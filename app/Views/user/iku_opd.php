@@ -8,37 +8,39 @@
       </h4>
 
       <div class="table-responsive">
-        <table class="table table-bordered text-center align-middle">
+        <table class="table table-bordered align-middle text-center">
           <thead class="table-success">
             <tr>
-              <th>No</th>
-              <th>Urusan</th>
-              <th>Program</th>
-              <th>Indikator</th>
-              <th>Satuan</th>
-              <th>Target</th>
-              <th>Capaian</th>
+              <th rowspan="2" style="width: 5%;">No</th>
+              <th rowspan="2">Sasaran Strategis</th>
+              <th rowspan="2">Indikator Sasaran (IKU)</th>
+              <th rowspan="2">Definisi Operasional / Formulasi</th>
+              <th rowspan="2">Satuan</th>
+              <th colspan="<?= count($tahunList) ?>">Target Capaian Per Tahun</th>
+            </tr>
+            <tr>
+              <?php foreach ($tahunList as $tahun): ?>
+                <th><?= $tahun ?></th>
+              <?php endforeach; ?>
             </tr>
           </thead>
           <tbody>
-            <?php if (!empty($ikuOpdData)): ?>
-              <?php $no = 1; foreach ($ikuOpdData as $data): ?>
-                <tr>
-                  <td><?= $no++ ?></td>
-                  <td><?= esc($data['urusan']) ?></td>
-                  <td><?= esc($data['program']) ?></td>
-                  <td><?= esc($data['indikator']) ?></td>
-                  <td><?= esc($data['satuan']) ?></td>
-                  <td><?= esc($data['target']) ?></td>
-                  <td><?= esc($data['capaian']) ?></td>
-                </tr>
-              <?php endforeach; ?>
-            <?php else: ?>
-              <tr><td colspan="7" class="text-muted">Belum ada data IKU yang tersedia.</td></tr>
-            <?php endif; ?>
+            <?php $no = 1; foreach ($ikuOpdData as $item): ?>
+              <tr>
+                <td><?= $no++ ?></td>
+                <td><?= esc($item['sasaran']) ?></td>
+                <td><?= esc($item['indikator']) ?></td>
+                <td><?= esc($item['definisi']) ?></td>
+                <td><?= esc($item['satuan']) ?></td>
+                <?php foreach ($tahunList as $tahun): ?>
+                  <td><?= isset($item['target_capaian'][$tahun]) ? esc($item['target_capaian'][$tahun]) : '-' ?></td>
+                <?php endforeach; ?>
+              </tr>
+            <?php endforeach; ?>
           </tbody>
         </table>
       </div>
+
     </div>
   </div>
 </main>

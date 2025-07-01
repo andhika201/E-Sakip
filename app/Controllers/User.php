@@ -65,27 +65,39 @@ class User extends BaseController
 
     public function iku_kabupaten()
     {
+        $tahunList = ['2025', '2026', '2027', '2028'];
+
         $ikuKabupatenData = [
             [
-                'urusan' => 'Pendidikan',
-                'program' => 'Meningkatkan Mutu Pendidikan',
-                'indikator' => 'Angka Partisipasi Sekolah',
+                'sasaran' => 'Pendidikan',
+                'indikator' => 'Meningkatkan Mutu Pendidikan',
+                'definisi' => 'Angka Partisipasi Sekolah',
                 'satuan' => '%',
-                'target' => '99.8',
-                'capaian' => '97.6',
+                'target_capaian' => [
+                    '2025' => '95',
+                    '2026' => '95',
+                    '2027' => '95',
+                    '2028' => '95',
+                ]
             ],
             [
-                'urusan' => 'Pendidikan',
-                'program' => 'Meningkatkan Mutu Pendidikan',
-                'indikator' => 'Angka Partisipasi Sekolah',
+                'sasaran' => 'Pendidikan',
+                'indikator' => 'Meningkatkan Mutu Pendidikan',
+                'definisi' => 'Angka Partisipasi Sekolah',
                 'satuan' => '%',
-                'target' => '99.8',
-                'capaian' => '97.6',
-            ],
+                'target_capaian' => [
+                    '2025' => '95',
+                    '2026' => '95',
+                    '2027' => '95',
+                    '2028' => '95',
+                ]
+            ]
         ];
 
         return view('user/iku_kabupaten',
-        ['ikuKabupatenData' => $ikuKabupatenData
+        [
+            'tahunList' => $tahunList,
+            'ikuKabupatenData' => $ikuKabupatenData
         ]);
     }
 
@@ -209,27 +221,39 @@ class User extends BaseController
 
     public function iku_opd()
     {
+        $tahunList = ['2025', '2026', '2027', '2028'];
+        
         $ikuOpdData = [
             [
-                'urusan' => 'Pendidikan',
-                'program' => 'Meningkatkan Mutu Pendidikan',
-                'indikator' => 'Angka Partisipasi Sekolah',
+                'sasaran' => 'Pendidikan',
+                'indikator' => 'Meningkatkan Mutu Pendidikan',
+                'definisi' => 'Angka Partisipasi Sekolah',
                 'satuan' => '%',
-                'target' => '99.8',
-                'capaian' => '97.6',
-            ],
+                'target_capaian' => [
+                    '2025' => '95',
+                    '2026' => '95',
+                    '2027' => '95',
+                    '2028' => '95',
+                ]
+                ],
             [
-                'urusan' => 'Pendidikan',
-                'program' => 'Meningkatkan Mutu Pendidikan',
-                'indikator' => 'Angka Partisipasi Sekolah',
+                'sasaran' => 'Pendidikan',
+                'indikator' => 'Meningkatkan Mutu Pendidikan',
+                'definisi' => 'Angka Partisipasi Sekolah',
                 'satuan' => '%',
-                'target' => '99.8',
-                'capaian' => '97.6',
-            ],
+                'target_capaian' => [
+                    '2025' => '95',
+                    '2026' => '95',
+                    '2027' => '95',
+                    '2028' => '95',
+                ]
+            ]
         ];
 
         return view('user/iku_opd',
-        ['ikuOpdData' => $ikuOpdData
+        [
+            'tahunList' => $tahunList,
+            'ikuOpdData' => $ikuOpdData
         ]);
     }
 

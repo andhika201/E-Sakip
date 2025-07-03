@@ -1,6 +1,6 @@
 </main> <!-- Menutup <main> dari halaman -->
 
-<footer class="footer-section mt-auto" style="background-color: #28a745; color: white; padding: 1rem 0;">
+<footer class="footer-section mt-auto" style="background-color: #00743e; color: white; padding: 1rem 0;">
   <div class="container-fluid px-4">
     <div class="row">
       <div class="col-md-8 small">

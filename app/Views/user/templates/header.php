@@ -35,12 +35,12 @@
 
     .header-section {
       padding: 10px 0;
-      background-color: #28a745;
+      background-color: #00743e;
       color: white;
     }
 
     .navbar-section {
-      background-color: #6bcf97;
+      background-color: #6eab11;
     }
 
     .nav-link {
@@ -58,13 +58,13 @@
     }
 
     .dropdown-item {
-      color: #28a745;
+      color: #00743e;
       font-weight: 500;
     }
 
     .dropdown-item:hover {
       color: #ffffff !important;
-      background-color: #1e7e34;
+      background-color: #005c31;
     }
 
     .admin-profile {
@@ -93,7 +93,7 @@
     }
 
     footer {
-      background-color: #28a745;
+      background-color: #00743e;
       color: white;
       padding: 1rem 0;
       margin-top: auto;
@@ -143,7 +143,6 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="kabupatenDropdown">
               <li><a class="dropdown-item" href="<?= base_url('rpjmd') ?>">RPJMD</a></li>
-              <li><a class="dropdown-item" href="<?= base_url('iku_kabupaten') ?>">IKU</a></li>
               <li><a class="dropdown-item" href="<?= base_url('pk_bupati') ?>">PK-Bupati</a></li>
               <li><a class="dropdown-item" href="<?= base_url('rkt') ?>">RKT</a></li>
               <li><a class="dropdown-item" href="<?= base_url('lakip_kabupaten') ?>">LAKIP</a></li>

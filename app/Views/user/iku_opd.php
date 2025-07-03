@@ -3,7 +3,7 @@
 <main class="flex-grow-1 d-flex align-items-center justify-content-center">
   <div class="container my-5" style="max-width: 1700px;">
     <div class="bg-white p-4 rounded shadow-sm">
-      <h4 class="fw-bold text-center text-success mb-4">
+      <h4 class="fw-bold text-center mb-4" style="color: #00743e;">
         INDIKATOR KINERJA UTAMA (IKU) OPD
       </h4>
 

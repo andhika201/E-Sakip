@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 class User extends BaseController
 {
-    public function dashboard()
+    public function index()
     {
         return view('user/dashboard');
     }
@@ -60,44 +60,6 @@ class User extends BaseController
         return view('user/rpjmd', [
             'tahunList' => $tahunList,
             'rpjmdData' => $rpjmdData
-        ]);
-    }
-
-    public function iku_kabupaten()
-    {
-        $tahunList = ['2025', '2026', '2027', '2028'];
-
-        $ikuKabupatenData = [
-            [
-                'sasaran' => 'Pendidikan',
-                'indikator' => 'Meningkatkan Mutu Pendidikan',
-                'definisi' => 'Angka Partisipasi Sekolah',
-                'satuan' => '%',
-                'target_capaian' => [
-                    '2025' => '95',
-                    '2026' => '95',
-                    '2027' => '95',
-                    '2028' => '95',
-                ]
-            ],
-            [
-                'sasaran' => 'Pendidikan',
-                'indikator' => 'Meningkatkan Mutu Pendidikan',
-                'definisi' => 'Angka Partisipasi Sekolah',
-                'satuan' => '%',
-                'target_capaian' => [
-                    '2025' => '95',
-                    '2026' => '95',
-                    '2027' => '95',
-                    '2028' => '95',
-                ]
-            ]
-        ];
-
-        return view('user/iku_kabupaten',
-        [
-            'tahunList' => $tahunList,
-            'ikuKabupatenData' => $ikuKabupatenData
         ]);
     }
 

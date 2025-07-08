@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateRpjmdTujuanTable extends Migration
+class CreateRktSasaranTable extends Migration
 {
     public function up()
     {
@@ -15,13 +15,13 @@ class CreateRpjmdTujuanTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'misi_id' => [
+            'rpjmd_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
                 'null' => false,
             ],
-            'tujuan_rpjmd' => [
+            'sasaran' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],
@@ -39,12 +39,12 @@ class CreateRpjmdTujuanTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('misi_id', 'rpjmd_misi', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('rpjmd_tujuan');
+        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('rkt_sasaran');
     }
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_tujuan');
+        $this->forge->dropTable('rkt_sasaran');
     }
 }

@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateRpjmdTujuanTable extends Migration
+class CreateRenstraSasaranTable extends Migration
 {
     public function up()
     {
@@ -15,14 +15,28 @@ class CreateRpjmdTujuanTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'misi_id' => [
+            'opd_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
                 'null' => false,
             ],
-            'tujuan_rpjmd' => [
+            'rpjmd_sasaran_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => false,
+            ],
+            'indikator_sasaran' => [
                 'type' => 'TEXT',
+                'null' => false,
+            ],
+            'tahun_mulai' => [
+                'type' => 'YEAR',
+                'null' => false,
+            ],
+            'tahun_akhir' => [
+                'type' => 'YEAR',
                 'null' => false,
             ],
             'created_at' => [
@@ -39,12 +53,13 @@ class CreateRpjmdTujuanTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('misi_id', 'rpjmd_misi', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('rpjmd_tujuan');
+        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('renstra_sasaran');
     }
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_tujuan');
+        $this->forge->dropTable('renstra_sasaran');
     }
 }

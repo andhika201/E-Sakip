@@ -31,8 +31,8 @@ class CreateUsersTable extends Migration
                 'null' => false,
             ],
             'role' => [
-                'type' => 'ENUM',
-                'constraint' => ['admin_kabupaten', 'admin_opd', 'viewer'],
+                'type' => 'VARCHAR',
+                'constraint' => 50,
                 'null' => false,
             ],
             'opd_id' => [
@@ -66,7 +66,7 @@ class CreateUsersTable extends Migration
         $this->forge->addKey('role');
         
         // Add foreign key constraint to opd table
-        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'SET NULL');
         
         $this->forge->createTable('users');
     }

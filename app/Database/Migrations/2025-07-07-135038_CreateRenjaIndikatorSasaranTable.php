@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateRenstraTable extends Migration
+class CreateRenjaIndikatorSasaranTable extends Migration
 {
     public function up()
     {
@@ -15,13 +15,7 @@ class CreateRenstraTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'opd_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
-            ],
-            'rpjmd_sasaran_id' => [
+            'renja_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
@@ -31,16 +25,18 @@ class CreateRenstraTable extends Migration
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'target_akhir_tahun_pertama' => [
-                'type' => 'TEXT',
+            'satuan' => [
+                'type' => 'VARCHAR',
+                'constraint' => 50,
                 'null' => false,
             ],
-            'target_akhir_tahun_kedua' => [
-                'type' => 'TEXT',
+            'tahun' => [
+                'type' => 'YEAR',
                 'null' => false,
-            ],
-            'target_akhir_tahun_ketiga' => [
-                'type' => 'TEXT',
+            ],      
+            'target' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
                 'null' => false,
             ],
             'created_at' => [
@@ -57,16 +53,12 @@ class CreateRenstraTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('renstra');
+        $this->forge->addForeignKey('renja_sasaran_id', 'renja_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('renja_indikator_sasaran');
     }
 
     public function down()
     {
-        $this->forge->dropTable('renstra', true);
-        // Optionally, you can also drop the foreign keys if they exist
-        // $this->forge->dropForeignKey('renstra', 'opd_id_foreign');
-        // $this->forge->dropForeignKey('renstra', 'rpjmd_sasaran_id_foreign');
+        $this->forge->dropTable('renja_indikator_sasaran');
     }
 }

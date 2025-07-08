@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateRenjaTable extends Migration
+class CreateIkuSasaranTable extends Migration
 {
     public function up()
     {
@@ -15,15 +15,14 @@ class CreateRenjaTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'rpjmd_sasaran_id' => [
+            'renstra_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
                 'null' => false,
             ],
-            'sasaran_renja' => [
-                'type' => 'VARCHAR',
-                'constraint' => 255,
+            'sasaran' => [
+                'type' => 'TEXT',
                 'null' => false,
             ],
             'created_at' => [
@@ -40,12 +39,12 @@ class CreateRenjaTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('renja');
+        $this->forge->addForeignKey('renstra_sasaran_id', 'renstra_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('iku_sasaran');
     }
 
     public function down()
     {
-        $this->forge->dropTable('renja');
+        $this->forge->dropTable('iku_sasaran');
     }
 }

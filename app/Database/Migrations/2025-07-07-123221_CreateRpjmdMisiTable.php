@@ -19,11 +19,11 @@ class CreateRpjmdMisiTable extends Migration
                 'type' => 'TEXT',
                 'null' => false,
             ],
-            'periode_start' => [
+            'tahun_mulai' => [
                 'type' => 'YEAR',
                 'null' => false,
             ],
-            'periode_end' => [
+            'tahun_akhir' => [
                 'type' => 'YEAR',
                 'null' => false,
             ],
@@ -46,6 +46,6 @@ class CreateRpjmdMisiTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_misi', true);
+        $this->forge->dropTable('rpjmd_misi');
     }
 }

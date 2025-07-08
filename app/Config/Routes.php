@@ -24,14 +24,35 @@ $routes->get('/pk_pengawas', 'User::pk_pengawas');
 $routes->get('/tentang_kami', 'User::tentang_kami');
 
 
-// Admin Kabupaten Routes
+/* Admin Kabupaten Routes */
 $routes->get('adminkab/dashboard', 'AdminKabupaten::index');
 
-// RPJMD Routes
-$routes->get('adminkab/rpjmd', 'AdminKabupaten::rpjmd');
-$routes->get('adminkab/rpjmd/tambah', 'AdminKabupaten::tambah_rpjmd');
-$routes->get('adminkab/rpjmd/edit', 'AdminKabupaten::edit_rpjmd');
-$routes->post('adminkab/rpjmd/save', 'AdminKabupaten::save_rpjmd');
+// RPJMD Routes - Admin Management
+$routes->get('adminkab/rpjmd', 'RpjmdController::index');
+$routes->get('adminkab/rpjmd/tambah', 'RpjmdController::tambah');
+$routes->get('adminkab/rpjmd/edit/(:num)', 'RpjmdController::edit/$1');
+$routes->post('adminkab/rpjmd/save', 'RpjmdController::save');
+$routes->get('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
+
+// RPJMD Sub-Entity Routes
+$routes->post('adminkab/rpjmd/tujuan/save', 'RpjmdController::save_tujuan');
+$routes->get('adminkab/rpjmd/tujuan/delete/(:num)', 'RpjmdController::delete_tujuan/$1');
+$routes->post('adminkab/rpjmd/sasaran/save', 'RpjmdController::save_sasaran');
+$routes->get('adminkab/rpjmd/sasaran/delete/(:num)', 'RpjmdController::delete_sasaran/$1');
+$routes->post('adminkab/rpjmd/indikator_sasaran/save', 'RpjmdController::save_indikator_sasaran');
+$routes->get('adminkab/rpjmd/indikator_sasaran/delete/(:num)', 'RpjmdController::delete_indikator_sasaran/$1');
+$routes->post('adminkab/rpjmd/target_tahunan/save', 'RpjmdController::save_target_tahunan');
+$routes->get('adminkab/rpjmd/target_tahunan/delete/(:num)', 'RpjmdController::delete_target_tahunan/$1');
+$routes->post('adminkab/rpjmd/complete/save', 'RpjmdController::save_complete');
+
+// RPJMD API Routes for AJAX
+$routes->get('adminkab/rpjmd/api/tujuan/(:num)', 'RpjmdController::get_tujuan_by_misi/$1');
+$routes->get('adminkab/rpjmd/api/sasaran/(:num)', 'RpjmdController::get_sasaran_by_tujuan/$1');
+$routes->get('adminkab/rpjmd/api/indikator/(:num)', 'RpjmdController::get_indikator_by_sasaran/$1');
+
+// RPJMD Utility Routes
+$routes->get('adminkab/rpjmd/search', 'RpjmdController::search');
+$routes->get('adminkab/rpjmd/export', 'RpjmdController::export');
 
 // RKT Routes
 $routes->get('adminkab/rkt', 'AdminKabupaten::rkt');

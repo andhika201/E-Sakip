@@ -21,33 +21,60 @@
     <div class="bg-white rounded shadow p-4">
         <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA PEMBANGUNAN JANGKA MENENGAH DAERAH</h2>
 
-        <!-- Filter -->
-        <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <div class="d-flex gap-2 flex-fill">
-            <select class="form-select">
-            <option value="">TAHUN MULAI</option>
-            <option>2019</option>
-            <option>2020</option>
-            <option>2021</option>
-            </select>
-            <select class="form-select">
-            <option value="">TAHUN SELESAI</option>
-            <option>2022</option>
-            <option>2023</option>
-            <option>2024</option>
-            </select>
-            <a href="" class="btn btn-success d-flex align-items-center">
-                <i class="fas fa-filter me-2"></i> FILTER
-            </a>
+        <!-- Summary Statistics -->
+        <?php if (isset($rpjmd_summary)): ?>
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success"><?= $rpjmd_summary['total_misi'] ?></h5>
+                        <p class="card-text small">Total Misi</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-info"><?= $rpjmd_summary['total_tujuan'] ?></h5>
+                        <p class="card-text small">Total Tujuan</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card border-warning">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-warning"><?= $rpjmd_summary['total_sasaran'] ?></h5>
+                        <p class="card-text small">Total Sasaran</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary"><?= $rpjmd_summary['total_indikator_sasaran'] ?></h5>
+                        <p class="card-text small">Total Indikator Sasaran</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-secondary">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-secondary"><?= $rpjmd_summary['total_target_tahunan'] ?></h5>
+                        <p class="card-text small">Total Target Tahunan</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div>
+        <?php endif; ?>
+
+        <!-- Action Button -->
+        <div class="d-flex justify-content-end mb-4">
             <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="btn btn-success d-flex align-items-center">
                 <i class="fas fa-plus me-1"></i> TAMBAH
             </a>
-        </div>  
-    </div>
+        </div>
 
-    <!-- Tabel -->
+        <!-- Tabel -->
     <div class="table-responsive">
         <table class="table table-bordered table-striped text-center small">
             <thead class="table-success">
@@ -59,47 +86,342 @@
                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                 <th rowspan="2" class="border p-2 align-middle">STRATEGI</th>
                 <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
-                <th colspan="5" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
+                <th colspan="<?= count($available_years) ?>" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
                 <th rowspan="2" class="border p-2 align-middle">ACTION</th>
             </tr>
             <tr class="border p-2" style="border-top: 2px solid;">
-                <th class="border p-2" style="border: 2px;">2025</th>
-                <th class="border p-2" style="border: 2px;">2026</th>
-                <th class="border p-2" style="border: 2px;">2027</th>
-                <th class="border p-2" style="border: 2px;">2028</th>
-                <th class="border p-2" style="border: 2px;">2029</th>
+                <?php foreach ($available_years as $year): ?>
+                    <th class="border p-2" style="border: 2px;"><?= $year ?></th>
+                <?php endforeach; ?>
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td class="border p-2">MISI</td>
-                <td class="border p-2">TUJUAN</td>
-                <td class="border p-2">INDIKATOR</td>
-                <td class="border p-2">SASARAN</td>
-                <td class="border p-2">INDIKATOR SASARAN</td>
-                <td class="border p-2">STRATEGI</td>
-                <td class="border p-2">PERSEN</td>
-                <td class="border p-2">✓</td>
-                <td class="border p-2">✓</td>
-                <td class="border p-2">✓</td>
-                <td class="border p-2">✓</td>
-                <td class="border p-2">✓</td>
-                <td class="border p-2">
-                <div class="d-flex align-items-center justify-content-center gap-2">
-                    <a href="#" class="text-success">
-                    <i class="fas fa-edit"></i>
-                </a>
-                    <button class="btn btn-link text-danger p-0"><i class="fas fa-trash"></i></button>
-                </div>
-                </td>
-            </tr>
-            <!-- Tambah baris lainnya jika diperlukan -->
+            <?php if (isset($rpjmd_data) && !empty($rpjmd_data)): ?>
+                <?php foreach ($rpjmd_data as $misi): ?>
+                    <?php if (isset($misi['tujuan']) && !empty($misi['tujuan'])): ?>
+                        <?php 
+                        $misiRowspan = 0;
+                        foreach ($misi['tujuan'] as $tujuan) {
+                            if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
+                                foreach ($tujuan['sasaran'] as $sasaran) {
+                                    if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
+                                        $misiRowspan += count($sasaran['indikator_sasaran']);
+                                    } else {
+                                        $misiRowspan += 1;
+                                    }
+                                }
+                            } else {
+                                $misiRowspan += 1;
+                            }
+                        }
+                        ?>
+                        
+                        <?php $firstMisiRow = true; ?>
+                        <?php foreach ($misi['tujuan'] as $tujuan): ?>
+                            <?php if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])): ?>
+                                <?php 
+                                $tujuanRowspan = 0;
+                                foreach ($tujuan['sasaran'] as $sasaran) {
+                                    if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
+                                        $tujuanRowspan += count($sasaran['indikator_sasaran']);
+                                    } else {
+                                        $tujuanRowspan += 1;
+                                    }
+                                }
+                                ?>
+                                
+                                <?php $firstTujuanRow = true; ?>
+                                <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
+                                    <?php if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])): ?>
+                                        
+                                        <?php $firstSasaranRow = true; ?>
+                                        <?php foreach ($sasaran['indikator_sasaran'] as $indikator): ?>
+                                            <tr>
+                                                <?php if ($firstMisiRow): ?>
+                                                    <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                                    <?php $firstMisiRow = false; ?>
+                                                <?php endif; ?>
+                                                
+                                                <?php if ($firstTujuanRow): ?>
+                                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
+                                                        <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                                            <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                                <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                                <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            -
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <?php $firstTujuanRow = false; ?>
+                                                <?php endif; ?>
+                                                
+                                                <?php if ($firstSasaranRow): ?>
+                                                    <td class="border p-2 align-top text-start" rowspan="<?= count($sasaran['indikator_sasaran']) ?>"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
+                                                    <?php $firstSasaranRow = false; ?>
+                                                <?php endif; ?>
+                                                
+                                                <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
+                                                <td class="border p-2 align-top text-start"><?= esc($indikator['strategi']) ?></td>
+                                                <td class="border p-2 align-top text-start"><?= esc($indikator['satuan']) ?></td>
+                                                
+                                                <!-- Target per tahun -->
+                                                <?php foreach ($available_years as $year): ?>
+                                                    <td class="border p-2 align-top text-start">
+                                                        <?php if (isset($indikator['target_tahunan']) && !empty($indikator['target_tahunan'])): ?>
+                                                            <?php foreach ($indikator['target_tahunan'] as $target): ?>
+                                                                <?php if ($target['tahun'] == $year): ?>
+                                                                    <?= esc($target['target_tahunan']) ?>
+                                                                    <?php break; ?>
+                                                                <?php endif; ?>
+                                                            <?php endforeach; ?>
+                                                        <?php else: ?>
+                                                            -
+                                                        <?php endif; ?>
+                                                    </td>
+                                                <?php endforeach; ?>
+                                                
+                                                <td class="border p-2 align-top text-center">
+                                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                                        <a href="<?= base_url('adminkab/rpjmd/edit/' . $indikator['id']) ?>" class="text-success">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $indikator['id'] ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <?php if ($firstMisiRow): ?>
+                                                <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                                <?php $firstMisiRow = false; ?>
+                                            <?php endif; ?>
+                                            
+                                            <?php if ($firstTujuanRow): ?>
+                                                <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                                <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
+                                                    <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                                        <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                            <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                            <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        -
+                                                    <?php endif; ?>
+                                                </td>
+                                                <?php $firstTujuanRow = false; ?>
+                                            <?php endif; ?>
+                                            
+                                            <td class="border p-2 align-top text-start"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <?php foreach ($available_years as $year): ?>
+                                                <td class="border p-2 align-top text-start">-</td>
+                                            <?php endforeach; ?>
+                                            <td class="border p-2 align-top text-center">
+                                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                                    <a href="<?= base_url('adminkab/rpjmd/edit/' . $sasaran['id']) ?>" class="text-success">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $sasaran['id'] ?>)">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <?php if ($firstMisiRow): ?>
+                                        <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                        <?php $firstMisiRow = false; ?>
+                                    <?php endif; ?>
+                                    
+                                    <td class="border p-2 align-top text-start"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                    <td class="border p-2 align-top text-start">
+                                        <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                            <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            -
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <?php foreach ($available_years as $year): ?>
+                                        <td class="border p-2 align-top text-start">-</td>
+                                    <?php endforeach; ?>
+                                    <td class="border p-2 align-top text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <a href="<?= base_url('adminkab/rpjmd/edit/' . $tujuan['id']) ?>" class="text-success">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $tujuan['id'] ?>)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td class="border p-2 align-top text-start"><?= esc($misi['misi']) ?></td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <td class="border p-2 align-top text-start">-</td>
+                            <?php foreach ($available_years as $year): ?>
+                                <td class="border p-2 align-top text-start">-</td>
+                            <?php endforeach; ?>
+                            <td class="border p-2 align-top text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-2">
+                                    <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="text-success">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $misi['id'] ?>)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="<?= 7 + count($available_years) + 1 ?>" class="border p-4 text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Belum ada data RPJMD. <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="text-success">Tambah data pertama</a>
+                    </td>
+                </tr>
+            <?php endif; ?>
             </tbody>
         </table>
         </div>
+        
+        <!-- Pagination -->
+        <?php if (isset($total_pages) && $total_pages > 1): ?>
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted">
+                Menampilkan halaman <?= $current_page ?> dari <?= $total_pages ?> 
+                (<?= $total_records ?> total data, <?= $per_page ?> per halaman)
+            </div>
+            
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <!-- Previous Page -->
+                    <?php if ($current_page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $current_page - 1 ?>">
+                                <i class="fas fa-chevron-left"></i> Sebelumnya
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="fas fa-chevron-left"></i> Sebelumnya
+                            </span>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <!-- Page Numbers -->
+                    <?php 
+                    $start = max(1, $current_page - 2);
+                    $end = min($total_pages, $current_page + 2);
+                    ?>
+                    
+                    <?php if ($start > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">1</a>
+                        </li>
+                        <?php if ($start > 2): ?>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    
+                    <?php for ($i = $start; $i <= $end; $i++): ?>
+                        <li class="page-item <?= $i == $current_page ? 'active' : '' ?>">
+                            <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <?php if ($end < $total_pages): ?>
+                        <?php if ($end < $total_pages - 1): ?>
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        <?php endif; ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $total_pages ?>"><?= $total_pages ?></a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <!-- Next Page -->
+                    <?php if ($current_page < $total_pages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $current_page + 1 ?>">
+                                Berikutnya <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Berikutnya <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+        <?php endif; ?>
     </div>
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+
+  <!-- JavaScript for Delete Confirmation -->
+  <script>
+  function confirmDelete(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
+          // Create form and submit
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '<?= base_url('adminkab/rpjmd/delete') ?>/' + id;
+          
+          // Add CSRF token if available
+          <?php if (csrf_token()): ?>
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = '<?= csrf_token() ?>';
+          csrfInput.value = '<?= csrf_hash() ?>';
+          form.appendChild(csrfInput);
+          <?php endif; ?>
+          
+          // Add method override for DELETE
+          const methodInput = document.createElement('input');
+          methodInput.type = 'hidden';
+          methodInput.name = '_method';
+          methodInput.value = 'DELETE';
+          form.appendChild(methodInput);
+          
+          document.body.appendChild(form);
+          form.submit();
+      }
+  }
+  </script>
 </body>
 </html>

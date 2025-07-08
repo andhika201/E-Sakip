@@ -58,7 +58,7 @@ class RpjmdModel extends Model
     public function getAllTujuan()
     {
         return $this->db->table('rpjmd_tujuan t')
-            ->select('t.*, m.misi_rpjmd, m.tahun_mulai, m.tahun_akhir')
+            ->select('t.*, m.misi, m.tahun_mulai, m.tahun_akhir')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->orderBy('t.misi_id', 'ASC')
             ->get()
@@ -82,7 +82,7 @@ class RpjmdModel extends Model
     public function getTujuanById($id)
     {
         return $this->db->table('rpjmd_tujuan t')
-            ->select('t.*, m.misi_rpjmd, m.tahun_mulai, m.tahun_akhir')
+            ->select('t.*, m.misi, m.tahun_mulai, m.tahun_akhir')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->where('t.id', $id)
             ->get()
@@ -97,7 +97,7 @@ class RpjmdModel extends Model
     public function getAllIndikatorTujuan()
     {
         return $this->db->table('rpjmd_indikator_tujuan it')
-            ->select('it.*, t.tujuan_rpjmd, m.misi_rpjmd')
+            ->select('it.*, t.tujuan_rpjmd, m.misi')
             ->join('rpjmd_tujuan t', 't.id = it.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->orderBy('it.tujuan_id', 'ASC')
@@ -124,7 +124,7 @@ class RpjmdModel extends Model
     public function getAllSasaran()
     {
         return $this->db->table('rpjmd_sasaran s')
-            ->select('s.*, t.tujuan_rpjmd, m.misi_rpjmd')
+            ->select('s.*, t.tujuan_rpjmd, m.misi')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->orderBy('s.tujuan_id', 'ASC')
@@ -149,7 +149,7 @@ class RpjmdModel extends Model
     public function getSasaranById($id)
     {
         return $this->db->table('rpjmd_sasaran s')
-            ->select('s.*, t.tujuan_rpjmd, m.misi_rpjmd')
+            ->select('s.*, t.tujuan_rpjmd, m.misi')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->where('s.id', $id)
@@ -165,7 +165,7 @@ class RpjmdModel extends Model
     public function getAllIndikatorSasaran()
     {
         return $this->db->table('rpjmd_indikator_sasaran is')
-            ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi_rpjmd')
+            ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
             ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
@@ -191,7 +191,7 @@ class RpjmdModel extends Model
     public function getIndikatorSasaranById($id)
     {
         return $this->db->table('rpjmd_indikator_sasaran is')
-            ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi_rpjmd')
+            ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
             ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
@@ -207,14 +207,14 @@ class RpjmdModel extends Model
      */
     public function getAllTargetTahunan()
     {
-        return $this->db->table('rpjmd_target_tahunan tt')
-            ->select('tt.*, is.indikator, is.strategi, is.satuan, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi_rpjmd')
-            ->join('rpjmd_indikator_sasaran is', 'is.id = tt.indikator_id')
+        return $this->db->table('rpjmd_target tt')
+            ->select('tt.*, is.indikator_sasaran, is.strategi, is.satuan, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
+            ->join('rpjmd_indikator_sasaran is', 'is.id = tt.indikator_sasaran_id')
             ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->orderBy('tt.tahun', 'ASC')
-            ->orderBy('tt.indikator_id', 'ASC')
+            ->orderBy('tt.indikator_sasaran_id', 'ASC')
             ->get()
             ->getResultArray();
     }
@@ -224,8 +224,8 @@ class RpjmdModel extends Model
      */
     public function getTargetTahunanByIndikatorId($indikatorId)
     {
-        return $this->db->table('rpjmd_target_tahunan')
-            ->where('indikator_id', $indikatorId)
+        return $this->db->table('rpjmd_target')
+            ->where('indikator_sasaran_id', $indikatorId)
             ->orderBy('tahun', 'ASC')
             ->get()
             ->getResultArray();
@@ -236,9 +236,9 @@ class RpjmdModel extends Model
      */
     public function getTargetTahunanByYear($tahun)
     {
-        return $this->db->table('rpjmd_target_tahunan tt')
-            ->select('tt.*, is.indikator, is.strategi, is.satuan, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi_rpjmd')
-            ->join('rpjmd_indikator_sasaran is', 'is.id = tt.indikator_id')
+        return $this->db->table('rpjmd_target tt')
+            ->select('tt.*, is.indikator_sasaran, is.strategi, is.satuan, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
+            ->join('rpjmd_indikator_sasaran is', 'is.id = tt.indikator_sasaran_id')
             ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
@@ -293,8 +293,8 @@ class RpjmdModel extends Model
                     $sasaran['indikator_sasaran'] = $this->getIndikatorSasaranBySasaranId($sasaran['id']);
                     
                     foreach ($sasaran['indikator_sasaran'] as &$indikator) {
-                        $indikator['target_tahunan'] = $this->db->table('rpjmd_target_tahunan')
-                            ->where('indikator_id', $indikator['id'])
+                        $indikator['target_tahunan'] = $this->db->table('rpjmd_target')
+                            ->where('indikator_sasaran_id', $indikator['id'])
                             ->where('tahun', $tahun)
                             ->get()
                             ->getResultArray();
@@ -316,9 +316,10 @@ class RpjmdModel extends Model
             'total_tujuan' => $this->db->table('rpjmd_tujuan')->countAllResults(),
             'total_sasaran' => $this->db->table('rpjmd_sasaran')->countAllResults(),
             'total_indikator_sasaran' => $this->db->table('rpjmd_indikator_sasaran')->countAllResults(),
-            'total_target_tahunan' => $this->db->table('rpjmd_target_tahunan')->countAllResults(),
-            'years_available' => $this->db->table('rpjmd_target_tahunan')
-                ->select('DISTINCT tahun')
+            'total_target_tahunan' => $this->db->table('rpjmd_target')->countAllResults(),
+            'years_available' => $this->db->table('rpjmd_target')
+                ->distinct()
+                ->select('tahun')
                 ->orderBy('tahun', 'ASC')
                 ->get()
                 ->getResultArray()
@@ -336,29 +337,29 @@ class RpjmdModel extends Model
     {
         $results = [
             'misi' => $this->db->table('rpjmd_misi')
-                ->like('misi_rpjmd', $keyword)
+                ->like('misi', $keyword)
                 ->get()
                 ->getResultArray(),
             'tujuan' => $this->db->table('rpjmd_tujuan t')
-                ->select('t.*, m.misi_rpjmd')
+                ->select('t.*, m.misi')
                 ->join('rpjmd_misi m', 'm.id = t.misi_id')
                 ->like('t.tujuan_rpjmd', $keyword)
                 ->get()
                 ->getResultArray(),
             'sasaran' => $this->db->table('rpjmd_sasaran s')
-                ->select('s.*, t.tujuan_rpjmd, m.misi_rpjmd')
+                ->select('s.*, t.tujuan_rpjmd, m.misi')
                 ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
                 ->join('rpjmd_misi m', 'm.id = t.misi_id')
                 ->like('s.sasaran_rpjmd', $keyword)
                 ->get()
                 ->getResultArray(),
             'indikator' => $this->db->table('rpjmd_indikator_sasaran is')
-                ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi_rpjmd')
+                ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
                 ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
                 ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
                 ->join('rpjmd_misi m', 'm.id = t.misi_id')
                 ->groupStart()
-                ->like('is.indikator', $keyword)
+                ->like('is.indikator_sasaran', $keyword)
                 ->orLike('is.strategi', $keyword)
                 ->groupEnd()
                 ->get()
@@ -376,7 +377,7 @@ class RpjmdModel extends Model
     public function createMisi($data)
     {
         // Validation
-        $required = ['misi_rpjmd', 'tahun_mulai', 'tahun_akhir'];
+        $required = ['misi', 'tahun_mulai', 'tahun_akhir'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
@@ -570,7 +571,7 @@ class RpjmdModel extends Model
     public function createIndikatorSasaran($data)
     {
         // Validation
-        $required = ['sasaran_id', 'indikator', 'strategi', 'satuan'];
+        $required = ['sasaran_id', 'indikator_sasaran', 'strategi', 'satuan'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
@@ -597,7 +598,7 @@ class RpjmdModel extends Model
         
         try {
             // Delete related target tahunan
-            $this->db->table('rpjmd_target_tahunan')->delete(['indikator_id' => $id]);
+            $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => $id]);
             
             // Delete the indikator sasaran
             $result = $this->db->table('rpjmd_indikator_sasaran')->delete(['id' => $id]);
@@ -619,14 +620,14 @@ class RpjmdModel extends Model
     public function createTargetTahunan($data)
     {
         // Validation
-        $required = ['indikator_id', 'tahun', 'target'];
+        $required = ['indikator_sasaran_id', 'tahun', 'target_tahunan'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
             }
         }
         
-        return $this->db->table('rpjmd_target_tahunan')->insert($data);
+        return $this->db->table('rpjmd_target')->insert($data);
     }
     
     /**
@@ -634,7 +635,7 @@ class RpjmdModel extends Model
      */
     public function updateTargetTahunan($id, $data)
     {
-        return $this->db->table('rpjmd_target_tahunan')->update(['id' => $id], $data);
+        return $this->db->table('rpjmd_target')->update(['id' => $id], $data);
     }
     
     /**
@@ -642,7 +643,7 @@ class RpjmdModel extends Model
      */
     public function deleteTargetTahunan($id)
     {
-        return $this->db->table('rpjmd_target_tahunan')->delete(['id' => $id]);
+        return $this->db->table('rpjmd_target')->delete(['id' => $id]);
     }
 
     // ==================== BATCH OPERATIONS ====================
@@ -686,7 +687,7 @@ class RpjmdModel extends Model
                                     // Create target tahunan
                                     if (isset($indikatorSasaran['target_tahunan']) && is_array($indikatorSasaran['target_tahunan'])) {
                                         foreach ($indikatorSasaran['target_tahunan'] as $target) {
-                                            $target['indikator_id'] = $indikatorId;
+                                            $target['indikator_sasaran_id'] = $indikatorId;
                                             $this->createTargetTahunan($target);
                                         }
                                     }
@@ -742,13 +743,13 @@ class RpjmdModel extends Model
             $insertData = [];
             foreach ($targets as $target) {
                 $insertData[] = [
-                    'indikator_id' => $indikatorId,
+                    'indikator_sasaran_id' => $indikatorId,
                     'tahun' => $target['tahun'],
-                    'target' => $target['target']
+                    'target_tahunan' => $target['target_tahunan']
                 ];
             }
             
-            $result = $this->db->table('rpjmd_target_tahunan')->insertBatch($insertData);
+            $result = $this->db->table('rpjmd_target')->insertBatch($insertData);
             
             $this->db->transComplete();
             return $result;

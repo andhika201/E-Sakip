@@ -23,26 +23,26 @@
 
         <!-- Filter -->
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <div class="d-flex gap-2 flex-fill">
-            <select class="form-select">
-            <option value="">TAHUN</option>
-            <option>2020</option>
-            <option>2021</option>
-            <option>2022</option>
-            <option>2023</option>
-            <option>2024</option>
-            <option>2025</option>
-            </select>
-            <select class="form-select">
-            <option value="">OPD</option>
-            <option>Dinas Pendidikan</option>
-            <option>Dinas Kesehatan</option>
-            <option>Dinas Sosial</option>
-            </select>
-            <a href="" class="btn btn-success d-flex align-items-center">
-            <i class="fas fa-filter me-2"></i> FILTER
-            </a>
-        </div>
+            <div class="d-flex gap-2 flex-fill">
+                <select class="form-select">
+                <option value="">TAHUN</option>
+                <option>2020</option>
+                <option>2021</option>
+                <option>2022</option>
+                <option>2023</option>
+                <option>2024</option>
+                <option>2025</option>
+                </select>
+                <select class="form-select">
+                <option value="">OPD</option>
+                <option>Dinas Pendidikan</option>
+                <option>Dinas Kesehatan</option>
+                <option>Dinas Sosial</option>
+                </select>
+                <a href="" class="btn btn-success d-flex align-items-center">
+                <i class="fas fa-filter me-2"></i> FILTER
+                </a>
+            </div>
         <div>
             <a href="<?= base_url('adminkab/rkt/tambah') ?>" class="btn btn-success d-flex align-items-center">
                 <i class="fas fa-plus me-1"></i> TAMBAH

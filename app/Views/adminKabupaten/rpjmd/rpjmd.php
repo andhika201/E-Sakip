@@ -48,7 +48,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="card border-primary">
                     <div class="card-body text-center">
                         <h5 class="card-title text-primary"><?= $rpjmd_summary['total_indikator_sasaran'] ?></h5>
@@ -56,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="card border-secondary">
                     <div class="card-body text-center">
                         <h5 class="card-title text-secondary"><?= $rpjmd_summary['total_target_tahunan'] ?></h5>
@@ -64,251 +64,271 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-2">
+                <div class="card border-dark">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-dark"><?= isset($rpjmd_grouped) ? count($rpjmd_grouped) : 0 ?></h5>
+                        <p class="card-text small">Periode RPJMD</p>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
 
-        <!-- Action Button -->
-        <div class="d-flex justify-content-end mb-4">
+        <!-- Filter and Action Controls -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- Period Filter -->
+            <div class="d-flex align-items-center flex-fill me-3">
+                <select id="periode-filter" class="form-select flex-fill" onchange="filterByPeriode()">
+                    <?php if (isset($rpjmd_grouped) && !empty($rpjmd_grouped)): ?>
+                        <?php 
+                        // Get the latest period (last key in the sorted array)
+                        $periodKeys = array_keys($rpjmd_grouped);
+                        $latestPeriod = end($periodKeys);
+                        ?>
+                        <?php foreach ($rpjmd_grouped as $periodKey => $periodData): ?>
+                            <option value="<?= $periodKey ?>" <?= $periodKey === $latestPeriod ? 'selected' : '' ?>>
+                                Periode <?= $periodData['period'] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+            
+            <!-- Action Button -->
             <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="btn btn-success d-flex align-items-center">
                 <i class="fas fa-plus me-1"></i> TAMBAH
             </a>
         </div>
 
         <!-- Tabel -->
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center small">
-            <thead class="table-success">
-            <tr>
-                <th rowspan="2" class="border p-2 align-middle">MISI</th>
-                <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
-                <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
-                <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
-                <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                <th rowspan="2" class="border p-2 align-middle">STRATEGI</th>
-                <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
-                <th colspan="<?= count($available_years) ?>" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
-                <th rowspan="2" class="border p-2 align-middle">ACTION</th>
-            </tr>
-            <tr class="border p-2" style="border-top: 2px solid;">
-                <?php foreach ($available_years as $year): ?>
-                    <th class="border p-2" style="border: 2px;"><?= $year ?></th>
-                <?php endforeach; ?>
-            </tr>
-            </thead>
-            <tbody>
-            <?php if (isset($rpjmd_data) && !empty($rpjmd_data)): ?>
-                <?php foreach ($rpjmd_data as $misi): ?>
-                    <?php if (isset($misi['tujuan']) && !empty($misi['tujuan'])): ?>
-                        <?php 
-                        $misiRowspan = 0;
-                        foreach ($misi['tujuan'] as $tujuan) {
-                            if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
-                                foreach ($tujuan['sasaran'] as $sasaran) {
-                                    if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
-                                        $misiRowspan += count($sasaran['indikator_sasaran']);
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center small">
+                <thead class="table-success">
+                <tr>
+                    <th rowspan="2" class="border p-2 align-middle">MISI</th>
+                    <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
+                    <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
+                    <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
+                    <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
+                    <th rowspan="2" class="border p-2 align-middle">STRATEGI</th>
+                    <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
+                    <th colspan="5" class="border p-2" id="year-header-span">TARGET CAPAIAN PER TAHUN</th>
+                    <th rowspan="2" class="border p-2 align-middle">ACTION</th>
+                </tr>
+                <tr class="border p-2" style="border-top: 2px solid;" id="year-header-row">
+                    <!-- Year headers will be populated by JavaScript -->
+                </tr>
+                </thead>
+                <tbody id="rpjmd-table-body">
+                <?php if (isset($rpjmd_grouped) && !empty($rpjmd_grouped)): ?>
+                    <?php foreach ($rpjmd_grouped as $periodIndex => $periodData): ?>
+                        <!-- Data untuk periode ini -->
+                        <?php foreach ($periodData['misi_data'] as $misi): ?>
+                            <?php if (isset($misi['tujuan']) && !empty($misi['tujuan'])): ?>
+                                <?php 
+                                $misiRowspan = 0;
+                                foreach ($misi['tujuan'] as $tujuan) {
+                                    if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
+                                        foreach ($tujuan['sasaran'] as $sasaran) {
+                                            if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
+                                                $misiRowspan += count($sasaran['indikator_sasaran']);
+                                            } else {
+                                                $misiRowspan += 1;
+                                            }
+                                        }
                                     } else {
                                         $misiRowspan += 1;
                                     }
                                 }
-                            } else {
-                                $misiRowspan += 1;
-                            }
-                        }
-                        ?>
-                        
-                        <?php $firstMisiRow = true; ?>
-                        <?php foreach ($misi['tujuan'] as $tujuan): ?>
-                            <?php if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])): ?>
-                                <?php 
-                                $tujuanRowspan = 0;
-                                foreach ($tujuan['sasaran'] as $sasaran) {
-                                    if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
-                                        $tujuanRowspan += count($sasaran['indikator_sasaran']);
-                                    } else {
-                                        $tujuanRowspan += 1;
-                                    }
-                                }
                                 ?>
                                 
-                                <?php $firstTujuanRow = true; ?>
-                                <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
-                                    <?php if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])): ?>
+                                <?php $firstMisiRow = true; ?>
+                                <?php foreach ($misi['tujuan'] as $tujuan): ?>
+                                    <?php if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])): ?>
+                                        <?php 
+                                        $tujuanRowspan = 0;
+                                        foreach ($tujuan['sasaran'] as $sasaran) {
+                                            if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
+                                                $tujuanRowspan += count($sasaran['indikator_sasaran']);
+                                            } else {
+                                                $tujuanRowspan += 1;
+                                            }
+                                        }
+                                        ?>
                                         
-                                        <?php $firstSasaranRow = true; ?>
-                                        <?php foreach ($sasaran['indikator_sasaran'] as $indikator): ?>
-                                            <tr>
-                                                <?php if ($firstMisiRow): ?>
-                                                    <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
-                                                    <?php $firstMisiRow = false; ?>
-                                                <?php endif; ?>
+                                        <?php $firstTujuanRow = true; ?>
+                                        <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
+                                            <?php if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])): ?>
                                                 
-                                                <?php if ($firstTujuanRow): ?>
-                                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
-                                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
-                                                        <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
-                                                            <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
-                                                                <?= esc($indikatorTujuan['indikator_tujuan']) ?>
-                                                                <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
-                                                            <?php endforeach; ?>
-                                                        <?php else: ?>
-                                                            -
+                                                <?php $firstSasaranRow = true; ?>
+                                                <?php foreach ($sasaran['indikator_sasaran'] as $indikator): ?>
+                                                    <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                                        <?php if ($firstMisiRow): ?>
+                                                            <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                                            <?php $firstMisiRow = false; ?>
                                                         <?php endif; ?>
-                                                    </td>
-                                                    <?php $firstTujuanRow = false; ?>
-                                                <?php endif; ?>
-                                                
-                                                <?php if ($firstSasaranRow): ?>
-                                                    <td class="border p-2 align-top text-start" rowspan="<?= count($sasaran['indikator_sasaran']) ?>"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
-                                                    <?php $firstSasaranRow = false; ?>
-                                                <?php endif; ?>
-                                                
-                                                <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                                                <td class="border p-2 align-top text-start"><?= esc($indikator['strategi']) ?></td>
-                                                <td class="border p-2 align-top text-start"><?= esc($indikator['satuan']) ?></td>
-                                                
-                                                <!-- Target per tahun -->
-                                                <?php foreach ($available_years as $year): ?>
-                                                    <td class="border p-2 align-top text-start">
-                                                        <?php if (isset($indikator['target_tahunan']) && !empty($indikator['target_tahunan'])): ?>
-                                                            <?php foreach ($indikator['target_tahunan'] as $target): ?>
-                                                                <?php if ($target['tahun'] == $year): ?>
-                                                                    <?= esc($target['target_tahunan']) ?>
-                                                                    <?php break; ?>
+                                                        
+                                                        <?php if ($firstTujuanRow): ?>
+                                                            <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                                            <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
+                                                                <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                                                    <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                                        <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                                        <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                                                    <?php endforeach; ?>
+                                                                <?php else: ?>
+                                                                    -
                                                                 <?php endif; ?>
-                                                            <?php endforeach; ?>
-                                                        <?php else: ?>
-                                                            -
+                                                            </td>
+                                                            <?php $firstTujuanRow = false; ?>
                                                         <?php endif; ?>
-                                                    </td>
+                                                        
+                                                        <?php if ($firstSasaranRow): ?>
+                                                            <td class="border p-2 align-top text-start" rowspan="<?= count($sasaran['indikator_sasaran']) ?>"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
+                                                            <?php $firstSasaranRow = false; ?>
+                                                        <?php endif; ?>
+                                                        
+                                                        <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
+                                                        <td class="border p-2 align-top text-start"><?= esc($indikator['strategi']) ?></td>
+                                                        <td class="border p-2 align-top text-start"><?= esc($indikator['satuan']) ?></td>
+                                                        
+                                                        <!-- Target per tahun (hanya untuk periode yang dipilih) -->
+                                                        <span class="year-cells" data-periode="<?= $periodIndex ?>">
+                                                            <?php foreach ($periodData['years'] as $year): ?>
+                                                                <td class="border p-2 align-top text-start">
+                                                                    <?php if (isset($indikator['target_tahunan']) && !empty($indikator['target_tahunan'])): ?>
+                                                                        <?php foreach ($indikator['target_tahunan'] as $target): ?>
+                                                                            <?php if ($target['tahun'] == $year): ?>
+                                                                                <?= esc($target['target_tahunan']) ?>
+                                                                                <?php break; ?>
+                                                                            <?php endif; ?>
+                                                                        <?php endforeach; ?>
+                                                                    <?php else: ?>
+                                                                        -
+                                                                    <?php endif; ?>
+                                                                </td>
+                                                            <?php endforeach; ?>
+                                                        </span>
+                                                        
+                                                        <!-- Action button hanya pada baris pertama misi -->
+                                                        <?php if ($misiRowspan > 0): ?>
+                                                            <td class="border p-2 align-middle text-center" rowspan="<?= $misiRowspan ?>">
+                                                                <div class="d-flex flex-column align-items-center gap-2">
+                                                                    <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="btn btn-success btn-sm">
+                                                                        <i class="fas fa-edit me-1"></i>Edit
+                                                                    </a>
+                                                                    <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $misi['id'] ?>)">
+                                                                        <i class="fas fa-trash me-1"></i>Hapus
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                            <?php $misiRowspan = 0; // Reset untuk mencegah duplikasi ?>
+                                                        <?php endif; ?>
+                                                    </tr>
                                                 <?php endforeach; ?>
-                                                
-                                                <td class="border p-2 align-top text-center">
-                                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                                        <a href="<?= base_url('adminkab/rpjmd/edit/' . $indikator['id']) ?>" class="text-success">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $indikator['id'] ?>)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                            <?php else: ?>
+                                                <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                                    <?php if ($firstMisiRow): ?>
+                                                        <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                                        <?php $firstMisiRow = false; ?>
+                                                    <?php endif; ?>
+                                                    
+                                                    <?php if ($firstTujuanRow): ?>
+                                                        <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                                        <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
+                                                            <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                                                <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                                    <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                                    <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                                                <?php endforeach; ?>
+                                                            <?php else: ?>
+                                                                -
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <?php $firstTujuanRow = false; ?>
+                                                    <?php endif; ?>
+                                                    
+                                                    <td class="border p-2 align-top text-start"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
+                                                    <td class="border p-2 align-top text-start">-</td>
+                                                    <td class="border p-2 align-top text-start">-</td>
+                                                    <td class="border p-2 align-top text-start">-</td>
+                                                    <span class="year-cells" data-periode="<?= $periodIndex ?>">
+                                                        <?php foreach ($periodData['years'] as $year): ?>
+                                                            <td class="border p-2 align-top text-start">-</td>
+                                                        <?php endforeach; ?>
+                                                    </span>
+                                                </tr>
+                                            <?php endif; ?>
                                         <?php endforeach; ?>
                                     <?php else: ?>
-                                        <tr>
+                                        <tr class="periode-row" data-periode="<?= $periodIndex ?>">
                                             <?php if ($firstMisiRow): ?>
                                                 <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
                                                 <?php $firstMisiRow = false; ?>
                                             <?php endif; ?>
                                             
-                                            <?php if ($firstTujuanRow): ?>
-                                                <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
-                                                <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
-                                                    <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
-                                                        <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
-                                                            <?= esc($indikatorTujuan['indikator_tujuan']) ?>
-                                                            <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                        -
-                                                    <?php endif; ?>
-                                                </td>
-                                                <?php $firstTujuanRow = false; ?>
-                                            <?php endif; ?>
-                                            
-                                            <td class="border p-2 align-top text-start"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
-                                            <td class="border p-2 align-top text-start">-</td>
-                                            <td class="border p-2 align-top text-start">-</td>
-                                            <td class="border p-2 align-top text-start">-</td>
-                                            <?php foreach ($available_years as $year): ?>
-                                                <td class="border p-2 align-top text-start">-</td>
-                                            <?php endforeach; ?>
-                                            <td class="border p-2 align-top text-center">
-                                                <div class="d-flex align-items-center justify-content-center gap-2">
-                                                    <a href="<?= base_url('adminkab/rpjmd/edit/' . $sasaran['id']) ?>" class="text-success">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $sasaran['id'] ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
+                                            <td class="border p-2 align-top text-start"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
+                                            <td class="border p-2 align-top text-start">
+                                                <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
+                                                    <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
+                                                        <?= esc($indikatorTujuan['indikator_tujuan']) ?>
+                                                        <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    -
+                                                <?php endif; ?>
                                             </td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                            <span class="year-cells" data-periode="<?= $periodIndex ?>">
+                                                <?php foreach ($periodData['years'] as $year): ?>
+                                                    <td class="border p-2 align-top text-start">-</td>
+                                                <?php endforeach; ?>
+                                            </span>
                                         </tr>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr>
-                                    <?php if ($firstMisiRow): ?>
-                                        <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
-                                        <?php $firstMisiRow = false; ?>
-                                    <?php endif; ?>
-                                    
-                                    <td class="border p-2 align-top text-start"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
-                                    <td class="border p-2 align-top text-start">
-                                        <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
-                                            <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
-                                                <?= esc($indikatorTujuan['indikator_tujuan']) ?>
-                                                <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            -
-                                        <?php endif; ?>
-                                    </td>
+                                <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                    <td class="border p-2 align-top text-start"><?= esc($misi['misi']) ?></td>
                                     <td class="border p-2 align-top text-start">-</td>
                                     <td class="border p-2 align-top text-start">-</td>
                                     <td class="border p-2 align-top text-start">-</td>
                                     <td class="border p-2 align-top text-start">-</td>
-                                    <?php foreach ($available_years as $year): ?>
-                                        <td class="border p-2 align-top text-start">-</td>
-                                    <?php endforeach; ?>
-                                    <td class="border p-2 align-top text-center">
-                                        <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <a href="<?= base_url('adminkab/rpjmd/edit/' . $tujuan['id']) ?>" class="text-success">
-                                                <i class="fas fa-edit"></i>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <td class="border p-2 align-top text-start">-</td>
+                                    <span class="year-cells" data-periode="<?= $periodIndex ?>">
+                                        <?php foreach ($periodData['years'] as $year): ?>
+                                            <td class="border p-2 align-top text-start">-</td>
+                                        <?php endforeach; ?>
+                                    </span>
+                                    <td class="border p-2 align-middle text-center">
+                                        <div class="d-flex flex-column align-items-center gap-2">
+                                            <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="btn btn-success btn-sm">
+                                                <i class="fas fa-edit me-1"></i>Edit
                                             </a>
-                                            <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $tujuan['id'] ?>)">
-                                                <i class="fas fa-trash"></i>
+                                            <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $misi['id'] ?>)">
+                                                <i class="fas fa-trash me-1"></i>Hapus
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                             <?php endif; ?>
                         <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td class="border p-2 align-top text-start"><?= esc($misi['misi']) ?></td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <td class="border p-2 align-top text-start">-</td>
-                            <?php foreach ($available_years as $year): ?>
-                                <td class="border p-2 align-top text-start">-</td>
-                            <?php endforeach; ?>
-                            <td class="border p-2 align-top text-center">
-                                <div class="d-flex align-items-center justify-content-center gap-2">
-                                    <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="text-success">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button class="btn btn-link text-danger p-0" onclick="confirmDelete(<?= $misi['id'] ?>)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="<?= 7 + count($available_years) + 1 ?>" class="border p-4 text-center text-muted">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Belum ada data RPJMD. <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="text-success">Tambah data pertama</a>
-                    </td>
-                </tr>
-            <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="<?= 7 + count($available_years) + 1 ?>" class="border p-4 text-center text-muted">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Belum ada data RPJMD. <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="text-success">Tambah data pertama</a>
+                        </td>
+                    </tr>
+                <?php endif; ?>
+                </tbody>
+            </table>
         </div>
         
         <!-- Pagination -->
@@ -393,8 +413,11 @@
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
-  <!-- JavaScript for Delete Confirmation -->
+  <!-- JavaScript for Delete Confirmation and Period Filter -->
   <script>
+  // Store period data for JavaScript
+  const periodData = <?= json_encode($rpjmd_grouped ?? []) ?>;
+  
   function confirmDelete(id) {
       if (confirm('Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) {
           // Create form and submit
@@ -422,6 +445,69 @@
           form.submit();
       }
   }
+
+  function updateTableHeaders(periodKey) {
+      const yearHeaderRow = document.getElementById('year-header-row');
+      const yearHeaderSpan = document.getElementById('year-header-span');
+      
+      if (periodData[periodKey] && periodData[periodKey].years) {
+          const years = periodData[periodKey].years;
+          
+          // Update colspan
+          yearHeaderSpan.setAttribute('colspan', years.length);
+          
+          // Clear and rebuild year headers
+          yearHeaderRow.innerHTML = '';
+          years.forEach(function(year) {
+              const th = document.createElement('th');
+              th.className = 'border p-2';
+              th.style.border = '2px';
+              th.textContent = year;
+              yearHeaderRow.appendChild(th);
+          });
+      }
+  }
+
+  function filterByPeriode() {
+      const filterValue = document.getElementById('periode-filter').value;
+      const rows = document.querySelectorAll('.periode-row');
+      const yearCells = document.querySelectorAll('.year-cells');
+      
+      // Hide all rows first
+      rows.forEach(function(row) {
+          row.style.display = 'none';
+      });
+      
+      // Hide all year cells first
+      yearCells.forEach(function(cells) {
+          cells.style.display = 'none';
+      });
+      
+      // Show only rows and year cells for selected period
+      rows.forEach(function(row) {
+          if (row.getAttribute('data-periode') === filterValue) {
+              row.style.display = '';
+          }
+      });
+      
+      yearCells.forEach(function(cells) {
+          if (cells.getAttribute('data-periode') === filterValue) {
+              cells.style.display = '';
+          }
+      });
+      
+      // Update table headers
+      updateTableHeaders(filterValue);
+      
+      // Update pagination info if visible
+      const visibleRows = document.querySelectorAll('.periode-row:not([style*="display: none"])');
+      console.log('Showing ' + visibleRows.length + ' rows for period: ' + filterValue);
+  }
+
+  // Initialize the filter on page load to show only the latest period
+  document.addEventListener('DOMContentLoaded', function() {
+      filterByPeriode();
+  });
   </script>
 </body>
 </html>

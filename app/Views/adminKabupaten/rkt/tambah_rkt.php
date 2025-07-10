@@ -22,6 +22,7 @@
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah RKT</h2>
 
       <form id="rkt-form" method="POST" action="<?= base_url('adminkab/rkt/save') ?>">
+        <?= csrf_field() ?>
 
       <!-- Informasi Umum -->
       <section class="mb-4">

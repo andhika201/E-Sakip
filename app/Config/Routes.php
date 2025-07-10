@@ -32,7 +32,10 @@ $routes->get('adminkab/rpjmd', 'RpjmdController::index');
 $routes->get('adminkab/rpjmd/tambah', 'RpjmdController::tambah');
 $routes->get('adminkab/rpjmd/edit/(:num)', 'RpjmdController::edit/$1');
 $routes->post('adminkab/rpjmd/save', 'RpjmdController::save');
+$routes->post('adminkab/rpjmd/update', 'RpjmdController::update');
 $routes->get('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
+$routes->post('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
+$routes->delete('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 
 // RPJMD Sub-Entity Routes
 $routes->post('adminkab/rpjmd/tujuan/save', 'RpjmdController::save_tujuan');
@@ -43,7 +46,7 @@ $routes->post('adminkab/rpjmd/indikator_sasaran/save', 'RpjmdController::save_in
 $routes->get('adminkab/rpjmd/indikator_sasaran/delete/(:num)', 'RpjmdController::delete_indikator_sasaran/$1');
 $routes->post('adminkab/rpjmd/target_tahunan/save', 'RpjmdController::save_target_tahunan');
 $routes->get('adminkab/rpjmd/target_tahunan/delete/(:num)', 'RpjmdController::delete_target_tahunan/$1');
-$routes->post('adminkab/rpjmd/complete/save', 'RpjmdController::save_complete');
+// $routes->post('adminkab/rpjmd/complete/save', 'RpjmdController::save_complete'); // Legacy - use save or update instead
 
 // RPJMD API Routes for AJAX
 $routes->get('adminkab/rpjmd/api/tujuan/(:num)', 'RpjmdController::get_tujuan_by_misi/$1');

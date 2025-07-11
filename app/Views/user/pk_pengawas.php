@@ -1,4 +1,15 @@
-<?= $this->include('user/templates/header'); ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PK Pengawas</title>
+    <?= $this->include('user/templates/style.php'); ?>
+</head>
+<body>
+  
+  
+  <?= $this->include('user/templates/header'); ?>
 
 <main class="flex-grow-1 d-flex align-items-center justify-content-center">
   <div class="container my-5" style="max-width: 1700px;">
@@ -6,7 +17,7 @@
       <h4 class="fw-bold text-center text-success mb-4">
         PERJANJIAN KINERJA PENGAWAS
       </h4>
-
+      
       <!-- Filter Tahun -->
       <div class="row justify-content-center mb-4">
         <div class="col-md-4">
@@ -18,7 +29,7 @@
           </button>
         </div>
       </div>
-
+      
       <!-- Tabel PK OPD -->
       <div class="table-responsive">
         <table class="table table-bordered text-center align-middle">
@@ -49,7 +60,7 @@
 <script>
   function filterPkPengawas() {
     const tahun = document.getElementById('filterTahun').value.trim();
-
+    
     if (!tahun) {
       alert('Masukkan tahun untuk memfilter!');
       return;
@@ -64,3 +75,5 @@
 </script>
 
 <?= $this->include('user/templates/footer'); ?>
+</body>
+</html>

@@ -1,12 +1,22 @@
-<?= $this->include('user/templates/header'); ?>
-
-<main class="flex-grow-1 d-flex align-items-center justify-content-center">
-  <div class="container my-5" style="max-width: 1700px;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAKIP</title>
+  <?= $this->include('user/templates/style.php'); ?>
+</head>
+<body>
+  
+  <?= $this->include('user/templates/header'); ?>
+  
+  <main class="flex-grow-1 d-flex align-items-center justify-content-center">
+    <div class="container my-5" style="max-width: 1700px;">
     <div class="bg-white p-4 rounded shadow-sm">
       <h4 class="fw-bold text-center text-success mb-4">
         LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAHAN OPD
       </h4>
-
+      
       <div class="table-responive">
         <table class="table table=bordered align-middle text-center">
           <thead class="table-success">
@@ -33,6 +43,9 @@
           </tbody>
         </table>
       </div>
-</main>
+    </main>
 
 <?= $this->include('user/templates/footer'); ?>
+
+</body>
+</html>

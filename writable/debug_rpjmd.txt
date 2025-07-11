@@ -36327,3 +36327,333 @@ About to insert target tahunan: Array
 
 Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 783
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 82
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 158
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 158
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 784
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 158
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 785
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 158
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 786
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 158
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 787
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 158
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 788
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 82
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 159
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 159
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 789
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 159
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 790
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 159
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 791
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 159
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 792
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 159
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 793
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 83
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 160
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 160
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 794
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 160
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 795
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 160
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 796
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 160
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 797
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 160
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 798
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 82
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 161
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 161
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 799
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 161
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 800
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 161
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 801
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 161
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 802
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 161
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 803
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 82
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 162
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 162
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 804
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 162
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 805
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 162
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 806
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 162
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 807
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 162
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 808
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 83
+    [indikator_sasaran] => qweqdwqweqdw
+    [strategi] => qweqdwqweqdw
+    [satuan] => qweqdwqweqdw
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 163
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 163
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 809
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 163
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 810
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 163
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 811
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 163
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 812
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 163
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 813

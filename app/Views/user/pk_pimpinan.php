@@ -1,12 +1,22 @@
-<?= $this->include('user/templates/header'); ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PK JPT</title>
+    <?= $this->include('user/templates/style.php'); ?>
+</head>
+<body>
 
-<main class="flex-grow-1 d-flex align-items-center justify-content-center">
-  <div class="container my-5" style="max-width: 1700px;">
+  <?= $this->include('user/templates/header'); ?>
+  
+  <main class="flex-grow-1 d-flex align-items-center justify-content-center">
+    <div class="container my-5" style="max-width: 1700px;">
     <div class="bg-white p-4 rounded shadow-sm">
       <h4 class="fw-bold text-center text-success mb-4">
         PERJANJIAN KINERJA PIMPINAN
       </h4>
-
+      
       <!-- Filter Tahun -->
       <div class="row justify-content-center mb-4">
         <div class="col-md-4">
@@ -18,7 +28,7 @@
           </button>
         </div>
       </div>
-
+      
       <!-- Tabel PK OPD -->
       <div class="table-responsive">
         <table class="table table-bordered text-center align-middle">
@@ -38,9 +48,9 @@
                 <td><?= esc($item['indikator']) ?></td>
                 <td><?= esc($item['target']) ?></td>
               </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
       </div>
     </div>
   </div>
@@ -49,12 +59,12 @@
 <script>
   function filterPkPimpinan() {
     const tahun = document.getElementById('filterTahun').value.trim();
-
+    
     if (!tahun) {
       alert('Masukkan tahun untuk memfilter!');
       return;
     }
-
+    
     const rows = document.querySelectorAll('#pkPimpinanTableBody tr');
     rows.forEach(row => {
       const rowTahun = row.getAttribute('data-tahun');
@@ -64,3 +74,5 @@
 </script>
 
 <?= $this->include('user/templates/footer'); ?>
+</body>
+</html>

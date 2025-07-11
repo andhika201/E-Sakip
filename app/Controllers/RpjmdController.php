@@ -141,7 +141,8 @@ class RpjmdController extends BaseController
                 'misi' => [
                     'misi' => $data['misi'],
                     'tahun_mulai' => $data['tahun_mulai'],
-                    'tahun_akhir' => $data['tahun_akhir']
+                    'tahun_akhir' => $data['tahun_akhir'],
+                    'status' => $data['status'] ?? 'draft'
                 ],
                 'tujuan' => $data['tujuan'] ?? []
             ];
@@ -184,7 +185,8 @@ class RpjmdController extends BaseController
                 'misi' => [
                     'misi' => $data['misi'],
                     'tahun_mulai' => $data['tahun_mulai'],
-                    'tahun_akhir' => $data['tahun_akhir']
+                    'tahun_akhir' => $data['tahun_akhir'],
+                    'status' => $data['status'] ?? $existingMisi['status'] ?? 'draft'
                 ],
                 'tujuan' => $data['tujuan'] ?? []
             ];
@@ -256,6 +258,80 @@ class RpjmdController extends BaseController
             return $this->response->setJSON(['success' => true, 'data' => $indikator]);
         } catch (\Exception $e) {
             return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ==================== STATUS MANAGEMENT ====================
+    
+    /**
+     * Update status RPJMD (AJAX endpoint)
+     */
+    public function updateStatus()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+        
+        // Get JSON input
+        $json = $this->request->getJSON(true);
+        $id = $json['id'] ?? null;
+        
+        if (!$id) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ID harus diisi']);
+        }
+        
+        try {
+            // Get current status
+            $currentMisi = $this->rpjmdModel->getMisiById($id);
+            if (!$currentMisi) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
+            }
+            
+            // Toggle status
+            $currentStatus = $currentMisi['status'] ?? 'draft';
+            $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
+            
+            $result = $this->rpjmdModel->updateMisiStatus($id, $newStatus);
+            
+            if ($result) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Status berhasil diupdate',
+                    'oldStatus' => $currentStatus,
+                    'newStatus' => $newStatus
+                ]);
+            } else {
+                return $this->response->setJSON(['success' => false, 'message' => 'Gagal mengupdate status']);
+            }
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+    
+    /**
+     * Toggle status RPJMD
+     */
+    public function toggleStatus($id)
+    {
+        try {
+            $misi = $this->rpjmdModel->getMisiById($id);
+            if (!$misi) {
+                return redirect()->back()->with('error', 'Data RPJMD tidak ditemukan');
+            }
+            
+            $newStatus = $misi['status'] === 'draft' ? 'selesai' : 'draft';
+            $result = $this->rpjmdModel->updateMisiStatus($id, $newStatus);
+            
+            if ($result) {
+                $message = $newStatus === 'selesai' 
+                    ? 'RPJMD berhasil diselesaikan' 
+                    : 'RPJMD dikembalikan ke status draft';
+                return redirect()->back()->with('success', $message);
+            } else {
+                return redirect()->back()->with('error', 'Gagal mengupdate status');
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 

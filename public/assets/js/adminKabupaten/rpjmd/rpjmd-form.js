@@ -306,7 +306,7 @@ function addSasaranToTujuan(tujuanElement) {
     
     const newSasaran = document.createElement('div');
     newSasaran.className = 'sasaran-item border rounded p-3 bg-white mb-3';
-    newSasaran.innerHTML = `
+    newSaran.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
         <label class="fw-medium">Sasaran</label>
         <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
@@ -599,14 +599,22 @@ document.addEventListener('input', function(e) {
 
 // Form change tracking
 let formHasChanges = false;
+let isSubmitting = false;
 
 // Track form changes
 function trackFormChanges() {
     const form = document.getElementById('rpjmd-form');
     
-    // Track input changes
+    // Track input changes (input, textarea, select)
     form.addEventListener('input', function(e) {
         formHasChanges = true;
+        console.log('Form changed via input:', e.target.name || e.target.id);
+    });
+    
+    // Track textarea changes specifically
+    form.addEventListener('change', function(e) {
+        formHasChanges = true;
+        console.log('Form changed via change:', e.target.name || e.target.id);
     });
     
     // Track dynamic additions/removals
@@ -621,17 +629,102 @@ function trackFormChanges() {
             e.target.classList.contains('remove-indikator-sasaran')) {
             
             formHasChanges = true;
+            console.log('Form changed via button click:', e.target.className);
         }
+    });
+    
+    // Track form submission
+    form.addEventListener('submit', function(e) {
+        isSubmitting = true;
+        console.log('Form is being submitted, disabling warnings');
     });
 }
 
 // Warn user about unsaved changes before leaving page
 function setupUnloadWarning() {
+    // Warning saat user meninggalkan halaman (reload, close tab, navigate away)
     window.addEventListener('beforeunload', function(e) {
-        if (formHasChanges) {
+        if (formHasChanges && !isSubmitting) {
             const message = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
+            e.preventDefault();
             e.returnValue = message;
             return message;
+        }
+    });
+    
+    // Warning saat user menekan tombol "Kembali"
+    const backButton = document.querySelector('a[href*="rpjmd"]');
+    if (backButton) {
+        backButton.addEventListener('click', function(e) {
+            if (formHasChanges && !isSubmitting) {
+                const confirmed = confirm('Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin kembali ke halaman sebelumnya?\n\nSemua perubahan akan hilang.');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+    }
+}
+
+// Setup confirmation untuk tombol save
+function setupSaveConfirmation() {
+    const saveButton = document.querySelector('button[type="submit"]');
+    if (saveButton) {
+        saveButton.addEventListener('click', function(e) {
+            if (formHasChanges) {
+                const confirmed = confirm('Apakah Anda yakin ingin menyimpan perubahan pada form RPJMD ini?');
+                if (!confirmed) {
+                    e.preventDefault();
+                    return false;
+                } else {
+                    // Set flag bahwa form sedang disubmit
+                    isSubmitting = true;
+                    formHasChanges = false; // Reset flag karena data akan disimpan
+                }
+            }
+        });
+    }
+}
+
+// Fungsi untuk mendeteksi apakah form benar-benar berubah dari state awal
+function hasFormActuallyChanged() {
+    // Bisa dikembangkan untuk membandingkan dengan data awal
+    // Untuk sekarang, gunakan flag sederhana
+    return formHasChanges;
+}
+
+// Fungsi untuk reset form change tracking
+function resetFormChangeTracking() {
+    formHasChanges = false;
+    isSubmitting = false;
+    console.log('Form change tracking reset');
+}
+
+// Fungsi untuk setup keyboard shortcuts
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S untuk save (mencegah save browser default)
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            if (formHasChanges) {
+                const confirmed = confirm('Apakah Anda ingin menyimpan form dengan shortcut Ctrl+S?');
+                if (confirmed) {
+                    document.getElementById('rpjmd-form').dispatchEvent(new Event('submit'));
+                }
+            } else {
+                alert('Tidak ada perubahan untuk disimpan.');
+            }
+        }
+        
+        // Esc untuk peringatan keluar
+        if (e.key === 'Escape') {
+            if (formHasChanges) {
+                const confirmed = confirm('Anda memiliki perubahan yang belum disimpan. Apakah Anda ingin meninggalkan halaman ini?');
+                if (confirmed) {
+                    window.history.back();
+                }
+            }
         }
     });
 }
@@ -642,9 +735,18 @@ document.addEventListener('DOMContentLoaded', function() {
     updateFormNames();
     updateTargetYears(); // Initialize target years pada load
     
-    // Setup form change tracking and unload warning
+    // Setup form change tracking and warnings
     trackFormChanges();
     setupUnloadWarning();
+    setupSaveConfirmation();
+    setupKeyboardShortcuts();
+    
+    console.log('Form protection initialized with keyboard shortcuts');
+    
+    // Show initial instruction to user
+    setTimeout(() => {
+        console.log('💡 Tips: Gunakan Ctrl+S untuk menyimpan atau Esc jika ingin keluar');
+    }, 1000);
 });
 
 // Fungsi untuk mengontrol visibility tombol delete berdasarkan jumlah item
@@ -797,6 +899,25 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     console.log('Validation passed, submitting form...');
     console.log('Form action:', this.action);
     console.log('Form method:', this.method);
+    
+    // Konfirmasi sebelum submit jika ada perubahan
+    if (formHasChanges && !isSubmitting) {
+        const modeInput = document.querySelector('input[name="mode"]');
+        const isEditMode = modeInput && modeInput.value === 'edit';
+        
+        const confirmMessage = isEditMode 
+            ? 'Apakah Anda yakin ingin menyimpan perubahan pada data RPJMD ini?' 
+            : 'Apakah Anda yakin ingin menyimpan data RPJMD baru ini?';
+            
+        const confirmed = confirm(confirmMessage);
+        if (!confirmed) {
+            console.log('User cancelled form submission');
+            return false;
+        }
+        
+        // Set flag bahwa form sedang disubmit
+        isSubmitting = true;
+    }
     
     // Debug: Check if ID fields are present for edit mode
     const modeInput = document.querySelector('input[name="mode"]');

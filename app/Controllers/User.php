@@ -37,29 +37,71 @@ class User extends BaseController
 
     public function rpjmd()
     {
-        $tahunList = ['2019', '2020', '2021', '2022', '2023', '2024'];
-        $rpjmdData = [
-            [
-                'misi' => 'Meningkatkan ketahanan nasional',
-                'tujuan' => 'Terwujudnya masyarakat yang berdaya',
-                'indikator' => 'Indeks Demokrasi Indonesia (IDI)',
-                'target' => '76',
-                'sasaran' => 'Meningkatkan kualitas demokrasi di daerah',
-                'strategi' => 'Isi strategi',
-                'target_capaian' => [
-                    '2019' => '0.00',
-                    '2020' => '72.00',
-                    '2021' => '72.00',
-                    '2022' => '75.00',
-                    '2023' => '75.00',
-                    '2024' => '78.6'
-                ]
-            ], 
-        ];
-
+        $rpjmdModel = new \App\Models\RpjmdModel();
+        
+        // Ambil data RPJMD yang sudah selesai saja
+        $completedRpjmd = $rpjmdModel->getCompletedMisi();
+        
+        // Jika tidak ada data selesai, tampilkan pesan
+        if (empty($completedRpjmd)) {
+            return view('user/rpjmd', [
+                'tahunList' => [],
+                'rpjmdData' => [],
+                'message' => 'Belum ada data RPJMD yang telah selesai.'
+            ]);
+        }
+        
+        // Proses data untuk tampilan
+        $processedData = [];
+        $tahunSet = [];
+        
+        foreach ($completedRpjmd as $misi) {
+            // Kumpulkan tahun dari periode
+            if (isset($misi['tahun_mulai']) && isset($misi['tahun_akhir'])) {
+                for ($year = $misi['tahun_mulai']; $year <= $misi['tahun_akhir']; $year++) {
+                    $tahunSet[$year] = $year;
+                }
+            }
+            
+            // Proses data misi dan strukturnya
+            if (isset($misi['tujuan']) && !empty($misi['tujuan'])) {
+                foreach ($misi['tujuan'] as $tujuan) {
+                    if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
+                        foreach ($tujuan['sasaran'] as $sasaran) {
+                            if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
+                                foreach ($sasaran['indikator_sasaran'] as $indikator) {
+                                    $targetCapaian = [];
+                                    
+                                    // Siapkan target capaian per tahun
+                                    if (isset($indikator['target_tahunan'])) {
+                                        foreach ($indikator['target_tahunan'] as $target) {
+                                            $targetCapaian[$target['tahun']] = $target['target'];
+                                        }
+                                    }
+                                    
+                                    $processedData[] = [
+                                        'misi' => $misi['misi'],
+                                        'tujuan' => $tujuan['tujuan_rpjmd'],
+                                        'indikator' => $tujuan['indikator_tujuan'][0]['indikator_tujuan'] ?? '-',
+                                        'target' => $indikator['target_akhir'] ?? '-',
+                                        'sasaran' => $sasaran['sasaran_rpjmd'],
+                                        'strategi' => $indikator['strategi'] ?? '-',
+                                        'target_capaian' => $targetCapaian
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        $tahunList = array_values($tahunSet);
+        sort($tahunList);
+        
         return view('user/rpjmd', [
             'tahunList' => $tahunList,
-            'rpjmdData' => $rpjmdData
+            'rpjmdData' => $processedData
         ]);
     }
 

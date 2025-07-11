@@ -36,6 +36,9 @@ function updateLabels() {
         });
     });
     });
+    
+    // Update visibility tombol delete setelah update labels
+    updateDeleteButtonVisibility();
 }
 
 // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
@@ -55,9 +58,9 @@ function updateFormNames() {
 
     // Update indikator tujuan names
     tujuanItem.querySelectorAll('.indikator-tujuan-item').forEach((indikatorTujuanItem, indikatorTujuanIndex) => {
-        const indikatorInput = indikatorTujuanItem.querySelector('input[name*="indikator"]');
+        const indikatorInput = indikatorTujuanItem.querySelector('input.form-control');
         if (indikatorInput) {
-        indikatorInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][indikator]`;
+        indikatorInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][indikator_tujuan]`;
         }
         
         // Update indikator tujuan hidden ID if exists
@@ -133,7 +136,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
     newTujuan.className = 'tujuan-item bg-light border rounded p-3 mb-3';
     newTujuan.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <label class="fw-medium">Tujuan</label>
+        <label class="h6 fw-medium">Tujuan</label>
         <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
     </div>
     <div class="mb-3">
@@ -153,7 +156,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
             </div>
             <div class="mb-3">
             <label class="form-label">Indikator</label>
-            <input type="text" name="tujuan[0][indikator_tujuan][0][indikator]" class="form-control" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
+            <input type="text" name="tujuan[0][indikator_tujuan][0][indikator_tujuan]" class="form-control" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
             </div>
         </div>
         </div>
@@ -506,38 +509,61 @@ document.addEventListener('click', function(e) {
     
     // Tombol hapus tujuan
     if (e.target.classList.contains('remove-tujuan') || e.target.closest('.remove-tujuan')) {
-    if (confirm('Hapus tujuan ini dan semua indikator serta sasarannya?')) {
-        e.target.closest('.tujuan-item').remove();
-        updateLabels();
-        updateFormNames();
-    }
+        const tujuanItems = document.querySelectorAll('.tujuan-item');
+        if (tujuanItems.length <= 1) {
+            alert('Minimal harus ada 1 Tujuan RPJMD. Tidak dapat menghapus tujuan terakhir.');
+            return;
+        }
+        if (confirm('Hapus tujuan ini dan semua indikator serta sasarannya?')) {
+            e.target.closest('.tujuan-item').remove();
+            updateLabels();
+            updateFormNames();
+        }
     }
     
     // Tombol hapus indikator tujuan
     if (e.target.classList.contains('remove-indikator-tujuan') || e.target.closest('.remove-indikator-tujuan')) {
-    if (confirm('Hapus indikator tujuan ini?')) {
-        e.target.closest('.indikator-tujuan-item').remove();
-        updateLabels();
-        updateFormNames();
-    }
+        const tujuanItem = e.target.closest('.tujuan-item');
+        const indikatorTujuanItems = tujuanItem.querySelectorAll('.indikator-tujuan-item');
+        if (indikatorTujuanItems.length <= 1) {
+            alert('Minimal harus ada 1 Indikator Tujuan. Tidak dapat menghapus indikator terakhir.');
+            return;
+        }
+        if (confirm('Hapus indikator tujuan ini?')) {
+            e.target.closest('.indikator-tujuan-item').remove();
+            updateLabels();
+            updateFormNames();
+        }
     }
     
     // Tombol hapus sasaran
     if (e.target.classList.contains('remove-sasaran') || e.target.closest('.remove-sasaran')) {
-    if (confirm('Hapus sasaran ini dan semua indikator sasarannya?')) {
-        e.target.closest('.sasaran-item').remove();
-        updateLabels();
-        updateFormNames();
-    }
+        const tujuanItem = e.target.closest('.tujuan-item');
+        const sasaranItems = tujuanItem.querySelectorAll('.sasaran-item');
+        if (sasaranItems.length <= 1) {
+            alert('Minimal harus ada 1 Sasaran. Tidak dapat menghapus sasaran terakhir.');
+            return;
+        }
+        if (confirm('Hapus sasaran ini dan semua indikator sasarannya?')) {
+            e.target.closest('.sasaran-item').remove();
+            updateLabels();
+            updateFormNames();
+        }
     }
     
     // Tombol hapus indikator sasaran
     if (e.target.classList.contains('remove-indikator-sasaran') || e.target.closest('.remove-indikator-sasaran')) {
-    if (confirm('Hapus indikator sasaran ini dan target 5 tahunannya?')) {
-        e.target.closest('.indikator-sasaran-item').remove();
-        updateLabels();
-        updateFormNames();
-    }
+        const sasaranItem = e.target.closest('.sasaran-item');
+        const indikatorSasaranItems = sasaranItem.querySelectorAll('.indikator-sasaran-item');
+        if (indikatorSasaranItems.length <= 1) {
+            alert('Minimal harus ada 1 Indikator Sasaran. Tidak dapat menghapus indikator terakhir.');
+            return;
+        }
+        if (confirm('Hapus indikator sasaran ini dan target 5 tahunannya?')) {
+            e.target.closest('.indikator-sasaran-item').remove();
+            updateLabels();
+            updateFormNames();
+        }
     }
 });
 
@@ -621,6 +647,85 @@ document.addEventListener('DOMContentLoaded', function() {
     setupUnloadWarning();
 });
 
+// Fungsi untuk mengontrol visibility tombol delete berdasarkan jumlah item
+function updateDeleteButtonVisibility() {
+    // Kontrol tombol delete tujuan
+    const tujuanItems = document.querySelectorAll('.tujuan-item');
+    tujuanItems.forEach(item => {
+        const deleteBtn = item.querySelector('.remove-tujuan');
+        if (deleteBtn) {
+            deleteBtn.style.display = tujuanItems.length <= 1 ? 'none' : 'inline-block';
+        }
+    });
+
+    // Kontrol tombol delete indikator tujuan
+    document.querySelectorAll('.tujuan-item').forEach(tujuanItem => {
+        const indikatorTujuanItems = tujuanItem.querySelectorAll('.indikator-tujuan-item');
+        indikatorTujuanItems.forEach(item => {
+            const deleteBtn = item.querySelector('.remove-indikator-tujuan');
+            if (deleteBtn) {
+                deleteBtn.style.display = indikatorTujuanItems.length <= 1 ? 'none' : 'inline-block';
+            }
+        });
+    });
+
+    // Kontrol tombol delete sasaran
+    document.querySelectorAll('.tujuan-item').forEach(tujuanItem => {
+        const sasaranItems = tujuanItem.querySelectorAll('.sasaran-item');
+        sasaranItems.forEach(item => {
+            const deleteBtn = item.querySelector('.remove-sasaran');
+            if (deleteBtn) {
+                deleteBtn.style.display = sasaranItems.length <= 1 ? 'none' : 'inline-block';
+            }
+        });
+    });
+
+    // Kontrol tombol delete indikator sasaran
+    document.querySelectorAll('.sasaran-item').forEach(sasaranItem => {
+        const indikatorSasaranItems = sasaranItem.querySelectorAll('.indikator-sasaran-item');
+        indikatorSasaranItems.forEach(item => {
+            const deleteBtn = item.querySelector('.remove-indikator-sasaran');
+            if (deleteBtn) {
+                deleteBtn.style.display = indikatorSasaranItems.length <= 1 ? 'none' : 'inline-block';
+            }
+        });
+    });
+}
+
+// Fungsi validasi form untuk memastikan minimal requirement
+function validateMinimalRequirements() {
+    const errors = [];
+    
+    // Minimal harus ada 1 tujuan
+    const tujuanItems = document.querySelectorAll('.tujuan-item');
+    if (tujuanItems.length === 0) {
+        errors.push('Harus ada minimal 1 Tujuan RPJMD');
+    }
+
+    // Setiap tujuan harus memiliki minimal 1 indikator tujuan dan 1 sasaran
+    tujuanItems.forEach((tujuanItem, tujuanIndex) => {
+        const indikatorTujuanItems = tujuanItem.querySelectorAll('.indikator-tujuan-item');
+        if (indikatorTujuanItems.length === 0) {
+            errors.push(`Tujuan ${tujuanIndex + 1} harus memiliki minimal 1 Indikator Tujuan`);
+        }
+
+        const sasaranItems = tujuanItem.querySelectorAll('.sasaran-item');
+        if (sasaranItems.length === 0) {
+            errors.push(`Tujuan ${tujuanIndex + 1} harus memiliki minimal 1 Sasaran`);
+        }
+
+        // Setiap sasaran harus memiliki minimal 1 indikator sasaran
+        sasaranItems.forEach((sasaranItem, sasaranIndex) => {
+            const indikatorSasaranItems = sasaranItem.querySelectorAll('.indikator-sasaran-item');
+            if (indikatorSasaranItems.length === 0) {
+                errors.push(`Sasaran ${tujuanIndex + 1}.${sasaranIndex + 1} harus memiliki minimal 1 Indikator Sasaran`);
+            }
+        });
+    });
+
+    return errors;
+}
+
 // Form submission handler
 document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -629,6 +734,13 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     
     // Update form names before validation
     updateFormNames();
+    
+    // Validasi minimal requirements
+    const minimalErrors = validateMinimalRequirements();
+    if (minimalErrors.length > 0) {
+        alert('Validasi gagal:\n\n' + minimalErrors.join('\n'));
+        return;
+    }
     
     // Basic validation only - simplified for debugging
     const misi = document.querySelector('textarea[name="misi"]');

@@ -53,7 +53,7 @@
           <!-- Tujuan 1 -->
           <div class="tujuan-item bg-light border rounded p-3 mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <label class="fw-medium">Tujuan 1</label>
+              <label class="h6 fw-medium">Tujuan 1</label>
               <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
             </div>
             <div class="mb-3">

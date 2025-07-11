@@ -58,7 +58,7 @@
                 <!-- Tujuan <?= $tujuan_index + 1 ?> -->
                 <div class="tujuan-item bg-light border rounded p-3 mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-3">
-                    <label class="fw-medium">Tujuan <?= $tujuan_index + 1 ?></label>
+                    <label class="h6 fw-medium">Tujuan <?= $tujuan_index + 1 ?></label>
                     <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                   </div>
                   <div class="mb-3">
@@ -85,7 +85,7 @@
                             <div class="mb-3">
                               <label class="form-label">Indikator</label>
                               <input type="hidden" name="tujuan[<?= $tujuan_index ?>][indikator_tujuan][<?= $indikator_tujuan_index ?>][id]" value="<?= isset($indikator_tujuan['id']) ? $indikator_tujuan['id'] : '' ?>">
-                              <input type="text" name="tujuan[<?= $tujuan_index ?>][indikator_tujuan][<?= $indikator_tujuan_index ?>][indikator]" class="form-control" value="<?= esc($indikator_tujuan['indikator_tujuan'] ?? '') ?>" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
+                              <input type="text" name="tujuan[<?= $tujuan_index ?>][indikator_tujuan][<?= $indikator_tujuan_index ?>][indikator_tujuan]" class="form-control" value="<?= esc($indikator_tujuan['indikator_tujuan'] ?? '') ?>" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
                             </div>
                           </div>
                         <?php endforeach; ?>
@@ -98,7 +98,7 @@
                           </div>
                           <div class="mb-3">
                             <label class="form-label">Indikator</label>
-                            <input type="text" name="tujuan[<?= $tujuan_index ?>][indikator_tujuan][0][indikator]" class="form-control" value="" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
+                            <input type="text" name="tujuan[<?= $tujuan_index ?>][indikator_tujuan][0][indikator_tujuan]" class="form-control" value="" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
                           </div>
                         </div>
                       <?php endif; ?>
@@ -366,7 +366,7 @@
                       </div>
                       <div class="mb-3">
                         <label class="form-label">Indikator</label>
-                        <input type="text" name="tujuan[0][indikator_tujuan][0][indikator]" class="form-control" value="" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
+                        <input type="text" name="tujuan[0][indikator_tujuan][0][indikator_tujuan]" class="form-control" value="" placeholder="Contoh: Indeks Kepuasan Masyarakat (IKM)" required>
                       </div>
                     </div>
                   </div>
@@ -501,6 +501,9 @@
       // Inisialisasi form dengan data yang sudah ada
       updateLabels();
       updateFormNames();
+      
+      // Update visibility tombol delete berdasarkan jumlah item saat ini
+      updateDeleteButtonVisibility();
     });
   </script>
 </body>

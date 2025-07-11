@@ -136,7 +136,7 @@ class RpjmdController extends BaseController
         try {
             $data = $this->request->getPost();
             
-            // Create new - Use createCompleteRpjmdNoTransaction for tambah form
+            // Create new - Use createCompleteRpjmdTransaction for tambah form
             $formattedData = [
                 'misi' => [
                     'misi' => $data['misi'],
@@ -146,7 +146,7 @@ class RpjmdController extends BaseController
                 'tujuan' => $data['tujuan'] ?? []
             ];
             
-            $misiId = $this->rpjmdModel->createCompleteRpjmdNoTransaction($formattedData);
+            $misiId = $this->rpjmdModel->createCompleteRpjmdTransaction($formattedData);
             
             if ($misiId) {
                 session()->setFlashdata('success', 'Data RPJMD berhasil ditambahkan');
@@ -172,116 +172,26 @@ class RpjmdController extends BaseController
             }
             
             $misiId = $data['id'];
-            
-            // Update misi data
-            $misiData = [
-                'misi' => $data['misi'],
-                'tahun_mulai' => $data['tahun_mulai'],
-                'tahun_akhir' => $data['tahun_akhir']
+            $existingMisi = $this->rpjmdModel->getMisiById($misiId);
+
+            if (!$existingMisi) {
+                session()->setFlashdata('error', 'Data RPJMD tidak ditemukan di database.');
+                return redirect()->to(base_url('adminkab/rpjmd'));
+            }
+
+            // Format data for updateCompleteRpjmdTransaction
+            $formattedData = [
+                'misi' => [
+                    'misi' => $data['misi'],
+                    'tahun_mulai' => $data['tahun_mulai'],
+                    'tahun_akhir' => $data['tahun_akhir']
+                ],
+                'tujuan' => $data['tujuan'] ?? []
             ];
             
-            $result = $this->rpjmdModel->updateMisi($misiId, $misiData);
-            
+            $result = $this->rpjmdModel->updateCompleteRpjmdTransaction($misiId, $formattedData);
             
             if ($result) {
-                // Process tujuan data
-                if (isset($data['tujuan']) && is_array($data['tujuan'])) {
-                    foreach ($data['tujuan'] as $index => $tujuanData) {
-                        if (!empty($tujuanData['tujuan_rpjmd'])) {
-                            $tujuanInfo = [
-                                'misi_id' => $misiId,
-                                'tujuan_rpjmd' => $tujuanData['tujuan_rpjmd']
-                            ];
-                            
-                            if (isset($tujuanData['id']) && !empty($tujuanData['id'])) {
-                                // Update existing tujuan
-                                $this->rpjmdModel->updateTujuan($tujuanData['id'], $tujuanInfo);
-                                $tujuanId = $tujuanData['id'];
-                            } else {
-                                // Create new tujuan
-                                $tujuanId = $this->rpjmdModel->createTujuan($tujuanInfo);
-                            }
-                            
-                            // Process indikator tujuan
-                            if (isset($tujuanData['indikator_tujuan']) && is_array($tujuanData['indikator_tujuan'])) {
-                                foreach ($tujuanData['indikator_tujuan'] as $indikatorData) {
-                                    if (!empty($indikatorData['indikator_tujuan'])) {
-                                        $indikatorInfo = [
-                                            'tujuan_id' => $tujuanId,
-                                            'indikator_tujuan' => $indikatorData['indikator_tujuan']
-                                        ];
-                                        
-                                        if (isset($indikatorData['id']) && !empty($indikatorData['id'])) {
-                                            $this->rpjmdModel->updateIndikatorTujuan($indikatorData['id'], $indikatorInfo);
-                                        } else {
-                                            $this->rpjmdModel->createIndikatorTujuan($indikatorInfo);
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Process sasaran data
-                            if (isset($tujuanData['sasaran']) && is_array($tujuanData['sasaran'])) {
-                                foreach ($tujuanData['sasaran'] as $sasaranData) {
-                                    if (!empty($sasaranData['sasaran_rpjmd'])) {
-                                        $sasaranInfo = [
-                                            'tujuan_id' => $tujuanId,
-                                            'sasaran_rpjmd' => $sasaranData['sasaran_rpjmd']
-                                        ];
-                                        
-                                        if (isset($sasaranData['id']) && !empty($sasaranData['id'])) {
-                                            $this->rpjmdModel->updateSasaran($sasaranData['id'], $sasaranInfo);
-                                            $sasaranId = $sasaranData['id'];
-                                        } else {
-                                            $sasaranId = $this->rpjmdModel->createSasaran($sasaranInfo);
-                                        }
-                                        
-                                        // Process indikator sasaran
-                                        if (isset($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
-                                            foreach ($sasaranData['indikator_sasaran'] as $indikatorSasaranData) {
-                                                if (!empty($indikatorSasaranData['indikator_sasaran'])) {
-                                                    $indikatorSasaranInfo = [
-                                                        'sasaran_id' => $sasaranId,
-                                                        'indikator_sasaran' => $indikatorSasaranData['indikator_sasaran'],
-                                                        'strategi' => $indikatorSasaranData['strategi'] ?? '',
-                                                        'satuan' => $indikatorSasaranData['satuan'] ?? ''
-                                                    ];
-                                                    
-                                                    if (isset($indikatorSasaranData['id']) && !empty($indikatorSasaranData['id'])) {
-                                                        $this->rpjmdModel->updateIndikatorSasaran($indikatorSasaranData['id'], $indikatorSasaranInfo);
-                                                        $indikatorSasaranId = $indikatorSasaranData['id'];
-                                                        
-                                                        // Delete existing target tahunan for this indikator before creating new ones
-                                                        $this->rpjmdModel->deleteTargetTahunanByIndikatorId($indikatorSasaranId);
-                                                    } else {
-                                                        $indikatorSasaranId = $this->rpjmdModel->createIndikatorSasaran($indikatorSasaranInfo);
-                                                    }
-                                                    
-                                                    // Process target tahunan
-                                                    if (isset($indikatorSasaranData['target_tahunan']) && is_array($indikatorSasaranData['target_tahunan'])) {
-                                                        foreach ($indikatorSasaranData['target_tahunan'] as $targetData) {
-                                                            // Create target tahunan if tahun exists (regardless of target_tahunan value)
-                                                            if (isset($targetData['tahun']) && $targetData['tahun'] !== '') {
-                                                                $targetInfo = [
-                                                                    'indikator_sasaran_id' => $indikatorSasaranId,
-                                                                    'tahun' => $targetData['tahun'],
-                                                                    'target_tahunan' => $targetData['target_tahunan'] ?? ''
-                                                                ];
-                                                                
-                                                                $this->rpjmdModel->createTargetTahunan($targetInfo);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
                 session()->setFlashdata('success', 'Data RPJMD berhasil diupdate');
             } else {
                 session()->setFlashdata('error', 'Gagal mengupdate data RPJMD');
@@ -315,226 +225,6 @@ class RpjmdController extends BaseController
         }
         
         return redirect()->to(base_url('adminkab/rpjmd'));
-    }
-
-    // ==================== TUJUAN METHODS ====================
-    
-    public function save_tujuan()
-    {
-        try {
-            $data = $this->request->getPost();
-            
-            if (isset($data['id']) && !empty($data['id'])) {
-                // Update
-                $id = $data['id'];
-                unset($data['id']);
-                $result = $this->rpjmdModel->updateTujuan($id, $data);
-                $message = 'Tujuan berhasil diupdate';
-            } else {
-                // Create
-                $result = $this->rpjmdModel->createTujuan($data);
-                $message = 'Tujuan berhasil ditambahkan';
-            }
-            
-            if ($result) {
-                session()->setFlashdata('success', $message);
-            } else {
-                session()->setFlashdata('error', 'Operasi gagal');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('rpjmd'));
-    }
-
-    public function delete_tujuan($id)
-    {
-        try {
-            $result = $this->rpjmdModel->deleteTujuan($id);
-            
-            if ($result) {
-                session()->setFlashdata('success', 'Tujuan berhasil dihapus');
-            } else {
-                session()->setFlashdata('error', 'Gagal menghapus tujuan');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('adminkab/rpjmd'));
-    }
-
-    // ==================== SASARAN METHODS ====================
-    
-    public function save_sasaran()
-    {
-        try {
-            $data = $this->request->getPost();
-            
-            if (isset($data['id']) && !empty($data['id'])) {
-                // Update
-                $id = $data['id'];
-                unset($data['id']);
-                $result = $this->rpjmdModel->updateSasaran($id, $data);
-                $message = 'Sasaran berhasil diupdate';
-            } else {
-                // Create
-                $result = $this->rpjmdModel->createSasaran($data);
-                $message = 'Sasaran berhasil ditambahkan';
-            }
-            
-            if ($result) {
-                session()->setFlashdata('success', $message);
-            } else {
-                session()->setFlashdata('error', 'Operasi gagal');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('rpjmd'));
-    }
-
-    public function delete_sasaran($id)
-    {
-        try {
-            $result = $this->rpjmdModel->deleteSasaran($id);
-            
-            if ($result) {
-                session()->setFlashdata('success', 'Sasaran berhasil dihapus');
-            } else {
-                session()->setFlashdata('error', 'Gagal menghapus sasaran');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('adminkab/rpjmd'));
-    }
-
-    // ==================== INDIKATOR SASARAN METHODS ====================
-    
-    public function save_indikator_sasaran()
-    {
-        try {
-            $data = $this->request->getPost();
-            
-            if (isset($data['id']) && !empty($data['id'])) {
-                // Update
-                $id = $data['id'];
-                unset($data['id']);
-                $result = $this->rpjmdModel->updateIndikatorSasaran($id, $data);
-                $message = 'Indikator Sasaran berhasil diupdate';
-            } else {
-                // Create
-                $result = $this->rpjmdModel->createIndikatorSasaran($data);
-                $message = 'Indikator Sasaran berhasil ditambahkan';
-            }
-            
-            if ($result) {
-                session()->setFlashdata('success', $message);
-            } else {
-                session()->setFlashdata('error', 'Operasi gagal');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('rpjmd'));
-    }
-
-    public function delete_indikator_sasaran($id)
-    {
-        try {
-            $result = $this->rpjmdModel->deleteIndikatorSasaran($id);
-            
-            if ($result) {
-                session()->setFlashdata('success', 'Indikator Sasaran berhasil dihapus');
-            } else {
-                session()->setFlashdata('error', 'Gagal menghapus indikator sasaran');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('adminkab/rpjmd'));
-    }
-
-    // ==================== TARGET TAHUNAN METHODS ====================
-    
-    public function save_target_tahunan()
-    {
-        try {
-            $data = $this->request->getPost();
-            
-            if (isset($data['id']) && !empty($data['id'])) {
-                // Update
-                $id = $data['id'];
-                unset($data['id']);
-                $result = $this->rpjmdModel->updateTargetTahunan($id, $data);
-                $message = 'Target Tahunan berhasil diupdate';
-            } else {
-                // Create
-                $result = $this->rpjmdModel->createTargetTahunan($data);
-                $message = 'Target Tahunan berhasil ditambahkan';
-            }
-            
-            if ($result) {
-                session()->setFlashdata('success', $message);
-            } else {
-                session()->setFlashdata('error', 'Operasi gagal');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('rpjmd'));
-    }
-
-    public function delete_target_tahunan($id)
-    {
-        try {
-            $result = $this->rpjmdModel->deleteTargetTahunan($id);
-            
-            if ($result) {
-                session()->setFlashdata('success', 'Target Tahunan berhasil dihapus');
-            } else {
-                session()->setFlashdata('error', 'Gagal menghapus target tahunan');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-        }
-        
-        return redirect()->to(base_url('adminkab/rpjmd'));
-    }
-
-    // ==================== COMPLETE RPJMD OPERATIONS (LEGACY - NOT USED) ====================
-    
-    /**
-     * Legacy method - use save() or update() instead
-     * Kept for backward compatibility if needed
-     */
-    public function save_complete()
-    {
-        // Redirect to appropriate method based on whether ID exists
-        $data = $this->request->getPost();
-        
-        if (isset($data['id']) && !empty($data['id'])) {
-            // Has ID - redirect to update
-            return $this->update();
-        } else {
-            // No ID - redirect to save (create)
-            return $this->save();
-        }
     }
 
     // ==================== API METHODS FOR AJAX ====================

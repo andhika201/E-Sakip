@@ -2841,3 +2841,2148 @@ POST Data: Array
 )
 
 
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 59
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => 1111111
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 62
+                    [tujuan_rpjmd] => 1111111
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => 1111111
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 71
+                                    [sasaran_rpjmd] => 1111111
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => 1111111
+                                                    [satuan] => 1111111
+                                                    [strategi] => 1111111
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 624
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1111111
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => 1111111
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 62 with data: Array
+(
+    [misi_id] => 59
+    [tujuan_rpjmd] => 1111111
+)
+
+Updating sasaran ID 71
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 140
+    [tahun] => 2025
+    [target_tahunan] => 1111111
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 140
+    [tahun] => 2026
+    [target_tahunan] => 1111111
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 140
+    [tahun] => 2027
+    [target_tahunan] => 1111111
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 140
+    [tahun] => 2028
+    [target_tahunan] => 1111111
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 140
+    [tahun] => 2029
+    [target_tahunan] => 1111111
+)
+
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 59
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => 1111111aaaaaa
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 62
+                    [tujuan_rpjmd] => 1111111aaaaaa
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => 1111111aaaaaa
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 71
+                                    [sasaran_rpjmd] => 1111111aaaaaa
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => 1111111aaaaaa
+                                                    [satuan] => 1111111aaaaaa
+                                                    [strategi] => 1111111aaaaaa
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 624
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => 1111111aaaaaa
+                                                    [satuan] => 1111111aaaaaa
+                                                    [strategi] => 1111111aaaaaa
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 694
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 1111111aaaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 11111111111111aaaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => 1111111aaaaaa
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 62 with data: Array
+(
+    [misi_id] => 59
+    [tujuan_rpjmd] => 1111111aaaaaa
+)
+
+Updating sasaran ID 71
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 141
+    [tahun] => 2025
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 141
+    [tahun] => 2026
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 141
+    [tahun] => 2027
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 141
+    [tahun] => 2028
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 141
+    [tahun] => 2029
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 142
+    [tahun] => 2025
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 142
+    [tahun] => 2026
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 142
+    [tahun] => 2027
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 142
+    [tahun] => 2028
+    [target_tahunan] => 1111111aaaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 142
+    [tahun] => 2029
+    [target_tahunan] => 11111111111111aaaaaa
+)
+
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => apa testqwe
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => testqwe
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => testqwe
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 80
+                                    [sasaran_rpjmd] => testqwe
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => testqwe
+                                                    [satuan] => nilai
+                                                    [strategi] => testqwe
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 709
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 90
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => testqwe
+                                                    [satuan] => nilai
+                                                    [strategi] => testqwe
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 714
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 90
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 90
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => apa testqwe
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => testqwe
+)
+
+Creating new indikator tujuan
+EXCEPTION in updateCompleteRpjmdTransaction: Field indikator harus diisi
+Stack trace: #0 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\app\Models\RpjmdModel.php(895): App\Models\RpjmdModel->createIndikatorTujuan(Array)
+#1 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\app\Controllers\RpjmdController.php(192): App\Models\RpjmdModel->updateCompleteRpjmdTransaction('62', Array)
+#2 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->update()
+#3 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('D:\\Document\\KP ...')
+#9 {main}
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 80
+                                    [sasaran_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                                    [satuan] => ap saqja saduafaba
+                                                    [strategi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 709
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => ap saqja saduafabaap saqja saduafaba
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => ap saqja saduafaba
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => ap saqja saduafaba
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => ap saqja saduafaba
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => ap saqja saduafaba
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                                    [satuan] => q1wqdas
+                                                    [strategi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 714
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => asd
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => deq
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => asda
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => asdqw
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => weq
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+)
+
+Creating new indikator tujuan
+EXCEPTION in updateCompleteRpjmdTransaction: Field indikator harus diisi
+Stack trace: #0 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\app\Models\RpjmdModel.php(895): App\Models\RpjmdModel->createIndikatorTujuan(Array)
+#1 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\app\Controllers\RpjmdController.php(192): App\Models\RpjmdModel->updateCompleteRpjmdTransaction('62', Array)
+#2 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->update()
+#3 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 D:\Document\KP Abi Ihza Rafi Alfano\Project\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('D:\\Document\\KP ...')
+#9 {main}
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [indikator_tujuan] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => test5test5
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => test5
+                                                    [satuan] => test5
+                                                    [strategi] => safaf
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+)
+
+Updating indikator tujuan ID 70
+Creating new sasaran
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 145
+    [tahun] => 2025
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 145
+    [tahun] => 2026
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 145
+    [tahun] => 2027
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 145
+    [tahun] => 2028
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 145
+    [tahun] => 2029
+    [target_tahunan] => test5
+)
+
+Deleting sasaran ID 80
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 58
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => qweqdwqweqdw
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 61
+                    [tujuan_rpjmd] => qweqdwqweqdw
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 61
+                                    [indikator_tujuan] => aaaaa
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [sasaran_rpjmd] => qweqdwqweqdw
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => aaaaa
+                                                    [satuan] => aaaaa
+                                                    [strategi] => qweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 604
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => aaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => aaaaa
+                                                    [satuan] => aaaaa
+                                                    [strategi] => qweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 609
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => aaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => qweqdwqweqdw
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 61 with data: Array
+(
+    [misi_id] => 58
+    [tujuan_rpjmd] => qweqdwqweqdw
+)
+
+Updating indikator tujuan ID 61
+Updating sasaran ID 70
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 146
+    [tahun] => 2025
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 146
+    [tahun] => 2026
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 146
+    [tahun] => 2027
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 146
+    [tahun] => 2028
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 146
+    [tahun] => 2029
+    [target_tahunan] => aaaaa
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 147
+    [tahun] => 2025
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 147
+    [tahun] => 2026
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 147
+    [tahun] => 2027
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 147
+    [tahun] => 2028
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 147
+    [tahun] => 2029
+    [target_tahunan] => aaaaa
+)
+
+Deleting indikator sasaran ID 122
+Deleting indikator sasaran ID 123
+Deleting indikator sasaran ID 124
+Deleting indikator sasaran ID 125
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [indikator_tujuan] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 81
+                                    [sasaran_rpjmd] => test5test5
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => test5
+                                                    [satuan] => test5
+                                                    [strategi] => safaf
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 719
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => test5
+                                                    [satuan] => test5
+                                                    [strategi] => test5
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+)
+
+Updating indikator tujuan ID 70
+Updating sasaran ID 81
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 148
+    [tahun] => 2025
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 148
+    [tahun] => 2026
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 148
+    [tahun] => 2027
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 148
+    [tahun] => 2028
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 148
+    [tahun] => 2029
+    [target_tahunan] => test5
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 149
+    [tahun] => 2025
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 149
+    [tahun] => 2026
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 149
+    [tahun] => 2027
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 149
+    [tahun] => 2028
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 149
+    [tahun] => 2029
+    [target_tahunan] => test5
+)
+
+Deleting indikator sasaran ID 145
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [indikator_tujuan] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 81
+                                    [sasaran_rpjmd] => test5test5
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => test5
+                                                    [satuan] => test5
+                                                    [strategi] => safaf
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 734
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => test5
+                                                    [satuan] => test5
+                                                    [strategi] => test5
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 739
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => test5
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => test5
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [indikator_sasaran] => w2qfqwqfw
+                                                    [satuan] => w2qfqwqfw
+                                                    [strategi] => w2qfqwqfw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => w2qfqwqfw
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => w2qfqwqfw
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => w2qfqwqfw
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => w2qfqwqfw
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => w2qfqwqfw
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+)
+
+Updating indikator tujuan ID 70
+Updating sasaran ID 81
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 150
+    [tahun] => 2025
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 150
+    [tahun] => 2026
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 150
+    [tahun] => 2027
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 150
+    [tahun] => 2028
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 150
+    [tahun] => 2029
+    [target_tahunan] => test5
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 151
+    [tahun] => 2025
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 151
+    [tahun] => 2026
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 151
+    [tahun] => 2027
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 151
+    [tahun] => 2028
+    [target_tahunan] => test5
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 151
+    [tahun] => 2029
+    [target_tahunan] => test5
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 152
+    [tahun] => 2025
+    [target_tahunan] => w2qfqwqfw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 152
+    [tahun] => 2026
+    [target_tahunan] => w2qfqwqfw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 152
+    [tahun] => 2027
+    [target_tahunan] => w2qfqwqfw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 152
+    [tahun] => 2028
+    [target_tahunan] => w2qfqwqfw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 152
+    [tahun] => 2029
+    [target_tahunan] => w2qfqwqfw
+)
+
+Deleting indikator sasaran ID 148
+Deleting indikator sasaran ID 149
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 62
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 67
+                    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [indikator_tujuan] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 67 with data: Array
+(
+    [misi_id] => 62
+    [tujuan_rpjmd] => ap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafabaap saqja saduafaba
+)
+
+Updating indikator tujuan ID 70
+Deleting sasaran ID 81
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 58
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => qweqdwqweqdw
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 61
+                    [tujuan_rpjmd] => qweqdwqweqdw
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 70
+                                    [sasaran_rpjmd] => qweqdwqweqdw
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => aaaaa
+                                                    [satuan] => aaaaa
+                                                    [strategi] => qweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 724
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => aaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => aaaaa
+                                                    [satuan] => aaaaa
+                                                    [strategi] => qweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 729
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => aaaaa
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => aaaaa
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => qweqdwqweqdw
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 61 with data: Array
+(
+    [misi_id] => 58
+    [tujuan_rpjmd] => qweqdwqweqdw
+)
+
+Deleting indikator tujuan ID 61
+Updating sasaran ID 70
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 153
+    [tahun] => 2025
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 153
+    [tahun] => 2026
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 153
+    [tahun] => 2027
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 153
+    [tahun] => 2028
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 153
+    [tahun] => 2029
+    [target_tahunan] => aaaaa
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 154
+    [tahun] => 2025
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 154
+    [tahun] => 2026
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 154
+    [tahun] => 2027
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 154
+    [tahun] => 2028
+    [target_tahunan] => aaaaa
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 154
+    [tahun] => 2029
+    [target_tahunan] => aaaaa
+)
+
+Deleting indikator sasaran ID 146
+Deleting indikator sasaran ID 147
+=== updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 58
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => qweqdwqweqdw
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 61
+                    [tujuan_rpjmd] => qweqdwqweqdw
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_tujuan] => qweqdwqweqdw
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => qweqdwqweqdw
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => qweqdwqweqdw
+                                                    [satuan] => qweqdwqweqdw
+                                                    [strategi] => qweqdwqweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [indikator_sasaran] => qweqdwqweqdw
+                                                    [satuan] => qweqdwqweqdw
+                                                    [strategi] => qweqdwqweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+            [1] => Array
+                (
+                    [tujuan_rpjmd] => qweqdwqweqdw
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_tujuan] => qweqdwqweqdw
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => qweqdwqweqdw
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => qweqdwqweqdw
+                                                    [satuan] => qweqdwqweqdw
+                                                    [strategi] => qweqdwqweqdw
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => qweqdwqweqdw
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => qweqdwqweqdw
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 61 with data: Array
+(
+    [misi_id] => 58
+    [tujuan_rpjmd] => qweqdwqweqdw
+)
+
+Creating new indikator tujuan
+Creating new sasaran
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 155
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 155
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 155
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 155
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 155
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 156
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 156
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 156
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 156
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 156
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Deleting sasaran ID 70
+Creating new tujuan with data: Array
+(
+    [misi_id] => 58
+    [tujuan_rpjmd] => qweqdwqweqdw
+)
+
+Creating new indikator tujuan
+Creating new sasaran
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 157
+    [tahun] => 2025
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 157
+    [tahun] => 2026
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 157
+    [tahun] => 2027
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 157
+    [tahun] => 2028
+    [target_tahunan] => qweqdwqweqdw
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 157
+    [tahun] => 2029
+    [target_tahunan] => qweqdwqweqdw
+)
+
+=== updateCompleteRpjmdTransaction END - SUCCESS ===

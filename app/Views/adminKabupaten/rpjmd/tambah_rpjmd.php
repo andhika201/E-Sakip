@@ -24,24 +24,24 @@
       <form id="rpjmd-form" method="POST" action="<?= base_url('adminkab/rpjmd/save') ?>">
         <?= csrf_field() ?>
 
-      <!-- Informasi Umum Misi -->
-      <section class="mb-4">
-        <h2 class="h5 fw-semibold mb-3">Informasi Umum Misi</h2>
-        <div class="row">
-          <div class="col-md-8">
-            <label class="form-label">Misi RPJMD</label>
-            <textarea name="misi" class="form-control mb-3" rows="2" placeholder="Contoh: Mewujudkan pembangunan berkelanjutan yang berpusat pada masyarakat" required></textarea>
+        <!-- Informasi Umum Misi -->
+        <section class="mb-4">
+          <h2 class="h5 fw-semibold mb-3">Informasi Umum Misi</h2>
+          <div class="row">
+            <div class="col-md-8">
+              <label class="form-label">Misi RPJMD</label>
+              <textarea name="misi" class="form-control mb-3" rows="2" placeholder="Contoh: Mewujudkan pembangunan berkelanjutan yang berpusat pada masyarakat" required></textarea>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Periode Mulai</label>
+              <input type="number" name="tahun_mulai" id="periode_start" class="form-control mb-3" value="2025" placeholder="Contoh: 2025" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">Periode Akhir</label>
+              <input type="number" name="tahun_akhir" id="periode_end" class="form-control mb-3" value="2029" placeholder="" readonly>
+            </div>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Periode Mulai</label>
-            <input type="number" name="tahun_mulai" id="periode_start" class="form-control mb-3" value="2025" placeholder="Contoh: 2025" required>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Periode Akhir</label>
-            <input type="number" name="tahun_akhir" id="periode_end" class="form-control mb-3" value="2029" placeholder="" readonly>
-          </div>
-        </div>
-      </section>
+        </section>
 
       <!-- Daftar Tujuan -->
       <section>

@@ -77,9 +77,9 @@
 
         <!-- Filter and Action Controls -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <!-- Period Filter -->
-            <div class="d-flex align-items-center flex-fill me-3">
-                <select id="periode-filter" class="form-select flex-fill" onchange="filterByPeriode()">
+            <!-- Period and Status Filter -->
+            <div class="d-flex align-items-center flex-fill me-3 gap-2">
+                <select id="periode-filter" class="form-select" onchange="filterByPeriode()" style="flex: 2;">
                     <?php if (isset($rpjmd_grouped) && !empty($rpjmd_grouped)): ?>
                         <?php 
                         // Get the latest period (last key in the sorted array)
@@ -92,6 +92,11 @@
                             </option>
                         <?php endforeach; ?>
                     <?php endif; ?>
+                </select>
+                <select id="status-filter" class="form-select" onchange="filterByStatus()" style="flex: 1;">
+                    <option value="">Semua Status</option>
+                    <option value="draft">Draft</option>
+                    <option value="selesai">Selesai</option>
                 </select>
             </div>
             
@@ -106,6 +111,7 @@
             <table class="table table-bordered table-striped text-center small">
                 <thead class="table-success">
                 <tr>
+                    <th rowspan="2" class="border p-2 align-middle">STATUS</th>
                     <th rowspan="2" class="border p-2 align-middle">MISI</th>
                     <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
                     <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
@@ -163,8 +169,18 @@
                                                 
                                                 <?php $firstSasaranRow = true; ?>
                                                 <?php foreach ($sasaran['indikator_sasaran'] as $indikator): ?>
-                                                    <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                                    <tr class="periode-row" data-periode="<?= $periodIndex ?>" data-status="<?= $misi['status'] ?? 'draft' ?>">
                                                         <?php if ($firstMisiRow): ?>
+                                                            <td class="border p-2 align-top text-center" rowspan="<?= $misiRowspan ?>">
+                                                                <?php 
+                                                                $status = $misi['status'] ?? 'draft';
+                                                                $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                                                $statusText = $status === 'selesai' ? 'Selesai' : 'Draft';
+                                                                ?>
+                                                                <button class="badge <?= $badgeClass ?> border-0" onclick="toggleStatus(<?= $misi['id'] ?>)" style="cursor: pointer;" title="Klik untuk mengubah status">
+                                                                    <?= $statusText ?>
+                                                                </button>
+                                                            </td>
                                                             <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
                                                             <?php $firstMisiRow = false; ?>
                                                         <?php endif; ?>
@@ -218,6 +234,15 @@
                                                                     <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="btn btn-success btn-sm">
                                                                         <i class="fas fa-edit me-1"></i>Edit
                                                                     </a>
+                                                                    <?php 
+                                                                    $currentStatus = $misi['status'] ?? 'draft';
+                                                                    $toggleClass = $currentStatus === 'selesai' ? 'btn-warning' : 'btn-info';
+                                                                    $toggleText = $currentStatus === 'selesai' ? 'Set Draft' : 'Set Selesai';
+                                                                    $toggleIcon = $currentStatus === 'selesai' ? 'fas fa-undo' : 'fas fa-check';
+                                                                    ?>
+                                                                    <button class="btn <?= $toggleClass ?> btn-sm" onclick="toggleStatus(<?= $misi['id'] ?>)">
+                                                                        <i class="<?= $toggleIcon ?> me-1"></i><?= $toggleText ?>
+                                                                    </button>
                                                                     <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $misi['id'] ?>)">
                                                                         <i class="fas fa-trash me-1"></i>Hapus
                                                                     </button>
@@ -228,8 +253,18 @@
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
-                                                <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                                <tr class="periode-row" data-periode="<?= $periodIndex ?>" data-status="<?= $misi['status'] ?? 'draft' ?>">
                                                     <?php if ($firstMisiRow): ?>
+                                                        <td class="border p-2 align-top text-center" rowspan="<?= $misiRowspan ?>">
+                                                            <?php 
+                                                            $status = $misi['status'] ?? 'draft';
+                                                            $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                                            $statusText = $status === 'selesai' ? 'Selesai' : 'Draft';
+                                                            ?>
+                                                            <button class="badge <?= $badgeClass ?> border-0" onclick="toggleStatus(<?= $misi['id'] ?>)" style="cursor: pointer;" title="Klik untuk mengubah status">
+                                                                <?= $statusText ?>
+                                                            </button>
+                                                        </td>
                                                         <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
                                                         <?php $firstMisiRow = false; ?>
                                                     <?php endif; ?>
@@ -261,12 +296,21 @@
                                                 </tr>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr class="periode-row" data-periode="<?= $periodIndex ?>">
-                                            <?php if ($firstMisiRow): ?>
-                                                <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
-                                                <?php $firstMisiRow = false; ?>
-                                            <?php endif; ?>
+                                    <?php else: ?>                        <tr class="periode-row" data-periode="<?= $periodIndex ?>" data-status="<?= $misi['status'] ?? 'draft' ?>">
+                            <?php if ($firstMisiRow): ?>
+                                <td class="border p-2 align-top text-center" rowspan="<?= $misiRowspan ?>">
+                                    <?php 
+                                    $status = $misi['status'] ?? 'draft';
+                                    $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                    $statusText = $status === 'selesai' ? 'Selesai' : 'Draft';
+                                    ?>
+                                    <button class="badge <?= $badgeClass ?> border-0" onclick="toggleStatus(<?= $misi['id'] ?>)" style="cursor: pointer;" title="Klik untuk mengubah status">
+                                        <?= $statusText ?>
+                                    </button>
+                                </td>
+                                <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
+                                <?php $firstMisiRow = false; ?>
+                            <?php endif; ?>
                                             
                                             <td class="border p-2 align-top text-start"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
                                             <td class="border p-2 align-top text-start">
@@ -292,7 +336,17 @@
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr class="periode-row" data-periode="<?= $periodIndex ?>">
+                                <tr class="periode-row" data-periode="<?= $periodIndex ?>" data-status="<?= $misi['status'] ?? 'draft' ?>">
+                                    <td class="border p-2 align-top text-center">
+                                        <?php 
+                                        $status = $misi['status'] ?? 'draft';
+                                        $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                        $statusText = $status === 'selesai' ? 'Selesai' : 'Draft';
+                                        ?>
+                                        <button class="badge <?= $badgeClass ?> border-0" onclick="toggleStatus(<?= $misi['id'] ?>)" style="cursor: pointer;" title="Klik untuk mengubah status">
+                                            <?= $statusText ?>
+                                        </button>
+                                    </td>
                                     <td class="border p-2 align-top text-start"><?= esc($misi['misi']) ?></td>
                                     <td class="border p-2 align-top text-start">-</td>
                                     <td class="border p-2 align-top text-start">-</td>
@@ -310,6 +364,15 @@
                                             <a href="<?= base_url('adminkab/rpjmd/edit/' . $misi['id']) ?>" class="btn btn-success btn-sm">
                                                 <i class="fas fa-edit me-1"></i>Edit
                                             </a>
+                                            <?php 
+                                            $currentStatus = $misi['status'] ?? 'draft';
+                                            $toggleClass = $currentStatus === 'selesai' ? 'btn-warning' : 'btn-info';
+                                            $toggleText = $currentStatus === 'selesai' ? 'Set Draft' : 'Set Selesai';
+                                            $toggleIcon = $currentStatus === 'selesai' ? 'fas fa-undo' : 'fas fa-check';
+                                            ?>
+                                            <button class="btn <?= $toggleClass ?> btn-sm" onclick="toggleStatus(<?= $misi['id'] ?>)">
+                                                <i class="<?= $toggleIcon ?> me-1"></i><?= $toggleText ?>
+                                            </button>
                                             <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $misi['id'] ?>)">
                                                 <i class="fas fa-trash me-1"></i>Hapus
                                             </button>
@@ -321,7 +384,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="<?= 7 + count($available_years) + 1 ?>" class="border p-4 text-center text-muted">
+                        <td colspan="<?= 8 + count($available_years) ?>" class="border p-4 text-center text-muted">
                             <i class="fas fa-info-circle me-2"></i>
                             Belum ada data RPJMD. <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="text-success">Tambah data pertama</a>
                         </td>
@@ -470,6 +533,7 @@
 
   function filterByPeriode() {
       const filterValue = document.getElementById('periode-filter').value;
+      const statusFilterValue = document.getElementById('status-filter').value;
       const rows = document.querySelectorAll('.periode-row');
       const yearCells = document.querySelectorAll('.year-cells');
       
@@ -483,9 +547,15 @@
           cells.style.display = 'none';
       });
       
-      // Show only rows and year cells for selected period
+      // Show only rows and year cells for selected period and status
       rows.forEach(function(row) {
-          if (row.getAttribute('data-periode') === filterValue) {
+          const rowPeriod = row.getAttribute('data-periode');
+          const rowStatus = row.getAttribute('data-status') || 'draft';
+          
+          const periodMatch = rowPeriod === filterValue;
+          const statusMatch = !statusFilterValue || rowStatus === statusFilterValue;
+          
+          if (periodMatch && statusMatch) {
               row.style.display = '';
           }
       });
@@ -501,13 +571,48 @@
       
       // Update pagination info if visible
       const visibleRows = document.querySelectorAll('.periode-row:not([style*="display: none"])');
-      console.log('Showing ' + visibleRows.length + ' rows for period: ' + filterValue);
+      console.log('Showing ' + visibleRows.length + ' rows for period: ' + filterValue + ', status: ' + (statusFilterValue || 'all'));
+  }
+
+  function filterByStatus() {
+      // Use the same function as period filter since they work together
+      filterByPeriode();
   }
 
   // Initialize the filter on page load to show only the latest period
   document.addEventListener('DOMContentLoaded', function() {
       filterByPeriode();
   });
+
+  // Function to toggle status via AJAX
+  function toggleStatus(misiId) {
+      if (confirm('Apakah Anda yakin ingin mengubah status RPJMD ini?')) {
+          fetch('<?= base_url('adminkab/rpjmd/update-status') ?>', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Requested-With': 'XMLHttpRequest',
+                  '<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+              },
+              body: JSON.stringify({
+                  id: misiId
+              })
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  // Reload page to show updated status
+                  window.location.reload();
+              } else {
+                  alert('Gagal mengubah status: ' + (data.message || 'Terjadi kesalahan'));
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Terjadi kesalahan saat mengubah status');
+          });
+      }
+  }
   </script>
 </body>
 </html>

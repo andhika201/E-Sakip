@@ -34,6 +34,17 @@
       </div>
       
       <!-- Tabel RPJMD -->
+      <?php if (isset($message)): ?>
+        <div class="alert alert-info text-center">
+          <i class="fas fa-info-circle me-2"></i>
+          <?= $message ?>
+        </div>
+      <?php elseif (empty($rpjmdData)): ?>
+        <div class="alert alert-warning text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Belum ada data RPJMD yang tersedia.
+        </div>
+      <?php else: ?>
       <div class="table-responsive">
         <table class="table table-bordered align-middle text-center">
           <thead class="table-success align-middle">
@@ -44,7 +55,9 @@
               <th rowspan="2">Target</th>
               <th rowspan="2">Sasaran</th>
               <th rowspan="2">Strategi</th>
+              <?php if (!empty($tahunList)): ?>
               <th colspan="<?= count($tahunList) ?>">Target Capaian Per Tahun</th>
+              <?php endif; ?>
             </tr>
             <tr>
               <?php foreach ($tahunList as $tahun): ?>
@@ -71,6 +84,7 @@
           </tbody>
         </table>
       </div>
+      <?php endif; ?>
     </div>
   </div>
 </main>

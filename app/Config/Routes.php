@@ -51,6 +51,10 @@ $routes->get('adminkab/rpjmd/api/indikator/(:num)', 'RpjmdController::get_indika
 $routes->get('adminkab/rpjmd/search', 'RpjmdController::search');
 $routes->get('adminkab/rpjmd/export', 'RpjmdController::export');
 
+// RPJMD Status Management Routes
+$routes->post('adminkab/rpjmd/update-status', 'RpjmdController::updateStatus');
+$routes->get('adminkab/rpjmd/toggle-status/(:num)', 'RpjmdController::toggleStatus/$1');
+
 // RKT Routes
 $routes->get('adminkab/rkt', 'AdminKabupaten::rkt');
 $routes->get('adminkab/rkt/tambah', 'AdminKabupaten::tambah_rkt');

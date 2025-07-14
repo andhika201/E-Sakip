@@ -21,8 +21,8 @@
 </style>
 
 <!-- Sidebar -->
-<div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between sidebar-hidden" style="width: 256px; z-index: 40; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
-  <!-- Atas: Logo + Navigasi -->
+<div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between sidebar-hidden shadow">
+  <!-- Logo dan Navigasi -->
   <div>
     <div class="p-3 border-bottom">
       <h2 class="h5 fw-bold text-dark mb-0">Admin Kabupaten</h2>
@@ -39,7 +39,7 @@
     </nav>
   </div>
 
-  <!-- Bawah: Tombol Keluar -->
+  <!-- Tombol Logout -->
   <div class="p-3 border-top">
     <a href="<?= base_url('logout') ?>" class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
       <i class="fas fa-sign-out-alt me-2"></i>

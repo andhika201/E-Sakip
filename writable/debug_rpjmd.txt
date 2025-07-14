@@ -36657,3 +36657,470 @@ About to insert target tahunan: Array
 
 Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 813
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => hjhjk
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => mdadjas
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_tujuan] => addjfkajc
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => dajakfjak
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => fafakejf
+                                                    [satuan] => persen
+                                                    [strategi] => dajnfafna
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 89
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 32
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 45
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 56
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 09
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => hjhjk
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+About to insert misi: Array
+(
+    [misi] => hjhjk
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Insert result: SUCCESS
+Insert ID: 1
+Misi created with ID: 1
+Misi verification: Array
+(
+    [id] => 1
+    [misi] => hjhjk
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [created_at] => 2025-07-11 10:01:43
+    [updated_at] => 2025-07-11 10:01:43
+)
+
+Creating tujuan with data: Array
+(
+    [tujuan_rpjmd] => mdadjas
+    [indikator_tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_tujuan] => addjfkajc
+                )
+
+        )
+
+    [sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [sasaran_rpjmd] => dajakfjak
+                    [indikator_sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_sasaran] => fafakejf
+                                    [satuan] => persen
+                                    [strategi] => dajnfafna
+                                    [target_tahunan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 89
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 32
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 45
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 56
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 09
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [misi_id] => 1
+)
+
+About to insert tujuan: Array
+(
+    [misi_id] => 1
+    [tujuan_rpjmd] => mdadjas
+)
+
+Tujuan insert result: SUCCESS
+Tujuan insert ID: 1
+Tujuan created with ID: 1
+Tujuan verification: Array
+(
+    [id] => 1
+    [misi_id] => 1
+    [tujuan_rpjmd] => mdadjas
+    [created_at] => 2025-07-11 10:01:43
+    [updated_at] => 2025-07-11 10:01:43
+)
+
+Creating indikator tujuan: Array
+(
+    [indikator_tujuan] => addjfkajc
+    [tujuan_id] => 1
+)
+
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 1
+    [indikator_tujuan] => addjfkajc
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 1
+Creating sasaran: Array
+(
+    [sasaran_rpjmd] => dajakfjak
+    [indikator_sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_sasaran] => fafakejf
+                    [satuan] => persen
+                    [strategi] => dajnfafna
+                    [target_tahunan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [tahun] => 2025
+                                    [target_tahunan] => 89
+                                )
+
+                            [1] => Array
+                                (
+                                    [tahun] => 2026
+                                    [target_tahunan] => 32
+                                )
+
+                            [2] => Array
+                                (
+                                    [tahun] => 2027
+                                    [target_tahunan] => 45
+                                )
+
+                            [3] => Array
+                                (
+                                    [tahun] => 2028
+                                    [target_tahunan] => 56
+                                )
+
+                            [4] => Array
+                                (
+                                    [tahun] => 2029
+                                    [target_tahunan] => 09
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [tujuan_id] => 1
+)
+
+About to insert sasaran: Array
+(
+    [tujuan_id] => 1
+    [sasaran_rpjmd] => dajakfjak
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 1
+Sasaran created with ID: 1
+Creating indikator sasaran: Array
+(
+    [indikator_sasaran] => fafakejf
+    [satuan] => persen
+    [strategi] => dajnfafna
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 89
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 32
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 45
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 56
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 09
+                )
+
+        )
+
+    [sasaran_id] => 1
+)
+
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 1
+    [indikator_sasaran] => fafakejf
+    [strategi] => dajnfafna
+    [satuan] => persen
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 1
+Indikator sasaran created with ID: 1
+Creating target: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 89
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2025
+    [target_tahunan] => 89
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 1
+Target created with ID: 1
+Creating target: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 32
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2026
+    [target_tahunan] => 32
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 2
+Target created with ID: 2
+Creating target: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 45
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2027
+    [target_tahunan] => 45
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 3
+Target created with ID: 3
+Creating target: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 56
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2028
+    [target_tahunan] => 56
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 4
+Target created with ID: 4
+Creating target: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 09
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2029
+    [target_tahunan] => 09
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 5
+Target created with ID: 5
+=== createCompleteRpjmd END - SUCCESS, MISI ID: 1 ===
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 1
+    [indikator_sasaran] => fafakejf
+    [strategi] => dajnfafna
+    [satuan] => persen
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 2
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 89534t
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 6
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 32
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 7
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 45
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 8
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 56
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 9
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 09
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 10

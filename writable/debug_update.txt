@@ -5664,3 +5664,146 @@ Creating target tahunan: Array
 
 Deleting indikator sasaran ID 160
 === updateCompleteRpjmdTransaction END - SUCCESS ===
+
+=== updateCompleteRpjmdTransaction START ===
+Misi ID: 1
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => hjhjk
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 1
+                    [tujuan_rpjmd] => mdadjas
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 1
+                                    [indikator_tujuan] => addjfkajc
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 1
+                                    [sasaran_rpjmd] => dajakfjak
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => fafakejf
+                                                    [satuan] => persen
+                                                    [strategi] => dajnfafna
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [id] => 1
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 89534t
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [target_tahunan] => 32
+                                                                    [tahun] => 2026
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [target_tahunan] => 45
+                                                                    [tahun] => 2027
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [target_tahunan] => 56
+                                                                    [tahun] => 2028
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [target_tahunan] => 09
+                                                                    [tahun] => 2029
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Updating misi with data: Array
+(
+    [misi] => hjhjk
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+)
+
+Updating tujuan ID 1 with data: Array
+(
+    [misi_id] => 1
+    [tujuan_rpjmd] => mdadjas
+)
+
+Updating indikator tujuan ID 1
+Updating sasaran ID 1
+Creating new indikator sasaran
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 89534t
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 32
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 45
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 56
+)
+
+Creating target tahunan: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 09
+)
+
+Deleting indikator sasaran ID 1
+=== updateCompleteRpjmdTransaction END - SUCCESS ===

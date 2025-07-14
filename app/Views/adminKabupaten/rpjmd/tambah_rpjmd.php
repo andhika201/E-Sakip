@@ -127,7 +127,13 @@
                           </div>
                           <div class="col-md-4">
                             <label class="form-label">Satuan</label>
-                            <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" value="" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                            <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                              <option value="">Pilih Satuan</option>
+                              <option value="Unit">Unit</option>
+                              <option value="Nilai">Nilai</option>
+                              <option value="Persen">Persen</option>
+                              <option value="Predikat">Predikat</option>
+                            </select>
                           </div>
                         </div>
 
@@ -227,6 +233,6 @@
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
   <!-- JavaScript Funtion For Handling RPJMD Form-->
-  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd/rpjmd-form.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd-form.js') ?>"></script>
 </body>
 </html>

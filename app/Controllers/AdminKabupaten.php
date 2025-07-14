@@ -20,7 +20,15 @@ class AdminKabupaten extends BaseController
 
     public function tambah_rkt()
     {
-        return view('adminKabupaten/rkt/tambah_rkt');
+        // Load model untuk mendapatkan data sasaran RPJMD
+        $rpjmdModel = new \App\Models\RpjmdModel();
+        $sasaranRpjmd = $rpjmdModel->getAllSasaranWithPeriode();
+        
+        $data = [
+            'sasaran_rpjmd' => $sasaranRpjmd
+        ];
+        
+        return view('adminKabupaten/rkt/tambah_rkt', $data);
     }
 
     public function edit_rkt()
@@ -30,7 +38,40 @@ class AdminKabupaten extends BaseController
 
     public function save_rkt()
     {
-        return redirect()->to(base_url('adminkab/rkt'));
+        $rktModel = new \App\Models\RktModel();
+        
+        // Validasi input
+        $validation = \Config\Services::validation();
+        $validation->setRules([
+            'rpjmd_sasaran_id' => 'required|integer',
+            'sasaran_rkt.*.sasaran' => 'required',
+            'sasaran_rkt.*.indikator_sasaran.*.indikator_sasaran' => 'required',
+            'sasaran_rkt.*.indikator_sasaran.*.satuan' => 'required',
+            'sasaran_rkt.*.indikator_sasaran.*.tahun' => 'required|integer',
+            'sasaran_rkt.*.indikator_sasaran.*.target' => 'required'
+        ]);
+
+        if (!$validation->withRequest($this->request)->run()) {
+            return redirect()->back()
+                ->withInput()
+                ->with('errors', $validation->getErrors());
+        }
+
+        // Ambil data dari form
+        $data = [
+            'rpjmd_sasaran_id' => $this->request->getPost('rpjmd_sasaran_id'),
+            'sasaran_rkt' => $this->request->getPost('sasaran_rkt')
+        ];
+
+        // Simpan data
+        if ($rktModel->saveRktWithIndikator($data)) {
+            return redirect()->to(base_url('adminkab/rkt'))
+                ->with('success', 'Data RKT berhasil disimpan');
+        } else {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal menyimpan data RKT');
+        }
     }
 
     // PK Bupati Methods

@@ -83,10 +83,10 @@ $routes->post('adminkab/tentang_kami/save', 'AdminKabupaten::save_tentang_kami')
 $routes->get('adminopd/dashboard', 'AdminOpd::index');
 
 // Renstra Routes
-$routes->get('adminopd/renstra', 'AdminOpd::renstra');
-$routes->get('adminopd/renstra/tambah', 'AdminOpd::tambah_renstra');
-$routes->get('adminopd/renstra/edit', 'AdminOpd::edit_renstra');
-$routes->post('adminopd/renstra/save', 'AdminOpd::save_renstra');
+$routes->get('adminopd/renstra', 'AdminOpd\Renstra::index');
+$routes->get('adminopd/renstra/tambah', 'AdminOpd\Renstra::tambah_renstra');
+$routes->get('adminopd/renstra/edit', 'AdminOpd\Renstra::edit_renstra');
+$routes->post('adminopd/renstra/save', 'AdminOpd\Renstra::save_renstra');
 
 // Renja Routes
 $routes->get('adminopd/renja', 'AdminOpd::renja');

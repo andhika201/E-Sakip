@@ -12,19 +12,6 @@ class AdminOpd extends BaseController
         return view('adminOpd/dashboard');
     }
 
-    public function renstra()
-    {
-        return view('adminOpd/renstra/renstra');
-    }
-    public function tambah_renstra()
-    {
-        return view('adminOpd/renstra/tambah_renstra');
-    }
-    public function edit_renstra()
-    {
-        return view('adminOpd/renstra/edit_renstra');
-    }
-
 
     public function renja()
     {

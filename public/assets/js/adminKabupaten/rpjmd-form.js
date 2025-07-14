@@ -1,3 +1,20 @@
+// Fungsi helper untuk menghasilkan option satuan
+// Untuk mengubah pilihan satuan, cukup edit array satuanOptions di bawah ini
+// Semua template akan otomatis menggunakan pilihan yang sama
+function generateSatuanOptions() {
+    const satuanOptions = [
+        { value: "", text: "Pilih Satuan" },
+        { value: "Unit", text: "Unit" },
+        { value: "Nilai", text: "Nilai" },
+        { value: "Persen", text: "Persen" },
+        { value: "Predikat", text: "Predikat" }
+    ];
+    
+    return satuanOptions.map(option => 
+        `<option value="${option.value}">${option.text}</option>`
+    ).join('\n                        ');
+}
+
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
     document.querySelectorAll('.tujuan-item').forEach((tujuanItem, tujuanIndex) => {
@@ -86,7 +103,7 @@ function updateFormNames() {
         // Update indikator sasaran names
         sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorSasaranItem, indikatorSasaranIndex) => {
         const indikatorInput = indikatorSasaranItem.querySelector('input[name*="indikator_sasaran"]');
-        const satuanInput = indikatorSasaranItem.querySelector('input[name*="satuan"]');
+        const satuanInput = indikatorSasaranItem.querySelector('select[name*="satuan"]');
         const strategiTextarea = indikatorSasaranItem.querySelector('textarea[name*="strategi"]');
         
         if (indikatorInput) {
@@ -200,7 +217,9 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="col-md-4">
                     <label class="form-label">Satuan</label>
-                    <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                    <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                        ` + generateSatuanOptions() + `
+                    </select>
                     </div>
                 </div>
 
@@ -306,7 +325,7 @@ function addSasaranToTujuan(tujuanElement) {
     
     const newSasaran = document.createElement('div');
     newSasaran.className = 'sasaran-item border rounded p-3 bg-white mb-3';
-    newSaran.innerHTML = `
+    newSasaran.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
         <label class="fw-medium">Sasaran</label>
         <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
@@ -334,7 +353,9 @@ function addSasaranToTujuan(tujuanElement) {
             </div>
             <div class="col-md-4">
                 <label class="form-label">Satuan</label>
-                <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                    ` + generateSatuanOptions() + `
+                </select>
             </div>
             </div>
 
@@ -423,7 +444,9 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="col-md-4">
         <label class="form-label">Satuan</label>
-        <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+        <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+            ` + generateSatuanOptions() + `
+        </select>
         </div>
     </div>
 

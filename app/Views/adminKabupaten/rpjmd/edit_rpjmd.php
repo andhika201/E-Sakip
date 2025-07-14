@@ -156,7 +156,13 @@
                                         </div>
                                         <div class="col-md-4">
                                           <label class="form-label">Satuan</label>
-                                          <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][satuan]" class="form-control mb-3" value="<?= esc($indikator_sasaran['satuan'] ?? '') ?>" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                                          <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][satuan]" class="form-select mb-3" required>
+                                            <option value="">Pilih Satuan</option>
+                                            <option value="Unit" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Unit' ? 'selected' : '' ?>>Unit</option>
+                                            <option value="Nilai" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Nilai' ? 'selected' : '' ?>>Nilai</option>
+                                            <option value="Persen" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Persen' ? 'selected' : '' ?>>Persen</option>
+                                            <option value="Predikat" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Predikat' ? 'selected' : '' ?>>Predikat</option>
+                                          </select>
                                         </div>
                                       </div>
 
@@ -217,7 +223,13 @@
                                       </div>
                                       <div class="col-md-4">
                                         <label class="form-label">Satuan</label>
-                                        <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][satuan]" class="form-control mb-3" value="" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                                        <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                          <option value="">Pilih Satuan</option>
+                                          <option value="Unit">Unit</option>
+                                          <option value="Nilai">Nilai</option>
+                                          <option value="Persen">Persen</option>
+                                          <option value="Predikat">Predikat</option>
+                                        </select>
                                       </div>
                                     </div>
 
@@ -290,7 +302,13 @@
                                   </div>
                                   <div class="col-md-4">
                                     <label class="form-label">Satuan</label>
-                                    <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" value="" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                                    <select name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                      <option value="">Pilih Satuan</option>
+                                      <option value="Unit">Unit</option>
+                                      <option value="Nilai">Nilai</option>
+                                      <option value="Persen">Persen</option>
+                                      <option value="Predikat">Predikat</option>
+                                    </select>
                                   </div>
                                 </div>
 
@@ -415,7 +433,13 @@
                               </div>
                               <div class="col-md-4">
                                 <label class="form-label">Satuan</label>
-                                <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-control mb-3" value="" placeholder="Contoh: Persen, Jumlah, Indeks" required>
+                                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                  <option value="">Pilih Satuan</option>
+                                  <option value="Unit">Unit</option>
+                                  <option value="Nilai">Nilai</option>
+                                  <option value="Persen">Persen</option>
+                                  <option value="Predikat">Predikat</option>
+                                </select>
                               </div>
                             </div>
 
@@ -490,7 +514,7 @@
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
   <!-- Include JavaScript eksternal -->
-  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd/rpjmd-form.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd-form.js') ?>"></script>
   
   <script>
     // Inisialisasi data untuk edit form

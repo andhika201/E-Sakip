@@ -103,25 +103,9 @@
                 <input type="password" name="password" class="form-control ps-4 input-border-green" placeholder="Password" required>
                 <i class="fas fa-lock position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
             </div>
-            <div class="d-flex justify-content-between mb-3 align-items-center">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="rememberMe">
-                    <label class="form-check-label" for="rememberMe">Remember me</label>
-                </div>
-                <a href="#" class="small">Forgot password?</a>
-            </div>
             <button type="submit" class="btn btn-success btn-login">Log In</button>
         </form>
         
-        <!-- Demo credentials info -->
-        <div class="mt-4 text-center">
-            <small class="text-muted">
-                <strong>Demo Login:</strong><br>
-                Admin Kab: <code>adminkab / adminkab123</code><br>
-                Admin OPD: <code>adminopd / adminopd123</code><br>
-                User: <code>user / user123</code>
-            </small>
-        </div>
     </div>
 
     <!-- Bootstrap 5 JS Bundle with Popper -->

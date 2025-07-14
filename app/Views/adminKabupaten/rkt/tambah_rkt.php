@@ -21,6 +21,35 @@
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah RKT</h2>
 
+      <!-- Error Messages -->
+      <?php if (session()->getFlashdata('error')): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <?= session()->getFlashdata('error') ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php endif; ?>
+
+      <!-- Success Messages -->
+      <?php if (session()->getFlashdata('success')): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <?= session()->getFlashdata('success') ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php endif; ?>
+
+      <!-- Validation Errors -->
+      <?php if (session()->getFlashdata('errors')): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <strong>Terdapat kesalahan:</strong>
+          <ul class="mb-0 mt-2">
+            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+              <li><?= esc($error) ?></li>
+            <?php endforeach; ?>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <?php endif; ?>
+
       <form id="rkt-form" method="POST" action="<?= base_url('adminkab/rkt/save') ?>">
         <?= csrf_field() ?>
 
@@ -30,12 +59,17 @@
         <div class="row">
           <div class="col-md-6">
             <label class="form-label">Sasaran RPJMD</label>
-            <select name="rpjmd_sasaran_id" class="form-select mb-3" required>
+            <select name="rpjmd_sasaran_id" id="rpjmd-sasaran-select" class="form-select mb-3" required>
               <option value="">Pilih Sasaran RPJMD</option>
-              <!-- Options akan diisi dari database -->
-              <option value="1">Meningkatnya kualitas pelayanan publik</option>
-              <option value="2">Meningkatnya transparansi pengelolaan keuangan</option>
-              <option value="3">Meningkatnya kompetensi ASN</option>
+              <?php if (isset($sasaran_rpjmd) && is_array($sasaran_rpjmd)): ?>
+                <?php foreach ($sasaran_rpjmd as $sasaran): ?>
+                  <option value="<?= $sasaran['id'] ?>" 
+                          data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" 
+                          data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
+                    <?= esc($sasaran['sasaran_rpjmd']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
+                  </option>
+                <?php endforeach; ?>
+              <?php endif; ?>
             </select>
           </div>
         </div>
@@ -45,9 +79,6 @@
       <section>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 fw-semibold">Daftar Sasaran RKT</h2>
-          <button type="button" id="add-sasaran-rkt" class="btn btn-success btn-sm">
-            <i class="fas fa-plus me-1"></i> Tambah Sasaran RKT
-          </button>
         </div>
 
         <div id="sasaran-rkt-container">
@@ -69,9 +100,6 @@
             <div class="indikator-sasaran-rkt-section">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
-                <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
-                  <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
-                </button>
               </div>
 
               <div class="indikator-sasaran-rkt-container">
@@ -90,24 +118,18 @@
                   <div class="row mb-3">
                     <div class="col-md-4">
                       <label class="form-label">Satuan</label>
-                      <select name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-control" placeholder="Unit/Persen/dll" required>
+                      <select name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-select" required>
                         <option value="">Pilih Satuan</option>
-                        <!-- Options akan diisi dari database -->
-                        <option value="1">Persen</option>
-                        <option value="2">Nilai</option>
-                        <option value="3">Predikat</option>
-                        <option value="4">Unit</option>
+                        <option value="Unit">Unit</option>
+                        <option value="Nilai">Nilai</option>
+                        <option value="Persen">Persen</option>
+                        <option value="Predikat">Predikat</option>
                       </select>
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Tahun Target</label>
-                      <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select" required>
-                        <option value="">Pilih Tahun</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                        <option value="2028">2028</option>
-                        <option value="2029">2029</option>
+                      <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
+                        <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
                       </select>
                     </div>
                     <div class="col-md-4">
@@ -118,8 +140,24 @@
                 </div> <!-- End Indikator Sasaran RKT -->
               </div> <!-- End Indikator Sasaran RKT Container -->
             </div> <!-- End Indikator Sasaran RKT Section -->
+
+            <!-- Tombol Tambah Indikator Sasaran -->
+            <div class="d-flex justify-content-end">
+              <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
+                <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
+              </button>
+            </div>
+
           </div> <!-- End Sasaran RKT -->
         </div> <!-- End Sasaran RKT Container -->
+
+        <!-- Tombol Tambah Sasaran RKT -->
+        <div class="d-flex justify-content-end">
+          <button type="button" id="add-sasaran-rkt" class="btn btn-success btn-sm">
+            <i class="fas fa-plus me-1"></i> Tambah Sasaran RKT
+          </button>
+        </div>
+
       </section>
 
       <!-- Tombol Aksi -->
@@ -138,6 +176,67 @@
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
   <script>
+    // Fungsi helper untuk menghasilkan option satuan
+    // Untuk mengubah pilihan satuan, cukup edit array satuanOptions di bawah ini
+    // Semua template akan otomatis menggunakan pilihan yang sama
+    function generateSatuanOptions() {
+      const satuanOptions = [
+        { value: "", text: "Pilih Satuan" },
+        { value: "Unit", text: "Unit" },
+        { value: "Nilai", text: "Nilai" },
+        { value: "Persen", text: "Persen" },
+        { value: "Predikat", text: "Predikat" }
+      ];
+      
+      return satuanOptions.map(option => 
+        `<option value="${option.value}">${option.text}</option>`
+      ).join('\n                ');
+    }
+
+    // Fungsi helper untuk menghasilkan option tahun berdasarkan periode RPJMD
+    function generateTahunOptions(tahunMulai = null, tahunAkhir = null) {
+      if (!tahunMulai || !tahunAkhir) {
+        return '<option value="">Pilih Sasaran RPJMD terlebih dahulu</option>';
+      }
+      
+      let options = '<option value="">Pilih Tahun</option>';
+      for (let tahun = parseInt(tahunMulai); tahun <= parseInt(tahunAkhir); tahun++) {
+        options += `<option value="${tahun}">${tahun}</option>`;
+      }
+      return options;
+    }
+
+    // Fungsi untuk mengupdate semua dropdown tahun
+    function updateAllTahunDropdowns() {
+      const sasaranSelect = document.getElementById('rpjmd-sasaran-select');
+      const selectedOption = sasaranSelect.options[sasaranSelect.selectedIndex];
+      
+      let tahunMulai = null;
+      let tahunAkhir = null;
+      
+      if (selectedOption && selectedOption.value) {
+        tahunMulai = selectedOption.getAttribute('data-tahun-mulai');
+        tahunAkhir = selectedOption.getAttribute('data-tahun-akhir');
+      }
+      
+      // Update semua dropdown tahun yang ada
+      document.querySelectorAll('select[name*="tahun"]').forEach(select => {
+        const currentValue = select.value;
+        select.innerHTML = generateTahunOptions(tahunMulai, tahunAkhir);
+        
+        // Restore value jika masih valid
+        if (currentValue && tahunMulai && tahunAkhir) {
+          const currentTahun = parseInt(currentValue);
+          const mulai = parseInt(tahunMulai);
+          const akhir = parseInt(tahunAkhir);
+          
+          if (currentTahun >= mulai && currentTahun <= akhir) {
+            select.value = currentValue;
+          }
+        }
+      });
+    }
+
     // Fungsi untuk mengupdate penomoran label secara real-time
     function updateLabels() {
       document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
@@ -215,17 +314,53 @@
         <div class="indikator-sasaran-rkt-section">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
+          </div>
+          <div class="indikator-sasaran-rkt-container">
+            <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="fw-medium">Indikator Sasaran</label>
+                <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Indikator Sasaran</label>
+                <textarea class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Satuan</label>
+                  <select class="form-select" required>
+                    ` + generateSatuanOptions() + `
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Tahun Target</label>
+                  <select class="form-select tahun-select" required>
+                    <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Target</label>
+                  <input type="text" class="form-control" placeholder="Nilai target" required>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
             <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
               <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
             </button>
           </div>
-          <div class="indikator-sasaran-rkt-container"></div>
         </div>
       `;
       
       sasaranContainer.appendChild(newSasaran);
       updateLabels();
       updateFormNames();
+      
+      // Update dropdown tahun untuk sasaran baru
+      updateAllTahunDropdowns();
     });
 
     // Fungsi untuk menambahkan indikator sasaran RKT
@@ -248,23 +383,14 @@
         <div class="row mb-3">
           <div class="col-md-4">
             <label class="form-label">Satuan</label>
-            <select class="form-control" required>
-              <option value="">Pilih Satuan</option>
-              <option value="1">Persen</option>
-              <option value="2">Nilai</option>
-              <option value="3">Predikat</option>
-              <option value="4">Unit</option>
+            <select class="form-select" required>
+              ` + generateSatuanOptions() + `
             </select>
           </div>
           <div class="col-md-4">
             <label class="form-label">Tahun Target</label>
-            <select class="form-select" required>
-              <option value="">Pilih Tahun</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-              <option value="2029">2029</option>
+            <select class="form-select tahun-select" required>
+              <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
             </select>
           </div>
           <div class="col-md-4">
@@ -277,7 +403,15 @@
       indikatorContainer.appendChild(newIndikator);
       updateLabels();
       updateFormNames();
+      
+      // Update dropdown tahun untuk indikator baru
+      updateAllTahunDropdowns();
     }
+
+    // Event listener untuk perubahan sasaran RPJMD
+    document.getElementById('rpjmd-sasaran-select').addEventListener('change', function() {
+      updateAllTahunDropdowns();
+    });
 
     // Event delegation untuk semua tombol
     document.addEventListener('click', function(e) {
@@ -310,6 +444,102 @@
     document.addEventListener('DOMContentLoaded', function() {
       updateLabels();
       updateFormNames();
+      
+      // Initialize dropdown tahun
+      updateAllTahunDropdowns();
+    });
+
+    // Form validation dan submit handler
+    document.getElementById('rkt-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Validasi RPJMD Sasaran
+      const rpjmdSasaranId = document.querySelector('select[name="rpjmd_sasaran_id"]').value;
+      if (!rpjmdSasaranId) {
+        alert('Pilih Sasaran RPJMD terlebih dahulu');
+        return false;
+      }
+
+      // Validasi minimal 1 sasaran RKT
+      const sasaranItems = document.querySelectorAll('.sasaran-rkt-item');
+      if (sasaranItems.length === 0) {
+        alert('Minimal harus ada 1 Sasaran RKT');
+        return false;
+      }
+
+      // Validasi setiap sasaran RKT harus diisi
+      let isValid = true;
+      sasaranItems.forEach((sasaran, index) => {
+        const sasaranText = sasaran.querySelector('textarea[name*="sasaran"]');
+        if (!sasaranText || !sasaranText.value.trim()) {
+          alert(`Sasaran RKT ${index + 1} harus diisi`);
+          isValid = false;
+          return;
+        }
+
+        // Validasi minimal 1 indikator sasaran per sasaran RKT
+        const indikatorItems = sasaran.querySelectorAll('.indikator-sasaran-rkt-item');
+        if (indikatorItems.length === 0) {
+          alert(`Sasaran RKT ${index + 1} harus memiliki minimal 1 Indikator Sasaran`);
+          isValid = false;
+          return;
+        }
+
+        // Validasi setiap indikator sasaran harus diisi lengkap
+        indikatorItems.forEach((indikator, indikatorIndex) => {
+          const indikatorText = indikator.querySelector('textarea[name*="indikator_sasaran"]');
+          const satuan = indikator.querySelector('select[name*="satuan"]');
+          const tahun = indikator.querySelector('select[name*="tahun"]');
+          const target = indikator.querySelector('input[name*="target"]');
+
+          if (!indikatorText || !indikatorText.value.trim()) {
+            alert(`Indikator Sasaran ${index + 1}.${indikatorIndex + 1} harus diisi`);
+            isValid = false;
+            return;
+          }
+          if (!satuan || !satuan.value) {
+            alert(`Satuan untuk Indikator Sasaran ${index + 1}.${indikatorIndex + 1} harus dipilih`);
+            isValid = false;
+            return;
+          }
+          if (!tahun || !tahun.value) {
+            alert(`Tahun untuk Indikator Sasaran ${index + 1}.${indikatorIndex + 1} harus dipilih`);
+            isValid = false;
+            return;
+          }
+          
+          // Validasi tahun harus dalam periode RPJMD
+          const sasaranSelect = document.getElementById('rpjmd-sasaran-select');
+          const selectedOption = sasaranSelect.options[sasaranSelect.selectedIndex];
+          
+          if (selectedOption && selectedOption.value) {
+            const tahunMulai = parseInt(selectedOption.getAttribute('data-tahun-mulai'));
+            const tahunAkhir = parseInt(selectedOption.getAttribute('data-tahun-akhir'));
+            const selectedTahun = parseInt(tahun.value);
+            
+            if (selectedTahun < tahunMulai || selectedTahun > tahunAkhir) {
+              alert(`Tahun untuk Indikator Sasaran ${index + 1}.${indikatorIndex + 1} harus dalam periode ${tahunMulai}-${tahunAkhir}`);
+              isValid = false;
+              return;
+            }
+          }
+          if (!target || !target.value.trim()) {
+            alert(`Target untuk Indikator Sasaran ${index + 1}.${indikatorIndex + 1} harus diisi`);
+            isValid = false;
+            return;
+          }
+        });
+      });
+
+      if (!isValid) {
+        return false;
+      }
+
+      // Konfirmasi sebelum submit
+      const confirmed = confirm('Apakah Anda yakin ingin menyimpan data RKT ini?');
+      if (confirmed) {
+        this.submit();
+      }
     });
   </script>
 </body>

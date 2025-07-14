@@ -185,6 +185,20 @@ class RpjmdModel extends Model
             ->getRowArray();
     }
 
+    /**
+     * Get all RPJMD Sasaran with periode information
+     */
+    public function getAllSasaranWithPeriode()
+    {
+        return $this->db->table('rpjmd_sasaran')
+            ->select('rpjmd_sasaran.id, rpjmd_sasaran.sasaran_rpjmd, rpjmd_misi.tahun_mulai, rpjmd_misi.tahun_akhir')
+            ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.rpjmd_tujuan_id')
+            ->join('rpjmd_misi', 'rpjmd_misi.id = rpjmd_tujuan.rpjmd_misi_id')
+            ->orderBy('rpjmd_sasaran.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
     // ==================== RPJMD INDIKATOR SASARAN ====================
     
     /**
@@ -1249,5 +1263,38 @@ class RpjmdModel extends Model
         }
         
         return null; // ID not found in any table
+    }
+
+    /**
+     * Get complete RPJMD hierarchy structure for completed RPJMD only
+     */
+    public function getCompletedRpjmdStructure()
+    {
+        $misiList = $this->getCompletedMisi();
+        
+        foreach ($misiList as &$misi) {
+            $misi['tujuan'] = $this->getTujuanByMisiId($misi['id']);
+            
+            if (!empty($misi['tujuan']) && is_array($misi['tujuan'])) {
+                foreach ($misi['tujuan'] as &$tujuan) {
+                    $tujuan['indikator_tujuan'] = $this->getIndikatorTujuanByTujuanId($tujuan['id']);
+                    $tujuan['sasaran'] = $this->getSasaranByTujuanId($tujuan['id']);
+                    
+                    if (!empty($tujuan['sasaran']) && is_array($tujuan['sasaran'])) {
+                        foreach ($tujuan['sasaran'] as &$sasaran) {
+                            $sasaran['indikator_sasaran'] = $this->getIndikatorSasaranBySasaranId($sasaran['id']);
+                            
+                            if (!empty($sasaran['indikator_sasaran']) && is_array($sasaran['indikator_sasaran'])) {
+                                foreach ($sasaran['indikator_sasaran'] as &$indikator) {
+                                    $indikator['target_tahunan'] = $this->getTargetTahunanByIndikatorId($indikator['id']);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return $misiList;
     }
 }

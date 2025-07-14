@@ -8,6 +8,47 @@ class User extends BaseController
     {
         return view('user/dashboard');
     }
+    
+    public function rpjmd()
+    {
+        $rpjmdModel = new \App\Models\RpjmdModel();
+        
+        // Ambil data RPJMD yang sudah selesai dengan struktur lengkap
+        $completedRpjmd = $rpjmdModel->getCompletedRpjmdStructure();
+        
+        // Jika tidak ada data selesai, tampilkan pesan
+        if (empty($completedRpjmd)) {
+            return view('user/rpjmd', [
+                'rpjmdGrouped' => [],
+                'message' => 'Belum ada data RPJMD yang telah selesai.'
+            ]);
+        }
+        
+        // Group data by period (tahun_mulai - tahun_akhir) seperti di admin kabupaten
+        $groupedData = [];
+        foreach ($completedRpjmd as $misi) {
+            $periodKey = $misi['tahun_mulai'] . '-' . $misi['tahun_akhir'];
+            
+            if (!isset($groupedData[$periodKey])) {
+                $groupedData[$periodKey] = [
+                    'period' => $periodKey,
+                    'tahun_mulai' => $misi['tahun_mulai'],
+                    'tahun_akhir' => $misi['tahun_akhir'],
+                    'years' => range($misi['tahun_mulai'], $misi['tahun_akhir']),
+                    'misi_data' => []
+                ];
+            }
+            
+            $groupedData[$periodKey]['misi_data'][] = $misi;
+        }
+        
+        // Sort periods by tahun_mulai
+        ksort($groupedData);
+        
+        return view('user/rpjmd', [
+            'rpjmdGrouped' => $groupedData
+        ]);
+    }
 
     public function rkt()
     {
@@ -32,76 +73,6 @@ class User extends BaseController
 
         return view('user/rkt', [
             'rktData' => $rktData
-        ]);
-    }
-
-    public function rpjmd()
-    {
-        $rpjmdModel = new \App\Models\RpjmdModel();
-        
-        // Ambil data RPJMD yang sudah selesai saja
-        $completedRpjmd = $rpjmdModel->getCompletedMisi();
-        
-        // Jika tidak ada data selesai, tampilkan pesan
-        if (empty($completedRpjmd)) {
-            return view('user/rpjmd', [
-                'tahunList' => [],
-                'rpjmdData' => [],
-                'message' => 'Belum ada data RPJMD yang telah selesai.'
-            ]);
-        }
-        
-        // Proses data untuk tampilan
-        $processedData = [];
-        $tahunSet = [];
-        
-        foreach ($completedRpjmd as $misi) {
-            // Kumpulkan tahun dari periode
-            if (isset($misi['tahun_mulai']) && isset($misi['tahun_akhir'])) {
-                for ($year = $misi['tahun_mulai']; $year <= $misi['tahun_akhir']; $year++) {
-                    $tahunSet[$year] = $year;
-                }
-            }
-            
-            // Proses data misi dan strukturnya
-            if (isset($misi['tujuan']) && !empty($misi['tujuan'])) {
-                foreach ($misi['tujuan'] as $tujuan) {
-                    if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
-                        foreach ($tujuan['sasaran'] as $sasaran) {
-                            if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
-                                foreach ($sasaran['indikator_sasaran'] as $indikator) {
-                                    $targetCapaian = [];
-                                    
-                                    // Siapkan target capaian per tahun
-                                    if (isset($indikator['target_tahunan'])) {
-                                        foreach ($indikator['target_tahunan'] as $target) {
-                                            $targetCapaian[$target['tahun']] = $target['target'];
-                                        }
-                                    }
-                                    
-                                    $processedData[] = [
-                                        'misi' => $misi['misi'],
-                                        'tujuan' => $tujuan['tujuan_rpjmd'],
-                                        'indikator' => $tujuan['indikator_tujuan'][0]['indikator_tujuan'] ?? '-',
-                                        'target' => $indikator['target_akhir'] ?? '-',
-                                        'sasaran' => $sasaran['sasaran_rpjmd'],
-                                        'strategi' => $indikator['strategi'] ?? '-',
-                                        'target_capaian' => $targetCapaian
-                                    ];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        $tahunList = array_values($tahunSet);
-        sort($tahunList);
-        
-        return view('user/rpjmd', [
-            'tahunList' => $tahunList,
-            'rpjmdData' => $processedData
         ]);
     }
 

@@ -1,3 +1,18 @@
+function generateSatuanOptions() {
+    const satuanOptions = [
+        { value: "", text: "Pilih Satuan" },
+        { value: "Unit", text: "Unit" },
+        { value: "Nilai", text: "Nilai" },
+        { value: "Persen", text: "Persen" },
+        { value: "Predikat", text: "Predikat" }
+    ];
+    
+    return satuanOptions.map(option => 
+        `<option value="${option.value}">${option.text}</option>`
+    ).join('\n                        ');
+}
+
+
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
     document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
@@ -109,11 +124,7 @@ function addIndikatorSasaranRKT(sasaranElement) {
         <div class="col-md-4">
         <label class="form-label">Satuan</label>
         <select class="form-control" required>
-            <option value="">Pilih Satuan</option>
-            <option value="1">Persen</option>
-            <option value="2">Nilai</option>
-            <option value="3">Predikat</option>
-            <option value="4">Unit</option>
+            '+ generateSatuanOptions() +'
         </select>
         </div>
         <div class="col-md-4">

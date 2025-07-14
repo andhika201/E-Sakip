@@ -37,12 +37,5 @@
     <a href="<?= base_url('logout') ?>" class="sidebar-link text-danger"><i class="fas fa-sign-out-alt me-2"></i> Keluar</a>
   </div>
 </div> 
-
-  <!-- Tombol Logout -->
-  <div class="p-3 border-top">
-    <a href="<?= base_url('logout') ?>" class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
-      <i class="fas fa-sign-out-alt me-2"></i>
-      <span>Keluar</span>
-    </a>
   </div>
 </div>

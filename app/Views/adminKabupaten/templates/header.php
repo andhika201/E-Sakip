@@ -27,7 +27,7 @@
   </div>
 </header>
 
-<!-- Overlay untuk sidebar -->
+<!-- Overlay -->
 <div id="overlay" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none" style="z-index: 1030;" onclick="toggleSidebar()"></div>
 
 
@@ -35,16 +35,16 @@
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
+    const body = document.body;
+
     sidebar.classList.toggle('sidebar-hidden');
     overlay.classList.toggle('d-none');
+    body.classList.toggle('sidebar-open');
   }
 
-  // Tutup otomatis sidebar jika layar kecil dan klik link
-  document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+  document.querySelectorAll('.sidebar-link').forEach(link => {
     link.addEventListener('click', () => {
-      if (window.innerWidth <= 768) {
-        toggleSidebar();
-      }
+      if (window.innerWidth <= 768) toggleSidebar();
     });
   });
 </script>

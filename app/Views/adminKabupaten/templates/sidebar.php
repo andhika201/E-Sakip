@@ -21,23 +21,22 @@
 </style>
 
 <!-- Sidebar -->
-<div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between sidebar-hidden shadow">
-  <!-- Logo dan Navigasi -->
-  <div>
-    <div class="p-3 border-bottom">
-      <h2 class="h5 fw-bold text-dark mb-0">Admin Kabupaten</h2>
-    </div>
-    <nav class="p-3">
-      <div class="d-grid gap-2">
-        <a href="<?= base_url('adminkab/dashboard') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
-        <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD Kabupaten</a>
-        <a href="<?= base_url('adminkab/rkt') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKT</a>
-        <a href="<?= base_url('adminkab/pk_bupati') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Bupati</a>
-        <a href="<?= base_url('adminkab/lakip_kabupaten') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP Kabupaten</a>
-        <a href="<?= base_url('adminkab/tentang_kami') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang Kami</a>
-      </div>
-    </nav>
+<div id="sidebar" class="sidebar position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between sidebar-hidden">
+  <div class="p-3 border-bottom text-center">
+    <h4 class="text-white">e-SAKIP</h4>
   </div>
+  <nav class="flex-grow-1 px-3 py-4">
+    <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link active"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a>
+    <a href="<?= base_url('adminkab/rpjmd') ?>" class="sidebar-link"><i class="fas fa-book me-2"></i> RPJMD Kabupaten</a>
+    <a href="<?= base_url('adminkab/rkt') ?>" class="sidebar-link"><i class="fas fa-tasks me-2"></i> RKT</a>
+    <a href="<?= base_url('adminkab/pk_bupati') ?>" class="sidebar-link"><i class="fas fa-file-alt me-2"></i> PK Bupati</a>
+    <a href="<?= base_url('adminkab/lakip_kabupaten') ?>" class="sidebar-link"><i class="fas fa-chart-line me-2"></i> LAKIP Kabupaten</a>
+    <a href="<?= base_url('adminkab/tentang_kami') ?>" class="sidebar-link"><i class="fas fa-info-circle me-2"></i> Tentang Kami</a>
+  </nav>
+  <div class="p-3 border-top">
+    <a href="<?= base_url('logout') ?>" class="sidebar-link text-danger"><i class="fas fa-sign-out-alt me-2"></i> Keluar</a>
+  </div>
+</div> 
 
   <!-- Tombol Logout -->
   <div class="p-3 border-top">

@@ -26,7 +26,7 @@
   <!-- Atas: Logo + Navigasi -->
   <div>
     <div class="p-3 border-bottom text-center">
-     background: url("<?= base_url('assets/images/logo1.jpg') ?>") no-repeat center center fixed;
+      <img src="<?= base_url('assets/images/logo.png') ?>" alt="Logo" class="mb-2" style="width: 64px; height: auto;">
       <h2 class="h5 fw-bold text-dark mb-0">PRISMA PRINGSEWU</h2>
       <p class="text-muted small">Sistem Manajemen Akuntabilitas</p>
     </div>

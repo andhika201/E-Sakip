@@ -76,8 +76,7 @@ class UserModel extends Model
      */
     public function findUserByUsername($username)
     {
-        return $this->where('username', $username)
-                   ->first();
+        return $this->where('username', $username)->first();
     }
 
     /**
@@ -85,8 +84,7 @@ class UserModel extends Model
      */
     public function getUsersByRole($role)
     {
-        return $this->where('role', $role)
-                   ->findAll();
+        return $this->where('role', $role)->findAll();
     }
 
     /**
@@ -95,8 +93,8 @@ class UserModel extends Model
     public function getAdminOpdByOpdId($opdId)
     {
         return $this->where('role', 'admin_opd')
-                   ->where('opd_id', $opdId)
-                   ->findAll();
+                    ->where('opd_id', $opdId)
+                    ->findAll();
     }
 
     /**
@@ -105,8 +103,8 @@ class UserModel extends Model
     public function getAdminKabupaten()
     {
         return $this->where('role', 'admin_kabupaten')
-                   ->where('opd_id', null)
-                   ->findAll();
+                    ->where('opd_id', null)
+                    ->findAll();
     }
 
     /**

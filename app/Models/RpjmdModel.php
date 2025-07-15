@@ -254,20 +254,36 @@ class RpjmdModel extends Model
      */
     public function getCompleteRpjmdStructure()
     {
-        $misiList = $this->getAllMisi();
-        
+        $misiList = $this->db->table('rpjmd_misi')->get()->getResultArray();
+
         foreach ($misiList as &$misi) {
-            $misi['tujuan'] = $this->getTujuanByMisiId($misi['id']);
-            
+            $misi['tujuan'] = $this->db->table('rpjmd_tujuan')
+                ->where('misi_id', $misi['id'])
+                ->get()
+                ->getResultArray();
+
             foreach ($misi['tujuan'] as &$tujuan) {
-                $tujuan['indikator_tujuan'] = $this->getIndikatorTujuanByTujuanId($tujuan['id']);
-                $tujuan['sasaran'] = $this->getSasaranByTujuanId($tujuan['id']);
-                
+                $tujuan['indikator_tujuan'] = $this->db->table('rpjmd_indikator_tujuan')
+                    ->where('tujuan_id', $tujuan['id'])
+                    ->get()
+                    ->getResultArray();
+
+                $tujuan['sasaran'] = $this->db->table('rpjmd_sasaran')
+                    ->where('tujuan_id', $tujuan['id'])
+                    ->get()
+                    ->getResultArray();
+
                 foreach ($tujuan['sasaran'] as &$sasaran) {
-                    $sasaran['indikator_sasaran'] = $this->getIndikatorSasaranBySasaranId($sasaran['id']);
-                    
+                    $sasaran['indikator_sasaran'] = $this->db->table('rpjmd_indikator_sasaran')
+                        ->where('sasaran_id', $sasaran['id'])
+                        ->get()
+                        ->getResultArray();
+
                     foreach ($sasaran['indikator_sasaran'] as &$indikator) {
-                        $indikator['target_tahunan'] = $this->getTargetTahunanByIndikatorId($indikator['id']);
+                        $indikator['target_tahunan'] = $this->db->table('rpjmd_target')
+                            ->where('indikator_sasaran_id', $indikator['id'])
+                            ->get()
+                            ->getResultArray();
                     }
                 }
             }

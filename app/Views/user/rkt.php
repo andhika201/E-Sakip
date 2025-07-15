@@ -7,7 +7,6 @@
         RENCANA KINERJA TAHUNAN
       </h4>
 
-      <!-- Tabel RKT -->
       <div class="table-responsive">
         <table class="table table-bordered align-middle text-center">
           <thead class="table-success">
@@ -15,17 +14,22 @@
               <th style="width: 5%;">No</th>
               <th>Sasaran</th>
               <th>Indikator Sasaran</th>
-              <th>Target Capaian Per Tahun</th>
+              <th>Tahun</th>
+              <th>Target</th>
             </tr>
           </thead>
           <tbody>
-            <?php $no = 1; foreach ($rktData as $item): ?>
-              <tr>
-                <td><?= $no++ ?></td>
-                <td><?= esc($item['sasaran']) ?></td>
-                <td><?= esc($item['indikator']) ?></td>
-                <td><?= esc($item['target']) ?></td>
-              </tr>
+            <?php $no = 1; ?>
+            <?php foreach ($grouped_rkt as $sasaran): ?>
+              <?php foreach ($sasaran['indikator'] as $indikator): ?>
+                <tr>
+                  <td><?= $no++ ?></td>
+                  <td><?= esc($sasaran['sasaran']) ?></td>
+                  <td><?= esc($indikator['indikator_sasaran']) ?></td>
+                  <td><?= esc($indikator['tahun']) ?></td>
+                  <td><?= esc($indikator['target']) ?></td>
+                </tr>
+              <?php endforeach; ?>
             <?php endforeach; ?>
           </tbody>
         </table>

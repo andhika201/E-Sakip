@@ -65,19 +65,19 @@
     <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'dashboard' ? 'active' : '') ?>">
       <i class="fas fa-tachometer-alt me-2"></i> Dashboard
     </a>
-    <a href="<?= base_url('adminkab/rpjmd') ?>" class="sidebar-link <?= ($page == 'rpjmd' ? 'active' : '') ?>">
+     <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'rpjmd' ? 'active' : '') ?>">
       <i class="fas fa-book me-2"></i> RPJMD Kabupaten
     </a>
-    <a href="<?= base_url('adminkab/rkt') ?>" class="sidebar-link <?= ($page == 'rkt' ? 'active' : '') ?>">
+   <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'rkt' ? 'active' : '') ?>">
       <i class="fas fa-tasks me-2"></i> RKT
     </a>
-    <a href="<?= base_url('adminkab/pk_bupati') ?>" class="sidebar-link <?= ($page == 'pk_bupati' ? 'active' : '') ?>">
+     <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'pk_bupati' ? 'active' : '') ?>">
       <i class="fas fa-file-alt me-2"></i> PK Bupati
     </a>
-    <a href="<?= base_url('adminkab/lakip_kabupaten') ?>" class="sidebar-link <?= ($page == 'lakip_kabupaten' ? 'active' : '') ?>">
+    <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'lakip_kabupaten' ? 'active' : '') ?>">
       <i class="fas fa-chart-line me-2"></i> LAKIP Kabupaten
     </a>
-    <a href="<?= base_url('adminkab/tentang_kami') ?>" class="sidebar-link <?= ($page == 'tentang_kami' ? 'active' : '') ?>">
+    <a href="<?= base_url('adminkab/dashboard') ?>" class="sidebar-link <?= (isset($page) && $page == 'tentang_kami' ? 'active' : '') ?>">
       <i class="fas fa-info-circle me-2"></i> Tentang Kami
     </a>
   </nav>

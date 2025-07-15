@@ -1,5 +1,6 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
 <style>
   body.sidebar-open #main-content {
     margin-left: 240px;
@@ -17,9 +18,6 @@
     width: 240px;
     background-color: #1e1e2d;
     color: #fff;
-    height: 100vh;
-    position: fixed;
-    z-index: 1040;
   }
 
   .sidebar a {
@@ -52,20 +50,8 @@
       height: 100vh;
       z-index: 1040;
     }
-
     body.sidebar-open #main-content {
       margin-left: 0;
     }
-  }
-
-  .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1030;
-    display: none;
   }
 </style>

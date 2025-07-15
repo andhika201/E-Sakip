@@ -17,6 +17,35 @@ class Login extends BaseController
         return view('login');
     }
 
+    private function verifyRecaptcha($response)
+    {
+        $secretKey = env('RECAPTCHA_SECRET_KEY');
+        
+        if (empty($secretKey)) {
+            log_message('error', 'RECAPTCHA_SECRET_KEY not found in environment variables');
+            return false;
+        }
+        
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+        
+        $data = [
+            'secret' => $secretKey,
+            'response' => $response,
+            'remoteip' => $this->request->getIPAddress()
+        ];
+        
+        try {
+            $client = \Config\Services::curlrequest();
+            $response = $client->post($url, ['form_params' => $data]);
+            $result = json_decode($response->getBody(), true);
+            
+            return isset($result['success']) && $result['success'] === true;
+        } catch (\Exception $e) {
+            log_message('error', 'reCAPTCHA verification failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function authenticate()
     {
         // Validasi input
@@ -33,18 +62,38 @@ class Login extends BaseController
 
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
+        $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
+    
+        // Validasi CAPTCHA
+        if (empty($recaptchaResponse)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Silakan verifikasi CAPTCHA terlebih dahulu');
+        }
+        
+        if (!$this->verifyRecaptcha($recaptchaResponse)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Verifikasi CAPTCHA gagal. Silakan coba lagi');
+        }
 
         // Load model untuk cek user di database
         $userModel = new \App\Models\UserModel();
         $user = $userModel->where('username', $username)->first();
 
+        // Debug: cek struktur data user
+        if ($user) {
+            log_message('debug', 'User data structure: ' . print_r($user, true));
+        }
+
         // Cek apakah user ditemukan dan password benar
         if ($user && password_verify($password, $user['password'])) {
-            // Set session data
+            // Set session data dengan field yang benar
             $sessionData = [
-                'user_id' => $user['id'],
+                'user_id' => $user['user_id'], // Menggunakan user_id sesuai migration
                 'username' => $user['username'],
                 'role' => $user['role'],
+                'opd_id' => isset($user['opd_id']) ? $user['opd_id'] : null,
                 'isLoggedIn' => true
             ];
             

@@ -117,7 +117,7 @@
                     <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
                     <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                     <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                    <th rowspan="2" class="border p-2 align-middle">STRATEGI</th>
+                    <th rowspan="2" class="border p-2 align-middle">Definisi Operasional</th>
                     <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                     <th colspan="5" class="border p-2" id="year-header-span">TARGET CAPAIAN PER TAHUN</th>
                     <th rowspan="2" class="border p-2 align-middle">ACTION</th>
@@ -206,7 +206,7 @@
                                                         <?php endif; ?>
                                                         
                                                         <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                                                        <td class="border p-2 align-top text-start"><?= esc($indikator['strategi']) ?></td>
+                                                        <td class="border p-2 align-top text-start"><?= esc($indikator['definisi_op']) ?></td>
                                                         <td class="border p-2 align-top text-start"><?= esc($indikator['satuan']) ?></td>
                                                         
                                                         <!-- Target per tahun (hanya untuk periode yang dipilih) -->

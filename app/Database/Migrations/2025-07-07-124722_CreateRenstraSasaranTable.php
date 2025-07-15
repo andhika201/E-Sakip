@@ -27,7 +27,7 @@ class CreateRenstraSasaranTable extends Migration
                 'unsigned' => true,
                 'null' => false,
             ],
-            'indikator_sasaran' => [
+            'sasaran' => [
                 'type' => 'TEXT',
                 'null' => false,
             ],

@@ -10,14 +10,17 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
-  <!-- Navbar/Header -->
-  <?= $this->include('adminKabupaten/templates/header.php'); ?>
-
   <!-- Sidebar -->
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
-  <!-- Konten Utama -->
-  <main class="flex-fill p-4 mt-2">
+  <!-- Content Wrapper -->
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+    
+    <!-- Navbar/Header -->
+    <?= $this->include('adminKabupaten/templates/header.php'); ?>
+
+    <!-- Konten Utama -->
+    <main class="flex-fill p-4 mt-2">
     <div class="bg-white rounded shadow p-4">
       <h2 class="h3 fw-bold text-dark mb-3">Selamat Datang di e-SAKIP</h2>
       <p class="text-muted">Sistem Akuntabilitas Kinerja Instansi Pemerintah - Admin Kabupaten</p>
@@ -53,5 +56,8 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+  
+  </div> <!-- End Content Wrapper -->
+
 </body>
 </html>

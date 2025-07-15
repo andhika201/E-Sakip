@@ -14,14 +14,6 @@
 
     <!-- Right Side -->
     <div class="d-flex align-items-center">
-      <div class="position-relative me-4">
-        <input type="text" placeholder="Cari data..." class="form-control ps-5" style="width: 250px;" />
-        <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-      </div>
-      <div class="position-relative me-4">
-        <i class="fas fa-bell text-white fs-5"></i>
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">2</span>
-      </div>
       <div class="d-flex align-items-center">
         <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
           <i class="fas fa-user text-success"></i>

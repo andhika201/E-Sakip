@@ -7,7 +7,7 @@ use CodeIgniter\Model;
 class UserModel extends Model
 {
     protected $table = 'users';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'user_id'; // Sesuai dengan migration
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
@@ -18,6 +18,7 @@ class UserModel extends Model
         'email',
         'role',
         'opd_id',
+        'is_active',
     ];
 
     // Dates

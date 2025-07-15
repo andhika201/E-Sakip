@@ -7,6 +7,7 @@
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             background-color:rgb(255, 255, 255);
@@ -95,6 +96,7 @@
         <?php endif; ?>
         
         <form method="POST" action="<?= base_url('login/authenticate') ?>">
+            <?= csrf_field() ?>
             <div class="mb-3 position-relative">
                 <input type="text" name="username" class="form-control ps-4 input-border-green" placeholder="Username" required>
                 <i class="fas fa-user position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
@@ -102,6 +104,10 @@
             <div class="mb-3 position-relative">
                 <input type="password" name="password" class="form-control ps-4 input-border-green" placeholder="Password" required>
                 <i class="fas fa-lock position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+            </div>
+            <!-- Google reCAPTCHA -->
+            <div class="mb-3 d-flex justify-content-center">
+                <div class="g-recaptcha" data-sitekey="<?= env('RECAPTCHA_SITE_KEY') ?>"></div>
             </div>
             <button type="submit" class="btn btn-success btn-login">Log In</button>
         </form>

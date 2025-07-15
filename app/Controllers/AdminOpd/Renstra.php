@@ -4,7 +4,7 @@ namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Models\RenstraModel;
+use App\Models\Opd\RenstraModel;
 use App\Models\RpjmdModel;
 use App\Models\OpdModel;
 
@@ -25,29 +25,50 @@ class Renstra extends BaseController
 
     public function index()
     {
-        // Get all Renstra data for table display
-        $renstraData = $this->renstraModel->getRenstraForTable();
+        // Get OPD ID from session (logged in user's OPD)
+        $session = session();
+        $opdId = $session->get('opd_id');
         
-        // Get OPD list for filter
-        $opdList = $this->opdModel->getAllOpd();
-        
-        // Group data by period if needed
-        $groupedData = [];
-        foreach ($renstraData as $data) {
-            $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
-            
-            if (!isset($groupedData[$periodKey])) {
-                $groupedData[$periodKey] = [
-                    'period' => $periodKey,
-                    'tahun_mulai' => $data['tahun_mulai'],
-                    'tahun_akhir' => $data['tahun_akhir'],
-                    'years' => range($data['tahun_mulai'], $data['tahun_akhir']),
-                    'renstra_data' => []
-                ];
-            }
-            
-            $groupedData[$periodKey]['renstra_data'][] = $data;
+        // If no OPD ID in session, redirect to login or show error
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
+        
+        // Get Renstra data filtered by user's OPD
+        $renstraData = $this->renstraModel->getRenstraForTable($opdId);
+        
+        // Debug: Log renstra data
+        log_message('debug', 'OPD ID: ' . $opdId . ', Renstra data count: ' . count($renstraData));
+        if (empty($renstraData)) {
+            log_message('debug', 'No Renstra data found for OPD ID: ' . $opdId);
+        } else {
+            log_message('debug', 'Sample Renstra data: ' . print_r($renstraData[0], true));
+        }
+        
+        // Get current OPD info
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
+        }
+        
+        // Set title based on current OPD
+        $titleSuffix = $currentOpd['nama_opd'];            // Group data by period
+            $groupedData = [];
+            foreach ($renstraData as $data) {
+                $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
+                
+                if (!isset($groupedData[$periodKey])) {
+                    $groupedData[$periodKey] = [
+                        'period' => $periodKey,
+                        'tahun_mulai' => $data['tahun_mulai'],
+                        'tahun_akhir' => $data['tahun_akhir'],
+                        'years' => range($data['tahun_mulai'], $data['tahun_akhir']),
+                        'renstra_data' => []
+                    ];
+                }
+                
+                $groupedData[$periodKey]['renstra_data'][] = $data;
+            }
         
         // Sort periods
         ksort($groupedData);
@@ -55,8 +76,8 @@ class Renstra extends BaseController
         $data = [
             'renstra_data' => $renstraData,
             'grouped_data' => $groupedData,
-            'opd_list' => $opdList,
-            'title' => 'Rencana Strategis'
+            'current_opd' => $currentOpd,
+            'title' => 'Rencana Strategis - ' . $titleSuffix
         ];
 
         return view('adminOpd/renstra/renstra', $data);
@@ -64,8 +85,29 @@ class Renstra extends BaseController
 
     public function tambah_renstra()
     {
-        // Get RPJMD Sasaran for dropdown
-        $rpjmdSasaran = $this->rpjmdModel->getAllSasaran();
+        // Get OPD ID from session
+        $session = session();
+        $opdId = $session->get('opd_id');
+        
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+        
+        // Get current OPD info
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
+        }
+        
+        // Get RPJMD Sasaran from completed Misi only
+        $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
+        
+        // Debug RPJMD Sasaran data
+        if (empty($rpjmdSasaran)) {
+            log_message('debug', 'No RPJMD Sasaran found from completed Misi. Please check if there are RPJMD Misi with status "selesai"');
+        } else {
+            log_message('debug', 'Found ' . count($rpjmdSasaran) . ' RPJMD Sasaran records from completed Misi');
+        }
         
         // Get satuan options
         $satuanOptions = [
@@ -83,7 +125,8 @@ class Renstra extends BaseController
         $data = [
             'rpjmd_sasaran' => $rpjmdSasaran,
             'satuan_options' => $satuanOptions,
-            'title' => 'Tambah Rencana Strategis'
+            'current_opd' => $currentOpd,
+            'title' => 'Tambah Rencana Strategis - ' . $currentOpd['nama_opd']
         ];
 
         return view('adminOpd/renstra/tambah_renstra', $data);
@@ -95,8 +138,16 @@ class Renstra extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Sasaran Renstra tidak ditemukan');
         }
 
-        // Get Renstra data by ID
-        $renstraData = $this->renstraModel->getCompleteRenstraStructure();
+        // Get OPD ID from session
+        $session = session();
+        $opdId = $session->get('opd_id');
+        
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // Get Renstra data filtered by user's OPD
+        $renstraData = $this->renstraModel->getCompleteRenstraStructure($opdId);
         $currentRenstra = null;
         
         foreach ($renstraData as $data) {
@@ -110,8 +161,8 @@ class Renstra extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Sasaran Renstra tidak ditemukan');
         }
 
-        // Get RPJMD Sasaran for dropdown
-        $rpjmdSasaran = $this->rpjmdModel->getAllSasaran();
+        // Get RPJMD Sasaran from completed Misi only
+        $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
         
         // Get satuan options
         $satuanOptions = [
@@ -147,21 +198,39 @@ class Renstra extends BaseController
         try {
             $data = $this->request->getPost();
             
+            // Debug: Log received data structure
+            log_message('debug', 'Received data: ' . print_r($data, true));
+            
             // Validate required fields
-            if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_awal']) || empty($data['tahun_akhir'])) {
+            if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
                 throw new \Exception('Data tidak lengkap');
             }
 
-            // Get OPD ID from session (assuming user is logged in)
+            // Validate sasaran_renstra structure
+            if (!isset($data['sasaran_renstra']) || !is_array($data['sasaran_renstra']) || empty($data['sasaran_renstra'])) {
+                throw new \Exception('Data sasaran renstra tidak ditemukan atau tidak valid');
+            }
+
+            // Validate first sasaran item
+            if (!isset($data['sasaran_renstra'][0]) || !isset($data['sasaran_renstra'][0]['sasaran'])) {
+                throw new \Exception('Field sasaran pada sasaran renstra pertama tidak ditemukan');
+            }
+
+            // Get OPD ID from session (logged in user's OPD)
             $session = session();
-            $opdId = $session->get('opd_id') ?? 1; // Default to 1 if not set
+            $opdId = $session->get('opd_id');
+            
+            // Validate OPD ID exists
+            if (!$opdId) {
+                throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
+            }
 
             // Prepare data for saving
             $saveData = [
                 'opd_id' => $opdId,
                 'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
                 'sasaran' => $data['sasaran_renstra'][0]['sasaran'] ?? '',
-                'tahun_mulai' => $data['tahun_awal'],
+                'tahun_mulai' => $data['tahun_mulai'],
                 'tahun_akhir' => $data['tahun_akhir'],
                 'indikator_sasaran' => []
             ];
@@ -236,20 +305,25 @@ class Renstra extends BaseController
             $data = $this->request->getPost();
             
             // Validate required fields
-            if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_awal']) || empty($data['tahun_akhir'])) {
+            if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
                 throw new \Exception('Data tidak lengkap');
             }
 
-            // Get OPD ID from session
+            // Get OPD ID from session (logged in user's OPD)
             $session = session();
-            $opdId = $session->get('opd_id') ?? 1;
+            $opdId = $session->get('opd_id');
+            
+            // Validate OPD ID exists
+            if (!$opdId) {
+                throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
+            }
 
             // Prepare data for updating
             $updateData = [
                 'opd_id' => $opdId,
                 'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
                 'sasaran' => $data['sasaran_renstra'][0]['sasaran'] ?? '',
-                'tahun_mulai' => $data['tahun_awal'],
+                'tahun_mulai' => $data['tahun_mulai'],
                 'tahun_akhir' => $data['tahun_akhir'],
                 'indikator_sasaran' => []
             ];
@@ -319,12 +393,45 @@ class Renstra extends BaseController
         }
 
         try {
+            // Get OPD ID from session
+            $session = session();
+            $opdId = $session->get('opd_id');
+            
+            if (!$opdId) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Session expired. Silakan login ulang.'
+                ]);
+            }
+
+            // Verify that the Renstra exists and belongs to user's OPD
+            $renstraData = $this->renstraModel->getSasaranById($id);
+            
+            if (!$renstraData) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Data Renstra tidak ditemukan'
+                ]);
+            }
+
+            // Check OPD ownership
+            if ($renstraData['opd_id'] != $opdId) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses untuk menghapus data Renstra ini'
+                ]);
+            }
+            //         'message' => 'Anda tidak memiliki akses untuk menghapus data ini'
+            //     ]);
+            // }
+
             $result = $this->renstraModel->deleteCompleteRenstra($id);
 
             if ($result) {
                 return $this->response->setJSON([
                     'status' => 'success',
-                    'message' => 'Data Renstra berhasil dihapus'
+                    'message' => 'Data Renstra berhasil dihapus',
+                    'redirect' => base_url('adminopd/renstra')
                 ]);
             } else {
                 throw new \Exception('Gagal menghapus data');
@@ -340,9 +447,21 @@ class Renstra extends BaseController
 
     // ==================== AJAX DATA ENDPOINTS ====================
 
-    public function getDataByOpd($opdId = null)
+    public function getDataByOpd()
     {
         try {
+            // Get OPD ID from session
+            $session = session();
+            $opdId = $session->get('opd_id');
+            
+            if (!$opdId) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Session expired. Silakan login ulang.'
+                ]);
+            }
+
+            // Get Renstra data filtered by user's OPD
             $renstraData = $this->renstraModel->getRenstraForTable($opdId);
             
             return $this->response->setJSON([
@@ -361,7 +480,7 @@ class Renstra extends BaseController
     public function getRpjmdSasaran()
     {
         try {
-            $rpjmdSasaran = $this->rpjmdModel->getAllSasaran();
+            $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
             
             return $this->response->setJSON([
                 'status' => 'success',
@@ -375,4 +494,42 @@ class Renstra extends BaseController
             ]);
         }
     }
+
+    public function getCurrentOpd()
+    {
+        try {
+            // Get OPD ID from session
+            $session = session();
+            $opdId = $session->get('opd_id');
+            
+            if (!$opdId) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Session expired. Silakan login ulang.'
+                ]);
+            }
+
+            // Get current user's OPD data
+            $opdData = $this->opdModel->find($opdId);
+            
+            if (!$opdData) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Data OPD tidak ditemukan'
+                ]);
+            }
+            
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $opdData
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
 }
+

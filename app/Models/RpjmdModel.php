@@ -161,6 +161,21 @@ class RpjmdModel extends Model
     }
 
     /**
+     * Get all RPJMD Sasaran from completed Misi only (for Renstra dropdown)
+     */
+    public function getAllSasaranFromCompletedMisi()
+    {
+        return $this->db->table('rpjmd_sasaran s')
+            ->select('s.*, t.tujuan_rpjmd, m.misi')
+            ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
+            ->join('rpjmd_misi m', 'm.id = t.misi_id')
+            ->where('m.status', 'selesai')
+            ->orderBy('s.tujuan_id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Get RPJMD Sasaran by Tujuan ID
      */
     public function getSasaranByTujuanId($tujuanId)
@@ -381,7 +396,7 @@ class RpjmdModel extends Model
                 ->join('rpjmd_misi m', 'm.id = t.misi_id')
                 ->groupStart()
                 ->like('is.indikator_sasaran', $keyword)
-                ->orLike('is.strategi', $keyword)
+                ->orLike('is.definisi_op', $keyword)
                 ->groupEnd()
                 ->get()
                 ->getResultArray()
@@ -680,7 +695,7 @@ class RpjmdModel extends Model
         $debugFile = WRITEPATH . 'debug_rpjmd.txt';
         
         // Validation
-        $required = ['sasaran_id', 'indikator_sasaran', 'strategi', 'satuan'];
+        $required = ['sasaran_id', 'indikator_sasaran', 'definisi_op', 'satuan'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
@@ -690,7 +705,7 @@ class RpjmdModel extends Model
         $insertData = [
             'sasaran_id' => $data['sasaran_id'],
             'indikator_sasaran' => $data['indikator_sasaran'],
-            'strategi' => $data['strategi'],
+            'definisi_op' => $data['definisi_op'],
             'satuan' => $data['satuan']
         ];
         
@@ -1010,7 +1025,7 @@ class RpjmdModel extends Model
                                                 $indikatorSasaranInfo = [
                                                     'sasaran_id' => $sasaranId,
                                                     'indikator_sasaran' => $indikatorSasaranData['indikator_sasaran'],
-                                                    'strategi' => $indikatorSasaranData['strategi'] ?? '',
+                                                    'definisi_op' => $indikatorSasaranData['definisi_op'] ?? '',
                                                     'satuan' => $indikatorSasaranData['satuan'] ?? ''
                                                 ];
                                                 

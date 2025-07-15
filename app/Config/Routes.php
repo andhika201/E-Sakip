@@ -85,8 +85,10 @@ $routes->get('adminopd/dashboard', 'AdminOpd::index');
 // Renstra Routes
 $routes->get('adminopd/renstra', 'AdminOpd\Renstra::index');
 $routes->get('adminopd/renstra/tambah', 'AdminOpd\Renstra::tambah_renstra');
-$routes->get('adminopd/renstra/edit', 'AdminOpd\Renstra::edit_renstra');
-$routes->post('adminopd/renstra/save', 'AdminOpd\Renstra::save_renstra');
+$routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\Renstra::edit_renstra/$1');
+$routes->post('adminopd/renstra/save', 'AdminOpd\Renstra::save');
+$routes->post('adminopd/renstra/update/(:num)', 'AdminOpd\Renstra::update/$1');
+$routes->delete('adminopd/renstra/delete/(:num)', 'AdminOpd\Renstra::delete/$1');
 
 // Renja Routes
 $routes->get('adminopd/renja', 'AdminOpd::renja');

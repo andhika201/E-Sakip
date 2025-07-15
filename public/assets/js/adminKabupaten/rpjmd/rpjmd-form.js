@@ -104,7 +104,7 @@ function updateFormNames() {
         sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorSasaranItem, indikatorSasaranIndex) => {
         const indikatorInput = indikatorSasaranItem.querySelector('input[name*="indikator_sasaran"]');
         const satuanInput = indikatorSasaranItem.querySelector('select[name*="satuan"]');
-        const strategiTextarea = indikatorSasaranItem.querySelector('textarea[name*="strategi"]');
+        const definisi_opTextarea = indikatorSasaranItem.querySelector('textarea[name*="definisi_op"]');
         
         if (indikatorInput) {
             indikatorInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][indikator_sasaran]`;
@@ -112,8 +112,8 @@ function updateFormNames() {
         if (satuanInput) {
             satuanInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][satuan]`;
         }
-        if (strategiTextarea) {
-            strategiTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][strategi]`;
+        if (definisi_opTextarea) {
+            definisi_opTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][definisi_op]`;
         }
         
         // Update indikator sasaran hidden ID if exists
@@ -224,8 +224,8 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Strategi</label>
-                    <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+                    <label class="form-label">Definisi Operasional</label>
+                    <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
                 </div>
 
                 <div class="target-section">
@@ -360,8 +360,8 @@ function addSasaranToTujuan(tujuanElement) {
             </div>
 
             <div class="mb-3">
-            <label class="form-label">Strategi</label>
-            <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+            <label class="form-label">Definisi Operasional</label>
+            <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
             </div>
 
             <div class="target-section">
@@ -450,10 +450,10 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
     </div>
 
-    <!-- Strategi -->
+    <!-- Definisi Operasional -->
     <div class="mb-3">
-        <label class="form-label">Strategi</label>
-        <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+        <label class="form-label">Definisi Operasional</label>
+        <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
     </div>
 
     <div class="target-section">
@@ -630,14 +630,18 @@ function trackFormChanges() {
     
     // Track input changes (input, textarea, select)
     form.addEventListener('input', function(e) {
-        formHasChanges = true;
-        console.log('Form changed via input:', e.target.name || e.target.id);
+        if (!isSubmitting) {
+            formHasChanges = true;
+            console.log('Form changed via input:', e.target.name || e.target.id);
+        }
     });
     
     // Track textarea changes specifically
     form.addEventListener('change', function(e) {
-        formHasChanges = true;
-        console.log('Form changed via change:', e.target.name || e.target.id);
+        if (!isSubmitting) {
+            formHasChanges = true;
+            console.log('Form changed via change:', e.target.name || e.target.id);
+        }
     });
     
     // Track dynamic additions/removals
@@ -649,10 +653,20 @@ function trackFormChanges() {
             e.target.classList.contains('remove-tujuan') ||
             e.target.classList.contains('remove-sasaran') ||
             e.target.classList.contains('remove-indikator-tujuan') ||
-            e.target.classList.contains('remove-indikator-sasaran')) {
+            e.target.classList.contains('remove-indikator-sasaran') ||
+            e.target.closest('.add-tujuan') ||
+            e.target.closest('.add-sasaran') ||
+            e.target.closest('.add-indikator-tujuan') ||
+            e.target.closest('.add-indikator-sasaran') ||
+            e.target.closest('.remove-tujuan') ||
+            e.target.closest('.remove-sasaran') ||
+            e.target.closest('.remove-indikator-tujuan') ||
+            e.target.closest('.remove-indikator-sasaran')) {
             
-            formHasChanges = true;
-            console.log('Form changed via button click:', e.target.className);
+            if (!isSubmitting) {
+                formHasChanges = true;
+                console.log('Form changed via button click:', e.target.className);
+            }
         }
     });
     
@@ -667,7 +681,7 @@ function trackFormChanges() {
 function setupUnloadWarning() {
     // Warning saat user meninggalkan halaman (reload, close tab, navigate away)
     window.addEventListener('beforeunload', function(e) {
-        if (formHasChanges && !isSubmitting) {
+        if (hasFormActuallyChanged() && !isSubmitting) {
             const message = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
             e.preventDefault();
             e.returnValue = message;
@@ -679,7 +693,7 @@ function setupUnloadWarning() {
     const backButton = document.querySelector('a[href*="rpjmd"]');
     if (backButton) {
         backButton.addEventListener('click', function(e) {
-            if (formHasChanges && !isSubmitting) {
+            if (hasFormActuallyChanged() && !isSubmitting) {
                 const confirmed = confirm('Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin kembali ke halaman sebelumnya?\n\nSemua perubahan akan hilang.');
                 if (!confirmed) {
                     e.preventDefault();
@@ -695,15 +709,12 @@ function setupSaveConfirmation() {
     const saveButton = document.querySelector('button[type="submit"]');
     if (saveButton) {
         saveButton.addEventListener('click', function(e) {
-            if (formHasChanges) {
+            console.log('Save button clicked');
+            if (hasFormActuallyChanged()) {
                 const confirmed = confirm('Apakah Anda yakin ingin menyimpan perubahan pada form RPJMD ini?');
                 if (!confirmed) {
                     e.preventDefault();
                     return false;
-                } else {
-                    // Set flag bahwa form sedang disubmit
-                    isSubmitting = true;
-                    formHasChanges = false; // Reset flag karena data akan disimpan
                 }
             }
         });
@@ -730,7 +741,7 @@ function setupKeyboardShortcuts() {
         // Ctrl+S untuk save (mencegah save browser default)
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
-            if (formHasChanges) {
+            if (hasFormActuallyChanged()) {
                 const confirmed = confirm('Apakah Anda ingin menyimpan form dengan shortcut Ctrl+S?');
                 if (confirmed) {
                     document.getElementById('rpjmd-form').dispatchEvent(new Event('submit'));
@@ -742,7 +753,7 @@ function setupKeyboardShortcuts() {
         
         // Esc untuk peringatan keluar
         if (e.key === 'Escape') {
-            if (formHasChanges) {
+            if (hasFormActuallyChanged()) {
                 const confirmed = confirm('Anda memiliki perubahan yang belum disimpan. Apakah Anda ingin meninggalkan halaman ini?');
                 if (confirmed) {
                     window.history.back();
@@ -924,7 +935,7 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     console.log('Form method:', this.method);
     
     // Konfirmasi sebelum submit jika ada perubahan
-    if (formHasChanges && !isSubmitting) {
+    if (hasFormActuallyChanged() && !isSubmitting) {
         const modeInput = document.querySelector('input[name="mode"]');
         const isEditMode = modeInput && modeInput.value === 'edit';
         

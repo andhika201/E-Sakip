@@ -10,6 +10,10 @@ class Opd extends Seeder
     {
         $data = [
             [
+                'nama_opd' => 'ADMIN',
+                'singkatan' => 'ADM',
+            ],
+            [
                 'nama_opd' => 'Sekretariat Daerah',
                 'singkatan' => 'Setda',
             ],
@@ -54,7 +58,7 @@ class Opd extends Seeder
                 'singkatan' => 'Dinsos',
             ],
             [
-                'nama_opd' => 'Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Bencana',
+                'nama_opd' => 'Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Berencana',
                 'singkatan' => 'DP3APKB',
             ],
             [
@@ -67,7 +71,7 @@ class Opd extends Seeder
             ],
             [
                 'nama_opd' => 'Dinas Koperasi, Usaha Kecil dan Menengah, Perdagangan dan Perindustrian',
-                'singkatan' => 'Diskopindagri',
+                'singkatan' => 'Diskoprindagri',
             ],
             [
                 'nama_opd' => 'Dinas Perhubungan',

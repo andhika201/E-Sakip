@@ -166,10 +166,10 @@
                                         </div>
                                       </div>
 
-                                      <!-- Strategi -->
+                                      <!-- Definisi Operasional -->
                                       <div class="mb-3">
-                                        <label class="form-label">Strategi</label>
-                                        <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required><?= esc($indikator_sasaran['strategi'] ?? '') ?></textarea>
+                                        <label class="form-label">Definisi Operasional</label>
+                                        <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required><?= esc($indikator_sasaran['definisi_op'] ?? '') ?></textarea>
                                       </div>
 
                                       <!-- Target 5 Tahunan -->
@@ -233,10 +233,10 @@
                                       </div>
                                     </div>
 
-                                    <!-- Strategi -->
+                                    <!-- Definisi Operasional -->
                                     <div class="mb-3">
-                                      <label class="form-label">Strategi</label>
-                                      <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+                                      <label class="form-label">Definisi Operasional</label>
+                                      <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
                                     </div>
 
                                     <!-- Target 5 Tahunan -->
@@ -312,10 +312,10 @@
                                   </div>
                                 </div>
 
-                                <!-- Strategi -->
+                                <!-- Definisi Operasional -->
                                 <div class="mb-3">
-                                  <label class="form-label">Strategi</label>
-                                  <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+                                  <label class="form-label">Definisi Operasional</label>
+                                  <textarea name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
                                 </div>
 
                                 <!-- Target 5 Tahunan -->
@@ -443,10 +443,10 @@
                               </div>
                             </div>
 
-                            <!-- Strategi -->
+                            <!-- Definisi Operasional -->
                             <div class="mb-3">
-                              <label class="form-label">Strategi</label>
-                              <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][strategi]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
+                              <label class="form-label">Definisi Operasional</label>
+                              <textarea name="tujuan[0][sasaran][0][indikator_sasaran][0][definisi_op]" class="form-control mb-3" rows="3" placeholder="Contoh: Meningkatkan kapasitas SDM aparatur, digitalisasi pelayanan, dan penerapan sistem monitoring evaluasi" required></textarea>
                             </div>
 
                             <!-- Target 5 Tahunan -->
@@ -514,7 +514,7 @@
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
   <!-- Include JavaScript eksternal -->
-  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd-form.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminKabupaten/rpjmd/rpjmd-form.js') ?>"></script>
   
   <script>
     // Inisialisasi data untuk edit form

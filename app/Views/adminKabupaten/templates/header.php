@@ -1,7 +1,7 @@
-<!-- Navbar/Header -->
+<!-- Header/Navbar -->
 <header class="bg-success px-4 py-3 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
   <div class="d-flex align-items-center justify-content-between">
-    <!-- Left Side -->
+    <!-- Sidebar Toggle & Title -->
     <div class="d-flex align-items-center">
       <button onclick="toggleSidebar()" class="btn btn-link text-white fs-4 p-0 me-3 border-0">
         <i class="fas fa-bars"></i>
@@ -12,25 +12,23 @@
       </div>
     </div>
 
-    <!-- Right Side -->
+    <!-- User Info -->
     <div class="d-flex align-items-center">
-      <div class="d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-          <i class="fas fa-user text-success"></i>
-        </div>
-        <div>
-          <p class="small fw-medium text-white mb-0">Admin Kabupaten</p>
-          <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Administrator</p>
-        </div>
+      <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+        <i class="fas fa-user text-success"></i>
+      </div>
+      <div>
+        <p class="small fw-medium text-white mb-0">Admin Kabupaten</p>
+        <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Administrator</p>
       </div>
     </div>
   </div>
 </header>
 
-<!-- Overlay -->
+<!-- Overlay for mobile -->
 <div id="overlay" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none" style="z-index: 1030;" onclick="toggleSidebar()"></div>
 
-
+<!-- Script Sidebar Toggle -->
 <script>
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -42,6 +40,7 @@
     body.classList.toggle('sidebar-open');
   }
 
+  // Close sidebar when clicking a link (mobile only)
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.addEventListener('click', () => {
       if (window.innerWidth <= 768) toggleSidebar();

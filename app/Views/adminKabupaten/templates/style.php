@@ -1,3 +1,5 @@
+<!-- style.php -->
+<!-- Bootstrap & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
@@ -18,6 +20,7 @@
     width: 240px;
     background-color: #1e1e2d;
     color: #fff;
+    z-index: 1040;
   }
 
   .sidebar a {
@@ -48,10 +51,15 @@
     .sidebar {
       position: fixed;
       height: 100vh;
-      z-index: 1040;
+      transform: translateX(-100%);
     }
+
+    body.sidebar-open .sidebar {
+      transform: translateX(0);
+    }
+
     body.sidebar-open #main-content {
-      margin-left: 0;
+      filter: blur(2px);
     }
   }
 </style>

@@ -13,8 +13,13 @@
   <!-- Sidebar -->
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
+  <!-- Content Wrapper -->
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+
   <!-- Header -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
+
+
 
   <!-- Main Content -->
   <main class="flex-fill p-4 mt-2" id="main-content">
@@ -114,6 +119,7 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+  </div> <!-- End Content Wrapper -->
 
   <script>
     const chartOptions = {

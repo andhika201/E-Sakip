@@ -38772,3 +38772,487 @@ Target tahunan insert ID: 938
 Target created with ID: 938
 === createCompleteRpjmd END - SUCCESS, MISI ID: 63 ===
 >>>>>>> f414b05f3ba3c5cbab2d36281307afb4f45d99bb
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => Mewujudkan cita cita bangsa
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => Meningkatkan kualitas kelayanan publik 
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => indeks kepuasan masyarakat (IKM )
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => Terwujudnya peleyanan publik yang transparan dan akuntabilitas
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => persentase
+                                                    [satuan] => 100%
+                                                    [strategi] => meningkatkan 
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 75
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 77
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 79
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 81
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 85
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => Mewujudkan cita cita bangsa
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => Mewujudkan cita cita bangsa
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: FAILED
+Insert ID: 0
+Database error: Array
+(
+    [code] => 1054
+    [message] => Unknown column 'status' in 'field list'
+)
+
+EXCEPTION in createCompleteRpjmdTransaction: Failed to insert misi: Unknown column 'status' in 'field list'
+Stack trace: #0 C:\Users\Acer\Documents\project kp\E-Sakip\app\Models\RpjmdModel.php(810): App\Models\RpjmdModel->createMisi(Array)
+#1 C:\Users\Acer\Documents\project kp\E-Sakip\app\Controllers\RpjmdController.php(150): App\Models\RpjmdModel->createCompleteRpjmdTransaction(Array)
+#2 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->save()
+#3 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 C:\Users\Acer\Documents\project kp\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('C:\\Users\\Acer\\D...')
+#9 {main}
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => fefg
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => ggr
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => hrtgr
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => efef
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => fef
+                                                    [satuan] => persen
+                                                    [strategi] => gfsfdg
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 66
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 45
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 56
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 78
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 90
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => fefg
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => fefg
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: FAILED
+Insert ID: 0
+Database error: Array
+(
+    [code] => 1054
+    [message] => Unknown column 'status' in 'field list'
+)
+
+EXCEPTION in createCompleteRpjmdTransaction: Failed to insert misi: Unknown column 'status' in 'field list'
+Stack trace: #0 C:\Users\Acer\Documents\project kp\E-Sakip\app\Models\RpjmdModel.php(810): App\Models\RpjmdModel->createMisi(Array)
+#1 C:\Users\Acer\Documents\project kp\E-Sakip\app\Controllers\RpjmdController.php(150): App\Models\RpjmdModel->createCompleteRpjmdTransaction(Array)
+#2 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->save()
+#3 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 C:\Users\Acer\Documents\project kp\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('C:\\Users\\Acer\\D...')
+#9 {main}
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => ggfd
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => hgfhgf
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => hfh
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => hrth
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => hyh
+                                                    [satuan] => persen
+                                                    [strategi] => hfgh
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 46
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 56
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 67
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 78
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 89
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => ggfd
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => ggfd
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: FAILED
+Insert ID: 0
+Database error: Array
+(
+    [code] => 1054
+    [message] => Unknown column 'status' in 'field list'
+)
+
+EXCEPTION in createCompleteRpjmdTransaction: Failed to insert misi: Unknown column 'status' in 'field list'
+Stack trace: #0 C:\Users\Acer\Documents\project kp\E-Sakip\app\Models\RpjmdModel.php(810): App\Models\RpjmdModel->createMisi(Array)
+#1 C:\Users\Acer\Documents\project kp\E-Sakip\app\Controllers\RpjmdController.php(150): App\Models\RpjmdModel->createCompleteRpjmdTransaction(Array)
+#2 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->save()
+#3 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 C:\Users\Acer\Documents\project kp\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('C:\\Users\\Acer\\D...')
+#9 {main}
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => dffs
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => fgfg
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator] => gdgh
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => bdbdb
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => dgb
+                                                    [satuan] => 30%
+                                                    [strategi] => fsvsv
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 56
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 35
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 77
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 77
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 78
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => dffs
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => dffs
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: FAILED
+Insert ID: 0
+Database error: Array
+(
+    [code] => 1054
+    [message] => Unknown column 'status' in 'field list'
+)
+
+EXCEPTION in createCompleteRpjmdTransaction: Failed to insert misi: Unknown column 'status' in 'field list'
+Stack trace: #0 C:\Users\Acer\Documents\project kp\E-Sakip\app\Models\RpjmdModel.php(810): App\Models\RpjmdModel->createMisi(Array)
+#1 C:\Users\Acer\Documents\project kp\E-Sakip\app\Controllers\RpjmdController.php(150): App\Models\RpjmdModel->createCompleteRpjmdTransaction(Array)
+#2 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(933): App\Controllers\RpjmdController->save()
+#3 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(507): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\RpjmdController))
+#4 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\CodeIgniter.php(354): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#5 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(334): CodeIgniter\CodeIgniter->run()
+#6 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\Boot.php(67): CodeIgniter\Boot::runCodeIgniter(Object(CodeIgniter\CodeIgniter))
+#7 C:\Users\Acer\Documents\project kp\E-Sakip\public\index.php(59): CodeIgniter\Boot::bootWeb(Object(Config\Paths))
+#8 C:\Users\Acer\Documents\project kp\E-Sakip\vendor\codeigniter4\framework\system\rewrite.php(44): require_once('C:\\Users\\Acer\\D...')
+#9 {main}

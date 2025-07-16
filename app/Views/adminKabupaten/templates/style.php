@@ -1,65 +1,91 @@
-<!-- style.php -->
-<!-- Bootstrap & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
 <style>
-  body.sidebar-open #main-content {
-    margin-left: 240px;
-    filter: blur(2px);
-    transition: margin-left 0.3s ease, filter 0.3s ease;
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  body:not(.sidebar-open) #main-content {
-    margin-left: 0;
-    filter: none;
-  }
+/* Custom green color scheme */
+:root {
+  --bs-success: #00743e;
+  --bs-success-rgb: 0, 116, 62;
+  --secondary-green: #6eab11;
+  --secondary-green-rgb: 110, 171, 17;
+}
 
-  .sidebar {
-    transition: all 0.3s ease;
-    width: 240px;
-    background-color: #1e1e2d;
-    color: #fff;
-    z-index: 1040;
-  }
+/* Primary green color (#00743e) */
+.bg-success {
+  background-color: #00743e !important;
+}
 
-  .sidebar a {
-    color: #cfd8dc;
-    text-decoration: none;
-    padding: 12px 20px;
-    display: block;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: background 0.3s, color 0.3s;
-  }
+.text-success {
+  color: #00743e !important;
+}
 
-  .sidebar a:hover {
-    background-color: #2d2d44;
-    color: #fff;
-  }
+.btn-success {
+  background-color: #00743e !important;
+  border-color: #00743e !important;
+}
 
-  .sidebar .active {
-    background-color: #00743e;
-    color: #fff !important;
-  }
+.btn-success:hover {
+  background-color: #005a30 !important;
+  border-color: #004a26 !important;
+}
 
-  .sidebar-hidden {
-    transform: translateX(-100%);
-  }
+.table-success {
+  background-color: rgba(0, 116, 62, 0.2) !important;
+}
 
-  @media (max-width: 768px) {
-    .sidebar {
-      position: fixed;
-      height: 100vh;
-      transform: translateX(-100%);
-    }
+.badge.bg-success {
+  background-color: #00743e !important;
+}
 
-    body.sidebar-open .sidebar {
-      transform: translateX(0);
-    }
+.border-success-subtle {
+  border-color: rgba(0, 116, 62, 0.3) !important;
+}
 
-    body.sidebar-open #main-content {
-      filter: blur(2px);
-    }
-  }
+/* Secondary green color (#6eab11) */
+.bg-secondary-green {
+  background-color: #6eab11 !important;
+}
+
+.text-secondary-green {
+  color: #6eab11 !important;
+}
+
+.btn-secondary-green {
+  background-color: #6eab11 !important;
+  border-color: #6eab11 !important;
+  color: white !important;
+}
+
+.btn-secondary-green:hover {
+  background-color: #5a8d0e !important;
+  border-color: #4d760c !important;
+  color: white !important;
+}
+
+.table-secondary-green {
+  background-color: rgba(110, 171, 17, 0.2) !important;
+}
+
+.badge.bg-secondary-green {
+  background-color: #6eab11 !important;
+}
+
+/* Custom hover effects for sidebar links */
+.btn-outline-secondary:hover {
+  background-color: rgba(110, 171, 17, 0.1) !important;
+  color: #6eab11 !important;
+  border-color: transparent !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: #f5c6cb !important;
+  color: #721c24 !important;
+  border-color: transparent !important;
+}
 </style>

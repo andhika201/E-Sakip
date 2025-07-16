@@ -136,6 +136,8 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+   </div> <!-- End Content Wrapper -->
+
 
   <script>
     // Fungsi untuk mengupdate penomoran label secara real-time

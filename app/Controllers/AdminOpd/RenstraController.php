@@ -8,7 +8,7 @@ use App\Models\Opd\RenstraModel;
 use App\Models\RpjmdModel;
 use App\Models\OpdModel;
 
-class Renstra extends BaseController
+class RenstraController extends BaseController
 {
     protected $renstraModel;
     protected $rpjmdModel;

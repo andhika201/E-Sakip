@@ -9,23 +9,23 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
  // User Routes
-$routes->get('/dashboard', 'User::index');
-$routes->get('/rkt', 'User::rkt');
-$routes->get('/rpjmd', 'User::rpjmd');
-$routes->get('/lakip_kabupaten', 'User::lakip_kabupaten');
-$routes->get('/pk_bupati', 'User::pk_bupati');
-$routes->get('/renja', 'User::renja');
-$routes->get('/renstra', 'User::renstra');
-$routes->get('/lakip_opd', 'User::lakip_opd');
-$routes->get('/iku_opd', 'User::iku_opd');
-$routes->get('/pk_pimpinan', 'User::pk_pimpinan');
-$routes->get('/pk_administrator', 'User::pk_administrator');
-$routes->get('/pk_pengawas', 'User::pk_pengawas');
-$routes->get('/tentang_kami', 'User::tentang_kami');
+$routes->get('/dashboard', 'UserController::index');
+$routes->get('/rkt', 'UserController::rkt');
+$routes->get('/rpjmd', 'UserController::rpjmd');
+$routes->get('/lakip_kabupaten', 'UserController::lakip_kabupaten');
+$routes->get('/pk_bupati', 'UserController::pk_bupati');
+$routes->get('/renja', 'UserController::renja');
+$routes->get('/renstra', 'UserController::renstra');
+$routes->get('/lakip_opd', 'UserController::lakip_opd');
+$routes->get('/iku_opd', 'UserController::iku_opd');
+$routes->get('/pk_pimpinan', 'UserController::pk_pimpinan');
+$routes->get('/pk_administrator', 'UserController::pk_administrator');
+$routes->get('/pk_pengawas', 'UserController::pk_pengawas');
+$routes->get('/tentang_kami', 'UserController::tentang_kami');
 
 
 /* Admin Kabupaten Routes */
-$routes->get('adminkab/dashboard', 'AdminKabupaten::index');
+$routes->get('adminkab/dashboard', 'AdminKabupatenController::index');
 
 // RPJMD Routes - Admin Management
 $routes->get('adminkab/rpjmd', 'RpjmdController::index');
@@ -37,75 +37,79 @@ $routes->get('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 $routes->post('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 $routes->delete('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 
-// RPJMD API Routes for AJAX
-$routes->get('adminkab/rpjmd/api/tujuan/(:num)', 'RpjmdController::get_tujuan_by_misi/$1');
-$routes->get('adminkab/rpjmd/api/sasaran/(:num)', 'RpjmdController::get_sasaran_by_tujuan/$1');
-$routes->get('adminkab/rpjmd/api/indikator/(:num)', 'RpjmdController::get_indikator_by_sasaran/$1');
-
-// RPJMD API Routes for AJAX
-$routes->get('adminkab/rpjmd/api/tujuan/(:num)', 'RpjmdController::get_tujuan_by_misi/$1');
-$routes->get('adminkab/rpjmd/api/sasaran/(:num)', 'RpjmdController::get_sasaran_by_tujuan/$1');
-$routes->get('adminkab/rpjmd/api/indikator/(:num)', 'RpjmdController::get_indikator_by_sasaran/$1');
-
-// RPJMD Utility Routes
-$routes->get('adminkab/rpjmd/search', 'RpjmdController::search');
-$routes->get('adminkab/rpjmd/export', 'RpjmdController::export');
-
 // RPJMD Status Management Routes
 $routes->post('adminkab/rpjmd/update-status', 'RpjmdController::updateStatus');
 $routes->get('adminkab/rpjmd/toggle-status/(:num)', 'RpjmdController::toggleStatus/$1');
 
 // RKT Routes
-$routes->get('adminkab/rkt', 'AdminKabupaten::rkt');
-$routes->get('adminkab/rkt/tambah', 'AdminKabupaten::tambah_rkt');
-$routes->get('adminkab/rkt/edit', 'AdminKabupaten::edit_rkt');
-$routes->post('adminkab/rkt/save', 'AdminKabupaten::save_rkt');
+$routes->get('adminkab/rkt', 'AdminKabupatenController::rkt');
+$routes->get('adminkab/rkt/tambah', 'AdminKabupatenController::tambah_rkt');
+$routes->get('adminkab/rkt/edit', 'AdminKabupatenController::edit_rkt');
+$routes->post('adminkab/rkt/save', 'AdminKabupatenController::save_rkt');
 
 // PK Bupati Routes
-$routes->get('adminkab/pk_bupati', 'AdminKabupaten::pk_bupati');
-$routes->get('adminkab/pk_bupati/tambah', 'AdminKabupaten::tambah_pk_bupati');
-$routes->get('adminkab/pk_bupati/edit', 'AdminKabupaten::edit_pk_bupati');
-$routes->post('adminkab/pk_bupati/save', 'AdminKabupaten::save_pk_bupati');
+$routes->get('adminkab/pk_bupati', 'AdminKabupatenController::pk_bupati');
+$routes->get('adminkab/pk_bupati/tambah', 'AdminKabupatenController::tambah_pk_bupati');
+$routes->get('adminkab/pk_bupati/edit', 'AdminKabupatenController::edit_pk_bupati');
+$routes->post('adminkab/pk_bupati/save', 'AdminKabupatenController::save_pk_bupati');
 
 // Lakip Kabupaten Routes
-$routes->get('adminkab/lakip_kabupaten', 'AdminKabupaten::lakip_kabupaten');
-$routes->get('adminkab/lakip_kabupaten/tambah', 'AdminKabupaten::tambah_lakip_kabupaten');
-$routes->get('adminkab/lakip_kabupaten/edit', 'AdminKabupaten::edit_lakip_kabupaten');
-$routes->post('adminkab/lakip_kabupaten/save', 'AdminKabupaten::save_lakip_kabupaten');
+$routes->get('adminkab/lakip_kabupaten', 'AdminKabupatenController::lakip_kabupaten');
+$routes->get('adminkab/lakip_kabupaten/tambah', 'AdminKabupatenController::tambah_lakip_kabupaten');
+$routes->get('adminkab/lakip_kabupaten/edit', 'AdminKabupatenController::edit_lakip_kabupaten');
+$routes->post('adminkab/lakip_kabupaten/save', 'AdminKabupatenController::save_lakip_kabupaten');
+
+// Program PK Routes
+$routes->get('adminkab/program_pk', 'ProgramPkController::index');
+$routes->get('adminkab/program_pk/tambah', 'ProgramPkController::tambah');
+$routes->get('adminkab/program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
+$routes->post('adminkab/program_pk/save', 'ProgramPkController::save');
+$routes->post('adminkab/program_pk/update/(:num)', 'ProgramPkController::update/$1');
+$routes->get('adminkab/program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
+$routes->get('adminopd/program-pk/search', 'AdminOpd\ProgramPkController::search');
 
 // Tentang Kami Routes
-$routes->get('adminkab/tentang_kami', 'AdminKabupaten::tentang_kami');
-$routes->get('adminkab/tentang_kami/edit', 'AdminKabupaten::edit_tentang_kami');
-$routes->post('adminkab/tentang_kami/save', 'AdminKabupaten::save_tentang_kami');
+$routes->get('adminkab/tentang_kami', 'AdminKabupatenController::tentang_kami');
+$routes->get('adminkab/tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
+$routes->post('adminkab/tentang_kami/save', 'AdminKabupatenController::save_tentang_kami');
 
 
 // Admin OPD Routes
-$routes->get('adminopd/dashboard', 'AdminOpd::index');
+$routes->get('adminopd/dashboard', 'AdminOpdController::index');
 
 // Renstra Routes
-$routes->get('adminopd/renstra', 'AdminOpd\Renstra::index');
-$routes->get('adminopd/renstra/tambah', 'AdminOpd\Renstra::tambah_renstra');
-$routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\Renstra::edit_renstra/$1');
-$routes->post('adminopd/renstra/save', 'AdminOpd\Renstra::save');
-$routes->post('adminopd/renstra/update/(:num)', 'AdminOpd\Renstra::update/$1');
-$routes->delete('adminopd/renstra/delete/(:num)', 'AdminOpd\Renstra::delete/$1');
+$routes->get('adminopd/renstra', 'AdminOpd\RenstraController::index');
+$routes->get('adminopd/renstra/tambah', 'AdminOpd\RenstraController::tambah_renstra');
+$routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\RenstraController::edit_renstra/$1');
+$routes->post('adminopd/renstra/save', 'AdminOpd\RenstraController::save');
+$routes->post('adminopd/renstra/update/(:num)', 'AdminOpd\RenstraController::update/$1');
+$routes->delete('adminopd/renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
 
 // Renja Routes
-$routes->get('adminopd/renja', 'AdminOpd::renja');
-$routes->get('adminopd/renja/tambah', 'AdminOpd::tambah_renja');
-$routes->get('adminopd/renja/edit', 'AdminOpd::edit_renja');
-$routes->post('adminopd/renja/save', 'AdminOpd::save_renja');
+$routes->get('adminopd/renja', 'AdminOpdController::renja');
+$routes->get('adminopd/renja/tambah', 'AdminOpdController::tambah_renja');
+$routes->get('adminopd/renja/edit', 'AdminOpdController::edit_renja');
+$routes->post('adminopd/renja/save', 'AdminOpdController::save_renja');
 
 // IKU Routes
-$routes->get('adminopd/iku', 'AdminOpd::iku');
-$routes->get('adminopd/iku/tambah', 'AdminOpd::tambah_iku');
-$routes->get('adminopd/iku/edit', 'AdminOpd::edit_iku');
-$routes->post('adminopd/iku/save', 'AdminOpd::save_iku');
+$routes->get('adminopd/iku', 'AdminOpdController::iku');
+$routes->get('adminopd/iku/tambah', 'AdminOpdController::tambah_iku');
+$routes->get('adminopd/iku/edit', 'AdminOpdController::edit_iku');
+$routes->post('adminopd/iku/save', 'AdminOpdController::save_iku');
 
-$routes->get('adminopd/pk_bupati', 'AdminOpd::pk_bupati');
-$routes->get('adminopd/lakip_kabupaten', 'AdminOpd::lakip_kabupaten');
-$routes->get('adminopd/tentang_kami', 'AdminOpd::tentang_kami');
+// PK Administrator Routes
+$routes->get('adminopd/pk_admin', 'AdminOpd\PkAdminController::index');
+$routes->get('adminopd/pk_admin/tambah', 'AdminOpd\PkAdminController::tambah');
+$routes->post('adminopd/pk_admin/save', 'AdminOpd\PkAdminController::save');
+$routes->get('adminopd/pk_admin/edit/(:num)', 'AdminOpd\PkAdminController::edit/$1');
+$routes->post('adminopd/pk_admin/update', 'AdminOpd\PkAdminController::update');
+$routes->post('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
+$routes->get('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
+$routes->delete('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 
-$routes->get('/login', 'Login::index');
-$routes->post('/login/authenticate', 'Login::authenticate');
-$routes->get('/logout', 'Login::logout');
+
+$routes->get('adminopd/tentang_kami', 'AdminOpdController::tentang_kami');
+
+$routes->get('/login', 'LoginController::index');
+$routes->post('/login/authenticate', 'LoginController::authenticate');
+$routes->get('/logout', 'LoginController::logout');

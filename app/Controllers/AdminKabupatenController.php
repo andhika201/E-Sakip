@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
-class AdminKabupaten extends BaseController
+class AdminKabupatenController extends BaseController
 {
     public function index()
     {

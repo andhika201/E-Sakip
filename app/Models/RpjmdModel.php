@@ -363,47 +363,7 @@ class RpjmdModel extends Model
         
         return $summary;
     }
-
-    // ==================== SEARCH FUNCTIONS ====================
     
-    /**
-     * Search RPJMD data by keyword
-     */
-    public function searchRpjmd($keyword)
-    {
-        $results = [
-            'misi' => $this->db->table('rpjmd_misi')
-                ->like('misi', $keyword)
-                ->get()
-                ->getResultArray(),
-            'tujuan' => $this->db->table('rpjmd_tujuan t')
-                ->select('t.*, m.misi')
-                ->join('rpjmd_misi m', 'm.id = t.misi_id')
-                ->like('t.tujuan_rpjmd', $keyword)
-                ->get()
-                ->getResultArray(),
-            'sasaran' => $this->db->table('rpjmd_sasaran s')
-                ->select('s.*, t.tujuan_rpjmd, m.misi')
-                ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
-                ->join('rpjmd_misi m', 'm.id = t.misi_id')
-                ->like('s.sasaran_rpjmd', $keyword)
-                ->get()
-                ->getResultArray(),
-            'indikator' => $this->db->table('rpjmd_indikator_sasaran is')
-                ->select('is.*, s.sasaran_rpjmd, t.tujuan_rpjmd, m.misi')
-                ->join('rpjmd_sasaran s', 's.id = is.sasaran_id')
-                ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
-                ->join('rpjmd_misi m', 'm.id = t.misi_id')
-                ->groupStart()
-                ->like('is.indikator_sasaran', $keyword)
-                ->orLike('is.definisi_op', $keyword)
-                ->groupEnd()
-                ->get()
-                ->getResultArray()
-        ];
-        
-        return $results;
-    }
 
     // ==================== CRUD OPERATIONS FOR RPJMD MISI ====================
     

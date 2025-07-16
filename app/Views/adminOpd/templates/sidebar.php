@@ -34,7 +34,7 @@
         <a href="<?= base_url('adminopd/renja') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja</a>
         <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
         <a href="<?= base_url('adminopd/pk_jpt') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK JPT</a>
-        <a href="<?= base_url('adminopd/pk_administrator') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Administrator</a>
+        <a href="<?= base_url('adminopd/pk_admin') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Administrator</a>
         <a href="<?= base_url('adminopd/pk_pengawas') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Pengawas</a>
         <a href="<?= base_url('adminopd/lakip_opd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP OPD</a>
         <a href="<?= base_url('adminopd/tentang_kami') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang Kami</a>
@@ -44,7 +44,7 @@
 
   <!-- Bawah: Tombol Keluar -->
   <div class="p-3 border-top">
-    <a href="<?= base_url('/') ?>" class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
+    <a href="<?= base_url('/logout') ?>" class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
       <i class="fas fa-sign-out-alt me-2"></i>
       <span>Keluar</span>
     </a>

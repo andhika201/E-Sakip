@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
-class AdminOpd extends BaseController
+class AdminOpdController extends BaseController
 {
     public function index()
     {

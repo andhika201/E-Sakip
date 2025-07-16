@@ -177,7 +177,7 @@
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <!-- Fallback untuk default years jika tidak ada grouped_data -->
-                                    <?php foreach (range(2023, 2027) as $year): ?>
+                                    <?php foreach (range(2025, 2029) as $year): ?>
                                         <td class="border p-2">
                                             <?= isset($data['targets'][$year]) ? esc($data['targets'][$year]) : '-' ?>
                                         </td>
@@ -220,7 +220,7 @@
                             }
                             ?>
                             <td colspan="<?= $totalColumns ?>" class="border p-3 text-center text-muted">
-                                Belum ada data Renstra
+                                Belum ada data Renstra. <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="text-success">Tambah data pertama</a>
                             </td>
                         </tr>
                     <?php endif; ?>

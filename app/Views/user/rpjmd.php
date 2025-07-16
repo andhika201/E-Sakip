@@ -54,7 +54,7 @@
                   <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
                   <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                   <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                  <th rowspan="2" class="border p-2 align-middle">STRATEGI</th>
+                  <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
                   <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                   <th colspan="5" class="border p-2" id="year-header-span">TARGET CAPAIAN PER TAHUN</th>
                 </tr>
@@ -131,13 +131,13 @@
                                   <?php endif; ?>
                                   
                                   <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                                  <td class="border p-2 align-top text-start"><?= esc($indikator['strategi'] ?? '-') ?></td>
+                                  <td class="border p-2 align-top text-start"><?= esc($indikator['definisi_op'] ?? '-') ?></td>
                                   <td class="border p-2 align-top text-start"><?= esc($indikator['satuan'] ?? '-') ?></td>
                                   
                                   <!-- Target per tahun -->
                                   <span class="year-cells" data-periode="<?= $periodIndex ?>">
                                     <?php foreach ($periodData['years'] as $year): ?>
-                                      <td class="border p-2 align-top text-start">
+                                      <td class="border p-2 align-top text-middle">
                                         <?php if (isset($indikator['target_tahunan']) && !empty($indikator['target_tahunan'])): ?>
                                           <?php foreach ($indikator['target_tahunan'] as $target): ?>
                                             <?php if ($target['tahun'] == $year): ?>

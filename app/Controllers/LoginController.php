@@ -5,13 +5,14 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
-class Login extends BaseController
+class LoginController extends BaseController
 {
     public function index()
     {
         // Cek apakah user sudah login
         if (session()->get('isLoggedIn')) {
-            return redirect()->to('/dashboard');
+            return redirect()->to('/dashboard')
+                ->with('message', 'Anda sudah login');
         }
 
         return view('login');

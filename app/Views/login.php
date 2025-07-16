@@ -98,12 +98,12 @@
         <form method="POST" action="<?= base_url('login/authenticate') ?>">
             <?= csrf_field() ?>
             <div class="mb-3 position-relative">
-                <input type="text" name="username" class="form-control ps-4 input-border-green" placeholder="Username" required>
-                <i class="fas fa-user position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+                <input type="text" name="username" class="form-control ps-5 input-border-green" placeholder="Username" required>
+                <i class="fas fa-user position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
             </div>
             <div class="mb-3 position-relative">
-                <input type="password" name="password" class="form-control ps-4 input-border-green" placeholder="Password" required>
-                <i class="fas fa-lock position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+                <input type="password" name="password" class="form-control ps-5 input-border-green" placeholder="Password" required>
+                <i class="fas fa-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
             </div>
             <!-- Google reCAPTCHA -->
             <div class="mb-3 d-flex justify-content-center">

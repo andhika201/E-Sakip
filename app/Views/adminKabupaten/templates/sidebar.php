@@ -96,6 +96,7 @@
         <a href="<?= base_url('adminkab/rkt') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKT</a>
         <a href="<?= base_url('adminkab/pk_bupati') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Bupati</a>
         <a href="<?= base_url('adminkab/lakip_kabupaten') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP Kabupaten</a>
+        <a href="<?= base_url('adminkab/program_pk') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Program PK</a>
         <a href="<?= base_url('adminkab/tentang_kami') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang Kami</a>
       </div>
     </nav>

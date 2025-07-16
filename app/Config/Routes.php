@@ -106,6 +106,8 @@ $routes->post('adminopd/pk_admin/update', 'AdminOpd\PkAdminController::update');
 $routes->post('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->get('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->delete('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
+$routes->get('adminopd/pk_admin/cetak', 'AdminOpd\PkAdminController::cetak');
+
 
 
 $routes->get('adminopd/tentang_kami', 'AdminOpdController::tentang_kami');

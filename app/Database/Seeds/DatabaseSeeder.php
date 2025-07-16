@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
         $this->call('Opd');
         $this->call('Pangkat');
         $this->call('Jabatan');
+        $this->call('UserAdminOpdSeeder');
         // Add other seeders here as needed
     }
 }

@@ -106,9 +106,9 @@
                 <i class="fas fa-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
             </div>
             <!-- Google reCAPTCHA -->
-            <div class="mb-3 d-flex justify-content-center">
+            <!-- <div class="mb-3 d-flex justify-content-center">
                 <div class="g-recaptcha" data-sitekey="<?= env('RECAPTCHA_SITE_KEY') ?>"></div>
-            </div>
+            </div> -->
             <button type="submit" class="btn btn-success btn-login">Log In</button>
         </form>
         

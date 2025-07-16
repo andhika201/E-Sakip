@@ -6,18 +6,21 @@ use App\Models\RpjmdModel;
 use App\Models\RktModel;
 use App\Models\RenjaModel;
 use App\Models\RenstraModel;
+use App\Models\IkuModel;
 
 class User extends BaseController
 {
     protected $rpjmdModel;
     protected $rktModel;
     protected $renstraModel;
+    protected $ikuModel;
 
     public function __construct()
     {
         $this->rpjmdModel = new RpjmdModel();
         $this->rktModel = new RktModel();
         $this->renstraModel = new RenstraModel();
+        $this->ikuModel = new IkuModel();
     }
 
     public function index()
@@ -65,38 +68,37 @@ class User extends BaseController
         $rktData = $this->rktModel->getAllRkt();
 
         $groupedRkt = [];
+        foreach ($rktData as $row) {
+            $sasaranId = $row['sasaran_id'];
 
-            foreach ($rktData as $row) {
-                $sasaranId = $row['sasaran_id'];
-
-                if (!isset($groupedRkt[$sasaranId])) {
-                    $groupedRkt[$sasaranId] = [
-                        'sasaran' => $row['sasaran'],
-                        'indikator' => []
-                    ];
-                }
-
-                $groupedRkt[$sasaranId]['indikator'][] = [
-                    'indikator_sasaran' => $row['indikator_sasaran'],
-                    'tahun' => $row['tahun'],
-                    'target' => $row['target']
+            if (!isset($groupedRkt[$sasaranId])) {
+                $groupedRkt[$sasaranId] = [
+                    'sasaran' => $row['sasaran'],
+                    'indikator' => []
                 ];
             }
 
-            return view('user/rkt', ['grouped_rkt' => $groupedRkt]);
+            $groupedRkt[$sasaranId]['indikator'][] = [
+                'indikator_sasaran' => $row['indikator_sasaran'],
+                'tahun' => $row['tahun'],
+                'target' => $row['target']
+            ];
         }
 
-        public function renja()
-        {
-            $renjaModel = new RenjaModel();
-            $renjaData = $renjaModel->getAllRenja(); // Ambil data dari model
+        return view('user/rkt', ['grouped_rkt' => $groupedRkt]);
+    }
 
-            return view('user/renja', [
-                'renjaData' => $renjaData
-            ]);
-        }
+    public function renja()
+    {
+        $renjaModel = new RenjaModel();
+        $renjaData = $renjaModel->getAllRenja();
 
-        public function renstra()
+        return view('user/renja', [
+            'renjaData' => $renjaData
+        ]);
+    }
+
+    public function renstra()
     {
         $data = $this->renstraModel->getRenstraData();
 
@@ -121,7 +123,6 @@ class User extends BaseController
             $renstraData[$key]['target_capaian'][$row['tahun']] = $row['target'];
         }
 
-        // Sorting tahun
         $tahunList = array_keys($tahunSet);
         sort($tahunList);
 
@@ -132,51 +133,50 @@ class User extends BaseController
         ]);
     }
 
+    public function iku_opd()
+    {
+        $ikuModel = new \App\Models\IkuModel();
+        $ikuResult = $ikuModel->getAllIku();
+
+        return view('user/iku_opd', [
+            'ikuOpdData' => $ikuResult['iku_opd_data'],
+            'tahunList' => $ikuResult['tahun_list']
+        ]);
+    }
 
     public function pk_bupati()
     {
-        $data['pkBupatiData'] = []; // Ganti dengan data asli jika tersedia
+        $data['pkBupatiData'] = []; // Ganti jika sudah tersedia
         return view('user/pk_bupati', $data);
     }
 
     public function pk_administrator()
     {
-        $data['pkAdministratorData'] = []; // Ganti dengan data asli jika tersedia
+        $data['pkAdministratorData'] = []; // Ganti jika sudah tersedia
         return view('user/pk_administrator', $data);
     }
 
     public function pk_pengawas()
     {
-        $data['pkPengawasData'] = []; // Ganti dengan data asli jika tersedia
+        $data['pkPengawasData'] = []; // Ganti jika sudah tersedia
         return view('user/pk_pengawas', $data);
     }
 
     public function pk_pimpinan()
     {
-        $data['pkPimpinanData'] = []; // Ganti dengan data asli jika tersedia
+        $data['pkPimpinanData'] = []; // Ganti jika sudah tersedia
         return view('user/pk_pimpinan', $data);
-    }
-
-    public function iku_opd()
-    {
-        // Kirim data kosong agar tidak error
-        $data = [
-            'ikuOpdData' => [],
-            'tahunList' => [2021, 2022, 2023, 2024] // contoh tahun dummy (boleh diubah)
-        ];
-
-        return view('user/iku_opd', $data);
     }
 
     public function lakip_kabupaten()
     {
-        $data['lakipKabupatenData'] = []; // Ganti dengan query data asli jika ada
+        $data['lakipKabupatenData'] = []; // Ganti jika sudah tersedia
         return view('user/lakip_kabupaten', $data);
     }
 
     public function lakip_opd()
     {
-        $data['lakipOpdData'] = []; // Ganti dengan query data asli jika ada
+        $data['lakipOpdData'] = []; // Ganti jika sudah tersedia
         return view('user/lakip_opd', $data);
     }
 

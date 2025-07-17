@@ -13,7 +13,7 @@
 
    h5, h6 {
   text-align: center;
-  font-weight: bold;
+  font-w eight: bold;
   margin-bottom: 20px;
 }
 
@@ -135,27 +135,26 @@ h6 {
 
   <p>PIHAK KEDUA akan memberikan supervisi yang diperlukan serta akan melakukan evaluasi akuntabilitas kinerja terhadap capaian kinerja dari perjanjian ini dan mengambil tindakan yang diperlukan dalam rangka pemberian penghargaan dan sanksi.</p>
 
- <!-- Tanda Tangan -->
-<div class="section">
-  <table class="no-border" style="width: 100%; margin-top: 60px;">
-    <tr>
-      <!-- PIHAK KEDUA -->
-      <td style="text-align: center; width: 50%; vertical-align: top;">
-        <p><strong>PIHAK KEDUA</strong><br>BUPATI PRINGSEWU</p>
-        <br><br><br><br><br>
-        <p style="font-weight: bold; text-transform: uppercase;">RIYANTO PAMUNGKAS</p>
-      </td>
+ <table style="width: 100%; margin-top: 80px;" class="table-no-border">
+  <tr>
+    <!-- PIHAK KEDUA -->
+    <td style="text-align: center; width: 50%; vertical-align: top;">
+      <p><strong>PIHAK KEDUA</strong><br>BUPATI PRINGSEWU</p>
+      <br><br><br><br><br>
+      <p style="font-weight: bold; text-transform: uppercase; margin: 0;">RIYANTO PAMUNGKAS</p>
+    </td>
 
-      <!-- PIHAK KESATU -->
-      <td style="text-align: center; width: 50%; vertical-align: top;">
-        <p><strong>PIHAK KESATU</strong><br>KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
-        <br><br><br><br><br>
-        <p style="font-weight: bold; text-transform: uppercase;">MOUDY ARY NAZOLLA, S.STP., MH</p>
-        <p>Pembina Tk. I<br>NIP. 19840819 200212 1 001</p>
-      </td>
-    </tr>
-  </table>
-</div>
+    <!-- PIHAK KESATU -->
+    <td style="text-align: center; width: 50%; vertical-align: top;">
+      <p><strong>PIHAK KESATU</strong><br>KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
+      <br><br><br><br><br>
+      <p style="font-weight: bold; text-transform: uppercase; margin: 0;">MOUDY ARY NAZOLLA, S.STP., MH</p>
+      <p style="margin: 0;">Pembina Tk. I</p>
+      <p style="margin: 0;">NIP. 19840819 200212 1 001</p>
+    </td>
+  </tr>
+</table>
+
 
 
 
@@ -243,23 +242,25 @@ h6 {
     </tbody>
   </table>
 
-  <div style="display: flex; justify-content: space-between; margin-top: 80px;">
-  <!-- PIHAK KEDUA -->
-  <div style="text-align: center; width: 48%;">
-    <p><strong>PIHAK KEDUA</strong><br>BUPATI PRINGSEWU</p>
-    <br><br><br><br><br>
-    <p style="font-weight: bold; text-transform: uppercase; margin: 0;">RIYANTO PAMUNGKAS</p>
-  </div>
+  <table style="width: 100%; margin-top: 80px;" class="table-no-border">
+  <tr>
+    <!-- PIHAK KEDUA -->
+    <td style="text-align: center; width: 50%; vertical-align: top;">
+      <p><strong>PIHAK KEDUA</strong><br>BUPATI PRINGSEWU</p>
+      <br><br><br><br><br>
+      <p style="font-weight: bold; text-transform: uppercase; margin: 0;">RIYANTO PAMUNGKAS</p>
+    </td>
 
-  <!-- PIHAK KESATU -->
-  <div style="text-align: center; width: 48%;">
-    <p><strong>PIHAK KESATU</strong><br>KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
-    <br><br><br><br><br>
-    <p style="font-weight: bold; text-transform: uppercase; margin: 0;">MOUDY ARY NAZOLLA, S.STP., MH</p>
-    <p style="margin: 0;">Pembina Tk. I</p>
-    <p style="margin: 0;">NIP. 19840819 200212 1 001</p>
-  </div>
-</div>
+    <!-- PIHAK KESATU -->
+    <td style="text-align: center; width: 50%; vertical-align: top;">
+      <p><strong>PIHAK KESATU</strong><br>KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
+      <br><br><br><br><br>
+      <p style="font-weight: bold; text-transform: uppercase; margin: 0;">MOUDY ARY NAZOLLA, S.STP., MH</p>
+      <p style="margin: 0;">Pembina Tk. I</p>
+      <p style="margin: 0;">NIP. 19840819 200212 1 001</p>
+    </td>
+  </tr>
+</table>
 </body>
 
 </html>

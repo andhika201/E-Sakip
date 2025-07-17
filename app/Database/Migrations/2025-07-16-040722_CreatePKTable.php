@@ -15,6 +15,12 @@ class CreatePKTable extends Migration
                 'unsigned'       => true,
                 'auto_increment' => true,
             ],
+            'opd_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => false,
+            ],
             'jenis' => [
                 'type' => 'VARCHAR',
                 'constraint' => 100,
@@ -47,6 +53,7 @@ class CreatePKTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
+        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('pihak_1', 'pegawai', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('pihak_2', 'pegawai', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('pk');

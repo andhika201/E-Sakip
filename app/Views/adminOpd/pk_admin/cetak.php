@@ -90,8 +90,9 @@
       </td>
     </tr> 
     <tr>
+      <!-- Halaman 1 -->
       <td style="border: none;">
-        <h4 style="font-weight: bold; margin: 0;">PERJANJIAN KINERJA TAHUN 2025</h4>
+        <h4 style="font-weight: bold; margin: 0;">PERJANJIAN KINERJA TAHUN <?= esc($data['tahun']) ?></h4>
       </td>
     </tr>
   </table>
@@ -102,12 +103,12 @@
     <tr>
       <td style="width: 80px;"><strong>Nama</strong></td>
       <td style="width: 10px;">:</td>
-      <td class="fw-bold text-uppercase">MOUDY ARY NAZOLLA, S.STP., MH</td>
+      <td class="fw-bold text-uppercase"><?= esc($data['pihak_1']) ?></td>
     </tr>
     <tr>
       <td><strong>Jabatan</strong></td>
       <td>:</td>
-      <td class="fw-bold">KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</td>
+      <td class="fw-bold"><?= $jabatan_p1 ?></td>
     </tr>
   </table>
 
@@ -117,12 +118,12 @@
     <tr>
       <td style="width: 80px;"><strong>Nama</strong></td>
       <td style="width: 10px;">:</td>
-      <td class="fw-bold text-uppercase">RIYANTO PAMUNGKAS</td>
+      <td class="fw-bold text-uppercase"><?= esc($data['pihak_1']) ?></td>
     </tr>
     <tr>
       <td><strong>Jabatan</strong></td>
       <td>:</td>
-      <td class="fw-bold">BUPATI PRINGSEWU</td>
+      <td class="fw-bold"><?= $jabatan_p2 ?></td>
     </tr>
   </table>
 

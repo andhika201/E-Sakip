@@ -37,14 +37,6 @@ class RenstraController extends BaseController
         // Get Renstra data filtered by user's OPD
         $renstraData = $this->renstraModel->getRenstraForTable($opdId);
         
-        // Debug: Log renstra data
-        log_message('debug', 'OPD ID: ' . $opdId . ', Renstra data count: ' . count($renstraData));
-        if (empty($renstraData)) {
-            log_message('debug', 'No Renstra data found for OPD ID: ' . $opdId);
-        } else {
-            log_message('debug', 'Sample Renstra data: ' . print_r($renstraData[0], true));
-        }
-        
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
         if (!$currentOpd) {
@@ -52,7 +44,7 @@ class RenstraController extends BaseController
         }
         
         // Set title based on current OPD
-        $titleSuffix = $currentOpd['nama_opd'];            // Group data by period
+        $titleSuffix = $currentOpd['nama_opd'];  // Group data by period
             $groupedData = [];
             foreach ($renstraData as $data) {
                 $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
@@ -101,13 +93,6 @@ class RenstraController extends BaseController
         
         // Get RPJMD Sasaran from completed Misi only
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-        
-        // Debug RPJMD Sasaran data
-        if (empty($rpjmdSasaran)) {
-            log_message('debug', 'No RPJMD Sasaran found from completed Misi. Please check if there are RPJMD Misi with status "selesai"');
-        } else {
-            log_message('debug', 'Found ' . count($rpjmdSasaran) . ' RPJMD Sasaran records from completed Misi');
-        }
         
         // Get satuan options
         $satuanOptions = [
@@ -191,15 +176,9 @@ class RenstraController extends BaseController
 
     public function save()
     {
-        if (!$this->request->isAJAX() && !$this->request->getMethod() === 'POST') {
-            return redirect()->back()->with('error', 'Metode request tidak valid');
-        }
 
         try {
             $data = $this->request->getPost();
-            
-            // Debug: Log received data structure
-            log_message('debug', 'Received data: ' . print_r($data, true));
             
             // Validate required fields
             if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
@@ -293,14 +272,6 @@ class RenstraController extends BaseController
 
     public function update($id = null)
     {
-        if (!$id) {
-            return redirect()->back()->with('error', 'ID tidak valid');
-        }
-
-        if (!$this->request->isAJAX() && !$this->request->getMethod() === 'POST') {
-            return redirect()->back()->with('error', 'Metode request tidak valid');
-        }
-
         try {
             $data = $this->request->getPost();
             
@@ -357,6 +328,12 @@ class RenstraController extends BaseController
             // Update in database
             $result = $this->renstraModel->updateCompleteRenstra($id, $updateData);
 
+            if ($result) {
+                return redirect()->to('/adminopd/pk_admin')->with('success', 'Data PK Admin berhasil disimpan');
+            } else {
+                return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK Admin');
+            }
+            
             if ($result) {
                 if ($this->request->isAJAX()) {
                     return $this->response->setJSON([

@@ -665,6 +665,5 @@ document.getElementById('renstra-form').addEventListener('submit', function(e) {
     // Set submission flag
     isSubmitting = true;
     
-    // Submit form normally (or via AJAX)
     this.submit();
 });

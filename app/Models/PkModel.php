@@ -90,7 +90,7 @@ class PkModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getPkForTable($opdId = null)
+    public function getAllPkData($opdId = null)
     {
         $query = $this->db->table('pk p')
         ->select('
@@ -98,34 +98,118 @@ class PkModel extends Model
             p.jenis,
             p.tanggal,
             o.nama_opd,
+
+            peg1.id as pihak_1_id,
+            peg1.nama_pegawai as pihak_1_nama,
+            peg1.nip_pegawai  as pihak_1_nip,
+            j1.nama_jabatan as pihak_1_jabatan,
+            pang1.nama_pangkat as pihak_1_pangkat,
+            pang1.golongan as pihak_1_golongan,
+
+            peg2.id as pihak_2_id,
+            peg2.nama_pegawai  as pihak_2_nama,
+            peg2.nip_pegawai  as pihak_2_nip,
+            j2.nama_jabatan as pihak_2_jabatan,
+            pang2.nama_pangkat as pihak_2_pangkat,
+            pang2.golongan as pihak_2_golongan,
+
+
             ps.id as sasaran_id,
             ps.sasaran,
             pi.id as indikator_id,
             pi.indikator,
             pi.target,
+
             pp.id as pk_program_id,
             pr.program_kegiatan,
             pr.anggaran
         ')
-        ->join('opd o', 'o.id = p.opd_id') // Join OPD
+        ->join('opd o', 'o.id = p.opd_id')
+        ->join('pegawai peg1', 'peg1.id = p.pihak_1')
+        ->join('jabatan j1', 'j1.id = peg1.id', 'left')
+        ->join('pangkat pang1', 'pang1.id = peg1.pangkat_id', 'left')
+        ->join('pegawai peg2', 'peg2.id = p.pihak_2')
+        ->join('jabatan j2', 'j2.id = peg2.id', 'left')
+        ->join('pangkat pang2', 'pang2.id = peg2.pangkat_id', 'left')
         ->join('pk_sasaran ps', 'ps.pk_id = p.id', 'left')
         ->join('pk_indikator pi', 'pi.pk_sasaran_id = ps.id', 'left')
         ->join('pk_program pp', 'pp.pk_id = p.id', 'left')
         ->join('program_pk pr', 'pr.id = pp.program_id', 'left');
 
-        if ($opdId !== null) {
-            $query->where('p.opd_id', $opdId);
-        }
+    if ($opdId !== null) {
+        $query->where('p.opd_id', $opdId);
+    }
 
-        $data = $query
-            ->orderBy('p.id', 'ASC')
-            ->orderBy('ps.id', 'ASC')
-            ->orderBy('pi.id', 'ASC')
-            ->orderBy('pp.id', 'ASC')
+    $data = $query
+        ->orderBy('p.id', 'ASC')
+        ->orderBy('ps.id', 'ASC')
+        ->orderBy('pi.id', 'ASC')
+        ->orderBy('pp.id', 'ASC')
+        ->get()
+        ->getResultArray();
+
+    return $data;
+
+    }
+
+    public function getPkById($id)
+    {
+        $builder = $this->db->table('pk p')
+            ->select('
+                p.id as pk_id,
+                p.jenis,
+                p.tanggal,
+                o.nama_opd,
+                o.singkatan,
+
+                peg1.nama_pegawai as nama_pihak_1,
+                peg1.nip_pegawai as nip_pihak_1,
+                jab1.nama_jabatan as jabatan_pihak_1,
+                pang1.nama_pangkat as pangkat_pihak_1,
+                pang1.golongan as golongan_pihak_1,
+
+                peg2.nama_pegawai as nama_pihak_2,
+                peg2.nip_pegawai as nip_pihak_2,
+                jab2.nama_jabatan as jabatan_pihak_2,
+                pang2.nama_pangkat as pangkat_pihak_2,
+                pang2.golongan as golongan_pihak_2
+            ')
+            ->join('opd o', 'o.id = p.opd_id')
+            ->join('pegawai peg1', 'peg1.id = p.pihak_1', 'left')
+            ->join('jabatan jab1', 'jab1.id = peg1.id', 'left')
+            ->join('pangkat pang1', 'pang1.id = peg1.pangkat_id', 'left')
+            ->join('pegawai peg2', 'peg2.id = p.pihak_2', 'left')
+            ->join('jabatan jab2', 'jab2.id = peg2.id', 'left')
+            ->join('pangkat pang2', 'pang2.id = peg2.pangkat_id', 'left')
+            ->where('p.id', $id)
+            ->get();
+
+        $pk = $builder->getRowArray();
+
+        if (!$pk) return null;
+
+        // Ambil sasaran & indikator
+        $pk['sasaran'] = $this->db->table('pk_sasaran')
+            ->where('pk_id', $id)
             ->get()
             ->getResultArray();
 
-        return $data;
+        foreach ($pk['sasaran'] as &$s) {
+            $s['indikator'] = $this->db->table('pk_indikator')
+                ->where('pk_sasaran_id', $s['id'])
+                ->get()
+                ->getResultArray();
+        }
+
+        // Ambil program
+        $pk['program'] = $this->db->table('pk_program pp')
+            ->select('pr.program_kegiatan, pr.anggaran')
+            ->join('program_pk pr', 'pr.id = pp.program_id')
+            ->where('pp.pk_id', $id)
+            ->get()
+            ->getResultArray();
+
+        return $pk;
     }
 
 

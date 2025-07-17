@@ -40,7 +40,7 @@ class PkAdminController extends BaseController
         }
 
         // Get PK data filtered by user's OPD
-        $pkData = $this->pkModel->getpkForTable($opdId);
+        $pkData = $this->pkModel->getAllPkData($opdId);
         
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
@@ -210,54 +210,43 @@ class PkAdminController extends BaseController
             return redirect()->to('/adminopd/pk_admin')->with('error', 'ID PK Admin tidak ditemukan');
         }
 
-        // Gunakan path absolut ke file image
-        $logoPath = FCPATH . 'assets/images/logo.png'; // FCPATH adalah path ke folder public
-        
-        $data = [
-            'title' => 'Perjanjian Kinerja',
-            'logo_url' => $logoPath, // Gunakan path absolut
-            'nama_p1' => 'MOUDY ARY NAZOLLA, S.STP., MH',
-            'jabatan_p1' => 'KEPALA DINAS KOMUNIKASI DAN INFORMATIKA',
-            'nama_p2' => 'RIYANTO PAMUNGKAS',
-            'jabatan_p2' => 'BUPATI',
-            'nama_opd' => 'DINAS KOMUNIKASI DAN INFORMATIKA',
-            'tahun' => '2025',
-        ];
+        // Ambil data lengkap PK dari model
+        $data = $this->pkModel->getPkById($id);
 
+        if (!$data) {
+            return redirect()->to('/adminopd/pk_admin')->with('error', 'Data PK tidak ditemukan');
+        }
+
+        // Logo path (harus absolut)
+        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+        
+        // dd($data);
+        // Buat halaman 1 dan 2
         $html_1 = view('adminOpd/pk_admin/cetak', $data);
         $html_2 = view('adminOpd/pk_admin/cetak-L', $data);
 
+        // Init mpdf
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'FOLIO',
             'default_font_size' => 12,
-            'defaultPageMode' => 'none',
-            'useSubstitutions' => true, 
             'mirrorMargins' => true,
             'tempDir' => sys_get_temp_dir(),
-            'curlTimeout' => 30,
-            'curlExecutionTimeout' => 30,
-            'allowedTags' => ['img'],
         ]);
 
+        // Tambahkan CSS jika perlu
         $css = '
-            img {
-                width: 70px;
-                height: auto;
-            }
+            img { width: 70px; height: auto; }
         ';
-
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
 
         $mpdf->WriteHTML($html_1);
-
-        // Tambah halaman landscape
-        $mpdf->AddPage('L');
-
+        $mpdf->AddPage('L'); // Halaman landscape
         $mpdf->WriteHTML($html_2);
 
         $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $data['tahun'] . '.pdf', 'I');
+        return $mpdf->Output('Perjanjian-Kinerja-' . $data['jenis'] . '.pdf', 'I');
     }
+
 
 }

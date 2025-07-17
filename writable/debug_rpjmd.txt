@@ -44048,3 +44048,419 @@ Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 80
 Target created with ID: 80
 === createCompleteRpjmd END - SUCCESS, MISI ID: 7 ===
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => jj
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => njj
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_tujuan] => ijijkj
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => hjijii
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => hjj
+                                                    [satuan] => Persen
+                                                    [definisi_op] => jijkjj
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 56
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 67
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 89
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 90
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 99
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => jj
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => jj
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 2
+Misi created with ID: 2
+Misi verification: Array
+(
+    [id] => 2
+    [misi] => jj
+    [status] => draft
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [created_at] => 2025-07-17 09:05:20
+    [updated_at] => 2025-07-17 09:05:20
+)
+
+Creating tujuan with data: Array
+(
+    [tujuan_rpjmd] => njj
+    [indikator_tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_tujuan] => ijijkj
+                )
+
+        )
+
+    [sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [sasaran_rpjmd] => hjijii
+                    [indikator_sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_sasaran] => hjj
+                                    [satuan] => Persen
+                                    [definisi_op] => jijkjj
+                                    [target_tahunan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 56
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 67
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 89
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 90
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 99
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [misi_id] => 2
+)
+
+About to insert tujuan: Array
+(
+    [misi_id] => 2
+    [tujuan_rpjmd] => njj
+)
+
+Tujuan insert result: SUCCESS
+Tujuan insert ID: 2
+Tujuan created with ID: 2
+Tujuan verification: Array
+(
+    [id] => 2
+    [misi_id] => 2
+    [tujuan_rpjmd] => njj
+    [created_at] => 2025-07-17 09:05:20
+    [updated_at] => 2025-07-17 09:05:20
+)
+
+Creating indikator tujuan: Array
+(
+    [indikator_tujuan] => ijijkj
+    [tujuan_id] => 2
+)
+
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 2
+    [indikator_tujuan] => ijijkj
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 2
+Creating sasaran: Array
+(
+    [sasaran_rpjmd] => hjijii
+    [indikator_sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_sasaran] => hjj
+                    [satuan] => Persen
+                    [definisi_op] => jijkjj
+                    [target_tahunan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [tahun] => 2025
+                                    [target_tahunan] => 56
+                                )
+
+                            [1] => Array
+                                (
+                                    [tahun] => 2026
+                                    [target_tahunan] => 67
+                                )
+
+                            [2] => Array
+                                (
+                                    [tahun] => 2027
+                                    [target_tahunan] => 89
+                                )
+
+                            [3] => Array
+                                (
+                                    [tahun] => 2028
+                                    [target_tahunan] => 90
+                                )
+
+                            [4] => Array
+                                (
+                                    [tahun] => 2029
+                                    [target_tahunan] => 99
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [tujuan_id] => 2
+)
+
+About to insert sasaran: Array
+(
+    [tujuan_id] => 2
+    [sasaran_rpjmd] => hjijii
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 2
+Sasaran created with ID: 2
+Creating indikator sasaran: Array
+(
+    [indikator_sasaran] => hjj
+    [satuan] => Persen
+    [definisi_op] => jijkjj
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 56
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 67
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 89
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 90
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 99
+                )
+
+        )
+
+    [sasaran_id] => 2
+)
+
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 2
+    [indikator_sasaran] => hjj
+    [definisi_op] => jijkjj
+    [satuan] => Persen
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 3
+Indikator sasaran created with ID: 3
+Creating target: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 56
+    [indikator_sasaran_id] => 3
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2025
+    [target_tahunan] => 56
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 11
+Target created with ID: 11
+Creating target: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 67
+    [indikator_sasaran_id] => 3
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2026
+    [target_tahunan] => 67
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 12
+Target created with ID: 12
+Creating target: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 89
+    [indikator_sasaran_id] => 3
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2027
+    [target_tahunan] => 89
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 13
+Target created with ID: 13
+Creating target: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 90
+    [indikator_sasaran_id] => 3
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2028
+    [target_tahunan] => 90
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 14
+Target created with ID: 14
+Creating target: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 99
+    [indikator_sasaran_id] => 3
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2029
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 15
+Target created with ID: 15
+=== createCompleteRpjmd END - SUCCESS, MISI ID: 2 ===

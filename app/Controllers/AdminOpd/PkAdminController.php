@@ -53,7 +53,6 @@ class PkAdminController extends BaseController
         // Load the view for adding a new PK Admin
         // $pegawai = $this->pegawaiModel->getAllPegawai();
         $program = $this->programPkModel->getAllPrograms();
-
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         
         // Pass the data to the view
@@ -93,11 +92,12 @@ class PkAdminController extends BaseController
             'tahun' => '2025',
         ];
 
-        $html = view('adminOpd/pk_admin/cetak', $data);
+        $html_1 = view('adminOpd/pk_admin/cetak', $data);
+        $html_2 = view('adminOpd/pk_admin/cetak-L', $data);
 
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
-            'format' => 'A4',
+            'format' => 'FOLIO',
             'default_font_size' => 12,
             'defaultPageMode' => 'none',
             'useSubstitutions' => true, 
@@ -110,14 +110,19 @@ class PkAdminController extends BaseController
 
         $css = '
             img {
-                width: 60px;
+                width: 70px;
                 height: auto;
             }
         ';
-        
+
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
 
-        $mpdf->WriteHTML($html);
+        $mpdf->WriteHTML($html_1);
+
+        // Tambah halaman landscape
+        $mpdf->AddPage('L');
+
+        $mpdf->WriteHTML($html_2);
 
         $this->response->setHeader('Content-Type', 'application/pdf');
         return $mpdf->Output('Perjanjian-Kinerja-2025.pdf', 'I');

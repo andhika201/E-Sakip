@@ -28,36 +28,52 @@
         <section class="mb-4">
           <h2 class="h5 fw-semibold mb-3">Informasi Umum PK</h2>
           <div class="col">
-            <div class="col-md-8">
-              <label class="form-label">Pihak 1</label>
-                <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
-                    <option value="">Pilih Pihak Kesatu</option>
-                    <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
-                        <?php foreach ($pegawaiOpd as $pegawai): ?>
-                        <option value="<?= $pegawai['id'] ?>">
-                            <?= esc($pegawai['nama_pegawai']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <option value="" disabled>Tidak Pegawai yang tersedia</option>
-                    <?php endif; ?>
-                </select>
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Pihak Kesatu</label>
+                        <select name="pegawai_1_id" id="p1_select" class="form-select mb-3 border-secondary pegawai-select" data-target="nip-p1" required>
+                            <option value="">Pilih Pihak Kesatu</option>
+                            <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
+                                <?php foreach ($pegawaiOpd as $pegawai): ?>
+                                <option value="<?= $pegawai['id'] ?>" data-nip="<?= $pegawai['nip_pegawai'] ?>">
+                                    <?= esc($pegawai['nama_pegawai']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="" disabled>Tidak Pegawai yang tersedia</option>
+                            <?php endif; ?>
+                        </select>
+                    </div> 
+                     <div class="col-md-4">
+                        <label class="form-label">NIP Pegawai</label>
+                        <input type="text" name="nip-p1" class="form-control mb-3 border-secondary" value="" placeholder="NIP" required readonly>
+                    </div>                  
+                </div>
             </div>
 
-            <div class="col-md-8">
-              <label class="form-label">Pihak 2</label>
-                <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
-                    <option value="">Pilih Pihak Kesatu</option>
-                    <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
-                        <?php foreach ($pegawaiOpd as $pegawai): ?>
-                        <option value="<?= $pegawai['id'] ?>">
-                            <?= esc($pegawai['nama_pegawai']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <option value="" disabled>Tidak Pegawai yang tersedia</option>
-                    <?php endif; ?>
-                </select>
+            <div class="col-md-12">
+              <div class="row">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Pihak Kedua</label>
+                        <select name="pegawai_2_id" id="p2_select" class="form-select mb-3 border-secondary pegawai-select" data-target="nip-p2" required>
+                            <option value="">Pilih Pihak Kesatu</option>
+                            <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
+                                <?php foreach ($pegawaiOpd as $pegawai): ?>
+                                <option value="<?= $pegawai['id'] ?>" data-nip="<?= $pegawai['nip_pegawai'] ?>">
+                                    <?= esc($pegawai['nama_pegawai']) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="" disabled>Tidak Pegawai yang tersedia</option>
+                            <?php endif; ?>
+                        </select>
+                    </div> 
+                     <div class="col-md-4">
+                        <label class="form-label">NIP Pegawai</label>
+                        <input type="text" name="nip-p2" class="form-control mb-3 border-secondary" value="" placeholder="NIP" required readonly>
+                    </div>                  
+                </div>
             </div>
           </div>
         </section>
@@ -73,32 +89,32 @@
             <!-- Sasaran 1.1 -->
                 <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                    <label class="fw-medium h5">Sasaran 1</label>
-                    <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                        <label class="fw-medium h5">Sasaran</label>
+                        <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                     </div>
-                    <div class="mb-3">
-                    <label class="form-label">Sasaran PK</label>
-                    <textarea name="tujuan[0][sasaran][0][sasaran_rpjmd]" class="form-control border-secondary" rows="2" placeholder="Contoh: Terwujudnya pelayanan publik yang prima dan memuaskan masyarakat" required></textarea>
+                        <div class="mb-3">
+                        <label class="form-label">Sasaran PK</label>
+                        <textarea name="sasaran_pk[0][sasaran]" class="form-control border-secondary" rows="2" placeholder="Contoh: Terwujudnya pelayanan publik yang prima dan memuaskan masyarakat" required></textarea>
                     </div>
 
-                    <!-- Indikator Sasaran -->
-                    <div class="indikator-sasaran-section">
-                        <div class="indikator-sasaran-container">
-                            <!-- Indikator Sasaran 1.1.1 -->
-                            <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
+                    <!-- Indikator -->
+                    <div class="indikator-section">
+                        <div class="indikator-container">
+                            <!-- Indikator-->
+                            <div class="indikator-item border rounded p-3 bg-light mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <label class="fw-medium">Indikator 1.1</label>
-                                    <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                    <label class="fw-medium">Indikator</label>
+                                    <button type="button" class="remove-indikator btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                                 </div>
                                 
                                 <div class="row">
                                     <div class="col-md-8">
                                         <label class="form-label">Indikator</label>
-                                        <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][indikator_sasaran]" class="form-control mb-3 border-secondary" value="" placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan" required>
+                                        <input type="text" name="sasaran_pk[0][indikator_sasaran][0][indikator]" class="form-control mb-3 border-secondary" value="" placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Target</label>
-                                        <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][indikator_sasaran]" class="form-control mb-3 border-secondary" value="" placeholder="Nilai target" required>
+                                        <input type="text" name="sasaran[0][indikator_sasaran][0][target]" class="form-control mb-3 border-secondary" value="" placeholder="Nilai target" required>
                                     </div>
                                 </div>
                             </div> <!-- End Indikator Sasaran -->
@@ -106,14 +122,14 @@
                         <!-- Tombol Tambah Indikator Sasaran di bawah container -->
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
-                            <i class="fas fa-plus me-1"></i> Tambah Sasaran
+                            <i class="fas fa-plus me-1"></i> Tambah Indikator
                             </button>
                         </div>
                     </div> <!-- End Indikator Sasaran Section -->
                 </div> <!-- End Sasaran -->
                 <div class="d-flex justify-content-end mt-2">
                     <button type="button" class="add-indikator-sasaran btn btn-success btn-sm">
-                    <i class="fas fa-plus me-1"></i> Tambah Indikator
+                    <i class="fas fa-plus me-1"></i> Tambah Sasaran
                     </button>
                 </div>
             </div> <!-- End Sasaran Container -->
@@ -136,22 +152,22 @@
                     <div class="row">
                         <div class="col-md-8">
                             <label class="form-label">Program</label>
-                            <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
-                                <option value="">Pilih Pihak Kesatu</option>
+                            <select name="program_id" class="form-select program-select mb-3" required>
+                                <option value="">Pilih Program</option>
                                 <?php if (isset($program) && !empty($program)): ?>
                                     <?php foreach ($program as $programItem): ?>
-                                    <option value="<?= $programItem['id'] ?>">
+                                    <option value="<?= $programItem['id'] ?>" data-anggaran="<?= $programItem['anggaran'] ?>">
                                         <?= esc($programItem['program_kegiatan']) ?>
                                     </option>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <option value="" disabled>Tidak Program yang tersedia</option>
+                                    <option value="" disabled>Tidak ada Program yang tersedia</option>
                                 <?php endif; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Anggaran</label>
-                            <input type="text" name="tujuan[0][sasaran][0][indikator_sasaran][0][indikator_sasaran]" class="form-control mb-3 border-secondary" value="" placeholder="Anggaran" required readonly>
+                            <input type="text" name="anggaran" class="form-control mb-3 border-secondary" value="" placeholder="Anggaran" required readonly>
                         </div>
                     </div>
                 </div>
@@ -166,7 +182,7 @@
 
       <!-- Tombol Aksi -->
       <div class="d-flex justify-content-between mt-4">
-        <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-secondary">
+        <a href="<?= base_url('adminopd/pk_admin') ?>" class="btn btn-secondary">
           <i class="fas fa-arrow-left me-1"></i> Kembali
         </a>
         <button type="submit" class="btn btn-success">
@@ -181,5 +197,46 @@
 
   <!-- JavaScript Funtion For Handling RPJMD Form-->
   <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const programSelect = document.querySelector('.program-select');
+        const anggaranInput = document.querySelector('input[name="anggaran"]');
+        
+        programSelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const anggaran = selectedOption.getAttribute('data-anggaran');
+
+            // Cek apakah ada anggaran, lalu tampilkan
+            if (anggaran) {
+                anggaranInput.value = formatRupiah(anggaran);
+            } else {
+                anggaranInput.value = '';
+            }
+        });
+
+        const pegawaiSelects = document.querySelectorAll('.pegawai-select');
+
+        pegawaiSelects.forEach(function(select) {
+            select.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const nip = selectedOption.getAttribute('data-nip');
+                const targetName = this.getAttribute('data-target');
+                const nipInput = document.querySelector(`input[name="${targetName}"]`);
+
+                if (nipInput) {
+                    nipInput.value = nip || '';
+                }
+            });
+        });
+
+        // Fungsi format ke Rupiah
+        function formatRupiah(angka) {
+            return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+        }
+    });
+</script>
+
 </body>
 </html>
+

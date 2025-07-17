@@ -5,93 +5,88 @@
   <meta charset="UTF-8" />
   <title>Perjanjian Kinerja 2025</title>
   <style>
-    body {
-      font-family: 'Times New Roman', Times, serif;
-      margin: 40px;
-      color: #000;
-    }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12px;
+    margin: 40px;
+    color: #000;
+  }
 
-   h5, h6 {
-  text-align: center;
-  font-w eight: bold;
-  margin-bottom: 20px;
-}
+  h5, h6 {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
 
-h5 {
-  font-size: 22px;
-}
+  h5 {
+    font-size: 16px;
+  }
 
-h6 {
-  font-size: 20px;
-}
+  h6 {
+    font-size: 14px;
+  }
 
-.signature-line {
-  display: inline-block;
-  border-bottom: 1px solid #000;
-  padding-bottom: 5px;
-  margin-bottom: 10px;
-}
+  p {
+    text-align: justify;
+    margin-bottom: 12px;
+  }
 
-.name-line {
-  font-weight: bold;
-  text-transform: uppercase;
-}
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 11px;
+  }
 
+  table td,
+  table th {
+    border: 1px solid #000;
+    padding: 5px 8px;
+    vertical-align: top;
+  }
 
-    p {
-      text-align: justify;
-      margin-bottom: 15px;
-    }
+  table th {
+    background-color: #f2f2f2;
+  }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
+  .no-border td {
+    border: none;
+    padding: 3px 0;
+  }
 
-    table td,
-    table th {
-      border: 1px solid #000;
-      padding: 6px 10px;
-      vertical-align: top;
-    }
+  .table-no-border td,
+  .table-no-border {
+    border: none !important;
+  }
 
-    table th {
-      background-color: #f2f2f2;
-    }
+  .center {
+    text-align: center;
+  }
 
-    .no-border td {
-      border: none;
-      padding: 4px 0;
-    }
+  .text-uppercase {
+    text-transform: uppercase;
+  }
 
-    .center {
-      text-align: center;
-    }
+  .fw-bold {
+    font-weight: bold;
+  }
 
-    .text-uppercase {
-      text-transform: uppercase;
-    }
+  .signature {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    text-align: center;
+  }
 
-    .fw-bold {
-      font-weight: bold;
-    }
+  .section {
+    margin-top: 40px;
+  }
 
-    .signature {
-      margin-top: 60px;
-      margin-bottom: 60px;
-      text-align: center;
-    }
+  .name-line {
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+</style>
 
-    .section {
-      margin-top: 50px;
-    }
-
-    .table-no-border td,
-    .table-no-border {
-      border: none !important;
-    }
-  </style>
 </head>
 
 <body>

@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\PegawaiModel;
 use App\Models\ProgramPkModel;
 use App\Models\OpdModel;
+// use Mpdf\Mpdf;
 
 class PkAdminController extends BaseController
 {
@@ -66,4 +67,60 @@ class PkAdminController extends BaseController
 
         return view('adminOpd/pk_admin/tambah_pk_admin', $data);
     }
+
+    public function cetak()
+    {
+        // Gunakan path absolut ke file image
+        $logoPath = FCPATH . 'assets/images/logo.png'; // FCPATH adalah path ke folder public
+        
+        // Atau alternatif lain:
+        // $logoPath = realpath(FCPATH . 'assets/images/logo.png');
+        
+        // Pastikan file exists
+        if (!file_exists($logoPath)) {
+            // Handle jika file tidak ada
+            log_message('error', 'Logo file tidak ditemukan: ' . $logoPath);
+            $logoPath = ''; // atau gunakan placeholder image
+        }
+        
+        $data = [
+            'title' => 'Perjanjian Kinerja 2025',
+            'logo_url' => $logoPath, // Gunakan path absolut
+            'nama_pihak_kesatu' => 'MOUDY ARY NAZOLLA, S.STP., MH',
+            'jabatan_pihak_kesatu' => 'KEPALA DINAS KOMUNIKASI DAN INFORMATIKA',
+            'nama_pihak_kedua' => 'RIYANTO PAMUNGKAS',
+            'jabatan_pihak_kedua' => 'BUPATI',
+            'tahun' => '2025',
+        ];
+
+        $html = view('adminOpd/pk_admin/cetak', $data);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font_size' => 12,
+            'defaultPageMode' => 'none',
+            'useSubstitutions' => true, 
+            'mirrorMargins' => true,
+            'tempDir' => sys_get_temp_dir(),
+            'curlTimeout' => 30,
+            'curlExecutionTimeout' => 30,
+            'allowedTags' => ['img'],
+        ]);
+
+        $css = '
+            img {
+                width: 60px;
+                height: auto;
+            }
+        ';
+        
+        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        return $mpdf->Output('Perjanjian-Kinerja-2025.pdf', 'I');
+    }
+
 }

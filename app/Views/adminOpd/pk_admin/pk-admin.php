@@ -74,6 +74,11 @@
             </tbody>
         </table>
         </div>
+        <div class="mt-3 text-end">
+            <a href="<?= base_url('adminopd/pk_admin/cetak') ?>" class="btn btn-outline-success">
+                <i class="fas fa-print me-1"></i> CETAK
+            </a>
+        </div>
     </div>
   </main>
   <?= $this->include('adminOpd/templates/footer.php'); ?>

@@ -13,6 +13,7 @@ class User extends BaseController
     protected $rpjmdModel;
     protected $rktModel;
     protected $renstraModel;
+    protected $renjaModel;
     protected $ikuModel;
 
     public function __construct()
@@ -20,6 +21,7 @@ class User extends BaseController
         $this->rpjmdModel = new RpjmdModel();
         $this->rktModel = new RktModel();
         $this->renstraModel = new RenstraModel();
+        $this->renjaModel = new RenjaModel();
         $this->ikuModel = new IkuModel();
     }
 

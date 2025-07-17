@@ -9,6 +9,9 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+  
+ <!-- Content Wrapper -->
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
   <!-- Navbar/Header -->
   <?= $this->include('adminOpd/templates/header.php'); ?>
@@ -53,5 +56,7 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  </div> <!-- End Content Wrapper -->
+
 </body>
 </html>

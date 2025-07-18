@@ -22,6 +22,7 @@ $routes->get('/pk_pimpinan', 'UserController::pk_pimpinan');
 $routes->get('/pk_administrator', 'UserController::pk_administrator');
 $routes->get('/pk_pengawas', 'UserController::pk_pengawas');
 $routes->get('/tentang_kami', 'UserController::tentang_kami');
+$routes->get('/rpjmd_tes', 'UserController::rpjmd_tes');
 
 
 /* Admin Kabupaten Routes */

@@ -7,7 +7,6 @@
   <?= $this->include('user/templates/style.php'); ?>
 </head>
 <body>
-  
   <?= $this->include('user/templates/header'); ?>
   
   <main class="flex-grow-1 d-flex align-items-center justify-content-center">
@@ -20,12 +19,12 @@
         <!-- Filter Periode -->
         <div class="d-flex justify-content-center mb-4">
           <div class="col-md-4">
-            <select id="periode-filter" class="form-select" onchange="filterByPeriode()">
+            <select id="periode-filter" class="form-select">
               <option value="">Semua Periode</option>
-              <?php if (isset($rpjmdGrouped) && !empty($rpjmdGrouped)): ?>
+              <?php if (!empty($rpjmdGrouped)): ?>
                 <?php foreach ($rpjmdGrouped as $periodKey => $periodData): ?>
                   <option value="<?= $periodKey ?>">
-                    Periode <?= $periodData['period'] ?>
+                    Periode <?= esc($periodData['period']) ?>
                   </option>
                 <?php endforeach; ?>
               <?php endif; ?>
@@ -37,7 +36,7 @@
         <?php if (isset($message)): ?>
           <div class="alert alert-info text-center">
             <i class="fas fa-info-circle me-2"></i>
-            <?= $message ?>
+            <?= esc($message) ?>
           </div>
         <?php elseif (empty($rpjmdGrouped)): ?>
           <div class="alert alert-warning text-center">
@@ -64,101 +63,7 @@
               </thead>
               <tbody id="rpjmd-table-body">
                 <?php foreach ($rpjmdGrouped as $periodIndex => $periodData): ?>
-                  <!-- Data untuk periode ini -->
-                  <?php foreach ($periodData['misi_data'] as $misi): ?>
-                    <?php if (isset($misi['tujuan']) && !empty($misi['tujuan'])): ?>
-                      <?php 
-                      $misiRowspan = 0;
-                      foreach ($misi['tujuan'] as $tujuan) {
-                          if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])) {
-                              foreach ($tujuan['sasaran'] as $sasaran) {
-                                  if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
-                                      $misiRowspan += count($sasaran['indikator_sasaran']);
-                                  } else {
-                                      $misiRowspan += 1;
-                                  }
-                              }
-                          } else {
-                              $misiRowspan += 1;
-                          }
-                      }
-                      ?>
-                      
-                      <?php $firstMisiRow = true; ?>
-                      <?php foreach ($misi['tujuan'] as $tujuan): ?>
-                        <?php if (isset($tujuan['sasaran']) && !empty($tujuan['sasaran'])): ?>
-                          <?php 
-                          $tujuanRowspan = 0;
-                          foreach ($tujuan['sasaran'] as $sasaran) {
-                              if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])) {
-                                  $tujuanRowspan += count($sasaran['indikator_sasaran']);
-                              } else {
-                                  $tujuanRowspan += 1;
-                              }
-                          }
-                          ?>
-                          
-                          <?php $firstTujuanRow = true; ?>
-                          <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
-                            <?php if (isset($sasaran['indikator_sasaran']) && !empty($sasaran['indikator_sasaran'])): ?>
-                              
-                              <?php $firstSasaranRow = true; ?>
-                              <?php foreach ($sasaran['indikator_sasaran'] as $indikator): ?>
-                                <tr class="periode-row" data-periode="<?= $periodIndex ?>">
-                                  <?php if ($firstMisiRow): ?>
-                                    <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi']) ?></td>
-                                    <?php $firstMisiRow = false; ?>
-                                  <?php endif; ?>
-                                  
-                                  <?php if ($firstTujuanRow): ?>
-                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan['tujuan_rpjmd']) ?></td>
-                                    <td class="border p-2 align-top text-start" rowspan="<?= $tujuanRowspan ?>">
-                                      <?php if (isset($tujuan['indikator_tujuan']) && !empty($tujuan['indikator_tujuan'])): ?>
-                                        <?php foreach ($tujuan['indikator_tujuan'] as $idx => $indikatorTujuan): ?>
-                                          <?= esc($indikatorTujuan['indikator_tujuan']) ?>
-                                          <?php if ($idx < count($tujuan['indikator_tujuan']) - 1): ?><br><?php endif; ?>
-                                        <?php endforeach; ?>
-                                      <?php else: ?>
-                                        -
-                                      <?php endif; ?>
-                                    </td>
-                                    <?php $firstTujuanRow = false; ?>
-                                  <?php endif; ?>
-                                  
-                                  <?php if ($firstSasaranRow): ?>
-                                    <td class="border p-2 align-top text-start" rowspan="<?= count($sasaran['indikator_sasaran']) ?>"><?= esc($sasaran['sasaran_rpjmd']) ?></td>
-                                    <?php $firstSasaranRow = false; ?>
-                                  <?php endif; ?>
-                                  
-                                  <td class="border p-2 align-top text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                                  <td class="border p-2 align-top text-start"><?= esc($indikator['definisi_op'] ?? '-') ?></td>
-                                  <td class="border p-2 align-top text-start"><?= esc($indikator['satuan'] ?? '-') ?></td>
-                                  
-                                  <!-- Target per tahun -->
-                                  <span class="year-cells" data-periode="<?= $periodIndex ?>">
-                                    <?php foreach ($periodData['years'] as $year): ?>
-                                      <td class="border p-2 align-top text-middle">
-                                        <?php if (isset($indikator['target_tahunan']) && !empty($indikator['target_tahunan'])): ?>
-                                          <?php foreach ($indikator['target_tahunan'] as $target): ?>
-                                            <?php if ($target['tahun'] == $year): ?>
-                                              <?= esc($target['target_tahunan']) ?>
-                                              <?php break; ?>
-                                            <?php endif; ?>
-                                          <?php endforeach; ?>
-                                        <?php else: ?>
-                                          -
-                                        <?php endif; ?>
-                                      </td>
-                                    <?php endforeach; ?>
-                                  </span>
-                                </tr>
-                              <?php endforeach; ?>
-                            <?php endif; ?>
-                          <?php endforeach; ?>
-                        <?php endif; ?>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                  <?php endforeach; ?>
+                  <?= renderPeriodData($periodIndex, $periodData) ?>
                 <?php endforeach; ?>
               </tbody>
             </table>
@@ -167,97 +72,181 @@
       </div>
     </div>
   </main>
-  </main>
 
   <script>
     // Data periode dari controller
     const periodData = <?= json_encode($rpjmdGrouped ?? []) ?>;
-    
-    // Fungsi untuk update header tahun
-    function updateTableHeaders(periodKey) {
-        const yearHeaderRow = document.getElementById('year-header-row');
-        const yearHeaderSpan = document.getElementById('year-header-span');
-        
-        if (periodData[periodKey] && periodData[periodKey].years) {
-            const years = periodData[periodKey].years;
-            
-            // Update colspan
-            yearHeaderSpan.setAttribute('colspan', years.length);
-            
-            // Clear and rebuild year headers
-            yearHeaderRow.innerHTML = '';
-            years.forEach(function(year) {
-                const th = document.createElement('th');
-                th.className = 'border p-2';
-                th.textContent = year;
-                yearHeaderRow.appendChild(th);
-            });
-        }
+    let currentPeriod = '';
+
+    // Initialize on DOM load
+    document.addEventListener('DOMContentLoaded', initRpjmdTable);
+
+    function initRpjmdTable() {
+      const periodeFilter = document.getElementById('periode-filter');
+      periodeFilter.addEventListener('change', filterByPeriode);
+      
+      // Set initial period
+      const initialPeriod = Object.keys(periodData)[0] || '';
+      if (initialPeriod) {
+        periodeFilter.value = initialPeriod;
+        filterByPeriode();
+      }
     }
-    
-    // Fungsi untuk filter berdasarkan periode
+
     function filterByPeriode() {
       const selectedPeriode = document.getElementById('periode-filter').value;
-      const rows = document.querySelectorAll('.periode-row');
-      const yearCells = document.querySelectorAll('.year-cells');
+      if (selectedPeriode === currentPeriod) return;
       
-      // Hide semua baris terlebih dahulu
-      rows.forEach(row => {
-        row.style.display = 'none';
-      });
-      
-      // Hide semua year cells
-      yearCells.forEach(cell => {
-        cell.style.display = 'none';
-      });
+      currentPeriod = selectedPeriode;
+      const rows = document.querySelectorAll('#rpjmd-table-body tr');
       
       if (selectedPeriode === '') {
-        // Tampilkan semua jika tidak ada filter
-        rows.forEach(row => {
-          row.style.display = '';
-        });
-        
-        // Untuk "Semua Periode", ambil periode pertama untuk header
-        const firstPeriodeKey = Object.keys(periodData)[0];
-        if (firstPeriodeKey) {
-          updateTableHeaders(firstPeriodeKey);
-          
-          // Show all year cells
-          yearCells.forEach(cell => {
-            cell.style.display = '';
-          });
-        }
+        // Show all periods
+        rows.forEach(row => row.classList.remove('d-none'));
+        updateTableHeaders(Object.keys(periodData)[0]);
       } else {
-        // Tampilkan hanya baris yang sesuai periode
+        // Show selected period
         rows.forEach(row => {
-          if (row.getAttribute('data-periode') === selectedPeriode) {
-            row.style.display = '';
-          }
+          row.classList.toggle('d-none', row.dataset.periode !== selectedPeriode);
         });
-        
-        // Tampilkan year cells untuk periode yang dipilih
-        yearCells.forEach(cell => {
-          if (cell.getAttribute('data-periode') === selectedPeriode) {
-            cell.style.display = '';
-          }
-        });
-        
         updateTableHeaders(selectedPeriode);
       }
     }
-    
-    // Inisialisasi tampilan saat page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Set filter ke periode pertama jika ada data
-      const periodeFilter = document.getElementById('periode-filter');
-      if (periodeFilter.children.length > 1) {
-        periodeFilter.selectedIndex = 1; // Pilih periode pertama (bukan "Semua Periode")
-        filterByPeriode();
-      }
-    });
+
+    function updateTableHeaders(periodKey) {
+      const yearHeaderRow = document.getElementById('year-header-row');
+      const yearHeaderSpan = document.getElementById('year-header-span');
+      
+      if (!periodData[periodKey] || !periodData[periodKey].years) return;
+      
+      const years = periodData[periodKey].years;
+      yearHeaderSpan.colSpan = years.length;
+      yearHeaderRow.innerHTML = '';
+      
+      years.forEach(year => {
+        const th = document.createElement('th');
+        th.className = 'border p-2';
+        th.textContent = year;
+        yearHeaderRow.appendChild(th);
+      });
+    }
   </script>
 
   <?= $this->include('user/templates/footer'); ?>
-
 </body>
 </html>
+
+<?php
+// Helper function to render period data (could be in separate file)
+function renderPeriodData($periodIndex, $periodData) {
+  ob_start();
+  foreach ($periodData['misi_data'] as $misi) {
+    if (empty($misi['tujuan'])) continue;
+    
+    $misiRowspan = calculateMisiRowspan($misi);
+    $firstMisiRow = true;
+    
+    foreach ($misi['tujuan'] as $tujuan) {
+      if (empty($tujuan['sasaran'])) continue;
+      
+      $tujuanRowspan = calculateTujuanRowspan($tujuan);
+      $firstTujuanRow = true;
+      
+      foreach ($tujuan['sasaran'] as $sasaran) {
+        if (empty($sasaran['indikator_sasaran'])) continue;
+        
+        $sasaranRowspan = count($sasaran['indikator_sasaran']);
+        $firstSasaranRow = true;
+        
+        foreach ($sasaran['indikator_sasaran'] as $indikator) {
+          echo '<tr class="periode-row" data-periode="' . $periodIndex . '">';
+          
+          // MISI cell
+          if ($firstMisiRow) {
+            echo '<td class="border p-2 align-top text-start" rowspan="' . $misiRowspan . '">' 
+                 . esc($misi['misi']) . '</td>';
+            $firstMisiRow = false;
+          }
+          
+          // TUJUAN cell
+          if ($firstTujuanRow) {
+            echo '<td class="border p-2 align-top text-start" rowspan="' . $tujuanRowspan . '">' 
+                 . esc($tujuan['tujuan_rpjmd']) . '</td>';
+            
+            // INDIKATOR TUJUAN cell
+            echo '<td class="border p-2 align-top text-start" rowspan="' . $tujuanRowspan . '">';
+            if (!empty($tujuan['indikator_tujuan'])) {
+              echo implode('<br>', array_map(
+                fn($it) => esc($it['indikator_tujuan']), 
+                $tujuan['indikator_tujuan']
+              ));
+            } else {
+              echo '-';
+            }
+            echo '</td>';
+            
+            $firstTujuanRow = false;
+          }
+          
+          // SASARAN cell
+          if ($firstSasaranRow) {
+            echo '<td class="border p-2 align-top text-start" rowspan="' . $sasaranRowspan . '">' 
+                 . esc($sasaran['sasaran_rpjmd']) . '</td>';
+            $firstSasaranRow = false;
+          }
+          
+          // Indikator details
+          echo '<td class="border p-2 align-top text-start">' . esc($indikator['indikator_sasaran']) . '</td>';
+          echo '<td class="border p-2 align-top text-start">' . esc($indikator['definisi_op'] ?? '-') . '</td>';
+          echo '<td class="border p-2 align-top text-start">' . esc($indikator['satuan'] ?? '-') . '</td>';
+          
+          // Year targets
+          foreach ($periodData['years'] as $year) {
+            $target = findYearTarget($indikator['target_tahunan'] ?? [], $year);
+            echo '<td class="border p-2 align-top text-middle">' . esc($target) . '</td>';
+          }
+          
+          echo '</tr>';
+        }
+      }
+    }
+  }
+  return ob_get_clean();
+}
+
+// Helper functions
+function calculateMisiRowspan($misi) {
+  $count = 0;
+  foreach ($misi['tujuan'] as $tujuan) {
+    if (!empty($tujuan['sasaran'])) {
+      foreach ($tujuan['sasaran'] as $sasaran) {
+        $count += !empty($sasaran['indikator_sasaran']) 
+          ? count($sasaran['indikator_sasaran']) 
+          : 1;
+      }
+    } else {
+      $count++;
+    }
+  }
+  return $count;
+}
+
+function calculateTujuanRowspan($tujuan) {
+  $count = 0;
+  foreach ($tujuan['sasaran'] as $sasaran) {
+    $count += !empty($sasaran['indikator_sasaran']) 
+      ? count($sasaran['indikator_sasaran']) 
+      : 1;
+  }
+  return $count;
+}
+
+function findYearTarget($targets, $year) {
+  foreach ($targets as $target) {
+    if ($target['tahun'] == $year) {
+      return $target['target_tahunan'];
+    }
+  }
+  return '-';
+}
+?>

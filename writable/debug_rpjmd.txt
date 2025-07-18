@@ -44048,3 +44048,443 @@ Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 80
 Target created with ID: 80
 === createCompleteRpjmd END - SUCCESS, MISI ID: 7 ===
+
+=== createCompleteRpjmdTransaction START ===
+Input data: Array
+(
+    [misi] => Array
+        (
+            [misi] => menciptakan kehidupan yang religius (agamis), berbudaya, aman dan damai
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [tujuan_rpjmd] => terwujudnya kehidupan masyarakat yang agamis, berbudaya aman dan damai
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_tujuan] => indeks demokrasi indonesia (IDI)
+                                )
+
+                            [1] => Array
+                                (
+                                    [indikator_tujuan] => indeks kerukunan umat beragama 
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [sasaran_rpjmd] => meningkatnya kualitas demokrasi di daerah
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [indikator_sasaran] => indeks demokrasi indonesia (IDI)
+                                                    [satuan] => Unit
+                                                    [definisi_op] => -
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 0
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 72
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 73
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 74
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 75
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Creating misi with data: Array
+(
+    [misi] => menciptakan kehidupan yang religius (agamis), berbudaya, aman dan damai
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+About to insert misi: Array
+(
+    [misi] => menciptakan kehidupan yang religius (agamis), berbudaya, aman dan damai
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 1
+Misi created with ID: 1
+Misi verification: Array
+(
+    [id] => 1
+    [misi] => menciptakan kehidupan yang religius (agamis), berbudaya, aman dan damai
+    [status] => draft
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [created_at] => 2025-07-18 10:35:21
+    [updated_at] => 2025-07-18 10:35:21
+)
+
+Creating tujuan with data: Array
+(
+    [tujuan_rpjmd] => terwujudnya kehidupan masyarakat yang agamis, berbudaya aman dan damai
+    [indikator_tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_tujuan] => indeks demokrasi indonesia (IDI)
+                )
+
+            [1] => Array
+                (
+                    [indikator_tujuan] => indeks kerukunan umat beragama 
+                )
+
+        )
+
+    [sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [sasaran_rpjmd] => meningkatnya kualitas demokrasi di daerah
+                    [indikator_sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [indikator_sasaran] => indeks demokrasi indonesia (IDI)
+                                    [satuan] => Unit
+                                    [definisi_op] => -
+                                    [target_tahunan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 0
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 72
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 73
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 74
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 75
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [misi_id] => 1
+)
+
+About to insert tujuan: Array
+(
+    [misi_id] => 1
+    [tujuan_rpjmd] => terwujudnya kehidupan masyarakat yang agamis, berbudaya aman dan damai
+)
+
+Tujuan insert result: SUCCESS
+Tujuan insert ID: 1
+Tujuan created with ID: 1
+Tujuan verification: Array
+(
+    [id] => 1
+    [misi_id] => 1
+    [tujuan_rpjmd] => terwujudnya kehidupan masyarakat yang agamis, berbudaya aman dan damai
+    [created_at] => 2025-07-18 10:35:21
+    [updated_at] => 2025-07-18 10:35:21
+)
+
+Creating indikator tujuan: Array
+(
+    [indikator_tujuan] => indeks demokrasi indonesia (IDI)
+    [tujuan_id] => 1
+)
+
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 1
+    [indikator_tujuan] => indeks demokrasi indonesia (IDI)
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 1
+Creating indikator tujuan: Array
+(
+    [indikator_tujuan] => indeks kerukunan umat beragama 
+    [tujuan_id] => 1
+)
+
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 1
+    [indikator_tujuan] => indeks kerukunan umat beragama 
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 2
+Creating sasaran: Array
+(
+    [sasaran_rpjmd] => meningkatnya kualitas demokrasi di daerah
+    [indikator_sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [indikator_sasaran] => indeks demokrasi indonesia (IDI)
+                    [satuan] => Unit
+                    [definisi_op] => -
+                    [target_tahunan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [tahun] => 2025
+                                    [target_tahunan] => 0
+                                )
+
+                            [1] => Array
+                                (
+                                    [tahun] => 2026
+                                    [target_tahunan] => 72
+                                )
+
+                            [2] => Array
+                                (
+                                    [tahun] => 2027
+                                    [target_tahunan] => 73
+                                )
+
+                            [3] => Array
+                                (
+                                    [tahun] => 2028
+                                    [target_tahunan] => 74
+                                )
+
+                            [4] => Array
+                                (
+                                    [tahun] => 2029
+                                    [target_tahunan] => 75
+                                )
+
+                        )
+
+                )
+
+        )
+
+    [tujuan_id] => 1
+)
+
+About to insert sasaran: Array
+(
+    [tujuan_id] => 1
+    [sasaran_rpjmd] => meningkatnya kualitas demokrasi di daerah
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 1
+Sasaran created with ID: 1
+Creating indikator sasaran: Array
+(
+    [indikator_sasaran] => indeks demokrasi indonesia (IDI)
+    [satuan] => Unit
+    [definisi_op] => -
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 0
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 72
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 73
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 74
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 75
+                )
+
+        )
+
+    [sasaran_id] => 1
+)
+
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 1
+    [indikator_sasaran] => indeks demokrasi indonesia (IDI)
+    [definisi_op] => -
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 1
+Indikator sasaran created with ID: 1
+Creating target: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 0
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2025
+    [target_tahunan] => 0
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 1
+Target created with ID: 1
+Creating target: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 72
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2026
+    [target_tahunan] => 72
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 2
+Target created with ID: 2
+Creating target: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 73
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2027
+    [target_tahunan] => 73
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 3
+Target created with ID: 3
+Creating target: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 74
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2028
+    [target_tahunan] => 74
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 4
+Target created with ID: 4
+Creating target: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 75
+    [indikator_sasaran_id] => 1
+)
+
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 1
+    [tahun] => 2029
+    [target_tahunan] => 75
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 5
+Target created with ID: 5
+=== createCompleteRpjmd END - SUCCESS, MISI ID: 1 ===

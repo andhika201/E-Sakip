@@ -8,14 +8,19 @@ class UserController extends BaseController
     {
         return view('user/dashboard');
     }
-    
+
+    public function rpjmd_tes()
+    {
+        return view('user/rpjmd_test');
+    }
+
     public function rpjmd()
     {
         $rpjmdModel = new \App\Models\RpjmdModel();
-        
+
         // Ambil data RPJMD yang sudah selesai dengan struktur lengkap
         $completedRpjmd = $rpjmdModel->getCompletedRpjmdStructure();
-        
+
         // Jika tidak ada data selesai, tampilkan pesan
         if (empty($completedRpjmd)) {
             return view('user/rpjmd', [
@@ -23,12 +28,12 @@ class UserController extends BaseController
                 'message' => 'Belum ada data RPJMD yang telah selesai.'
             ]);
         }
-        
+
         // Group data by period (tahun_mulai - tahun_akhir) seperti di admin kabupaten
         $groupedData = [];
         foreach ($completedRpjmd as $misi) {
             $periodKey = $misi['tahun_mulai'] . '-' . $misi['tahun_akhir'];
-            
+
             if (!isset($groupedData[$periodKey])) {
                 $groupedData[$periodKey] = [
                     'period' => $periodKey,
@@ -38,13 +43,13 @@ class UserController extends BaseController
                     'misi_data' => []
                 ];
             }
-            
+
             $groupedData[$periodKey]['misi_data'][] = $misi;
         }
-        
+
         // Sort periods by tahun_mulai
         ksort($groupedData);
-        
+
         return view('user/rpjmd', [
             'rpjmdGrouped' => $groupedData
         ]);
@@ -52,7 +57,7 @@ class UserController extends BaseController
 
     public function rkt()
     {
-    // Simulasi data dari database
+        // Simulasi data dari database
         $rktData = [
             [
                 'sasaran' => 'indeks Keterbukaan Informasi Publik',
@@ -77,7 +82,7 @@ class UserController extends BaseController
     }
 
     public function lakip_kabupaten()
-    {   
+    {
         $lakipKabupatenData = [
             [
                 'sasaran' => 'Meningkatkan Kerukunana dan Toleransi Antar Umat Beragama',
@@ -118,7 +123,7 @@ class UserController extends BaseController
         ];
 
         return view('user/pk_bupati', [
-        'pkBupatiData' => $pkBupatiData
+            'pkBupatiData' => $pkBupatiData
         ]);
     }
 
@@ -135,7 +140,7 @@ class UserController extends BaseController
                 'indikator_sasaran' => "Nilai indeks didapat dari hasil penilaian indeks keterbukaan informasi publik oleh komisi informasi",
                 'target_capaian_per_tahun' => "2025"
             ]
-            ];
+        ];
 
         return view('user/renja', [
             'renjaData' => $renjaData
@@ -172,7 +177,7 @@ class UserController extends BaseController
 
     public function lakip_opd()
     {
-         $lakipOpdData = [
+        $lakipOpdData = [
             [
                 'sasaran' => 'Meningkatkan Kerukunana dan Toleransi Antar Umat Beragama',
                 'indikator' => 'Indeks Kerukunan Umat Beraga',
@@ -197,7 +202,7 @@ class UserController extends BaseController
     public function iku_opd()
     {
         $tahunList = ['2025', '2026', '2027', '2028'];
-        
+
         $ikuOpdData = [
             [
                 'sasaran' => 'Pendidikan',
@@ -210,7 +215,7 @@ class UserController extends BaseController
                     '2027' => '95',
                     '2028' => '95',
                 ]
-                ],
+            ],
             [
                 'sasaran' => 'Pendidikan',
                 'indikator' => 'Meningkatkan Mutu Pendidikan',
@@ -225,11 +230,13 @@ class UserController extends BaseController
             ]
         ];
 
-        return view('user/iku_opd',
-        [
-            'tahunList' => $tahunList,
-            'ikuOpdData' => $ikuOpdData
-        ]);
+        return view(
+            'user/iku_opd',
+            [
+                'tahunList' => $tahunList,
+                'ikuOpdData' => $ikuOpdData
+            ]
+        );
     }
 
     public function pk_pimpinan()
@@ -250,7 +257,7 @@ class UserController extends BaseController
         ];
 
         return view('user/pk_pimpinan', [
-        'pkPimpinanData' => $pkPimpinanData
+            'pkPimpinanData' => $pkPimpinanData
         ]);
     }
 
@@ -269,8 +276,8 @@ class UserController extends BaseController
                 'indikator' => 'Angkat Partisipsi Sekolah',
                 'target' => '98%',
             ]
-            ];
-        return view('user/pk_administrator',[
+        ];
+        return view('user/pk_administrator', [
             'pkAdministratorData' => $pkAdministratorData
         ]);
     }
@@ -292,7 +299,7 @@ class UserController extends BaseController
             ]
         ];
 
-        return view('user/pk_pengawas',[
+        return view('user/pk_pengawas', [
             'pkPengawasData' => $pkPengawasData
         ]);
     }

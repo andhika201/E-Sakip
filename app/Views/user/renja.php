@@ -18,11 +18,28 @@
         RENCANA KINERJA
       </h4>
 
+      <!-- Filter OPD -->
+      <div class="row mb-3">
+        <div class="col-md-4 d-flex align-items-center">
+          <label for="filterOpd" class="me-2 fw-bold">OPD:</label>
+          <select id="filterOpd" class="form-select">
+            <?php foreach ($opdList as $opd): ?>
+              <option value="<?= esc($opd) ?>"><?= esc($opd) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-success w-100" onclick="filterOpd()">
+            <i class="fas fa-filter"></i> Filter
+          </button>
+        </div>
+      </div>
+
       <div class="table-responsive">
         <table class="table table-bordered align-middle tect-center">
           <thead class="table-success">
             <tr>
-              <th>No</th>
+              <th>No</th>~
               <th>Sasaran</th>
               <th>Indikator Sasaran</th>
               <th>Target Capaian Per Tahun</th>

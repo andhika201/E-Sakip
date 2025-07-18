@@ -52,9 +52,7 @@
                 <th class="border p-2">TARGET</th>
                 <th class="border p-2">PROGRAM</th>
                 <th class="border p-2">ANGGARAN</th>
-                <th class="border p-2">Tingkat Pk</th>
                 <th class="border p-2">FILE</th>
-                <th class="border p-2">ACTION</th>
             </tr>
             </thead>
             <tbody>
@@ -67,11 +65,7 @@
                     <td class="border p-2"><?= esc($data['program_kegiatan']) ?></td>
                     <td class="border p-2">Rp <?= number_format($data['anggaran'], 0, ',', '.') ?></td>
                     <td class="border p-2"><?= esc(ucwords($data['jenis'])) ?></td>
-                    <td class="border p-2 align-middle text-center">
-                        <a href="<?= base_url('adminopd/pk_admin/cetak/' . $data['pk_id']) ?>" class="text-white btn btn-primary btn-sm" target="_blank">
-                            <i class="fas fa-download me-1"></i>Download
-                        </a>
-                    </td>
+                    
                     <td class="border p-2">
                         <div class="d-flex flex-column align-items-center gap-2">
                             <a href="<?= base_url('adminopd/pk_admin/edit/' . $data['pk_id']) ?>" class="btn btn-success btn-sm">

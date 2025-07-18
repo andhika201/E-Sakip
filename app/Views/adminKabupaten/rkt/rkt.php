@@ -33,12 +33,12 @@
                 <option>2024</option>
                 <option>2025</option>
                 </select>
-                <select class="form-select">
+                <!-- <select class="form-select">
                 <option value="">OPD</option>
                 <option>Dinas Pendidikan</option>
                 <option>Dinas Kesehatan</option>
                 <option>Dinas Sosial</option>
-                </select>
+                </select> -->
                 <a href="" class="btn btn-success d-flex align-items-center">
                 <i class="fas fa-filter me-2"></i> FILTER
                 </a>

@@ -1,22 +1,27 @@
-
 <!-- Header -->
-<header class="bg-success px-4 py-2 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
+<header class="bg-success px-4 py-2 shadow-sm border-bottom border-success-subtle position-relative"
+  style="z-index: 20;">
   <div class="d-flex align-items-center justify-content-between">
     <!-- Left Side -->
     <div class="d-flex align-items-center">
-      <img src="<?= base_url('assets/images/sakipLogo-light.png') ?>" alt="sakipLogo" width="auto" height="50" class="rounded me-2" />
+      <img src="<?= base_url('assets/images/sakipLogo-light.png') ?>" alt="sakipLogo" width="auto" height="50"
+        class="rounded me-2" />
     </div>
 
     <!-- Right Side -->
     <div class="d-flex align-items-center">
       <div class="d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+        <a href="<?= base_url('login') ?>" class="text-decoration-none">
+        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2"
+          style="width: 32px; height: 32px;">
           <i class="fas fa-user text-success"></i>
         </div>
+        </a>
         <div>
           <p class="small fw-medium text-white mb-0">User</p>
           <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Viewer</p>
         </div>
+        
       </div>
     </div>
   </div>
@@ -36,7 +41,8 @@
 
         <!-- Dropdown Kinerja Pemerintah Kabupaten -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="kabupatenDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle" href="#" id="kabupatenDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
             Kinerja Pemerintah Kabupaten
           </a>
           <ul class="dropdown-menu" aria-labelledby="kabupatenDropdown">
@@ -49,7 +55,8 @@
 
         <!-- Dropdown Kinerja Perangkat Daerah -->
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="perangkatDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle" href="#" id="perangkatDropdown" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false">
             Kinerja Perangkat Daerah
           </a>
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">

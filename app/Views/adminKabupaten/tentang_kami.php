@@ -38,7 +38,7 @@
 
             <!-- Visi Misi -->
             <div class="col-12 col-md-6">
-                <div class="bg-success bg-opacity-10 p-4 rounded h-100">
+                <div class="bg-primary bg-opacity-10 p-4 rounded h-100">
                     <h3 class="h4 fw-semibold text-success mb-3">Visi</h3>
                     <p class="text-dark lh-lg">
                         Mewujudkan tata kelola pemerintahan yang akuntabel dan transparan melalui sistem pelaporan kinerja yang terintegrasi dan berkualitas.

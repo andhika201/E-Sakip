@@ -28,6 +28,8 @@ class PkAdminController extends BaseController
 
     }
 
+    
+
     public function index()
     {
          // Get OPD ID from session (logged in user's OPD)
@@ -150,7 +152,7 @@ class PkAdminController extends BaseController
         // Get the form data
         $data = $this->request->getPost();
         $now = date('Y-m-d'); // Use Y-m-d format for date
-
+        
         // Prepare data for saving
         $saveData = [
             'opd_id' => $opdId,
@@ -205,14 +207,16 @@ class PkAdminController extends BaseController
     }
 
     public function cetak($id = null)
-    {
+    {   
+        helper('format');
+        
         if (!$id) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'ID PK Admin tidak ditemukan');
         }
 
         // Ambil data lengkap PK dari model
         $data = $this->pkModel->getPkById($id);
-
+        
         if (!$data) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'Data PK tidak ditemukan');
         }
@@ -238,6 +242,7 @@ class PkAdminController extends BaseController
         $css = '
             img { width: 70px; height: auto; }
         ';
+
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
 
         $mpdf->WriteHTML($html_1);
@@ -247,6 +252,5 @@ class PkAdminController extends BaseController
         $this->response->setHeader('Content-Type', 'application/pdf');
         return $mpdf->Output('Perjanjian-Kinerja-' . $data['jenis'] . '.pdf', 'I');
     }
-
 
 }

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Perjanjian Kinerja 2025</title>
+  <title>Perjanjian Kinerja <?= esc(date('Y', strtotime($tanggal))) ?></title>
   <style>
     body {
       font-family: 'Times New Roman', Times, serif;
@@ -29,26 +29,20 @@
       margin-bottom: 15px;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    table td,
-    table th {
+    /* Table dengan border */
+    .table-bordered-custom,
+    .table-bordered-custom th,
+    .table-bordered-custom td {
       border: 1px solid #000;
-      padding: 6px 10px;
-      vertical-align: top;
+      border-collapse: collapse;
     }
 
-    table th {
-      background-color: #f2f2f2;
-    }
-
-    .no-border td {
-      border: none;
-      padding: 4px 0;
+    /* Table tanpa border */
+    .table-no-border,
+    .table-no-border th,
+    .table-no-border td {
+      border: none !important;
+      border-collapse: collapse;
     }
     
     .center {
@@ -73,10 +67,6 @@
       margin-top: 50px;
     }
     
-    .table-no-border td,
-    .table-no-border {
-      border: none !important;
-    }
   </style>
 </head>
 
@@ -99,56 +89,65 @@
 
   <p>Dalam rangka mewujudkan manajemen pemerintahan yang efektif, transparan dan akuntabel serta berorientasi pada hasil, kami yang bertanda tangan di bawah ini :</p>
 
-  <table class="table-no-border">
+  <table class="table-no-border" syle="width: 100%; border-collapse: collapse;">
     <tr>
-      <td style="width: 80px;"><strong>Nama</strong></td>
+      <td style="width: 80px;">Nama</td>
       <td style="width: 10px;">:</td>
       <td class="fw-bold text-uppercase"><?= esc($nama_pihak_1) ?></td>
     </tr>
     <tr>
-      <td><strong>Jabatan</strong></td>
+      <td>Jabatan</td>
       <td>:</td>
-      <td class="fw-bold"><?= esc($jabatan_pihak_1) ?></td>
+      <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_1) ?></td>
     </tr>
   </table>
 
-  <p>Selanjutnya disebut <strong>PIHAK KESATU</strong></p>
+  <p>Selanjutnya disebut PIHAK KESATU</p>
 
-  <table class="table-no-border">
+  <table class="table-no-border" syle="width: 100%; border-collapse: collapse; margin-top: 15px;">
     <tr>
-      <td style="width: 80px;"><strong>Nama</strong></td>
+      <td style="width: 80px;">Nama</td>
       <td style="width: 10px;">:</td>
       <td class="fw-bold text-uppercase"><?= esc($nama_pihak_2) ?></td>
     </tr>
     <tr>
-      <td><strong>Jabatan</strong></td>
+      <td>Jabatan</td>
       <td>:</td>
-      <td class="fw-bold"><?= esc($jabatan_pihak_2) ?></td>
+      <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_2) ?></td>
     </tr>
   </table>
 
-  <p>Selaku atasan PIHAK KESATU, selanjutnya disebut <strong>PIHAK KEDUA</strong>.</p>
+  <p>Selaku atasan PIHAK KESATU, selanjutnya disebut PIHAK KEDUA.</p>
 
   <p>PIHAK KESATU pada tahun <?= esc(date('Y', strtotime($tanggal))) ?> berjanji akan mewujudkan target kinerja tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target kinerja jangka menengah seperti yang ditetapkan dalam dokumen perencanaan. Keberhasilan pencapaian target kinerja tersebut menjadi tanggung jawab PIHAK KESATU.</p>
 
   <p>PIHAK KEDUA akan memberikan supervisi yang diperlukan serta akan melakukan evaluasi akuntabilitas kinerja terhadap capaian kinerja dari perjanjian ini dan mengambil tindakan yang diperlukan dalam rangka pemberian penghargaan dan sanksi.</p>
+  
+  <table style="width: 85%; margin-top: 80px;" class="table-no-border">
+    <tr>
+      <!-- Tanggal Surat-->
+      <td style="text-align: right; "> 
+        <p style="text-align: right;">Pringsewu, <?= esc(formatTanggal($tanggal)) ?></p>
+      </td>
+    </tr>
+  </table>
 
- <table style="width: 100%; margin-top: 80px;" class="table-no-border">
-  <tr>
+ <table style="width: 100%; margin-top: 20px;" class="table-no-border">
+  <tr >
     <!-- PIHAK KEDUA -->
     <td style="text-align: center; width: 50%; vertical-align: top;">
-      <p><strong>PIHAK KEDUA</strong><br><?= esc($nama_pihak_2) ?></p>
+      <p class="text-uppercase" >PIHAK KEDUA, <br><?= esc($jabatan_pihak_2) ?></p>
       <br><br><br><br><br>
-      <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($jabatan_pihak_2) ?></p>
+      <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_2) ?></p>
       <p style="margin: 0;"><?= esc($pangkat_pihak_2) ?></p>
       <p style="margin: 0;"><?= esc($nip_pihak_2) ?></p>
     </td>
 
     <!-- PIHAK KESATU -->
     <td style="text-align: center; width: 50%; vertical-align: top;">
-      <p><strong>PIHAK KESATU</strong><br><?= esc($nama_pihak_1) ?></p>
+      <p class="text-uppercase" >PIHAK KESATU,<br><?= esc($jabatan_pihak_1) ?></p>
       <br><br><br><br><br>
-      <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($jabatan_pihak_1) ?></p>
+      <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_1) ?></p>
       <p style="margin: 0;"><?= esc($pangkat_pihak_1) ?></p>
       <p style="margin: 0;"><?= esc($nip_pihak_1) ?></p>
     </td>

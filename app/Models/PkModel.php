@@ -126,11 +126,13 @@ class PkModel extends Model
         ')
         ->join('opd o', 'o.id = p.opd_id')
         ->join('pegawai peg1', 'peg1.id = p.pihak_1')
-        ->join('jabatan j1', 'j1.id = peg1.id', 'left')
+        ->join('jabatan j1', 'j1.id = peg1.jabatan_id', 'left')
         ->join('pangkat pang1', 'pang1.id = peg1.pangkat_id', 'left')
+
         ->join('pegawai peg2', 'peg2.id = p.pihak_2')
-        ->join('jabatan j2', 'j2.id = peg2.id', 'left')
+        ->join('jabatan j2', 'j2.id = peg2.jabatan_id', 'left')
         ->join('pangkat pang2', 'pang2.id = peg2.pangkat_id', 'left')
+
         ->join('pk_sasaran ps', 'ps.pk_id = p.id', 'left')
         ->join('pk_indikator pi', 'pi.pk_sasaran_id = ps.id', 'left')
         ->join('pk_program pp', 'pp.pk_id = p.id', 'left')
@@ -147,6 +149,7 @@ class PkModel extends Model
         ->orderBy('pp.id', 'ASC')
         ->get()
         ->getResultArray();
+
 
     return $data;
 
@@ -189,12 +192,12 @@ class PkModel extends Model
         if (!$pk) return null;
 
         // Ambil sasaran & indikator
-        $pk['sasaran'] = $this->db->table('pk_sasaran')
+        $pk['sasaran_pk'] = $this->db->table('pk_sasaran')
             ->where('pk_id', $id)
             ->get()
             ->getResultArray();
 
-        foreach ($pk['sasaran'] as &$s) {
+        foreach ($pk['sasaran_pk'] as &$s) {
             $s['indikator'] = $this->db->table('pk_indikator')
                 ->where('pk_sasaran_id', $s['id'])
                 ->get()
@@ -202,7 +205,7 @@ class PkModel extends Model
         }
 
         // Ambil program
-        $pk['program'] = $this->db->table('pk_program pp')
+        $pk['program_pk'] = $this->db->table('pk_program pp')
             ->select('pr.program_kegiatan, pr.anggaran')
             ->join('program_pk pr', 'pr.id = pp.program_id')
             ->where('pp.pk_id', $id)

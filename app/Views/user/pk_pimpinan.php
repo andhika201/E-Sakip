@@ -10,8 +10,8 @@
 
   <?= $this->include('user/templates/header'); ?>
   
-  <main class="flex-grow-1 d-flex align-items-center justify-content-center">
-    <div class="container my-5" style="max-width: 1700px;">
+  <main class="flex-grow-1">
+    <div class="container-fluid my-5 px-4" >
     <div class="bg-white p-4 rounded shadow-sm">
       <h4 class="fw-bold text-center text-success mb-4">
         PERJANJIAN KINERJA PIMPINAN

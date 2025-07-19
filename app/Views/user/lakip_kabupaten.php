@@ -38,7 +38,7 @@
                         <i class="fas fa-filter me-2"></i> FILTER
                     </a>
                 </div>
-                
+
             </div>
 
             <!-- Tabel -->
@@ -48,14 +48,13 @@
                         <tr>
                             <th class="border p-2 align-middle" rowspan="2">NO</th>
                             <th class="border p-2 align-middle" rowspan="2">TAHUN LAPORAN</th>
-                            <th class="border p-2" colspan="3">2023</th>
+                            <th class="border p-2">2023</th>
                             <th class="border p-2" colspan="3">2024</th>
                             <th class="border p-2 align-middle" rowspan="2">FILE</th>
                         </tr>
                         <tr>
-                            <th class="border p-2">Target</th>
+
                             <th class="border p-2">Capaian</th>
-                            <th class="border p-2">Realisasi</th>
                             <th class="border p-2">Target</th>
                             <th class="border p-2">Capaian</th>
                             <th class="border p-2">Realisasi</th>
@@ -69,16 +68,14 @@
                             <td class="border p-2">2023</td>
 
                             <!-- Kolom 2023 -->
-                            <td class="border p-2">100%</td> <!-- Target -->
-                            <td class="border p-2">95%</td> <!-- Capaian -->
-                            <td class="border p-2">Rp 950jt</td> <!-- Realisasi -->
 
+                            <td class="border p-2">95%</td> <!-- Capaian -->
                             <!-- Kolom 2024 -->
                             <td class="border p-2">100%</td>
                             <td class="border p-2">80%</td>
                             <td class="border p-2">Rp 800jt</td>
 
-                       
+
                             <td class="border p-2">
                                 <a href="#" class="text-primary">
                                     <i class="fas fa-download me-1"></i>Download

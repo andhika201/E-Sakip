@@ -1,51 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAKIP</title>
-  <?= $this->include('user/templates/style.php'); ?>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LAKIP Kabupaten - e-SAKIP</title>
+    <!-- Style -->
+    <?= $this->include('user/templates/style.php'); ?>
 </head>
-<body>
-  
-  <?= $this->include('user/templates/header'); ?>
-  
-  <main class="flex-grow-1 d-flex align-items-center justify-content-center">
-    <div class="container my-5" style="max-width: 1700px;">
-    <div class="bg-white p-4 rounded shadow-sm">
-      <h4 class="fw-bold text-center text-success mb-4">
-        LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAHAN OPD
-      </h4>
-      
-      <div class="table-responive">
-        <table class="table table=bordered align-middle text-center">
-          <thead class="table-success">
-            <tr>
-              <th>No</th>
-              <th>Sasaran</th>
-              <th>Indikator</th>
-              <th>Capaian Tahun Sebelumnya</th>
-              <th>Target Tahun Ini</th>
-              <th>Capaian Tahun Ini</th>
-            </tr>
-          </thead>
-        <tbody>
-          <?php $no = 1; foreach ($lakipOpdData as $item): ?>
-              <tr>
-                <td><?= $no++ ?></td>
-                <td><?= esc($item['sasaran']) ?></td>
-                <td><?= esc($item['indikator']) ?></td>
-                <td><?= esc($item['capaian_sebelumnya']) ?></td>
-                <td><?= esc($item['target_tahun_ini']) ?></td>
-                <td><?= esc($item['capaian_tahun_ini']) ?></td>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
+
+<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+
+    <!-- Navbar/Header -->
+    <?= $this->include('user/templates/header.php'); ?>
+
+    <!-- Sidebar -->
+
+    <!-- Konten Utama -->
+    <main class="flex-fill p-4 mt-2">
+        <div class="bg-white rounded shadow p-4">
+            <h2 class="h3 fw-bold text-success text-center mb-4">LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAH
+                OPD</h2>
+
+            <!-- Filter -->
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                <div class="d-flex gap-2 flex-fill">
+                    <select class="form-select">
+                        <option value="">TAHUN</option>
+                        <option>2019</option>
+                        <option>2020</option>
+                        <option>2021</option>
+                        <option>2022</option>
+                        <option>2023</option>
+                        <option>2024</option>
+                    </select>
+                    <a href="" class="btn btn-success d-flex align-items-center">
+                        <i class="fas fa-filter me-2"></i> FILTER
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Tabel -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-center small">
+                    <thead class="table-success align-middle text-center">
+                        <tr>
+                            <th class="border p-2 align-middle" rowspan="2">NO</th>
+                            <th class="border p-2 align-middle" rowspan="2">TAHUN LAPORAN</th>
+                            <th class="border p-2">2023</th>
+                            <th class="border p-2" colspan="3">2024</th>
+                            <th class="border p-2 align-middle" rowspan="2">FILE</th>
+                        </tr>
+                        <tr>
+
+                            <th class="border p-2">Capaian</th>
+                            <th class="border p-2">Target</th>
+                            <th class="border p-2">Capaian</th>
+                            <th class="border p-2">Realisasi</th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+                        <tr>
+                            <td class="border p-2">1</td>
+                            <td class="border p-2">2023</td>
+
+                            <!-- Kolom 2023 -->
+
+                            <td class="border p-2">95%</td> <!-- Capaian -->
+                            <!-- Kolom 2024 -->
+                            <td class="border p-2">100%</td>
+                            <td class="border p-2">80%</td>
+                            <td class="border p-2">Rp 800jt</td>
+
+
+                            <td class="border p-2">
+                                <a href="#" class="text-primary">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
     </main>
 
-<?= $this->include('user/templates/footer'); ?>
-
+    <?= $this->include('user/templates/footer.php'); ?>
 </body>
+
 </html>

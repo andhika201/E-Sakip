@@ -62,18 +62,9 @@ class UserController extends BaseController
             [
                 'sasaran' => 'indeks Keterbukaan Informasi Publik',
                 'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
+                'target' => '3,5'
             ],
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
+        
         ];
 
         return view('user/rkt', [
@@ -129,6 +120,7 @@ class UserController extends BaseController
 
     public function renja()
     {
+        $opdList = ['Unit Kerja', 'Dinas Pendidikan', 'Dinas Kesehatan'];
         $renjaData = [
             [
                 'sasaran' => "Indeks Keterbukaan Informaasi Publik",
@@ -143,6 +135,7 @@ class UserController extends BaseController
         ];
 
         return view('user/renja', [
+            'opdList' => $opdList,
             'renjaData' => $renjaData
         ]);
     }

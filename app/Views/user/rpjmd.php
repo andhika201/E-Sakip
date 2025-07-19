@@ -6,70 +6,71 @@
   <title>RPJMD</title>
   <?= $this->include('user/templates/style.php'); ?>
 </head>
-<body>
+<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+
+  <!-- Header -->
   <?= $this->include('user/templates/header'); ?>
-  
-  <main class="flex-grow-1 d-flex align-items-center justify-content-center">
-    <div class="container my-5" style="max-width: 1700px;">
-      <div class="bg-white p-4 rounded shadow-sm">
-        <h4 class="fw-bold text-center text-success mb-4">
-          RENCANA PEMBANGUNAN JANGKA MENENGAH DAERAH
-        </h4>
-        
-        <!-- Filter Periode -->
-        <div class="d-flex justify-content-center mb-4">
-          <div class="col-md-4">
-            <select id="periode-filter" class="form-select">
-              <option value="">Semua Periode</option>
-              <?php if (!empty($rpjmdGrouped)): ?>
-                <?php foreach ($rpjmdGrouped as $periodKey => $periodData): ?>
-                  <option value="<?= $periodKey ?>">
-                    Periode <?= esc($periodData['period']) ?>
-                  </option>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </select>
-          </div>
+
+  <!-- Konten Utama -->
+  <main class="flex-fill p-4 mt-2">
+    <div class="bg-white rounded shadow p-4">
+      <h4 class="fw-bold text-center text-success mb-4">
+        RENCANA PEMBANGUNAN JANGKA MENENGAH DAERAH
+      </h4>
+
+      <!-- Filter Periode -->
+      <div class="d-flex flex-column flex-md-row justify-content-center gap-3 mb-4">
+        <div class="d-flex gap-2 flex-fill" style="max-width: 500px;">
+          <select id="periode-filter" class="form-select">
+            <option value="">Semua Periode</option>
+            <?php if (!empty($rpjmdGrouped)): ?>
+              <?php foreach ($rpjmdGrouped as $periodKey => $periodData): ?>
+                <option value="<?= $periodKey ?>">
+                  Periode <?= esc($periodData['period']) ?>
+                </option>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </select>
         </div>
-        
-        <!-- Tabel RPJMD -->
-        <?php if (isset($message)): ?>
-          <div class="alert alert-info text-center">
-            <i class="fas fa-info-circle me-2"></i>
-            <?= esc($message) ?>
-          </div>
-        <?php elseif (empty($rpjmdGrouped)): ?>
-          <div class="alert alert-warning text-center">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Belum ada data RPJMD yang telah selesai.
-          </div>
-        <?php else: ?>
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped text-center small">
-              <thead class="table-success">
-                <tr>
-                  <th rowspan="2" class="border p-2 align-middle">MISI</th>
-                  <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
-                  <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
-                  <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
-                  <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                  <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
-                  <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
-                  <th colspan="5" class="border p-2" id="year-header-span">TARGET CAPAIAN PER TAHUN</th>
-                </tr>
-                <tr class="border p-2" style="border-top: 2px solid;" id="year-header-row">
-                  <!-- Year headers will be populated by JavaScript -->
-                </tr>
-              </thead>
-              <tbody id="rpjmd-table-body">
-                <?php foreach ($rpjmdGrouped as $periodIndex => $periodData): ?>
-                  <?= renderPeriodData($periodIndex, $periodData) ?>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
       </div>
+
+      <!-- Tabel RPJMD -->
+      <?php if (isset($message)): ?>
+        <div class="alert alert-info text-center">
+          <i class="fas fa-info-circle me-2"></i>
+          <?= esc($message) ?>
+        </div>
+      <?php elseif (empty($rpjmdGrouped)): ?>
+        <div class="alert alert-warning text-center">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Belum ada data RPJMD yang telah selesai.
+        </div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped text-center small">
+            <thead class="table-success">
+              <tr>
+                <th rowspan="2" class="border p-2 align-middle">MISI</th>
+                <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
+                <th rowspan="2" class="border p-2 align-middle">INDIKATOR TUJUAN</th>
+                <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
+                <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
+                <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
+                <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
+                <th colspan="5" class="border p-2" id="year-header-span">TARGET CAPAIAN PER TAHUN</th>
+              </tr>
+              <tr class="border p-2" style="border-top: 2px solid;" id="year-header-row">
+                <!-- Akan diisi oleh JavaScript -->
+              </tr>
+            </thead>
+            <tbody id="rpjmd-table-body">
+              <?php foreach ($rpjmdGrouped as $periodIndex => $periodData): ?>
+                <?= renderPeriodData($periodIndex, $periodData) ?>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     </div>
   </main>
 

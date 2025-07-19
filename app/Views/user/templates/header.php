@@ -12,16 +12,16 @@
     <div class="d-flex align-items-center">
       <div class="d-flex align-items-center">
         <a href="<?= base_url('login') ?>" class="text-decoration-none">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2"
-          style="width: 32px; height: 32px;">
-          <i class="fas fa-user text-success"></i>
-        </div>
+          <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2"
+            style="width: 32px; height: 32px;">
+            <i class="fas fa-user text-success"></i>
+          </div>
         </a>
         <div>
           <p class="small fw-medium text-white mb-0">User</p>
           <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Viewer</p>
         </div>
-        
+
       </div>
     </div>
   </div>
@@ -60,8 +60,8 @@
             Kinerja Perangkat Daerah
           </a>
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">
-            <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('renstra') ?>">RENSTRA</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
             <li><a class="dropdown-item" href="<?= base_url('iku_opd') ?>">IKU</a></li>
             <li><a class="dropdown-item" href="<?= base_url('pk_pimpinan') ?>">PK Pimpinan</a></li>

@@ -30,10 +30,10 @@ class PkAdminController extends BaseController
 
     public function index()
     {
-         // Get OPD ID from session (logged in user's OPD)
+        // Get OPD ID from session (logged in user's OPD)
         $session = session();
         $opdId = $session->get('opd_id');
-        
+
         // If no OPD ID in session, redirect to login or show error
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
@@ -41,7 +41,9 @@ class PkAdminController extends BaseController
 
         // Get PK data filtered by user's OPD
         $pkData = $this->pkModel->getAllPkData($opdId);
-        
+        $programData = $this->pkModel->getAllProgramPkGrouped();
+
+        // dd($pkData, $programData);
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
         if (!$currentOpd) {
@@ -51,22 +53,52 @@ class PkAdminController extends BaseController
         // Load the view for PK Admin
         // Set title based on current OPD
         $titleSuffix = $currentOpd['nama_opd'];  // Group data by period
-        
+
         $data = [
             'pk_data' => $pkData,
             'current_opd' => $currentOpd,
+            'program_data' => $programData,
             'title' => 'Perjanjian Kinerja - ' . $titleSuffix
         ];
 
         return view('adminOpd/pk_admin/pk-admin', $data);
     }
 
-    public function tambah(){
+    public function edit($id)
+    {
 
-         // Get OPD ID from session (logged in user's OPD)
+        // Get OPD ID from session (logged in user's OPD)
         $session = session();
         $opdId = $session->get('opd_id');
+
+        // If no OPD ID in session, redirect to login or show error
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+        // Ambil data PK berdasarkan ID
+
+        $pkData = $this->pkModel->getAllPkData($opdId);
+        $programData = $this->pkModel->getAllProgramPkGrouped();
+
+        if (!$pkData) {
+            return redirect()->to('/adminopd/pk_admin')->with('error', 'Data tidak ditemukan');
+        }
         
+        $data = [
+            'pk' => $pkData,
+            'title' => 'Edit PK Administrator'
+        ];
+
+        return view('adminOpd/pk_admin/edit-pk', $data);
+    }
+
+    public function tambah()
+    {
+
+        // Get OPD ID from session (logged in user's OPD)
+        $session = session();
+        $opdId = $session->get('opd_id');
+
         // If no OPD ID in session, redirect to login or show error
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
@@ -76,7 +108,7 @@ class PkAdminController extends BaseController
         // $pegawai = $this->pegawaiModel->getAllPegawai();
         $program = $this->programPkModel->getAllPrograms();
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
-        
+
         // Pass the data to the view
         $data = [
             // 'pegawai' => $pegawai,
@@ -91,7 +123,7 @@ class PkAdminController extends BaseController
     }
 
     public function save()
-    {   
+    {
         $validation = \Config\Services::validation();
 
         $rules = [
@@ -154,7 +186,7 @@ class PkAdminController extends BaseController
         // Prepare data for saving
         $saveData = [
             'opd_id' => $opdId,
-            'jenis'   => $data['jenis'],
+            'jenis' => $data['jenis'],
             'pihak_1' => $data['pegawai_1_id'],
             'pihak_2' => $data['pegawai_2_id'],
             'tanggal' => $now,
@@ -187,7 +219,7 @@ class PkAdminController extends BaseController
                 foreach ($data['program'] as $programItem) {
                     $saveData['program'][] = [
                         'program_id' => $programItem['program_id'] ?? null,
-                        'anggaran'   => $programItem['anggaran'] ?? 0,
+                        'anggaran' => $programItem['anggaran'] ?? 0,
                     ];
                 }
             }
@@ -204,6 +236,9 @@ class PkAdminController extends BaseController
         }
     }
 
+
+
+
     public function cetak($id = null)
     {
         if (!$id) {
@@ -219,7 +254,7 @@ class PkAdminController extends BaseController
 
         // Logo path (harus absolut)
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
-        
+
         // dd($data);
         // Buat halaman 1 dan 2
         $html_1 = view('adminOpd/pk_admin/cetak', $data);

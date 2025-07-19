@@ -31,13 +31,11 @@
                     <div class="col">
 
                         <label class="form-label fw-bold">Jenis PK</label>
-                        <select name="jenis" id="jenis-pk" class="form-select jenis-pk-select mb-3 border-secondary"
-                            required>
-                            <option value="">Pilih Jenis PK</option>
-                            <option value="jpt">PK Jabatan Pimpinan Tinggi</option>
-                            <option value="administrator">PK Administrator</option>
-                            <option value="pengawas">PK Pejabat Pengawas</option>
+                        <select name="jenis" id="jenis-pk" class="form-select mb-3 border-secondary" readonly disabled>
+                            <option value="administrator" selected>PK Administrator</option>
                         </select>
+                        <input type="hidden" name="jenis" value="administrator">
+
                         <div class="col-md-12">
                             <div class="row">
                                 <div class="col-md-8">

@@ -44,6 +44,22 @@
             </div>
 
             <!-- Tabel -->
+            <?php
+            // Hitung jumlah baris per sasaran
+            $rowspans = [];
+            foreach ($pk_data as $item) {
+                $sasaran = $item['sasaran'];
+                if (!isset($rowspans[$sasaran])) {
+                    $rowspans[$sasaran] = 0;
+                }
+                $rowspans[$sasaran]++;
+            }
+
+            // Untuk tracking apakah sudah ditampilkan
+            $shown_sasaran = [];
+            $no = 1;
+            ?>
+
             <div class="table-responsive">
                 <table class="table table-bordered table-striped text-center small">
                     <thead class="table-success">
@@ -52,43 +68,74 @@
                             <th class="border p-2">SASARAN</th>
                             <th class="border p-2">INDIKATOR</th>
                             <th class="border p-2">TARGET</th>
-                            <th class="border p-2">PROGRAM</th>
-                            <th class="border p-2">ANGGARAN</th>
-
-                            <th class="border p-2">ACTION</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $no = 1;
-                        foreach ($pk_data as $data): ?>
+                        <?php foreach ($pk_data as $data): ?>
                             <tr>
                                 <td class="border p-2"><?= $no++ ?></td>
-                                <td class="border p-2"><?= esc($data['sasaran']) ?></td>
-                                <td class="border p-2"><?= esc($data['indikator']) ?></td>
-                                <td class="border p-2"><?= esc($data['target']) ?></td>
-                                <td class="border p-2"><?= esc($data['program_kegiatan']) ?></td>
-                                <td class="border p-2">Rp <?= number_format($data['anggaran'], 0, ',', '.') ?></td>
 
-                                <td class="border p-2">
-                                    <div class="d-flex flex-column align-items-center gap-2">
-                                        <a href="<?= base_url('adminopd/pk_admin/edit/' . $data['pk_id']) ?>"
-                                            class="btn btn-success btn-sm">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </a>
-                                        <button class="btn btn-danger btn-sm"
-                                            onclick="deleteRenstra(<?= $data['pk_id'] ?>, '<?= base_url() ?>')">
-                                            <i class="fas fa-trash me-1"></i>Hapus
-                                        </button>
-                                    </div>
-                                </td>
+                                <?php if (!in_array($data['sasaran'], $shown_sasaran)): ?>
+                                    <td class="border p-2 text-start align-top" rowspan="<?= $rowspans[$data['sasaran']] ?>">
+                                        <?= esc($data['sasaran']) ?>
+                                    </td>
+                                    <?php $shown_sasaran[] = $data['sasaran']; ?>
+                                <?php endif; ?>
+
+                                <td class="border p-2 text-start"><?= esc($data['indikator']) ?></td>
+                                <td class="border p-2"><?= esc($data['target']) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <a href="<?= base_url('adminopd/pk_admin/cetak/') ?>" class="text-white btn btn-primary btn-sm"
-                    target="_blank">
+            </div>
+
+            <?php $pk_id = $pk_data[0]['pk_id'] ?? null; ?>
+            <div class="mt-4">
+                <h5 class="fw-bold mb-3">Daftar Program & Anggaran</h5>
+
+                <table class="table table-bordered table-sm">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th style="width: 5%;">No</th>
+                            <th>Program</th>
+                            <th>Anggaran</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($program_data[$pk_id])): ?>
+                            <?php $no = 1;
+                            foreach ($program_data[$pk_id] as $prog): ?>
+                                <tr>
+                                    <td><?= $no++ ?></td>
+                                    <td>
+                                        <input type="text" class="form-control" name="program_kegiatan[]"
+                                            value="<?= esc($prog['program_kegiatan']) ?>" readonly>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control" name="anggaran[]"
+                                            value="<?= 'Rp ' . number_format($prog['anggaran'], 0, ',', '.') ?>" readonly>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="3" class="text-center fst-italic">Tidak ada data program</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <a href="<?= base_url('adminopd/pk_admin/cetak/' . $pk_id) ?>"
+                    class="text-white btn btn-primary btn-sm me-2" target="_blank">
                     <i class="fas fa-download me-1"></i>Cetak
                 </a>
+                <?php if (!empty($pk_id)): ?>
+                    <a href="<?= base_url('adminopd/pk_admin/edit/' . $pk_id) ?>" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </main>

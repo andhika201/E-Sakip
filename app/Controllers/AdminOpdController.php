@@ -67,4 +67,9 @@ class AdminOpdController extends BaseController
     {
         return view('adminOpd/lakip_kabupaten/lakip_kabupaten');
     }
+
+    public function tentang_kami()
+    {
+        return view('adminOpd/tentang_kami');
+    }
 }

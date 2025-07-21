@@ -179,10 +179,11 @@ class PkModel extends Model
             ')
             ->join('opd o', 'o.id = p.opd_id')
             ->join('pegawai peg1', 'peg1.id = p.pihak_1', 'left')
-            ->join('jabatan jab1', 'jab1.id = peg1.id', 'left')
+            ->join('jabatan jab1', 'jab1.id = peg1.jabatan_id', 'left')
             ->join('pangkat pang1', 'pang1.id = peg1.pangkat_id', 'left')
+            
             ->join('pegawai peg2', 'peg2.id = p.pihak_2', 'left')
-            ->join('jabatan jab2', 'jab2.id = peg2.id', 'left')
+            ->join('jabatan jab2', 'jab2.id = peg2.jabatan_id', 'left')
             ->join('pangkat pang2', 'pang2.id = peg2.pangkat_id', 'left')
             ->where('p.id', $id)
             ->get();

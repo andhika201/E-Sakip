@@ -58,33 +58,44 @@
             </tr>
             </thead>
             <tbody>
-            <?php $no = 1; foreach ($pk_data as $data): ?>
-                <tr>
-                    <td class="border p-2"><?= $no++ ?></td>
-                    <td class="border p-2"><?= esc($data['sasaran']) ?></td>
-                    <td class="border p-2"><?= esc($data['indikator']) ?></td>
-                    <td class="border p-2"><?= esc($data['target']) ?></td>
-                    <td class="border p-2"><?= esc($data['program_kegiatan']) ?></td>
-                    <td class="border p-2">Rp <?= number_format($data['anggaran'], 0, ',', '.') ?></td>
-                    <td class="border p-2"><?= esc(ucwords($data['jenis'])) ?></td>
-                    <td class="border p-2 align-middle text-center">
-                        <a href="<?= base_url('adminopd/pk_admin/cetak/' . $data['pk_id']) ?>" class="text-white btn btn-primary btn-sm" target="_blank">
-                            <i class="fas fa-download me-1"></i>Download
-                        </a>
-                    </td>
-                    <td class="border p-2">
-                        <div class="d-flex flex-column align-items-center gap-2">
-                            <a href="<?= base_url('adminopd/pk_admin/edit/' . $data['pk_id']) ?>" class="btn btn-success btn-sm">
+            <?php $no = 1; ?>
+            <?php foreach ($pk_data['sasaran'] as $sasaran): ?>
+                <?php foreach ($sasaran['indikator'] as $indikator): ?>
+                    <tr>
+                        <td class="border p-2"><?= $no++ ?></td>
+                        <td class="border p-2"><?= esc($sasaran['sasaran']) ?></td>
+                        <td class="border p-2"><?= esc($indikator['indikator']) ?></td>
+                        <td class="border p-2"><?= esc($indikator['target']) ?></td>
+
+                        <td class="border p-2">
+                            <?php foreach ($pk_data['program'] as $prog): ?>
+                                <div><?= esc($prog['program_kegiatan']) ?></div>
+                            <?php endforeach; ?>
+                        </td>
+                        <td class="border p-2">
+                            <?php foreach ($pk_data['program'] as $prog): ?>
+                                <div>Rp <?= number_format((float) $prog['anggaran'], 0, ',', '.') ?></div>
+                            <?php endforeach; ?>
+                        </td>
+
+                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+                        <td class="border p-2 text-center">
+                            <a href="<?= base_url('adminopd/pk_admin/cetak/' . $pk_data['pk_id']) ?>" class="btn btn-primary btn-sm" target="_blank">
+                                <i class="fas fa-download me-1"></i>Download
+                            </a>
+                        </td>
+                        <td class="border p-2 text-center">
+                            <a href="<?= base_url('adminopd/pk_admin/edit/' . $pk_data['pk_id']) ?>" class="btn btn-success btn-sm mb-1">
                                 <i class="fas fa-edit me-1"></i>Edit
                             </a>
-                            <button class="btn btn-danger btn-sm" onclick="deleteRenstra(<?= $data['pk_id'] ?>, '<?= base_url() ?>')">
+                            <button class="btn btn-danger btn-sm" onclick="deleteRenstra(<?= $pk_data['pk_id'] ?>, '<?= base_url() ?>')">
                                 <i class="fas fa-trash me-1"></i>Hapus
                             </button>
-                        </div>
-                    </td>
-                </tr>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
             <?php endforeach; ?>
-            </tbody>
+        </tbody>
         </table>
         </div>
     </div>

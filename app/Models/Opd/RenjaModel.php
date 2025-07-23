@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Opd;
 
 use CodeIgniter\Model;
 
-class RktModel extends Model
+class RenjaModel extends Model
 {
     protected $db;
     
@@ -14,25 +14,25 @@ class RktModel extends Model
         $this->db = \Config\Database::connect();
     }
     
-    // ==================== RKT SASARAN ====================
+    // ==================== RENJA SASARAN ====================
 
     /**
-     * Get all RKT Sasaran
+     * Get all RENJA Sasaran
      */
-    public function getRktSasaranById($id) {
+    public function getRenjaSasaranById($id) {
 
-        return $this->db->table('rkt_sasaran')
+        return $this->db->table('renja_sasaran')
             ->where('id', $id)
             ->get()
             ->getRowArray();
     }
 
     /**
-     * Get all RKT Sasaran with optional status filter
+     * Get all RENJA Sasaran with optional status filter
      */
-    public function getAllRktByStatus($status = null)
+    public function getAllRenjaByStatus($status = null)
     {
-        $query = $this->db->table('rkt_sasaran');
+        $query = $this->db->table('renja_sasaran');
         
         if ($status !== null) {
             $query->where('status', $status);
@@ -44,11 +44,11 @@ class RktModel extends Model
     }
 
     /**
-     * Get all Completed RKT Sasaran
+     * Get all Completed RENJA Sasaran
      */
-    public function getCompletedRkt()
+    public function getCompletedRenja()
     {
-        return $this->db->table('rkt_sasaran')
+        return $this->db->table('renja_sasaran')
             ->where('status', 'selesai')
             ->orderBy('id', 'ASC')
             ->get()
@@ -56,50 +56,50 @@ class RktModel extends Model
     }
 
     
-    // Update status RKT
+    // Update status RENJA
     public function updateStatus($id, $status)
     {
-        return $this->db->table('rkt_sasaran')
+        return $this->db->table('renja_sasaran')
             ->where('id', $id)
             ->update(['status' => $status]);
     }
 
-    /* * Get All RKT Data
-     * This method retrieves all RKT data including indicators
+    /* * Get All RENJA Data
+     * This method retrieves all RENJA data including indicators
      */
-    public function getAllRkt()
+    public function getAllRenja()
     {
-        $builder = $this->db->table('rkt_sasaran');
+        $builder = $this->db->table('renja_sasaran');
         $builder->select('
-            rkt_sasaran.id AS rkt_sasaran_id,
-            rkt_sasaran.rpjmd_sasaran_id,
-            rkt_sasaran.sasaran,
-            rkt_sasaran.status,
-            rkt_indikator_sasaran.id AS indikator_id,
-            rkt_indikator_sasaran.indikator_sasaran,
-            rkt_indikator_sasaran.satuan,
-            rkt_indikator_sasaran.tahun,
-            rkt_indikator_sasaran.target,
-            rpjmd_sasaran.sasaran_rpjmd AS rpjmd_sasaran
+            renja_sasaran.id AS renja_sasaran_id,
+            renja_sasaran.renstra_sasaran_id,
+            renja_sasaran.sasaran,
+            renja_sasaran.status,
+            renja_indikator_sasaran.id AS indikator_id,
+            renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.satuan,
+            renja_indikator_sasaran.tahun,
+            renja_indikator_sasaran.target,
+            renstra_sasaran.sasaran_renstra AS renstra_sasaran
         ');
-        $builder->join('rkt_indikator_sasaran', 'rkt_indikator_sasaran.rkt_sasaran_id = rkt_sasaran.id', 'left');
-        $builder->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rkt_sasaran.rpjmd_sasaran_id', 'left');
-        $builder->orderBy('rkt_sasaran.id', 'ASC');
-        $builder->orderBy('rkt_indikator_sasaran.tahun', 'ASC');
+        $builder->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
+        $builder->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left');
+        $builder->orderBy('renja_sasaran.id', 'ASC');
+        $builder->orderBy('renja_indikator_sasaran.tahun', 'ASC');
         
         $query = $builder->get();
         $results = $query->getResultArray();
 
-        // Kelompokkan data berdasarkan rkt_sasaran_id
+        // Kelompokkan data berdasarkan renja_sasaran_id
         $grouped = [];
         foreach ($results as $row) {
-            $id = $row['rkt_sasaran_id'];
+            $id = $row['renja_sasaran_id'];
             if (!isset($grouped[$id])) {
                 $grouped[$id] = [
-                    'id' => $row['rkt_sasaran_id'],
-                    'rpjmd_sasaran_id' => $row['rpjmd_sasaran_id'],
-                    'rpjmd_sasaran' => $row['rpjmd_sasaran'],
-                    'sasaran' => $row['sasaran'],
+                    'id' => $row['renja_sasaran_id'],
+                    'renstra_sasaran_id' => $row['renstra_sasaran_id'],
+                    'renstra_sasaran' => $row['renstra_sasaran'],
+                    'sasaran_renja' => $row['sasaran_renja'],
                     'status' => $row['status'],
                     'indikator' => []
                 ];
@@ -121,42 +121,42 @@ class RktModel extends Model
     }
 
     /**
-     * Get RKT data by RPJMD Sasaran ID (for edit)
+     * Get RENJA data by RPJMD Sasaran ID (for edit)
      */
-    public function getRktById($id)
+    public function getRenjaById($id)
     {
-        $builder = $this->db->table('rkt_sasaran');
+        $builder = $this->db->table('renja_sasaran');
         $builder->select('
-            rkt_sasaran.id AS rkt_sasaran_id,
-            rkt_sasaran.rpjmd_sasaran_id,
-            rkt_sasaran.sasaran,
-            rkt_sasaran.status,
-            rkt_indikator_sasaran.id AS indikator_id,
-            rkt_indikator_sasaran.indikator_sasaran,
-            rkt_indikator_sasaran.satuan,
-            rkt_indikator_sasaran.tahun,
-            rkt_indikator_sasaran.target,
-            rpjmd_sasaran.id AS rpjmd_sasaran_id,
-            rpjmd_sasaran.sasaran_rpjmd AS rpjmd_sasaran
+            renja_sasaran.id AS renja_sasaran_id,
+            renja_sasaran.renstra_sasaran_id,
+            renja_sasaran.sasaran,
+            renja_sasaran.status,
+            renja_indikator_sasaran.id AS indikator_id,
+            renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.satuan,
+            renja_indikator_sasaran.tahun,
+            renja_indikator_sasaran.target,
+            renstra_sasaran.id AS renstra_sasaran_id,
+            renstra_sasaran.sasaran_renstra AS renstra_sasaran
         ');
-        $builder->join('rkt_indikator_sasaran', 'rkt_indikator_sasaran.rkt_sasaran_id = rkt_sasaran.id', 'left');
-        $builder->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rkt_sasaran.rpjmd_sasaran_id', 'left');
-        $builder->where('rkt_sasaran.id', $id);
-        $builder->orderBy('rkt_sasaran.id', 'ASC');
-        $builder->orderBy('rkt_indikator_sasaran.tahun', 'ASC');
+        $builder->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
+        $builder->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left');
+        $builder->where('renja_sasaran.id', $id);
+        $builder->orderBy('renja_sasaran.id', 'ASC');
+        $builder->orderBy('renja_indikator_sasaran.tahun', 'ASC');
         
         $query = $builder->get();
         $results = $query->getResultArray();
 
-        // Kelompokkan data berdasarkan rkt_sasaran_id
+        // Kelompokkan data berdasarkan renja_sasaran_id
         $grouped = [];
         foreach ($results as $row) {
-            $id = $row['rkt_sasaran_id'];
+            $id = $row['renja_sasaran_id'];
             if (!isset($grouped[$id])) {
                 $grouped[$id] = [
-                    'id' => $row['rkt_sasaran_id'],
-                    'rpjmd_sasaran_id' => $row['rpjmd_sasaran_id'],
-                    'sasaran' => $row['sasaran'],
+                    'id' => $row['renja_sasaran_id'],
+                    'renstra_sasaran_id' => $row['renstra_sasaran_id'],
+                    'sasaran_renja' => $row['sasaran_renja'],
                     'status' => $row['status'],
                     'indikator' => []
                 ];
@@ -175,23 +175,23 @@ class RktModel extends Model
         }
 
         return [
-            'rpjmd_sasaran_id' => !empty($results) ? $results[0]['rpjmd_sasaran_id'] : '',
-            'rpjmd_sasaran' => !empty($results) ? $results[0]['rpjmd_sasaran'] : '',
-            'sasaran_rkt' => array_values($grouped)
+            'renstra_sasaran_id' => !empty($results) ? $results[0]['renstra_sasaran_id'] : '',
+            'renstra_sasaran' => !empty($results) ? $results[0]['renstra_sasaran'] : '',
+            'sasaran_renja' => array_values($grouped)
         ];
     }
 
-    // ==================== RKT INDIKATOR SASARAN ====================
+    // ==================== RENJA INDIKATOR SASARAN ====================
     
     /**
      * Get all Indikator Sasaran
      */
     public function getAllIndikatorSasaran()
     {
-        return $this->db->table('rkt_indikator_sasaran ris')
+        return $this->db->table('renja_indikator_sasaran ris')
             ->select('ris.*, rs.sasaran as sasaran_nama')
-            ->join('rkt_sasaran rs', 'rs.id = ris.rkt_sasaran_id')
-            ->orderBy('ris.rkt_sasaran_id', 'ASC')
+            ->join('renja_sasaran rs', 'rs.id = ris.renja_sasaran_id')
+            ->orderBy('ris.renja_sasaran_id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->get()
             ->getResultArray();
@@ -202,8 +202,8 @@ class RktModel extends Model
      */
     public function getIndikatorSasaranBySasaranId($sasaranId)
     {
-        return $this->db->table('rkt_indikator_sasaran')
-            ->where('rkt_sasaran_id', $sasaranId)
+        return $this->db->table('renja_indikator_sasaran')
+            ->where('renja_sasaran_id', $sasaranId)
             ->get()
             ->getResultArray();
     }
@@ -213,21 +213,21 @@ class RktModel extends Model
      */
     public function getIndikatorSasaranById($id)
     {
-        return $this->db->table('rkt_indikator_sasaran ris')
+        return $this->db->table('renja_indikator_sasaran ris')
             ->select('ris.*, rs.sasaran as sasaran_nama')
-            ->join('rkt_sasaran rs', 'rs.id = ris.rkt_sasaran_id')
+            ->join('renja_sasaran rs', 'rs.id = ris.renja_sasaran_id')
             ->where('ris.id', $id)
             ->get()
             ->getRowArray();
     }
 
 
-    // ==================== CRUD OPERATIONS FOR RKT SASARAN ====================
+    // ==================== CRUD OPERATIONS FOR RENJA SASARAN ====================
 
     public function createSasaran($data)
     {
         // Validation
-        $required = ['rpjmd_sasaran_id', 'sasaran',];
+        $required = ['renstra_sasaran_id', 'sasaran_renja',];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
@@ -235,12 +235,12 @@ class RktModel extends Model
         }
         
         $insertData = [
-            'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
-            'sasaran' => $data['sasaran'],
+            'renstra_sasaran_id' => $data['renstra_sasaran_id'],
+            'sasaran_renja' => $data['sasaran_renja'],
             'status' => $data['status'] ?? 'draft',
         ];
         
-        $result = $this->db->table('rkt_sasaran')->insert($insertData);
+        $result = $this->db->table('renja_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
 
         if (!$result) {
@@ -252,15 +252,15 @@ class RktModel extends Model
     }
 
      /**
-     * Update RKT Sasaran
+     * Update RENJA Sasaran
      */
     public function updateSasaran($id, $data)
     {
-        return $this->db->table('rkt_sasaran')->where('id', $id)->update($data);
+        return $this->db->table('renja_sasaran')->where('id', $id)->update($data);
     }
     
     /**
-     * Delete RKT Sasaran (with cascade delete)
+     * Delete RENJA Sasaran (with cascade delete)
      */ 
     public function deleteSasaran($id)
     {
@@ -274,7 +274,7 @@ class RktModel extends Model
             }
             
             // Delete the sasaran
-            $result = $this->db->table('rkt_sasaran')->delete(['id' => $id]);
+            $result = $this->db->table('renja_sasaran')->delete(['id' => $id]);
             
             $this->db->transComplete();
             return $result;
@@ -287,12 +287,12 @@ class RktModel extends Model
 
 
 
-    // ==================== CRUD OPERATIONS FOR RKT INDIKATOR SASARAN ====================
+    // ==================== CRUD OPERATIONS FOR RENJA INDIKATOR SASARAN ====================
 
     public function createIndikatorSasaran($data)
     {
         // Validation
-        $required = ['rkt_sasaran_id', 'indikator_sasaran', 'satuan', 'tahun', 'target'];
+        $required = ['renja_sasaran_id', 'indikator_sasaran', 'satuan', 'tahun', 'target'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
@@ -300,7 +300,7 @@ class RktModel extends Model
         }
         
         $insertData = [
-            'rkt_sasaran_id' => $data['rkt_sasaran_id'],
+            'renja_sasaran_id' => $data['renja_sasaran_id'],
             'indikator_sasaran' => $data['indikator_sasaran'],
             'satuan' => $data['satuan'],
             'tahun' => $data['tahun'],
@@ -308,7 +308,7 @@ class RktModel extends Model
         ];
         
 
-        $result = $this->db->table('rkt_indikator_sasaran')->insert($insertData);
+        $result = $this->db->table('renja_indikator_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
 
         if (!$result) {
@@ -320,20 +320,20 @@ class RktModel extends Model
     }
 
      /**
-     * Update RKT Indikator Sasaran
+     * Update RENJA Indikator Sasaran
      */
     public function updateIndikatorSasaran($id, $data)
     {
-        return $this->db->table('rkt_indikator_sasaran')->where('id', $id)->update($data);
+        return $this->db->table('renja_indikator_sasaran')->where('id', $id)->update($data);
     }
     
     /**
-     * Delete RKT Indikator Sasaran
+     * Delete RENJA Indikator Sasaran
      */ 
     public function deleteIndikatorSasaran($id)
     {
         try {
-            $result = $this->db->table('rkt_indikator_sasaran')->where('id', $id)->delete();
+            $result = $this->db->table('renja_indikator_sasaran')->where('id', $id)->delete();
             if (!$result) {
                 $error = $this->db->error();
                 log_message('error', 'Failed to delete indikator sasaran ID ' . $id . ': ' . $error['message']);
@@ -346,30 +346,30 @@ class RktModel extends Model
         }
     }
 
-// ==================== COMPLETE RKT OPERATIONS ====================
+// ==================== COMPLETE RENJA OPERATIONS ====================
 
-    // Menyimpan data RKT beserta indikator sasaran
-    public function createCompleteRkt($data)
+    // Menyimpan data RENJA beserta indikator sasaran
+    public function createCompleteRenja($data)
     {
         $this->db->transStart();
 
         try {
-            if (isset($data['sasaran_rkt']) && is_array($data['sasaran_rkt'])) {
-                foreach ($data['sasaran_rkt'] as $sasaranData) {
+            if (isset($data['sasaran_renja']) && is_array($data['sasaran_renja'])) {
+                foreach ($data['sasaran_renja'] as $sasaranData) {
 
                     // Inject foreign key ke dalam data sasaran
-                    $sasaranData['rpjmd_sasaran_id'] = $data['rpjmd_sasaran_id'];
+                    $sasaranData['renstra_sasaran_id'] = $data['renstra_sasaran_id'];
                     $sasaranData['status'] = $sasaranData['status'] ?? 'draft';
 
-                    // Simpan sasaran RKT
-                    $sasaranRktId = $this->createSasaran($sasaranData);
+                    // Simpan sasaran RENJA
+                    $sasaranRenjaId = $this->createSasaran($sasaranData);
 
                     // Cek dan simpan indikator-indikator sasaran
                     if (isset($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
                         foreach ($sasaranData['indikator_sasaran'] as $indikatorData) {
 
                             // Inject foreign key ke dalam data indikator
-                            $indikatorData['rkt_sasaran_id'] = $sasaranRktId;
+                            $indikatorData['renja_sasaran_id'] = $sasaranRenjaId;
 
                             // Simpan indikator
                             $this->createIndikatorSasaran($indikatorData);
@@ -388,47 +388,47 @@ class RktModel extends Model
 
         } catch (\Exception $e) {
             $this->db->transRollback();
-            log_message('error', 'Error saving RKT: ' . $e->getMessage());
+            log_message('error', 'Error saving RENJA: ' . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * Update complete RKT data with sasaran and indikator
+     * Update complete RENJA data with sasaran and indikator
      */
-    public function updateCompleteRkt($rktSasaranId, $data)
+    public function updateCompleteRenja($renjaSasaranId, $data)
     {
         try {
             $this->db->transStart();
 
             // Get the selected RPJMD Sasaran ID from form
-            $rpjmdSasaranId = $data['rpjmd_sasaran_id'];
+            $renstraSasaranId = $data['renstra_sasaran_id'];
             
             // Get existing sasaran IDs to track which ones to keep
-            // Since we're editing a specific RKT sasaran, we start with that ID
-            $existingSasaranIds = [$rktSasaranId];
+            // Since we're editing a specific RENJA sasaran, we start with that ID
+            $existingSasaranIds = [$renjaSasaranId];
             
             $processedSasaranIds = [];
 
             // Process sasaran data
-            if (isset($data['sasaran_rkt']) && is_array($data['sasaran_rkt'])) {
-                foreach ($data['sasaran_rkt'] as $sasaranData) {
+            if (isset($data['sasaran_renja']) && is_array($data['sasaran_renja'])) {
+                foreach ($data['sasaran_renja'] as $sasaranData) {
                     $isNewSasaran = false;
                     
                     if (isset($sasaranData['id']) && !empty($sasaranData['id'])) {
                         // Update existing sasaran
                         $sasaranId = $sasaranData['id'];
                         $updateData = [
-                            'rpjmd_sasaran_id' => $rpjmdSasaranId,  // Update foreign key
-                            'sasaran' => $sasaranData['sasaran'],
+                            'renstra_sasaran_id' => $renstraSasaranId,  // Update foreign key
+                            'sasaran_renja' => $sasaranData['sasaran_renja'],
                             'status' => $sasaranData['status'] ?? 'draft'
                         ];
                         $this->updateSasaran($sasaranId, $updateData);
                         $processedSasaranIds[] = $sasaranId;
                     } else {
                         // Create new sasaran
-                        $sasaranData['rpjmd_sasaran_id'] = $rpjmdSasaranId;
-                        $sasaranData['sasaran'] = $sasaranData['sasaran'] ?? '';
+                        $sasaranData['renstra_sasaran_id'] = $renstraSasaranId;
+                        $sasaranData['sasaran_renja'] = $sasaranData['sasaran_renja'] ?? '';
                         $sasaranData['status'] = $sasaranData['status'] ?? 'draft';
                         $sasaranId = $this->createSasaran($sasaranData);
                         $processedSasaranIds[] = $sasaranId;
@@ -456,7 +456,7 @@ class RktModel extends Model
                                 $processedIndikatorIds[] = $indikatorId;
                             } else {
                                 // Create new indikator
-                                $indikatorData['rkt_sasaran_id'] = $sasaranId;
+                                $indikatorData['renja_sasaran_id'] = $sasaranId;
                                 $indikatorId = $this->createIndikatorSasaran($indikatorData);
                                 $processedIndikatorIds[] = $indikatorId;
                             }
@@ -487,26 +487,26 @@ class RktModel extends Model
 
         } catch (\Exception $e) {
             $this->db->transRollback();
-            log_message('error', 'Error updating RKT: ' . $e->getMessage());
+            log_message('error', 'Error updating RENJA: ' . $e->getMessage());
             throw $e;
         }
     }
 
     /**
-     * Delete complete RKT data by RKT Sasaran ID (with cascade delete)
+     * Delete complete RENJA data by RENJA Sasaran ID (with cascade delete)
      */
-    public function deleteCompleteRkt($rktSasaranId)
+    public function deleteCompleteRenja($renjaSasaranId)
     {
         $this->db->transStart();
         
         try {
-            // Get all RKT Sasaran for this RKT Sasaran
-            $rktSasaranList = $this->db->table('rkt_sasaran')
-                ->where('id', $rktSasaranId)
+            // Get all RENJA Sasaran for this RENJA Sasaran
+            $renjaSasaranList = $this->db->table('renja_sasaran')
+                ->where('id', $renjaSasaranId)
                 ->get()
                 ->getResultArray();
             
-            foreach ($rktSasaranList as $sasaran) {
+            foreach ($renjaSasaranList as $sasaran) {
                 // Delete using existing delete method (which handles cascade)
                 $this->deleteSasaran($sasaran['id']);
             }
@@ -516,18 +516,18 @@ class RktModel extends Model
             
         } catch (\Exception $e) {
             $this->db->transRollback();
-            log_message('error', 'Error deleting complete RKT: ' . $e->getMessage());
+            log_message('error', 'Error deleting complete RENJA: ' . $e->getMessage());
             throw $e;
         }
     }
 
-    public function updateRktStatus($id, $status)
+    public function updateRenjaStatus($id, $status)
     {
         if (!in_array($status, ['draft', 'selesai'])) {
             throw new \InvalidArgumentException("Status harus 'draft' atau 'selesai'");
         }
 
-        return $this->db->table('rkt_sasaran')
+        return $this->db->table('renja_sasaran')
             ->where('id', $id)
             ->update(['status' => $status]);
     }

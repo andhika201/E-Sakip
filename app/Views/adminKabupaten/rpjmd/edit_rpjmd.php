@@ -209,6 +209,7 @@
                                     </div> <!-- End Indikator Sasaran -->
                                   <?php endforeach; ?>
                                 <?php else: ?>
+
                                   <!-- Default indikator sasaran if none exist -->
                                   <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -271,6 +272,7 @@
                           </div> <!-- End Sasaran -->
                         <?php endforeach; ?>
                       <?php else: ?>
+
                         <!-- Default sasaran if none exist -->
                         <div class="sasaran-item border rounded p-3 bg-white mb-3">
                           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -359,6 +361,7 @@
                 </div> <!-- End Tujuan -->
               <?php endforeach; ?>
             <?php else: ?>
+              
               <!-- Default tujuan if none exist -->
               <div class="tujuan-item bg-light border rounded p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-3">

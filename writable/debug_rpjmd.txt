@@ -44048,3 +44048,165 @@ Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 80
 Target created with ID: 80
 === createCompleteRpjmd END - SUCCESS, MISI ID: 7 ===
+About to insert misi: Array
+(
+    [misi] => asdasdasdad
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 8
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 9
+    [indikator_tujuan] => aasdasdasd
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 10
+About to insert sasaran: Array
+(
+    [tujuan_id] => 9
+    [sasaran_rpjmd] => adsadasdasdad
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 9
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 9
+    [indikator_sasaran] => asdasdasdadasd
+    [definisi_op] => asdaddadasdasda
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 17
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 17
+    [tahun] => 2025
+    [target_tahunan] => 11
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 81
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 17
+    [tahun] => 2026
+    [target_tahunan] => 11
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 82
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 17
+    [tahun] => 2027
+    [target_tahunan] => 11
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 83
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 17
+    [tahun] => 2028
+    [target_tahunan] => 11
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 84
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 17
+    [tahun] => 2029
+    [target_tahunan] => 11
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 85
+About to insert misi: Array
+(
+    [misi] => asdasdad
+    [tahun_mulai] => 2030
+    [tahun_akhir] => 2034
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 9
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 10
+    [indikator_tujuan] => aadsaadsa
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 11
+About to insert sasaran: Array
+(
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => asdasdad
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 10
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test
+    [definisi_op] => asdasd
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 18
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 18
+    [tahun] => 2030
+    [target_tahunan] => asda
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 86
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 18
+    [tahun] => 2031
+    [target_tahunan] => dada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 87
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 18
+    [tahun] => 2032
+    [target_tahunan] => aad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 88
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 18
+    [tahun] => 2033
+    [target_tahunan] => daada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 89
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 18
+    [tahun] => 2034
+    [target_tahunan] => daad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 90

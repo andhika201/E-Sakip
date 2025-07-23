@@ -15,6 +15,12 @@ class CreateIkuSasaranTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
+            'opd_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => false,
+            ],
             'renstra_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
@@ -39,6 +45,7 @@ class CreateIkuSasaranTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
+        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('renstra_sasaran_id', 'renstra_sasaran', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('iku_sasaran');
     }

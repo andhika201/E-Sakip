@@ -152,7 +152,128 @@ class PkModel extends Model
 
 
     return $data;
+    }
 
+
+    public function getCompletePkByOpdId($opdId)
+    {
+        $query = $this->db->table('pk p')
+            ->select('
+                p.id as pk_id,
+                p.opd_id,
+                p.jenis,
+                p.tanggal,
+                o.nama_opd,
+
+                peg1.id as pihak_1_id,
+                peg1.nama_pegawai as pihak_1_nama,
+                peg1.nip_pegawai as pihak_1_nip,
+                j1.nama_jabatan as pihak_1_jabatan,
+                pang1.nama_pangkat as pihak_1_pangkat,
+                pang1.golongan as pihak_1_golongan,
+
+                peg2.id as pihak_2_id,
+                peg2.nama_pegawai as pihak_2_nama,
+                peg2.nip_pegawai as pihak_2_nip,
+                j2.nama_jabatan as pihak_2_jabatan,
+                pang2.nama_pangkat as pihak_2_pangkat,
+                pang2.golongan as pihak_2_golongan,
+
+                ps.id as sasaran_id,
+                ps.sasaran,
+
+                pi.id as indikator_id,
+                pi.indikator,
+                pi.target,
+
+                pp.id as pk_program_id,
+                pr.program_kegiatan,
+                pr.anggaran
+            ')
+            ->join('opd o', 'o.id = p.opd_id')
+            ->join('pegawai peg1', 'peg1.id = p.pihak_1')
+            ->join('jabatan j1', 'j1.id = peg1.jabatan_id', 'left')
+            ->join('pangkat pang1', 'pang1.id = peg1.pangkat_id', 'left')
+            ->join('pegawai peg2', 'peg2.id = p.pihak_2')
+            ->join('jabatan j2', 'j2.id = peg2.jabatan_id', 'left')
+            ->join('pangkat pang2', 'pang2.id = peg2.pangkat_id', 'left')
+            ->join('pk_sasaran ps', 'ps.pk_id = p.id', 'left')
+            ->join('pk_indikator pi', 'pi.pk_sasaran_id = ps.id', 'left')
+            ->join('pk_program pp', 'pp.pk_id = p.id', 'left')
+            ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
+            ->where('p.opd_id', $opdId)
+            ->orderBy('ps.id')
+            ->orderBy('pi.id')
+            ->orderBy('pp.id')
+            ->get()
+            ->getResultArray();
+
+        if (!$query) {
+            return null;
+        }
+
+        $first = $query[0];
+        $result = [
+            'pk_id' => $first['pk_id'],
+            'opd_id' => $first['opd_id'],
+            'nama_opd' => $first['nama_opd'],
+            'jenis' => $first['jenis'],
+            'tanggal' => $first['tanggal'],
+            'pihak_1' => [
+                'id' => $first['pihak_1_id'],
+                'nama' => $first['pihak_1_nama'],
+                'nip' => $first['pihak_1_nip'],
+                'jabatan' => $first['pihak_1_jabatan'],
+                'pangkat' => $first['pihak_1_pangkat'],
+                'golongan' => $first['pihak_1_golongan'],
+            ],
+            'pihak_2' => [
+                'id' => $first['pihak_2_id'],
+                'nama' => $first['pihak_2_nama'],
+                'nip' => $first['pihak_2_nip'],
+                'jabatan' => $first['pihak_2_jabatan'],
+                'pangkat' => $first['pihak_2_pangkat'],
+                'golongan' => $first['pihak_2_golongan'],
+            ],
+            'sasaran' => [],
+            'program' => [],
+        ];
+
+        foreach ($query as $row) {
+            // Sasaran & Indikator
+            if ($row['sasaran_id']) {
+                $sid = $row['sasaran_id'];
+                if (!isset($result['sasaran'][$sid])) {
+                    $result['sasaran'][$sid] = [
+                        'sasaran_id' => $sid,
+                        'sasaran' => $row['sasaran'],
+                        'indikator' => []
+                    ];
+                }
+
+                if ($row['indikator_id']) {
+                    $result['sasaran'][$sid]['indikator'][] = [
+                        'indikator_id' => $row['indikator_id'],
+                        'indikator' => $row['indikator'],
+                        'target' => $row['target']
+                    ];
+                }
+            }
+
+            // Program
+            if ($row['pk_program_id']) {
+                $result['program'][] = [
+                    'pk_program_id' => $row['pk_program_id'],
+                    'program_kegiatan' => $row['program_kegiatan'],
+                    'anggaran' => $row['anggaran']
+                ];
+            }
+        }
+
+        // Format ulang agar array numerik
+        $result['sasaran'] = array_values($result['sasaran']);
+
+        return $result;
     }
 
     public function getPkById($id)

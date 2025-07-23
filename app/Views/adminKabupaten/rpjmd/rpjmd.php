@@ -79,7 +79,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <!-- Period and Status Filter -->
             <div class="d-flex align-items-center flex-fill me-3 gap-2">
-                <select id="periode-filter" class="form-select" onchange="filterByPeriode()" style="flex: 2;">
+                <select id="periodFilter" class="form-select" onchange="filterByPeriode()" style="flex: 2;">
                     <?php if (isset($rpjmd_grouped) && !empty($rpjmd_grouped)): ?>
                         <?php 
                         // Get the latest period (last key in the sorted array)
@@ -93,8 +93,8 @@
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
-                <select id="status-filter" class="form-select" onchange="filterByStatus()" style="flex: 1;">
-                    <option value="">Semua Status</option>
+                <select id="statusFilter" class="form-select" onchange="filterByStatus()" style="flex: 1;">
+                    <option value="all">Semua Status</option>
                     <option value="draft">Draft</option>
                     <option value="selesai">Selesai</option>
                 </select>
@@ -394,83 +394,16 @@
             </table>
         </div>
         
-        <!-- Pagination -->
-        <?php if (isset($total_pages) && $total_pages > 1): ?>
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            <div class="text-muted">
-                Menampilkan halaman <?= $current_page ?> dari <?= $total_pages ?> 
-                (<?= $total_records ?> total data, <?= $per_page ?> per halaman)
+        <!-- Data Summary -->
+        <div class="d-flex justify-content-between align-items-center mt-3 text-muted small">
+            <div>
+                <span id="visible-data-count">Memuat data...</span>
             </div>
-            
-            <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0">
-                    <!-- Previous Page -->
-                    <?php if ($current_page > 1): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=<?= $current_page - 1 ?>">
-                                <i class="fas fa-chevron-left"></i> Sebelumnya
-                            </a>
-                        </li>
-                    <?php else: ?>
-                        <li class="page-item disabled">
-                            <span class="page-link">
-                                <i class="fas fa-chevron-left"></i> Sebelumnya
-                            </span>
-                        </li>
-                    <?php endif; ?>
-                    
-                    <!-- Page Numbers -->
-                    <?php 
-                    $start = max(1, $current_page - 2);
-                    $end = min($total_pages, $current_page + 2);
-                    ?>
-                    
-                    <?php if ($start > 1): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1">1</a>
-                        </li>
-                        <?php if ($start > 2): ?>
-                            <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                            </li>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                    
-                    <?php for ($i = $start; $i <= $end; $i++): ?>
-                        <li class="page-item <?= $i == $current_page ? 'active' : '' ?>">
-                            <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
-                        </li>
-                    <?php endfor; ?>
-                    
-                    <?php if ($end < $total_pages): ?>
-                        <?php if ($end < $total_pages - 1): ?>
-                            <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                            </li>
-                        <?php endif; ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=<?= $total_pages ?>"><?= $total_pages ?></a>
-                        </li>
-                    <?php endif; ?>
-                    
-                    <!-- Next Page -->
-                    <?php if ($current_page < $total_pages): ?>
-                        <li class="page-item">
-                            <a class="page-link" href="?page=<?= $current_page + 1 ?>">
-                                Berikutnya <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
-                    <?php else: ?>
-                        <li class="page-item disabled">
-                            <span class="page-link">
-                                Berikutnya <i class="fas fa-chevron-right"></i>
-                            </span>
-                        </li>
-                    <?php endif; ?>
-                </ul>
-            </nav>
+            <div>
+                <i class="fas fa-filter me-1"></i>
+                Filter aktif: <span id="active-filters">Periode terbaru</span>
+            </div>
         </div>
-        <?php endif; ?>
     </div>
   </main>
 
@@ -532,8 +465,8 @@
   }
 
   function filterByPeriode() {
-      const filterValue = document.getElementById('periode-filter').value;
-      const statusFilterValue = document.getElementById('status-filter').value;
+      const filterValue = document.getElementById('periodFilter').value;
+      const statusFilterValue = document.getElementById('statusFilter').value;
       const rows = document.querySelectorAll('.periode-row');
       const yearCells = document.querySelectorAll('.year-cells');
       
@@ -553,7 +486,7 @@
           const rowStatus = row.getAttribute('data-status') || 'draft';
           
           const periodMatch = rowPeriod === filterValue;
-          const statusMatch = !statusFilterValue || rowStatus === statusFilterValue;
+          const statusMatch = statusFilterValue === 'all' || !statusFilterValue || rowStatus === statusFilterValue;
           
           if (periodMatch && statusMatch) {
               row.style.display = '';
@@ -569,18 +502,104 @@
       // Update table headers
       updateTableHeaders(filterValue);
       
-      // Update pagination info if visible
+      // Update data summary
+      updateDataSummary(filterValue, statusFilterValue);
+  }
+
+  function updateDataSummary(periodKey, statusFilter) {
       const visibleRows = document.querySelectorAll('.periode-row:not([style*="display: none"])');
-      console.log('Showing ' + visibleRows.length + ' rows for period: ' + filterValue + ', status: ' + (statusFilterValue || 'all'));
+      const totalRows = document.querySelectorAll('.periode-row').length;
+      
+      // Update visible data count
+      const countElement = document.getElementById('visible-data-count');
+      if (countElement) {
+          countElement.textContent = `Menampilkan ${visibleRows.length} dari ${totalRows} data`;
+      }
+      
+      // Update active filters
+      const filtersElement = document.getElementById('active-filters');
+      if (filtersElement) {
+          let filterText = '';
+          
+          if (periodKey && periodKey !== 'all') {
+              // Try to get period from periodData or use periodKey directly
+              if (typeof periodData !== 'undefined' && periodData[periodKey]) {
+                  filterText = `Periode ${periodData[periodKey].period}`;
+              } else {
+                  filterText = `Periode ${periodKey}`;
+              }
+          } else {
+              filterText = 'Semua Periode';
+          }
+          
+          if (statusFilter && statusFilter !== 'all') {
+              filterText += `, Status: ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`;
+          }
+          
+          filtersElement.textContent = filterText;
+      }
   }
 
   function filterByStatus() {
-      // Use the same function as period filter since they work together
-      filterByPeriode();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const periodFilter = document.getElementById('periodFilter').value;
+      
+      // Get all data rows
+      const rows = document.querySelectorAll('.periode-row');
+      const yearCells = document.querySelectorAll('.year-cells');
+      
+      // Hide all rows first
+      rows.forEach(function(row) {
+          row.style.display = 'none';
+      });
+      
+      // Hide all year cells first
+      yearCells.forEach(function(cells) {
+          cells.style.display = 'none';
+      });
+      
+      // Show/hide rows based on filters
+      rows.forEach(function(row) {
+          const rowPeriod = row.getAttribute('data-periode');
+          const rowStatus = row.getAttribute('data-status') || 'draft';
+          
+          const periodMatch = rowPeriod === periodFilter;
+          const statusMatch = statusFilter === 'all' || rowStatus === statusFilter;
+          
+          if (periodMatch && statusMatch) {
+              row.style.display = '';
+          }
+      });
+      
+      // Show year cells for visible periods
+      yearCells.forEach(function(cells) {
+          if (cells.getAttribute('data-periode') === periodFilter) {
+              cells.style.display = '';
+          }
+      });
+      
+      // Update table headers
+      updateTableHeaders(periodFilter);
+      
+      // Update data summary
+      updateDataSummary(periodFilter, statusFilter);
   }
 
   // Initialize the filter on page load to show only the latest period
   document.addEventListener('DOMContentLoaded', function() {
+      // Initialize data summary
+      const totalRows = document.querySelectorAll('.periode-row').length;
+      const countElement = document.getElementById('visible-data-count');
+      if (countElement) {
+          countElement.textContent = `Menampilkan ${totalRows} dari ${totalRows} data`;
+      }
+      
+      const filtersElement = document.getElementById('active-filters');
+      if (filtersElement) {
+          filtersElement.textContent = 'Semua Data';
+      }
+      
+      // Apply initial filter
       filterByPeriode();
   });
 

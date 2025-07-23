@@ -19,12 +19,7 @@ class RpjmdController extends BaseController
 
     public function index()
     {
-        // Pagination setup
-        $perPage = 5; // 5 misi per page
-        $page = $this->request->getGet('page') ?? 1;
-        $offset = ($page - 1) * $perPage;
-        
-        // Get all data without filter
+        // Get all data first
         $allMisi = $this->rpjmdModel->getCompleteRpjmdStructure();
         
         // Group data by period (tahun_mulai - tahun_akhir)
@@ -48,19 +43,9 @@ class RpjmdController extends BaseController
         // Sort periods by tahun_mulai
         ksort($groupedData);
         
-        // Get total count for pagination
-        $totalMisi = count($allMisi);
-        $totalPages = ceil($totalMisi / $perPage);
-        
-        // Pass grouped data to view
+        // Pass ALL grouped data to view (let JavaScript handle filtering)
         $data['rpjmd_grouped'] = $groupedData;
-        $data['rpjmd_data'] = array_slice($allMisi, $offset, $perPage); // Keep original for compatibility
-        
-        // Pagination info
-        $data['current_page'] = $page;
-        $data['total_pages'] = $totalPages;
-        $data['per_page'] = $perPage;
-        $data['total_records'] = $totalMisi;
+        $data['rpjmd_data'] = $allMisi;
         
         // Load summary statistics
         $data['rpjmd_summary'] = $this->rpjmdModel->getRpjmdSummary();
@@ -229,38 +214,6 @@ class RpjmdController extends BaseController
         return redirect()->to(base_url('adminkab/rpjmd'));
     }
 
-    // ==================== API METHODS FOR AJAX ====================
-    
-    public function get_tujuan_by_misi($misiId)
-    {
-        try {
-            $tujuan = $this->rpjmdModel->getTujuanByMisiId($misiId);
-            return $this->response->setJSON(['success' => true, 'data' => $tujuan]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-
-    public function get_sasaran_by_tujuan($tujuanId)
-    {
-        try {
-            $sasaran = $this->rpjmdModel->getSasaranByTujuanId($tujuanId);
-            return $this->response->setJSON(['success' => true, 'data' => $sasaran]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-
-    public function get_indikator_by_sasaran($sasaranId)
-    {
-        try {
-            $indikator = $this->rpjmdModel->getIndikatorSasaranBySasaranId($sasaranId);
-            return $this->response->setJSON(['success' => true, 'data' => $indikator]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-
     // ==================== STATUS MANAGEMENT ====================
     
     /**
@@ -334,38 +287,4 @@ class RpjmdController extends BaseController
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
-
-    // // ==================== ADDITIONAL UTILITY METHODS ====================
-
-    // public function search()
-    // {
-    //     $keyword = $this->request->getPost('keyword');
-        
-    //     if (empty($keyword)) {
-    //         return redirect()->to(base_url('rpjmd'));
-    //     }
-        
-    //     try {
-    //         $data['search_results'] = $this->rpjmdModel->searchRpjmd($keyword);
-    //         $data['keyword'] = $keyword;
-            
-    //         return view('adminKabupaten/rpjmd/search_results', $data);
-    //     } catch (\Exception $e) {
-    //         session()->setFlashdata('error', 'Error: ' . $e->getMessage());
-    //         return redirect()->to(base_url('rpjmd'));
-    //     }
-    // }
-
-    // public function export()
-    // {
-    //     // Method untuk export data RPJMD (bisa dikembangkan untuk PDF, Excel, dll)
-    //     try {
-    //         $data = $this->rpjmdModel->getCompleteRpjmdStructure();
-            
-    //         // Untuk sementara return JSON
-    //         return $this->response->setJSON($data);
-    //     } catch (\Exception $e) {
-    //         return $this->response->setJSON(['error' => $e->getMessage()]);
-    //     }
-    // }
 }

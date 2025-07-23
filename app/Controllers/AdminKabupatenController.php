@@ -12,30 +12,6 @@ class AdminKabupatenController extends BaseController
         return view('adminKabupaten/dashboard');
     }
 
-    // RKT Methods
-    public function rkt()
-    {
-        return view('adminKabupaten/rkt/rkt');
-    }
-
-    public function tambah_rkt()
-    {
-        // Load model untuk mendapatkan data sasaran RPJMD
-        $rpjmdModel = new \App\Models\RpjmdModel();
-        $sasaranRpjmd = $rpjmdModel->getAllSasaranWithPeriode();
-        
-        $data = [
-            'sasaran_rpjmd' => $sasaranRpjmd
-        ];
-        
-        return view('adminKabupaten/rkt/tambah_rkt', $data);
-    }
-
-    public function edit_rkt()
-    {
-        return view('adminKabupaten/rkt/edit_rkt');
-    }
-
     public function save_rkt()
     {
         $rktModel = new \App\Models\RktModel();

@@ -6,6 +6,65 @@
   <title>Edit Renstra e-SAKIP</title>
   <!-- Style -->
   <?= $this->include('adminOpd/templates/style.php'); ?>
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    .is-invalid {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+    
+    .alert {
+      transition: all 0.3s ease;
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .target-years-container .col-md-2 {
+      margin-bottom: 10px;
+    }
+
+    /* Custom Select2 styles */
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      line-height: 36px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      padding-left: 12px;
+      padding-right: 20px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 36px;
+    }
+    
+    .select2-dropdown {
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+    }
+    
+    .select2-search--dropdown .select2-search__field {
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      padding: 8px 12px;
+    }
+    
+    .select2-results__option--highlighted {
+      background-color: #007bff;
+      color: white;
+    }
+    
+    .select2-container--default .select2-results__option[aria-selected=true] {
+      background-color: #6c757d;
+      color: white;
+    }
+  </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -21,410 +80,242 @@
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit Renstra</h2>
 
-      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/save') ?>">
+      <!-- Alert Container -->
+      <div id="alert-container"></div>
 
-      <!-- Informasi Umum -->
-      <section class="mb-4">
-        <h2 class="h5 fw-semibold mb-3">Informasi Umum Renstra</h2>
-        <div class="row">
-          <div class="col-md-6">
-            <label class="form-label">Sasaran RPJMD Terkait</label>
-            <select name="rpjmd_sasaran_id" class="form-select mb-3" required>
-              <option value="">Pilih Sasaran RPJMD</option>
-              <!-- Options akan diisi dari database -->
-              <option value="1">Meningkatnya kualitas pelayanan publik</option>
-              <option value="2">Meningkatnya transparansi pengelolaan keuangan</option>
-              <option value="3">Meningkatnya kompetensi ASN</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Tahun Awal</label>
-            <input type="number" name="tahun_awal" id="tahun_awal" class="form-control mb-3" min="2020" max="2050" placeholder="Contoh: 2025" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Tahun Akhir</label>
-            <input type="number" name="tahun_akhir" id="tahun_akhir" class="form-control mb-3" readonly required>
-          </div>
-        </div>
-      </section>
+      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update'. '$id') ?>">
+      <?= csrf_field() ?>
 
-      <!-- Daftar Sasaran Renstra -->
-      <section>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 fw-semibold">Daftar Sasaran Renstra</h2>
-          <button type="button" id="add-sasaran-renstra" class="btn btn-success btn-sm">
-            <i class="fas fa-plus me-1"></i> Tambah Sasaran Renstra
-          </button>
-        </div>
+        <!-- Hidden fields untuk mode edit -->
+        <input type="hidden" name="mode" value="edit">
 
-        <div id="sasaran-renstra-container">
-          <!-- Sasaran Renstra 1 -->
-          <div class="sasaran-renstra-item bg-light border rounded p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <label class="fw-medium">Sasaran Renstra 1</label>
-              <button type="button" class="remove-sasaran-renstra btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+        <!-- Informasi Umum -->
+        <section class="mb-4">
+          <h2 class="h5 fw-semibold mb-3">Informasi Umum Renstra</h2>
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Sasaran RPJMD Terkait</label>
+              <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
+                <option value="">Pilih Sasaran RPJMD</option>
+                <?php if (isset($rpjmd_sasaran) && !empty($rpjmd_sasaran)): ?>
+                  <?php foreach ($rpjmd_sasaran as $sasaran): ?>
+                    <option value="<?= $sasaran['id'] ?>" <?= $sasaran['id'] == $renstra['rpjmd_sasaran_id'] ? 'selected' : '' ?>>
+                      <?= esc($sasaran['sasaran_rpjmd']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <option value="" disabled>Tidak ada sasaran RPJMD yang tersedia</option>
+                <?php endif; ?>
+              </select>
+              <small class="text-muted">Ketik untuk mencari sasaran RPJMD...</small>
             </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-12">
-                <label class="form-label">Sasaran Renstra</label>
-                <textarea name="sasaran_renstra[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran renstra" required></textarea>
-              </div>
+            <div class="col-md-3">
+              <label class="form-label">Tahun Mulai</label>
+              <input type="number" name="tahun_mulai" id="tahun_mulai" class="form-control mb-3" value="<?= esc($renstra['tahun_mulai']) ?>" placeholder="Contoh: 2025" required>
             </div>
+            <div class="col-md-3">
+              <label class="form-label">Tahun Akhir</label>
+              <input type="number" name="tahun_akhir" id="tahun_akhir" class="form-control mb-3" readonly required>
+            </div>
+          </div>
+        </section>
 
-            <!-- Indikator Sasaran -->
-            <div class="indikator-sasaran-section">
+        <!-- Daftar Sasaran Renstra -->
+        <section>
+          <h2 class="h5 fw-semibold mb-3">Daftar Sasaran Renstra</h2>
+
+          <div id="sasaran-renstra-container">
+            <!-- Sasaran Renstra 1 -->
+            <div class="sasaran-renstra-item bg-light border rounded p-3 mb-3">
               <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="h5 fw-medium">Indikator Sasaran</h4>
-                <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
-                  <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
-                </button>
+                <label class="fw-medium sasaran-title">Sasaran Renstra 1</label>
+                <button type="button" class="remove-sasaran-renstra btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label class="form-label">Sasaran Renstra</label>
+                  <textarea name="sasaran_renstra[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran renstra" required></textarea>
+                </div>
               </div>
 
-              <div class="indikator-sasaran-container">
-                <!-- Indikator Sasaran 1.1 -->
-                <div class="indikator-sasaran-item border rounded p-3 bg-white mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-3">
-                    <label class="fw-medium">Indikator Sasaran 1.1</label>
-                    <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-                  </div>
-                  
-                  <div class="mb-3">
-                    <label class="form-label">Indikator Sasaran</label>
-                    <textarea name="sasaran_renstra[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
-                  </div>
+              <!-- Indikator Sasaran -->
+              <div class="indikator-sasaran-section">
+                <h4 class="h5 fw-medium mb-3">Indikator Sasaran</h4>
 
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <label class="form-label">Satuan</label>
-                      <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control" required>
-                        <option value="">Pilih Satuan</option>
-                        <!-- Options akan diisi dari database -->
-                        <option value="Persen">Persen</option>
-                        <option value="Nilai">Nilai</option>
-                        <option value="Predikat">Predikat</option>
-                        <option value="Unit">Unit</option>
-                      </select>
+                <div class="indikator-sasaran-container">
+                  <!-- Indikator Sasaran 1.1 -->
+                  <div class="indikator-sasaran-item border rounded p-3 bg-white mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <label class="fw-medium indikator-title">Indikator Sasaran 1.1</label>
+                      <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                     </div>
-                  </div>
+                    
+                    <div class="mb-3">
+                      <label class="form-label">Indikator Sasaran</label>
+                      <textarea name="sasaran_renstra[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+                    </div>
 
-                  <!-- Target Tahunan -->
-                  <div class="target-section">
-                    <h5 class="fw-medium mb-3">Target Tahunan</h5>
-                    <div class="target-container">
-                      <!-- Target akan diisi otomatis berdasarkan tahun awal dan akhir -->
-                      <div class="target-years-container">
-                        <div class="row g-2 mb-2">
-                          <div class="col-md-2">
-                            <label class="form-label fw-medium">2025</label>
-                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][target]" class="form-control form-control-sm" placeholder="Target 2025" required>
-                            <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][tahun]" value="2025">
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Satuan</label>
+                        <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control" required>
+                          <option value="">Pilih Satuan</option>
+                          <?php if (isset($satuan_options) && !empty($satuan_options)): ?>
+                            <?php foreach ($satuan_options as $value => $text): ?>
+                              <option value="<?= $value ?>"><?= $text ?></option>
+                            <?php endforeach; ?>
+                          <?php else: ?>
+                            <option value="Persen">Persen (%)</option>
+                            <option value="Orang">Orang</option>
+                            <option value="Unit">Unit</option>
+                            <option value="Dokumen">Dokumen</option>
+                            <option value="Kegiatan">Kegiatan</option>
+                            <option value="Rupiah">Rupiah</option>
+                            <option value="Index">Index</option>
+                            <option value="Nilai">Nilai</option>
+                            <option value="Predikat">Predikat</option>
+                          <?php endif; ?>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <!-- Target Tahunan -->
+                    <div class="target-section">
+                      <h5 class="fw-medium mb-3">Target Tahunan</h5>
+                      <div class="target-container">
+                        <div class="target-item row g-2 align-items-center mb-2">
+                          <div class="col-auto">
+                            <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                           </div>
-                          <div class="col-md-2">
-                            <label class="form-label fw-medium">2026</label>
-                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][1][target]" class="form-control form-control-sm" placeholder="Target 2026" required>
-                            <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][1][tahun]" value="2026">
+                          <div class="col">
+                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][target]" value="" class="form-control form-control-sm" placeholder="Contoh: 75" required>
                           </div>
-                          <div class="col-md-2">
-                            <label class="form-label fw-medium">2027</label>
-                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][2][target]" class="form-control form-control-sm" placeholder="Target 2027" required>
-                            <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][2][tahun]" value="2027">
+                        </div>
+                        <div class="target-item row g-2 align-items-center mb-2">
+                          <div class="col-auto">
+                            <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][1][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                           </div>
-                          <div class="col-md-2">
-                            <label class="form-label fw-medium">2028</label>
-                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][3][target]" class="form-control form-control-sm" placeholder="Target 2028" required>
-                            <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][3][tahun]" value="2028">
+                          <div class="col">
+                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][1][target]" value="" class="form-control form-control-sm" placeholder="Contoh: 75" required>
                           </div>
-                          <div class="col-md-2">
-                            <label class="form-label fw-medium">2029</label>
-                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][4][target]" class="form-control form-control-sm" placeholder="Target 2029" required>
-                            <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][4][tahun]" value="2029">
+                        </div>
+                        <div class="target-item row g-2 align-items-center mb-2">
+                          <div class="col-auto">
+                            <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][2][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                          </div>
+                          <div class="col">
+                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][2][target]" value="" class="form-control form-control-sm" placeholder="Contoh: 75" required>
+                          </div>
+                        </div>
+                        <div class="target-item row g-2 align-items-center mb-2">
+                          <div class="col-auto">
+                            <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][3][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                          </div>
+                          <div class="col">
+                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][3][target]" value="" class="form-control form-control-sm" placeholder="Contoh: 75" required>
+                          </div>
+                        </div>
+                        <div class="target-item row g-2 align-items-center mb-2">
+                          <div class="col-auto">
+                            <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][4][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                          </div>
+                          <div class="col">
+                            <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][4][target]" value="" class="form-control form-control-sm" placeholder="Contoh: 75" required>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div> <!-- End Indikator Sasaran -->
-              </div> <!-- End Indikator Sasaran Container -->
-            </div> <!-- End Indikator Sasaran Section -->
-          </div> <!-- End Sasaran Renstra -->
-        </div> <!-- End Sasaran Renstra Container -->
-      </section>
+                  </div> <!-- End Indikator Sasaran -->
+                </div> <!-- End Indikator Sasaran Container -->
+                
+                <!-- Tombol Tambah Indikator Sasaran -->
+                <div class="text-end mt-3">
+                  <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
+                    <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
+                  </button>
+                </div>
+              </div> <!-- End Indikator Sasaran Section -->
+            </div> <!-- End Sasaran Renstra -->
+          </div> <!-- End Sasaran Renstra Container -->
+          
+          <!-- Tombol Tambah Sasaran Renstra -->
+          <div class="text-end mt-3">
+            <button type="button" id="add-sasaran-renstra" class="btn btn-success btn-sm">
+              <i class="fas fa-plus me-1"></i> Tambah Sasaran Renstra
+            </button>
+          </div>
+        </section>
 
-      <!-- Tombol Aksi -->
-      <div class="d-flex justify-content-between mt-4">
-        <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-secondary">
-          <i class="fas fa-arrow-left me-1"></i> Kembali
-        </a>
-        <button type="submit" class="btn btn-success">
-          <i class="fas fa-save me-1"></i> Simpan
-        </button>
-      </div>
+        <!-- Tombol Aksi -->
+        <div class="d-flex justify-content-between mt-4">
+          <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Kembali
+          </a>
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i> Simpan
+          </button>
+        </div>
       </form>
     </div>
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
 
+  <!-- jQuery (required for Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  
   <script>
-    // Fungsi untuk mengupdate tahun akhir otomatis
-    document.getElementById('tahun_awal').addEventListener('input', function() {
-      const tahunAwal = parseInt(this.value);
-      if (tahunAwal && !isNaN(tahunAwal)) {
-        const tahunAkhir = tahunAwal + 4; // Jarak 5 tahun (2025-2029)
-        document.getElementById('tahun_akhir').value = tahunAkhir;
-        
-        // Update semua target tahunan
-        updateAllTargetYears(tahunAwal, tahunAkhir);
-      } else {
-        document.getElementById('tahun_akhir').value = '';
-      }
-    });
+    $(document).ready(function() {
+      // Initialize Select2 for existing elements
+      initializeSelect2();
 
-    // Fungsi untuk mengupdate semua target tahunan
-    function updateAllTargetYears(tahunAwal, tahunAkhir) {
-      if (!tahunAwal || isNaN(tahunAwal)) return;
-      
-      document.querySelectorAll('.target-years-container').forEach(container => {
-        const yearColumns = container.querySelector('.row');
-        yearColumns.innerHTML = '';
-        
-        for (let i = 0; i < 5; i++) {
-          const tahun = tahunAwal + i;
-          const colDiv = document.createElement('div');
-          colDiv.className = 'col-md-2';
-          colDiv.innerHTML = `
-            <label class="form-label fw-medium">${tahun}</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Target ${tahun}" required>
-            <input type="hidden" value="${tahun}">
-          `;
-          yearColumns.appendChild(colDiv);
-        }
-        
-        // Update form names setelah perubahan tahun
-        updateFormNames();
-      });
-    }
-
-    // Fungsi untuk mengupdate penomoran label secara real-time
-    function updateLabels() {
-      document.querySelectorAll('.sasaran-renstra-item').forEach((sasaranItem, sasaranIndex) => {
-        const sasaranNumber = sasaranIndex + 1;
-        
-        // Update label sasaran renstra
-        const sasaranLabel = sasaranItem.querySelector('label');
-        if (sasaranLabel) {
-          sasaranLabel.textContent = `Sasaran Renstra ${sasaranNumber}`;
-        }
-
-        // Update indikator sasaran labels
-        sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorItem, indikatorIndex) => {
-          const indikatorNumber = indikatorIndex + 1;
-          const indikatorLabel = indikatorItem.querySelector('label');
-          if (indikatorLabel) {
-            indikatorLabel.textContent = `Indikator Sasaran ${sasaranNumber}.${indikatorNumber}`;
-          }
+      // Function to initialize Select2 on elements
+      function initializeSelect2() {
+        // Initialize Select2 for RPJMD Sasaran dropdown
+        $('#rpjmd_sasaran_select').select2({
+          placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
+          allowClear: true,
+          width: '100%'
         });
+      }
+
+      // Re-initialize Select2 when new elements are added
+      $(document).on('click', '.add-indikator-sasaran, #add-sasaran-renstra', function() {
+        setTimeout(function() {
+          initializeSelect2();
+        }, 100);
       });
-    }
 
-    // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
-    function updateFormNames() {
-      document.querySelectorAll('.sasaran-renstra-item').forEach((sasaranItem, sasaranIndex) => {
-        // Update sasaran renstra names
-        const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran"]');
+      // Handle selection change
+      $('#rpjmd_sasaran_select').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
         
-        if (sasaranTextarea) {
-          sasaranTextarea.name = `sasaran_renstra[${sasaranIndex}][sasaran]`;
-        }
-
-        // Update indikator sasaran names
-        sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorItem, indikatorIndex) => {
-          const indikatorTextarea = indikatorItem.querySelector('textarea[name*="indikator_sasaran"]');
-          const satuanSelect = indikatorItem.querySelector('select[name*="satuan"]');
-          
-          if (indikatorTextarea) {
-            indikatorTextarea.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
-          }
-          if (satuanSelect) {
-            satuanSelect.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][satuan]`;
-          }
-
-          // Update target tahunan names
-          indikatorItem.querySelectorAll('.target-years-container .col-md-2').forEach((targetCol, targetIndex) => {
-            const targetInput = targetCol.querySelector('input[type="text"]');
-            const tahunInput = targetCol.querySelector('input[type="hidden"]');
-            
-            if (targetInput) {
-              targetInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target_tahunan][${targetIndex}][target]`;
-            }
-            if (tahunInput) {
-              tahunInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target_tahunan][${targetIndex}][tahun]`;
-            }
+        if (selectedOption.val()) {
+          console.log('Selected Sasaran:', {
+            id: selectedOption.val(),
+            sasaran: selectedOption.text()
           });
-        });
+          
+          // Show selected info (optional)
+          showSelectedInfo(selectedOption.text());
+        }
       });
-    }
 
-    // Tambah Sasaran Renstra Baru
-    document.getElementById('add-sasaran-renstra').addEventListener('click', () => {
-      const sasaranContainer = document.getElementById('sasaran-renstra-container');
-      const tahunAwal = parseInt(document.getElementById('tahun_awal').value);
-      
-      if (!tahunAwal || isNaN(tahunAwal)) {
-        alert('Silakan isi tahun awal terlebih dahulu');
-        return;
-      }
-      
-      const newSasaran = document.createElement('div');
-      newSasaran.className = 'sasaran-renstra-item bg-light border rounded p-3 mb-3';
-      
-      // Generate target years HTML
-      let targetYearsHTML = '';
-      for (let i = 0; i < 5; i++) {
-        const tahun = tahunAwal + i;
-        targetYearsHTML += `
-          <div class="col-md-2">
-            <label class="form-label fw-medium">${tahun}</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Target ${tahun}" required>
-            <input type="hidden" value="${tahun}">
-          </div>
-        `;
-      }
-      
-      newSasaran.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="fw-medium">Sasaran Renstra</label>
-          <button type="button" class="remove-sasaran-renstra btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-        </div>
+      // Function to show selected sasaran info
+      function showSelectedInfo(sasaran) {
+        var infoHtml = '<div class="alert alert-info alert-dismissible fade show mt-2" role="alert">' +
+          '<strong>Sasaran RPJMD Terpilih:</strong> ' + sasaran +
+          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>';
         
-        <div class="row mb-3">
-          <div class="col-md-12">
-            <label class="form-label">Sasaran Renstra</label>
-            <textarea class="form-control" rows="2" placeholder="Masukkan sasaran renstra" required></textarea>
-          </div>
-        </div>
-
-        <div class="indikator-sasaran-section">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="h5 fw-medium">Indikator Sasaran</h4>
-            <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
-              <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
-            </button>
-          </div>
-          <div class="indikator-sasaran-container"></div>
-        </div>
-      `;
-      
-      sasaranContainer.appendChild(newSasaran);
-      updateLabels();
-      updateFormNames();
-    });
-
-    // Fungsi untuk menambahkan indikator sasaran
-    function addIndikatorSasaran(sasaranElement) {
-      const indikatorContainer = sasaranElement.querySelector('.indikator-sasaran-container');
-      const tahunAwal = parseInt(document.getElementById('tahun_awal').value);
-      
-      if (!tahunAwal || isNaN(tahunAwal)) {
-        alert('Silakan isi tahun awal terlebih dahulu');
-        return;
-      }
-      
-      // Generate target years HTML
-      let targetYearsHTML = '';
-      for (let i = 0; i < 5; i++) {
-        const tahun = tahunAwal + i;
-        targetYearsHTML += `
-          <div class="col-md-2">
-            <label class="form-label fw-medium">${tahun}</label>
-            <input type="text" class="form-control form-control-sm" placeholder="Target ${tahun}" required>
-            <input type="hidden" value="${tahun}">
-          </div>
-        `;
-      }
-      
-      const newIndikator = document.createElement('div');
-      newIndikator.className = 'indikator-sasaran-item border rounded p-3 bg-white mb-3';
-      newIndikator.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="fw-medium">Indikator Sasaran</label>
-          <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-        </div>
-        
-        <div class="mb-3">
-          <label class="form-label">Indikator Sasaran</label>
-          <textarea class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
-        </div>
-
-        <div class="row mb-3">
-          <div class="col-md-6">
-            <label class="form-label">Satuan</label>
-            <select class="form-control" required>
-              <option value="">Pilih Satuan</option>
-              <option value="Persen">Persen</option>
-              <option value="Nilai">Nilai</option>
-              <option value="Predikat">Predikat</option>
-              <option value="Unit">Unit</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="target-section">
-          <h5 class="fw-medium mb-3">Target Tahunan</h5>
-          <div class="target-container">
-            <div class="target-years-container">
-              <div class="row g-2 mb-2">
-                ${targetYearsHTML}
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      indikatorContainer.appendChild(newIndikator);
-      updateLabels();
-      updateFormNames();
-    }
-
-    // Event delegation untuk semua tombol
-    document.addEventListener('click', function(e) {
-      // Tombol tambah indikator sasaran
-      if (e.target.classList.contains('add-indikator-sasaran') || e.target.closest('.add-indikator-sasaran')) {
-        const sasaranItem = e.target.closest('.sasaran-renstra-item');
-        addIndikatorSasaran(sasaranItem);
-      }
-      
-      // Tombol hapus sasaran renstra
-      if (e.target.classList.contains('remove-sasaran-renstra') || e.target.closest('.remove-sasaran-renstra')) {
-        if (confirm('Hapus sasaran renstra ini dan semua indikator sasarannya?')) {
-          e.target.closest('.sasaran-renstra-item').remove();
-          updateLabels();
-          updateFormNames();
-        }
-      }
-      
-      // Tombol hapus indikator sasaran
-      if (e.target.classList.contains('remove-indikator-sasaran') || e.target.closest('.remove-indikator-sasaran')) {
-        if (confirm('Hapus indikator sasaran ini?')) {
-          e.target.closest('.indikator-sasaran-item').remove();
-          updateLabels();
-          updateFormNames();
-        }
-      }
-    });
-
-    // Initialize pada load
-    document.addEventListener('DOMContentLoaded', function() {
-      updateLabels();
-      updateFormNames();
-      
-      // Set default tahun akhir
-      const tahunAwal = document.getElementById('tahun_awal').value;
-      if (tahunAwal) {
-        document.getElementById('tahun_akhir').value = parseInt(tahunAwal) + 4;
+        $('#alert-container').html(infoHtml);
       }
     });
   </script>
+
+  <script src="<?= base_url('assets/js/adminOpd/renstra/renstra-form.js') ?>"></script>
 </body>
 </html>

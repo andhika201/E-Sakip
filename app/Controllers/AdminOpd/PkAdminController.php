@@ -28,8 +28,6 @@ class PkAdminController extends BaseController
 
     }
 
-    
-
     public function index()
     {
          // Get OPD ID from session (logged in user's OPD)
@@ -42,23 +40,26 @@ class PkAdminController extends BaseController
         }
 
         // Get PK data filtered by user's OPD
-        $pkData = $this->pkModel->getAllPkData($opdId);
+        $pkData = $this->pkModel->getCompletePkByOpdId($opdId);
         
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
+
         if (!$currentOpd) {
             return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
         }
 
         // Load the view for PK Admin
         // Set title based on current OPD
-        $titleSuffix = $currentOpd['nama_opd'];  // Group data by period
+        $titleSuffix = $currentOpd['singkatan'];  // Group data by period
         
         $data = [
             'pk_data' => $pkData,
             'current_opd' => $currentOpd,
             'title' => 'Perjanjian Kinerja - ' . $titleSuffix
         ];
+
+        // dd($data);
 
         return view('adminOpd/pk_admin/pk-admin', $data);
     }
@@ -110,6 +111,7 @@ class PkAdminController extends BaseController
         }
 
         $programs = $this->request->getPost('program');
+
         if (is_array($programs)) {
             foreach ($programs as $i => $program) {
                 if (empty($program['program_id'])) {
@@ -122,6 +124,7 @@ class PkAdminController extends BaseController
         }
 
         $sasaranPk = $this->request->getPost('sasaran_pk');
+
         if (is_array($sasaranPk)) {
             foreach ($sasaranPk as $i => $sasaran) {
                 if (empty($sasaran['sasaran'])) {
@@ -196,10 +199,10 @@ class PkAdminController extends BaseController
         }
 
         // Save to database
-        $result = $this->pkModel->saveCompletePk($saveData);
+        $success = $this->pkModel->saveCompletePk($saveData);
 
         // Save the data to the database
-        if ($result) {
+        if ($success) {
             return redirect()->to('/adminopd/pk_admin')->with('success', 'Data PK Admin berhasil disimpan');
         } else {
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK Admin');

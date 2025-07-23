@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edit RKT e-SAKIP</title>
+  <title><?php echo esc($title); ?></title>
   <!-- Style -->
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
@@ -21,7 +21,10 @@
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit RKT</h2>
 
-      <form id="rkt-form" method="POST" action="<?= base_url('adminkab/rkt/save') ?>">
+      <form id="rkt-form" method="POST" action="<?= base_url('adminkab/rkt/update') ?>">
+        <?= csrf_field() ?>
+        <input type="hidden" name="rpjmd_sasaran_id" value="<?= isset($rkt_data['rpjmd_sasaran_id']) ? $rkt_data['rpjmd_sasaran_id'] : '' ?>">
+        <input type="hidden" name="rkt_sasaran_id" value="<?= isset($rkt_sasaran_id) ? $rkt_sasaran_id : '' ?>">
 
       <!-- Informasi Umum -->
       <section class="mb-4">
@@ -29,12 +32,19 @@
         <div class="row">
           <div class="col-md-6">
             <label class="form-label">Sasaran RPJMD</label>
-            <select name="rpjmd_sasaran_id" class="form-select mb-3" required>
+            <select name="rpjmd_sasaran_id" id="rpjmd-sasaran-select" class="form-select mb-3" required>
               <option value="">Pilih Sasaran RPJMD</option>
-              <!-- Options akan diisi dari database -->
-              <option value="1">Meningkatnya kualitas pelayanan publik</option>
-              <option value="2">Meningkatnya transparansi pengelolaan keuangan</option>
-              <option value="3">Meningkatnya kompetensi ASN</option>
+              <?php if (isset($rpjmd_sasaran) && !empty($rpjmd_sasaran)): ?>
+                <?php foreach ($rpjmd_sasaran as $sasaran): ?>
+                  <option value="<?= $sasaran['id'] ?>" 
+                    <?= (isset($rkt_data['rpjmd_sasaran_id']) && $rkt_data['rpjmd_sasaran_id'] == $sasaran['id']) ? 'selected' : '' ?>
+                    data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
+                    <?= esc($sasaran['sasaran_rpjmd']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
+                  </option> 
+                <?php endforeach; ?>
+              <?php else: ?>
+                <option value="" disabled>Tidak ada sasaran RPJMD yang tersedia</option>
+              <?php endif; ?>
             </select>
           </div>
         </div>
@@ -44,81 +54,219 @@
       <section>
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h2 class="h5 fw-semibold">Daftar Sasaran RKT</h2>
-          <button type="button" id="add-sasaran-rkt" class="btn btn-success btn-sm">
-            <i class="fas fa-plus me-1"></i> Tambah Sasaran RKT
-          </button>
         </div>
 
         <div id="sasaran-rkt-container">
-          <!-- Sasaran RKT 1 -->
-          <div class="sasaran-rkt-item bg-light border rounded p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <label class="fw-medium">Sasaran RKT 1</label>
-              <button type="button" class="remove-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-            </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-12">
-                <label class="form-label">Sasaran RKT</label>
-                <textarea name="sasaran_rkt[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RKT" required></textarea>
-              </div>
-            </div>
+          <?php if (isset($rkt_data['sasaran_rkt']) && !empty($rkt_data['sasaran_rkt'])): ?>
+            <?php foreach ($rkt_data['sasaran_rkt'] as $sasaranIndex => $sasaranRkt): ?>
+              <!-- Sasaran RKT <?= $sasaranIndex + 1 ?> -->
+              <div class="sasaran-rkt-item bg-light border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <label class="fw-medium">Sasaran RKT <?= $sasaranIndex + 1 ?></label>
+                  <button type="button" class="remove-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                </div>
+                
+                <input type="hidden" name="sasaran_rkt[<?= $sasaranIndex ?>][id]" value="<?= $sasaranRkt['id'] ?>">
+                
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <label class="form-label">Sasaran RKT</label>
+                    <textarea name="sasaran_rkt[<?= $sasaranIndex ?>][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RKT" required><?= esc($sasaranRkt['sasaran']) ?></textarea>
+                  </div>
+                </div>
 
-            <!-- Indikator Sasaran RKT -->
-            <div class="indikator-sasaran-rkt-section">
+                <!-- Indikator Sasaran RKT -->
+                <div class="indikator-sasaran-rkt-section">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
+                  </div>
+
+                  <div class="indikator-sasaran-rkt-container">
+                    <?php if (isset($sasaranRkt['indikator']) && !empty($sasaranRkt['indikator'])): ?>
+                      <?php foreach ($sasaranRkt['indikator'] as $indikatorIndex => $indikator): ?>
+                        <!-- Indikator Sasaran RKT <?= $sasaranIndex + 1 ?>.<?= $indikatorIndex + 1 ?> -->
+                        <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
+                          <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="fw-medium">Indikator Sasaran <?= $sasaranIndex + 1 ?>.<?= $indikatorIndex + 1 ?></label>
+                            <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                          </div>
+                          
+                          <input type="hidden" name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][id]" value="<?= $indikator['id'] ?>">
+                          
+                          <div class="mb-3">
+                            <label class="form-label">Indikator Sasaran</label>
+                            <textarea name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required><?= esc($indikator['indikator_sasaran']) ?></textarea>
+                          </div>
+
+                          <div class="row mb-3">
+                            <div class="col-md-4">
+                              <label class="form-label">Satuan</label>
+                              <select name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-select" required>
+                                <option value="">Pilih Satuan</option>
+                                <option value="Unit" <?= $indikator['satuan'] == 'Unit' ? 'selected' : '' ?>>Unit</option>
+                                <option value="Nilai" <?= $indikator['satuan'] == 'Nilai' ? 'selected' : '' ?>>Nilai</option>
+                                <option value="Persen" <?= $indikator['satuan'] == 'Persen' ? 'selected' : '' ?>>Persen</option>
+                                <option value="Predikat" <?= $indikator['satuan'] == 'Predikat' ? 'selected' : '' ?>>Predikat</option>
+                              </select>
+                            </div>
+                            <div class="col-md-4">
+                              <label class="form-label">Tahun Target</label>
+                              <select name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][tahun]" class="form-select tahun-select" required>
+                                <option value="">Pilih Tahun</option>
+                                <?php 
+                                // Get tahun range from selected RPJMD Sasaran
+                                $selectedSasaran = null;
+                                if (isset($rpjmd_sasaran) && isset($rkt_data['rpjmd_sasaran_id'])) {
+                                  foreach ($rpjmd_sasaran as $sasaran) {
+                                    if ($sasaran['id'] == $rkt_data['rpjmd_sasaran_id']) {
+                                      $selectedSasaran = $sasaran;
+                                      break;
+                                    }
+                                  }
+                                }
+                                
+                                if ($selectedSasaran):
+                                  for ($year = $selectedSasaran['tahun_mulai']; $year <= $selectedSasaran['tahun_akhir']; $year++):
+                                ?>
+                                  <option value="<?= $year ?>" <?= $indikator['tahun'] == $year ? 'selected' : '' ?>><?= $year ?></option>
+                                <?php 
+                                  endfor;
+                                else:
+                                ?>
+                                  <option value="<?= $indikator['tahun'] ?>" selected><?= $indikator['tahun'] ?></option>
+                                <?php endif; ?>
+                              </select>
+                            </div>
+                            <div class="col-md-4">
+                              <label class="form-label">Target</label>
+                              <input type="text" name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target]" class="form-control" placeholder="Nilai target" value="<?= esc($indikator['target']) ?>" required>
+                            </div>
+                          </div>
+                        </div> <!-- End Indikator Sasaran RKT -->
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <!-- Default Indikator Sasaran RKT jika tidak ada data -->
+                      <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                          <label class="fw-medium">Indikator Sasaran <?= $sasaranIndex + 1 ?>.1</label>
+                          <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <label class="form-label">Indikator Sasaran</label>
+                          <textarea name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                          <div class="col-md-4">
+                            <label class="form-label">Satuan</label>
+                            <select name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][0][satuan]" class="form-select" required>
+                              <option value="">Pilih Satuan</option>
+                              <option value="Unit">Unit</option>
+                              <option value="Nilai">Nilai</option>
+                              <option value="Persen">Persen</option>
+                              <option value="Predikat">Predikat</option>
+                            </select>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Tahun Target</label>
+                            <select name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
+                              <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
+                            </select>
+                          </div>
+                          <div class="col-md-4">
+                            <label class="form-label">Target</label>
+                            <input type="text" name="sasaran_rkt[<?= $sasaranIndex ?>][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
+                          </div>
+                        </div>
+                      </div> <!-- End Indikator Sasaran RKT -->
+                    <?php endif; ?>
+                  </div> <!-- End Indikator Sasaran RKT Container -->
+                </div> <!-- End Indikator Sasaran RKT Section -->
+
+                <!-- Tombol Tambah Indikator Sasaran -->
+                <div class="d-flex justify-content-end">
+                  <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
+                    <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
+                  </button>
+                </div>
+
+              </div> <!-- End Sasaran RKT -->
+            <?php endforeach; ?>
+          <?php else: ?>
+            <!-- Default Sasaran RKT jika tidak ada data -->
+            <div class="sasaran-rkt-item bg-light border rounded p-3 mb-3">
               <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
+                <label class="fw-medium">Sasaran RKT 1</label>
+                <button type="button" class="remove-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label class="form-label">Sasaran RKT</label>
+                  <textarea name="sasaran_rkt[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RKT" required></textarea>
+                </div>
+              </div>
+
+              <!-- Indikator Sasaran RKT -->
+              <div class="indikator-sasaran-rkt-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
+                </div>
+
+                <div class="indikator-sasaran-rkt-container">
+                  <!-- Indikator Sasaran RKT 1.1 -->
+                  <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <label class="fw-medium">Indikator Sasaran 1.1</label>
+                      <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                    </div>
+                    
+                    <div class="mb-3">
+                      <label class="form-label">Indikator Sasaran</label>
+                      <textarea name="sasaran_rkt[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                      <div class="col-md-4">
+                        <label class="form-label">Satuan</label>
+                        <select id="satuanSelect" name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-select" required>
+                          <option value="">Pilih Satuan</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label">Tahun Target</label>
+                        <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
+                          <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
+                        </select>
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label">Target</label>
+                        <input type="text" name="sasaran_rkt[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
+                      </div>
+                    </div>
+                  </div> <!-- End Indikator Sasaran RKT -->
+                </div> <!-- End Indikator Sasaran RKT Container -->
+              </div> <!-- End Indikator Sasaran RKT Section -->
+
+              <!-- Tombol Tambah Indikator Sasaran -->
+              <div class="d-flex justify-content-end">
                 <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
                   <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
                 </button>
               </div>
 
-              <div class="indikator-sasaran-rkt-container">
-                <!-- Indikator Sasaran RKT 1.1 -->
-                <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-3">
-                    <label class="fw-medium">Indikator Sasaran 1.1</label>
-                    <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-                  </div>
-                  
-                  <div class="mb-3">
-                    <label class="form-label">Indikator Sasaran</label>
-                    <textarea name="sasaran_rkt[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Satuan</label>
-                      <select name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-control" placeholder="Unit/Persen/dll" required>
-                        <option value="">Pilih Satuan</option>
-                        <!-- Options akan diisi dari database -->
-                        <option value="1">Persen</option>
-                        <option value="2">Nilai</option>
-                        <option value="3">Predikat</option>
-                        <option value="4">Unit</option>
-                      </select>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Tahun Target</label>
-                      <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select" required>
-                        <option value="">Pilih Tahun</option>
-                        <option value="2025">2025</option>
-                        <option value="2026">2026</option>
-                        <option value="2027">2027</option>
-                        <option value="2028">2028</option>
-                        <option value="2029">2029</option>
-                      </select>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Target</label>
-                      <input type="text" name="sasaran_rkt[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
-                    </div>
-                  </div>
-                </div> <!-- End Indikator Sasaran RKT -->
-              </div> <!-- End Indikator Sasaran RKT Container -->
-            </div> <!-- End Indikator Sasaran RKT Section -->
-          </div> <!-- End Sasaran RKT -->
+            </div> <!-- End Sasaran RKT -->
+          <?php endif; ?>
         </div> <!-- End Sasaran RKT Container -->
+
+        <!-- Tombol Tambah Sasaran RKT -->
+        <div class="d-flex justify-content-end">
+          <button type="button" id="add-sasaran-rkt" class="btn btn-success btn-sm">
+            <i class="fas fa-plus me-1"></i> Tambah Sasaran RKT
+          </button>
+        </div>
+
       </section>
 
       <!-- Tombol Aksi -->
@@ -127,7 +275,7 @@
           <i class="fas fa-arrow-left me-1"></i> Kembali
         </a>
         <button type="submit" class="btn btn-success">
-          <i class="fas fa-save me-1"></i> Simpan
+          <i class="fas fa-save me-1"></i> Update
         </button>
       </div>
       </form>
@@ -136,179 +284,14 @@
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
+  <script src="<?= base_url('/assets/js/adminKabupaten/rkt/rkt-form.js')?>"></script>
+
   <script>
-    // Fungsi untuk mengupdate penomoran label secara real-time
-    function updateLabels() {
-      document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
-        const sasaranNumber = sasaranIndex + 1;
-        
-        // Update label sasaran RKT
-        const sasaranLabel = sasaranItem.querySelector('label');
-        if (sasaranLabel) {
-          sasaranLabel.textContent = `Sasaran RKT ${sasaranNumber}`;
-        }
-
-        // Update indikator sasaran RKT labels
-        sasaranItem.querySelectorAll('.indikator-sasaran-rkt-item').forEach((indikatorItem, indikatorIndex) => {
-          const indikatorNumber = indikatorIndex + 1;
-          const indikatorLabel = indikatorItem.querySelector('label');
-          if (indikatorLabel) {
-            indikatorLabel.textContent = `Indikator Sasaran ${sasaranNumber}.${indikatorNumber}`;
-          }
-        });
-      });
-    }
-
-    // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
-    function updateFormNames() {
-      document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
-        // Update sasaran RKT names
-        const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran"]');
-        
-        if (sasaranTextarea) {
-          sasaranTextarea.name = `sasaran_rkt[${sasaranIndex}][sasaran]`;
-        }
-
-        // Update indikator sasaran RKT names
-        sasaranItem.querySelectorAll('.indikator-sasaran-rkt-item').forEach((indikatorItem, indikatorIndex) => {
-          const indikatorTextarea = indikatorItem.querySelector('textarea[name*="indikator_sasaran"]');
-          const satuanSelect = indikatorItem.querySelector('select[name*="satuan"]');
-          const tahunSelect = indikatorItem.querySelector('select[name*="tahun"]');
-          const targetInput = indikatorItem.querySelector('input[name*="target"]');
-          
-          if (indikatorTextarea) {
-            indikatorTextarea.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
-          }
-          if (satuanSelect) {
-            satuanSelect.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][satuan]`;
-          }
-          if (tahunSelect) {
-            tahunSelect.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][tahun]`;
-          }
-          if (targetInput) {
-            targetInput.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target]`;
-          }
-        });
-      });
-    }
-
-    // Tambah Sasaran RKT Baru
-    document.getElementById('add-sasaran-rkt').addEventListener('click', () => {
-      const sasaranContainer = document.getElementById('sasaran-rkt-container');
-      
-      const newSasaran = document.createElement('div');
-      newSasaran.className = 'sasaran-rkt-item bg-light border rounded p-3 mb-3';
-      newSasaran.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="fw-medium">Sasaran RKT</label>
-          <button type="button" class="remove-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-        </div>
-        
-        <div class="row mb-3">
-          <div class="col-md-12">
-            <label class="form-label">Sasaran RKT</label>
-            <textarea class="form-control" rows="2" placeholder="Masukkan sasaran RKT" required></textarea>
-          </div>
-        </div>
-
-        <div class="indikator-sasaran-rkt-section">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
-            <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
-              <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
-            </button>
-          </div>
-          <div class="indikator-sasaran-rkt-container"></div>
-        </div>
-      `;
-      
-      sasaranContainer.appendChild(newSasaran);
-      updateLabels();
-      updateFormNames();
-    });
-
-    // Fungsi untuk menambahkan indikator sasaran RKT
-    function addIndikatorSasaranRKT(sasaranElement) {
-      const indikatorContainer = sasaranElement.querySelector('.indikator-sasaran-rkt-container');
-      
-      const newIndikator = document.createElement('div');
-      newIndikator.className = 'indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3';
-      newIndikator.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <label class="fw-medium">Indikator Sasaran</label>
-          <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-        </div>
-        
-        <div class="mb-3">
-          <label class="form-label">Indikator Sasaran</label>
-          <textarea class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
-        </div>
-
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <label class="form-label">Satuan</label>
-            <select class="form-control" required>
-              <option value="">Pilih Satuan</option>
-              <option value="1">Persen</option>
-              <option value="2">Nilai</option>
-              <option value="3">Predikat</option>
-              <option value="4">Unit</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Tahun Target</label>
-            <select class="form-select" required>
-              <option value="">Pilih Tahun</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-              <option value="2029">2029</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Target</label>
-            <input type="text" class="form-control" placeholder="Nilai target" required>
-          </div>
-        </div>
-      `;
-      
-      indikatorContainer.appendChild(newIndikator);
-      updateLabels();
-      updateFormNames();
-    }
-
-    // Event delegation untuk semua tombol
-    document.addEventListener('click', function(e) {
-      // Tombol tambah indikator sasaran RKT
-      if (e.target.classList.contains('add-indikator-sasaran-rkt') || e.target.closest('.add-indikator-sasaran-rkt')) {
-        const sasaranItem = e.target.closest('.sasaran-rkt-item');
-        addIndikatorSasaranRKT(sasaranItem);
-      }
-      
-      // Tombol hapus sasaran RKT
-      if (e.target.classList.contains('remove-sasaran-rkt') || e.target.closest('.remove-sasaran-rkt')) {
-        if (confirm('Hapus sasaran RKT ini dan semua indikator sasarannya?')) {
-          e.target.closest('.sasaran-rkt-item').remove();
-          updateLabels();
-          updateFormNames();
-        }
-      }
-      
-      // Tombol hapus indikator sasaran RKT
-      if (e.target.classList.contains('remove-indikator-sasaran-rkt') || e.target.closest('.remove-indikator-sasaran-rkt')) {
-        if (confirm('Hapus indikator sasaran ini?')) {
-          e.target.closest('.indikator-sasaran-rkt-item').remove();
-          updateLabels();
-          updateFormNames();
-        }
-      }
-    });
-
-    // Initialize pada load
     document.addEventListener('DOMContentLoaded', function() {
-      updateLabels();
-      updateFormNames();
+      const select = document.getElementById('satuanSelect');
+      if (select) {
+        select.innerHTML = generateSatuanOptions();
+      }
     });
   </script>
 </body>

@@ -143,7 +143,7 @@
                                         </button>
                                     </td>
                                     <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <?= esc($data['nama_opd'] ?? 'N/A') ?>
+                                        <?= esc($data['singkatan'] ?? 'N/A') ?>
                                     </td>
                                     <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
                                         <?= esc($data['rpjmd_sasaran'] ?? 'N/A') ?>

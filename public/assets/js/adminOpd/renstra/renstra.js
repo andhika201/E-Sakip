@@ -87,7 +87,7 @@ function deleteRenstra(id, baseUrl) {
     }
 }
 
-// Function to toggle status via AJAX
+// // Function to toggle status via AJAX
 function toggleStatus(sasaranId, baseUrl, csrfHeader, csrfHash) {
     if (confirm('Apakah Anda yakin ingin mengubah status Renstra ini?')) {
         fetch(`${baseUrl}adminopd/renstra/update-status`, {

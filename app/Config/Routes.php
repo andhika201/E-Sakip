@@ -36,16 +36,24 @@ $routes->post('adminkab/rpjmd/update', 'RpjmdController::update');
 $routes->get('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 $routes->post('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 $routes->delete('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
-
 // RPJMD Status Management Routes
 $routes->post('adminkab/rpjmd/update-status', 'RpjmdController::updateStatus');
 $routes->get('adminkab/rpjmd/toggle-status/(:num)', 'RpjmdController::toggleStatus/$1');
 
+
 // RKT Routes
-$routes->get('adminkab/rkt', 'AdminKabupatenController::rkt');
-$routes->get('adminkab/rkt/tambah', 'AdminKabupatenController::tambah_rkt');
-$routes->get('adminkab/rkt/edit', 'AdminKabupatenController::edit_rkt');
-$routes->post('adminkab/rkt/save', 'AdminKabupatenController::save_rkt');
+$routes->get('adminkab/rkt', 'RktController::index');
+$routes->get('adminkab/rkt/tambah', 'RktController::tambah');
+$routes->get('adminkab/rkt/edit/(:num)', 'RktController::edit/$1');
+$routes->post('adminkab/rkt/save', 'RktController::save');
+$routes->post('adminkab/rkt/update', 'RktController::update');
+$routes->get('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
+$routes->post('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
+$routes->delete('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
+// RKT Status Management Routes
+$routes->post('adminkab/rkt/update-status', 'RktController::updateStatus');
+$routes->get('adminkab/rkt/toggle-status/(:num)', 'RktController::toggleStatus/$1');
+
 
 // PK Bupati Routes
 $routes->get('adminkab/pk_bupati', 'AdminKabupatenController::pk_bupati');
@@ -53,11 +61,13 @@ $routes->get('adminkab/pk_bupati/tambah', 'AdminKabupatenController::tambah_pk_b
 $routes->get('adminkab/pk_bupati/edit', 'AdminKabupatenController::edit_pk_bupati');
 $routes->post('adminkab/pk_bupati/save', 'AdminKabupatenController::save_pk_bupati');
 
+
 // Lakip Kabupaten Routes
 $routes->get('adminkab/lakip_kabupaten', 'AdminKabupatenController::lakip_kabupaten');
 $routes->get('adminkab/lakip_kabupaten/tambah', 'AdminKabupatenController::tambah_lakip_kabupaten');
 $routes->get('adminkab/lakip_kabupaten/edit', 'AdminKabupatenController::edit_lakip_kabupaten');
 $routes->post('adminkab/lakip_kabupaten/save', 'AdminKabupatenController::save_lakip_kabupaten');
+
 
 // Program PK Routes
 $routes->get('adminkab/program_pk', 'ProgramPkController::index');
@@ -68,10 +78,12 @@ $routes->post('adminkab/program_pk/update/(:num)', 'ProgramPkController::update/
 $routes->get('adminkab/program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
 $routes->get('adminopd/program-pk/search', 'AdminOpd\ProgramPkController::search');
 
+
 // Tentang Kami Routes
 $routes->get('adminkab/tentang_kami', 'AdminKabupatenController::tentang_kami');
 $routes->get('adminkab/tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
 $routes->post('adminkab/tentang_kami/save', 'AdminKabupatenController::save_tentang_kami');
+
 
 
 // Admin OPD Routes
@@ -80,17 +92,29 @@ $routes->get('adminopd/dashboard', 'AdminOpdController::index');
 // Renstra Routes
 $routes->get('adminopd/renstra', 'AdminOpd\RenstraController::index');
 $routes->get('adminopd/renstra/tambah', 'AdminOpd\RenstraController::tambah_renstra');
-$routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\RenstraController::edit_renstra/$1');
+$routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\RenstraController::edit/$1');
 $routes->post('adminopd/renstra/save', 'AdminOpd\RenstraController::save');
 $routes->post('adminopd/renstra/update/(:num)', 'AdminOpd\RenstraController::update/$1');
 $routes->delete('adminopd/renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
+// Renstra Status Management Routes
+$routes->post('adminopd/renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
+$routes->get('adminopd/renstra/toggle-status/(:num)', 'AdminOpd\RenstraController::toggleStatus/$1');
 
-// Renja Routes
-$routes->get('adminopd/renja', 'AdminOpdController::renja');
-$routes->get('adminopd/renja/tambah', 'AdminOpdController::tambah_renja');
-$routes->get('adminopd/renja/edit', 'AdminOpdController::edit_renja');
-$routes->post('adminopd/renja/save', 'AdminOpdController::save_renja');
 
+// RENJA Routes
+$routes->get('adminopd/renja', 'AdminOpd\RenjaController::index');
+$routes->get('adminopd/renja/tambah', 'AdminOpd\RenjaController::tambah');
+$routes->get('adminopd/renja/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
+$routes->post('adminopd/renja/save', 'AdminOpd\RenjaController::save');
+$routes->post('adminopd/renja/update', 'AdminOpd\RenjaController::update');
+$routes->get('adminopd/renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
+$routes->post('adminopd/renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
+$routes->delete('adminopd/renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
+// RENJA Status Management Routes
+$routes->post('adminopd/renja/update-status', 'AdminOpd\RenjaController::updateStatus');
+$routes->get('adminopd/renja/toggle-status/(:num)', 'AdminOpd\RenjaController::toggleStatus/$1');
+
+    
 // IKU Routes
 $routes->get('adminopd/iku', 'AdminOpdController::iku');
 $routes->get('adminopd/iku/tambah', 'AdminOpdController::tambah_iku');
@@ -106,7 +130,6 @@ $routes->post('adminopd/pk_admin/update', 'AdminOpd\PkAdminController::update');
 $routes->post('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->get('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->delete('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
-$routes->get('adminopd/pk_admin/edit/(:num)', 'AdminOpd\PkAdmin::edit/$1');
 $routes->get('adminopd/pk_admin/cetak/(:num)', 'AdminOpd\PkAdminController::cetak/$1');
 
 $routes->get('adminopd/tentang_kami', 'AdminOpdController::tentang_kami');

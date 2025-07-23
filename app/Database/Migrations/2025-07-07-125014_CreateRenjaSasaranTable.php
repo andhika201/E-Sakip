@@ -15,7 +15,13 @@ class CreateRenjaSasaranTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'rpjmd_sasaran_id' => [
+            'opd_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => false,
+            ],
+            'renstra_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
@@ -40,7 +46,8 @@ class CreateRenjaSasaranTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('renstra_sasaran_id', 'renstra_sasaran', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('renja_sasaran');
     }
 

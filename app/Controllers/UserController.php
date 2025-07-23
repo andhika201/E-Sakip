@@ -6,7 +6,7 @@ class UserController extends BaseController
 {
     public function index()
     {
-        return view('user/dashboard');
+        return view('dashboard');
     }
     
     public function rpjmd()

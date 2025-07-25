@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RKT - e-SAKIP</title>
+  <title>RKPD - e-SAKIP</title>
   <!-- Style -->
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
@@ -19,7 +19,7 @@
   <!-- Konten Utama -->
   <main class="flex-fill p-4 mt-2">
     <div class="bg-white rounded shadow p-4">
-        <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA KERJA TAHUNAN</h2>
+        <h2 class="h3 fw-bold text-success text-center mb-4">Rencana Kerja Pemerintah Daerah</h2>
 
         <!-- Error Messages -->
         <?php if (session()->getFlashdata('error')): ?>
@@ -70,7 +70,7 @@
                 </select>
             </div>
             <div>
-                <a href="<?= base_url('adminkab/rkt/tambah') ?>" class="btn btn-success d-flex align-items-center">
+                <a href="<?= base_url('adminkab/rkpd/tambah') ?>" class="btn btn-success d-flex align-items-center">
                     <i class="fas fa-plus me-1"></i> TAMBAH
                 </a>
             </div>
@@ -84,7 +84,7 @@
                 <th class="border p-2">NO</th>
                 <th class="border p-2">STATUS</th>
                 <th class="border p-2">SASARAN RPJMD</th>
-                <th class="border p-2">SASARAN RKT</th>
+                <th class="border p-2">SASARAN RKPD</th>
                 <th class="border p-2">INDIKATOR SASARAN</th>
                 <th class="border p-2">SATUAN</th>
                 <th class="border p-2">TAHUN</th>
@@ -93,40 +93,36 @@
             </tr>   
             </thead>
             <tbody>
-            <?php if (empty($rkt_data)): ?>
+            <?php if (empty($rkpd_data)): ?>
                 <tr>
                     <td colspan="9" class="border p-4 text-center text-muted">
-                        <i class="fas fa-inbox mb-2 d-block" style="font-size: 2rem;"></i>
-                        Tidak ada data RKT
-                        <br>
-                        <a href="<?= base_url('adminkab/rkt/tambah') ?>" class="btn btn-sm btn-success mt-2">
-                            <i class="fas fa-plus me-1"></i> Tambah RKT
-                        </a>
+                        <i class="fas fa-info-circle me-2"></i>
+                             Tidak ada data RKPD. <a href="<?= base_url('adminkab/rkpd/tambah') ?>" class="text-success">Tambah data pertama</a>
                     </td>
                 </tr>
             <?php else: ?>
             <?php $no = 1; ?>
-            <?php foreach ($rkt_data as $rkt): ?>
+            <?php foreach ($rkpd_data as $rkpd): ?>
                 <?php 
-                    $indikatorList = $rkt['indikator']; 
+                    $indikatorList = $rkpd['indikator']; 
                     $rowspan = count($indikatorList);
                     // Skip if no indicators (shouldn't happen after filter, but safety check)
                     if ($rowspan == 0) continue;
                 ?>
                 <?php foreach ($indikatorList as $i => $indikator): ?>
-                    <tr class="rkt-row" data-status="<?= $rkt['status'] ?? 'draft' ?>" data-year="<?= $indikator['tahun'] ?>" data-rkt-group="<?= $rkt['id'] ?>">
+                    <tr class="rkpd-row" data-status="<?= $rkpd['status'] ?? 'draft' ?>" data-year="<?= $indikator['tahun'] ?>" data-rkpd-group="<?= $rkpd['id'] ?>">
                         <?php if ($i === 0): ?>
                             <td class="border p-2" rowspan="<?= $rowspan ?>"><?= $no++ ?></td>
 
                             <!-- Status -->
                             <td class="border p-2" rowspan="<?= $rowspan ?>">
                                 <?php 
-                                    $status = $rkt['status'] ?? 'draft';
+                                    $status = $rkpd['status'] ?? 'draft';
                                     $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning';
                                 ?>
                                 <button 
                                     class="badge <?= $badgeClass ?> border-0" 
-                                    onclick="toggleStatus(<?= $rkt['id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" 
+                                    onclick="toggleStatus(<?= $rkpd['id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" 
                                     style="cursor: pointer;" 
                                     title="Klik untuk mengubah status">
                                     <?= ucfirst($status) ?>
@@ -135,12 +131,12 @@
 
                             <!-- Sasaran RPJMD -->
                             <td class="border p-2 text-start" rowspan="<?= $rowspan ?>">
-                                <?= esc($rkt['rpjmd_sasaran']) ?>
+                                <?= esc($rkpd['rpjmd_sasaran']) ?>
                             </td>
 
-                            <!-- Sasaran RKT -->
+                            <!-- Sasaran RKPD -->
                             <td class="border p-2 text-start" rowspan="<?= $rowspan ?>">
-                                <?= esc($rkt['sasaran']) ?>
+                                <?= esc($rkpd['sasaran']) ?>
                             </td>
                         <?php endif; ?>
 
@@ -153,10 +149,10 @@
                         <?php if ($i === 0): ?>
                             <td class="border p-2 align-middle text-center" rowspan="<?= $rowspan ?>">
                                 <div class="d-flex flex-column align-items-center gap-2">
-                                    <a href="<?= base_url('adminkab/rkt/edit/' . $rkt['id']) ?>" class="btn btn-success btn-sm">
+                                    <a href="<?= base_url('adminkab/rkpd/edit/' . $rkpd['id']) ?>" class="btn btn-success btn-sm">
                                         <i class="fas fa-edit me-1"></i>Edit
                                     </a>
-                                    <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $rkt['id'] ?>)">
+                                    <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $rkpd['id'] ?>)">
                                         <i class="fas fa-trash me-1"></i>Hapus
                                     </button>
                                 </div>
@@ -194,9 +190,9 @@
 
   <script>
   // Function to toggle status via AJAX
-  function toggleStatus(rktId) {
-      if (confirm('Apakah Anda yakin ingin mengubah status RKT ini?')) {
-          fetch('<?= base_url('adminkab/rkt/update-status') ?>', {
+  function toggleStatus(rkpdId) {
+      if (confirm('Apakah Anda yakin ingin mengubah status RKPD ini?')) {
+          fetch('<?= base_url('adminkab/rkpd/update-status') ?>', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -204,7 +200,7 @@
                   '<?= csrf_header() ?>': '<?= csrf_hash() ?>'
               },
               body: JSON.stringify({
-                  id: rktId
+                  id: rkpdId
               })
           })
           .then(response => response.json())
@@ -228,7 +224,7 @@
       const yearFilter = document.getElementById('yearFilter').value;
       const statusFilter = document.getElementById('statusFilter').value;
       
-      const rows = document.querySelectorAll('.rkt-row');
+      const rows = document.querySelectorAll('.rkpd-row');
       const noDataMessage = document.getElementById('no-data-message');
       let visibleCount = 0;
       
@@ -237,24 +233,24 @@
           row.style.display = 'none';
       });
       
-      // Group rows by RKT group and check filters
-      const rktGroups = {};
+      // Group rows by RKPD group and check filters
+      const rkpdGroups = {};
       rows.forEach(function(row) {
-          const rktGroupId = row.getAttribute('data-rkt-group');
-          if (!rktGroups[rktGroupId]) {
-              rktGroups[rktGroupId] = [];
+          const rkpdGroupId = row.getAttribute('data-rkpd-group');
+          if (!rkpdGroups[rkpdGroupId]) {
+              rkpdGroups[rkpdGroupId] = [];
           }
-          rktGroups[rktGroupId].push(row);
+          rkpdGroups[rkpdGroupId].push(row);
       });
       
-      // Process each RKT group
-      Object.keys(rktGroups).forEach(function(rktGroupId) {
-          const groupRows = rktGroups[rktGroupId];
+      // Process each RKPD group
+      Object.keys(rkpdGroups).forEach(function(rkpdGroupId) {
+          const groupRows = rkpdGroups[rkpdGroupId];
           const firstRow = groupRows[0];
-          const rktStatus = firstRow.getAttribute('data-status');
+          const rkpdStatus = firstRow.getAttribute('data-status');
           
           // Check if status matches
-          const statusMatch = statusFilter === 'all' || rktStatus === statusFilter;
+          const statusMatch = statusFilter === 'all' || rkpdStatus === statusFilter;
           
           // Check if any row in this group has matching year
           let yearMatch = yearFilter === 'all';
@@ -313,15 +309,15 @@
 
   // Function to confirm delete
   function confirmDelete(id) {
-      if (confirm('Apakah Anda yakin ingin menghapus data RKT ini?')) {
-          window.location.href = '<?= base_url('adminkab/rkt/delete/') ?>' + id;
+      if (confirm('Apakah Anda yakin ingin menghapus data RKPD ini?')) {
+          window.location.href = '<?= base_url('adminkab/rkpd/delete/') ?>' + id;
       }
   }
 
   // Initialize on page load
   document.addEventListener('DOMContentLoaded', function() {
       // Initialize data summary
-      const totalRows = document.querySelectorAll('.rkt-row').length;
+      const totalRows = document.querySelectorAll('.rkpd-row').length;
       const countElement = document.getElementById('visible-data-count');
       if (countElement) {
           countElement.textContent = `Menampilkan ${totalRows} dari ${totalRows} data`;

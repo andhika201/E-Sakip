@@ -20,6 +20,18 @@ function generateSatuanOptions() {
     ).join('\n                        ');
 }
 
+// Fungsi untuk populate semua select satuan
+function populateAllSatuanSelects() {
+    document.querySelectorAll('.satuan-select').forEach(select => {
+        const currentValue = select.value;
+        const selectedValue = select.getAttribute('data-selected') || currentValue;
+        select.innerHTML = generateSatuanOptions();
+        if (selectedValue) {
+            select.value = selectedValue;
+        }
+    });
+}
+
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
     document.querySelectorAll('.sasaran-renstra-item').forEach((sasaranItem, sasaranIndex) => {
@@ -127,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="col-md-6">
                                 <label class="form-label">Satuan</label>
                                 <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control satuan-select" required>
-                                    ${generateSatuanOptions()}
+                                    <option value="">Pilih Satuan</option>
                                 </select>
                             </div>
                         </div>
@@ -192,6 +204,9 @@ document.addEventListener('DOMContentLoaded', function() {
             updateFormNames();
             updateTargetYears(); // Update tahun target untuk elemen baru
             
+            // Populate satuan selects untuk sasaran baru
+            populateAllSatuanSelects();
+            
             // Trigger Select2 initialization for new elements
             if (typeof $ !== 'undefined' && $.fn.select2) {
                 setTimeout(function() {
@@ -236,7 +251,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
             <div class="col-md-6">
                 <label class="form-label">Satuan</label>
                 <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control satuan-select" required>
-                    ${generateSatuanOptions()}
+                    <option value="">Pilih Satuan</option>
                 </select>
             </div>
         </div>
@@ -293,6 +308,9 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
     updateLabels();
     updateFormNames();
     updateTargetYears(); // Update tahun target untuk elemen baru
+    
+    // Populate satuan selects untuk indikator baru
+    populateAllSatuanSelects();
     
     // Trigger Select2 initialization for new elements
     if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -388,6 +406,20 @@ function updateTargetYears() {
                 }
             });
         });
+    }
+}
+
+// Fungsi untuk initialize tahun akhir berdasarkan tahun mulai yang sudah ada (untuk edit mode)
+function initializeTahunAkhir() {
+    const tahunMulaiField = document.getElementById('tahun_mulai');
+    const tahunAkhirField = document.getElementById('tahun_akhir');
+    
+    if (tahunMulaiField && tahunAkhirField && tahunMulaiField.value) {
+        const tahunMulai = parseInt(tahunMulaiField.value);
+        if (tahunMulai && !isNaN(tahunMulai)) {
+            // Set tahun akhir (Renstra biasanya 5 tahun)
+            tahunAkhirField.value = tahunMulai + 4;
+        }
     }
 }
 
@@ -544,7 +576,14 @@ function setupKeyboardShortcuts() {
 document.addEventListener('DOMContentLoaded', function() {
     updateLabels();
     updateFormNames();
+    
+    // Initialize tahun akhir berdasarkan tahun mulai yang sudah ada
+    initializeTahunAkhir();
+    
     updateTargetYears(); // Initialize target years pada load
+    
+    // Initialize satuan selects
+    populateAllSatuanSelects();
     
     // Setup form change tracking and warnings
     trackFormChanges();

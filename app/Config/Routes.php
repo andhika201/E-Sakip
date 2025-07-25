@@ -10,7 +10,7 @@ $routes->get('/', 'Home::index');
 
  // User Routes
 $routes->get('/dashboard', 'UserController::index');
-$routes->get('/rkt', 'UserController::rkt');
+$routes->get('/rkpd', 'UserController::rkpd');
 $routes->get('/rpjmd', 'UserController::rpjmd');
 $routes->get('/lakip_kabupaten', 'UserController::lakip_kabupaten');
 $routes->get('/pk_bupati', 'UserController::pk_bupati');
@@ -41,18 +41,18 @@ $routes->post('adminkab/rpjmd/update-status', 'RpjmdController::updateStatus');
 $routes->get('adminkab/rpjmd/toggle-status/(:num)', 'RpjmdController::toggleStatus/$1');
 
 
-// RKT Routes
-$routes->get('adminkab/rkt', 'RktController::index');
-$routes->get('adminkab/rkt/tambah', 'RktController::tambah');
-$routes->get('adminkab/rkt/edit/(:num)', 'RktController::edit/$1');
-$routes->post('adminkab/rkt/save', 'RktController::save');
-$routes->post('adminkab/rkt/update', 'RktController::update');
-$routes->get('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
-$routes->post('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
-$routes->delete('adminkab/rkt/delete/(:num)', 'RktController::delete/$1');
-// RKT Status Management Routes
-$routes->post('adminkab/rkt/update-status', 'RktController::updateStatus');
-$routes->get('adminkab/rkt/toggle-status/(:num)', 'RktController::toggleStatus/$1');
+// RKPD Routes
+$routes->get('adminkab/rkpd', 'RkpdController::index');
+$routes->get('adminkab/rkpd/tambah', 'RkpdController::tambah');
+$routes->get('adminkab/rkpd/edit/(:num)', 'RkpdController::edit/$1');
+$routes->post('adminkab/rkpd/save', 'RkpdController::save');
+$routes->post('adminkab/rkpd/update', 'RkpdController::update');
+$routes->get('adminkab/rkpd/delete/(:num)', 'RkpdController::delete/$1');
+$routes->post('adminkab/rkpd/delete/(:num)', 'RkpdController::delete/$1');
+$routes->delete('adminkab/rkpd/delete/(:num)', 'RkpdController::delete/$1');
+// RKPD Status Management Routes
+$routes->post('adminkab/rkpd/update-status', 'RkpdController::updateStatus');
+$routes->get('adminkab/rkpd/toggle-status/(:num)', 'RkpdController::toggleStatus/$1');
 
 
 // PK Bupati Routes

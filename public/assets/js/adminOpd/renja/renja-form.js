@@ -119,7 +119,7 @@
     }
 
     // Tambah Sasaran RENJA Baru
-    document.getElementById('add-sasaran-renja').addEventListener('click', () => {
+    document.getElementById('add-sasaran-renja').addEventListener('click', function() {
       const sasaranContainer = document.getElementById('sasaran-renja-container');
       
       const newSasaran = document.createElement('div');
@@ -156,7 +156,7 @@
               <div class="row mb-3">
                 <div class="col-md-4">
                   <label class="form-label">Satuan</label>
-                  <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select" required>
+                  <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                     ${generateSatuanOptions()}
                   </select>
                 </div>
@@ -185,6 +185,9 @@
       updateLabels();
       updateFormNames();
       
+      // Populate satuan selects untuk sasaran baru
+      populateAllSatuanSelects();
+      
       // Update dropdown tahun untuk sasaran baru
       updateAllTahunDropdowns();
     });
@@ -209,7 +212,7 @@
         <div class="row mb-3">
           <div class="col-md-4">
             <label class="form-label">Satuan</label>
-            <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select" required>
+            <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                 ${generateSatuanOptions()}
             </select>
           </div>
@@ -230,17 +233,16 @@
       updateLabels();
       updateFormNames();
       
+      // Populate satuan selects untuk indikator baru
+      populateAllSatuanSelects();
+      
       // Update dropdown tahun untuk indikator baru
       updateAllTahunDropdowns();
     }
 
-    // Event listener untuk perubahan sasaran RENSTRA
-    document.getElementById('renstra-sasaran-select').addEventListener('change', function() {
-      updateAllTahunDropdowns();
-    });
-
     // Event delegation untuk semua tombol
     document.addEventListener('click', function(e) {
+     
       // Tombol tambah indikator Sasaran RENJA
       if (e.target.classList.contains('add-indikator-sasaran-renja') || e.target.closest('.add-indikator-sasaran-renja')) {
         const sasaranItem = e.target.closest('.sasaran-renja-item');
@@ -266,10 +268,25 @@
       }
     });
 
+    // Fungsi untuk populate semua select satuan
+    function populateAllSatuanSelects() {
+      document.querySelectorAll('.satuan-select').forEach(select => {
+        const currentValue = select.value;
+        const selectedValue = select.getAttribute('data-selected') || currentValue;
+        select.innerHTML = generateSatuanOptions();
+        if (selectedValue) {
+          select.value = selectedValue;
+        }
+      });
+    }
+
     // Initialize pada load
     document.addEventListener('DOMContentLoaded', function() {
       updateLabels();
       updateFormNames();
+      
+      // Initialize dropdown satuan
+      populateAllSatuanSelects();
       
       // Initialize dropdown tahun
       updateAllTahunDropdowns();

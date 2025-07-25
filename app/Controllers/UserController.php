@@ -50,10 +50,10 @@ class UserController extends BaseController
         ]);
     }
 
-    public function rkt()
+    public function rkpd()
     {
     // Simulasi data dari database
-        $rktData = [
+        $rkpdData = [
             [
                 'sasaran' => 'indeks Keterbukaan Informasi Publik',
                 'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
@@ -71,8 +71,8 @@ class UserController extends BaseController
             ],
         ];
 
-        return view('user/rkt', [
-            'rktData' => $rktData
+        return view('user/rkpd', [
+            'rkpdData' => $rkpdData
         ]);
     }
 

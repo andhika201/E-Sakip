@@ -30,32 +30,23 @@ class RenjaModel extends Model
     /**
      * Get all RENJA Sasaran with optional status filter
      */
-    public function getAllRenjaByStatus($status = null)
+    public function getAllRenjaByStatus($status = null, $opdId = null)
     {
         $query = $this->db->table('renja_sasaran');
         
         if ($status !== null) {
             $query->where('status', $status);
         }
-        
+
+        if ($opdId !== null) {
+            $query->where('opd_id', $opdId);
+        }
+
         return $query->orderBy('id', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-    /**
-     * Get all Completed RENJA Sasaran
-     */
-    public function getCompletedRenja()
-    {
-        return $this->db->table('renja_sasaran')
-            ->where('status', 'selesai')
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
-    }
-
-    
     // Update status RENJA
     public function updateStatus($id, $status)
     {
@@ -64,26 +55,28 @@ class RenjaModel extends Model
             ->update(['status' => $status]);
     }
 
-    /* * Get All RENJA Data
+    /* * Get All RENJA Data Per OPD
      * This method retrieves all RENJA data including indicators
      */
-    public function getAllRenja()
+    public function getAllRenja($opdId)
     {
         $builder = $this->db->table('renja_sasaran');
         $builder->select('
             renja_sasaran.id AS renja_sasaran_id,
+            renja_sasaran.opd_id,
             renja_sasaran.renstra_sasaran_id,
-            renja_sasaran.sasaran,
+            renja_sasaran.sasaran_renja,
             renja_sasaran.status,
             renja_indikator_sasaran.id AS indikator_id,
             renja_indikator_sasaran.indikator_sasaran,
             renja_indikator_sasaran.satuan,
             renja_indikator_sasaran.tahun,
             renja_indikator_sasaran.target,
-            renstra_sasaran.sasaran_renstra AS renstra_sasaran
+            renstra_sasaran.sasaran AS renstra_sasaran
         ');
         $builder->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
         $builder->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left');
+        $builder->where('renja_sasaran.opd_id', $opdId);
         $builder->orderBy('renja_sasaran.id', 'ASC');
         $builder->orderBy('renja_indikator_sasaran.tahun', 'ASC');
         
@@ -97,6 +90,7 @@ class RenjaModel extends Model
             if (!isset($grouped[$id])) {
                 $grouped[$id] = [
                     'id' => $row['renja_sasaran_id'],
+                    'opd_id' => $row['opd_id'],
                     'renstra_sasaran_id' => $row['renstra_sasaran_id'],
                     'renstra_sasaran' => $row['renstra_sasaran'],
                     'sasaran_renja' => $row['sasaran_renja'],
@@ -128,8 +122,9 @@ class RenjaModel extends Model
         $builder = $this->db->table('renja_sasaran');
         $builder->select('
             renja_sasaran.id AS renja_sasaran_id,
+            renja_sasaran.opd_id,
             renja_sasaran.renstra_sasaran_id,
-            renja_sasaran.sasaran,
+            renja_sasaran.sasaran_renja,
             renja_sasaran.status,
             renja_indikator_sasaran.id AS indikator_id,
             renja_indikator_sasaran.indikator_sasaran,
@@ -137,10 +132,11 @@ class RenjaModel extends Model
             renja_indikator_sasaran.tahun,
             renja_indikator_sasaran.target,
             renstra_sasaran.id AS renstra_sasaran_id,
-            renstra_sasaran.sasaran_renstra AS renstra_sasaran
+            renstra_sasaran.sasaran AS renstra_sasaran
         ');
         $builder->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
         $builder->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left');
+        $builder->join('opd', 'opd.id = renja_sasaran.opd_id', 'left');
         $builder->where('renja_sasaran.id', $id);
         $builder->orderBy('renja_sasaran.id', 'ASC');
         $builder->orderBy('renja_indikator_sasaran.tahun', 'ASC');
@@ -155,6 +151,7 @@ class RenjaModel extends Model
             if (!isset($grouped[$id])) {
                 $grouped[$id] = [
                     'id' => $row['renja_sasaran_id'],
+                    'opd_id' => $row['opd_id'],
                     'renstra_sasaran_id' => $row['renstra_sasaran_id'],
                     'sasaran_renja' => $row['sasaran_renja'],
                     'status' => $row['status'],
@@ -235,6 +232,7 @@ class RenjaModel extends Model
         }
         
         $insertData = [
+            'opd_id' => $data['opd_id'],
             'renstra_sasaran_id' => $data['renstra_sasaran_id'],
             'sasaran_renja' => $data['sasaran_renja'],
             'status' => $data['status'] ?? 'draft',
@@ -355,18 +353,22 @@ class RenjaModel extends Model
 
         try {
             if (isset($data['sasaran_renja']) && is_array($data['sasaran_renja'])) {
-                foreach ($data['sasaran_renja'] as $sasaranData) {
+                foreach ($data['sasaran_renja'] as $sasaranItem) {
 
                     // Inject foreign key ke dalam data sasaran
-                    $sasaranData['renstra_sasaran_id'] = $data['renstra_sasaran_id'];
-                    $sasaranData['status'] = $sasaranData['status'] ?? 'draft';
-
+                    $sasaranData = [
+                        'opd_id' => $data['opd_id'],
+                        'renstra_sasaran_id' => $data['renstra_sasaran_id'],
+                        'sasaran_renja' => $sasaranItem['sasaran'] ?? '',
+                        'status' => $sasaranItem['status'] ?? 'draft',
+                    ];
+                    
                     // Simpan sasaran RENJA
                     $sasaranRenjaId = $this->createSasaran($sasaranData);
 
                     // Cek dan simpan indikator-indikator sasaran
-                    if (isset($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
-                        foreach ($sasaranData['indikator_sasaran'] as $indikatorData) {
+                    if (isset($sasaranItem['indikator_sasaran']) && is_array($sasaranItem['indikator_sasaran'])) {
+                        foreach ($sasaranItem['indikator_sasaran'] as $indikatorData) {
 
                             // Inject foreign key ke dalam data indikator
                             $indikatorData['renja_sasaran_id'] = $sasaranRenjaId;

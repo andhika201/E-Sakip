@@ -23,7 +23,7 @@
 
       <form id="renja-form" method="POST" action="<?= base_url('adminopd/renja/update') ?>">
         <?= csrf_field() ?>
-        <input type="hidden" name="rpjmd_sasaran_id" value="<?= isset($renja_data['rpjmd_sasaran_id']) ? $renja_data['rpjmd_sasaran_id'] : '' ?>">
+        <input type="hidden" name="renstra_sasaran_id" value="<?= isset($renja_data['renstra_sasaran_id']) ? $renja_data['renstra_sasaran_id'] : '' ?>">
         <input type="hidden" name="renja_sasaran_id" value="<?= isset($renja_sasaran_id) ? $renja_sasaran_id : '' ?>">
 
       <!-- Informasi Umum -->
@@ -32,14 +32,14 @@
         <div class="row">
           <div class="col-md-6">
             <label class="form-label">Sasaran RENSTRA</label>
-            <select name="rpjmd_sasaran_id" id="rpjmd-sasaran-select" class="form-select mb-3" required>
+            <select name="renstra_sasaran_id" id="renstra-sasaran-select" class="form-select mb-3" required>
               <option value="">Pilih Sasaran RENSTRA</option>
-              <?php if (isset($rpjmd_sasaran) && !empty($rpjmd_sasaran)): ?>
-                <?php foreach ($rpjmd_sasaran as $sasaran): ?>
+              <?php if (isset($renstra_sasaran) && !empty($renstra_sasaran)): ?>
+                <?php foreach ($renstra_sasaran as $sasaran): ?>
                   <option value="<?= $sasaran['id'] ?>" 
-                    <?= (isset($renja_data['rpjmd_sasaran_id']) && $renja_data['rpjmd_sasaran_id'] == $sasaran['id']) ? 'selected' : '' ?>
+                    <?= (isset($renja_data['renstra_sasaran_id']) && $renja_data['renstra_sasaran_id'] == $sasaran['id']) ? 'selected' : '' ?>
                     data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
-                    <?= esc($sasaran['sasaran_rpjmd']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
+                    <?= esc($sasaran['sasaran']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
                   </option> 
                 <?php endforeach; ?>
               <?php else: ?>
@@ -71,7 +71,7 @@
                 <div class="row mb-3">
                   <div class="col-md-12">
                     <label class="form-label">Sasaran RENJA</label>
-                    <textarea name="sasaran_renja[<?= $sasaranIndex ?>][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RENJA" required><?= esc($sasaranRenja['sasaran']) ?></textarea>
+                    <textarea name="sasaran_renja[<?= $sasaranIndex ?>][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RENJA" required><?= esc($sasaranRenja['sasaran_renja']) ?></textarea>
                   </div>
                 </div>
 
@@ -101,12 +101,8 @@
                           <div class="row mb-3">
                             <div class="col-md-4">
                               <label class="form-label">Satuan</label>
-                              <select name="sasaran_renja[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-select" required>
+                              <select name="sasaran_renja[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-select satuan-select" data-selected="<?= esc($indikator['satuan']) ?>" required>
                                 <option value="">Pilih Satuan</option>
-                                <option value="Unit" <?= $indikator['satuan'] == 'Unit' ? 'selected' : '' ?>>Unit</option>
-                                <option value="Nilai" <?= $indikator['satuan'] == 'Nilai' ? 'selected' : '' ?>>Nilai</option>
-                                <option value="Persen" <?= $indikator['satuan'] == 'Persen' ? 'selected' : '' ?>>Persen</option>
-                                <option value="Predikat" <?= $indikator['satuan'] == 'Predikat' ? 'selected' : '' ?>>Predikat</option>
                               </select>
                             </div>
                             <div class="col-md-4">
@@ -116,9 +112,9 @@
                                 <?php 
                                 // Get tahun range from selected RENSTRA Sasaran
                                 $selectedSasaran = null;
-                                if (isset($rpjmd_sasaran) && isset($renja_data['rpjmd_sasaran_id'])) {
-                                  foreach ($rpjmd_sasaran as $sasaran) {
-                                    if ($sasaran['id'] == $renja_data['rpjmd_sasaran_id']) {
+                                if (isset($renstra_sasaran) && isset($renja_data['renstra_sasaran_id'])) {
+                                  foreach ($renstra_sasaran as $sasaran) {
+                                    if ($sasaran['id'] == $renja_data['renstra_sasaran_id']) {
                                       $selectedSasaran = $sasaran;
                                       break;
                                     }
@@ -160,12 +156,8 @@
                         <div class="row mb-3">
                           <div class="col-md-4">
                             <label class="form-label">Satuan</label>
-                            <select name="sasaran_renja[<?= $sasaranIndex ?>][indikator_sasaran][0][satuan]" class="form-select" required>
+                            <select name="sasaran_renja[<?= $sasaranIndex ?>][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                               <option value="">Pilih Satuan</option>
-                              <option value="Unit">Unit</option>
-                              <option value="Nilai">Nilai</option>
-                              <option value="Persen">Persen</option>
-                              <option value="Predikat">Predikat</option>
                             </select>
                           </div>
                           <div class="col-md-4">
@@ -230,7 +222,7 @@
                     <div class="row mb-3">
                       <div class="col-md-4">
                         <label class="form-label">Satuan</label>
-                        <select id="satuanSelect" name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select" required>
+                        <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                           <option value="">Pilih Satuan</option>
                         </select>
                       </div>
@@ -288,10 +280,14 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const select = document.getElementById('satuanSelect');
-      if (select) {
+      // Populate all satuan selects with options from JavaScript helper
+      document.querySelectorAll('.satuan-select').forEach(select => {
+        const selectedValue = select.getAttribute('data-selected') || '';
         select.innerHTML = generateSatuanOptions();
-      }
+        if (selectedValue) {
+          select.value = selectedValue;
+        }
+      });
     });
   </script>
 </body>

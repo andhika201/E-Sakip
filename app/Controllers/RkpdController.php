@@ -5,28 +5,28 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\RpjmdModel;
-use App\Models\RktModel;
+use App\Models\RkpdModel;
 
-class RktController extends BaseController
+class RkpdController extends BaseController
 {
     protected $rpjmdModel;
-    protected $rktModel;
+    protected $rkpdModel;
 
-     public function __construct()
+    public function __construct()
     {
         $this->rpjmdModel = new RpjmdModel();
-        $this->rktModel = new RktModel();
+        $this->rkpdModel = new RkpdModel();
     }
 
     public function index()
     {
-        // Get all RKT data (no server-side filtering)
-        $rktData = $this->rktModel->getAllRkt();
+        // Get all RKPD data (no server-side filtering)
+        $rkpdData = $this->rkpdModel->getAllRkpd();
         
         // Get unique years for filter dropdown
         $availableYears = [];
-        foreach ($rktData as $rkt) {
-            foreach ($rkt['indikator'] as $indikator) {
+        foreach ($rkpdData as $rkpd) {
+            foreach ($rkpd['indikator'] as $indikator) {
                 if (!empty($indikator['tahun']) && !in_array($indikator['tahun'], $availableYears)) {
                     $availableYears[] = $indikator['tahun'];
                 }
@@ -36,12 +36,14 @@ class RktController extends BaseController
 
         $data = [
             'title' => 'Rencana Kerja Tahunan',
-            'rkt_data' => $rktData,
+            'rkpd_data' => $rkpdData,
             'available_years' => $availableYears
         ];
         
-        return view('adminKabupaten/rkt/rkt', $data);
-    }    public function tambah()
+        return view('adminKabupaten/rkpd/rkpd', $data);
+    }  
+    
+    public function tambah()
     {
         // Get RPJMD Sasaran from completed Misi only
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
@@ -52,7 +54,7 @@ class RktController extends BaseController
             'validation' => \Config\Services::validation()
         ];
 
-        return view('adminKabupaten/rkt/tambah_rkt', $data);
+        return view('adminKabupaten/rkpd/tambah_rkpd', $data);
     }
 
     public function save()
@@ -64,53 +66,51 @@ class RktController extends BaseController
             $formattedData = [
                 'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
                 'status' => 'draft',
-                'sasaran_rkt' => $data['sasaran_rkt'] ?? [],
+                'sasaran_rkpd' => $data['sasaran_rkpd'] ?? [],
             ];
 
-            $success = $this->rktModel->createCompleteRkt($formattedData);
+            $success = $this->rkpdModel->createCompleteRkpd($formattedData);
             
             if ($success) {
-                session()->setFlashdata('success', 'Data RKT berhasil ditambahkan');
+                session()->setFlashdata('success', 'Data RKPD berhasil ditambahkan');
             } else {
-                session()->setFlashdata('error', 'Gagal menambahkan data RKT');
+                session()->setFlashdata('error', 'Gagal menambahkan data RKPD');
                 return redirect()->back()->withInput();
             }
             
         } catch (\Exception $e) {
-            log_message('error', 'RKT Save Error: ' . $e->getMessage());
-            session()->setFlashdata('error', 'Terjadi kesalahan saat menyimpan data.');
-            return redirect()->back()->withInput();
+            return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
 
-        return redirect()->to(base_url('adminkab/rkt'));
+        return redirect()->to(base_url('adminkab/rkpd'));
     }
     
     public function edit($id = null){
 
         if (!$id) {
-            session()->setFlashdata('error', 'ID RKT Sasaran tidak ditemukan');
-            return redirect()->to(base_url('adminkab/rkt'));
+            session()->setFlashdata('error', 'ID RKPD Sasaran tidak ditemukan');
+            return redirect()->to(base_url('adminkab/rkpd'));
         }
 
-        // Fetch the complete RKT data for the RPJMD Sasaran ID
-        $rktData = $this->rktModel->getRktById($id);
+        // Fetch the complete RKPD data for the RPJMD Sasaran ID
+        $rkpdData = $this->rkpdModel->getRkpdById($id);
 
         // Get RPJMD Sasaran data
         $rpjmdSasaranData = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
         if (!$rpjmdSasaranData) {
             session()->setFlashdata('error', 'Data RPJMD Sasaran tidak ditemukan');
-            return redirect()->to(base_url('adminkab/rkt'));
+            return redirect()->to(base_url('adminkab/rkpd'));
         }
 
         $data = [
-            'title' => 'Edit RKT',
-            'rkt_data' => $rktData,
-            'rkt_sasaran_id' => $id, // Pass the RKT Sasaran ID to the view
+            'title' => 'Edit RKPD',
+            'rkpd_data' => $rkpdData,
+            'rkpd_sasaran_id' => $id,
             'rpjmd_sasaran' => $rpjmdSasaranData,
             'validation' => \Config\Services::validation()
         ];
 
-        return view('adminKabupaten/rkt/edit_rkt', $data);
+        return view('adminKabupaten/rkpd/edit_rkpd', $data);
     }
 
     public function update(){
@@ -118,35 +118,53 @@ class RktController extends BaseController
         try {
             $data = $this->request->getPost();
             
-            // Debug: log the received data
-            log_message('debug', 'Received form data: ' . json_encode($data));
-            
-            if (!isset($data['rkt_sasaran_id']) || empty($data['rkt_sasaran_id'])) {
-                session()->setFlashdata('error', 'ID RKT Sasaran tidak ditemukan');
+            if (!isset($data['rkpd_sasaran_id']) || empty($data['rkpd_sasaran_id'])) {
+                session()->setFlashdata('error', 'ID RKPD Sasaran tidak ditemukan');
                 return redirect()->back()->withInput();
             }
 
-            $rktSasaranId = $data['rkt_sasaran_id'];
+            $rkpdSasaranId = $data['rkpd_sasaran_id'];
 
-            // Use the updateCompleteRkt method
-            $result = $this->rktModel->updateCompleteRkt($rktSasaranId, $data);
+            // Use the updateCompleteRkpd method
+            $result = $this->rkpdModel->updateCompleteRkpd($rkpdSasaranId, $data);
 
            
             if ($result) {
-                session()->setFlashdata('success', 'Data RKT berhasil diupdate');
+                session()->setFlashdata('success', 'Data RKPD berhasil diupdate');
             } else {
-                session()->setFlashdata('error', 'Gagal mengupdate data RKT');
+                session()->setFlashdata('error', 'Gagal mengupdate data RKPD');
             }
             
         } catch (\Exception $e) {
             session()->setFlashdata('error', 'Error: ' . $e->getMessage());
         }
 
-        return redirect()->to(base_url('adminkab/rkt'));
+        return redirect()->to(base_url('adminkab/rkpd'));
     }
 
-    public function delete(){
+    public function delete($id)
+    {
+        try {
+            // Verify that the RKPD exists and belongs to user's OPD
+            $rkpdData = $this->rkpdModel->getRkpdById($id);
 
+            if (!$rkpdData) {
+                return redirect()->back()->with('error', 'Data RKPD tidak ditemukan');
+            }
+
+            $success = $this->rkpdModel->deleteCompleteRkpd($id);
+
+            if ($success) {
+                return redirect()->to(base_url('adminkab/rkpd'))->with('success', 'Data RKPD berhasil dihapus');
+            } else {
+                return redirect()->back()->with('error', 'Gagal menghapus data');
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
+        
+        return redirect()->to(base_url('adminkab/rkpd'));
     }
 
     public function updateStatus()
@@ -165,16 +183,16 @@ class RktController extends BaseController
         
         try {
             // Get current status
-            $currentRkt = $this->rktModel->getRktSasaranById($id);
-            if (!$currentRkt) {
+            $currentRkpd = $this->rkpdModel->getRkpdSasaranById($id);
+            if (!$currentRkpd) {
                 return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
             }
             
             // Toggle status
-            $currentStatus = $currentRkt['status'] ?? 'draft';
+            $currentStatus = $currentRkpd['status'] ?? 'draft';
             $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
             
-            $result = $this->rktModel->updateRktStatus($id, $newStatus);
+            $result = $this->rkpdModel->updateRkpdStatus($id, $newStatus);
             
             if ($result) {
                 return $this->response->setJSON([

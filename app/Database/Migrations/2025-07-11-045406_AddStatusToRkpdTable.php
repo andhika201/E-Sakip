@@ -4,11 +4,11 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class AddStatusToRktTable extends Migration
+class AddStatusToRkpdTable extends Migration
 {
     public function up()
     {
-        $this->forge->addColumn('rkt_sasaran', [
+        $this->forge->addColumn('rkpd_sasaran', [
             'status' => [
                 'type' => 'ENUM',
                 'constraint' => ['draft', 'selesai'],
@@ -21,6 +21,6 @@ class AddStatusToRktTable extends Migration
 
     public function down()
     {
-        $this->forge->dropColumn('rkt_sasaran', 'status');
+        $this->forge->dropColumn('rkpd_sasaran', 'status');
     }
 }

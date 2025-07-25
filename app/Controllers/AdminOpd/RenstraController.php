@@ -35,7 +35,7 @@ class RenstraController extends BaseController
         }
         
         // Get Renstra data filtered by user's OPD
-        $renstraData = $this->renstraModel->getRenstraForTable($opdId);
+        $renstraData = $this->renstraModel->getAllRenstra($opdId);
         
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
@@ -138,23 +138,9 @@ class RenstraController extends BaseController
         // Get RPJMD Sasaran from completed Misi only
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
         
-        // Get satuan options
-        $satuanOptions = [
-            'Persen' => 'Persen (%)',
-            'Orang' => 'Orang',
-            'Unit' => 'Unit',
-            'Dokumen' => 'Dokumen',
-            'Kegiatan' => 'Kegiatan',
-            'Rupiah' => 'Rupiah',
-            'Index' => 'Index',
-            'Nilai' => 'Nilai',
-            'Predikat' => 'Predikat'
-        ];
-        
         $data = [
             'renstra_data' => $currentRenstra,
             'rpjmd_sasaran' => $rpjmdSasaran,
-            'satuan_options' => $satuanOptions,
             'title' => 'Edit Rencana Strategis'
         ];
 
@@ -262,9 +248,9 @@ class RenstraController extends BaseController
             $success = $this->renstraModel->updateCompleteRenstra($id, $updateData);
 
             if ($success) {
-                return redirect()->to('/adminopd/pk_admin')->with('success', 'Data PK Admin berhasil disimpan');
+                return redirect()->to('/adminopd/renstra')->with('success', 'Data Renstra berhasil disimpan');
             } else {
-                return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK Admin');
+                return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data Renstra');
             }
             
             if ($success) {

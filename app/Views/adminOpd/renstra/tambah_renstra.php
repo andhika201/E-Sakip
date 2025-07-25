@@ -6,14 +6,7 @@
   <title>Tambah Renstra e-SAKIP</title>
   <!-- Style -->
   <?= $this->include('adminOpd/templates/style.php'); ?>
-  <!-- Select2 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
-    .is-invalid {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-    }
-    
     .alert {
       transition: all 0.3s ease;
     }
@@ -27,43 +20,6 @@
       margin-bottom: 10px;
     }
 
-    /* Custom Select2 styles */
-    .select2-container--default .select2-selection--single {
-      height: 38px;
-      line-height: 36px;
-      border: 1px solid #ced4da;
-      border-radius: 0.375rem;
-    }
-    
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-      padding-left: 12px;
-      padding-right: 20px;
-    }
-    
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-      height: 36px;
-    }
-    
-    .select2-dropdown {
-      border: 1px solid #ced4da;
-      border-radius: 0.375rem;
-    }
-    
-    .select2-search--dropdown .select2-search__field {
-      border: 1px solid #ced4da;
-      border-radius: 0.375rem;
-      padding: 8px 12px;
-    }
-    
-    .select2-results__option--highlighted {
-      background-color: #007bff;
-      color: white;
-    }
-    
-    .select2-container--default .select2-results__option[aria-selected=true] {
-      background-color: #6c757d;
-      color: white;
-    }
   </style>
 </head>
 
@@ -91,15 +47,15 @@
         <div class="row">
           <div class="col-md-6">
             <label class="form-label">Sasaran RPJMD Terkait</label>
-            <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
+            <select name="rpjmd_sasaran_id" id="rpjmd-sasaran-select" class="form-select mb-3" required>
               <option value="">Pilih Sasaran RPJMD</option>
               <?php if (isset($rpjmd_sasaran) && !empty($rpjmd_sasaran)): ?>
                 <?php foreach ($rpjmd_sasaran as $sasaran): ?>
-                  <option value="<?= $sasaran['id'] ?>">
-                    <?= esc($sasaran['sasaran_rpjmd']) ?>
+                  <option value="<?= $sasaran['id'] ?>" data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
+                    <?= esc($sasaran['sasaran_rpjmd']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
                   </option>
                 <?php endforeach; ?>
-              <?php else: ?>
+              <?php else: ?>  
                 <option value="" disabled>Tidak ada sasaran RPJMD yang tersedia</option>
               <?php endif; ?>
             </select>
@@ -155,23 +111,8 @@
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label">Satuan</label>
-                      <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control" required>
+                      <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" id="satuanSelect" class="form-control satuan-select" required>
                         <option value="">Pilih Satuan</option>
-                        <?php if (isset($satuan_options) && !empty($satuan_options)): ?>
-                          <?php foreach ($satuan_options as $value => $text): ?>
-                            <option value="<?= $value ?>"><?= $text ?></option>
-                          <?php endforeach; ?>
-                        <?php else: ?>
-                          <option value="Persen">Persen (%)</option>
-                          <option value="Orang">Orang</option>
-                          <option value="Unit">Unit</option>
-                          <option value="Dokumen">Dokumen</option>
-                          <option value="Kegiatan">Kegiatan</option>
-                          <option value="Rupiah">Rupiah</option>
-                          <option value="Index">Index</option>
-                          <option value="Nilai">Nilai</option>
-                          <option value="Predikat">Predikat</option>
-                        <?php endif; ?>
                       </select>
                     </div>
                   </div>
@@ -257,11 +198,7 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
-
-  <!-- jQuery (required for Select2) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <!-- Select2 JS -->
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="<?= base_url('assets/js/adminOpd/renstra/renstra-form.js') ?>"></script>
   
   <script>
     $(document).ready(function() {
@@ -271,7 +208,8 @@
       // Function to initialize Select2 on elements
       function initializeSelect2() {
         // Initialize Select2 for RPJMD Sasaran dropdown
-        $('#rpjmd_sasaran_select').select2({
+        $('#rpjmd-sasaran-select').select2({
+          theme: 'bootstrap-5',
           placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
           allowClear: true,
           width: '100%'
@@ -286,14 +224,10 @@
       });
 
       // Handle selection change
-      $('#rpjmd_sasaran_select').on('change', function() {
+      $('#rpjmd-sasaran-select').on('change', function() {
         var selectedOption = $(this).find('option:selected');
         
         if (selectedOption.val()) {
-          console.log('Selected Sasaran:', {
-            id: selectedOption.val(),
-            sasaran: selectedOption.text()
-          });
           
           // Show selected info (optional)
           showSelectedInfo(selectedOption.text());
@@ -310,8 +244,13 @@
         $('#alert-container').html(infoHtml);
       }
     });
-  </script>
 
-  <script src="<?= base_url('assets/js/adminOpd/renstra/renstra-form.js') ?>"></script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const select = document.getElementById('satuanSelect');
+      if (select && typeof generateSatuanOptions === 'function') {
+        select.innerHTML = generateSatuanOptions();
+      }
+    });
+  </script>
 </body>
 </html>

@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateRktIndikatorSasaranTable extends Migration
+class CreateRkpdSasaranTable extends Migration
 {
     public function up()
     {
@@ -15,28 +15,14 @@ class CreateRktIndikatorSasaranTable extends Migration
                 'unsigned' => true,
                 'auto_increment' => true,
             ],
-            'rkt_sasaran_id' => [
+            'rpjmd_sasaran_id' => [
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
                 'null' => false,
             ],
-            'indikator_sasaran' => [
+            'sasaran' => [
                 'type' => 'TEXT',
-                'null' => false,
-            ],
-            'satuan' => [
-                'type' => 'VARCHAR',
-                'constraint' => 50,
-                'null' => false,
-            ],
-            'tahun' => [
-                'type' => 'YEAR',
-                'null' => false,
-            ],
-            'target' => [
-                'type' => 'VARCHAR',
-                'constraint' => 100,
                 'null' => false,
             ],
             'created_at' => [
@@ -53,12 +39,12 @@ class CreateRktIndikatorSasaranTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('rkt_sasaran_id', 'rkt_sasaran', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('rkt_indikator_sasaran');
+        $this->forge->addForeignKey('rpjmd_sasaran_id', 'rpjmd_sasaran', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('rkpd_sasaran');
     }
 
     public function down()
     {
-        $this->forge->dropTable('rkt_indikator_sasaran');
+        $this->forge->dropTable('rkpd_sasaran');
     }
 }

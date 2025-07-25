@@ -62,8 +62,8 @@
                     <tr>
                         <th rowspan="2" class="border p-2 align-middle">Status</th>
                         <th rowspan="2" class="border p-2 align-middle">OPD</th>
-                        <th rowspan="2" class="border p-2 align-middle">RPJMD Sasaran</th>
-                        <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
+                        <th rowspan="2" class="border p-2 align-middle">SASARAN RPJMD</th>
+                        <th rowspan="2" class="border p-2 align-middle">SASARAN RENSTRA</th>
                         <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                         <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                         

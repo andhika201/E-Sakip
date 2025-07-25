@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tambah RENJA e-SAKIP</title>
+  <title><?= esc($title) ?></title>
   <!-- Style -->
   <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
@@ -21,6 +21,9 @@
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah RENJA</h2>
 
+       <!-- Alert Container -->
+      <div id="alert-container"></div>
+
       <form id="renja-form" method="POST" action="<?= base_url('adminopd/renja/save') ?>">
         <?= csrf_field() ?>
 
@@ -29,19 +32,19 @@
         <h2 class="h5 fw-semibold mb-3">Sasaran RENSTRA Terkait RENJA ini</h2>
         <div class="row">
           <div class="col-md-6">
-            <label class="form-label">Sasaran RENSTRA</label>
-            <select name="renstra_sasaran_id" id="renstra-sasaran-select" class="form-select mb-3" required>
-              <option value="">Pilih Sasaran RENSTRA</option>
-              <?php if (isset($renstra_sasaran) && !empty($renstra_sasaran)): ?>
-                <?php foreach ($renstra_sasaran as $sasaran): ?>
-                  <option value="<?= $sasaran['id'] ?>"  data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
-                    <?= esc($sasaran['sasaran_renstra']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
-                  </option> 
-                <?php endforeach; ?>
-              <?php else: ?>
-                <option value="" disabled>Tidak ada sasaran RENSTRA yang tersedia</option>
-              <?php endif; ?>
-            </select>
+              <label class="form-label">Sasaran RENSTRA Terkait</label>
+              <select name="renstra_sasaran_id" id="renstra-sasaran-select" class="form-select mb-3" required>
+                <option value="">Pilih Sasaran RENSTRA</option>
+                <?php if (isset($renstra_sasaran) && !empty($renstra_sasaran)): ?>
+                  <?php foreach ($renstra_sasaran as $sasaran): ?>
+                    <option value="<?= $sasaran['id'] ?>" data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
+                      <?= esc($sasaran['sasaran']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
+                    </option>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <option value="" disabled>Tidak ada sasaran RENSTRA yang tersedia</option>
+                <?php endif; ?>
+              </select>
           </div>
         </div>
       </section>
@@ -89,7 +92,7 @@
                   <div class="row mb-3">
                     <div class="col-md-4">
                       <label class="form-label">Satuan</label>
-                      <select id="satuanSelect" name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select" required>
+                      <select name="sasaran_renja[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                         <option value="">Pilih Satuan</option>
                       </select>
                     </div>
@@ -142,13 +145,65 @@
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-  <script src="<?= base_url('/assets/js/adminOpd/renja/renja-form.js')?>"></script>
-
+  
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const select = document.getElementById('satuanSelect');
-      select.innerHTML = generateSatuanOptions();
+    $(document).ready(function() {
+      // Initialize Select2 for existing elements
+      initializeSelect2();
+      
+      // Function to initialize Select2 on elements
+      function initializeSelect2() {
+        // Initialize Select2 for RENSTRA Sasaran dropdown
+        $('#renstra-sasaran-select').select2({
+          theme: 'bootstrap-5',
+          placeholder: "Pilih atau ketik untuk mencari sasaran RENSTRA ...",
+          allowClear: true,
+          width: '100%'
+        });
+      }
+      
+      // Handle selection change
+      $('#renstra-sasaran-select').on('change', function() {
+        var selectedOption = $(this).find('option:selected');
+        
+        if (selectedOption.val()) {
+          console.log('Selected Sasaran:', {
+            id: selectedOption.val(),
+            sasaran: selectedOption.text()
+          });
+          
+          // Show selected info (optional)
+          showSelectedInfo(selectedOption.text());
+          
+          // Trigger tahun dropdown update
+          if (typeof updateAllTahunDropdowns === 'function') {
+            updateAllTahunDropdowns();
+          }
+        }
+      });
+      
+      // Function to show selected sasaran info
+      function showSelectedInfo(sasaran) {
+        var infoHtml = '<div class="alert alert-info alert-dismissible fade show mt-2" role="alert">' +
+        '<strong>Sasaran RENSTRA Terpilih:</strong> ' + sasaran +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>';
+        
+        $('#alert-container').html(infoHtml);
+      }
     });
-  </script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Isi semua dropdown satuan dengan class 'satuan-select'
+      const satuanSelects = document.querySelectorAll('.satuan-select');
+      satuanSelects.forEach(select => {
+        if (typeof generateSatuanOptions === 'function') {
+          select.innerHTML = generateSatuanOptions();
+        }
+      });
+    });
+    </script>
+
+  <script src="<?= base_url('/assets/js/adminOpd/renja/renja-form.js')?>"></script>
 </body>
 </html>

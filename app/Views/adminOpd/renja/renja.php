@@ -96,12 +96,8 @@
             <?php if (empty($renja_data)): ?>
                 <tr>
                     <td colspan="9" class="border p-4 text-center text-muted">
-                        <i class="fas fa-inbox mb-2 d-block" style="font-size: 2rem;"></i>
-                        Tidak ada data RENJA
-                        <br>
-                        <a href="<?= base_url('adminopd/renja/tambah') ?>" class="btn btn-sm btn-success mt-2">
-                            <i class="fas fa-plus me-1"></i> Tambah RENJA
-                        </a>
+                        <i class="fas fa-info-circle me-2"></i>
+                             Tidak ada data RENJA. <a href="<?= base_url('adminopd/renja/tambah') ?>" class="text-success">Tambah data pertama</a>
                     </td>
                 </tr>
             <?php else: ?>
@@ -140,7 +136,7 @@
 
                             <!-- Sasaran RENJA -->
                             <td class="border p-2 text-start" rowspan="<?= $rowspan ?>">
-                                <?= esc($renja['sasaran']) ?>
+                                <?= esc($renja['sasaran_renja']) ?>
                             </td>
                         <?php endif; ?>
 

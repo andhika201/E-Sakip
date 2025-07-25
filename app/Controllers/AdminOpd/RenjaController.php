@@ -32,8 +32,14 @@ class RenjaController extends BaseController
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
         
+        // Get current OPD info
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
+        }
+        
         // Get all RENJA data (no server-side filtering)
-        $renjaData = $this->renjaModel->getAllRenja();
+        $renjaData = $this->renjaModel->getAllRenja($opdId);
         
         // Get unique years for filter dropdown
         $availableYears = [];
@@ -55,15 +61,30 @@ class RenjaController extends BaseController
         return view('adminOpd/renja/renja', $data);
     }    
     
-    
     public function tambah()
     {
-        // Get RPJMD Sasaran from completed Misi only
-        $renstraSasaran = $this->renstraModel->getAllSasaranFromCompletedMisi();
+        // Get OPD ID from session (logged in user's OPD)
+        $session = session();
+        $opdId = $session->get('opd_id');
+        $status = 'selesai';
+
+        // If no OPD ID in session, redirect to login or show error
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // Get current OPD info
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
+        }
         
+        // Get RENSTRA Sasaran from completed Renstra only
+        $renstraSasaran = $this->renstraModel->getAllRenstraByStatus($status, $opdId);
+
         $data = [
             'renstra_sasaran' => $renstraSasaran,
-            'title' => 'Tambah Kerja Tahunan',
+            'title' => 'Tambah Rencana Kerja Tahunan',
             'validation' => \Config\Services::validation()
         ];
 
@@ -74,9 +95,18 @@ class RenjaController extends BaseController
     {
         try {
             $data = $this->request->getPost();
-            
-            // Create new - Use createCompleteRenstra for tambah form
+
+            //Current Opd
+            $session = session();
+            $opdId = $session->get('opd_id');
+
+            if (!$opdId) {
+                return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+            }
+
+            // Create new - Use createCompleteRenja for tambah form
             $formattedData = [
+                'opd_id' => $opdId,
                 'renstra_sasaran_id' => $data['renstra_sasaran_id'],
                 'status' => 'draft',
                 'sasaran_renja' => $data['sasaran_renja'] ?? [],
@@ -100,18 +130,29 @@ class RenjaController extends BaseController
         return redirect()->to(base_url('adminopd/renja'));
     }
     
-    public function edit($id = null){
+    public function edit($id){
+        // Get OPD ID from session (logged in user's OPD)
+        $session = session();
+        $opdId = $session->get('opd_id');
+        $status = 'selesai';
 
-        if (!$id) {
-            session()->setFlashdata('error', 'ID RENJA Sasaran tidak ditemukan');
-            return redirect()->to(base_url('adminopd/renja'));
+        // If no OPD ID in session, redirect to login or show error
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // Get current OPD info
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
         }
 
         // Fetch the complete RENJA data for the RPJMD Sasaran ID
         $renjaData = $this->renjaModel->getRenjaById($id);
 
         // Get RPJMD Sasaran data
-        $renstraSasaranData = $this->renstraModel->getAllSasaranFromCompletedMisi();
+        $renstraSasaranData = $this->renstraModel->getAllRenstraByStatus($status, $opdId);
+
         if (!$renstraSasaranData) {
             session()->setFlashdata('error', 'Data RPJMD Sasaran tidak ditemukan');
             return redirect()->to(base_url('adminopd/renja'));
@@ -120,7 +161,7 @@ class RenjaController extends BaseController
         $data = [
             'title' => 'Edit RENJA',
             'renja_data' => $renjaData,
-            'renja_sasaran_id' => $id, // Pass the RENJA Sasaran ID to the view
+            'renja_sasaran_id' => $id,
             'renstra_sasaran' => $renstraSasaranData,
             'validation' => \Config\Services::validation()
         ];
@@ -132,9 +173,6 @@ class RenjaController extends BaseController
 
         try {
             $data = $this->request->getPost();
-            
-            // Debug: log the received data
-            log_message('debug', 'Received form data: ' . json_encode($data));
             
             if (!isset($data['renja_sasaran_id']) || empty($data['renja_sasaran_id'])) {
                 session()->setFlashdata('error', 'ID RENJA Sasaran tidak ditemukan');
@@ -160,9 +198,42 @@ class RenjaController extends BaseController
         return redirect()->to(base_url('adminopd/renja'));
     }
 
-    public function delete(){
+    public function delete($id)
+    {
+        try {
 
+            $session = session();
+            $opdId = $session->get('opd_id');
+            
+            if (!$opdId) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Session expired. Silakan login ulang.'
+                ]);
+            }
+            
+            // Verify that the RENJA exists and belongs to user's OPD
+            $renjaData = $this->renjaModel->getRenjaById($id);
+
+            if (!$renjaData) {
+                return redirect()->back()->with('error', 'Data RENJA tidak ditemukan');
+            }
+
+            $success = $this->renjaModel->deleteCompleteRenja($id);
+
+            if ($success) {
+                return redirect()->to(base_url('adminopd/renja'))->with('success', 'Data RENJA berhasil dihapus');
+            } else {
+                return redirect()->back()->with('error', 'Gagal menghapus data');
+            }
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+        }
+
+        return redirect()->to(base_url('adminopd/renja'));
     }
+
 
     public function updateStatus()
     {

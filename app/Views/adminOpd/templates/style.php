@@ -1,5 +1,8 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 
 <style>
 /* Custom green color scheme */
@@ -83,5 +86,41 @@
   border-color: transparent !important;
 }
 
-
+/* Custom Select2 styles */
+  .select2-container--default .select2-selection--single {
+    height: 38px;
+    line-height: 36px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px;
+    padding-right: 20px;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+  }
+  
+  .select2-dropdown {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+  }
+  
+  .select2-search--dropdown .select2-search__field {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 8px 12px;
+  }
+  
+  .select2-results__option--highlighted {
+    background-color: #00743e !important;
+    color: white !important;
+  }
+  
+  .select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: #00743e !important;
+    color: white !important;
+  }
 </style>

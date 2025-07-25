@@ -332,7 +332,7 @@ class RenstraModel extends Model
     /**
      * Get Renstra data for display table (flattened structure)
      */
-    public function getRenstraForTable($opdId = null)
+    public function getAllRenstra($opdId = null)
     {
         $query = $this->db->table('renstra_sasaran rs')
             ->select('

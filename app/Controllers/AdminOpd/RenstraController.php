@@ -191,6 +191,7 @@ class RenstraController extends BaseController
         try {
             $data = $this->request->getPost();
             
+           
             // Validate required fields
             if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
                 throw new \Exception('Data tidak lengkap');
@@ -215,9 +216,7 @@ class RenstraController extends BaseController
                 'tahun_akhir' => $data['tahun_akhir'],
                 'indikator_sasaran' => []
             ];
-
             
-
             // Process indikator sasaran (similar to save method)
             if (isset($data['sasaran_renstra']) && is_array($data['sasaran_renstra'])) {
                 foreach ($data['sasaran_renstra'] as $sasaran) {
@@ -277,10 +276,7 @@ class RenstraController extends BaseController
     public function delete($id = null)
     {
         if (!$id) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'ID tidak valid'
-            ]);
+            return redirect()->back()->with('error', 'ID tidak valid');
         }
 
         try {
@@ -289,47 +285,31 @@ class RenstraController extends BaseController
             $opdId = $session->get('opd_id');
             
             if (!$opdId) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Session expired. Silakan login ulang.'
-                ]);
+                return redirect()->to('/login')->with('error', 'Session expired. Silakan login ulang.');
             }
 
             // Verify that the Renstra exists and belongs to user's OPD
             $renstraData = $this->renstraModel->getSasaranById($id);
             
             if (!$renstraData) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Data Renstra tidak ditemukan'
-                ]);
+                return redirect()->back()->with('error', 'Data Renstra tidak ditemukan');
             }
 
             // Check OPD ownership
             if ($renstraData['opd_id'] != $opdId) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Anda tidak memiliki akses untuk menghapus data Renstra ini'
-                ]);
+                return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus data Renstra ini');
             }
 
             $success = $this->renstraModel->deleteCompleteRenstra($id);
 
             if ($success) {
-                return $this->response->setJSON([
-                    'status' => 'success',
-                    'message' => 'Data Renstra berhasil dihapus',
-                    'redirect' => base_url('adminopd/renstra')
-                ]);
+                return redirect()->to(base_url('adminopd/renstra'))->with('success', 'Data Renstra berhasil dihapus');
             } else {
-                throw new \Exception('Gagal menghapus data');
+                return redirect()->back()->with('error', 'Gagal menghapus data');
             }
 
         } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage()
-            ]);
+            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -342,7 +322,7 @@ class RenstraController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
         }
         
-        // Get JSON input
+        // Get JSON input (like RENJA)
         $json = $this->request->getJSON(true);
         $id = $json['id'] ?? null;
 
@@ -351,6 +331,14 @@ class RenstraController extends BaseController
         }
         
         try {
+            // Check OPD session
+            $session = session();
+            $opdId = $session->get('opd_id');
+            
+            if (!$opdId) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Session expired. Silakan login ulang.']);
+            }
+            
             // Get current status
             $currentRenstra = $this->renstraModel->getRenstraById($id);
             if (!$currentRenstra) {
@@ -375,33 +363,6 @@ class RenstraController extends BaseController
             }
         } catch (\Exception $e) {
             return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
-        }
-    }
-    
-    /**
-     * Toggle status RENSTRA
-     */
-    public function toggleStatus($id)
-    {
-        try {
-            $misi = $this->renstraModel->getRenstraById($id);
-            if (!$misi) {
-                return redirect()->back()->with('error', 'Data RENSTRA tidak ditemukan');
-            }
-            
-            $newStatus = $renstra['status'] === 'draft' ? 'selesai' : 'draft';
-            $result = $this->renstraModel->updateRenstraStatus($id, $newStatus);
-            
-            if ($result) {
-                $message = $newStatus === 'selesai' 
-                    ? 'RENSTRA berhasil diselesaikan' 
-                    : 'RENSTRA dikembalikan ke status draft';
-                return redirect()->back()->with('success', $message);
-            } else {
-                return redirect()->back()->with('error', 'Gagal mengupdate status');
-            }
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 }

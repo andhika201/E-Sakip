@@ -10,6 +10,9 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
+    <!-- Content Wrapper -->
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+    
   <!-- Navbar/Header -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
 
@@ -53,7 +56,11 @@
         <!-- Filter -->
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
             <div class="d-flex gap-2 flex-fill">
-                <select id="yearFilter" class="form-select" onchange="filterData()" style="flex: 1;">
+                <select id="rpjmdSasaranFilter" class="form-select w-50" onchange="filterData()">
+                    <option value="all">SEMUA SASARAN RPJMD</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+                <select id="yearFilter" class="form-select w-25" onchange="filterData()">
                     <option value="all">SEMUA TAHUN</option>
                     <?php if (isset($available_years)): ?>
                         <?php foreach ($available_years as $year): ?>
@@ -63,7 +70,7 @@
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
-                <select id="statusFilter" class="form-select" onchange="filterData()" style="flex: 1;">
+                <select id="statusFilter" class="form-select w-25" onchange="filterData()">
                     <option value="all">SEMUA STATUS</option>
                     <option value="draft">Draft</option>
                     <option value="selesai">Selesai</option>
@@ -76,89 +83,137 @@
             </div>
         </div>
 
+    <!-- Data Summary -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <span id="visible-data-count">Memuat data...</span>
+                </small>
+                <small class="text-muted">
+                    Filter aktif: <span id="active-filters">Semua Sasaran, Semua Tahun, Semua Status</span>
+                </small>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabel -->
     <div class="table-responsive">
         <table class="table table-bordered table-striped text-center small">
             <thead class="table-success">
             <tr>
                 <th class="border p-2">NO</th>
-                <th class="border p-2">STATUS</th>
                 <th class="border p-2">SASARAN RPJMD</th>
                 <th class="border p-2">SASARAN RKPD</th>
                 <th class="border p-2">INDIKATOR SASARAN</th>
                 <th class="border p-2">SATUAN</th>
                 <th class="border p-2">TAHUN</th>
                 <th class="border p-2">TARGET</th>
+                <th class="border p-2">STATUS</th>
                 <th class="border p-2">ACTION</th>
             </tr>   
             </thead>
             <tbody>
             <?php if (empty($rkpd_data)): ?>
-                <tr>
+                <tr id="no-data-message">
                     <td colspan="9" class="border p-4 text-center text-muted">
                         <i class="fas fa-info-circle me-2"></i>
                              Tidak ada data RKPD. <a href="<?= base_url('adminkab/rkpd/tambah') ?>" class="text-success">Tambah data pertama</a>
                     </td>
                 </tr>
             <?php else: ?>
-            <?php $no = 1; ?>
-            <?php foreach ($rkpd_data as $rkpd): ?>
+            <?php 
+                // Group data by rpjmd_sasaran first
+                $rpjmdGroups = [];
+                foreach ($rkpd_data as $rkpd) {
+                    $rpjmdSasaranId = $rkpd['rpjmd_sasaran_id'];
+                    if (!isset($rpjmdGroups[$rpjmdSasaranId])) {
+                        $rpjmdGroups[$rpjmdSasaranId] = [
+                            'rpjmd_sasaran' => $rkpd['rpjmd_sasaran'],
+                            'rkpd_list' => []
+                        ];
+                    }
+                    $rpjmdGroups[$rpjmdSasaranId]['rkpd_list'][] = $rkpd;
+                }
+                
+                $globalNo = 1;
+            ?>
+            <?php foreach ($rpjmdGroups as $rpjmdGroup): ?>
                 <?php 
-                    $indikatorList = $rkpd['indikator']; 
-                    $rowspan = count($indikatorList);
-                    // Skip if no indicators (shouldn't happen after filter, but safety check)
-                    if ($rowspan == 0) continue;
+                    // Calculate total rows for this RPJMD group
+                    $totalRowsForRpjmd = 0;
+                    foreach ($rpjmdGroup['rkpd_list'] as $rkpd) {
+                        $totalRowsForRpjmd += count($rkpd['indikator']);
+                    }
+                    $isFirstRowOfRpjmd = true;
                 ?>
-                <?php foreach ($indikatorList as $i => $indikator): ?>
-                    <tr class="rkpd-row" data-status="<?= $rkpd['status'] ?? 'draft' ?>" data-year="<?= $indikator['tahun'] ?>" data-rkpd-group="<?= $rkpd['id'] ?>">
-                        <?php if ($i === 0): ?>
-                            <td class="border p-2" rowspan="<?= $rowspan ?>"><?= $no++ ?></td>
+                <?php foreach ($rpjmdGroup['rkpd_list'] as $rkpd): ?>
+                    <?php 
+                        $indikatorList = $rkpd['indikator']; 
+                        $rowspanRkpd = count($indikatorList);
+                        // Skip if no indicators
+                        if ($rowspanRkpd == 0) continue;
+                    ?>
+                    <?php foreach ($indikatorList as $i => $indikator): ?>
+                        <tr class="rkpd-row" data-status="<?= $rkpd['status'] ?? 'draft' ?>" data-year="<?= $indikator['tahun'] ?>" data-rkpd-group="<?= $rkpd['id'] ?>">
+                            <!-- Nomor - show only once per RPJMD group -->
+                            <?php if ($isFirstRowOfRpjmd): ?>
+                                <td class="border p-2" rowspan="<?= $totalRowsForRpjmd ?>"><?= $globalNo++ ?></td>
+                            <?php endif; ?>
+                            
+                            <!-- Sasaran RPJMD - show only once per RPJMD group -->
+                            <?php if ($isFirstRowOfRpjmd): ?>
+                                <td class="border p-2 text-start" rowspan="<?= $totalRowsForRpjmd ?>">
+                                    <?= esc($rpjmdGroup['rpjmd_sasaran']) ?>
+                                </td>
+                                <?php $isFirstRowOfRpjmd = false; ?>
+                            <?php endif; ?>
 
-                            <!-- Status -->
-                            <td class="border p-2" rowspan="<?= $rowspan ?>">
-                                <?php 
-                                    $status = $rkpd['status'] ?? 'draft';
-                                    $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning';
-                                ?>
-                                <button 
-                                    class="badge <?= $badgeClass ?> border-0" 
-                                    onclick="toggleStatus(<?= $rkpd['id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" 
-                                    style="cursor: pointer;" 
-                                    title="Klik untuk mengubah status">
-                                    <?= ucfirst($status) ?>
-                                </button>
-                            </td>
+                            <!-- Sasaran RKPD - show only once per RKPD -->
+                            <?php if ($i === 0): ?>
+                                <td class="border p-2 text-start" rowspan="<?= $rowspanRkpd ?>">
+                                    <?= esc($rkpd['sasaran']) ?>
+                                </td>
+                            <?php endif; ?>
 
-                            <!-- Sasaran RPJMD -->
-                            <td class="border p-2 text-start" rowspan="<?= $rowspan ?>">
-                                <?= esc($rkpd['rpjmd_sasaran']) ?>
-                            </td>
+                            <!-- Indikator -->
+                            <td class="border p-2 text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
+                            <td class="border p-2"><?= esc($indikator['satuan']) ?></td>
+                            <td class="border p-2"><?= esc($indikator['tahun']) ?></td>
+                            <td class="border p-2"><?= esc($indikator['target']) ?></td>
 
-                            <!-- Sasaran RKPD -->
-                            <td class="border p-2 text-start" rowspan="<?= $rowspan ?>">
-                                <?= esc($rkpd['sasaran']) ?>
-                            </td>
-                        <?php endif; ?>
-
-                        <!-- Indikator -->
-                        <td class="border p-2 text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                        <td class="border p-2"><?= esc($indikator['satuan']) ?></td>
-                        <td class="border p-2"><?= esc($indikator['tahun']) ?></td>
-                        <td class="border p-2"><?= esc($indikator['target']) ?></td>
-
-                        <?php if ($i === 0): ?>
-                            <td class="border p-2 align-middle text-center" rowspan="<?= $rowspan ?>">
-                                <div class="d-flex flex-column align-items-center gap-2">
-                                    <a href="<?= base_url('adminkab/rkpd/edit/' . $rkpd['id']) ?>" class="btn btn-success btn-sm">
-                                        <i class="fas fa-edit me-1"></i>Edit
-                                    </a>
-                                    <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $rkpd['id'] ?>)">
-                                        <i class="fas fa-trash me-1"></i>Hapus
+                            <!-- Status - show only once per RKPD -->
+                            <?php if ($i === 0): ?>
+                                <td class="border p-2" rowspan="<?= $rowspanRkpd ?>">
+                                    <?php 
+                                        $status = $rkpd['status'] ?? 'draft';
+                                        $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning';
+                                    ?>
+                                    <button 
+                                        class="badge <?= $badgeClass ?> border-0" 
+                                        onclick="toggleStatus(<?= $rkpd['id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" 
+                                        style="cursor: pointer;" 
+                                        title="Klik untuk mengubah status">
+                                        <?= ucfirst($status) ?>
                                     </button>
-                                </div>
-                            </td>
-                        <?php endif; ?>
-                    </tr>
+                                </td>
+                            <?php endif; ?>
+
+                            <!-- Action - show only once per RKPD -->
+                            <?php if ($i === 0): ?>
+                                <td class="border p-2 align-middle text-center" rowspan="<?= $rowspanRkpd ?>">
+                                    <div class="d-flex flex-column align-items-center gap-2">
+                                        <a href="<?= base_url('adminkab/rkpd/edit/' . $rkpd['id']) ?>" class="btn btn-success btn-sm">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $rkpd['id'] ?>)">
+                                            <i class="fas fa-trash me-1"></i>Hapus
+                                        </button>
+                                    </div>
+                                </td>
+                            <?php endif; ?>
+                        </tr>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
             <?php endforeach; ?>
             <?php endif; ?>
@@ -187,8 +242,12 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
-
+    </div> <!-- End of Content Wrapper -->
+    
   <script>
+  // Store original data for filtering
+  const originalData = <?= json_encode($rkpd_data ?? []) ?>;
+  
   // Function to toggle status via AJAX
   function toggleStatus(rkpdId) {
       if (confirm('Apakah Anda yakin ingin mengubah status RKPD ini?')) {
@@ -219,69 +278,195 @@
       }
   }
 
-  // Function to filter data using JavaScript (client-side) - RPJMD approach with groups
+  // Function to filter and rebuild table
   function filterData() {
+      const rpjmdSasaranFilter = document.getElementById('rpjmdSasaranFilter').value;
       const yearFilter = document.getElementById('yearFilter').value;
       const statusFilter = document.getElementById('statusFilter').value;
       
-      const rows = document.querySelectorAll('.rkpd-row');
+      // Filter original data
+      const filteredData = originalData.filter(function(rkpd) {
+          const statusMatch = statusFilter === 'all' || rkpd.status === statusFilter;
+          
+          const rpjmdSasaranMatch = rpjmdSasaranFilter === 'all' || 
+              rkpd.rpjmd_sasaran === rpjmdSasaranFilter;
+          
+          // Check if any indicator matches the year filter
+          const yearMatch = yearFilter === 'all' || 
+              rkpd.indikator.some(function(indikator) {
+                  return indikator.tahun === yearFilter;
+              });
+          
+          return statusMatch && rpjmdSasaranMatch && yearMatch;
+      });
+      
+      // If year filter is applied, filter indicators within each RKPD
+      const processedData = filteredData.map(function(rkpd) {
+          if (yearFilter === 'all') {
+              return rkpd;
+          } else {
+              return {
+                  ...rkpd,
+                  indikator: rkpd.indikator.filter(function(indikator) {
+                      return indikator.tahun === yearFilter;
+                  })
+              };
+          }
+      });
+      
+      // Rebuild table
+      rebuildTable(processedData);
+      
+      // Update summary
+      const totalIndicators = processedData.reduce((sum, rkpd) => sum + rkpd.indikator.length, 0);
+      const originalTotal = originalData.reduce((sum, rkpd) => sum + rkpd.indikator.length, 0);
+      updateDataSummary(totalIndicators, originalTotal, rpjmdSasaranFilter, yearFilter, statusFilter);
+  }
+  
+  // Function to rebuild table with filtered data
+  function rebuildTable(data) {
+      const tbody = document.querySelector('tbody');
       const noDataMessage = document.getElementById('no-data-message');
-      let visibleCount = 0;
       
-      // Hide all rows first
-      rows.forEach(function(row) {
-          row.style.display = 'none';
-      });
+      // Clear existing rows except no-data message
+      const existingRows = tbody.querySelectorAll('tr:not(#no-data-message)');
+      existingRows.forEach(row => row.remove());
       
-      // Group rows by RKPD group and check filters
-      const rkpdGroups = {};
-      rows.forEach(function(row) {
-          const rkpdGroupId = row.getAttribute('data-rkpd-group');
-          if (!rkpdGroups[rkpdGroupId]) {
-              rkpdGroups[rkpdGroupId] = [];
-          }
-          rkpdGroups[rkpdGroupId].push(row);
-      });
-      
-      // Process each RKPD group
-      Object.keys(rkpdGroups).forEach(function(rkpdGroupId) {
-          const groupRows = rkpdGroups[rkpdGroupId];
-          const firstRow = groupRows[0];
-          const rkpdStatus = firstRow.getAttribute('data-status');
-          
-          // Check if status matches
-          const statusMatch = statusFilter === 'all' || rkpdStatus === statusFilter;
-          
-          // Check if any row in this group has matching year
-          let yearMatch = yearFilter === 'all';
-          if (!yearMatch) {
-              yearMatch = groupRows.some(function(row) {
-                  return row.getAttribute('data-year') === yearFilter;
-              });
-          }
-          
-          // Show entire group if criteria match
-          if (statusMatch && yearMatch) {
-              groupRows.forEach(function(row) {
-                  row.style.display = '';
-                  visibleCount++;
-              });
-          }
-      });
-      
-      // Show/hide no data message
-      if (visibleCount === 0 && rows.length > 0) {
+      if (data.length === 0) {
           noDataMessage.style.display = '';
-      } else {
-          noDataMessage.style.display = 'none';
+          return;
       }
       
-      // Update data summary
-      updateDataSummary(visibleCount, rows.length, yearFilter, statusFilter);
+      noDataMessage.style.display = 'none';
+      
+      // Group data by rpjmd_sasaran_id
+      const rpjmdGroups = {};
+      data.forEach(function(rkpd) {
+          const rpjmdSasaranId = rkpd.rpjmd_sasaran_id;
+          if (!rpjmdGroups[rpjmdSasaranId]) {
+              rpjmdGroups[rpjmdSasaranId] = {
+                  rpjmd_sasaran: rkpd.rpjmd_sasaran,
+                  rkpd_list: []
+              };
+          }
+          rpjmdGroups[rpjmdSasaranId].rkpd_list.push(rkpd);
+      });
+      
+      let globalNo = 1;
+      
+      Object.values(rpjmdGroups).forEach(function(rpjmdGroup) {
+          // Calculate total rows for this RPJMD group
+          let totalRowsForRpjmd = 0;
+          rpjmdGroup.rkpd_list.forEach(function(rkpd) {
+              totalRowsForRpjmd += rkpd.indikator.length;
+          });
+          
+          let isFirstRowOfRpjmd = true;
+          
+          rpjmdGroup.rkpd_list.forEach(function(rkpd) {
+              const indikatorList = rkpd.indikator;
+              const rowspanRkpd = indikatorList.length;
+              
+              if (rowspanRkpd === 0) return;
+              
+              indikatorList.forEach(function(indikator, i) {
+                  const row = document.createElement('tr');
+                  row.className = 'rkpd-row';
+                  row.setAttribute('data-status', rkpd.status || 'draft');
+                  row.setAttribute('data-year', indikator.tahun);
+                  row.setAttribute('data-rkpd-group', rkpd.id);
+                  
+                  let html = '';
+                  
+                  // Nomor - show only once per RPJMD group
+                  if (isFirstRowOfRpjmd) {
+                      html += `<td class="border p-2" rowspan="${totalRowsForRpjmd}">${globalNo++}</td>`;
+                  }
+                  
+                  // Sasaran RPJMD - show only once per RPJMD group
+                  if (isFirstRowOfRpjmd) {
+                      html += `<td class="border p-2 text-start" rowspan="${totalRowsForRpjmd}">${escapeHtml(rpjmdGroup.rpjmd_sasaran)}</td>`;
+                      isFirstRowOfRpjmd = false;
+                  }
+                  
+                  // Status - show only once per RKPD
+                  if (i === 0) {
+                      const status = rkpd.status || 'draft';
+                      const badgeClass = status === 'selesai' ? 'bg-success' : 'bg-warning';
+                      html += `
+                          <td class="border p-2" rowspan="${rowspanRkpd}">
+                              <button class="badge ${badgeClass} border-0" 
+                                      onclick="toggleStatus(${rkpd.id})" 
+                                      style="cursor: pointer;" 
+                                      title="Klik untuk mengubah status">
+                                  ${status.charAt(0).toUpperCase() + status.slice(1)}
+                              </button>
+                          </td>`;
+                  }
+                  
+                  // Sasaran RKPD - show only once per RKPD
+                  if (i === 0) {
+                      html += `<td class="border p-2 text-start" rowspan="${rowspanRkpd}">${escapeHtml(rkpd.sasaran)}</td>`;
+                  }
+                  
+                  // Indikator data
+                  html += `
+                      <td class="border p-2 text-start">${escapeHtml(indikator.indikator_sasaran)}</td>
+                      <td class="border p-2">${escapeHtml(indikator.satuan)}</td>
+                      <td class="border p-2">${escapeHtml(indikator.tahun)}</td>
+                      <td class="border p-2">${escapeHtml(indikator.target)}</td>`;
+                  
+                  // Action - show only once per RKPD
+                  if (i === 0) {
+                      html += `
+                          <td class="border p-2 align-middle text-center" rowspan="${rowspanRkpd}">
+                              <div class="d-flex flex-column align-items-center gap-2">
+                                  <a href="<?= base_url('adminkab/rkpd/edit/') ?>${rkpd.id}" class="btn btn-success btn-sm">
+                                      <i class="fas fa-edit me-1"></i>Edit
+                                  </a>
+                                  <button class="btn btn-danger btn-sm" onclick="confirmDelete(${rkpd.id})">
+                                      <i class="fas fa-trash me-1"></i>Hapus
+                                  </button>
+                              </div>
+                          </td>`;
+                  }
+                  
+                  row.innerHTML = html;
+                  tbody.insertBefore(row, noDataMessage);
+              });
+          });
+      });
+  }
+  
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+  }
+
+  // Function to populate rpjmd sasaran filter options
+  function populateRpjmdSasaranFilter() {
+      const rpjmdSasaranFilter = document.getElementById('rpjmdSasaranFilter');
+      const uniqueSasaran = [...new Set(originalData.map(rkpd => rkpd.rpjmd_sasaran))];
+      
+      // Clear existing options except the first one (All)
+      while (rpjmdSasaranFilter.children.length > 1) {
+          rpjmdSasaranFilter.removeChild(rpjmdSasaranFilter.lastChild);
+      }
+      
+      // Add unique sasaran rpjmd options
+      uniqueSasaran.forEach(function(sasaran) {
+          const option = document.createElement('option');
+          option.value = sasaran;
+          option.textContent = sasaran.length > 80 ? sasaran.substring(0, 80) + '...' : sasaran;
+          option.title = sasaran; // Full text in tooltip
+          rpjmdSasaranFilter.appendChild(option);
+      });
   }
 
   // Function to update data summary
-  function updateDataSummary(visibleCount, totalCount, yearFilter, statusFilter) {
+  function updateDataSummary(visibleCount, totalCount, rpjmdSasaranFilter, yearFilter, statusFilter) {
       const countElement = document.getElementById('visible-data-count');
       if (countElement) {
           countElement.textContent = `Menampilkan ${visibleCount} dari ${totalCount} data`;
@@ -291,10 +476,16 @@
       if (filtersElement) {
           let filterText = '';
           
-          if (yearFilter !== 'all') {
-              filterText += `Tahun ${yearFilter}`;
+          if (rpjmdSasaranFilter !== 'all') {
+              filterText += `Sasaran: ${rpjmdSasaranFilter.length > 50 ? rpjmdSasaranFilter.substring(0, 50) + '...' : rpjmdSasaranFilter}`;
           } else {
-              filterText += 'Semua Tahun';
+              filterText += 'Semua Sasaran';
+          }
+          
+          if (yearFilter !== 'all') {
+              filterText += `, Tahun ${yearFilter}`;
+          } else {
+              filterText += ', Semua Tahun';
           }
           
           if (statusFilter !== 'all') {
@@ -316,8 +507,11 @@
 
   // Initialize on page load
   document.addEventListener('DOMContentLoaded', function() {
+      // Populate rpjmd sasaran filter options
+      populateRpjmdSasaranFilter();
+      
       // Initialize data summary
-      const totalRows = document.querySelectorAll('.rkpd-row').length;
+      const totalRows = originalData.reduce((sum, rkpd) => sum + rkpd.indikator.length, 0);
       const countElement = document.getElementById('visible-data-count');
       if (countElement) {
           countElement.textContent = `Menampilkan ${totalRows} dari ${totalRows} data`;
@@ -325,7 +519,7 @@
       
       const filtersElement = document.getElementById('active-filters');
       if (filtersElement) {
-          filtersElement.textContent = 'Semua Tahun, Semua Status';
+          filtersElement.textContent = 'Semua Sasaran, Semua Tahun, Semua Status';
       }
   });
   </script>

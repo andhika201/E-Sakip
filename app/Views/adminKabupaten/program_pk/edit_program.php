@@ -20,8 +20,11 @@
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit Program PK</h2>
 
-      <form id="program-pk-form" method="POST" action="<?= base_url('adminkab/program_pk/save') ?>">
+      <form id="program-pk-form" method="POST" action="<?= base_url('adminkab/program_pk/update/' . ($program['id'] ?? '')) ?>">
         <?= csrf_field() ?>
+
+        <!-- Hidden field for program ID -->
+        <input type="hidden" name="id" value="<?= $program['id'] ?? '' ?>">
 
         <!-- Flash Messages -->
         <?php if (session()->getFlashdata('validation')) : ?>
@@ -36,23 +39,41 @@
             </div>
         <?php endif; ?>
 
-      <!-- Daftar Program PK -->
+        <?php if (session()->getFlashdata('success')) : ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <?= session()->getFlashdata('success') ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')) : ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <?= session()->getFlashdata('error') ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+      <!-- Program PK Data -->
       <section>
-        <div id="program-pk-container">
-          <!-- Program PK 1 -->
-          <div class="program-pk-item bg-light border rounded p-3 mb-3" data-index="0">
+        <div class="program-pk-container">
+          <div class="program-pk-item bg-light border rounded p-3 mb-3">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <label class="fw-medium">Program PK</label>
+              <label class="fw-medium">Edit Program PK</label>
             </div>
             <div class="row mb-3">
               <div class="col-md-8">
                 <label class="form-label">Program atau Kegiatan</label>
-                <textarea name="program_pk[0][program_kegiatan]" class="form-control border-secondary" rows="3" placeholder="Masukkan Program Kegiatan" required></textarea>
+                <textarea name="program_kegiatan" class="form-control border-secondary" rows="3" placeholder="Masukkan Program Kegiatan" required><?= esc($program['program_kegiatan'] ?? '') ?></textarea>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Anggaran (Rp)</label>
-                <input type="number" name="program_pk[0][anggaran]" class="form-control anggaran-input border-secondary" placeholder="0" min="0" step="1000" required>
+                <input type="number" name="anggaran" class="form-control anggaran-input border-secondary" placeholder="0" min="0" step="1" value="<?= isset($program['anggaran']) ? intval($program['anggaran']) : '' ?>" required>
                 <small class="text-muted">Contoh: 1000000 untuk Rp 1.000.000</small>
+                <?php if (isset($program['anggaran']) && $program['anggaran']): ?>
+                  <small class="text-info d-block">Anggaran Saat Ini: <?= 'Rp ' . number_format($program['anggaran'], 0, ',', '.') ?></small>
+                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -93,30 +114,28 @@
 
     // Alert untuk tombol simpan
     document.getElementById('program-pk-form').addEventListener('submit', function(e) {
-      const items = document.querySelectorAll('.program-pk-item');
+      const programKegiatan = document.querySelector('textarea[name="program_kegiatan"]').value.trim();
+      const anggaran = document.querySelector('input[name="anggaran"]').value;
+      
       let isValid = true;
-      items.forEach((item, index) => {
-        const programKegiatan = item.querySelector('textarea').value.trim();
-        const anggaran = item.querySelector('input[type="number"]').value;
-        if (!programKegiatan) {
-          alert(`Program Kegiatan ${index + 1} tidak boleh kosong`);
-          isValid = false;
-          return;
-        }
-        if (!anggaran || parseFloat(anggaran) <= 0) {
-          alert(`Anggaran Program ${index + 1} harus lebih dari 0`);
-          isValid = false;
-          return;
-        }
-      });
+      
+      if (!programKegiatan) {
+        alert('Program Kegiatan tidak boleh kosong');
+        isValid = false;
+      }
+      
+      if (!anggaran || parseFloat(anggaran) <= 0) {
+        alert('Anggaran harus lebih dari 0');
+        isValid = false;
+      }
+      
       if (!isValid) {
         e.preventDefault();
         return;
       }
-      if (!confirm('Yakin ingin menyimpan data program PK?')) {
+      
+      if (!confirm('Yakin ingin memperbarui data program PK?')) {
         e.preventDefault();
-      } else {
-        alert('Data program PK berhasil disimpan!');
       }
     });
   </script>

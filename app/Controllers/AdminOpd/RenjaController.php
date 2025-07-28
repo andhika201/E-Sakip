@@ -173,6 +173,16 @@ class RenjaController extends BaseController
 
         try {
             $data = $this->request->getPost();
+
+            $session = session();
+            $opdId = $session->get('opd_id');
+
+            if (!$opdId) {
+                return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+            }
+
+            // Inject opd_id into data for model (needed when creating new sasaran via edit form)
+            $data['opd_id'] = $opdId;
             
             if (!isset($data['renja_sasaran_id']) || empty($data['renja_sasaran_id'])) {
                 session()->setFlashdata('error', 'ID RENJA Sasaran tidak ditemukan');
@@ -180,10 +190,9 @@ class RenjaController extends BaseController
             }
 
             $renjaSasaranId = $data['renja_sasaran_id'];
-
+            
             // Use the updateCompleteRenja method
             $result = $this->renjaModel->updateCompleteRenja($renjaSasaranId, $data);
-
            
             if ($result) {
                 session()->setFlashdata('success', 'Data RENJA berhasil diupdate');

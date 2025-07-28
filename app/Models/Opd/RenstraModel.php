@@ -691,7 +691,6 @@ class RenstraModel extends Model
     }
  
 
-
     /**
      * Update complete Renstra data
      */
@@ -726,6 +725,17 @@ class RenstraModel extends Model
             // Insert new indikator and targets
             if (isset($data['indikator_sasaran']) && is_array($data['indikator_sasaran'])) {
                 foreach ($data['indikator_sasaran'] as $indikator) {
+                    // Skip if indikator is not an array or is empty
+                    if (!is_array($indikator) || empty($indikator)) {
+                        continue;
+                    }
+                    
+                    // Skip if required fields are missing
+                    if (!isset($indikator['indikator_sasaran']) || empty($indikator['indikator_sasaran']) ||
+                        !isset($indikator['satuan']) || empty($indikator['satuan'])) {
+                        continue;
+                    }
+                    
                     $indikatorData = [
                         'renstra_sasaran_id' => $sasaranId,
                         'indikator_sasaran' => $indikator['indikator_sasaran'],
@@ -738,6 +748,12 @@ class RenstraModel extends Model
                     // Insert Target Tahunan
                     if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
                         foreach ($indikator['target_tahunan'] as $target) {
+                            // Skip if target data is incomplete
+                            if (!is_array($target) || !isset($target['tahun']) || !isset($target['target']) ||
+                                empty($target['tahun']) || empty($target['target'])) {
+                                continue;
+                            }
+                            
                             $targetData = [
                                 'renstra_indikator_id' => $indikatorId,
                                 'tahun' => $target['tahun'],
@@ -768,6 +784,24 @@ class RenstraModel extends Model
         $this->db->transStart();
 
         try {
+            // First, delete all RENJA data that references this RENSTRA sasaran
+            $renjaSasaranList = $this->db->table('renja_sasaran')
+                ->where('renstra_sasaran_id', $sasaranId)
+                ->get()
+                ->getResultArray();
+            
+            foreach ($renjaSasaranList as $renjaSasaran) {
+                // Delete RENJA indikator sasaran first
+                $this->db->table('renja_indikator_sasaran')
+                    ->where('renja_sasaran_id', $renjaSasaran['id'])
+                    ->delete();
+            }
+            
+            // Delete all RENJA sasaran that reference this RENSTRA sasaran
+            $this->db->table('renja_sasaran')
+                ->where('renstra_sasaran_id', $sasaranId)
+                ->delete();
+
             // Get indikator IDs first
             $indikatorList = $this->getIndikatorSasaranBySasaranId($sasaranId);
             

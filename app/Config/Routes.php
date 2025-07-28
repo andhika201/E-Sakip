@@ -38,7 +38,6 @@ $routes->post('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 $routes->delete('adminkab/rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
 // RPJMD Status Management Routes
 $routes->post('adminkab/rpjmd/update-status', 'RpjmdController::updateStatus');
-$routes->get('adminkab/rpjmd/toggle-status/(:num)', 'RpjmdController::toggleStatus/$1');
 
 
 // RKPD Routes
@@ -52,7 +51,6 @@ $routes->post('adminkab/rkpd/delete/(:num)', 'RkpdController::delete/$1');
 $routes->delete('adminkab/rkpd/delete/(:num)', 'RkpdController::delete/$1');
 // RKPD Status Management Routes
 $routes->post('adminkab/rkpd/update-status', 'RkpdController::updateStatus');
-$routes->get('adminkab/rkpd/toggle-status/(:num)', 'RkpdController::toggleStatus/$1');
 
 
 // PK Bupati Routes
@@ -95,10 +93,11 @@ $routes->get('adminopd/renstra/tambah', 'AdminOpd\RenstraController::tambah_rens
 $routes->get('adminopd/renstra/edit/(:num)', 'AdminOpd\RenstraController::edit/$1');
 $routes->post('adminopd/renstra/save', 'AdminOpd\RenstraController::save');
 $routes->post('adminopd/renstra/update/(:num)', 'AdminOpd\RenstraController::update/$1');
+$routes->get('adminopd/renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
+$routes->post('adminopd/renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
 $routes->delete('adminopd/renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
 // Renstra Status Management Routes
 $routes->post('adminopd/renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
-$routes->get('adminopd/renstra/toggle-status/(:num)', 'AdminOpd\RenstraController::toggleStatus/$1');
 
 
 // RENJA Routes
@@ -112,7 +111,7 @@ $routes->post('adminopd/renja/delete/(:num)', 'AdminOpd\RenjaController::delete/
 $routes->delete('adminopd/renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
 // RENJA Status Management Routes
 $routes->post('adminopd/renja/update-status', 'AdminOpd\RenjaController::updateStatus');
-$routes->get('adminopd/renja/toggle-status/(:num)', 'AdminOpd\RenjaController::toggleStatus/$1');
+// $routes->get('adminopd/renja/toggle-status/(:num)', 'AdminOpd\RenjaController::toggleStatus/$1');
 
     
 // IKU Routes

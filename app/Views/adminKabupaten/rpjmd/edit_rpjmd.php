@@ -156,12 +156,8 @@
                                         </div>
                                         <div class="col-md-4">
                                           <label class="form-label">Satuan</label>
-                                          <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][satuan]" class="form-select mb-3" required>
+                                          <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][satuan]" class="form-select satuan-select mb-3" data-selected="<?= esc($indikator_sasaran['satuan'] ?? '') ?>" required>
                                             <option value="">Pilih Satuan</option>
-                                            <option value="Unit" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Unit' ? 'selected' : '' ?>>Unit</option>
-                                            <option value="Nilai" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Nilai' ? 'selected' : '' ?>>Nilai</option>
-                                            <option value="Persen" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Persen' ? 'selected' : '' ?>>Persen</option>
-                                            <option value="Predikat" <?= isset($indikator_sasaran['satuan']) && $indikator_sasaran['satuan'] == 'Predikat' ? 'selected' : '' ?>>Predikat</option>
                                           </select>
                                         </div>
                                       </div>
@@ -180,18 +176,19 @@
                                             <?php foreach ($indikator_sasaran['target_tahunan'] as $target_index => $target): ?>
                                               <div class="target-item row g-2 align-items-center mb-2">
                                                 <div class="col-auto">
-                                                  <input type="hidden" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $target_index ?>][id]" value="<?= isset($target['id']) ? $target['id'] : '' ?>">
                                                   <input type="number" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $target_index ?>][tahun]" value="<?= esc($target['tahun'] ?? '') ?>" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                                                 </div>
                                                 <div class="col">
                                                   <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $target_index ?>][target_tahunan]" value="<?= esc($target['target_tahunan'] ?? '') ?>" class="form-control form-control-sm" placeholder="Contoh: 75" required>
                                                 </div>
+                                                <!-- Hidden field for target ID -->
+                                                <input type="hidden" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $target_index ?>][id]" value="<?= $target['id'] ?? '' ?>">
                                               </div>
                                             <?php endforeach; ?>
                                           <?php else: ?>
                                             <!-- Default 5-year targets if none exist -->
                                             <?php 
-                                            $start_year = isset($misi['tahun_mulai']) ? (int)$misi['tahun_mulai'] : 2025;
+                                            $start_year = isset($rpjmd_complete['tahun_mulai']) ? (int)$rpjmd_complete['tahun_mulai'] : 2025;
                                             for ($i = 0; $i < 5; $i++): 
                                             ?>
                                               <div class="target-item row g-2 align-items-center mb-2">
@@ -201,6 +198,8 @@
                                                 <div class="col">
                                                   <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $i ?>][target_tahunan]" value="" class="form-control form-control-sm" placeholder="Contoh: <?= 75 + $i * 2 ?>" required>
                                                 </div>
+                                                <!-- Hidden field for target ID (empty for new targets) -->
+                                                <input type="hidden" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][<?= $indikator_sasaran_index ?>][target_tahunan][<?= $i ?>][id]" value="">
                                               </div>
                                             <?php endfor; ?>
                                           <?php endif; ?>
@@ -224,12 +223,8 @@
                                       </div>
                                       <div class="col-md-4">
                                         <label class="form-label">Satuan</label>
-                                        <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                        <select name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
                                           <option value="">Pilih Satuan</option>
-                                          <option value="Unit">Unit</option>
-                                          <option value="Nilai">Nilai</option>
-                                          <option value="Persen">Persen</option>
-                                          <option value="Predikat">Predikat</option>
                                         </select>
                                       </div>
                                     </div>
@@ -245,7 +240,7 @@
                                       <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                                       <div class="target-container">
                                         <?php 
-                                        $start_year = isset($misi['tahun_mulai']) ? (int)$misi['tahun_mulai'] : 2025;
+                                        $start_year = isset($rpjmd_complete['tahun_mulai']) ? (int)$rpjmd_complete['tahun_mulai'] : 2025;
                                         for ($i = 0; $i < 5; $i++): 
                                         ?>
                                           <div class="target-item row g-2 align-items-center mb-2">
@@ -255,6 +250,8 @@
                                             <div class="col">
                                               <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][target_tahunan][<?= $i ?>][target_tahunan]" value="" class="form-control form-control-sm" placeholder="Contoh: <?= 75 + $i * 2 ?>" required>
                                             </div>
+                                            <!-- Hidden field for target ID (empty for new targets) -->
+                                            <input type="hidden" name="tujuan[<?= $tujuan_index ?>][sasaran][<?= $sasaran_index ?>][indikator_sasaran][0][target_tahunan][<?= $i ?>][id]" value="">
                                           </div>
                                         <?php endfor; ?>
                                       </div>
@@ -304,12 +301,8 @@
                                   </div>
                                   <div class="col-md-4">
                                     <label class="form-label">Satuan</label>
-                                    <select name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                    <select name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
                                       <option value="">Pilih Satuan</option>
-                                      <option value="Unit">Unit</option>
-                                      <option value="Nilai">Nilai</option>
-                                      <option value="Persen">Persen</option>
-                                      <option value="Predikat">Predikat</option>
                                     </select>
                                   </div>
                                 </div>
@@ -325,7 +318,7 @@
                                   <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                                   <div class="target-container">
                                     <?php 
-                                    $start_year = isset($misi['tahun_mulai']) ? (int)$misi['tahun_mulai'] : 2025;
+                                    $start_year = isset($rpjmd_complete['tahun_mulai']) ? (int)$rpjmd_complete['tahun_mulai'] : 2025;
                                     for ($i = 0; $i < 5; $i++): 
                                     ?>
                                       <div class="target-item row g-2 align-items-center mb-2">
@@ -335,6 +328,8 @@
                                         <div class="col">
                                           <input type="text" name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][target_tahunan][<?= $i ?>][target_tahunan]" value="" class="form-control form-control-sm" placeholder="Contoh: <?= 75 + $i * 2 ?>" required>
                                         </div>
+                                        <!-- Hidden field for target ID (empty for new targets) -->
+                                        <input type="hidden" name="tujuan[<?= $tujuan_index ?>][sasaran][0][indikator_sasaran][0][target_tahunan][<?= $i ?>][id]" value="">
                                       </div>
                                     <?php endfor; ?>
                                   </div>
@@ -436,12 +431,8 @@
                               </div>
                               <div class="col-md-4">
                                 <label class="form-label">Satuan</label>
-                                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
+                                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
                                   <option value="">Pilih Satuan</option>
-                                  <option value="Unit">Unit</option>
-                                  <option value="Nilai">Nilai</option>
-                                  <option value="Persen">Persen</option>
-                                  <option value="Predikat">Predikat</option>
                                 </select>
                               </div>
                             </div>
@@ -457,7 +448,7 @@
                               <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                               <div class="target-container">
                                 <?php 
-                                $start_year = isset($misi['tahun_mulai']) ? (int)$misi['tahun_mulai'] : 2025;
+                                $start_year = isset($rpjmd_complete['tahun_mulai']) ? (int)$rpjmd_complete['tahun_mulai'] : 2025;
                                 for ($i = 0; $i < 5; $i++): 
                                 ?>
                                   <div class="target-item row g-2 align-items-center mb-2">
@@ -522,6 +513,15 @@
   <script>
     // Inisialisasi data untuk edit form
     document.addEventListener('DOMContentLoaded', function() {
+      // Populate all satuan selects with options from JavaScript helper
+      document.querySelectorAll('.satuan-select').forEach(select => {
+        const selectedValue = select.getAttribute('data-selected') || '';
+        select.innerHTML = generateSatuanOptions();
+        if (selectedValue) {
+          select.value = selectedValue;
+        }
+      });
+
       // Update periode pada load
       updatePeriodeTahun();
       

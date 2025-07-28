@@ -10,6 +10,9 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
+    <!-- Content Wrapper -->
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+
   <!-- Navbar/Header -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
 
@@ -51,11 +54,12 @@
             <tr>
                 <th class="border p-2">NO</th>
                 <th class="border p-2">TAHUN LAPORAN</th>
-                <th class="border p-2">PERIODE LAPORAN</th>
-                <th class="border p-2">JENIS LAPORAN</th>
-                <th class="border p-2">STATUS</th>
+                <th class="border p-2">JUDUL LAPORAN</th>
+                <th class="border p-2">CAPAIAN SEBELUMNYA</th>
+                <th class="border p-2">TARGET</th>
                 <th class="border p-2">TANGGAL UPLOAD</th>
                 <th class="border p-2">FILE</th>
+                <th class="border p-2">STATUS</th>
                 <th class="border p-2">ACTION</th>
             </tr>
             </thead>
@@ -64,17 +68,18 @@
                 <td class="border p-2">1</td>
                 <td class="border p-2">2023</td>
                 <td class="border p-2">Januari - Desember 2023</td>
-                <td class="border p-2">LAKIP Tahunan</td>
-                <td class="border p-2"><span class="badge bg-success">Selesai</span></td>
+                <td class="border p-2">99</td>
+                <td class="border p-2">99</td>
                 <td class="border p-2">15/01/2024</td>
                 <td class="border p-2">
                     <a href="#" class="text-primary">
                         <i class="fas fa-download me-1"></i>Download
                     </a>
                 </td>
+                <td class="border p-2"><span class="badge bg-success">Selesai</span></td>
                 <td class="border p-2">
-                <div class="d-flex align-items-center justify-content-center gap-2">
-                    <a href="#" class="text-success">
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                        <a href="#" class="text-success">
                     <i class="fas fa-edit"></i>
                 </a>
                     <button class="btn btn-link text-danger p-0"><i class="fas fa-trash"></i></button>
@@ -89,5 +94,6 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+</div> <!-- End of Content Wrapper -->
 </body>
 </html>

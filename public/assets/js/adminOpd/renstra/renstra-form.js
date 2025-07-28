@@ -32,6 +32,53 @@ function populateAllSatuanSelects() {
     });
 }
 
+$(document).ready(function() {
+    // Initialize satuan options untuk form yang sudah ada
+    populateAllSatuanSelects();
+    
+    // Initialize Select2 for existing elements
+    initializeSelect2();
+
+    // Function to initialize Select2 on elements
+    function initializeSelect2() {
+    // Initialize Select2 for RPJMD Sasaran dropdown
+    $('#rpjmd-sasaran-select').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
+        allowClear: true,
+        width: '100%'
+    });
+    }
+
+    // Re-initialize Select2 when new elements are added
+    $(document).on('click', '.add-indikator-sasaran, #add-sasaran-renstra', function() {
+        setTimeout(function() {
+            initializeSelect2();
+        }, 100);
+    });
+
+    // Handle selection change
+    $('#rpjmd-sasaran-select').on('change', function() {
+    var selectedOption = $(this).find('option:selected');
+        
+        if (selectedOption.val()) {
+            
+            // Show selected info (optional)
+            showSelectedInfo(selectedOption.text());
+        }
+    });
+
+    // Function to show selected sasaran info
+    function showSelectedInfo(sasaran) {
+        var infoHtml = '<div class="alert alert-info alert-dismissible fade show mt-2" role="alert">' +
+            '<strong>Sasaran RPJMD Terpilih:</strong> ' + sasaran +
+            '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+        '</div>';
+        
+        $('#alert-container').html(infoHtml);
+    }
+});
+
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
     document.querySelectorAll('.sasaran-renstra-item').forEach((sasaranItem, sasaranIndex) => {
@@ -57,15 +104,20 @@ function updateFormNames() {
     document.querySelectorAll('.sasaran-renstra-item').forEach((sasaranItem, sasaranIndex) => {
         // Update sasaran renstra names
         const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran"]');
+        const sasaranIdInput = sasaranItem.querySelector('input[name*="[id]"]');
         
         if (sasaranTextarea) {
             sasaranTextarea.name = `sasaran_renstra[${sasaranIndex}][sasaran]`;
+        }
+        if (sasaranIdInput) {
+            sasaranIdInput.name = `sasaran_renstra[${sasaranIndex}][id]`;
         }
 
         // Update indikator sasaran names
         sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorItem, indikatorIndex) => {
             const indikatorTextarea = indikatorItem.querySelector('textarea[name*="indikator_sasaran"]');
             const satuanSelect = indikatorItem.querySelector('select[name*="satuan"]');
+            const idInput = indikatorItem.querySelector('input[name*="[id]"]');
             
             if (indikatorTextarea) {
                 indikatorTextarea.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
@@ -73,17 +125,24 @@ function updateFormNames() {
             if (satuanSelect) {
                 satuanSelect.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][satuan]`;
             }
+            if (idInput) {
+                idInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][id]`;
+            }
 
             // Update nama field target tahunan
             indikatorItem.querySelectorAll('.target-item').forEach((targetItem, targetIndex) => {
                 const targetInput = targetItem.querySelector('input[type="text"]');
                 const tahunInput = targetItem.querySelector('.tahun-target');
+                const targetIdInput = targetItem.querySelector('input[name*="[id]"]');
                 
                 if (targetInput) {
                     targetInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target_tahunan][${targetIndex}][target]`;
                 }
                 if (tahunInput) {
                     tahunInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target_tahunan][${targetIndex}][tahun]`;
+                }
+                if (targetIdInput) {
+                    targetIdInput.name = `sasaran_renstra[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target_tahunan][${targetIndex}][id]`;
                 }
             });
         });
@@ -206,21 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Populate satuan selects untuk sasaran baru
             populateAllSatuanSelects();
-            
-            // Trigger Select2 initialization for new elements
-            if (typeof $ !== 'undefined' && $.fn.select2) {
-                setTimeout(function() {
-                    $('.satuan-select').each(function() {
-                        if (!$(this).hasClass('select2-hidden-accessible')) {
-                            $(this).select2({
-                                placeholder: "Pilih atau ketik untuk mencari satuan...",
-                                allowClear: true,
-                                width: '100%'
-                            });
-                        }
-                    });
-                }, 100);
-            }
+    
         });
     }
 });
@@ -311,36 +356,6 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
     
     // Populate satuan selects untuk indikator baru
     populateAllSatuanSelects();
-    
-    // Trigger Select2 initialization for new elements
-    if (typeof $ !== 'undefined' && $.fn.select2) {
-        setTimeout(function() {
-            $('.satuan-select').each(function() {
-                if (!$(this).hasClass('select2-hidden-accessible')) {
-                    $(this).select2({
-                        placeholder: "Pilih atau ketik untuk mencari satuan...",
-                        allowClear: true,
-                        width: '100%'
-                    });
-                }
-            });
-        }, 100);
-    }
-    
-    // Trigger Select2 initialization for new elements
-    if (typeof $ !== 'undefined' && $.fn.select2) {
-        setTimeout(function() {
-            $('.satuan-select').each(function() {
-                if (!$(this).hasClass('select2-hidden-accessible')) {
-                    $(this).select2({
-                        placeholder: "Pilih atau ketik untuk mencari satuan...",
-                        allowClear: true,
-                        width: '100%'
-                    });
-                }
-            });
-        }, 100);
-    }
 }
 
 // Event delegation untuk semua tombol

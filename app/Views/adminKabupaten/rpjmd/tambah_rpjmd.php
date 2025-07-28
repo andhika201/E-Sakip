@@ -127,12 +127,7 @@
                           </div>
                           <div class="col-md-4">
                             <label class="form-label">Satuan</label>
-                            <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
-                              <option value="">Pilih Satuan</option>
-                              <option value="Unit">Unit</option>
-                              <option value="Nilai">Nilai</option>
-                              <option value="Persen">Persen</option>
-                              <option value="Predikat">Predikat</option>
+                            <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
                             </select>
                           </div>
                         </div>
@@ -234,5 +229,17 @@
 
   <!-- JavaScript Funtion For Handling RPJMD Form-->
   <script src="<?= base_url('assets/js/adminKabupaten/rpjmd/rpjmd-form.js') ?>"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Isi semua dropdown satuan dengan class 'satuan-select'
+      const satuanSelects = document.querySelectorAll('.satuan-select');
+      satuanSelects.forEach(select => {
+        if (typeof generateSatuanOptions === 'function') {
+          select.innerHTML = generateSatuanOptions();
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -4,9 +4,14 @@
 function generateSatuanOptions() {
     const satuanOptions = [
         { value: "", text: "Pilih Satuan" },
+        { value: "Persen", text: "Persen (%)" },
+        { value: "Orang", text: "Orang" },
         { value: "Unit", text: "Unit" },
+        { value: "Dokumen", text: "Dokumen" },
+        { value: "Kegiatan", text: "Kegiatan" },
+        { value: "Rupiah", text: "Rupiah" },
+        { value: "Index", text: "Index" },
         { value: "Nilai", text: "Nilai" },
-        { value: "Persen", text: "Persen" },
         { value: "Predikat", text: "Predikat" }
     ];
     
@@ -14,6 +19,21 @@ function generateSatuanOptions() {
         `<option value="${option.value}">${option.text}</option>`
     ).join('\n                        ');
 }
+
+// Fungsi untuk populate semua select satuan
+function populateAllSatuanSelects() {
+    const satuanSelects = document.querySelectorAll('.satuan-select');
+    
+    satuanSelects.forEach(select => {
+        const currentValue = select.value;
+        const selectedValue = select.getAttribute('data-selected') || currentValue;
+        select.innerHTML = generateSatuanOptions();
+        if (selectedValue) {
+            select.value = selectedValue;
+        }
+    });
+}
+
 
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
@@ -61,87 +81,87 @@ function updateLabels() {
 // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
 function updateFormNames() {
     document.querySelectorAll('.tujuan-item').forEach((tujuanItem, tujuanIndex) => {
-    // Update tujuan names
-    const tujuanTextarea = tujuanItem.querySelector('textarea[name*="tujuan_rpjmd"]');
-    if (tujuanTextarea) {
-        tujuanTextarea.name = `tujuan[${tujuanIndex}][tujuan_rpjmd]`;
-    }
-    
-    // Update tujuan hidden ID if exists
-    const tujuanIdInput = tujuanItem.querySelector('input[type="hidden"][name*="id"]');
-    if (tujuanIdInput) {
-        tujuanIdInput.name = `tujuan[${tujuanIndex}][id]`;
-    }
-
-    // Update indikator tujuan names
-    tujuanItem.querySelectorAll('.indikator-tujuan-item').forEach((indikatorTujuanItem, indikatorTujuanIndex) => {
-        const indikatorInput = indikatorTujuanItem.querySelector('input.form-control');
-        if (indikatorInput) {
-        indikatorInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][indikator_tujuan]`;
-        }
+        // Update tujuan names
+        const tujuanTextarea = tujuanItem.querySelector('textarea[name*="tujuan_rpjmd"]');
+        const tujuanIdInput = tujuanItem.querySelector('input[type="hidden"][name*="tujuan"][name*="[id]"]');
         
-        // Update indikator tujuan hidden ID if exists
-        const indikatorIdInput = indikatorTujuanItem.querySelector('input[type="hidden"][name*="id"]');
-        if (indikatorIdInput) {
-        indikatorIdInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][id]`;
+        if (tujuanTextarea) {
+            tujuanTextarea.name = `tujuan[${tujuanIndex}][tujuan_rpjmd]`;
         }
-    });
-
-    // Update sasaran names
-    tujuanItem.querySelectorAll('.sasaran-item').forEach((sasaranItem, sasaranIndex) => {
-        const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran_rpjmd"]');
-        if (sasaranTextarea) {
-        sasaranTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][sasaran_rpjmd]`;
-        }
-        
-        // Update sasaran hidden ID if exists
-        const sasaranIdInput = sasaranItem.querySelector('input[type="hidden"][name*="id"]');
-        if (sasaranIdInput) {
-        sasaranIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][id]`;
+        if (tujuanIdInput) {
+            tujuanIdInput.name = `tujuan[${tujuanIndex}][id]`;
         }
 
-        // Update indikator sasaran names
-        sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorSasaranItem, indikatorSasaranIndex) => {
-        const indikatorInput = indikatorSasaranItem.querySelector('input[name*="indikator_sasaran"]');
-        const satuanInput = indikatorSasaranItem.querySelector('select[name*="satuan"]');
-        const definisi_opTextarea = indikatorSasaranItem.querySelector('textarea[name*="definisi_op"]');
-        
-        if (indikatorInput) {
-            indikatorInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][indikator_sasaran]`;
-        }
-        if (satuanInput) {
-            satuanInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][satuan]`;
-        }
-        if (definisi_opTextarea) {
-            definisi_opTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][definisi_op]`;
-        }
-        
-        // Update indikator sasaran hidden ID if exists
-        const indikatorSasaranIdInput = indikatorSasaranItem.querySelector('input[type="hidden"][name*="id"]');
-        if (indikatorSasaranIdInput) {
-            indikatorSasaranIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][id]`;
-        }
-
-        // Update target names for 5-year plan
-        indikatorSasaranItem.querySelectorAll('.target-item').forEach((targetItem, targetIndex) => {
-            const tahunInput = targetItem.querySelector('.tahun-target');
-            const targetInput = targetItem.querySelector('input[name*="target_tahunan"]:not(.tahun-target)');
+        // Update indikator tujuan names
+        tujuanItem.querySelectorAll('.indikator-tujuan-item').forEach((indikatorTujuanItem, indikatorTujuanIndex) => {
+            const indikatorInput = indikatorTujuanItem.querySelector('input[name*="indikator_tujuan"]:not([type="hidden"])');
+            const indikatorIdInput = indikatorTujuanItem.querySelector('input[type="hidden"][name*="indikator_tujuan"][name*="[id]"]');
             
-            if (tahunInput) {
-            tahunInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][tahun]`;
+            if (indikatorInput) {
+                indikatorInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][indikator_tujuan]`;
             }
-            if (targetInput) {
-            targetInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][target_tahunan]`;
-            }
-            
-            // Update target tahunan hidden ID if exists
-            const targetIdInput = targetItem.querySelector('input[type="hidden"][name*="id"]');
-            if (targetIdInput) {
-            targetIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][id]`;
+            if (indikatorIdInput) {
+                indikatorIdInput.name = `tujuan[${tujuanIndex}][indikator_tujuan][${indikatorTujuanIndex}][id]`;
             }
         });
+
+        // Update sasaran names
+        tujuanItem.querySelectorAll('.sasaran-item').forEach((sasaranItem, sasaranIndex) => {
+            const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran_rpjmd"]');
+            const sasaranIdInput = sasaranItem.querySelector('input[type="hidden"][name*="sasaran"][name*="[id]"]:not([name*="indikator"])');
+            
+            if (sasaranTextarea) {
+                sasaranTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][sasaran_rpjmd]`;
+            }
+            if (sasaranIdInput) {
+                sasaranIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][id]`;
+            }
+
+            // Update indikator sasaran names
+            sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach((indikatorSasaranItem, indikatorSasaranIndex) => {
+                const indikatorInput = indikatorSasaranItem.querySelector('input[name*="indikator_sasaran"]:not([type="hidden"])');
+                const satuanSelect = indikatorSasaranItem.querySelector('select[name*="satuan"]');
+                const definisiOpTextarea = indikatorSasaranItem.querySelector('textarea[name*="definisi_op"]');
+                const indikatorIdInput = indikatorSasaranItem.querySelector('input[type="hidden"][name*="indikator_sasaran"][name*="[id]"]:not([name*="target"])');
+                
+                if (indikatorInput) {
+                    indikatorInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][indikator_sasaran]`;
+                }
+                if (satuanSelect) {
+                    satuanSelect.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][satuan]`;
+                }
+                if (definisiOpTextarea) {
+                    definisiOpTextarea.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][definisi_op]`;
+                }
+                if (indikatorIdInput) {
+                    indikatorIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][id]`;
+                }
+
+                // Fixed approach: More specific selectors untuk target fields
+                indikatorSasaranItem.querySelectorAll('.target-item').forEach((targetItem, targetIndex) => {
+                    // Lebih spesifik untuk menghindari konflik selector
+                    const tahunInput = targetItem.querySelector('input[type="number"].tahun-target');
+                    const targetInput = targetItem.querySelector('input[type="text"][name*="target_tahunan"]:not([type="hidden"]):not([type="number"])');
+                    const targetIdInput = targetItem.querySelector('input[type="hidden"][name*="target_tahunan"][name*="[id]"]');
+                    
+                    console.log(`Updating target ${targetIndex} in indikator ${indikatorSasaranIndex}:`, {
+                        tahunInput: tahunInput ? tahunInput.name : 'not found',
+                        targetInput: targetInput ? targetInput.name : 'not found',
+                        targetIdInput: targetIdInput ? targetIdInput.name : 'not found'
+                    });
+                    
+                    if (tahunInput) {
+                        tahunInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][tahun]`;
+                    }
+                    if (targetInput) {
+                        targetInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][target_tahunan]`;
+                    }
+                    if (targetIdInput) {
+                        targetIdInput.name = `tujuan[${tujuanIndex}][sasaran][${sasaranIndex}][indikator_sasaran][${indikatorSasaranIndex}][target_tahunan][${targetIndex}][id]`;
+                    }
+                });
+            });
         });
-    });
     });
 }
 
@@ -217,8 +237,8 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="col-md-4">
                     <label class="form-label">Satuan</label>
-                    <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
-                        ` + generateSatuanOptions() + `
+                    <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
+                        <option value="">Pilih Satuan</option>
                     </select>
                     </div>
                 </div>
@@ -233,6 +253,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     <div class="target-container">
                     <div class="target-item row g-2 align-items-center mb-2">
                         <div class="col-auto">
+                        <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][id]" value="">
                         <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                         </div>
                         <div class="col">
@@ -241,6 +262,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="target-item row g-2 align-items-center mb-2">
                         <div class="col-auto">
+                        <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][id]" value="">
                         <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                         </div>
                         <div class="col">
@@ -249,6 +271,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="target-item row g-2 align-items-center mb-2">
                         <div class="col-auto">
+                        <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][id]" value="">
                         <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                         </div>
                         <div class="col">
@@ -257,6 +280,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="target-item row g-2 align-items-center mb-2">
                         <div class="col-auto">
+                        <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][id]" value="">
                         <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                         </div>
                         <div class="col">
@@ -265,6 +289,7 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
                     </div>
                     <div class="target-item row g-2 align-items-center mb-2">
                         <div class="col-auto">
+                        <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][id]" value="">
                         <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                         </div>
                         <div class="col">
@@ -292,9 +317,22 @@ document.getElementById('add-tujuan').addEventListener('click', () => {
     `;
     
     tujuanContainer.appendChild(newTujuan);
+    
+    // Update labels dan form names
     updateLabels();
     updateFormNames();
-    updateTargetYears(); // Update tahun target untuk elemen baru
+    
+    // Update target years untuk tujuan baru
+    updateTargetYears();
+    
+    // Populate satuan select untuk tujuan baru saja
+    const newSatuanSelects = newTujuan.querySelectorAll('.satuan-select');
+    newSatuanSelects.forEach(select => {
+        select.innerHTML = generateSatuanOptions();
+    });
+    
+    // Update delete button visibility
+    updateDeleteButtonVisibility();
 });
 
 // Fungsi untuk menambahkan indikator tujuan
@@ -353,8 +391,8 @@ function addSasaranToTujuan(tujuanElement) {
             </div>
             <div class="col-md-4">
                 <label class="form-label">Satuan</label>
-                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
-                    ` + generateSatuanOptions() + `
+                <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
+                    <option value="">Pilih Satuan</option>
                 </select>
             </div>
             </div>
@@ -369,6 +407,7 @@ function addSasaranToTujuan(tujuanElement) {
             <div class="target-container">
                 <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
+                    <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][id]" value="">
                     <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                 </div>
                 <div class="col">
@@ -377,6 +416,7 @@ function addSasaranToTujuan(tujuanElement) {
                 </div>
                 <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
+                    <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][id]" value="">
                     <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                 </div>
                 <div class="col">
@@ -385,6 +425,7 @@ function addSasaranToTujuan(tujuanElement) {
                 </div>
                 <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
+                    <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][id]" value="">
                     <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                 </div>
                 <div class="col">
@@ -393,6 +434,7 @@ function addSasaranToTujuan(tujuanElement) {
                 </div>
                 <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
+                    <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][id]" value="">
                     <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                 </div>
                 <div class="col">
@@ -401,6 +443,7 @@ function addSasaranToTujuan(tujuanElement) {
                 </div>
                 <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
+                    <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][id]" value="">
                     <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                 </div>
                 <div class="col">
@@ -420,13 +463,27 @@ function addSasaranToTujuan(tujuanElement) {
     `;
     
     sasaranContainer.appendChild(newSasaran);
+    
+    // Update labels dan form names
     updateLabels();
     updateFormNames();
-    updateTargetYears(); // Update tahun target untuk elemen baru
+    
+    // Update target years untuk sasaran baru
+    updateTargetYears();
+    
+    // Populate satuan select untuk sasaran baru saja
+    const newSatuanSelects = newSasaran.querySelectorAll('.satuan-select');
+    newSatuanSelects.forEach(select => {
+        select.innerHTML = generateSatuanOptions();
+    });
+    
+    // Update delete button visibility
+    updateDeleteButtonVisibility();
 }
 
 // Fungsi untuk menambahkan indikator sasaran
 function addIndikatorSasaranToSasaran(sasaranElement) {
+    console.log('=== ADDING INDIKATOR SASARAN ===');
     const indikatorContainer = sasaranElement.querySelector('.indikator-sasaran-container');
     
     const newIndikator = document.createElement('div');
@@ -444,8 +501,8 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="col-md-4">
         <label class="form-label">Satuan</label>
-        <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select mb-3" required>
-            ` + generateSatuanOptions() + `
+        <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]" class="form-select satuan-select mb-3" required>
+            <option value="">Pilih Satuan</option>
         </select>
         </div>
     </div>
@@ -461,6 +518,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         <div class="target-container">
         <div class="target-item row g-2 align-items-center mb-2">
             <div class="col-auto">
+            <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][id]" value="">
             <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][0][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
             <div class="col">
@@ -469,6 +527,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="target-item row g-2 align-items-center mb-2">
             <div class="col-auto">
+            <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][id]" value="">
             <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][1][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
             <div class="col">
@@ -477,6 +536,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="target-item row g-2 align-items-center mb-2">
             <div class="col-auto">
+            <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][id]" value="">
             <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][2][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
             <div class="col">
@@ -485,6 +545,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="target-item row g-2 align-items-center mb-2">
             <div class="col-auto">
+            <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][id]" value="">
             <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][3][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
             <div class="col">
@@ -493,6 +554,7 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
         </div>
         <div class="target-item row g-2 align-items-center mb-2">
             <div class="col-auto">
+            <input type="hidden" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][id]" value="">
             <input type="number" name="tujuan[0][sasaran][0][indikator_sasaran][0][target_tahunan][4][tahun]" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
             <div class="col">
@@ -505,9 +567,36 @@ function addIndikatorSasaranToSasaran(sasaranElement) {
     
     indikatorContainer.appendChild(newIndikator);
     
+    console.log('New indikator sasaran element added');
+    
+    // Update labels dan form names
     updateLabels();
     updateFormNames();
+    
+    // Update target years untuk indikator baru
     updateTargetYears();
+    
+    console.log('=== AFTER ADDING INDIKATOR SASARAN ===');
+    // Debug: Log final structure
+    const allIndikatorItems = sasaranElement.querySelectorAll('.indikator-sasaran-item');
+    allIndikatorItems.forEach((item, index) => {
+        const targetItems = item.querySelectorAll('.target-item');
+        console.log(`Final indikator ${index} has ${targetItems.length} target items`);
+        targetItems.forEach((target, targetIndex) => {
+            const tahunInput = target.querySelector('input[type="number"].tahun-target');
+            const targetInput = target.querySelector('input[type="text"][name*="target_tahunan"]');
+            console.log(`  Target ${targetIndex}: tahun=${tahunInput?.value}, name=${targetInput?.name}`);
+        });
+    });
+    
+    // Populate satuan select untuk indikator baru saja
+    const newSatuanSelect = newIndikator.querySelector('.satuan-select');
+    if (newSatuanSelect) {
+        newSatuanSelect.innerHTML = generateSatuanOptions();
+    }
+    
+    // Update delete button visibility
+    updateDeleteButtonVisibility();
 }
 
 // Event delegation untuk semua tombol
@@ -526,8 +615,15 @@ document.addEventListener('click', function(e) {
     
     // Tombol tambah indikator sasaran
     if (e.target.classList.contains('add-indikator-sasaran') || e.target.closest('.add-indikator-sasaran')) {
-    const sasaranItem = e.target.closest('.sasaran-item');
-    addIndikatorSasaranToSasaran(sasaranItem);
+        console.log('=== ADDING NEW INDIKATOR SASARAN ===');
+        const sasaranItem = e.target.closest('.sasaran-item');
+        const currentIndikatorCount = sasaranItem.querySelectorAll('.indikator-sasaran-item').length;
+        console.log('Current indikator count before add:', currentIndikatorCount);
+        
+        addIndikatorSasaranToSasaran(sasaranItem);
+        
+        const newIndikatorCount = sasaranItem.querySelectorAll('.indikator-sasaran-item').length;
+        console.log('New indikator count after add:', newIndikatorCount);
     }
     
     // Tombol hapus tujuan
@@ -574,18 +670,54 @@ document.addEventListener('click', function(e) {
         }
     }
     
-    // Tombol hapus indikator sasaran
+    // Tombol hapus indikator sasaran - mengikuti pendekatan RENSTRA yang sederhana
     if (e.target.classList.contains('remove-indikator-sasaran') || e.target.closest('.remove-indikator-sasaran')) {
         const sasaranItem = e.target.closest('.sasaran-item');
         const indikatorSasaranItems = sasaranItem.querySelectorAll('.indikator-sasaran-item');
+        
         if (indikatorSasaranItems.length <= 1) {
-            alert('Minimal harus ada 1 Indikator Sasaran. Tidak dapat menghapus indikator terakhir.');
+            alert('Minimal harus ada 1 Indikator Sasaran per Sasaran!');
             return;
         }
+        
         if (confirm('Hapus indikator sasaran ini dan target 5 tahunannya?')) {
+            console.log('=== BEFORE INDIKATOR SASARAN REMOVAL ===');
+            console.log('Current indikator count:', indikatorSasaranItems.length);
+            
+            // Debug: Log target field structure before removal
+            indikatorSasaranItems.forEach((item, index) => {
+                const targetItems = item.querySelectorAll('.target-item');
+                console.log(`Indikator ${index} has ${targetItems.length} target items`);
+                targetItems.forEach((target, targetIndex) => {
+                    const tahunInput = target.querySelector('input[type="number"].tahun-target');
+                    const targetInput = target.querySelector('input[type="text"][name*="target_tahunan"]');
+                    console.log(`  Target ${targetIndex}: tahun=${tahunInput?.value}, target=${targetInput?.value}`);
+                });
+            });
+            
             e.target.closest('.indikator-sasaran-item').remove();
+            
+            console.log('=== AFTER INDIKATOR SASARAN REMOVAL ===');
+            const remainingItems = sasaranItem.querySelectorAll('.indikator-sasaran-item');
+            console.log('Remaining indikator count:', remainingItems.length);
+            
+            // RENSTRA approach: Always update after removal
             updateLabels();
             updateFormNames();
+            updateTargetYears(); // Re-apply years after re-indexing
+            updateDeleteButtonVisibility();
+            
+            console.log('=== AFTER REINDEXING ===');
+            // Debug: Log target field structure after reindexing
+            remainingItems.forEach((item, index) => {
+                const targetItems = item.querySelectorAll('.target-item');
+                console.log(`Reindexed indikator ${index} has ${targetItems.length} target items`);
+                targetItems.forEach((target, targetIndex) => {
+                    const tahunInput = target.querySelector('input[type="number"].tahun-target');
+                    const targetInput = target.querySelector('input[type="text"][name*="target_tahunan"]');
+                    console.log(`  Target ${targetIndex}: tahun=${tahunInput?.value}, target=${targetInput?.value}, name=${targetInput?.name}`);
+                });
+            });
         }
     }
 });
@@ -594,16 +726,28 @@ document.addEventListener('click', function(e) {
 function updateTargetYears() {
     const periodeStart = parseInt(document.getElementById('periode_start').value);
     if (periodeStart && !isNaN(periodeStart)) {
-    // Update semua tahun target untuk setiap indikator sasaran
-    document.querySelectorAll('.indikator-sasaran-item').forEach((indikatorItem) => {
-        const targetItems = indikatorItem.querySelectorAll('.target-item');
-        targetItems.forEach((targetItem, index) => {
-        const tahunInput = targetItem.querySelector('.tahun-target');
-        if (tahunInput) {
-            tahunInput.value = periodeStart + index;
-        }
+        console.log('Updating target years with periode start:', periodeStart);
+        
+        // Update semua tahun target untuk setiap indikator sasaran
+        document.querySelectorAll('.indikator-sasaran-item').forEach((indikatorItem, indikatorIndex) => {
+            const targetItems = indikatorItem.querySelectorAll('.target-item');
+            console.log(`Processing indikator ${indikatorIndex} with ${targetItems.length} target items`);
+            
+            targetItems.forEach((targetItem, targetIndex) => {
+                // Gunakan selector yang sangat spesifik untuk field tahun
+                const tahunInput = targetItem.querySelector('input[type="number"].tahun-target');
+                
+                if (tahunInput) {
+                    const newYear = periodeStart + targetIndex;
+                    console.log(`Setting year for target ${targetIndex}: ${newYear}`);
+                    tahunInput.value = newYear;
+                } else {
+                    console.warn(`Tahun input not found for target ${targetIndex} in indikator ${indikatorIndex}`);
+                }
+            });
         });
-    });
+    } else {
+        console.log('Invalid periode start value:', document.getElementById('periode_start').value);
     }
 }
 
@@ -763,10 +907,14 @@ function setupKeyboardShortcuts() {
     });
 }
 
-// Initialize pada load
+// Initialize pada load - mengikuti pendekatan RENSTRA
 document.addEventListener('DOMContentLoaded', function() {
     updateLabels();
+    
+    // RENSTRA approach: ALWAYS call updateFormNames on load
+    // This ensures consistent form structure for both edit and create modes
     updateFormNames();
+    
     updateTargetYears(); // Initialize target years pada load
     
     // Setup form change tracking and warnings
@@ -775,7 +923,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupSaveConfirmation();
     setupKeyboardShortcuts();
     
-    console.log('Form protection initialized with keyboard shortcuts');
+    console.log('RPJMD form initialized with RENSTRA approach - consistent reindexing');
     
     // Show initial instruction to user
     setTimeout(() => {
@@ -862,13 +1010,13 @@ function validateMinimalRequirements() {
     return errors;
 }
 
-// Form submission handler
+// Form submission handler - mengikuti pendekatan RENSTRA yang lebih sederhana
 document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
     console.log('Form submission started...');
     
-    // Update form names before validation
+    // RENSTRA approach: Always update form names before submission
     updateFormNames();
     
     // Validasi minimal requirements
@@ -878,7 +1026,7 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
         return;
     }
     
-    // Basic validation only - simplified for debugging
+    // Basic validation
     const misi = document.querySelector('textarea[name="misi"]');
     const tahunMulai = document.querySelector('input[name="tahun_mulai"]');
     const tahunAkhir = document.querySelector('input[name="tahun_akhir"]');
@@ -934,7 +1082,7 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
     console.log('Form action:', this.action);
     console.log('Form method:', this.method);
     
-    // Konfirmasi sebelum submit jika ada perubahan
+    // Konfirmasi sebelum submit - RENSTRA style
     if (hasFormActuallyChanged() && !isSubmitting) {
         const modeInput = document.querySelector('input[name="mode"]');
         const isEditMode = modeInput && modeInput.value === 'edit';
@@ -953,39 +1101,26 @@ document.getElementById('rpjmd-form').addEventListener('submit', function(e) {
         isSubmitting = true;
     }
     
-    // Debug: Check if ID fields are present for edit mode
+    // Debug: Log form structure for verification
+    console.log('=== FINAL FORM STRUCTURE VERIFICATION ===');
+    
+    // Check ID fields for edit mode
     const modeInput = document.querySelector('input[name="mode"]');
     if (modeInput && modeInput.value === 'edit') {
-        console.log('=== EDIT MODE - CHECKING ID FIELDS ===');
+        console.log('Edit mode - checking ID preservation:');
         
-        // Check misi ID
-        const misiId = document.querySelector('input[name="id"]');
-        console.log('Misi ID:', misiId ? misiId.value : 'NOT FOUND');
+        const allIdFields = document.querySelectorAll('input[type="hidden"][name*="[id]"]');
+        console.log('Total ID fields found:', allIdFields.length);
         
-        // Check tujuan IDs
-        document.querySelectorAll('input[name*="tujuan"][name*="[id]"]').forEach((input, index) => {
-            console.log(`Tujuan ID ${index}:`, input.name, '=', input.value);
+        let idCount = 0;
+        allIdFields.forEach((input) => {
+            if (input.value) {
+                idCount++;
+                console.log(`ID preserved: ${input.name} = ${input.value}`);
+            }
         });
         
-        // Check indikator tujuan IDs
-        document.querySelectorAll('input[name*="indikator_tujuan"][name*="[id]"]').forEach((input, index) => {
-            console.log(`Indikator Tujuan ID ${index}:`, input.name, '=', input.value);
-        });
-        
-        // Check sasaran IDs
-        document.querySelectorAll('input[name*="sasaran"][name*="[id]"]').forEach((input, index) => {
-            console.log(`Sasaran ID ${index}:`, input.name, '=', input.value);
-        });
-        
-        // Check indikator sasaran IDs
-        document.querySelectorAll('input[name*="indikator_sasaran"][name*="[id]"]').forEach((input, index) => {
-            console.log(`Indikator Sasaran ID ${index}:`, input.name, '=', input.value);
-        });
-        
-        // Check target tahunan IDs
-        document.querySelectorAll('input[name*="target_tahunan"][name*="[id]"]').forEach((input, index) => {
-            console.log(`Target Tahunan ID ${index}:`, input.name, '=', input.value);
-        });
+        console.log(`Total IDs with values: ${idCount}`);
     }
     
     // If validation passes, clear form changes flag and submit the form

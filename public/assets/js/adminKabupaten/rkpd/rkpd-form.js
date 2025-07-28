@@ -31,17 +31,26 @@ function populateAllSatuanSelects() {
   });
 }
 
+// Fungsi untuk inisialisasi tahun target pada semua select
+function initializeTahunAkhir() {
+  // Update semua dropdown tahun berdasarkan sasaran RPJMD yang terpilih
+  updateAllTahunDropdowns();
+}
+
 $(document).ready(function() {
   // Initialize Select2 for existing elements
   initializeSelect2();
   
   // Initialize satuan selects
   populateAllSatuanSelects();
+  
+  // Initialize tahun target dropdowns
+  initializeTahunAkhir();
 
   // Function to initialize Select2 on elements
   function initializeSelect2() {
     // Initialize Select2 for RPJMD Sasaran dropdown
-    $('#rpjmd_sasaran_select').select2({
+    $('#rpjmd-sasaran-select').select2({
       theme: 'bootstrap-5',
       placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
       allowClear: true,
@@ -50,14 +59,14 @@ $(document).ready(function() {
   }
 
   // Re-initialize Select2 when new elements are added
-  $(document).on('click', '.add-indikator-sasaran-rkt, #add-sasaran-rkt', function() {
+  $(document).on('click', '.add-indikator-sasaran-rkpd, #add-sasaran-rkpd', function() {
     setTimeout(function() {
       initializeSelect2();
     }, 100);
   });
 
   // Handle selection change
-  $('#rpjmd_sasaran_select').on('change', function() {
+  $('#rpjmd-sasaran-select').on('change', function() {
     var selectedOption = $(this).find('option:selected');
     
     if (selectedOption.val()) {
@@ -99,7 +108,7 @@ function generateTahunOptions(tahunMulai = null, tahunAkhir = null) {
 
 // Fungsi untuk mengupdate semua dropdown tahun
 function updateAllTahunDropdowns() {
-  const sasaranSelect = document.getElementById('rpjmd_sasaran_select');
+  const sasaranSelect = document.getElementById('rpjmd-sasaran-select');
   const selectedOption = sasaranSelect.options[sasaranSelect.selectedIndex];
   
   let tahunMulai = null;
@@ -130,17 +139,17 @@ function updateAllTahunDropdowns() {
 
 // Fungsi untuk mengupdate penomoran label secara real-time
 function updateLabels() {
-  document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
+  document.querySelectorAll('.sasaran-rkpd-item').forEach((sasaranItem, sasaranIndex) => {
     const sasaranNumber = sasaranIndex + 1;
     
-    // Update label sasaran RKT
+    // Update label sasaran RKPD
     const sasaranLabel = sasaranItem.querySelector('label');
     if (sasaranLabel) {
-      sasaranLabel.textContent = `Sasaran RKT ${sasaranNumber}`;
+      sasaranLabel.textContent = `Sasaran RKPD ${sasaranNumber}`;
     }
 
-    // Update indikator sasaran RKT labels
-    sasaranItem.querySelectorAll('.indikator-sasaran-rkt-item').forEach((indikatorItem, indikatorIndex) => {
+    // Update indikator sasaran RKPD labels
+    sasaranItem.querySelectorAll('.indikator-sasaran-rkpd-item').forEach((indikatorItem, indikatorIndex) => {
       const indikatorNumber = indikatorIndex + 1;
       const indikatorLabel = indikatorItem.querySelector('label');
       if (indikatorLabel) {
@@ -152,94 +161,98 @@ function updateLabels() {
 
 // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
 function updateFormNames() {
-  document.querySelectorAll('.sasaran-rkt-item').forEach((sasaranItem, sasaranIndex) => {
-    // Update sasaran RKT names
+  document.querySelectorAll('.sasaran-rkpd-item').forEach((sasaranItem, sasaranIndex) => {
+    // Update sasaran RKPD names
     const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran"]');
     
     if (sasaranTextarea) {
-      sasaranTextarea.name = `sasaran_rkt[${sasaranIndex}][sasaran]`;
+      sasaranTextarea.name = `sasaran_rkpd[${sasaranIndex}][sasaran]`;
     }
 
-    // Update indikator sasaran RKT names
-    sasaranItem.querySelectorAll('.indikator-sasaran-rkt-item').forEach((indikatorItem, indikatorIndex) => {
+    // Update indikator sasaran RKPD names
+    sasaranItem.querySelectorAll('.indikator-sasaran-rkpd-item').forEach((indikatorItem, indikatorIndex) => {
       const indikatorTextarea = indikatorItem.querySelector('textarea[name*="indikator_sasaran"]');
       const satuanSelect = indikatorItem.querySelector('select[name*="satuan"]');
       const tahunSelect = indikatorItem.querySelector('select[name*="tahun"]');
       const targetInput = indikatorItem.querySelector('input[name*="target"]');
+      const idInput = indikatorItem.querySelector('input[name*="[id]"]');
       
       if (indikatorTextarea) {
-        indikatorTextarea.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
+        indikatorTextarea.name = `sasaran_rkpd[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
       }
       if (satuanSelect) {
-        satuanSelect.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][satuan]`;
+        satuanSelect.name = `sasaran_rkpd[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][satuan]`;
       }
       if (tahunSelect) {
-        tahunSelect.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][tahun]`;
+        tahunSelect.name = `sasaran_rkpd[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][tahun]`;
       }
       if (targetInput) {
-        targetInput.name = `sasaran_rkt[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target]`;
+        targetInput.name = `sasaran_rkpd[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target]`;
+      }
+      if (idInput) {
+        idInput.name = `sasaran_rkpd[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][id]`;
       }
     });
   });
 }
 
-// Tambah Sasaran RKT Baru
-document.getElementById('add-sasaran-rkt').addEventListener('click', () => {
-  const sasaranContainer = document.getElementById('sasaran-rkt-container');
+// Tambah Sasaran RKPD Baru
+document.getElementById('add-sasaran-rkpd').addEventListener('click', () => {
+  const sasaranContainer = document.getElementById('sasaran-rkpd-container');
   
   const newSasaran = document.createElement('div');
-  newSasaran.className = 'sasaran-rkt-item bg-light border rounded p-3 mb-3';
+  newSasaran.className = 'sasaran-rkpd-item bg-light border rounded p-3 mb-3';
   newSasaran.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <label class="fw-medium">Sasaran RKT</label>
-      <button type="button" class="remove-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+      <label class="fw-medium">Sasaran RKPD</label>
+      <button type="button" class="remove-sasaran-rkpd btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
     </div>
     
     <div class="row mb-3">
       <div class="col-md-12">
-        <label class="form-label">Sasaran RKT</label>
-        <textarea name="sasaran_rkt[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RKT" required></textarea>
+        <label class="form-label">Sasaran RKPD</label>
+        <textarea name="sasaran_rkpd[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran RKPD" required></textarea>
       </div>
     </div>
 
-    <div class="indikator-sasaran-rkt-section">
+    <div class="indikator-sasaran-rkpd-section">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="h5 fw-medium">Indikator Sasaran RKT</h4>
+        <h4 class="h5 fw-medium">Indikator Sasaran RKPD</h4>
       </div>
-      <div class="indikator-sasaran-rkt-container">
-        <div class="indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3">
+      <div class="indikator-sasaran-rkpd-container">
+        <div class="indikator-sasaran-rkpd-item border rounded p-3 bg-white mb-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <label class="fw-medium">Indikator Sasaran</label>
-            <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            <button type="button" class="remove-indikator-sasaran-rkpd btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
           </div>
           
           <div class="mb-3">
             <label class="form-label">Indikator Sasaran</label>
-            <textarea name="sasaran_rkt[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+            <textarea name="sasaran_rkpd[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
           </div>
 
           <div class="row mb-3">
             <div class="col-md-4">
               <label class="form-label">Satuan</label>
-              <select name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
+              <select name="sasaran_rkpd[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
                 <option value="">Pilih Satuan</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">Tahun Target</label>
-              <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
+              <select name="sasaran_rkpd[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
                 <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
               </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">Target</label>
-              <input type="text" name="sasaran_rkt[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
+              <input type="text" name="sasaran_rkpd[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
             </div>
           </div>
         </div>
       </div>
       <div class="d-flex justify-content-end">
-        <button type="button" class="add-indikator-sasaran-rkt btn btn-info btn-sm">
+        <button type="button" class="add-indikator-sasaran-rkpd btn btn-info btn-sm">
           <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
         </button>
       </div>
@@ -257,39 +270,39 @@ document.getElementById('add-sasaran-rkt').addEventListener('click', () => {
   updateAllTahunDropdowns();
 });
 
-// Fungsi untuk menambahkan indikator sasaran RKT
-function addIndikatorSasaranRKT(sasaranElement) {
-  const indikatorContainer = sasaranElement.querySelector('.indikator-sasaran-rkt-container');
+// Fungsi untuk menambahkan indikator sasaran RKPD
+function addIndikatorSasaranRKPD(sasaranElement) {
+  const indikatorContainer = sasaranElement.querySelector('.indikator-sasaran-rkpd-container');
   
   const newIndikator = document.createElement('div');
-  newIndikator.className = 'indikator-sasaran-rkt-item border rounded p-3 bg-white mb-3';
+  newIndikator.className = 'indikator-sasaran-rkpd-item border rounded p-3 bg-white mb-3';
   newIndikator.innerHTML = `
     <div class="d-flex justify-content-between align-items-center mb-3">
       <label class="fw-medium">Indikator Sasaran</label>
-      <button type="button" class="remove-indikator-sasaran-rkt btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+      <button type="button" class="remove-indikator-sasaran-rkpd btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
     </div>
     
     <div class="mb-3">
       <label class="form-label">Indikator Sasaran</label>
-      <textarea name="sasaran_rkt[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+      <textarea name="sasaran_rkpd[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
     </div>
 
     <div class="row mb-3">
       <div class="col-md-4">
         <label class="form-label">Satuan</label>
-        <select name="sasaran_rkt[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
-            <option value="">Pilih Satuan</option>
+        <select name="sasaran_rkpd[0][indikator_sasaran][0][satuan]" class="form-select satuan-select" required>
+          <option value="">Pilih Satuan</option>
         </select>
       </div>
       <div class="col-md-4">
         <label class="form-label">Tahun Target</label>
-        <select name="sasaran_rkt[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
+        <select name="sasaran_rkpd[0][indikator_sasaran][0][tahun]" class="form-select tahun-select" required>
           <option value="">Pilih Sasaran RPJMD terlebih dahulu</option>
         </select>
       </div>
       <div class="col-md-4">
         <label class="form-label">Target</label>
-        <input type="text" name="sasaran_rkt[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
+        <input type="text" name="sasaran_rkpd[0][indikator_sasaran][0][target]" class="form-control" placeholder="Nilai target" required>
       </div>
     </div>
   `;
@@ -307,25 +320,25 @@ function addIndikatorSasaranRKT(sasaranElement) {
 
 // Event delegation untuk semua tombol
 document.addEventListener('click', function(e) {
-  // Tombol tambah indikator sasaran RKT
-  if (e.target.classList.contains('add-indikator-sasaran-rkt') || e.target.closest('.add-indikator-sasaran-rkt')) {
-    const sasaranItem = e.target.closest('.sasaran-rkt-item');
-    addIndikatorSasaranRKT(sasaranItem);
+  // Tombol tambah indikator sasaran RKPD
+  if (e.target.classList.contains('add-indikator-sasaran-rkpd') || e.target.closest('.add-indikator-sasaran-rkpd')) {
+    const sasaranItem = e.target.closest('.sasaran-rkpd-item');
+    addIndikatorSasaranRKPD(sasaranItem);
   }
   
-  // Tombol hapus sasaran RKT
-  if (e.target.classList.contains('remove-sasaran-rkt') || e.target.closest('.remove-sasaran-rkt')) {
-    if (confirm('Hapus sasaran RKT ini dan semua indikator sasarannya?')) {
-      e.target.closest('.sasaran-rkt-item').remove();
+  // Tombol hapus sasaran RKPD
+  if (e.target.classList.contains('remove-sasaran-rkpd') || e.target.closest('.remove-sasaran-rkpd')) {
+    if (confirm('Hapus sasaran RKPD ini dan semua indikator sasarannya?')) {
+      e.target.closest('.sasaran-rkpd-item').remove();
       updateLabels();
       updateFormNames();
     }
   }
   
-  // Tombol hapus indikator sasaran RKT
-  if (e.target.classList.contains('remove-indikator-sasaran-rkt') || e.target.closest('.remove-indikator-sasaran-rkt')) {
+  // Tombol hapus indikator sasaran RKPD
+  if (e.target.classList.contains('remove-indikator-sasaran-rkpd') || e.target.closest('.remove-indikator-sasaran-rkpd')) {
     if (confirm('Hapus indikator sasaran ini?')) {
-      e.target.closest('.indikator-sasaran-rkt-item').remove();
+      e.target.closest('.indikator-sasaran-rkpd-item').remove();
       updateLabels();
       updateFormNames();
     }

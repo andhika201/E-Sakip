@@ -442,23 +442,49 @@ class RkpdModel extends Model
 
                     // Process indikator sasaran data
                     if (isset($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
-                        foreach ($sasaranData['indikator_sasaran'] as $indikatorData) {
+                        foreach ($sasaranData['indikator_sasaran'] as $indikatorIndex => $indikatorData) {
+                            // Skip if indikatorData is not an array or is empty
+                            if (!is_array($indikatorData) || empty($indikatorData)) {
+                                continue;
+                            }
+                            
+                            // Skip if required fields are missing (except for delete operations)
+                            if ((!isset($indikatorData['indikator_sasaran']) || empty($indikatorData['indikator_sasaran'])) &&
+                                (!isset($indikatorData['id']) || empty($indikatorData['id']))) {
+                                continue;
+                            }
+                            
                             if (isset($indikatorData['id']) && !empty($indikatorData['id'])) {
                                 // Update existing indikator
                                 $indikatorId = $indikatorData['id'];
-                                $updateIndikatorData = [
-                                    'indikator_sasaran' => $indikatorData['indikator_sasaran'],
-                                    'satuan' => $indikatorData['satuan'],
-                                    'tahun' => $indikatorData['tahun'],
-                                    'target' => $indikatorData['target']
-                                ];
-                                $this->updateIndikatorSasaran($indikatorId, $updateIndikatorData);
-                                $processedIndikatorIds[] = $indikatorId;
+                                
+                                // Validate that we have all required fields for update
+                                if (isset($indikatorData['indikator_sasaran']) && 
+                                    isset($indikatorData['satuan']) && 
+                                    isset($indikatorData['tahun']) && 
+                                    isset($indikatorData['target'])) {
+                                    
+                                    $updateIndikatorData = [
+                                        'indikator_sasaran' => $indikatorData['indikator_sasaran'],
+                                        'satuan' => $indikatorData['satuan'],
+                                        'tahun' => $indikatorData['tahun'],
+                                        'target' => $indikatorData['target']
+                                    ];
+                                    $this->updateIndikatorSasaran($indikatorId, $updateIndikatorData);
+                                    $processedIndikatorIds[] = $indikatorId;
+                                }
                             } else {
-                                // Create new indikator
-                                $indikatorData['rkpd_sasaran_id'] = $sasaranId;
-                                $indikatorId = $this->createIndikatorSasaran($indikatorData);
-                                $processedIndikatorIds[] = $indikatorId;
+                                // Create new indikator - ensure required fields exist
+                                if (isset($indikatorData['indikator_sasaran']) && 
+                                    isset($indikatorData['satuan']) && 
+                                    isset($indikatorData['tahun']) && 
+                                    isset($indikatorData['target']) &&
+                                    !empty($indikatorData['indikator_sasaran'])) {
+                                    
+                                    $indikatorData['rkpd_sasaran_id'] = $sasaranId;
+                                    $indikatorId = $this->createIndikatorSasaran($indikatorData);
+                                    $processedIndikatorIds[] = $indikatorId;
+                                }
                             }
                         }
                     }

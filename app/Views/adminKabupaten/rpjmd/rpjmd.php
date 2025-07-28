@@ -10,9 +10,12 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
-  <!-- Navbar/Header -->
-  <?= $this->include('adminKabupaten/templates/header.php'); ?>
-
+    <!-- Content Wrapper -->
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+        
+    <!-- Navbar/Header -->
+    <?= $this->include('adminKabupaten/templates/header.php'); ?>
+    
   <!-- Sidebar -->
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
@@ -20,59 +23,35 @@
   <main class="flex-fill p-4 mt-2">
     <div class="bg-white rounded shadow p-4">
         <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA PEMBANGUNAN JANGKA MENENGAH DAERAH</h2>
+        
+        <!-- Flash Messages -->
+          <!-- Error Messages -->
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('error') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
 
-        <!-- Summary Statistics -->
-        <?php if (isset($rpjmd_summary)): ?>
-        <div class="row mb-4">
-            <div class="col-md-2">
-                <div class="card border-success">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-success"><?= $rpjmd_summary['total_misi'] ?></h5>
-                        <p class="card-text small">Total Misi</p>
-                    </div>
-                </div>
+        <!-- Success Messages -->
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('success') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="col-md-2">
-                <div class="card border-info">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-info"><?= $rpjmd_summary['total_tujuan'] ?></h5>
-                        <p class="card-text small">Total Tujuan</p>
-                    </div>
-                </div>
+        <?php endif; ?>
+
+        <!-- Validation Errors -->
+        <?php if (session()->getFlashdata('errors')): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Terdapat kesalahan:</strong>
+            <ul class="mb-0 mt-2">
+                <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                <li><?= esc($error) ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="col-md-2">
-                <div class="card border-warning">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-warning"><?= $rpjmd_summary['total_sasaran'] ?></h5>
-                        <p class="card-text small">Total Sasaran</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card border-primary">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-primary"><?= $rpjmd_summary['total_indikator_sasaran'] ?></h5>
-                        <p class="card-text small">Total Indikator Sasaran</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card border-secondary">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-secondary"><?= $rpjmd_summary['total_target_tahunan'] ?></h5>
-                        <p class="card-text small">Total Target Tahunan</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card border-dark">
-                    <div class="card-body text-center">
-                        <h5 class="card-title text-dark"><?= isset($rpjmd_grouped) ? count($rpjmd_grouped) : 0 ?></h5>
-                        <p class="card-text small">Periode RPJMD</p>
-                    </div>
-                </div>
-            </div>
-        </div>
         <?php endif; ?>
 
         <!-- Filter and Action Controls -->
@@ -408,6 +387,7 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+    </div> <!-- End of Content Wrapper -->
 
   <!-- JavaScript for Delete Confirmation and Period Filter -->
   <script>

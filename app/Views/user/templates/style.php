@@ -14,7 +14,7 @@
 
     <?php if ($is_dashboard): ?>
     body {
-      background: url("<?= base_url('assets/images/logo1.jpg') ?>") no-repeat center center fixed;
+      background: url("<?= base_url('assets/images/Pringsewu.jpg') ?>") no-repeat center center fixed;
       background-size: cover;
       display: flex;
       flex-direction: column;

@@ -10,6 +10,9 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
+    <!-- Content Wrapper -->
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
+    
   <!-- Navbar/Header -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
 
@@ -57,7 +60,7 @@
                     <th class="border p-2">NO</th>
                     <th class="border p-2">PROGRAM</th>
                     <th class="border p-2">ANGGARAN</th>
-                    <th class="border p-2 " style="max-width: 200px; width:1%; white-space:nowrap;" >ACTION</th>
+                    <th class="border p-2">ACTION</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -68,14 +71,14 @@
                         <td class="border p-2"><?= $no++ ?></td>
                         <td class="border p-2 text-start"><?= esc($program['program_kegiatan']) ?></td>
                         <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
-                        <td class="border p-2" style="max-width: 200px; width:1%; white-space:nowrap;">
-                            <div class="d-flex align-items-center justify-content-center gap-2">
+                        <td class="border p-2">
+                            <div class="d-flex flex-column align-items-center gap-2">
                                 <a href="<?= base_url('adminkab/program_pk/edit/' . $program['id']) ?>" class="btn btn-success btn-sm">
                                     <i class="fas fa-edit me-1"></i>Edit
                                 </a>
-                                <a href="<?= base_url('adminkab/program_pk/delete/' . $program['id']) ?>" class="btn btn-danger btn-sm" title="Hapus" onclick="return confirm('Yakin ingin menghapus program ini?')">
-                                    <i class="fas fa-trash"></i> Hapus
-                                </a>
+                                <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $program['id'] ?>)">
+                                    <i class="fas fa-trash me-1"></i>Hapus
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -94,8 +97,16 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+    </div> <!-- End of Content Wrapper -->
 
   <script>
+    // Function to confirm delete
+    function confirmDelete(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus program ini?')) {
+            window.location.href = '<?= base_url('adminkab/program_pk/delete/') ?>' + id;
+        }
+    }
+
     // Search functionality
     document.getElementById('searchInput').addEventListener('input', function() {
         const searchValue = this.value.toLowerCase();

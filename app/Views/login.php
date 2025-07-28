@@ -24,7 +24,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('/assets/images/logo1.jpg');
+            background-image: url('/assets/images/Pringsewu.jpg');
             background-size: cover;
             background-position: center;
             filter: blur(10px);

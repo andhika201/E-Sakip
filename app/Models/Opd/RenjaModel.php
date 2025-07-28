@@ -405,7 +405,7 @@ class RenjaModel extends Model
 
             // Get the selected RPJMD Sasaran ID from form
             $renstraSasaranId = $data['renstra_sasaran_id'];
-            
+
             // Get existing sasaran IDs to track which ones to keep
             // Since we're editing a specific RENJA sasaran, we start with that ID
             $existingSasaranIds = [$renjaSasaranId];
@@ -421,16 +421,18 @@ class RenjaModel extends Model
                         // Update existing sasaran
                         $sasaranId = $sasaranData['id'];
                         $updateData = [
-                            'renstra_sasaran_id' => $renstraSasaranId,  // Update foreign key
-                            'sasaran_renja' => $sasaranData['sasaran_renja'],
+                            'renstra_sasaran_id' => $renstraSasaranId,
+                            'sasaran_renja' => $sasaranData['sasaran'],
                             'status' => $sasaranData['status'] ?? 'draft'
                         ];
+
                         $this->updateSasaran($sasaranId, $updateData);
                         $processedSasaranIds[] = $sasaranId;
                     } else {
                         // Create new sasaran
+                        $sasaranData['opd_id'] = $data['opd_id'];
                         $sasaranData['renstra_sasaran_id'] = $renstraSasaranId;
-                        $sasaranData['sasaran_renja'] = $sasaranData['sasaran_renja'] ?? '';
+                        $sasaranData['sasaran_renja'] = $sasaranData['sasaran'] ?? '';
                         $sasaranData['status'] = $sasaranData['status'] ?? 'draft';
                         $sasaranId = $this->createSasaran($sasaranData);
                         $processedSasaranIds[] = $sasaranId;
@@ -444,23 +446,49 @@ class RenjaModel extends Model
 
                     // Process indikator sasaran data
                     if (isset($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
-                        foreach ($sasaranData['indikator_sasaran'] as $indikatorData) {
+                        foreach ($sasaranData['indikator_sasaran'] as $indikatorIndex => $indikatorData) {
+                            // Skip if indikatorData is not an array or is empty
+                            if (!is_array($indikatorData) || empty($indikatorData)) {
+                                continue;
+                            }
+                            
+                            // Skip if required fields are missing (except for delete operations)
+                            if ((!isset($indikatorData['indikator_sasaran']) || empty($indikatorData['indikator_sasaran'])) &&
+                                (!isset($indikatorData['id']) || empty($indikatorData['id']))) {
+                                continue;
+                            }
+                            
                             if (isset($indikatorData['id']) && !empty($indikatorData['id'])) {
                                 // Update existing indikator
                                 $indikatorId = $indikatorData['id'];
-                                $updateIndikatorData = [
-                                    'indikator_sasaran' => $indikatorData['indikator_sasaran'],
-                                    'satuan' => $indikatorData['satuan'],
-                                    'tahun' => $indikatorData['tahun'],
-                                    'target' => $indikatorData['target']
-                                ];
-                                $this->updateIndikatorSasaran($indikatorId, $updateIndikatorData);
-                                $processedIndikatorIds[] = $indikatorId;
+                                
+                                // Validate that we have all required fields for update
+                                if (isset($indikatorData['indikator_sasaran']) && 
+                                    isset($indikatorData['satuan']) && 
+                                    isset($indikatorData['tahun']) && 
+                                    isset($indikatorData['target'])) {
+                                    
+                                    $updateIndikatorData = [
+                                        'indikator_sasaran' => $indikatorData['indikator_sasaran'],
+                                        'satuan' => $indikatorData['satuan'],
+                                        'tahun' => $indikatorData['tahun'],
+                                        'target' => $indikatorData['target']
+                                    ];
+                                    $this->updateIndikatorSasaran($indikatorId, $updateIndikatorData);
+                                    $processedIndikatorIds[] = $indikatorId;
+                                }
                             } else {
-                                // Create new indikator
-                                $indikatorData['renja_sasaran_id'] = $sasaranId;
-                                $indikatorId = $this->createIndikatorSasaran($indikatorData);
-                                $processedIndikatorIds[] = $indikatorId;
+                                // Create new indikator - ensure required fields exist
+                                if (isset($indikatorData['indikator_sasaran']) && 
+                                    isset($indikatorData['satuan']) && 
+                                    isset($indikatorData['tahun']) && 
+                                    isset($indikatorData['target']) &&
+                                    !empty($indikatorData['indikator_sasaran'])) {
+                                    
+                                    $indikatorData['renja_sasaran_id'] = $sasaranId;
+                                    $indikatorId = $this->createIndikatorSasaran($indikatorData);
+                                    $processedIndikatorIds[] = $indikatorId;
+                                }
                             }
                         }
                     }

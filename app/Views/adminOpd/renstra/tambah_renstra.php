@@ -111,7 +111,7 @@
                   <div class="row mb-3">
                     <div class="col-md-6">
                       <label class="form-label">Satuan</label>
-                      <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" id="satuanSelect" class="form-control satuan-select" required>
+                      <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control satuan-select" required>
                         <option value="">Pilih Satuan</option>
                       </select>
                     </div>
@@ -200,57 +200,13 @@
   <?= $this->include('adminOpd/templates/footer.php'); ?>
   <script src="<?= base_url('assets/js/adminOpd/renstra/renstra-form.js') ?>"></script>
   
-  <script>
-    $(document).ready(function() {
-      // Initialize Select2 for existing elements
-      initializeSelect2();
-
-      // Function to initialize Select2 on elements
-      function initializeSelect2() {
-        // Initialize Select2 for RPJMD Sasaran dropdown
-        $('#rpjmd-sasaran-select').select2({
-          theme: 'bootstrap-5',
-          placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
-          allowClear: true,
-          width: '100%'
-        });
-      }
-
-      // Re-initialize Select2 when new elements are added
-      $(document).on('click', '.add-indikator-sasaran, #add-sasaran-renstra', function() {
-        setTimeout(function() {
-          initializeSelect2();
-        }, 100);
-      });
-
-      // Handle selection change
-      $('#rpjmd-sasaran-select').on('change', function() {
-        var selectedOption = $(this).find('option:selected');
-        
-        if (selectedOption.val()) {
-          
-          // Show selected info (optional)
-          showSelectedInfo(selectedOption.text());
-        }
-      });
-
-      // Function to show selected sasaran info
-      function showSelectedInfo(sasaran) {
-        var infoHtml = '<div class="alert alert-info alert-dismissible fade show mt-2" role="alert">' +
-          '<strong>Sasaran RPJMD Terpilih:</strong> ' + sasaran +
-          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
-        '</div>';
-        
-        $('#alert-container').html(infoHtml);
-      }
-    });
-
+  <!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
       const select = document.getElementById('satuanSelect');
       if (select && typeof generateSatuanOptions === 'function') {
         select.innerHTML = generateSatuanOptions();
       }
     });
-  </script>
+  </script> -->
 </body>
 </html>

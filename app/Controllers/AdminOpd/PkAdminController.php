@@ -8,7 +8,7 @@ use App\Models\PegawaiModel;
 use App\Models\ProgramPkModel;
 use App\Models\OpdModel;
 use App\Models\PkModel;
-// use Mpdf\Mpdf;
+use Mpdf\Mpdf;
 
 class PkAdminController extends BaseController
 {
@@ -219,15 +219,15 @@ class PkAdminController extends BaseController
 
         // Ambil data lengkap PK dari model
         $data = $this->pkModel->getPkById($id);
-        
+    
         if (!$data) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'Data PK tidak ditemukan');
         }
 
         // Logo path (harus absolut)
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
-        
-        // dd($data);
+        $tahun = date('Y', strtotime($data['tanggal']));
+
         // Buat halaman 1 dan 2
         $html_1 = view('adminOpd/pk_admin/cetak', $data);
         $html_2 = view('adminOpd/pk_admin/cetak-L', $data);
@@ -253,7 +253,6 @@ class PkAdminController extends BaseController
         $mpdf->WriteHTML($html_2);
 
         $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $data['jenis'] . '.pdf', 'I');
+        return $mpdf->Output('Perjanjian-Kinerja-' . $data['jenis'] . '-' . $tahun . '.pdf', 'I');
     }
-
 }

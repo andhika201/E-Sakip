@@ -21,26 +21,68 @@
     <div class="bg-white rounded shadow p-4">
         <h2 class="h3 fw-bold text-success text-center mb-4">Rencana Strategis</h2>
 
+        <!-- Error Messages -->
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('error') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <!-- Success Messages -->
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('success') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <!-- Validation Errors -->
+        <?php if (session()->getFlashdata('errors')): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Terdapat kesalahan:</strong>
+            <ul class="mb-0 mt-2">
+                <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                <li><?= esc($error) ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
         <!-- Filter -->
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
             <div class="d-flex gap-2 flex-fill">
                 <!-- Period Filter -->
                 <div class="d-flex align-items-center flex-fill me-3 gap-2">
-                    <select id="periode-filter" class="form-select" onchange="filterByPeriode()" style="flex: 2;">
-                        <option value="">Semua Periode</option>
-                        <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
+
+                    <select id="rpjmd-filter" class="form-select" onchange="filterByRpjmd()" style="flex: 2;">
+                        <option value="">Semua Sasaran RPJMD</option>
+                        <?php if (isset($renstra_data) && !empty($renstra_data)): ?>
                             <?php 
-                            // Get the latest period (last key in the sorted array)
-                            $periodKeys = array_keys($grouped_data);
-                            $latestPeriod = end($periodKeys);
+                            $rpjmdSasaran = [];
+                            foreach ($renstra_data as $data) {
+                                $rpjmdSasaran[$data['rpjmd_sasaran']] = $data['rpjmd_sasaran'];
+                            }
+                            asort($rpjmdSasaran);
                             ?>
+                            <?php foreach ($rpjmdSasaran as $sasaran): ?>
+                                <option value="<?= esc($sasaran) ?>"><?= esc($sasaran) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+
+                    <select id="periode-filter" class="form-select" onchange="filterByPeriode()" style="flex: 1;">
+                        <option value="" selected>Semua Periode</option>
+                        <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
                             <?php foreach ($grouped_data as $periodKey => $periodData): ?>
-                                <option value="<?= $periodKey ?>" <?= $periodKey === $latestPeriod ? 'selected' : '' ?>>
+                                <option value="<?= $periodKey ?>">
                                     Periode <?= $periodData['period'] ?>
                                 </option>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
+
                     <select id="status-filter" class="form-select" onchange="filterByStatus()" style="flex: 1;">
                         <option value="">Semua Status</option>
                         <option value="draft">Draft</option>
@@ -57,12 +99,10 @@
 
         <!-- Tabel -->
         <div class="table-responsive">
-            <table class="table table-bordered text-center small" style="border-collapse: collapse;">
+            <table class="table table-bordered table-striped text-center small" style="border-collapse: collapse;">
                 <thead class="table-success">
                     <tr>
-                        <th rowspan="2" class="border p-2 align-middle">Status</th>
-                        <th rowspan="2" class="border p-2 align-middle">OPD</th>
-                        <th rowspan="2" class="border p-2 align-middle">SASARAN RPJMD</th>
+                        <th rowspan="2" class="border p-2 align-middle">RPJMD Sasaran</th>
                         <th rowspan="2" class="border p-2 align-middle">SASARAN RENSTRA</th>
                         <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                         <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
@@ -80,6 +120,7 @@
                             <th colspan="5" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
                         <?php endif; ?>
                         
+                        <th rowspan="2" class="border p-2 align-middle">Status</th>
                         <th rowspan="2" class="border p-2 align-middle">ACTION</th>
                     </tr>
                     <tr class="border p-2">
@@ -100,130 +141,12 @@
                     </tr>
                 </thead>
                 <tbody id="renstra-table-body">
-                    <?php if (isset($renstra_data) && !empty($renstra_data)): ?>
-                        <?php 
-                        $no = 1; 
-                        $currentSasaran = '';
-                        $sasaranRowspan = [];
-                        
-                        // Calculate rowspan for each sasaran
-                        foreach ($renstra_data as $data) {
-                            $sasaranKey = $data['sasaran_id'];
-                            if (!isset($sasaranRowspan[$sasaranKey])) {
-                                $sasaranRowspan[$sasaranKey] = 0;
-                            }
-                            $sasaranRowspan[$sasaranKey]++;
-                        }
-                        
-                        $sasaranCounter = [];
-                        ?>
-                        
-                        <?php foreach ($renstra_data as $data): ?>
-                            <?php 
-                            $sasaranKey = $data['sasaran_id'];
-                            $isFirstRowOfSasaran = !isset($sasaranCounter[$sasaranKey]);
-                            if ($isFirstRowOfSasaran) {
-                                $sasaranCounter[$sasaranKey] = true;
-                            }
-                            
-                            // Get period for this data
-                            $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
-                            $years = range($data['tahun_mulai'], $data['tahun_akhir']);
-                            ?>
-                            <tr data-periode="<?= $periodKey ?>" data-status="<?= $data['status'] ?? 'draft' ?>">
-                                
-                                <?php if ($isFirstRowOfSasaran): ?>
-                                    <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <?php 
-                                        $status = $data['status'] ?? 'draft';
-                                        $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning';
-                                        ?>
-                                        <button class="badge <?= $badgeClass ?> border-0" onclick="toggleStatus(<?= $data['sasaran_id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" style="cursor: pointer;" title="Klik untuk mengubah status">
-                                            <?= ucfirst($status) ?>
-                                        </button>
-                                    </td>
-                                    <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <?= esc($data['singkatan'] ?? 'N/A') ?>
-                                    </td>
-                                    <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <?= esc($data['rpjmd_sasaran'] ?? 'N/A') ?>
-                                    </td>
-                                    <td class="border p-2" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <?= esc($data['sasaran'] ?? 'N/A') ?>
-                                    </td>
-                                <?php endif; ?>
-                                
-                                <td class="border p-2"><?= esc($data['indikator_sasaran'] ?? 'N/A') ?></td>
-                                <td class="border p-2"><?= esc($data['satuan'] ?? 'N/A') ?></td>
-                                
-                                <!-- Target per tahun untuk setiap periode -->
-                                <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
-                                    <?php foreach ($grouped_data as $periodIndex => $periodData): ?>
-                                        <span class="year-cells" data-periode="<?= $periodIndex ?>">
-                                            <?php foreach ($periodData['years'] as $year): ?>
-                                                <td class="border p-2 align-top text-start">
-                                                    <?php 
-                                                    // Check if this data belongs to this period
-                                                    $dataPeriodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
-                                                    if ($dataPeriodKey === $periodIndex && isset($data['targets'][$year])) {
-                                                        echo esc($data['targets'][$year]);
-                                                    } else {
-                                                        echo '-';
-                                                    }
-                                                    ?>
-                                                </td>
-                                            <?php endforeach; ?>
-                                        </span>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <!-- Fallback untuk default years jika tidak ada grouped_data -->
-                                    <?php foreach (range(2025, 2029) as $year): ?>
-                                        <td class="border p-2">
-                                            <?= isset($data['targets'][$year]) ? esc($data['targets'][$year]) : '-' ?>
-                                        </td>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                                
-                                <?php if ($isFirstRowOfSasaran): ?>
-                                    <td class="border p-2 align-middle text-center" rowspan="<?= $sasaranRowspan[$sasaranKey] ?>">
-                                        <div class="d-flex flex-column align-items-center gap-2">
-                                            <a href="<?= base_url('adminopd/renstra/edit/' . $data['sasaran_id']) ?>" class="btn btn-success btn-sm">
-                                                <i class="fas fa-edit me-1"></i>Edit
-                                            </a>
-                                            <?php 
-                                            $currentStatus = $data['status'] ?? 'draft';
-                                            $toggleClass = $currentStatus === 'selesai' ? 'btn-warning' : 'btn-info';
-                                            $toggleText = $currentStatus === 'selesai' ? 'Set Draft' : 'Set Selesai';
-                                            $toggleIcon = $currentStatus === 'selesai' ? 'fas fa-undo' : 'fas fa-check';
-                                            ?>
-                                            <button class="btn <?= $toggleClass ?> btn-sm" onclick="toggleStatus(<?= $data['sasaran_id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')">
-                                                <i class="<?= $toggleIcon ?> me-1"></i><?= $toggleText ?>
-                                            </button>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteRenstra(<?= $data['sasaran_id'] ?>, '<?= base_url() ?>')">
-                                                <i class="fas fa-trash me-1"></i>Hapus
-                                            </button>
-                                        </div>
-                                    </td>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <?php 
-                            $totalColumns = 7; // Status, OPD, RPJMD Sasaran, Sasaran, Indikator, Satuan, Action
-                            if (isset($grouped_data) && !empty($grouped_data)) {
-                                foreach ($grouped_data as $periodData) {
-                                    $totalColumns += count($periodData['years']);
-                                }
-                            } else {
-                                $totalColumns += 5; // Default 5 years
-                            }
-                            ?>
-                            <td colspan="<?= $totalColumns ?>" class="border p-3 text-center text-muted">
-                                Belum ada data Renstra. <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="text-success">Tambah data pertama</a>
-                            </td>
-                        </tr>
-                    <?php endif; ?>
+                    <!-- Table content will be built by JavaScript -->
+                    <tr>
+                        <td colspan="12" class="border p-3 text-center text-muted">
+                            Memuat data...
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -231,10 +154,59 @@
   </main>
 
   <!-- JavaScript for Renstra functionality -->
+  <script>
+    // Set global variables for JavaScript
+    window.base_url = '<?= base_url() ?>';
+    window.csrf_header = '<?= csrf_header() ?>';
+    window.csrf_hash = '<?= csrf_hash() ?>';
+    
+    // Debug: Log the base_url to see what it contains
+    console.log('Base URL:', window.base_url);
+    
+    // Function to toggle status via AJAX (same as RENJA)
+    function toggleStatus(sasaranId) {
+        if (confirm('Apakah Anda yakin ingin mengubah status RENSTRA ini?')) {
+            fetch('<?= base_url('adminopd/renstra/update-status') ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    '<?= csrf_header() ?>': '<?= csrf_hash() ?>'
+                },
+                body: JSON.stringify({
+                    id: sasaranId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload page to show updated status
+                    window.location.reload();
+                } else {
+                    alert('Gagal mengubah status: ' + (data.message || 'Terjadi kesalahan'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengubah status');
+            });
+        }
+    }
+    
+    // Function to confirm delete (same as RENJA)
+    function confirmDelete(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data RENSTRA ini?')) {
+            window.location.href = '<?= base_url('adminopd/renstra/delete/') ?>' + id;
+        }
+    }
+  </script>
   <script src="<?= base_url('assets/js/adminOpd/renstra/renstra.js') ?>"></script>
   <script>
     // Set period data for JavaScript
     setPeriodData(<?= json_encode($grouped_data ?? []) ?>);
+    
+    // Set original renstra data for filtering
+    setOriginalData(<?= json_encode($renstra_data ?? []) ?>);
   </script>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>

@@ -372,7 +372,6 @@ class RpjmdModel extends Model
      */
     public function createMisi($data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd.txt';
         
         // Validation
         $required = ['misi', 'tahun_mulai', 'tahun_akhir'];
@@ -388,18 +387,12 @@ class RpjmdModel extends Model
             'tahun_akhir' => $data['tahun_akhir'],
             'status' => $data['status'] ?? 'draft'
         ];
-        
-        file_put_contents($debugFile, "About to insert misi: " . print_r($insertData, true) . "\n", FILE_APPEND);
-        
+                
         $result = $this->db->table('rpjmd_misi')->insert($insertData);
         $insertId = $this->db->insertID();
-        
-        file_put_contents($debugFile, "Insert result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
-        file_put_contents($debugFile, "Insert ID: " . $insertId . "\n", FILE_APPEND);
-        
+                
         if (!$result) {
             $error = $this->db->error();
-            file_put_contents($debugFile, "Database error: " . print_r($error, true) . "\n", FILE_APPEND);
             throw new \Exception("Failed to insert misi: " . $error['message']);
         }
         
@@ -417,26 +410,32 @@ class RpjmdModel extends Model
     /**
      * Delete RPJMD Misi (with cascade delete)
      */ 
-    public function deleteMisi($id)
+    public function deleteMisi($id, $internal = false)
     {
-        $this->db->transStart();
+        if (!$internal) {
+            $this->db->transStart();
+        }
         
         try {
             // Get all related data for cascade delete
             $tujuanList = $this->getTujuanByMisiId($id);
             
             foreach ($tujuanList as $tujuan) {
-                $this->deleteTujuan($tujuan['id']);
+                $this->deleteTujuan($tujuan['id'], true);
             }
             
             // Delete the misi
             $result = $this->db->table('rpjmd_misi')->delete(['id' => $id]);
             
-            $this->db->transComplete();
+            if (!$internal) {
+                $this->db->transComplete();
+            }
             return $result;
             
         } catch (\Exception $e) {
-            $this->db->transRollback();
+            if (!$internal) {
+                $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -483,9 +482,11 @@ class RpjmdModel extends Model
     /**
      * Delete RPJMD Tujuan (with cascade delete)
      */
-    public function deleteTujuan($id)
+    public function deleteTujuan($id, $internal = false)
     {
-        $this->db->transStart();
+        if (!$internal) {
+            $this->db->transStart();
+        }
         
         try {
             // Delete related indikator tujuan
@@ -493,18 +494,27 @@ class RpjmdModel extends Model
             
             // Get and delete related sasaran
             $sasaranList = $this->getSasaranByTujuanId($id);
+
             foreach ($sasaranList as $sasaran) {
-                $this->deleteSasaran($sasaran['id']);
+                $this->deleteSasaran($sasaran['id'], true);
             }
             
             // Delete the tujuan
             $result = $this->db->table('rpjmd_tujuan')->delete(['id' => $id]);
-            
-            $this->db->transComplete();
+
+            if (!$internal) {
+                $this->db->transComplete();
+                
+                if ($this->db->transStatus() === false) {
+                    throw new \Exception("Transaction failed during tujuan deletion");
+                }
+            }
             return $result;
             
         } catch (\Exception $e) {
-            $this->db->transRollback();
+            if (!$internal) {
+                $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -516,8 +526,6 @@ class RpjmdModel extends Model
      */
     public function createIndikatorTujuan($data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd.txt';
-        
         // Validation
         $required = ['tujuan_id', 'indikator_tujuan'];
         foreach ($required as $field) {
@@ -531,17 +539,11 @@ class RpjmdModel extends Model
             'indikator_tujuan' => $data['indikator_tujuan']
         ];
         
-        file_put_contents($debugFile, "About to insert indikator tujuan: " . print_r($insertData, true) . "\n", FILE_APPEND);
-        
         $result = $this->db->table('rpjmd_indikator_tujuan')->insert($insertData);
         $insertId = $this->db->insertID();
         
-        file_put_contents($debugFile, "Indikator tujuan insert result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
-        file_put_contents($debugFile, "Indikator tujuan insert ID: " . $insertId . "\n", FILE_APPEND);
-        
         if (!$result) {
             $error = $this->db->error();
-            file_put_contents($debugFile, "Indikator tujuan database error: " . print_r($error, true) . "\n", FILE_APPEND);
             throw new \Exception("Failed to insert indikator tujuan: " . $error['message']);
         }
         
@@ -571,8 +573,6 @@ class RpjmdModel extends Model
      */
     public function createSasaran($data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd.txt';
-        
         // Validation
         $required = ['tujuan_id', 'sasaran_rpjmd'];
         foreach ($required as $field) {
@@ -586,17 +586,11 @@ class RpjmdModel extends Model
             'sasaran_rpjmd' => $data['sasaran_rpjmd']
         ];
         
-        file_put_contents($debugFile, "About to insert sasaran: " . print_r($insertData, true) . "\n", FILE_APPEND);
-        
         $result = $this->db->table('rpjmd_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
         
-        file_put_contents($debugFile, "Sasaran insert result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
-        file_put_contents($debugFile, "Sasaran insert ID: " . $insertId . "\n", FILE_APPEND);
-        
         if (!$result) {
             $error = $this->db->error();
-            file_put_contents($debugFile, "Sasaran database error: " . print_r($error, true) . "\n", FILE_APPEND);
             throw new \Exception("Failed to insert sasaran: " . $error['message']);
         }
         
@@ -614,25 +608,91 @@ class RpjmdModel extends Model
     /**
      * Delete RPJMD Sasaran (with cascade delete)
      */
-    public function deleteSasaran($id)
+    public function deleteSasaran($id, $internal = false)
     {
-        $this->db->transStart();
+        if (!$internal) {
+            $this->db->transStart();
+        }
         
         try {
             // Get and delete related indikator sasaran
             $indikatorList = $this->getIndikatorSasaranBySasaranId($id);
             foreach ($indikatorList as $indikator) {
-                $this->deleteIndikatorSasaran($indikator['id']);
+                $this->deleteIndikatorSasaran($indikator['id'], true);
+            }
+
+            // Delete related data in other tables that reference this sasaran
+            
+            // First handle RENSTRA cascade delete (similar to RenstraModel approach)
+            $renstraSasaranList = $this->db->table('renstra_sasaran')->where('rpjmd_sasaran_id', $id)->get()->getResultArray();
+            foreach ($renstraSasaranList as $renstraSasaran) {
+                $renstraSasaranId = $renstraSasaran['id'];
+                
+                // Delete RENJA data that references this RENSTRA sasaran
+                $renjaSasaranList = $this->db->table('renja_sasaran')
+                    ->where('renstra_sasaran_id', $renstraSasaranId)
+                    ->get()
+                    ->getResultArray();
+                
+                foreach ($renjaSasaranList as $renjaSasaran) {
+                    // Delete RENJA indikator sasaran first
+                    $this->db->table('renja_indikator_sasaran')
+                        ->where('renja_sasaran_id', $renjaSasaran['id'])
+                        ->delete();
+                }
+                
+                // Delete all RENJA sasaran that reference this RENSTRA sasaran
+                $this->db->table('renja_sasaran')
+                    ->where('renstra_sasaran_id', $renstraSasaranId)
+                    ->delete();
+                
+                // Delete RENSTRA targets first
+                $renstraIndikatorList = $this->db->table('renstra_indikator_sasaran')
+                    ->where('renstra_sasaran_id', $renstraSasaranId)
+                    ->get()
+                    ->getResultArray();
+                
+                foreach ($renstraIndikatorList as $renstraIndikator) {
+                    $this->db->table('renstra_target')
+                        ->where('renstra_indikator_id', $renstraIndikator['id'])
+                        ->delete();
+                }
+                
+                // Delete RENSTRA indikator sasaran
+                $this->db->table('renstra_indikator_sasaran')
+                    ->where('renstra_sasaran_id', $renstraSasaranId)
+                    ->delete();
             }
             
-            // Delete the sasaran
-            $result = $this->db->table('rensra_sasaran')->delete(['id' => $id]);
+            // Delete RENSTRA sasaran
+            $this->db->table('renstra_sasaran')->delete(['rpjmd_sasaran_id' => $id]);
             
-            $this->db->transComplete();
+            // For RKPD, we need to delete rkpd_indikator_sasaran first, then rkpd_sasaran
+            $rkpdSasaranList = $this->db->table('rkpd_sasaran')->where('rpjmd_sasaran_id', $id)->get()->getResultArray();
+            foreach ($rkpdSasaranList as $rkpdSasaran) {
+                $rkpdSasaranId = $rkpdSasaran['id'];
+                $this->db->table('rkpd_indikator_sasaran')->delete(['rkpd_sasaran_id' => $rkpdSasaranId]);
+            }
+            
+            $this->db->table('rkpd_sasaran')->delete(['rpjmd_sasaran_id' => $id]);
+
+            // Delete the sasaran
+            $result = $this->db->table('rpjmd_sasaran')->delete(['id' => $id]);
+
+            if (!$internal) {
+                $this->db->transComplete();
+                
+                if ($this->db->transStatus() === false) {
+                    throw new \Exception("Transaction failed during sasaran deletion");
+                }
+            }
+            
             return $result;
             
         } catch (\Exception $e) {
-            $this->db->transRollback();
+            if (!$internal) {
+                $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -643,14 +703,19 @@ class RpjmdModel extends Model
      * Create new RPJMD Indikator Sasaran
      */
     public function createIndikatorSasaran($data)
-    {
-        $debugFile = WRITEPATH . 'debug_rpjmd.txt';
+    {        
+        // Debug logging
+        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
+        file_put_contents($debugFile, "=== CREATE INDIKATOR SASARAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+        file_put_contents($debugFile, "Input data: " . print_r($data, true) . "\n", FILE_APPEND);
         
         // Validation
         $required = ['sasaran_id', 'indikator_sasaran', 'definisi_op', 'satuan'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
-                throw new \InvalidArgumentException("Field {$field} harus diisi");
+                $error = "Field {$field} harus diisi";
+                file_put_contents($debugFile, "VALIDATION ERROR: {$error}\n", FILE_APPEND);
+                throw new \InvalidArgumentException($error);
             }
         }
         
@@ -661,19 +726,21 @@ class RpjmdModel extends Model
             'satuan' => $data['satuan']
         ];
         
-        file_put_contents($debugFile, "About to insert indikator sasaran: " . print_r($insertData, true) . "\n", FILE_APPEND);
-        
+        file_put_contents($debugFile, "Insert data: " . print_r($insertData, true) . "\n", FILE_APPEND);
+                
         $result = $this->db->table('rpjmd_indikator_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
         
-        file_put_contents($debugFile, "Indikator sasaran insert result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
-        file_put_contents($debugFile, "Indikator sasaran insert ID: " . $insertId . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Insert result: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Insert ID: " . $insertId . "\n", FILE_APPEND);
         
         if (!$result) {
             $error = $this->db->error();
-            file_put_contents($debugFile, "Indikator sasaran database error: " . print_r($error, true) . "\n", FILE_APPEND);
+            file_put_contents($debugFile, "DATABASE ERROR: " . print_r($error, true) . "\n", FILE_APPEND);
             throw new \Exception("Failed to insert indikator sasaran: " . $error['message']);
         }
+        
+        file_put_contents($debugFile, "=== END CREATE INDIKATOR SASARAN ===\n\n", FILE_APPEND);
         
         return $insertId;
     }
@@ -683,28 +750,56 @@ class RpjmdModel extends Model
      */
     public function updateIndikatorSasaran($id, $data)
     {
-        return $this->db->table('rpjmd_indikator_sasaran')->where('id', $id)->update($data);
+        // Debug logging
+        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
+        file_put_contents($debugFile, "=== UPDATE INDIKATOR SASARAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+        file_put_contents($debugFile, "Indikator Sasaran ID: {$id}\n", FILE_APPEND);
+        file_put_contents($debugFile, "Update data: " . print_r($data, true) . "\n", FILE_APPEND);
+        
+        $result = $this->db->table('rpjmd_indikator_sasaran')->where('id', $id)->update($data);
+        
+        file_put_contents($debugFile, "Update result: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Affected rows: " . $this->db->affectedRows() . "\n", FILE_APPEND);
+        
+        if (!$result) {
+            $error = $this->db->error();
+            file_put_contents($debugFile, "UPDATE ERROR: " . print_r($error, true) . "\n", FILE_APPEND);
+        }
+        
+        file_put_contents($debugFile, "=== END UPDATE INDIKATOR SASARAN ===\n\n", FILE_APPEND);
+        
+        return $result;
     }
     
     /**
      * Delete RPJMD Indikator Sasaran (with cascade delete)
      */
-    public function deleteIndikatorSasaran($id)
+    public function deleteIndikatorSasaran($id, $internal = false)
     {
-        $this->db->transStart();
-        
+        if (!$internal) {
+            $this->db->transStart();
+        }
+
         try {
             // Delete related target tahunan
             $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => $id]);
-            
+
             // Delete the indikator sasaran
             $result = $this->db->table('rpjmd_indikator_sasaran')->delete(['id' => $id]);
             
-            $this->db->transComplete();
+            if (!$internal) {
+                $this->db->transComplete();
+                
+                if ($this->db->transStatus() === false) {
+                    throw new \Exception("Transaction failed during indikator sasaran deletion");
+                }
+            }
             return $result;
             
         } catch (\Exception $e) {
-            $this->db->transRollback();
+            if (!$internal) {
+                $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -715,14 +810,19 @@ class RpjmdModel extends Model
      * Create new RPJMD Target Tahunan
      */
     public function createTargetTahunan($data)
-    {
-        $debugFile = WRITEPATH . 'debug_rpjmd.txt';
+    {        
+        // Debug logging
+        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
+        file_put_contents($debugFile, "=== CREATE TARGET TAHUNAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+        file_put_contents($debugFile, "Input data: " . print_r($data, true) . "\n", FILE_APPEND);
         
         // Validation
         $required = ['indikator_sasaran_id', 'tahun'];
         foreach ($required as $field) {
             if (!isset($data[$field]) || empty($data[$field])) {
-                throw new \InvalidArgumentException("Field {$field} harus diisi");
+                $error = "Field {$field} harus diisi";
+                file_put_contents($debugFile, "VALIDATION ERROR: {$error}\n", FILE_APPEND);
+                throw new \InvalidArgumentException($error);
             }
         }
         
@@ -733,19 +833,21 @@ class RpjmdModel extends Model
             'target_tahunan' => $data['target_tahunan'] ?? ''
         ];
         
-        file_put_contents($debugFile, "About to insert target tahunan: " . print_r($insertData, true) . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Insert data: " . print_r($insertData, true) . "\n", FILE_APPEND);
         
         $result = $this->db->table('rpjmd_target')->insert($insertData);
         $insertId = $this->db->insertID();
         
-        file_put_contents($debugFile, "Target tahunan insert result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
-        file_put_contents($debugFile, "Target tahunan insert ID: " . $insertId . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Insert result: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Insert ID: " . $insertId . "\n", FILE_APPEND);
         
         if (!$result) {
             $error = $this->db->error();
-            file_put_contents($debugFile, "Target tahunan database error: " . print_r($error, true) . "\n", FILE_APPEND);
+            file_put_contents($debugFile, "DATABASE ERROR: " . print_r($error, true) . "\n", FILE_APPEND);
             throw new \Exception("Failed to insert target tahunan: " . $error['message']);
         }
+        
+        file_put_contents($debugFile, "=== END CREATE TARGET TAHUNAN ===\n\n", FILE_APPEND);
         
         return $insertId;
     }
@@ -771,7 +873,25 @@ class RpjmdModel extends Model
      */
     public function deleteTargetTahunanByIndikatorId($indikatorSasaranId)
     {
-        return $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => $indikatorSasaranId]);
+        // Debug logging
+        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
+        file_put_contents($debugFile, "=== DELETE TARGET TAHUNAN BY INDIKATOR ID - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+        file_put_contents($debugFile, "Indikator Sasaran ID: {$indikatorSasaranId}\n", FILE_APPEND);
+        
+        // First check how many records exist
+        $existingCount = $this->db->table('rpjmd_target')
+            ->where('indikator_sasaran_id', $indikatorSasaranId)
+            ->countAllResults();
+        
+        file_put_contents($debugFile, "Existing targets to delete: {$existingCount}\n", FILE_APPEND);
+        
+        $result = $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => $indikatorSasaranId]);
+        
+        file_put_contents($debugFile, "Delete result: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "Affected rows: " . $this->db->affectedRows() . "\n", FILE_APPEND);
+        file_put_contents($debugFile, "=== END DELETE TARGET TAHUNAN ===\n\n", FILE_APPEND);
+        
+        return $result;
     }
 
     // ==================== BATCH OPERATIONS ====================
@@ -848,6 +968,11 @@ class RpjmdModel extends Model
     
     public function updateCompleteRpjmdTransaction($misiId, $data)
     {
+        // Debug logging
+        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
+        file_put_contents($debugFile, "\n=== UPDATE COMPLETE RPJMD TRANSACTION - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+        file_put_contents($debugFile, "Misi ID: {$misiId}\n", FILE_APPEND);
+        file_put_contents($debugFile, "Input data structure:\n" . print_r($data, true) . "\n", FILE_APPEND);
        
         try {
             $this->db->transStart();
@@ -861,9 +986,16 @@ class RpjmdModel extends Model
             $existingTujuanIds = array_column($this->getTujuanByMisiId($misiId), 'id');
             $processedTujuanIds = [];
             
+            file_put_contents($debugFile, "Existing tujuan IDs: " . print_r($existingTujuanIds, true) . "\n", FILE_APPEND);
+            
             // Process tujuan data
             if (isset($data['tujuan']) && is_array($data['tujuan'])) {
-                foreach ($data['tujuan'] as $tujuanData) {
+                file_put_contents($debugFile, "Processing " . count($data['tujuan']) . " tujuan items\n", FILE_APPEND);
+                
+                foreach ($data['tujuan'] as $tujuanIndex => $tujuanData) {
+                    file_put_contents($debugFile, "\n--- Processing Tujuan [{$tujuanIndex}] ---\n", FILE_APPEND);
+                    file_put_contents($debugFile, "Tujuan data: " . print_r($tujuanData, true) . "\n", FILE_APPEND);
+                    
                     if (!empty($tujuanData['tujuan_rpjmd'])) {
                         $tujuanInfo = [
                             'misi_id' => $misiId,
@@ -872,13 +1004,16 @@ class RpjmdModel extends Model
                         
                         if (isset($tujuanData['id']) && !empty($tujuanData['id'])) {
                             // Update existing tujuan
+                            file_put_contents($debugFile, "UPDATING existing tujuan ID: {$tujuanData['id']}\n", FILE_APPEND);
                             $this->updateTujuan($tujuanData['id'], $tujuanInfo);
                             $tujuanId = $tujuanData['id'];
                             $processedTujuanIds[] = $tujuanId;
                         } else {
                             // Create new tujuan
+                            file_put_contents($debugFile, "CREATING new tujuan\n", FILE_APPEND);
                             $tujuanId = $this->createTujuan($tujuanInfo);
                             $processedTujuanIds[] = $tujuanId;
+                            file_put_contents($debugFile, "New tujuan created with ID: {$tujuanId}\n", FILE_APPEND);
                         }
                         
                         // Get existing indikator tujuan IDs to track which ones to keep
@@ -959,23 +1094,46 @@ class RpjmdModel extends Model
                                                 
                                                 // For existing indikator sasaran, delete all target tahunan first to avoid duplicates
                                                 if (isset($indikatorSasaranData['id']) && !empty($indikatorSasaranData['id'])) {
-                                                    $this->deleteTargetTahunanByIndikatorId($indikatorSasaranId);
+                                                    file_put_contents($debugFile, "Deleting existing targets for indikator sasaran ID: {$indikatorSasaranId}\n", FILE_APPEND);
+                                                    $deleteResult = $this->deleteTargetTahunanByIndikatorId($indikatorSasaranId);
+                                                    file_put_contents($debugFile, "Delete result: " . ($deleteResult ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
                                                 }
                                                 
                                                 // Process target tahunan
                                                 if (isset($indikatorSasaranData['target_tahunan']) && is_array($indikatorSasaranData['target_tahunan'])) {
-                                                    foreach ($indikatorSasaranData['target_tahunan'] as $targetData) {
-                                                        // Create target tahunan if tahun exists (regardless of target_tahunan value)
-                                                        if (isset($targetData['tahun']) && $targetData['tahun'] !== '') {
+                                                    file_put_contents($debugFile, "Processing " . count($indikatorSasaranData['target_tahunan']) . " targets for indikator sasaran ID: {$indikatorSasaranId}\n", FILE_APPEND);
+                                                    
+                                                    // Get misi data to determine year range
+                                                    $misi = $this->getMisiById($misiId);
+                                                    $startYear = $misi['tahun_mulai'] ?? 2025;
+                                                    
+                                                    foreach ($indikatorSasaranData['target_tahunan'] as $targetIndex => $targetData) {
+                                                        file_put_contents($debugFile, "Target [{$targetIndex}]: " . print_r($targetData, true) . "\n", FILE_APPEND);
+                                                        
+                                                        // Check if tahun is missing and generate it from index
+                                                        $tahun = $targetData['tahun'] ?? '';
+                                                        if (empty($tahun) && is_numeric($targetIndex)) {
+                                                            $tahun = $startYear + $targetIndex;
+                                                            file_put_contents($debugFile, "Generated tahun from index: {$tahun} (startYear: {$startYear} + index: {$targetIndex})\n", FILE_APPEND);
+                                                        }
+                                                        
+                                                        // Create target tahunan if we have a valid year (either from data or generated)
+                                                        if (!empty($tahun)) {
                                                             $targetInfo = [
                                                                 'indikator_sasaran_id' => $indikatorSasaranId,
-                                                                'tahun' => $targetData['tahun'],
+                                                                'tahun' => $tahun,
                                                                 'target_tahunan' => $targetData['target_tahunan'] ?? ''
                                                             ];
                                                             
-                                                            $this->createTargetTahunan($targetInfo);
+                                                            file_put_contents($debugFile, "Creating target with data: " . print_r($targetInfo, true) . "\n", FILE_APPEND);
+                                                            $targetId = $this->createTargetTahunan($targetInfo);
+                                                            file_put_contents($debugFile, "Target created with ID: {$targetId}\n", FILE_APPEND);
+                                                        } else {
+                                                            file_put_contents($debugFile, "Skipping target - unable to determine tahun (original: '{$targetData['tahun']}', index: {$targetIndex})\n", FILE_APPEND);
                                                         }
                                                     }
+                                                } else {
+                                                    file_put_contents($debugFile, "No target_tahunan data found for indikator sasaran ID: {$indikatorSasaranId}\n", FILE_APPEND);
                                                 }
                                             }
                                         }
@@ -984,7 +1142,7 @@ class RpjmdModel extends Model
                                     // Delete indikator sasaran that were not processed (removed from form)
                                     $toDeleteIndikatorSasaran = array_diff($existingIndikatorSasaranIds, $processedIndikatorSasaranIds);
                                     foreach ($toDeleteIndikatorSasaran as $deleteId) {
-                                        $this->deleteIndikatorSasaran($deleteId);
+                                        $this->deleteIndikatorSasaran($deleteId, true);
                                     }
                                 }
                             }
@@ -993,7 +1151,7 @@ class RpjmdModel extends Model
                         // Delete sasaran that were not processed (removed from form)
                         $toDeleteSasaran = array_diff($existingSasaranIds, $processedSasaranIds);
                         foreach ($toDeleteSasaran as $deleteId) {
-                            $this->deleteSasaran($deleteId);
+                            $this->deleteSasaran($deleteId, true);
                         }
                     }
                 }
@@ -1001,20 +1159,33 @@ class RpjmdModel extends Model
             
             // Delete tujuan that were not processed (removed from form)
             $toDeleteTujuan = array_diff($existingTujuanIds, $processedTujuanIds);
+            file_put_contents($debugFile, "Tujuan to delete: " . print_r($toDeleteTujuan, true) . "\n", FILE_APPEND);
+            
             foreach ($toDeleteTujuan as $deleteId) {
-                $this->deleteTujuan($deleteId);
+                file_put_contents($debugFile, "Deleting tujuan ID: {$deleteId}\n", FILE_APPEND);
+                $this->deleteTujuan($deleteId, true);
             }
             
             // Clean up any orphaned records
+            file_put_contents($debugFile, "Cleaning up orphaned records for misi ID: {$misiId}\n", FILE_APPEND);
             $this->cleanupOrphanedRecords($misiId);
 
             $this->db->transComplete();
             
             if ($this->db->transStatus() === false) {
+                file_put_contents($debugFile, "ERROR: Database transaction failed!\n", FILE_APPEND);
                 throw new \Exception("Database transaction failed. All changes have been rolled back.");
             }
             
+            file_put_contents($debugFile, "SUCCESS: Transaction completed successfully\n", FILE_APPEND);
+            file_put_contents($debugFile, "=== END UPDATE TRANSACTION ===\n\n", FILE_APPEND);
+            
+            return true;
+            
         } catch (\Exception $e) {
+            file_put_contents($debugFile, "EXCEPTION in updateCompleteRpjmdTransaction: " . $e->getMessage() . "\n", FILE_APPEND);
+            file_put_contents($debugFile, "Stack trace:\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+            file_put_contents($debugFile, "=== TRANSACTION ROLLED BACK ===\n\n", FILE_APPEND);
 
             $this->db->transRollback();
             throw $e;

@@ -83,7 +83,7 @@
       <!-- Alert Container -->
       <div id="alert-container"></div>
 
-      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['sasaran_id'] ?? '')) ?>">>
+      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['sasaran_id'] ?? '')) ?>">
       <?= csrf_field() ?>
 
         <!-- Hidden fields untuk mode edit -->
@@ -126,6 +126,7 @@
 
           <div id="sasaran-renstra-container">
             <!-- Sasaran Renstra from Database -->
+            <?php $sasaranIndex = 0; ?>
             <div class="sasaran-renstra-item bg-light border rounded p-3 mb-3">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <label class="fw-medium sasaran-title">Sasaran Renstra 1</label>
@@ -133,12 +134,12 @@
               </div>
               
               <!-- Hidden field for sasaran ID -->
-              <input type="hidden" name="sasaran_renstra[0][id]" value="<?= $renstra_data['sasaran_id'] ?? '' ?>">
+              <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][id]" value="<?= $renstra_data['sasaran_id'] ?? '' ?>">
               
               <div class="row mb-3">
                 <div class="col-md-12">
                   <label class="form-label">Sasaran Renstra</label>
-                  <textarea name="sasaran_renstra[0][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran renstra" required><?= esc($renstra_data['sasaran'] ?? '') ?></textarea>
+                  <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][sasaran]" class="form-control" rows="2" placeholder="Masukkan sasaran renstra" required><?= esc($renstra_data['sasaran'] ?? '') ?></textarea>
                 </div>
               </div>
 
@@ -157,17 +158,17 @@
                         </div>
                         
                         <!-- Hidden field for indikator ID -->
-                        <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][id]" value="<?= $indikator['indikator_id'] ?? '' ?>">
+                        <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][id]" value="<?= $indikator['indikator_id'] ?? '' ?>">
                         
                         <div class="mb-3">
                           <label class="form-label">Indikator Sasaran</label>
-                          <textarea name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required><?= esc($indikator['indikator_sasaran'] ?? '') ?></textarea>
+                          <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required><?= esc($indikator['indikator_sasaran'] ?? '') ?></textarea>
                         </div>
 
                         <div class="row mb-3">
                           <div class="col-md-6">
                             <label class="form-label">Satuan</label>
-                              <select name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-control satuan-select" data-selected="<?= esc($indikator['satuan'] ?? '') ?>" required>
+                              <select name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-control satuan-select" data-selected="<?= esc($indikator['satuan'] ?? '') ?>" required>
                               <option value="">Pilih Satuan</option>
                             </select>
                           </div>
@@ -181,23 +182,23 @@
                               <?php foreach ($indikator['target_tahunan'] as $targetIndex => $target): ?>
                                 <div class="target-item row g-2 align-items-center mb-2">
                                   <div class="col-auto">
-                                    <input type="number" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][tahun]" value="<?= esc($target['tahun'] ?? '') ?>" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                                    <input type="number" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][tahun]" value="<?= esc($target['tahun'] ?? '') ?>" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                                   </div>
                                   <div class="col">
-                                    <input type="text" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][target]" value="<?= esc($target['target'] ?? '') ?>" class="form-control form-control-sm" placeholder="Target <?= esc($target['tahun'] ?? '') ?>" required>
+                                    <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][target]" value="<?= esc($target['target'] ?? '') ?>" class="form-control form-control-sm" placeholder="Target <?= esc($target['tahun'] ?? '') ?>" required>
                                   </div>
                                   <!-- Hidden field for target ID -->
-                                  <input type="hidden" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][id]" value="<?= $target['target_id'] ?? '' ?>">
+                                  <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][id]" value="<?= $target['target_id'] ?? '' ?>">
                                 </div>
                               <?php endforeach; ?>
                             <?php else: ?>
                               <!-- Default targets if none exist -->
                               <div class="target-item row g-2 align-items-center mb-2">
                                 <div class="col-auto">
-                                  <input type="number" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][0][tahun]" value="<?= esc($renstra_data['tahun_mulai'] ?? '') ?>" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                                  <input type="number" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][0][tahun]" value="<?= esc($renstra_data['tahun_mulai'] ?? '') ?>" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                                 </div>
                                 <div class="col">
-                                  <input type="text" name="sasaran_renstra[0][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][0][target]" value="" class="form-control form-control-sm" placeholder="Target <?= esc($renstra_data['tahun_mulai'] ?? '') ?>" required>
+                                  <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][0][target]" value="" class="form-control form-control-sm" placeholder="Target <?= esc($renstra_data['tahun_mulai'] ?? '') ?>" required>
                                 </div>
                               </div>
                             <?php endif; ?>
@@ -215,13 +216,13 @@
                       
                       <div class="mb-3">
                         <label class="form-label">Indikator Sasaran</label>
-                        <textarea name="sasaran_renstra[0][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
+                        <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][0][indikator_sasaran]" class="form-control" rows="2" placeholder="Masukkan indikator sasaran" required></textarea>
                       </div>
 
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Satuan</label>
-                          <select name="sasaran_renstra[0][indikator_sasaran][0][satuan]" class="form-control satuan-select" required>
+                          <select name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][0][satuan]" class="form-control satuan-select" required>
                             <option value="">Pilih Satuan</option>
                           </select>
                         </div>
@@ -233,10 +234,10 @@
                         <div class="target-container">
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
-                              <input type="number" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
+                              <input type="number" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][0][target_tahunan][0][tahun]" value="" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
                             </div>
                             <div class="col">
-                              <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][target_tahunan][0][target]" value="" class="form-control form-control-sm" placeholder="Target" required>
+                              <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][0][target_tahunan][0][target]" value="" class="form-control form-control-sm" placeholder="Target" required>
                             </div>
                           </div>
                         </div>

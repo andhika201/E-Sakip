@@ -101,6 +101,7 @@
           const satuanSelect = indikatorItem.querySelector('select[name*="satuan"]');
           const tahunSelect = indikatorItem.querySelector('select[name*="tahun"]');
           const targetInput = indikatorItem.querySelector('input[name*="target"]');
+          const idInput = indikatorItem.querySelector('input[name*="[id]"]');
           
           if (indikatorTextarea) {
             indikatorTextarea.name = `sasaran_renja[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][indikator_sasaran]`;
@@ -113,6 +114,9 @@
           }
           if (targetInput) {
             targetInput.name = `sasaran_renja[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][target]`;
+          }
+          if (idInput) {
+            idInput.name = `sasaran_renja[${sasaranIndex}][indikator_sasaran][${indikatorIndex}][id]`;
           }
         });
       });

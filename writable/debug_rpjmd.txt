@@ -44210,3 +44210,1141 @@ About to insert target tahunan: Array
 
 Target tahunan insert result: SUCCESS
 Target tahunan insert ID: 90
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 10
+    [indikator_tujuan] => Mewujudkan asdadasdha dashdadauhda da
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 12
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 10
+    [indikator_tujuan] => adadsaaaaaaaaas
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 13
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test
+    [definisi_op] => asdasd
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 19
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 19
+    [tahun] => 2030
+    [target_tahunan] => asda
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 91
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 19
+    [tahun] => 2031
+    [target_tahunan] => dada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 92
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 19
+    [tahun] => 2032
+    [target_tahunan] => aad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 93
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 19
+    [tahun] => 2033
+    [target_tahunan] => daada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 94
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 19
+    [tahun] => 2034
+    [target_tahunan] => daad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 95
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test5
+    [definisi_op] => asdasdadasdad
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 20
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 20
+    [tahun] => 2030
+    [target_tahunan] => adasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 96
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 20
+    [tahun] => 2031
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 97
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 20
+    [tahun] => 2032
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 98
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 20
+    [tahun] => 2033
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 99
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 20
+    [tahun] => 2034
+    [target_tahunan] => asdad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 100
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test
+    [definisi_op] => asdasd
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 21
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 21
+    [tahun] => 2030
+    [target_tahunan] => asda
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 101
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 21
+    [tahun] => 2031
+    [target_tahunan] => dada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 102
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 21
+    [tahun] => 2032
+    [target_tahunan] => aad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 103
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 21
+    [tahun] => 2033
+    [target_tahunan] => daada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 104
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 21
+    [tahun] => 2034
+    [target_tahunan] => daad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 105
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test5
+    [definisi_op] => asdasdadasdad
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 22
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 22
+    [tahun] => 2030
+    [target_tahunan] => adasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 106
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 22
+    [tahun] => 2031
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 107
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 22
+    [tahun] => 2032
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 108
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 22
+    [tahun] => 2033
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 109
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 22
+    [tahun] => 2034
+    [target_tahunan] => asdad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 110
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => 11111111111111111111111
+    [definisi_op] => asdasd
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 23
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 23
+    [tahun] => 2030
+    [target_tahunan] => asda
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 111
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 23
+    [tahun] => 2031
+    [target_tahunan] => dada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 112
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 23
+    [tahun] => 2032
+    [target_tahunan] => aad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 113
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 23
+    [tahun] => 2033
+    [target_tahunan] => daada
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 114
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 23
+    [tahun] => 2034
+    [target_tahunan] => daad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 115
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => test5
+    [definisi_op] => asdasdadasdad
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 24
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 24
+    [tahun] => 2030
+    [target_tahunan] => adasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 116
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 24
+    [tahun] => 2031
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 117
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 24
+    [tahun] => 2032
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 118
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 24
+    [tahun] => 2033
+    [target_tahunan] => asdasd
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 119
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 24
+    [tahun] => 2034
+    [target_tahunan] => asdad
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 120
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => misi
+    [definisi_op] => misi
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 25
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 25
+    [tahun] => 2030
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 121
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 25
+    [tahun] => 2031
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 122
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 25
+    [tahun] => 2032
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 123
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 25
+    [tahun] => 2033
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 124
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 25
+    [tahun] => 2034
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 125
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => misi
+    [definisi_op] => misi
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 26
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 26
+    [tahun] => 2030
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 126
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 26
+    [tahun] => 2031
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 127
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 26
+    [tahun] => 2032
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 128
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 26
+    [tahun] => 2033
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 129
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 26
+    [tahun] => 2034
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 130
+About to insert misi: Array
+(
+    [misi] => aaaaaaaaaaaaaaaa
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 10
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 11
+    [indikator_tujuan] => aaaaaaaaaaaaaaaa
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 14
+About to insert sasaran: Array
+(
+    [tujuan_id] => 11
+    [sasaran_rpjmd] => aaaaaaaaaaaaaaaa
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 11
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 11
+    [indikator_sasaran] => aaaaaaaaaaaaaaaa
+    [definisi_op] => aaaaaaaaaaaaaaaa
+    [satuan] => Unit
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 27
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 27
+    [tahun] => 2025
+    [target_tahunan] => aaaaaaaaaaaaaaaa
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 131
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 27
+    [tahun] => 2026
+    [target_tahunan] => aaaaaaaaaaaaaaaa
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 132
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 27
+    [tahun] => 2027
+    [target_tahunan] => aaaaaaaaaaaaaaaa
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 133
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 27
+    [tahun] => 2028
+    [target_tahunan] => aaaaaaaaaaaaaaaa
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 134
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 27
+    [tahun] => 2029
+    [target_tahunan] => aaaaaaaaaaaaaaaa
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 135
+About to insert misi: Array
+(
+    [misi] => Meningkatkan kualitas sumber daya manusia yang berdaya saing dan berakhlak mulia
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [status] => draft
+)
+
+Insert result: SUCCESS
+Insert ID: 11
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 12
+    [indikator_tujuan] => Mendorong pertumbuhan ekonomi berbasis potensi lokal dan ekonomi kreatif
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 15
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 12
+    [indikator_tujuan] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 16
+About to insert sasaran: Array
+(
+    [tujuan_id] => 12
+    [sasaran_rpjmd] => Meningkatnya angka partisipasi sekolah dan derajat kesehatan masyarakat
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 12
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 12
+    [indikator_sasaran] => Mengembangkan usaha mikro, kecil, dan menengah (UMKM)
+    [definisi_op] => Meningkatnya angka partisipasi sekolah dan derajat kesehatan masyarakat
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 28
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 28
+    [tahun] => 2025
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 136
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 28
+    [tahun] => 2026
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 137
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 28
+    [tahun] => 2027
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 138
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 28
+    [tahun] => 2028
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 139
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 28
+    [tahun] => 2029
+    [target_tahunan] => 99
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 140
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 12
+    [indikator_sasaran] => Meningkatnya angka partisipasi sekolah dan derajat kesehatan masyarakat
+    [definisi_op] => Meningkatnya angka partisipasi sekolah dan derajat kesehatan masyarakat
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 29
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 29
+    [tahun] => 2025
+    [target_tahunan] => 88
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 141
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 29
+    [tahun] => 2026
+    [target_tahunan] => 88
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 142
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 29
+    [tahun] => 2027
+    [target_tahunan] => 88
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 143
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 29
+    [tahun] => 2028
+    [target_tahunan] => 88
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 144
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 29
+    [tahun] => 2029
+    [target_tahunan] => 88
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 145
+About to insert sasaran: Array
+(
+    [tujuan_id] => 12
+    [sasaran_rpjmd] => Meningkatnya angka partisipasi sekolah dan derajat kesehatan masyarakat
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 13
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 13
+    [indikator_sasaran] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+    [definisi_op] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 30
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 30
+    [tahun] => 2025
+    [target_tahunan] => 77
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 146
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 30
+    [tahun] => 2026
+    [target_tahunan] => 77
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 147
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 30
+    [tahun] => 2027
+    [target_tahunan] => 77
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 148
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 30
+    [tahun] => 2028
+    [target_tahunan] => 77
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 149
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 30
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 150
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 13
+    [indikator_tujuan] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 17
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 13
+    [indikator_tujuan] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 18
+About to insert sasaran: Array
+(
+    [tujuan_id] => 13
+    [sasaran_rpjmd] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 14
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 14
+    [indikator_sasaran] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+    [definisi_op] => Mewujudkan Kabupaten Pringsewu yang Maju, Mandiri, dan Sejahtera Berlandaskan Nilai-Nilai Budaya Lokal
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 31
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 31
+    [tahun] => 2025
+    [target_tahunan] => 66
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 151
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 31
+    [tahun] => 2026
+    [target_tahunan] => 66
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 152
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 31
+    [tahun] => 2027
+    [target_tahunan] => 66
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 153
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 31
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 154
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 31
+    [tahun] => 2029
+    [target_tahunan] => 66
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 155
+About to insert indikator sasaran: Array
+(
+    [sasaran_id] => 10
+    [indikator_sasaran] => misi
+    [definisi_op] => misi
+    [satuan] => Nilai
+)
+
+Indikator sasaran insert result: SUCCESS
+Indikator sasaran insert ID: 32
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 32
+    [tahun] => 2030
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 156
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 32
+    [tahun] => 2031
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 157
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 32
+    [tahun] => 2032
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 158
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 32
+    [tahun] => 2033
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 159
+About to insert target tahunan: Array
+(
+    [indikator_sasaran_id] => 32
+    [tahun] => 2034
+    [target_tahunan] => misi
+)
+
+Target tahunan insert result: SUCCESS
+Target tahunan insert ID: 160
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 10
+    [indikator_tujuan] => Gagal mengupdate data RPJMD
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 19
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 10
+    [indikator_tujuan] => misimisi
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 20
+About to insert sasaran: Array
+(
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 15
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 14
+    [indikator_tujuan] => misimisi
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 21
+About to insert indikator tujuan: Array
+(
+    [tujuan_id] => 14
+    [indikator_tujuan] => misimisi
+)
+
+Indikator tujuan insert result: SUCCESS
+Indikator tujuan insert ID: 22
+About to insert sasaran: Array
+(
+    [tujuan_id] => 14
+    [sasaran_rpjmd] => misimisi
+)
+
+Sasaran insert result: SUCCESS
+Sasaran insert ID: 16
+=== DELETE SASARAN START: ID=10, internal=1 ===
+Found 2 indikator sasaran to delete
+Deleting indikator sasaran ID: 52
+Deleting indikator sasaran ID: 53
+Deleting sasaran ID: 10
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 10
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-23 14:27:32
+    [updated_at] => 2025-07-23 14:27:32
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 10
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '10'
+Sasaran delete result: FAILED
+Database error: Array
+(
+    [code] => 1451
+    [message] => Cannot delete or update a parent row: a foreign key constraint fails (`e-sakip`.`rkpd_sasaran`, CONSTRAINT `rkpd_sasaran_rpjmd_sasaran_id_foreign` FOREIGN KEY (`rpjmd_sasaran_id`) REFERENCES `rpjmd_sasaran` (`id`))
+)
+
+Affected rows: -1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=15, internal=1 ===
+Found 1 indikator sasaran to delete
+Deleting indikator sasaran ID: 54
+Deleting sasaran ID: 15
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 15
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-27 21:05:18
+    [updated_at] => 2025-07-27 21:05:18
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 15
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '15'
+Sasaran delete result: SUCCESS
+Affected rows: 1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=10, internal=1 ===
+Found 2 indikator sasaran to delete
+Deleting indikator sasaran ID: 52
+Deleting indikator sasaran ID: 53
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 10
+RENSTRA sasaran delete result: SUCCESS
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 10
+RKPD sasaran delete result: FAILED
+Deleting sasaran ID: 10
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 10
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-23 14:27:32
+    [updated_at] => 2025-07-23 14:27:32
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 10
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '10'
+Sasaran delete result: FAILED
+Database error: Array
+(
+    [code] => 1451
+    [message] => Cannot delete or update a parent row: a foreign key constraint fails (`e-sakip`.`rkpd_sasaran`, CONSTRAINT `rkpd_sasaran_rpjmd_sasaran_id_foreign` FOREIGN KEY (`rpjmd_sasaran_id`) REFERENCES `rpjmd_sasaran` (`id`))
+)
+
+Affected rows: -1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=15, internal=1 ===
+Found 1 indikator sasaran to delete
+Deleting indikator sasaran ID: 54
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 15
+RENSTRA sasaran delete result: SUCCESS
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 15
+RKPD sasaran delete result: SUCCESS
+Deleting sasaran ID: 15
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 15
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-27 21:05:18
+    [updated_at] => 2025-07-27 21:05:18
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 15
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '15'
+Sasaran delete result: SUCCESS
+Affected rows: 1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=10, internal=1 ===
+Found 2 indikator sasaran to delete
+Deleting indikator sasaran ID: 52
+Deleting indikator sasaran ID: 53
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 10
+RENSTRA sasaran delete result: SUCCESS
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 10
+RKPD sasaran delete result: FAILED
+Deleting sasaran ID: 10
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 10
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-23 14:27:32
+    [updated_at] => 2025-07-23 14:27:32
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 10
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '10'
+Sasaran delete result: FAILED
+Database error: Array
+(
+    [code] => 1451
+    [message] => Cannot delete or update a parent row: a foreign key constraint fails (`e-sakip`.`rkpd_sasaran`, CONSTRAINT `rkpd_sasaran_rpjmd_sasaran_id_foreign` FOREIGN KEY (`rpjmd_sasaran_id`) REFERENCES `rpjmd_sasaran` (`id`))
+)
+
+Affected rows: -1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=15, internal=1 ===
+Found 1 indikator sasaran to delete
+Deleting indikator sasaran ID: 54
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 15
+RENSTRA sasaran delete result: SUCCESS
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 15
+RKPD sasaran delete result: SUCCESS
+Deleting sasaran ID: 15
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 15
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-27 21:05:18
+    [updated_at] => 2025-07-27 21:05:18
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 15
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '15'
+Sasaran delete result: SUCCESS
+Affected rows: 1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=10, internal=1 ===
+Found 2 indikator sasaran to delete
+Deleting indikator sasaran ID: 52
+Deleting indikator sasaran ID: 53
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 10
+RENSTRA sasaran delete result: SUCCESS
+Getting RKPD sasaran data for rpjmd_sasaran_id: 10
+Found 0 RKPD sasaran to delete
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 10
+RKPD sasaran delete result: SUCCESS
+Deleting sasaran ID: 10
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 10
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-23 14:27:32
+    [updated_at] => 2025-07-23 14:27:32
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 10
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '10'
+Sasaran delete result: SUCCESS
+Affected rows: 1
+=== DELETE SASARAN END: SUCCESS ===
+=== DELETE SASARAN START: ID=15, internal=1 ===
+Found 1 indikator sasaran to delete
+Deleting indikator sasaran ID: 54
+Deleting related RENSTRA sasaran data for rpjmd_sasaran_id: 15
+RENSTRA sasaran delete result: SUCCESS
+Getting RKPD sasaran data for rpjmd_sasaran_id: 15
+Found 1 RKPD sasaran to delete
+Deleting RKPD indikator sasaran for rkpd_sasaran_id: 32
+RKPD indikator sasaran delete result: SUCCESS
+Deleting related RKPD sasaran data for rpjmd_sasaran_id: 15
+RKPD sasaran delete result: SUCCESS
+Deleting sasaran ID: 15
+Sasaran exists check: EXISTS
+Sasaran data: Array
+(
+    [id] => 15
+    [tujuan_id] => 10
+    [sasaran_rpjmd] => misimisi
+    [created_at] => 2025-07-27 21:05:18
+    [updated_at] => 2025-07-27 21:05:18
+)
+
+About to execute DELETE FROM rpjmd_sasaran WHERE id = 15
+Compiled SQL: DELETE FROM `rpjmd_sasaran`
+WHERE `id` = '15'
+Sasaran delete result: SUCCESS
+Affected rows: 1
+=== DELETE SASARAN END: SUCCESS ===

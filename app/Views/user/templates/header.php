@@ -10,12 +10,19 @@
     <!-- Right Side -->
     <div class="d-flex align-items-center">
       <div class="d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-          <i class="fas fa-user text-success"></i>
-        </div>
-        <div>
-          <p class="small fw-medium text-white mb-0">User</p>
-          <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Viewer</p>
+         <div class="dropdown">
+          <div class="btn d-flex align-items-center gap-2 px-2 py-1" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="true">
+            <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+              <i class="fas fa-user text-success"></i>
+            </div>
+            <div>
+              <p class="small fw-medium text-white mb-0">User</p>
+              <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Viewer</p>
+            </div>
+          </div>
+          <ul class="dropdown-menu " aria-labelledby="dropdownMenuButton1">
+            <li><a class="dropdown-item" href="<?= base_url('login') ?>">Login</a></li>
+          </ul>
         </div>
       </div>
     </div>

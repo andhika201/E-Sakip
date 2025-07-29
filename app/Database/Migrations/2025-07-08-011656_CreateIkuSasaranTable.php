@@ -31,6 +31,14 @@ class CreateIkuSasaranTable extends Migration
                 'type' => 'TEXT',
                 'null' => false,
             ],
+            'tahun_mulai' => [
+                'type' => 'YEAR',
+                'null' => false,
+            ],
+            'tahun_akhir' => [
+                'type' => 'YEAR',
+                'null' => false,
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,

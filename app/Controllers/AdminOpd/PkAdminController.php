@@ -216,7 +216,6 @@ class PkAdminController extends BaseController
         if (!$id) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'ID PK Admin tidak ditemukan');
         }
-
         // Ambil data lengkap PK dari model
         $data = $this->pkModel->getPkById($id);
     
@@ -227,7 +226,7 @@ class PkAdminController extends BaseController
         // Logo path (harus absolut)
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
         $tahun = date('Y', strtotime($data['tanggal']));
-
+        
         // Buat halaman 1 dan 2
         $html_1 = view('adminOpd/pk_admin/cetak', $data);
         $html_2 = view('adminOpd/pk_admin/cetak-L', $data);

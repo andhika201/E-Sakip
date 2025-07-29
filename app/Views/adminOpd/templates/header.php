@@ -27,15 +27,70 @@
   </div>
 </header>
 
-<!-- Overlay saat sidebar muncul -->
-<div id="overlay" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none" style="z-index: 30;" onclick="toggleSidebar()"></div>
-
 <!-- Script Toggle Sidebar -->
 <script>
+    let sidebarOpen = false;
+    
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-        sidebar.classList.toggle('sidebar-hidden');
-        overlay.classList.toggle('d-none');
+        const mainContent = document.getElementById('main-content');
+        const overlay = document.getElementById('sidebar-overlay');
+        const isMobile = window.innerWidth <= 768;
+        
+        sidebarOpen = !sidebarOpen;
+        
+        if (sidebarOpen) {
+            sidebar.classList.add('sidebar-show');
+            
+            if (!isMobile) {
+                // Desktop behavior - geser content saja
+                if (mainContent) mainContent.classList.add('sidebar-open');
+            } else {
+                // Mobile behavior - tampilkan overlay
+                if (overlay) overlay.classList.add('show');
+            }
+        } else {
+            sidebar.classList.remove('sidebar-show');
+            
+            if (!isMobile) {
+                // Desktop behavior
+                if (mainContent) mainContent.classList.remove('sidebar-open');
+            } else {
+                // Mobile behavior
+                if (overlay) overlay.classList.remove('show');
+            }
+        }
     }
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const overlay = document.getElementById('sidebar-overlay');
+        const isMobile = window.innerWidth <= 768;
+        
+        if (sidebarOpen) {
+            if (isMobile) {
+                // Switch to mobile mode
+                if (mainContent) mainContent.classList.remove('sidebar-open');
+                if (overlay) overlay.classList.add('show');
+            } else {
+                // Switch to desktop mode
+                if (overlay) overlay.classList.remove('show');
+                if (mainContent) mainContent.classList.add('sidebar-open');
+            }
+        }
+    });
+    
+    // Close sidebar on mobile when clicking outside
+    document.addEventListener('click', function(event) {
+        if (window.innerWidth <= 768 && sidebarOpen) {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');
+            
+            if (!sidebar.contains(event.target) && !toggleButton) {
+                toggleSidebar();
+            }
+        }
+    });
 </script>

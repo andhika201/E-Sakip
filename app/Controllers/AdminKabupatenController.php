@@ -3,50 +3,118 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\DashboardModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminKabupatenController extends BaseController
 {
-    public function index()
+    protected $dashboardModel;
+    
+    public function __construct()
     {
-        return view('adminKabupaten/dashboard');
+        $this->dashboardModel = new DashboardModel();
     }
 
-    public function save_rkt()
+    public function index()
     {
-        $rktModel = new \App\Models\RktModel();
-        
-        // Validasi input
-        $validation = \Config\Services::validation();
-        $validation->setRules([
-            'rpjmd_sasaran_id' => 'required|integer',
-            'sasaran_rkt.*.sasaran' => 'required',
-            'sasaran_rkt.*.indikator_sasaran.*.indikator_sasaran' => 'required',
-            'sasaran_rkt.*.indikator_sasaran.*.satuan' => 'required',
-            'sasaran_rkt.*.indikator_sasaran.*.tahun' => 'required|integer',
-            'sasaran_rkt.*.indikator_sasaran.*.target' => 'required'
-        ]);
+        try {
+            // Get comprehensive dashboard data
+            $data = [
+                'dashboard_data' => $this->dashboardModel->getDashboardData(),
+                'summary_stats' => $this->dashboardModel->getSummaryStats()
+            ];
+            
+            return view('adminKabupaten/dashboard', $data);
+            
+        } catch (\Exception $e) {
+            // Log error and return view with default data
+            log_message('error', 'Dashboard error: ' . $e->getMessage());
+            
+            // Return view with default/fallback data
+            $data = [
+                'dashboard_data' => [
+                    'rpjmd' => ['draft' => 0, 'selesai' => 0],
+                    'rkpd' => ['draft' => 0, 'selesai' => 0],
+                    'renstra' => ['draft' => 0, 'selesai' => 0],
+                    'renja' => ['draft' => 0, 'selesai' => 0],
+                    'iku' => ['draft' => 0, 'selesai' => 0],
+                    'lakip_kabupaten' => ['draft' => 0, 'selesai' => 0],
+                    'lakip_opd' => ['draft' => 0, 'selesai' => 0],
+                    'opd_list' => [],
+                    'available_years' => [date('Y')]
+                ],
+                'summary_stats' => [
+                    'total_rpjmd' => 0,
+                    'total_rkpd' => 0,
+                    'total_renstra' => 0,
+                    'total_renja' => 0,
+                    'total_opd' => 0,
+                    'active_year' => date('Y')
+                ],
+                'error_message' => 'Terjadi kesalahan saat memuat data dashboard.'
+            ];
 
-        if (!$validation->withRequest($this->request)->run()) {
-            return redirect()->back()
-                ->withInput()
-                ->with('errors', $validation->getErrors());
+            return view('adminKabupaten/dashboard', $data);
         }
+    }
 
-        // Ambil data dari form
-        $data = [
-            'rpjmd_sasaran_id' => $this->request->getPost('rpjmd_sasaran_id'),
-            'sasaran_rkt' => $this->request->getPost('sasaran_rkt')
-        ];
+    /**
+     * AJAX endpoint untuk mendapatkan data dashboard berdasarkan filter
+     */
+    public function getDashboardData()
+    {
+        $opdId = $this->request->getPost('opd_id');
+        $year = $this->request->getPost('year');
+        
+        try {
+            if ($opdId || $year) {
+                // Get filtered data
+                $filteredData = $this->dashboardModel->getDashboardDataByOpdAndYear($opdId, $year);
+                
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'data' => $filteredData
+                ]);
+            } else {
+                // Get all data
+                $allData = $this->dashboardModel->getDashboardData();
+                
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'data' => $allData
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Dashboard AJAX error: ' . $e->getMessage());
+            
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat memuat data.'
+            ]);
+        }
+    }
 
-        // Simpan data
-        if ($rktModel->saveRktWithIndikator($data)) {
-            return redirect()->to(base_url('adminkab/rkt'))
-                ->with('success', 'Data RKT berhasil disimpan');
-        } else {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Gagal menyimpan data RKT');
+    /**
+     * Method untuk mendapatkan statistik ringkas (untuk widget atau API)
+     */
+    public function getStats()
+    {
+        try {
+            $stats = $this->dashboardModel->getSummaryStats();
+            
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $stats
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Stats error: ' . $e->getMessage());
+            
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Gagal memuat statistik.'
+            ]);
         }
     }
 

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LAKIP Kabupaten - e-SAKIP</title>
+  <title>LAKIP OPD - e-SAKIP</title>
   <!-- Style -->
-  <?= $this->include('adminKabupaten/templates/style.php'); ?>
+  <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -14,15 +14,15 @@
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
   <!-- Navbar/Header -->
-  <?= $this->include('adminKabupaten/templates/header.php'); ?>
-
+  <?= $this->include('adminOpd/templates/header.php'); ?>
+  
   <!-- Sidebar -->
-  <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
+  <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
   <!-- Konten Utama -->
   <main class="flex-fill p-4 mt-2">
     <div class="bg-white rounded shadow p-4">
-        <h2 class="h3 fw-bold text-success text-center mb-4">LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAH KABUPATEN</h2>
+        <h2 class="h3 fw-bold text-success text-center mb-4">LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAH DAERAH</h2>
 
         <!-- Flash Messages -->
         <?php if (session()->getFlashdata('success')) : ?>
@@ -85,7 +85,7 @@
                 </select>
             </div>
             <div class="d-flex flex-column flex-md-row gap-2">
-                <a href="<?= base_url('adminkab/lakip_kabupaten/tambah') ?>" class="btn btn-success">
+                <a href="<?= base_url('adminopd/lakip_opd/tambah') ?>" class="btn btn-success">
                     <i class="fas fa-plus me-1"></i> Tambah
                 </a>
             </div>
@@ -122,7 +122,7 @@
                         </td>
                         <td class="border p-2">
                             <?php if (!empty($lakip['file'])): ?>
-                                <a href="<?= base_url('adminkab/lakip_kabupaten/download/' . $lakip['id']) ?>" class="text-primary" title="<?= esc($lakip['judul']) ?>">
+                                <a href="<?= base_url('adminopd/lakip_opd/download/' . $lakip['id']) ?>" class="text-primary" title="<?= esc($lakip['judul']) ?>">
                                     <i class="fas fa-download me-1"></i> Download
                                 </a>
                             <?php else: ?>
@@ -139,7 +139,7 @@
                         </td>
                         <td class="border p-2 align-middle text-center">
                             <div class="d-flex flex-column align-items-center gap-2">
-                                <a href="<?= base_url('adminkab/lakip_kabupaten/edit/' . $lakip['id']) ?>" class="btn btn-success btn-sm">
+                                <a href="<?= base_url('adminopd/lakip_opd/edit/' . $lakip['id']) ?>" class="btn btn-success btn-sm">
                                     <i class="fas fa-edit me-1"></i>Edit
                                 </a>
                                 <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $lakip['id'] ?>)">
@@ -153,7 +153,7 @@
                     <tr>
                         <td colspan="7" class="border p-4 text-center text-muted">
                             <i class="fas fa-folder-open me-2"></i>
-                            Belum ada data LAKIP Kabupaten
+                            Belum ada data LAKIP OPD
                         </td>
                     </tr>
                 <?php endif; ?>
@@ -163,15 +163,15 @@
     </div>
   </main>
 
-  <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+  <?= $this->include('adminOpd/templates/footer.php'); ?>
 </div> <!-- End of Content Wrapper -->
 
 <script>
 function filterData() {
     const tahun = document.getElementById('tahun_filter').value;
     const status = document.getElementById('status_filter').value;
-    
-    let url = '<?= base_url('adminkab/lakip_kabupaten') ?>';
+
+    let url = '<?= base_url('adminopd/lakip_opd') ?>';
     const params = new URLSearchParams();
     
     if (tahun) params.append('tahun', tahun);
@@ -189,8 +189,8 @@ function confirmDelete(id) {
         // Create form for delete request
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '<?= base_url('adminkab/lakip_kabupaten/delete/') ?>' + id;
-        
+        form.action = '<?= base_url('adminopd/lakip_opd/delete/') ?>' + id;
+
         // Add CSRF token
         const csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';
@@ -206,7 +206,7 @@ function confirmDelete(id) {
 // Function to toggle status via AJAX
 function toggleStatus(lakipId) {
     if (confirm('Apakah Anda yakin ingin mengubah status LAKIP ini?')) {
-        fetch('<?= base_url('adminkab/lakip_kabupaten/update-status') ?>', {
+        fetch('<?= base_url('adminopd/lakip_opd/update-status') ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

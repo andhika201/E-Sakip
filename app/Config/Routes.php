@@ -26,6 +26,8 @@ $routes->get('/tentang_kami', 'UserController::tentang_kami');
 
 /* Admin Kabupaten Routes */
 $routes->get('adminkab/dashboard', 'AdminKabupatenController::index');
+$routes->post('adminkab/getDashboardData', 'AdminKabupatenController::getDashboardData');
+$routes->get('adminkab/getStats', 'AdminKabupatenController::getStats');
 
 // RPJMD Routes - Admin Management
 $routes->get('adminkab/rpjmd', 'RpjmdController::index');
@@ -61,10 +63,16 @@ $routes->post('adminkab/pk_bupati/save', 'AdminKabupatenController::save_pk_bupa
 
 
 // Lakip Kabupaten Routes
-$routes->get('adminkab/lakip_kabupaten', 'AdminKabupatenController::lakip_kabupaten');
-$routes->get('adminkab/lakip_kabupaten/tambah', 'AdminKabupatenController::tambah_lakip_kabupaten');
-$routes->get('adminkab/lakip_kabupaten/edit', 'AdminKabupatenController::edit_lakip_kabupaten');
-$routes->post('adminkab/lakip_kabupaten/save', 'AdminKabupatenController::save_lakip_kabupaten');
+$routes->get('adminkab/lakip_kabupaten', 'LakipKabupatenController::index');
+$routes->get('adminkab/lakip_kabupaten/tambah', 'LakipKabupatenController::tambah');
+$routes->post('adminkab/lakip_kabupaten/save', 'LakipKabupatenController::save');
+$routes->get('adminkab/lakip_kabupaten/edit/(:num)', 'LakipKabupatenController::edit/$1');
+$routes->post('adminkab/lakip_kabupaten/update/(:num)', 'LakipKabupatenController::update/$1');
+$routes->get('adminkab/lakip_kabupaten/download/(:num)', 'LakipKabupatenController::download/$1');
+$routes->post('adminkab/lakip_kabupaten/update-status', 'LakipKabupatenController::updateStatus');
+$routes->get('adminkab/lakip_kabupaten/delete/(:num)', 'LakipKabupatenController::delete/$1');
+$routes->post('adminkab/lakip_kabupaten/delete/(:num)', 'LakipKabupatenController::delete/$1');
+$routes->delete('adminkab/lakip_kabupaten/delete/(:num)', 'LakipKabupatenController::delete/$1');
 
 
 // Program PK Routes
@@ -130,6 +138,20 @@ $routes->post('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::de
 $routes->get('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->delete('adminopd/pk_admin/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
 $routes->get('adminopd/pk_admin/cetak/(:num)', 'AdminOpd\PkAdminController::cetak/$1');
+$routes->get('adminopd/pk_admin/cetak', 'AdminOpd\PkAdminController::view_cetak');
+
+// Lakip Opd Routes
+$routes->get('adminopd/lakip_opd', 'AdminOpd\LakipOpdController::index');
+$routes->get('adminopd/lakip_opd/tambah', 'AdminOpd\LakipOpdController::tambah');
+$routes->post('adminopd/lakip_opd/save', 'AdminOpd\LakipOpdController::save');
+$routes->get('adminopd/lakip_opd/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
+$routes->post('adminopd/lakip_opd/update/(:num)', 'AdminOpd\LakipOpdController::update/$1');
+$routes->get('adminopd/lakip_opd/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
+$routes->post('adminopd/lakip_opd/update-status', 'AdminOpd\LakipOpdController::updateStatus');
+$routes->get('adminopd/lakip_opd/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+$routes->post('adminopd/lakip_opd/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+$routes->delete('adminopd/lakip_opd/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+
 
 $routes->get('adminopd/tentang_kami', 'AdminOpdController::tentang_kami');
 

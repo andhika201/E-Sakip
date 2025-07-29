@@ -159,4 +159,13 @@ class RktModel extends Model
             ->update(['status' => $status]);
     }
 
+    public function getRktData()
+    {
+        return $this->db->table('rkt_sasaran')
+            ->select('rkt_sasaran.id, rkt_sasaran.sasaran, rkt_indikator_sasaran.indikator_sasaran, rkt_indikator_sasaran.target, rkt_indikator_sasaran.tahun')
+            ->join('rkt_indikator_sasaran', 'rkt_indikator_sasaran.rkt_sasaran_id = rkt_sasaran.id')
+            ->orderBy('rkt_sasaran.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
 }

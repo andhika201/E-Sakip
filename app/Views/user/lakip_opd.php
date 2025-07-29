@@ -12,40 +12,51 @@
   
   <main class="flex-grow-1 d-flex align-items-center justify-content-center">
     <div class="container my-5" style="max-width: 1700px;">
-    <div class="bg-white p-4 rounded shadow-sm">
-      <h4 class="fw-bold text-center text-success mb-4">
-        LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAHAN OPD
-      </h4>
-      
-      <div class="table-responive">
-        <table class="table table=bordered align-middle text-center">
-          <thead class="table-success">
-            <tr>
-              <th>No</th>
-              <th>Sasaran</th>
-              <th>Indikator</th>
-              <th>Capaian Tahun Sebelumnya</th>
-              <th>Target Tahun Ini</th>
-              <th>Capaian Tahun Ini</th>
-            </tr>
-          </thead>
-        <tbody>
-          <?php $no = 1; foreach ($lakipOpdData as $item): ?>
-              <tr>
-                <td><?= $no++ ?></td>
-                <td><?= esc($item['sasaran']) ?></td>
-                <td><?= esc($item['indikator']) ?></td>
-                <td><?= esc($item['capaian_sebelumnya']) ?></td>
-                <td><?= esc($item['target_tahun_ini']) ?></td>
-                <td><?= esc($item['capaian_tahun_ini']) ?></td>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-    </main>
+      <div class="bg-white p-4 rounded shadow-sm">
+        <h4 class="fw-bold text-center text-success mb-4">
+          LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAHAN OPD
+        </h4>
 
-<?= $this->include('user/templates/footer'); ?>
+        <?php if (empty($lakipOpdData)): ?>
+          <div class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Belum ada data LAKIP OPD yang tersedia.
+          </div>
+        <?php else: ?>
+        
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle text-center">
+            <thead class="table-success">
+              <tr>
+                <th>No</th>
+                <th>Sasaran</th>
+                <th>Indikator</th>
+                <th>Capaian Tahun Sebelumnya</th>
+                <th>Target Tahun Ini</th>
+                <th>Capaian Tahun Ini</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php $no = 1; foreach ($lakipOpdData as $item): ?>
+                <tr>
+                  <td><?= $no++ ?></td>
+                  <td><?= esc($item['sasaran']) ?></td>
+                  <td><?= esc($item['indikator']) ?></td>
+                  <td><?= esc($item['capaian_sebelumnya']) ?></td>
+                  <td><?= esc($item['target_tahun_ini']) ?></td>
+                  <td><?= esc($item['capaian_tahun_ini']) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <?php endif; ?>
+        
+      </div>
+    </div>
+  </main>
+
+  <?= $this->include('user/templates/footer'); ?>
 
 </body>
 </html>

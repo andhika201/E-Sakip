@@ -42,7 +42,7 @@
         <?php elseif (empty($rpjmdGrouped)): ?>
           <div class="alert alert-warning text-center">
             <i class="fas fa-exclamation-triangle me-2"></i>
-            Belum ada data RPJMD yang telah selesai.
+            Belum ada data RPJMD yang tersedia.
           </div>
         <?php else: ?>
           <div class="table-responsive">

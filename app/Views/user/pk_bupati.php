@@ -14,7 +14,7 @@
     <div class="container my-5" style="max-width: 1700px;">
     <div class="bg-white p-4 rounded shadow-sm">
       <h4 class="fw-bold text-center text-success mb-4">
-        PERJANJIAN KINERJA KABUPATEN
+        PERJANJIAN KINERJA BUPATI
       </h4>
       
       <!-- Filter Tahun -->

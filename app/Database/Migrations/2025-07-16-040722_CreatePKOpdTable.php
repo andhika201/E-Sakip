@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreatePKTable extends Migration
+class CreatePKOpdTable extends Migration
 {
     public function up()
     {
@@ -22,8 +22,8 @@ class CreatePKTable extends Migration
                 'null' => false,
             ],
             'jenis' => [
-                'type' => 'VARCHAR',
-                'constraint' => 100,
+                'type' => 'ENUM',
+                'constraint' => ['JPT', 'Administrator', 'Pengawas'],
                 'null' => false,
             ],
             'pihak_1' => [
@@ -42,13 +42,35 @@ class CreatePKTable extends Migration
                 'type' => 'DATE',
                 'null' => false,
             ],
+
+            'rpjmd_misi_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => true,
+            ],
+            'parent_jpt_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => true,
+            ],
+            'parent_admin_id' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'unsigned' => true,
+                'null' => true,
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
             'updated_at' => [
                 'type' => 'DATETIME', 
                 'null' => true,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 
@@ -56,11 +78,14 @@ class CreatePKTable extends Migration
         $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('pihak_1', 'pegawai', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('pihak_2', 'pegawai', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('pk');
+        $this->forge->addForeignKey('rpjmd_misi_id', 'rpjmd_misi', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('parent_jpt_id', 'pk_opd', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('parent_admin_id', 'pk_opd', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->createTable('pk_opd');
     }
 
     public function down()
     {
-        $this->forge->dropTable('pk');
+        $this->forge->dropTable('pk_opd', true);
     }
 }

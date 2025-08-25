@@ -46,6 +46,6 @@ class CreateRpjmdMisiTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_misi');
+        $this->forge->dropTable('rpjmd_misi', true, true);
     }
 }

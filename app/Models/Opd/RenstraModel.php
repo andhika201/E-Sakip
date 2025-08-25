@@ -83,22 +83,22 @@ class RenstraModel extends Model
     /**
      * Get all RENSTRA Sasaran dengan filter status
      */
-    public function getAllRenstraByStatus($status = null, $opdId = null)
-    {
-        $query = $this->db->table('renstra_sasaran rs');
+    // public function getAllRenstraByStatus($status = null, $opdId = null)
+    // {
+    //     $query = $this->db->table('renstra_sasaran rs');
 
-        if ($status !== null) {
-            $query->where('rs.status', $status);
-        }
+    //     if ($status !== null) {
+    //         $query->where('rs.status', $status);
+    //     }
 
-        if ($opdId !== null) {
-            $query->where('rs.opd_id', $opdId);
-        }
+    //     if ($opdId !== null) {
+    //         $query->where('rs.opd_id', $opdId);
+    //     }
 
-        return $query->orderBy('rs.tahun_mulai', 'ASC')
-            ->get()
-            ->getResultArray();
-    }
+    //     return $query->orderBy('rs.tahun_mulai', 'ASC')
+    //         ->get()
+    //         ->getResultArray();
+    // }
 
     // ==================== RENSTRA INDIKATOR SASARAN ====================
     

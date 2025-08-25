@@ -10,6 +10,28 @@ class UserAdminOpdSeeder extends Seeder
     {
         // Data admin OPD untuk berbagai dinas
         $userData = [
+            // Super Admin
+            [
+                'username' => 'superadmin',
+                'password' => password_hash('superadmin', PASSWORD_DEFAULT),
+                'email' => 'admin@admin',
+                'role' => 'admin',
+                'opd_id' => 0, // Admin
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+
+            // Admin Kabupaten
+            [
+                'username' => 'admin_kab',
+                'password' => password_hash('admin_kab', PASSWORD_DEFAULT),
+                'email' => 'adminkabupaten@kabupaten.go.id',
+                'role' => 'admin_kab',
+                'opd_id' => 75, 
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            
             // DISKOMINFO
             [
                 'username' => 'admin_diskominfo',

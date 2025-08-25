@@ -3,6 +3,7 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
+use CodeIgniter\Database\RawSql;
 
 class CreateRenstraSasaranTable extends Migration
 {
@@ -32,25 +33,25 @@ class CreateRenstraSasaranTable extends Migration
                 'null' => false,
             ],
             'tahun_mulai' => [
-                'type' => 'YEAR',
+                'type' => 'INT',
+                'constraint' => 4,
                 'null' => false,
             ],
             'tahun_akhir' => [
-                'type' => 'YEAR',
+                'type' => 'INT',
+                'constraint' => 4,
                 'null' => false,
             ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
             'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'type' => new RawSql("DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
             ],
         ]);
+
 
         $this->forge->addKey('id', true);
         $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
@@ -60,6 +61,6 @@ class CreateRenstraSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('renstra_sasaran');
+        $this->forge->dropTable('renstra_sasaran', true, true);
     }
 }

@@ -42,6 +42,6 @@ class CreatePkSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('pk_sasaran');
+        $this->forge->dropTable('pk_sasaran',true, true);
     }
 }

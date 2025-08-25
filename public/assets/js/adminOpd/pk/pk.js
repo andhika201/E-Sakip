@@ -1,3 +1,26 @@
+// Delete PK function
+function deletePk(pkId) {
+    if (!confirm('Yakin ingin menghapus data PK ini?')) return;
+    const jenis = typeof window.jenis !== 'undefined' ? window.jenis : (window.pkJenis || 'administrator');
+    fetch(`${base_url}adminopd/pk/${jenis}/delete/${pkId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Data PK berhasil dihapus!');
+            location.reload();
+        } else {
+            alert(data.error || 'Gagal menghapus data PK.');
+        }
+    })
+    .catch(() => alert('Terjadi kesalahan saat menghapus data PK.'));
+}
 document.addEventListener('DOMContentLoaded', function () {
     const tbody = document.querySelector('#pkTable tbody');
     const grouped = {};

@@ -50,6 +50,6 @@ class CreateIkuTargetTahunanTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('iku_target_tahunan');
+        $this->forge->dropTable('iku_target_tahunan', true, true);
     }
 }

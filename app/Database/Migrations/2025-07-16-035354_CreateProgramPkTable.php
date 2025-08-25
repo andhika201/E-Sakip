@@ -41,6 +41,6 @@ class CreateProgramPkTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('program_pk');
+        $this->forge->dropTable('program_pk',true, true);
     }
 }

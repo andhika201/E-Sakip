@@ -60,6 +60,6 @@ class CreateIkuSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('iku_sasaran');
+        $this->forge->dropTable('iku_sasaran', true, true);
     }
 }

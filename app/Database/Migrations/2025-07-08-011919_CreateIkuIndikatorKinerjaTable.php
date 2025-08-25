@@ -58,6 +58,6 @@ class CreateIkuIndikatorKinerjaTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('iku_indikator_kinerja');
+        $this->forge->dropTable('iku_indikator_kinerja', true, true);
     }
 }

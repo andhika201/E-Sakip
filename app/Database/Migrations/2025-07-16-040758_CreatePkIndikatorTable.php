@@ -25,7 +25,19 @@ class CreatePkIndikatorTable extends Migration
                 'type'       => 'TEXT',
                 'null'       => false,
             ],
+            'jenis_indikator' => [
+                'type' => 'ENUM',
+                'constraint' => ['Indikator Positif', 'Indikator Negatif'],
+                'default' => 'Indikator Positif',
+                'null' => false,
+                'after' => 'misi'
+            ],
             'target'       => [
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => false,
+            ],
+            'capaian'       => [
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
                 'null'       => false,
@@ -47,6 +59,6 @@ class CreatePkIndikatorTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('pk_indikator');
+        $this->forge->dropTable('pk_indikator',true, true);
     }
 }

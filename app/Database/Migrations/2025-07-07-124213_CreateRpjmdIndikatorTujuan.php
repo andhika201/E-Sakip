@@ -45,6 +45,6 @@ class CreateRpjmdIndikatorTujuan extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_indikator_tujuan', true);
+        $this->forge->dropTable('rpjmd_indikator_tujuan', true, true);
     }
 }

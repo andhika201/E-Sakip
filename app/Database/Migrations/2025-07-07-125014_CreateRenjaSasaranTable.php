@@ -3,6 +3,7 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
+use CodeIgniter\Database\RawSql;
 
 class CreateRenjaSasaranTable extends Migration
 {
@@ -10,38 +11,38 @@ class CreateRenjaSasaranTable extends Migration
     {
         $this->forge->addField([
             'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
+                'type'           => 'INT',
+                'constraint'     => 11,
+                'unsigned'       => true,
                 'auto_increment' => true,
             ],
             'opd_id' => [
-                'type' => 'INT',
+                'type'       => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
+                'unsigned'   => true,
+                'null'       => false,
             ],
             'renstra_sasaran_id' => [
-                'type' => 'INT',
+                'type'       => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
+                'unsigned'   => true,
+                'null'       => false,
             ],
             'sasaran_renja' => [
-                'type' => 'VARCHAR',
+                'type'       => 'VARCHAR',
                 'constraint' => 255,
-                'null' => false,
+                'null'       => false,
             ],
             'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'type'    => 'DATETIME',
+                'null'    => true,
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
             'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'type'      => 'DATETIME',
+                'null'      => true,
+                'default'   => new RawSql('CURRENT_TIMESTAMP'),
+                'on_update' => new RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 
@@ -53,6 +54,6 @@ class CreateRenjaSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('renja_sasaran');
+        $this->forge->dropTable('renja_sasaran', true, true);
     }
 }

@@ -46,6 +46,6 @@ class CreateJabatanTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('jabatan');
+        $this->forge->dropTable('jabatan', true, true);
     }
 }

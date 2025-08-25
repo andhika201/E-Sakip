@@ -50,6 +50,6 @@ class CreateRpjmdTargetTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_target');
+        $this->forge->dropTable('rpjmd_target',true, true);
     }
 }

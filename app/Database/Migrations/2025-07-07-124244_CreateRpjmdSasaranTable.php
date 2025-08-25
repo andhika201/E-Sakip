@@ -45,7 +45,7 @@ class CreateRpjmdSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_sasaran', true);
+        $this->forge->dropTable('rpjmd_sasaran', true, true);
         // Optionally, you can also drop the foreign key if it exists
         // $this->forge->dropForeignKey('rpjmd_sasaran', 'tujuan_id_foreign');
     }

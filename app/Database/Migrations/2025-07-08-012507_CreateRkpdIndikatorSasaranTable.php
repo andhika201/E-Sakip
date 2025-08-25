@@ -59,6 +59,6 @@ class CreateRkpdIndikatorSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rkpd_indikator_sasaran');
+        $this->forge->dropTable('rkpd_indikator_sasaran', true, true);
     }
 }

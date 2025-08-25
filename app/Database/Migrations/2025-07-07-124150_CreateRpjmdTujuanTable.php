@@ -45,6 +45,6 @@ class CreateRpjmdTujuanTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_tujuan');
+        $this->forge->dropTable('rpjmd_tujuan', true, true);
     }
 }

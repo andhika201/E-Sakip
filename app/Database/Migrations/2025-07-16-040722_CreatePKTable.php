@@ -30,14 +30,14 @@ class CreatePKTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
-                'null' => false,
+                'null' => true,
             ],
-            'pihak_2' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
-            ],
+                'pihak_2' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'unsigned' => true,
+                    'null' => true,
+                ],
             'tanggal' => [
                 'type' => 'DATE',
                 'null' => false,
@@ -61,6 +61,6 @@ class CreatePKTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('pk');
+        $this->forge->dropTable('pk',true, true);
     }
 }

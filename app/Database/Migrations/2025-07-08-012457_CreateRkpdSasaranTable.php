@@ -45,6 +45,6 @@ class CreateRkpdSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rkpd_sasaran');
+        $this->forge->dropTable('rkpd_sasaran' ,true, true);
     }
 }

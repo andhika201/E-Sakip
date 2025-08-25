@@ -44,6 +44,6 @@ class CreatePangkatTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('pangkat');
+        $this->forge->dropTable('pangkat', true, true);
     }
 }

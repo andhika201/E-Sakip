@@ -59,6 +59,6 @@ class CreateRenjaIndikatorSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('renja_indikator_sasaran');
+        $this->forge->dropTable('renja_indikator_sasaran', true, true);
     }
 }

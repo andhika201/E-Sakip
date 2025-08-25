@@ -3,12 +3,13 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
+use CodeIgniter\Database\RawSql;
 
 class CreateLakipOpdTable extends Migration
 {
     public function up()
     {
-        $this->forgeField([
+        $this->forge->addField([
             'id'          => [
                 'type'           => 'INT',
                 'constraint'     => 11,
@@ -26,12 +27,12 @@ class CreateLakipOpdTable extends Migration
             ],
             'tanggal_laporan' => [
                 'type'       => 'DATE',
-                'null'      => true,
+                'null'       => true,
             ],
             'file'        => [
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
-                'null'      => true,
+                'null'       => true,
             ],
             'status'      => [
                 'type'       => 'ENUM',
@@ -40,15 +41,14 @@ class CreateLakipOpdTable extends Migration
                 'null'       => false,
             ],
             'created_at'  => [
-                'type'       => 'DATETIME',
-                'null'      => true,
-                'default'   => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'type'    => 'DATETIME',
+                'null'    => true,
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
             'updated_at'  => [
-                'type'       => 'DATETIME',
-                'null'      => true,
-                'default'   => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
+                'type'    => 'DATETIME',
+                'null'    => true,
+                'default' => new RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 
@@ -59,6 +59,6 @@ class CreateLakipOpdTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('lakip_opd', true);
+        $this->forge->dropTable('lakip_opd', true, true);
     }
 }

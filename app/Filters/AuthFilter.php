@@ -31,6 +31,7 @@ class AuthFilter implements FilterInterface
             // User is not logged in, redirect to login page
             return redirect()->to('/login')->with('error', 'You must be logged in to access this page.');
         }
+        
 
         if($arguments !== null && is_array($arguments)) {
             // Check if user has the required role

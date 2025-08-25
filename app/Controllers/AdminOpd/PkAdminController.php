@@ -30,10 +30,10 @@ class PkAdminController extends BaseController
 
     public function index()
     {
-         // Get OPD ID from session (logged in user's OPD)
+        // Get OPD ID from session (logged in user's OPD)
         $session = session();
         $opdId = $session->get('opd_id');
-        
+
         // If no OPD ID in session, redirect to login or show error
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
@@ -41,7 +41,7 @@ class PkAdminController extends BaseController
 
         // Get PK data filtered by user's OPD
         $pkData = $this->pkModel->getCompletePkByOpdId($opdId);
-        
+
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
 
@@ -52,7 +52,7 @@ class PkAdminController extends BaseController
         // Load the view for PK Admin
         // Set title based on current OPD
         $titleSuffix = $currentOpd['singkatan'];  // Group data by period
-        
+
         $data = [
             'pk_data' => $pkData,
             'current_opd' => $currentOpd,
@@ -64,12 +64,13 @@ class PkAdminController extends BaseController
         return view('adminOpd/pk_admin/pk-admin', $data);
     }
 
-    public function tambah(){
+    public function tambah()
+    {
 
-         // Get OPD ID from session (logged in user's OPD)
+        // Get OPD ID from session (logged in user's OPD)
         $session = session();
         $opdId = $session->get('opd_id');
-        
+
         // If no OPD ID in session, redirect to login or show error
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
@@ -79,7 +80,7 @@ class PkAdminController extends BaseController
         // $pegawai = $this->pegawaiModel->getAllPegawai();
         $program = $this->programPkModel->getAllPrograms();
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
-        
+
         // Pass the data to the view
         $data = [
             // 'pegawai' => $pegawai,
@@ -93,8 +94,108 @@ class PkAdminController extends BaseController
         return view('adminOpd/pk_admin/tambah_pk_admin', $data);
     }
 
+
+    public function edit($id)
+    {
+        $session = session();
+        $opdId = $session->get('opd_id');
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // Ambil data PK yang akan diedit
+        $pk = $this->pkModel->getPkById($id);
+        if (!$pk) {
+            return redirect()->to('/adminopd/pk_admin')->with('error', 'Data PK tidak ditemukan');
+        }
+
+        // Data pegawai dan program untuk select option
+        $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
+        $program = $this->programPkModel->getAllPrograms();
+
+        $satuanModel = new \App\Models\SatuanModel();
+        $satuan = $satuanModel->getAllSatuan();
+        $data = [
+            'pk' => $pk,
+            'pegawaiOpd' => $pegawaiOpd,
+            'program' => $program,
+            'satuan' => $satuan,
+            'title' => 'Edit PK Admin',
+            'validation' => session()->getFlashdata('validation')
+        ];
+
+        // dd($data);
+
+        return view('adminOpd/pk_admin/edit_pk_admin', $data);
+    }
+
+    /**
+     * Update PK Admin data from edit form
+     */
+    public function update($id)
+    {
+        $session = session();
+        $opdId = $session->get('opd_id');
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        $data = $this->request->getPost();
+        $now = date('Y-m-d');
+
+        // Prepare data for updating
+        $updateData = [
+            'id' => $id,
+            'opd_id' => $opdId,
+            'jenis' => $data['jenis'],
+            'pihak_1' => $data['pegawai_1_id'],
+            'pihak_2' => $data['pegawai_2_id'],
+            'tanggal' => $now,
+            'sasaran_pk' => [],
+            'program' => [],
+        ];
+
+        // Process Sasaran and Indikator
+        if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
+            foreach ($data['sasaran_pk'] as $sasaranItem) {
+                $sasaranData = [
+                    'sasaran' => $sasaranItem['sasaran'] ?? '',
+                    'indikator' => [],
+                ];
+                if (isset($sasaranItem['indikator']) && is_array($sasaranItem['indikator'])) {
+                    foreach ($sasaranItem['indikator'] as $indikatorItem) {
+                        $sasaranData['indikator'][] = [
+                            'indikator' => $indikatorItem['indikator'] ?? '',
+                            'target' => $indikatorItem['target'] ?? '',
+                            'id_satuan' => $indikatorItem['id_satuan'] ?? null,
+                        ];
+                    }
+                }
+                $updateData['sasaran_pk'][] = $sasaranData;
+            }
+        }
+
+        // Process Program
+        if (isset($data['program']) && is_array($data['program'])) {
+            foreach ($data['program'] as $programItem) {
+                $updateData['program'][] = [
+                    'program_id' => $programItem['program_id'] ?? null,
+                    'anggaran' => $programItem['anggaran'] ?? 0,
+                ];
+            }
+        }
+
+        // Call model update method (you need to implement updateCompletePk in PkModel)
+        $success = $this->pkModel->updateCompletePk($id, $updateData);
+
+        if ($success) {
+            return redirect()->to('/adminopd/pk/administrator')->with('success', 'Data PK Admin berhasil diperbarui');
+        } else {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data PK Admin');
+        }
+    }
     public function save()
-    {   
+    {
         $validation = \Config\Services::validation();
 
         $rules = [
@@ -155,11 +256,11 @@ class PkAdminController extends BaseController
         // Get the form data
         $data = $this->request->getPost();
         $now = date('Y-m-d'); // Use Y-m-d format for date
-        
+
         // Prepare data for saving
         $saveData = [
             'opd_id' => $opdId,
-            'jenis'   => $data['jenis'],
+            'jenis' => $data['jenis'],
             'pihak_1' => $data['pegawai_1_id'],
             'pihak_2' => $data['pegawai_2_id'],
             'tanggal' => $now,
@@ -192,7 +293,7 @@ class PkAdminController extends BaseController
                 foreach ($data['program'] as $programItem) {
                     $saveData['program'][] = [
                         'program_id' => $programItem['program_id'] ?? null,
-                        'anggaran'   => $programItem['anggaran'] ?? 0,
+                        'anggaran' => $programItem['anggaran'] ?? 0,
                     ];
                 }
             }
@@ -210,15 +311,15 @@ class PkAdminController extends BaseController
     }
 
     public function cetak($id = null)
-    {   
+    {
         helper('format');
-        
+
         if (!$id) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'ID PK Admin tidak ditemukan');
         }
         // Ambil data lengkap PK dari model
         $data = $this->pkModel->getPkById($id);
-    
+
         if (!$data) {
             return redirect()->to('/adminopd/pk_admin')->with('error', 'Data PK tidak ditemukan');
         }
@@ -226,7 +327,7 @@ class PkAdminController extends BaseController
         // Logo path (harus absolut)
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
         $tahun = date('Y', strtotime($data['tanggal']));
-        
+
         // Buat halaman 1 dan 2
         $html_1 = view('adminOpd/pk_admin/cetak', $data);
         $html_2 = view('adminOpd/pk_admin/cetak-L', $data);

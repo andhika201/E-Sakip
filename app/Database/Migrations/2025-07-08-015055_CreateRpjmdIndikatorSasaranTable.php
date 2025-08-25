@@ -54,6 +54,6 @@ class CreateRpjmdIndikatorSasaranTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('rpjmd_indikator_sasaran');
+        $this->forge->dropTable('rpjmd_indikator_sasaran',true, true);
     }
 }

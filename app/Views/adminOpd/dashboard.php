@@ -10,7 +10,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-
+  
  <!-- Content Wrapper -->
   <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
@@ -26,7 +26,7 @@
     <h2 class="h3 fw-bold text-dark mb-3">Selamat Datang di e-SAKIP</h2>
     <p class="text-muted">Sistem Akuntabilitas Kinerja Instansi Pemerintah - Admin Kabupaten</p>
   </div>
-
+<?= session('role'); ?>
   <div class="row g-4">
     <!-- RENSTRA -->
     <div class="col-12 col-md-6 col-lg-4">

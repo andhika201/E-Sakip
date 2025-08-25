@@ -6,6 +6,8 @@ class UserController extends BaseController
 {
     public function index()
     {
+        // session()->destroy(); // hapus semua session
+        // dd(session()->get('role'));
         return view('dashboard');
     }
     

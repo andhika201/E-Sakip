@@ -50,6 +50,6 @@ class CreateRenstraTargetTahunanTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('renstra_target');
+        $this->forge->dropTable('renstra_target', true, true);
     }
 }

@@ -53,9 +53,9 @@ class AdminOpdController extends BaseController
         return view('adminOpd/pk_jpt/pk_jpt');
     }
 
-    public function pk_administrator()
+    public function pk_admin()
     {
-        return view('adminOpd/pk_administrator/pk_administrator');
+        return view('adminOpd/pk_admin/pk-admin');
     }
 
     public function pk_pengawas()

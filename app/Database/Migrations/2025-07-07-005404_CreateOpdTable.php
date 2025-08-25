@@ -25,6 +25,11 @@ class CreateOpdTable extends Migration
                 'constraint' => 50,
                 'null' => true,
             ],
+            'id_kepala_opd' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'null' => true,
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
@@ -44,6 +49,6 @@ class CreateOpdTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('opd');
+        $this->forge->dropTable('opd', true, true);
     }
 }

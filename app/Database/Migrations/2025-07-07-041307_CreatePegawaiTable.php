@@ -65,6 +65,6 @@ class CreatePegawaiTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('pegawai');
+        $this->forge->dropTable('pegawai', true, true);
     }
 }

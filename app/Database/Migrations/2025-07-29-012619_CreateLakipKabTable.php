@@ -55,6 +55,6 @@ class CreateLakipKabTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('lakip_kab', true);
+        $this->forge->dropTable('lakip_kab', true, true);
     }
 }

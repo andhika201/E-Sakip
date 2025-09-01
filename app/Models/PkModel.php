@@ -545,43 +545,50 @@ class PkModel extends Model
                 }
             }
 
-            // Simpan indikator dan mapping urutan ke id
-            $indikatorIdMap = [];
-            foreach ($data['sasaran_pk'] as $sasaranIdx => $sasaran) {
-                $db->table('pk_sasaran')->insert([
-                    'pk_id' => $pkId,
-                    'sasaran' => $sasaran['sasaran']
-                ]);
-                $pkSasaranId = $db->insertID();
-                if (!empty($sasaran['indikator'])) {
-                    foreach ($sasaran['indikator'] as $indikatorIdx => $indikator) {
-                        $db->table('pk_indikator')->insert([
-                            'pk_sasaran_id' => $pkSasaranId,
-                            'indikator' => $indikator['indikator'],
-                            'target' => $indikator['target'],
-                            'id_satuan' => $indikator['id_satuan'] ?? null,
-                            'jenis_indikator' => $indikator['jenis_indikator'] ?? null
-                        ]);
-                        $pkIndikatorId = $db->insertID();
-                        $indikatorIdMap["{$sasaranIdx}_{$indikatorIdx}"] = $pkIndikatorId;
+            // Simpan sasaran, indikator, dan program
+        foreach ($data['sasaran_pk'] as $sasaran) {
+            // Simpan sasaran
+            $db->table('pk_sasaran')->insert([
+                'pk_id' => $pkId,
+                'sasaran' => $sasaran['sasaran']
+            ]);
+            $pkSasaranId = $db->insertID();
+
+            if (!empty($sasaran['indikator'])) {
+                foreach ($sasaran['indikator'] as $indikator) {
+                    // Simpan indikator
+                    $db->table('pk_indikator')->insert([
+                        'pk_sasaran_id' => $pkSasaranId,
+                        'indikator' => $indikator['indikator'],
+                        'target' => $indikator['target'],
+                        'id_satuan' => $indikator['id_satuan'] ?? null,
+                        'jenis_indikator' => $indikator['jenis_indikator'] ?? null
+                    ]);
+                    $pkIndikatorId = $db->insertID();
+
+                    // Simpan program untuk indikator ini, jika ada
+                    if (isset($indikator['program']) && is_array($indikator['program'])) {
+                        foreach ($indikator['program'] as $programItem) {
+                            $db->table('pk_program')->insert([
+                                'pk_id' => $pkId,
+                                'program_id' => $programItem['program_id'] ?? null,
+                                'id_indikator' => $pkIndikatorId,
+                            ]);
+                        }
                     }
                 }
             }
-
-            // Proses Program dan Anggaran, mapping id_indikator ke id dari pk_indikator
-            if (isset($data['program']) && is_array($data['program'])) {
-                foreach ($data['program'] as $program) {
-                    $programId = $program['program_id'];
-                    $anggaran = $program['anggaran'] ?? null;
-                    $urutanIndikator = $program['id_indikator']; // misal "0_1"
-                    $idIndikator = isset($indikatorIdMap[$urutanIndikator]) ? $indikatorIdMap[$urutanIndikator] : null;
-                    $db->table('pk_program')->insert([
-                        'pk_id' => $pkId,
-                        'program_id' => $programId,
-                        'id_indikator' => $idIndikator,
-                    ]);
-                }
+        }
+        
+        // Simpan misi bupati jika ada (untuk jenis JPT)
+        if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
+            foreach ($data['misi_bupati_id'] as $misiId) {
+                $db->table('pk_misi')->insert([
+                    'pk_id' => $pkId,
+                    'rpjmd_misi_id' => $misiId
+                ]);
             }
+        }
 
             $db->transComplete();
 

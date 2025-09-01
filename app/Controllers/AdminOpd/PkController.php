@@ -219,33 +219,28 @@ class PkController extends BaseController
             }
         }
 
-dd($saveData['sasaran_pk'][0]['indikator']);
 
+        try {
+            // Panggil model untuk menyimpan data
+            $pkId = $this->pkModel->saveCompletePk($saveData);
 
-        $pkId = $this->pkModel->saveCompletePk($saveData);
-        dd($pkId);
-        // Simpan ke pk_misi jika jenis jpt dan ada misi dipilih
-        if ($pkId && strtolower($jenis) === 'jpt' && !empty($saveData['misi_bupati_id'])) {
-            $db = \Config\Database::connect();
-            foreach ($saveData['misi_bupati_id'] as $misiId) {
-                $db->table('pk_misi')->insert([
-                    'pk_id' => $pkId,
-                    'rpjmd_misi_id' => $misiId
-                ]);
-            }
-        }
-
-        if ($pkId) {
-            if (strtolower($jenis) === 'bupati') {
-                return redirect()->to('/adminkab/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+            if ($pkId) {
+                if (strtolower($jenis) === 'bupati') {
+                    return redirect()->to('/adminkab/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+                } else {
+                    return redirect()->to('/adminopd/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+                }
             } else {
-                return redirect()->to('/adminopd/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+                log_message('error', 'Gagal menyimpan data PK: ' . print_r($saveData, true));
+                return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK. Silakan coba lagi.');
             }
-        } else {
-            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK');
+        } catch (\Exception $e) {
+            log_message('error', 'Error saving PK: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
-
     }
+
+
 
 
     public function update($jenis, $id)

@@ -40,7 +40,23 @@ document.addEventListener('DOMContentLoaded', function () {
     window.satuanDropdownTemplate = `<option value="">Pilih Satuan</option>
     ${window.satuanOptions || ''}`;
     // Jika ingin menambah logic dinamis lain, tambahkan di sini
+
+    window.addEventListener('change', function (e) {
+        if (e.target.matches('.program-select')) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            // Find anggaran input inside the same indikator-item
+            let anggaranInput = null;
+            let parent = e.target.closest('.indikator-item');
+            if (parent) {
+                anggaranInput = parent.querySelector('input[name*="[anggaran]"]');
+            }
+            if (anggaranInput) {
+                anggaranInput.value = selectedOption ? selectedOption.dataset.anggaran : '';
+            }
+        }
+    });
 });
 
 // ---------------------------------------------
 // End PK Form JS
+

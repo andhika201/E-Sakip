@@ -545,17 +545,16 @@ class PkModel extends Model
                 }
             }
 
-            // Simpan ke pk_sasaran dan pk_indikator (langsung dengan query builder)
-            foreach ($data['sasaran_pk'] as $sasaran) {
+            // Simpan indikator dan mapping urutan ke id
+            $indikatorIdMap = [];
+            foreach ($data['sasaran_pk'] as $sasaranIdx => $sasaran) {
                 $db->table('pk_sasaran')->insert([
                     'pk_id' => $pkId,
                     'sasaran' => $sasaran['sasaran']
                 ]);
-
                 $pkSasaranId = $db->insertID();
-
                 if (!empty($sasaran['indikator'])) {
-                    foreach ($sasaran['indikator'] as $indikator) {
+                    foreach ($sasaran['indikator'] as $indikatorIdx => $indikator) {
                         $db->table('pk_indikator')->insert([
                             'pk_sasaran_id' => $pkSasaranId,
                             'indikator' => $indikator['indikator'],
@@ -563,18 +562,23 @@ class PkModel extends Model
                             'id_satuan' => $indikator['id_satuan'] ?? null,
                             'jenis_indikator' => $indikator['jenis_indikator'] ?? null
                         ]);
+                        $pkIndikatorId = $db->insertID();
+                        $indikatorIdMap["{$sasaranIdx}_{$indikatorIdx}"] = $pkIndikatorId;
                     }
                 }
             }
 
-            // Proses Program dan Anggaran
+            // Proses Program dan Anggaran, mapping id_indikator ke id dari pk_indikator
             if (isset($data['program']) && is_array($data['program'])) {
                 foreach ($data['program'] as $program) {
                     $programId = $program['program_id'];
-
+                    $anggaran = $program['anggaran'] ?? null;
+                    $urutanIndikator = $program['id_indikator']; // misal "0_1"
+                    $idIndikator = isset($indikatorIdMap[$urutanIndikator]) ? $indikatorIdMap[$urutanIndikator] : null;
                     $db->table('pk_program')->insert([
                         'pk_id' => $pkId,
-                        'program_id' => $programId
+                        'program_id' => $programId,
+                        'id_indikator' => $idIndikator,
                     ]);
                 }
             }

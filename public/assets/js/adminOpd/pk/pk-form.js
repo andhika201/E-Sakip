@@ -1,4 +1,3 @@
-
 /**
  * PK Form Handler
  * Script untuk mengelola form dinamis PK (Sasaran, Indikator, Program) pada halaman input/edit PK.
@@ -8,46 +7,61 @@
  * - Format Rupiah
  */
 document.addEventListener('DOMContentLoaded', function() {
-
+    // Pastikan updateFormNames dijalankan sebelum submit form
+    const pkForm = document.getElementById('pk-form');
+    if (pkForm) {
+        pkForm.addEventListener('submit', function(e) {
+            updateFormNames();
+        });
+    }
     /**
-     * Helper: Update semua nama input agar sesuai struktur array PHP
-     */
-    function updateFormNames() {
-        // Sasaran dan Indikator
-        document.querySelectorAll('.sasaran-container .sasaran-item').forEach((sasaranItem, sasaranIndex) => {
-            const sasaranTextarea = sasaranItem.querySelector('textarea[name*="[sasaran]"]');
-            if (sasaranTextarea) {
-                sasaranTextarea.name = `sasaran_pk[${sasaranIndex}][sasaran]`;
+ * Helper: Update semua nama input agar sesuai struktur array PHP
+ */
+function updateFormNames() {
+    // Sasaran dan Indikator
+    document.querySelectorAll('.sasaran-container .sasaran-item').forEach((sasaranItem, sasaranIndex) => {
+        const sasaranTextarea = sasaranItem.querySelector('textarea[name*="[sasaran]"]');
+        if (sasaranTextarea) {
+            sasaranTextarea.name = `sasaran_pk[${sasaranIndex}][sasaran]`;
+        }
+        
+        const indikatorItems = sasaranItem.querySelectorAll('.indikator-item');
+        indikatorItems.forEach((indikator, indikatorIndex) => {
+            // Update input indikator
+            const indikatorInput = indikator.querySelector('input[name*="[indikator]"]');
+            const targetInput = indikator.querySelector('input[name*="[target]"]');
+            const satuanSelect = indikator.querySelector('select[name*="[id_satuan]"]');
+            const jenisSelect = indikator.querySelector('select[name*="[jenis_indikator]"]');
+            
+            if (indikatorInput) {
+                indikatorInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][indikator]`;
             }
-            const indikatorItems = sasaranItem.querySelectorAll('.indikator-item');
-            indikatorItems.forEach((indikator, indikatorIndex) => {
-                const indikatorInput = indikator.querySelector('input[name*="[indikator]"]');
-                const targetInput = indikator.querySelector('input[name*="[target]"]');
-                const satuanSelect = indikator.querySelector('select[name*="[id_satuan]"]');
-                if (indikatorInput) {
-                    indikatorInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][indikator]`;
+            if (targetInput) {
+                targetInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][target]`;
+            }
+            if (satuanSelect) {
+                satuanSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][id_satuan]`;
+            }
+            if (jenisSelect) {
+                jenisSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][jenis_indikator]`;
+            }
+            
+            // Update program untuk setiap indikator
+            const programItems = indikator.querySelectorAll('.program-item');
+            programItems.forEach((program, programIndex) => {
+                const programSelect = program.querySelector('select[name*="[program_id]"]');
+                const anggaranInput = program.querySelector('input[name*="[anggaran]"]');
+                
+                if (programSelect) {
+                    programSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][program][${programIndex}][program_id]`;
                 }
-                if (targetInput) {
-                    targetInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][target]`;
-                }
-                if (satuanSelect) {
-                    satuanSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][id_satuan]`;
+                if (anggaranInput) {
+                    anggaranInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][program][${programIndex}][anggaran]`;
                 }
             });
         });
-        // Program
-        document.querySelectorAll('.program-container .program-item').forEach((program, index) => {
-            const programSelect = program.querySelector('select[name*="program_id"]');
-            const anggaranInput = program.querySelector('input[name*="anggaran"]');
-            if (programSelect) {
-                programSelect.name = `program[${index}][program_id]`;
-            }
-            if (anggaranInput) {
-                anggaranInput.name = `program[${index}][anggaran]`;
-            }
-        });
-    }
-
+    });
+}
     /**
      * Tambah Sasaran Baru
      * @event click .add-sasaran
@@ -98,6 +112,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </select>
                             </div>
                         </div>
+                        <div class="program-container">
+                            <div class="row program-item">
+                                <div class="col-md-6">
+                                    <label class="form-label">Program</label>
+                                    <select name="sasaran_pk[0][indikator][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
+                                        ${window.programDropdownTemplate}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Anggaran</label>
+                                    <input type="text" name="program[0][anggaran]"
+                                        class="form-control mb-3 border-secondary" value=""
+                                        placeholder="Anggaran" required readonly>
+                                    <input type="hidden" name="program[0][id_indikator]" value="">
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="add-program btn btn-success btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Program
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end mt-2">
@@ -117,7 +158,10 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('add-indikator') || e.target.closest('.add-indikator')) {
-            const indikatorContainer = e.target.closest('.indikator-section').querySelector('.indikator-container');
+            const indikatorSection = e.target.closest('.indikator-section');
+            if (!indikatorSection) return;
+            const indikatorContainer = indikatorSection.querySelector('.indikator-container');
+            if (!indikatorContainer) return;
             const indikatorCount = indikatorContainer.querySelectorAll('.indikator-item').length + 1;
             const newIndikator = document.createElement('div');
             newIndikator.className = 'indikator-item border rounded p-3 bg-light mb-3';
@@ -151,44 +195,73 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </div>
                 </div>
+                <div class="program-container">
+                    <div class="row program-item">
+                        <div class="col-md-6">
+                            <label class="form-label">Program</label>
+                            <select name="sasaran_pk[0][indikator][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
+                                ${window.programDropdownTemplate}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anggaran</label>
+                            <input type="text" name="program[0][anggaran]"
+                                class="form-control mb-3 border-secondary" value=""
+                                placeholder="Anggaran" required readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-2">
+                    <button type="button" class="add-program btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i> Tambah Program
+                    </button>
+                </div>
             `;
             indikatorContainer.appendChild(newIndikator);
             updateFormNames();
         }
     });
 
-    /**
-     * Tambah Program Baru
-     * @event click .add-program
-     */
-    document.querySelector('.add-program').addEventListener('click', function() {
-        const programContainer = document.querySelector('.program-container');
-        const programCount = programContainer.querySelectorAll('.program-item').length + 1;
-        const newProgram = document.createElement('div');
-        newProgram.className = 'program-item border border-secondary rounded p-3 bg-white mb-3';
-        newProgram.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="fw-medium">Program ${programCount}</label>
-                <button type="button" class="remove-program btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
-            </div>
-            <div class="mb-3">
-                <div class="row">
-                    <div class="col-md-8">
-                        <label class="form-label">Program</label>
-                        <select name="program[0][program_id]" class="form-select program-select mb-3" required>
-                            ${document.querySelector('.program-select').innerHTML}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Anggaran</label>
-                        <input type="text" name="program[0][anggaran]" class="form-control mb-3 border-secondary" placeholder="Anggaran" required readonly>
-                    </div>
+    // Tambah Program pada setiap indikator template baru
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-program') || e.target.closest('.add-program')) {
+            const indikatorItem = e.target.closest('.indikator-item');
+            if (!indikatorItem) return;
+            const programContainer = indikatorItem.querySelector('.program-container');
+            if (!programContainer) return;
+            const programCount = programContainer.querySelectorAll('.program-item').length + 1;
+            // Buat template program-item baru
+            const newProgram = document.createElement('div');
+            newProgram.className = 'row program-item';
+            newProgram.innerHTML = `
+                <div class="col-md-6">
+                    <label class="form-label">Program</label>
+                    <select name="sasaran_pk[0][indikator][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
+                        ${window.programDropdownTemplate || ''}
+                    </select>
                 </div>
-            </div>
-        `;
-        programContainer.appendChild(newProgram);
-        updateFormNames();
+                <div class="col-md-3">
+                    <label class="form-label">Anggaran</label>
+                    <input type="text" name="program[0][anggaran]" class="form-control mb-3 border-secondary" value="" placeholder="Anggaran" required readonly />
+                    <input type="hidden" name="program[0][id_indikator]" value="">
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            programContainer.appendChild(newProgram);
+            updateFormNames();
+        }
     });
+
+    
 
     /**
      * Event Delegation: Hapus Sasaran, Indikator, Program
@@ -219,19 +292,70 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Minimal harus ada 1 indikator!');
             }
         }
-        // Hapus Program
+        // Hapus Program pada setiap indikator
         if (e.target.classList.contains('remove-program') || e.target.closest('.remove-program')) {
-            const programContainer = document.querySelector('.program-container');
-            if (programContainer.children.length > 1) {
+            const indikatorItem = e.target.closest('.indikator-item');
+            if (!indikatorItem) return;
+            const programContainer = indikatorItem.querySelector('.program-container');
+            if (!programContainer) return;
+            const programItems = programContainer.querySelectorAll('.program-item');
+            if (programItems.length > 1) {
                 if (confirm('Yakin ingin menghapus program ini?')) {
                     e.target.closest('.program-item').remove();
                     updateFormNames();
                 }
             } else {
-                alert('Minimal harus ada 1 program!');
+                // Jika hanya satu, kosongkan saja
+                const firstProgram = programContainer.querySelector('.program-item');
+                if (firstProgram) {
+                    firstProgram.querySelectorAll('input, select').forEach(el => {
+                        if (el.tagName === 'INPUT') el.value = '';
+                        if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                    });
+                }
             }
         }
     });
+    // Tambah dan hapus program pada setiap indikator
+document.addEventListener('DOMContentLoaded', function () {
+    // Handler tambah program
+    document.body.addEventListener('click', function (e) {
+        if (e.target.classList.contains('add-program') || e.target.closest('.add-program')) {
+        const indikatorItem = e.target.closest('.indikator-item');
+        if (!indikatorItem) return;
+        
+        const programContainer = indikatorItem.querySelector('.program-container');
+        if (!programContainer) return;
+        
+        // Clone program item pertama sebagai template
+        const template = programContainer.querySelector('.program-item').cloneNode(true);
+        
+        // Kosongkan nilai
+        template.querySelector('select').selectedIndex = 0;
+        template.querySelector('input').value = '';
+        
+        // Tambahkan program baru
+        programContainer.appendChild(template);
+        
+        // Update nama form
+        updateFormNames();
+    }
+        // Handler hapus program
+        if (e.target.classList.contains('remove-program') || e.target.closest('.remove-program')) {
+        const programItem = e.target.closest('.program-item');
+        const programContainer = programItem.closest('.program-container');
+        
+        if (programContainer.querySelectorAll('.program-item').length > 1) {
+            programItem.remove();
+            updateFormNames();
+        } else {
+            // Jika hanya satu program, kosongkan nilai
+            programItem.querySelector('select').selectedIndex = 0;
+            programItem.querySelector('input').value = '';
+        }
+    }
+    });
+});
 
     /**
      * Auto-fill NIP saat memilih pegawai
@@ -250,22 +374,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    /**
-     * Auto-fill anggaran saat memilih program
-     * @event change .program-select
-     */
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('program-select')) {
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const anggaranInput = e.target.closest('.row').querySelector('input[name*="anggaran"]');
-            if (selectedOption.value !== '') {
-                const anggaran = selectedOption.getAttribute('data-anggaran');
-                anggaranInput.value = formatRupiah(anggaran);
-            } else {
-                anggaranInput.value = '';
+        /**
+         * Auto-fill anggaran saat memilih program (event delegation, per program-item)
+         */
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('program-select')) {
+                // Cari program-item terdekat
+                const programItem = e.target.closest('.program-item');
+                if (!programItem) return;
+                const anggaranInput = programItem.querySelector('input[name*="anggaran"]');
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                if (selectedOption && selectedOption.value !== '') {
+                    const anggaran = selectedOption.getAttribute('data-anggaran');
+                    anggaranInput.value = formatRupiah(anggaran);
+                } else {
+                    anggaranInput.value = '';
+                }
             }
-        }
+        });
+
+    // Inisialisasi auto-fill untuk elemen yang sudah ada
+    document.querySelectorAll('.program-select').forEach(select => {
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption && selectedOption.value !== '') {
+        const anggaran = selectedOption.getAttribute('data-anggaran');
+        const parentItem = select.closest('.indikator-item') || select.closest('.program-item');
+        const anggaranInput = parentItem.querySelector('input[name*="anggaran"]');
+        anggaranInput.value = formatRupiah(anggaran);
+    }
     });
+
+
 
     /**
      * Helper: Format angka ke Rupiah
@@ -275,4 +414,4 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatRupiah(angka) {
         return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
     }
-});
+    });

@@ -158,6 +158,7 @@ class PkController extends BaseController
             throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
         }
         $data = $this->request->getPost();
+
         $now = date('Y-m-d');
         // Proses referensi indikator acuan: value = pkid-indikatorid
         $referensiIndikatorArr = [];
@@ -179,43 +180,50 @@ class PkController extends BaseController
             'pihak_2' => $data['pegawai_2_id'] ?? null,
             'tanggal' => $now,
             'sasaran_pk' => [],
-            'program' => [],
             'referensi_acuan' => $referensiIndikatorArr,
             'misi_bupati_id' => isset($data['misi_bupati_id']) ? $data['misi_bupati_id'] : [],
         ];
+
         if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
-            foreach ($data['sasaran_pk'] as $sasaranItem) {
+            foreach ($data['sasaran_pk'] as $sasaranIndex => $sasaranItem) {
                 $sasaranData = [
                     'sasaran' => $sasaranItem['sasaran'] ?? '',
                     'indikator' => [],
                 ];
+
                 if (isset($sasaranItem['indikator']) && is_array($sasaranItem['indikator'])) {
-                    foreach ($sasaranItem['indikator'] as $indikatorItem) {
-                        $sasaranData['indikator'][] = [
+                    foreach ($sasaranItem['indikator'] as $indikatorIndex => $indikatorItem) {
+                        $indikatorData = [
                             'indikator' => $indikatorItem['indikator'] ?? '',
                             'target' => $indikatorItem['target'] ?? '',
                             'id_satuan' => $indikatorItem['id_satuan'] ?? null,
                             'jenis_indikator' => $indikatorItem['jenis_indikator'] ?? null,
+                            'program' => [],
                         ];
+
+                        // Proses program untuk setiap indikator
+                        if (isset($indikatorItem['program']) && is_array($indikatorItem['program'])) {
+                            foreach ($indikatorItem['program'] as $programItem) {
+                                $indikatorData['program'][] = [
+                                    'program_id' => $programItem['program_id'] ?? null,
+                                    'anggaran' => $programItem['anggaran'] ?? 0,
+                                ];
+                            }
+                        }
+
+                        $sasaranData['indikator'][] = $indikatorData;
                     }
                 }
+
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         }
 
-        // dd($saveData);
-        // Untuk PK Bupati, program dan anggaran tidak perlu diisi
-        if (strtolower($jenis) !== 'bupati' && isset($data['program']) && is_array($data['program'])) {
-            foreach ($data['program'] as $programItem) {
-                $saveData['program'][] = [
-                    'program_id' => $programItem['program_id'] ?? null,
-                    'anggaran' => $programItem['anggaran'] ?? 0,
-                ];
-            }
-        }
+dd($saveData['sasaran_pk'][0]['indikator']);
+
 
         $pkId = $this->pkModel->saveCompletePk($saveData);
-
+        dd($pkId);
         // Simpan ke pk_misi jika jenis jpt dan ada misi dipilih
         if ($pkId && strtolower($jenis) === 'jpt' && !empty($saveData['misi_bupati_id'])) {
             $db = \Config\Database::connect();
@@ -390,9 +398,13 @@ class PkController extends BaseController
             return redirect()->to('/adminopd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
         }
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+        // Fetch all program_pk if jenis=bupati
+        if (strtolower($jenis) === 'bupati') {
+            $data['program_pk'] = $this->pkModel->getAllPrograms();
+        }
         $tahun = date('Y', strtotime($data['tanggal']));
-        $viewPath = 'adminOpd/pk_' . $jenis . '/cetak';
-        $viewPathL = 'adminOpd/pk_' . $jenis . '/cetak-L';
+        $viewPath = 'adminOpd/pk/cetak';
+        $viewPathL = 'adminOpd/pk/cetak-L';
         $html_1 = view($viewPath, $data);
         $html_2 = view($viewPathL, $data);
         $mpdf = new \Mpdf\Mpdf([

@@ -223,6 +223,7 @@
                                                             class="form-control mb-3 border-secondary" value=""
                                                             placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
                                                             required>
+                                                        <input type="hidden" name="id_pk_indikator" value="">
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Target</label>
@@ -252,7 +253,45 @@
                                                             <option value="Indikator Negatif">Indikator Negatif</option>
                                                         </select>
                                                     </div>
-
+                                                </div>
+                                                <!-- Program Container Dinamis per Indikator -->
+                                                <div class="program-container">
+                                                    <div class="row program-item">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Program</label>
+                                                            <select
+                                                                name="sasaran_pk[0][indikator][0][program][0][program_id]"
+                                                                class="form-select program-select mb-3 border-secondary"
+                                                                required>
+                                                                <option value="">Pilih Program</option>
+                                                                <?php if (isset($program) && !empty($program)): ?>
+                                                                    <?php foreach ($program as $programItem): ?>
+                                                                        <option value="<?= $programItem['id'] ?>"
+                                                                            data-anggaran="<?= $programItem['anggaran'] ?>">
+                                                                            <?= esc($programItem['program_kegiatan']) ?>
+                                                                        </option>
+                                                                    <?php endforeach; ?>
+                                                                <?php endif; ?>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label class="form-label">Anggaran</label>
+                                                            <input type="text" name="sasaran_pk[0][indikator][0][program][0][anggaran]"
+                                                                class="form-control mb-3 border-secondary"
+                                                                value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
+                                                            <input type="hidden" name="program[0][id_indikator]" value="">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-end mt-2">
+                                                    <button type="button" class="add-program btn btn-success btn-sm">
+                                                        <i class="fas fa-plus me-1"></i> Tambah Program
+                                                    </button>
                                                 </div>
                                             </div> <!-- End Indikator Item -->
                                         </div> <!-- End Indikator Container -->
@@ -271,60 +310,6 @@
                             </div>
                         </div> <!-- End Sasaran Section -->
                     </section>
-
-                    <section>
-
-                        <!-- Program PK -->
-                        <div class="mt-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h3 class="fw-medium">Program PK</h3>
-                            </div>
-                            <div class="program-container">
-                                <!-- Program -->
-                                <div class="program-item border border-secondary rounded p-3 bg-white mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <label class="fw-medium">Program 1</label>
-                                        <button type="button" class="remove-program btn btn-outline-danger btn-sm"><i
-                                                class="fas fa-trash"></i></button>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="row">
-                                            <div class="col-md-8">
-                                                <label class="form-label">Program</label>
-                                                <select name="program[0][program_id]"
-                                                    class="form-select program-select mb-3 border-secondary" <?= ($jenis !== 'bupati') ? 'required' : '' ?>>
-                                                    <option value="">Pilih Program</option>
-                                                    <?php if (isset($program) && !empty($program)): ?>
-                                                        <?php foreach ($program as $programItem): ?>
-                                                            <option value="<?= $programItem['id'] ?>"
-                                                                data-anggaran="<?= $programItem['anggaran'] ?>">
-                                                                <?= esc($programItem['program_kegiatan']) ?>
-                                                            </option>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                        <option value="" disabled>Tidak ada Program yang tersedia</option>
-                                                    <?php endif; ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Anggaran</label>
-                                                <input type="text" name="program[0][anggaran]"
-                                                    class="form-control mb-3 border-secondary" value=""
-                                                    placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
-                                                    readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> <!-- End Program -->
-                            </div> <!-- End Program Container -->
-                            <div class="d-flex justify-content-end mt-2">
-                                <button type="button" class="add-program btn btn-success btn-sm">
-                                    <i class="fas fa-plus me-1"></i> Tambah Program
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
                     <div class="d-flex justify-content-between mt-4">
                         <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis) ?>"
                             class="btn btn-secondary">
@@ -352,6 +337,15 @@
             }
         } else {
             echo '<option value="" disabled>Tidak ada satuan</option>';
+        }
+        ?>`;
+        window.programDropdownTemplate = `<?php
+        if (isset($program) && !empty($program)) {
+            foreach ($program as $programItem) {
+                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
         }
         ?>`;
     </script>

@@ -32,11 +32,11 @@ $routes->group(
         $routes->get('capaian_pk/(:any)/(:num)', 'AdminOpd\PkController::edit_capaian/$1/$2');
         $routes->post('capaian_pk/(:any)/setcapaian/(:num)', 'AdminOpd\PkController::update_capaian/$1/$2');
         $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');
+        $routes->get('pk/(:any)/cetak/(:num)', 'AdminOpd\PkController::cetak/$1/$2');
         $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
         $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
         $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
-        $routes->get('pk/(:any)/cetak/(:num)', 'AdminOpd\PkController::cetak/$1/$2');
         $routes->get('pk_bupati/cetak', 'AdminKab\PkBupatiController::view_cetak');
 
 

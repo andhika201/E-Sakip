@@ -85,7 +85,6 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </select>
-
                     <select id="status-filter" class="form-select" onchange="filterByStatus()" style="flex: 1;">
                         <option value="">Semua Status</option>
                         <option value="draft">Draft</option>

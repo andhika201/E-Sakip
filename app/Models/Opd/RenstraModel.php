@@ -7,15 +7,35 @@ use CodeIgniter\Model;
 class RenstraModel extends Model
 {
     protected $db;
-    
     public function __construct()
     {
         parent::__construct();
         $this->db = \Config\Database::connect();
     }
 
-    // ==================== RENSTRA SASARAN ====================
-    
+    /**
+     * Get all RENSTRA Sasaran dengan filter status dan OPD
+     */
+    public function getAllRenstraByStatus($status = null, $opdId = null)
+    {
+        $query = $this->db->table('renstra_sasaran rs');
+
+        if ($status !== null) {
+            $query->where('rs.status', $status);
+        }
+
+        if ($opdId !== null) {
+            $query->where('rs.opd_id', $opdId);
+        }
+
+        return $query
+            ->orderBy('rs.tahun_mulai', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+
     /**
      * Get all Renstra Sasaran
      */

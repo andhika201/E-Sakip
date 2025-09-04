@@ -95,12 +95,42 @@
         <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renstra</a>
         <a href="<?= base_url('adminopd/renja') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja</a>
         <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
-        <a href="<?= base_url('adminopd/pk/jpt') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK JPT</a>
-        <a href="<?= base_url('adminopd/capaian_pk/jpt') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Capaian PK JPT</a>
-        <a href="<?= base_url('adminopd/pk/administrator') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Administrator</a>
-        <a href="<?= base_url('adminopd/capaian_pk/administrator') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Capaian PK Administrator</a>
-        <a href="<?= base_url('adminopd/pk/pengawas') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Pengawas</a>
-        <a href="<?= base_url('adminopd/capaian_pk/pengawas') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Capaian PK Pengawas</a>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center" type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>PK JPT</span>
+          </button>
+          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">Input PK JPT</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/capaian_pk/jpt') ?>">Capaian PK JPT</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center" type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>PK Administrator</span>
+          </button>
+          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">Input PK Administrator</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/capaian_pk/administrator') ?>">Capaian PK Administrator</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center" type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>PK Pengawas</span>
+          </button>
+          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">Input PK Pengawas</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/capaian_pk/pengawas') ?>">Capaian PK Pengawas</a></li>
+          </ul>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center" type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>Pengukuran Kinerja</span>
+          </button>
+          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">Target & Rencana Aksi</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/capaian_pk/pengawas') ?>">MONEV</a></li>
+          </ul>
+        </div>
         <a href="<?= base_url('adminopd/lakip_opd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP OPD</a>
       </div>
     </nav>

@@ -71,31 +71,38 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="border p-2" style="border: 1px solid;">1.</td>
-                                <td class="border p-2">Meningkatkan Pertumbuhan Ekonomi Daerah</td>
-                                <td class="border p-2">Pertumbuhan Ekonomi</td>
-                                <td class="border p-2">Persentase pertumbuhan PDRB Kabupaten Pringsewu tahun berjalan
-                                    dibandingkan tahun sebelumnya</td>
-                                <td class="border p-2">Persen</td>
-                                <td class="border p-2">5.0%</td>
-                                <td class="border p-2">5.2%</td>
-                                <td class="border p-2">5.5%</td>
-                                <td class="border p-2">5.8%</td>
-                                <td class="border p-2">5.8%</td>
-                                <td class="border p-2">Program Pembangunan Ekonomi Daerah</td>
-                                <td class="border p-2">
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <a href="<?= base_url('adminopd/iku/edit') ?>" class="text-success">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button class="btn btn-link text-danger p-0"><i
-                                                class="fas fa-trash"></i></button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Tambah baris lainnya jika diperlukan -->
+                            <?php if (isset($iku_data) && !empty($iku_data)): ?>
+                                <?php $no = 1; foreach ($iku_data as $iku): ?>
+                                    <tr>
+                                        <td class="border p-2" style="border: 1px solid;"> <?= $no++ ?> </td>
+                                        <td class="border p-2"> <?= esc($iku['sasaran_iku'] ?? '-') ?> </td>
+                                        <td class="border p-2"> <?= esc($iku['indikator'] ?? '-') ?> </td>
+                                        <td class="border p-2"> - </td>
+                                        <td class="border p-2"> <?= esc($iku['satuan'] ?? '-') ?> </td>
+                                        <td class="border p-2"> <?= esc($iku['target'] ?? '-') ?> </td>
+                                        <td class="border p-2"> <?= esc($iku['tahun'] ?? '-') ?> </td>
+                                        <td class="border p-2"> - </td>
+                                        <td class="border p-2"> - </td>
+                                        <td class="border p-2"> - </td>
+                                        <td class="border p-2"> - </td>
+                                        <td class="border p-2">
+                                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                                <a href="<?= base_url('adminopd/iku/edit/' . $iku['id']) ?>" class="text-success">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form action="<?= base_url('adminopd/iku/delete/' . $iku['id']) ?>" method="post" style="display:inline;">
+                                                    <?= csrf_field() ?>
+                                                    <button type="submit" class="btn btn-link text-danger p-0" onclick="return confirm('Hapus data ini?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="12" class="text-center text-muted">Tidak ada data IKU</td></tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

@@ -523,12 +523,16 @@ class PkModel extends Model
         try {
 
             // Simpan ke tabel pk
+
+            $now = date('Y-m-d H:i:s');
             $pkData = [
                 'opd_id' => $data['opd_id'],
                 'jenis' => $data['jenis'],
                 'pihak_1' => $data['pihak_1'],
                 'pihak_2' => $data['pihak_2'],
                 'tanggal' => $data['tanggal'],
+                'created_at' => $now,
+                'updated_at' => $now
             ];
 
             $this->db->table('pk')->insert($pkData);
@@ -550,7 +554,9 @@ class PkModel extends Model
             // Simpan sasaran
             $db->table('pk_sasaran')->insert([
                 'pk_id' => $pkId,
-                'sasaran' => $sasaran['sasaran']
+                'sasaran' => $sasaran['sasaran'],
+                'created_at' => $now,
+                'updated_at' => $now
             ]);
             $pkSasaranId = $db->insertID();
 
@@ -562,7 +568,9 @@ class PkModel extends Model
                         'indikator' => $indikator['indikator'],
                         'target' => $indikator['target'],
                         'id_satuan' => $indikator['id_satuan'] ?? null,
-                        'jenis_indikator' => $indikator['jenis_indikator'] ?? null
+                        'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
+                        'created_at' => $now,
+                        'updated_at' => $now
                     ]);
                     $pkIndikatorId = $db->insertID();
 
@@ -573,6 +581,8 @@ class PkModel extends Model
                                 'pk_id' => $pkId,
                                 'program_id' => $programItem['program_id'] ?? null,
                                 'id_indikator' => $pkIndikatorId,
+                                'created_at' => $now,
+                                'updated_at' => $now
                             ]);
                         }
                     }

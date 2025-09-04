@@ -99,11 +99,11 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     // PK Generic Controller (slash-based, for compatibility with button href)
     $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
     $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');
+    $routes->get('pk/(:any)/cetak/(:num)', 'AdminOpd\PkController::cetak/$1/$2');
     $routes->get('pk/(:any)/tambah', 'AdminOpd\PkController::tambah/$1');
     $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
     $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
     $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
-    $routes->get('pk/(:any)/cetak/(:num)', 'AdminOpd\PkController::cetak/$1/$2');
     $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
 
     $routes->get('dashboard', 'AdminOpdController::index');
@@ -127,32 +127,19 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('renja/update-status', 'AdminOpd\RenjaController::updateStatus');
 
     // IKU
-    $routes->get('iku', 'AdminOpdController::iku');
-    $routes->get('iku/tambah', 'AdminOpdController::tambah_iku');
-    $routes->get('iku/edit', 'AdminOpdController::edit_iku');
-    $routes->post('iku/save', 'AdminOpdController::save_iku');
+    $routes->get('iku', 'AdminOpd\IkuController::index');
+    $routes->get('iku/tambah', 'AdminOpd\IkuController::tambah');
+    $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->post('iku/save', 'AdminOpd\IkuController::save');
+    $routes->post('iku/update', 'AdminOpd\IkuController::update');
+    $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 
-    // PK ADMINISTRATOR
-    $routes->get('pk_administrator/edit/(:num)', 'AdminOpd\PkAdminController::edit/$1');
-    $routes->post('pk_administrator/update/(:num)', 'AdminOpd\PkAdminController::update/$1');
-    $routes->get('pk_administrator/cetak/(:num)', 'AdminOpd\PkAdminController::cetak/$1');
-    $routes->get('pk_administrator/cetak', 'AdminOpd\PkAdminController::view_cetak');
-    $routes->match(['get', 'post', 'delete'], 'pk_administrator/delete/(:num)', 'AdminOpd\PkAdminController::delete/$1');
-
-    // PK JPT
-    $routes->get('pk_jpt/edit/(:num)', 'AdminOpd\PkJptController::edit/$1');
-    $routes->post('pk_jpt/update/(:num)', 'AdminOpd\PkJptController::update/$1');
-    $routes->get('pk_jpt/cetak/(:num)', 'AdminOpd\PkJptController::cetak/$1');
-    $routes->get('pk_jpt/cetak', 'AdminOpd\PkJptController::view_cetak');
-    $routes->match(['get', 'post', 'delete'], 'pk_jpt/delete/(:num)', 'AdminOpd\PkJptController::delete/$1');
-
-    // PK Pengawas
-    $routes->get('pk_pengawas/edit/(:num)', 'AdminOpd\PkPengawasController::edit/$1');
-    $routes->post('pk_pengawas/update/(:num)', 'AdminOpd\PkPengawasController::update/$1');
-    $routes->get('pk_pengawas/cetak/(:num)', 'AdminOpd\PkPengawasController::cetak/$1');
-    $routes->get('pk_pengawas/cetak', 'AdminOpd\PkPengawasController::view_cetak');
-    $routes->match(['get', 'post', 'delete'], 'pk_pengawas/delete/(:num)', 'AdminOpd\PkPengawasController::delete/$1');
-
+    //MONEV
+    $routes->get('monev', 'MonevController::index');
+    $routes->get('monev/tambah', 'MonevController::tambah');
+    $routes->post('monev/save', 'MonevController::save');
+    $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
+    
     // Lakip OPD
     $routes->get('lakip_opd', 'AdminOpd\LakipOpdController::index');
     $routes->get('lakip_opd/tambah', 'AdminOpd\LakipOpdController::tambah');

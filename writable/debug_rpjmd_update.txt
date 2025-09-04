@@ -10594,3 +10594,505 @@ Array
 Update result: SUCCESS
 === END UPDATE DEBUG ===
 
+=== RPJMD UPDATE DEBUG - 2025-09-03 03:02:57 ===
+Raw POST data structure:
+Array
+(
+    [csrf_test_name] => 76b98b548ac8cd444bd59d5eae60695f
+    [id] => 2
+    [mode] => edit
+    [misi] => Misi 2
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 2
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 6
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 7
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 8
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 9
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 10
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Processing update for Misi ID: 2
+Existing misi data:
+Array
+(
+    [id] => 2
+    [misi] => Misi 2
+    [status] => draft
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [created_at] => 2025-08-20 09:29:55
+    [updated_at] => 2025-08-20 09:29:55
+)
+
+=== TUJUAN DATA ANALYSIS ===
+Tujuan count: 1
+
+Tujuan [0]:
+  - ID: 2
+  - Text: Tujuan 1...
+  - Sasaran count: 1
+    Sasaran [0]:
+      - ID: 2
+      - Text: sasaran 2...
+      - Indikator Sasaran count: 1
+        Indikator Sasaran [0]:
+          - ID: 2
+          - Text: indikator sasaran 1...
+          - Target Tahunan count: 5
+            Target [0]:
+              - ID: 6
+              - Tahun: 2025
+              - Target: 33
+            Target [1]:
+              - ID: 7
+              - Tahun: 2026
+              - Target: 44
+            Target [2]:
+              - ID: 8
+              - Tahun: 2027
+              - Target: 55
+            Target [3]:
+              - ID: 9
+              - Tahun: 2028
+              - Target: 66
+            Target [4]:
+              - ID: 10
+              - Tahun: 2029
+              - Target: 77
+=== FORMATTED DATA FOR MODEL ===
+Formatted data structure:
+Array
+(
+    [misi] => Array
+        (
+            [misi] => Misi 2
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 2
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 6
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 7
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 8
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 9
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 10
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Update result: SUCCESS
+=== END UPDATE DEBUG ===
+
+=== RPJMD UPDATE DEBUG - 2025-09-03 03:03:12 ===
+Raw POST data structure:
+Array
+(
+    [csrf_test_name] => 76b98b548ac8cd444bd59d5eae60695f
+    [id] => 2
+    [mode] => edit
+    [misi] => Misi 2
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 3
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 11
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 12
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 13
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 14
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 15
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Processing update for Misi ID: 2
+Existing misi data:
+Array
+(
+    [id] => 2
+    [misi] => Misi 2
+    [status] => selesai
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [created_at] => 2025-08-20 09:29:55
+    [updated_at] => 2025-08-20 09:29:55
+)
+
+=== TUJUAN DATA ANALYSIS ===
+Tujuan count: 1
+
+Tujuan [0]:
+  - ID: 2
+  - Text: Tujuan 1...
+  - Sasaran count: 1
+    Sasaran [0]:
+      - ID: 2
+      - Text: sasaran 3...
+      - Indikator Sasaran count: 1
+        Indikator Sasaran [0]:
+          - ID: 2
+          - Text: indikator sasaran 1...
+          - Target Tahunan count: 5
+            Target [0]:
+              - ID: 11
+              - Tahun: 2025
+              - Target: 33
+            Target [1]:
+              - ID: 12
+              - Tahun: 2026
+              - Target: 44
+            Target [2]:
+              - ID: 13
+              - Tahun: 2027
+              - Target: 55
+            Target [3]:
+              - ID: 14
+              - Tahun: 2028
+              - Target: 66
+            Target [4]:
+              - ID: 15
+              - Tahun: 2029
+              - Target: 77
+=== FORMATTED DATA FOR MODEL ===
+Formatted data structure:
+Array
+(
+    [misi] => Array
+        (
+            [misi] => Misi 2
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => selesai
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 3
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 11
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 12
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 13
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 14
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 15
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Update result: SUCCESS
+=== END UPDATE DEBUG ===
+

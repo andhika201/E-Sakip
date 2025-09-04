@@ -31,10 +31,15 @@
             <label class="form-label">Sasaran Renstra</label>
             <select name="renstra_sasaran_id" class="form-select mb-3" required>
               <option value="">Pilih Sasaran Renstra</option>
-              <!-- Options akan diisi dari database -->
-              <option value="1">Meningkatnya kualitas pelayanan publik</option>
-              <option value="2">Meningkatnya transparansi pengelolaan keuangan</option>
-              <option value="3">Meningkatnya kompetensi ASN</option>
+              <?php if (isset($renstra_sasaran) && !empty($renstra_sasaran)): ?>
+                <?php foreach ($renstra_sasaran as $sasaran): ?>
+                  <option value="<?= $sasaran['id'] ?>" data-tahun-mulai="<?= $sasaran['tahun_mulai'] ?>" data-tahun-akhir="<?= $sasaran['tahun_akhir'] ?>">
+                      <?= esc($sasaran['sasaran']) ?> (Periode: <?= $sasaran['tahun_mulai'] ?>-<?= $sasaran['tahun_akhir'] ?>)
+                    </option>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <option value="" disabled>Tidak ada sasaran RENSTRA yang tersedia</option>
+              <?php endif; ?>
             </select>
           </div>
         </div>

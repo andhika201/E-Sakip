@@ -13079,3 +13079,797 @@ Insert result: TRUE
 Insert ID: 10
 === END CREATE TARGET TAHUNAN ===
 
+
+=== UPDATE COMPLETE RPJMD TRANSACTION - 2025-09-03 03:02:57 ===
+Misi ID: 2
+Input data structure:
+Array
+(
+    [misi] => Array
+        (
+            [misi] => Misi 2
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => draft
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 2
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 6
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 7
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 8
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 9
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 10
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Existing tujuan IDs: Array
+(
+    [0] => 2
+)
+
+Processing 1 tujuan items
+
+--- Processing Tujuan [0] ---
+Tujuan data: Array
+(
+    [id] => 2
+    [tujuan_rpjmd] => Tujuan 1
+    [indikator_tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [indikator_tujuan] => Indikator tujuan 1
+                )
+
+            [1] => Array
+                (
+                    [id] => 3
+                    [indikator_tujuan] => indikator tujuan 2
+                )
+
+        )
+
+    [sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [sasaran_rpjmd] => sasaran 2
+                    [indikator_sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_sasaran] => indikator sasaran 1
+                                    [satuan] => Kegiatan
+                                    [definisi_op] => definisi operasional 2
+                                    [target_tahunan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 33
+                                                    [id] => 6
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 44
+                                                    [id] => 7
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 55
+                                                    [id] => 8
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 66
+                                                    [id] => 9
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 77
+                                                    [id] => 10
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+UPDATING existing tujuan ID: 2
+=== UPDATE INDIKATOR SASARAN - 2025-09-03 03:02:57 ===
+Indikator Sasaran ID: 2
+Update data: Array
+(
+    [sasaran_id] => 2
+    [indikator_sasaran] => indikator sasaran 1
+    [definisi_op] => definisi operasional 2
+    [satuan] => Kegiatan
+)
+
+Update result: TRUE
+Affected rows: 0
+=== END UPDATE INDIKATOR SASARAN ===
+
+Deleting existing targets for indikator sasaran ID: 2
+=== DELETE TARGET TAHUNAN BY INDIKATOR ID - 2025-09-03 03:02:57 ===
+Indikator Sasaran ID: 2
+Existing targets to delete: 5
+Delete result: TRUE
+Affected rows: 5
+=== END DELETE TARGET TAHUNAN ===
+
+Delete result: SUCCESS
+Processing 5 targets for indikator sasaran ID: 2
+Target [0]: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 33
+    [id] => 6
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:02:57 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+Insert result: TRUE
+Insert ID: 11
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 11
+Target [1]: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 44
+    [id] => 7
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:02:57 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+Insert result: TRUE
+Insert ID: 12
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 12
+Target [2]: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 55
+    [id] => 8
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:02:57 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+Insert result: TRUE
+Insert ID: 13
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 13
+Target [3]: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 66
+    [id] => 9
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:02:57 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+Insert result: TRUE
+Insert ID: 14
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 14
+Target [4]: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 77
+    [id] => 10
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:02:57 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+Insert result: TRUE
+Insert ID: 15
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 15
+Tujuan to delete: Array
+(
+)
+
+Cleaning up orphaned records for misi ID: 2
+SUCCESS: Transaction completed successfully
+=== END UPDATE TRANSACTION ===
+
+
+=== UPDATE COMPLETE RPJMD TRANSACTION - 2025-09-03 03:03:12 ===
+Misi ID: 2
+Input data structure:
+Array
+(
+    [misi] => Array
+        (
+            [misi] => Misi 2
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => selesai
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 3
+                                    [indikator_tujuan] => indikator tujuan 2
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 3
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 11
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 12
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 13
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 14
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 15
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+Existing tujuan IDs: Array
+(
+    [0] => 2
+)
+
+Processing 1 tujuan items
+
+--- Processing Tujuan [0] ---
+Tujuan data: Array
+(
+    [id] => 2
+    [tujuan_rpjmd] => Tujuan 1
+    [indikator_tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [indikator_tujuan] => Indikator tujuan 1
+                )
+
+            [1] => Array
+                (
+                    [id] => 3
+                    [indikator_tujuan] => indikator tujuan 2
+                )
+
+        )
+
+    [sasaran] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [sasaran_rpjmd] => sasaran 3
+                    [indikator_sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_sasaran] => indikator sasaran 1
+                                    [satuan] => Kegiatan
+                                    [definisi_op] => definisi operasional 2
+                                    [target_tahunan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 33
+                                                    [id] => 11
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 44
+                                                    [id] => 12
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 55
+                                                    [id] => 13
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 66
+                                                    [id] => 14
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 77
+                                                    [id] => 15
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+UPDATING existing tujuan ID: 2
+=== UPDATE INDIKATOR SASARAN - 2025-09-03 03:03:12 ===
+Indikator Sasaran ID: 2
+Update data: Array
+(
+    [sasaran_id] => 2
+    [indikator_sasaran] => indikator sasaran 1
+    [definisi_op] => definisi operasional 2
+    [satuan] => Kegiatan
+)
+
+Update result: TRUE
+Affected rows: 0
+=== END UPDATE INDIKATOR SASARAN ===
+
+Deleting existing targets for indikator sasaran ID: 2
+=== DELETE TARGET TAHUNAN BY INDIKATOR ID - 2025-09-03 03:03:12 ===
+Indikator Sasaran ID: 2
+Existing targets to delete: 5
+Delete result: TRUE
+Affected rows: 5
+=== END DELETE TARGET TAHUNAN ===
+
+Delete result: SUCCESS
+Processing 5 targets for indikator sasaran ID: 2
+Target [0]: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 33
+    [id] => 11
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:03:12 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2025
+    [target_tahunan] => 33
+)
+
+Insert result: TRUE
+Insert ID: 16
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 16
+Target [1]: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 44
+    [id] => 12
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:03:12 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2026
+    [target_tahunan] => 44
+)
+
+Insert result: TRUE
+Insert ID: 17
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 17
+Target [2]: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 55
+    [id] => 13
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:03:12 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2027
+    [target_tahunan] => 55
+)
+
+Insert result: TRUE
+Insert ID: 18
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 18
+Target [3]: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 66
+    [id] => 14
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:03:12 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2028
+    [target_tahunan] => 66
+)
+
+Insert result: TRUE
+Insert ID: 19
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 19
+Target [4]: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 77
+    [id] => 15
+)
+
+Creating target with data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+=== CREATE TARGET TAHUNAN - 2025-09-03 03:03:12 ===
+Input data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 2
+    [tahun] => 2029
+    [target_tahunan] => 77
+)
+
+Insert result: TRUE
+Insert ID: 20
+=== END CREATE TARGET TAHUNAN ===
+
+Target created with ID: 20
+Tujuan to delete: Array
+(
+)
+
+Cleaning up orphaned records for misi ID: 2
+SUCCESS: Transaction completed successfully
+=== END UPDATE TRANSACTION ===
+

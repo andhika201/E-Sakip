@@ -59,6 +59,9 @@
                 <tr>
                     <th class="border p-2">NO</th>
                     <th class="border p-2">PROGRAM</th>
+                    <th class="border p-2">KEGIATAN</th>
+                    <th class="border p-2">SUBKEGIATAN</th>
+                    <th class="border p-2">INDIKATOR SUBKEGIATAN</th>
                     <th class="border p-2">ANGGARAN</th>
                     <th class="border p-2">ACTION</th>
                 </tr>
@@ -70,6 +73,9 @@
                     <tr>
                         <td class="border p-2"><?= $no++ ?></td>
                         <td class="border p-2 text-start"><?= esc($program['program_kegiatan']) ?></td>
+                        <td class="border p-2">-</td>
+                        <td class="border p-2">-</td>
+                        <td class="border p-2">-</td>
                         <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
                         <td class="border p-2">
                             <div class="d-flex flex-column align-items-center gap-2">

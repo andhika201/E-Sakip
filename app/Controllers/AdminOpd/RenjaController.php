@@ -82,7 +82,6 @@ class RenjaController extends BaseController
         // Get RENSTRA Sasaran from completed Renstra only
         $renstraSasaran = $this->renstraModel->getAllRenstraByStatus($status, $opdId);
 
-        dd($renstraSasaran);
         $data = [
             'renstra_sasaran' => $renstraSasaran,
             'title' => 'Tambah Rencana Kerja Tahunan',

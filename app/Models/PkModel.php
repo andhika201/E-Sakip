@@ -288,12 +288,13 @@ class PkModel extends Model
         return $result;
     }
 
-    public function getCompletePkByOpdIdAndJenis($opdId, $jenis)
+    public function getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun)
     {
         $builder = $this->db->table('pk');
         $builder->select('pk.*, opd.nama_opd');
         $builder->join('opd', 'opd.id = pk.opd_id');
         $builder->where('pk.opd_id', $opdId);
+        $builder->where('pk.tahun', $tahun);
         $builder->where('pk.jenis', $jenis); // Filter by jenis
         $query = $builder->get();
 
@@ -528,6 +529,7 @@ class PkModel extends Model
             $pkData = [
                 'opd_id' => $data['opd_id'],
                 'jenis' => $data['jenis'],
+                'tahun' => $data['tahun'],
                 'pihak_1' => $data['pihak_1'],
                 'pihak_2' => $data['pihak_2'],
                 'tanggal' => $data['tanggal'],
@@ -556,7 +558,8 @@ class PkModel extends Model
                 'pk_id' => $pkId,
                 'sasaran' => $sasaran['sasaran'],
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
+                'rpjmd_misi_id' =>$data['misi_bupati_id'],
             ]);
             $pkSasaranId = $db->insertID();
 
@@ -589,17 +592,15 @@ class PkModel extends Model
                 }
             }
         }
-        
         // Simpan misi bupati jika ada (untuk jenis JPT)
         if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
             foreach ($data['misi_bupati_id'] as $misiId) {
                 $db->table('pk_misi')->insert([
                     'pk_id' => $pkId,
-                    'rpjmd_misi_id' => $misiId
+                    'misi_bupati_id' => $misiId
                 ]);
             }
         }
-
             $db->transComplete();
 
             return $db->transStatus() ? $pkId : false;

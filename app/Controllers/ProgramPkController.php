@@ -54,8 +54,8 @@ class ProgramPkController extends BaseController
 
         if (!$this->validate($rules)) {
             return redirect()->back()
-                           ->withInput()
-                           ->with('validation', $this->validator->getErrors());
+                ->withInput()
+                ->with('validation', $this->validator->getErrors());
         }
 
         // Prepare data

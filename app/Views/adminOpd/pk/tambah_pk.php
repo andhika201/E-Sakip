@@ -68,6 +68,17 @@
                             <select name="jenis" id="jenis-pk" class="form-select mb-3 border-secondary" disabled>
                                 <option value="<?= esc($jenis) ?>" selected>PK <?= ucfirst($jenis) ?></option>
                             </select>
+                            <label class="form-label fw-bold">Tahun PK</label>
+                            <select name="tahun" id="tahun-pk" class="form-select mb-3 border-secondary" required>
+                                <option value="">Pilih Tahun</option>
+                                
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                                <option value="2029">2029</option></div>
+
                             <input type="hidden" name="jenis" value="<?= esc($jenis) ?>">
                             <div class="col-md-12">
                                 <div class="row">
@@ -129,201 +140,201 @@
                                 <?php if ($jenis === 'jpt'): ?>
                                     <div class="mb-3">
                                         <div class="misi-container">
-                                            <label class="form-label misi-label">Misi Bupati</label>
-                                            <div class="btn-group-vertical w-100" role="group" aria-label="Misi Bupati">
-                                                <?php $misiList = model('App\\Models\\RpjmdModel')->getAllMisi(); ?>
-                                                <?php if (!empty($misiList)):
-                                                    foreach ($misiList as $misi): ?>
-                                                        <input type="checkbox" class="btn-check" id="misi<?= $misi['id'] ?>"
-                                                            autocomplete="off" name="misi_bupati_id[]" value="<?= $misi['id'] ?>"
-                                                            data-misi="<?= esc($misi['misi']) ?>">
-                                                        <label class="btn btn-outline-primary text-start mb-2"
-                                                            for="misi<?= $misi['id'] ?>"><?= esc($misi['misi']) ?></label>
+                                            <label class="form-label misi-label">Misi Bupati Terkait</label>
+                                            <select name="misi_bupati_id" id="misi_bupati-select"
+                                                class="form-select mb-3" required>
+                                                <option value="">Pilih Misi Bupati</option>
+                                                <?php if (isset($misiList) && !empty($misiList)): ?>
+                                                    <?php foreach ($misiList as $misi): ?>
+                                                        <option value="<?= $misi['id'] ?>">
+                                                            <?= esc($misi['misi']) ?>
+                                                        </option>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <span class="text-muted">Data misi bupati belum tersedia</span>
                                                 <?php endif; ?>
-                                            </div>
-                                            <div id="selected-misi-container" class="mt-2"></div>
+                                            </select>
                                         </div>
                                     </div>
-                                <?php elseif ($jenis !== 'bupati' && $jenis !== 'jpt'): ?>
-                                    <div class="mb-3">
-                                        <div class="indikator-acuan-container">
-                                            <label class="form-label misi-label">Indikator Acuan (Referensi)</label>
-                                            <div class="btn-group-vertical w-100" role="group" aria-label="Indikator Acuan">
-                                                <?php
-                                                if (!empty($pkPimpinan)):
-                                                    $hasIndikator = false;
-                                                    foreach ($pkPimpinan as $refPk):
-                                                        if (isset($refPk['id'])) {
-                                                            $indikatorList = model('App\\Models\\PkModel')->getSasaranByPkId($refPk['id']);
-                                                            foreach ($indikatorList as $sasaran) {
-                                                                foreach ($sasaran['indikator'] as $indikator) {
-                                                                    $hasIndikator = true;
-                                                                    $label = esc($indikator['indikator']);
-                                                                    $inputId = 'indikatorAcuan' . $refPk['id'] . '_' . $indikator['id'];
-                                                                    echo '<input type="checkbox" class="btn-check" id="' . $inputId . '" autocomplete="off" name="referensi_indikator_id[]" value="' . $refPk['id'] . '-' . $indikator['id'] . '" data-indikator="' . $label . '">';
-                                                                    echo '<label class="btn btn-outline-info text-start mb-2" for="' . $inputId . '">' . $label . '</label>';
-                                                                }
+                            <?php elseif ($jenis !== 'bupati' && $jenis !== 'jpt'): ?>
+                                <div class="mb-3">
+                                    <div class="indikator-acuan-container">
+                                        <label class="form-label misi-label">Indikator Acuan (Referensi)</label>
+                                        <div class="btn-group-vertical w-100" role="group" aria-label="Indikator Acuan">
+                                            <?php
+                                            if (!empty($pkPimpinan)):
+                                                $hasIndikator = false;
+                                                foreach ($pkPimpinan as $refPk):
+                                                    if (isset($refPk['id'])) {
+                                                        $indikatorList = model('App\\Models\\PkModel')->getSasaranByPkId($refPk['id']);
+                                                        foreach ($indikatorList as $sasaran) {
+                                                            foreach ($sasaran['indikator'] as $indikator) {
+                                                                $hasIndikator = true;
+                                                                $label = esc($indikator['indikator']);
+                                                                $inputId = 'indikatorAcuan' . $refPk['id'] . '_' . $indikator['id'];
+                                                                echo '<input type="checkbox" class="btn-check" id="' . $inputId . '" autocomplete="off" name="referensi_indikator_id[]" value="' . $refPk['id'] . '-' . $indikator['id'] . '" data-indikator="' . $label . '">';
+                                                                echo '<label class="btn btn-outline-info text-start mb-2" for="' . $inputId . '">' . $label . '</label>';
                                                             }
                                                         }
-                                                    endforeach;
-                                                    if (!$hasIndikator): ?>
-                                                        <span>pk pimpinan masih kosong</span>
-                                                    <?php endif; ?>
-                                                <?php else: ?>
+                                                    }
+                                                endforeach;
+                                                if (!$hasIndikator): ?>
                                                     <span>pk pimpinan masih kosong</span>
                                                 <?php endif; ?>
-                                            </div>
-                                            <div id="selected-indikator-container" class="mt-2"></div>
+                                            <?php else: ?>
+                                                <span>pk pimpinan masih kosong</span>
+                                            <?php endif; ?>
                                         </div>
+                                        <div id="selected-indikator-container" class="mt-2"></div>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
-                    </section>
+            </div>
+            </section>
 
-                    <section>
-                        <!-- Sasaran -->
-                        <div class="sasaran-section">
+            <section>
+                <!-- Sasaran -->
+                <div class="sasaran-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="fw-medium h4">Sasaran Terkait PK Ini</h3>
+                    </div>
+                    <div class="sasaran-container">
+                        <!-- Sasaran 1.1 -->
+                        <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h3 class="fw-medium h4">Sasaran Terkait PK Ini</h3>
+                                <label class="fw-medium h5">Sasaran</label>
+                                <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i
+                                        class="fas fa-trash"></i></button>
                             </div>
-                            <div class="sasaran-container">
-                                <!-- Sasaran 1.1 -->
-                                <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <label class="fw-medium h5">Sasaran</label>
-                                        <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i
-                                                class="fas fa-trash"></i></button>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Sasaran PK</label>
-                                        <textarea name="sasaran_pk[0][sasaran]" class="form-control border-secondary"
-                                            rows="2"
-                                            placeholder="Contoh: Terwujudnya pelayanan publik yang prima dan memuaskan masyarakat"
-                                            required></textarea>
-                                    </div>
-                                    <!-- Indikator -->
-                                    <div class="indikator-section">
-                                        <div class="indikator-container">
-                                            <!-- Indikator-->
-                                            <div class="indikator-item border rounded p-3 bg-light mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <label class="fw-medium">Indikator</label>
-                                                    <button type="button"
-                                                        class="remove-indikator btn btn-outline-danger btn-sm"><i
-                                                            class="fas fa-trash"></i></button>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-5">
-                                                        <label class="form-label">Indikator</label>
-                                                        <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
-                                                            class="form-control mb-3 border-secondary" value=""
-                                                            placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
+                            <div class="mb-3">
+                                <label class="form-label">Sasaran PK</label>
+                                <textarea name="sasaran_pk[0][sasaran]" class="form-control border-secondary" rows="2"
+                                    placeholder="Contoh: Terwujudnya pelayanan publik yang prima dan memuaskan masyarakat"
+                                    required></textarea>
+                            </div>
+                            <!-- Indikator -->
+                            <div class="indikator-section">
+                                <div class="indikator-container">
+                                    <!-- Indikator-->
+                                    <div class="indikator-item border rounded p-3 bg-light mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <label class="fw-medium">Indikator</label>
+                                            <button type="button"
+                                                class="remove-indikator btn btn-outline-danger btn-sm"><i
+                                                    class="fas fa-trash"></i></button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <label class="form-label">Indikator</label>
+                                                <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
+                                                    class="form-control mb-3 border-secondary" value=""
+                                                    placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
+                                                    required>
+                                                <input type="hidden" name="id_pk_indikator" value="">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Target</label>
+                                                <input type="text" name="sasaran_pk[0][indikator][0][target]"
+                                                    class="form-control mb-3 border-secondary" value=""
+                                                    placeholder="Nilai target" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Satuan</label>
+                                                <select name="sasaran_pk[0][indikator][0][id_satuan]"
+                                                    class="form-select mb-3 border-secondary" required>
+                                                    <option value="">Pilih Satuan</option>
+                                                    <?php if (isset($satuan) && !empty($satuan)): ?>
+                                                        <?php foreach ($satuan as $s): ?>
+                                                            <option value="<?= $s['id'] ?>"><?= esc($s['satuan']) ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    <?php endif; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Jenis Indikator</label>
+                                                <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
+                                                    class="form-select mb-3 border-secondary" required>
+                                                    <option value="">Pilih Jenis Indikator</option>
+                                                    <option value="Indikator Positif">Indikator Positif</option>
+                                                    <option value="Indikator Negatif">Indikator Negatif</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <!-- Program Container Dinamis per Indikator -->
+                                        <?php if ($jenis !== 'bupati'): ?>
+                                            <div class="program-container">
+                                                <div class="row program-item">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Program</label>
+                                                        <select name="sasaran_pk[0][indikator][0][program][0][program_id]"
+                                                            class="form-select program-select mb-3 border-secondary"
                                                             required>
-                                                        <input type="hidden" name="id_pk_indikator" value="">
-                                                    </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">Target</label>
-                                                        <input type="text" name="sasaran_pk[0][indikator][0][target]"
-                                                            class="form-control mb-3 border-secondary" value=""
-                                                            placeholder="Nilai target" required>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Satuan</label>
-                                                        <select name="sasaran_pk[0][indikator][0][id_satuan]"
-                                                            class="form-select mb-3 border-secondary" required>
-                                                            <option value="">Pilih Satuan</option>
-                                                            <?php if (isset($satuan) && !empty($satuan)): ?>
-                                                                <?php foreach ($satuan as $s): ?>
-                                                                    <option value="<?= $s['id'] ?>"><?= esc($s['satuan']) ?>
+                                                            <option value="">Pilih Program</option>
+                                                            <?php if (isset($program) && !empty($program)): ?>
+                                                                <?php foreach ($program as $programItem): ?>
+                                                                    <option value="<?= $programItem['id'] ?>"
+                                                                        data-anggaran="<?= $programItem['anggaran'] ?>">
+                                                                        <?= esc($programItem['program_kegiatan']) ?>
                                                                     </option>
                                                                 <?php endforeach; ?>
                                                             <?php endif; ?>
                                                         </select>
                                                     </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Jenis Indikator</label>
-                                                        <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
-                                                            class="form-select mb-3 border-secondary" required>
-                                                            <option value="">Pilih Jenis Indikator</option>
-                                                            <option value="Indikator Positif">Indikator Positif</option>
-                                                            <option value="Indikator Negatif">Indikator Negatif</option>
-                                                        </select>
+                                                    <div class="col-md-3">
+                                                        <label class="form-label">Anggaran</label>
+                                                        <input type="text"
+                                                            name="sasaran_pk[0][indikator][0][program][0][anggaran]"
+                                                            class="form-control mb-3 border-secondary" value=""
+                                                            placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
+                                                        <input type="hidden" name="program[0][id_indikator]" value="">
                                                     </div>
-                                                </div>
-                                                <!-- Program Container Dinamis per Indikator -->
-                                                <div class="program-container">
-                                                    <div class="row program-item">
-                                                        <div class="col-md-6">
-                                                            <label class="form-label">Program</label>
-                                                            <select
-                                                                name="sasaran_pk[0][indikator][0][program][0][program_id]"
-                                                                class="form-select program-select mb-3 border-secondary"
-                                                                required>
-                                                                <option value="">Pilih Program</option>
-                                                                <?php if (isset($program) && !empty($program)): ?>
-                                                                    <?php foreach ($program as $programItem): ?>
-                                                                        <option value="<?= $programItem['id'] ?>"
-                                                                            data-anggaran="<?= $programItem['anggaran'] ?>">
-                                                                            <?= esc($programItem['program_kegiatan']) ?>
-                                                                        </option>
-                                                                    <?php endforeach; ?>
-                                                                <?php endif; ?>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <label class="form-label">Anggaran</label>
-                                                            <input type="text" name="sasaran_pk[0][indikator][0][program][0][anggaran]"
-                                                                class="form-control mb-3 border-secondary"
-                                                                value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
-                                                            <input type="hidden" name="program[0][id_indikator]" value="">
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                                                    <div class="col-md-3">
+                                                        <button type="button"
+                                                            class="remove-program btn btn-outline-danger btn-sm">
                                                             <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </div>
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div class="d-flex justify-content-end mt-2">
-                                                    <button type="button" class="add-program btn btn-success btn-sm">
-                                                        <i class="fas fa-plus me-1"></i> Tambah Program
-                                                    </button>
-                                                </div>
-                                            </div> <!-- End Indikator Item -->
-                                        </div> <!-- End Indikator Container -->
-                                        <div class="d-flex justify-content-end mt-2">
-                                            <button type="button" class="add-indikator btn btn-success btn-sm">
-                                                <i class="fas fa-plus me-1"></i> Tambah Indikator
-                                            </button>
-                                        </div>
-                                    </div> <!-- End Indikator Section -->
-                                </div> <!-- End Sasaran Item -->
-                            </div> <!-- End Sasaran Container -->
-                            <div class="d-flex justify-content-end mt-2">
-                                <button type="button" class="add-sasaran btn btn-success btn-sm">
-                                    <i class="fas fa-plus me-1"></i> Tambah Sasaran
-                                </button>
-                            </div>
-                        </div> <!-- End Sasaran Section -->
-                    </section>
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis) ?>"
-                            class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save me-1"></i> Simpan
+                                            </div>
+                                            <div class="d-flex justify-content-end mt-2">
+                                                <button type="button" class="add-program btn btn-success btn-sm">
+                                                    <i class="fas fa-plus me-1"></i> Tambah Program
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div> <!-- End Indikator Item -->
+                                </div> <!-- End Indikator Container -->
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="button" class="add-indikator btn btn-success btn-sm">
+                                        <i class="fas fa-plus me-1"></i> Tambah Indikator
+                                    </button>
+                                </div>
+                            </div> <!-- End Indikator Section -->
+                        </div> <!-- End Sasaran Item -->
+                    </div> <!-- End Sasaran Container -->
+                    <div class="d-flex justify-content-end mt-2">
+                        <button type="button" class="add-sasaran btn btn-success btn-sm">
+                            <i class="fas fa-plus me-1"></i> Tambah Sasaran
                         </button>
                     </div>
-                </form>
+                </div> <!-- End Sasaran Section -->
+            </section>
+            <div class="d-flex justify-content-between mt-4">
+                <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis) ?>"
+                    class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Kembali
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i> Simpan
+                </button>
             </div>
-        </main>
+            </form>
+    </div>
+    </main>
 
-        <?= $this->include('adminOpd/templates/footer.php'); ?>
+    <?= $this->include('adminOpd/templates/footer.php'); ?>
     </div>
 
     <!-- JavaScript Libraries -->

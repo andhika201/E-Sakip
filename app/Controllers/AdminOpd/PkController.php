@@ -5,12 +5,15 @@ use App\Controllers\BaseController;
 use App\Models\PegawaiModel;
 use App\Models\PkModel;
 use App\Models\OpdModel;
+use App\Models\RpjmdModel;
+
 
 class PkController extends BaseController
 {
     protected $pegawaiModel;
     protected $pkModel;
     protected $opdModel;
+    protected $rpjmdModel;
 
 
     public function __construct()
@@ -18,6 +21,7 @@ class PkController extends BaseController
         $this->pegawaiModel = new PegawaiModel();
         $this->pkModel = new PkModel();
         $this->opdModel = new OpdModel();
+        $this->rpjmdModel = new RpjmdModel();
 
     }
 
@@ -25,14 +29,31 @@ class PkController extends BaseController
     {
         $session = session();
         $opdId = $session->get('opd_id');
+        $tahun = $this->request->getGet('tahun');
+
+        if (!$tahun) {
+            $tahun = date('Y'); // default ke tahun sekarang jika belum dipilih
+        }
+
 
         if (!$opdId)
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis);
+        $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
         // If multiple, pick the first (or null if none)
-
         $currentOpd = $this->opdModel->find($opdId);
 
+        $pkMisiRows = [];
+        if ($pkData && !empty($pkData['sasaran'])) {
+            foreach ($pkData['sasaran'] as $sasaran) {
+                $misi = $this->rpjmdModel->getMisiById($sasaran['rpjmd_misi_id']);
+                $pkMisiRows[] = [
+                    'rpjmd_misi_id' => $sasaran['rpjmd_misi_id'],
+                    'nama_misi' => $misi ? $misi['misi'] : '-'
+                ];
+            }
+        }
+
+        // dd($pkData);
         if (is_array($pkData) && count($pkData) > 0) {
             $pkData = $pkData[0];
         } else {
@@ -42,13 +63,17 @@ class PkController extends BaseController
             return view('adminopd/pk/pk', [
                 'pk_data' => $pkData,
                 'current_opd' => $currentOpd,
+                'tahun' => $tahun,
                 'jenis' => $jenis,
+                'pkMisiRows' => $pkMisiRows,
             ]);
         } else {
             return view('adminOpd/pk/pk', [
                 'pk_data' => $pkData,
                 'current_opd' => $currentOpd,
+                'tahun' => $tahun,
                 'jenis' => $jenis,
+                'pkMisiRows' => $pkMisiRows,
             ]);
         }
     }
@@ -62,6 +87,8 @@ class PkController extends BaseController
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         $program = $this->pkModel->getAllPrograms();
         $satuan = $this->pkModel->getAllSatuan();
+        $misiList = $this->rpjmdModel->getAllMisi();
+
         // Dapatkan PK Pimpinan sebagai acuan sesuai jenis
         $referensiJenis = null;
         if ($jenis === 'administrator') {
@@ -76,6 +103,7 @@ class PkController extends BaseController
                 ->where('jenis', $referensiJenis)
                 ->findAll();
         }
+
         if (strtolower($jenis) === 'bupati') {
             return view('adminopd/pk/tambah_pk', [
                 'pegawaiOpd' => $pegawaiOpd,
@@ -83,7 +111,8 @@ class PkController extends BaseController
                 'satuan' => $satuan,
                 'pkPimpinan' => $pkPimpinan,
                 'title' => 'Tambah PK ' . ucfirst($jenis),
-                'jenis' => $jenis
+                'jenis' => $jenis,
+                'misiList' => $misiList,
             ]);
         } else {
             return view('adminOpd/pk/tambah_pk', [
@@ -92,7 +121,8 @@ class PkController extends BaseController
                 'satuan' => $satuan,
                 'pkPimpinan' => $pkPimpinan,
                 'title' => 'Tambah PK ' . ucfirst($jenis),
-                'jenis' => $jenis
+                'jenis' => $jenis,
+                'misiList' => $misiList,
             ]);
         }
     }
@@ -176,6 +206,7 @@ class PkController extends BaseController
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
+            'tahun' => $data['tahun'],
             'pihak_1' => $data['pegawai_1_id'] ?? null,
             'pihak_2' => $data['pegawai_2_id'] ?? null,
             'tanggal' => $now,

@@ -13873,3 +13873,453 @@ Cleaning up orphaned records for misi ID: 2
 SUCCESS: Transaction completed successfully
 === END UPDATE TRANSACTION ===
 
+=== CREATE INDIKATOR SASARAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [indikator_sasaran] => asdasdas
+    [satuan] => Index
+    [definisi_op] => sadadawasa
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 12
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 34
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 567
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 980
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 9999
+                )
+
+        )
+
+    [sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [sasaran_id] => 3
+    [indikator_sasaran] => asdasdas
+    [definisi_op] => sadadawasa
+    [satuan] => Index
+)
+
+Insert result: TRUE
+Insert ID: 3
+=== END CREATE INDIKATOR SASARAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 12
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2025
+    [target_tahunan] => 12
+)
+
+Insert result: TRUE
+Insert ID: 21
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 34
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2026
+    [target_tahunan] => 34
+)
+
+Insert result: TRUE
+Insert ID: 22
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 567
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2027
+    [target_tahunan] => 567
+)
+
+Insert result: TRUE
+Insert ID: 23
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 980
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2028
+    [target_tahunan] => 980
+)
+
+Insert result: TRUE
+Insert ID: 24
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-07 06:10:14 ===
+Input data: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 9999
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2029
+    [target_tahunan] => 9999
+)
+
+Insert result: TRUE
+Insert ID: 25
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE INDIKATOR SASARAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [indikator_sasaran] => wdawad
+    [satuan] => Index
+    [definisi_op] => wdadaw
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 12
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 342
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => erw
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 24234
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 242342
+                )
+
+        )
+
+    [sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [sasaran_id] => 4
+    [indikator_sasaran] => wdawad
+    [definisi_op] => wdadaw
+    [satuan] => Index
+)
+
+Insert result: TRUE
+Insert ID: 4
+=== END CREATE INDIKATOR SASARAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 12
+    [indikator_sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 4
+    [tahun] => 2025
+    [target_tahunan] => 12
+)
+
+Insert result: TRUE
+Insert ID: 26
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 342
+    [indikator_sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 4
+    [tahun] => 2026
+    [target_tahunan] => 342
+)
+
+Insert result: TRUE
+Insert ID: 27
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => erw
+    [indikator_sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 4
+    [tahun] => 2027
+    [target_tahunan] => erw
+)
+
+Insert result: TRUE
+Insert ID: 28
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 24234
+    [indikator_sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 4
+    [tahun] => 2028
+    [target_tahunan] => 24234
+)
+
+Insert result: TRUE
+Insert ID: 29
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:39:04 ===
+Input data: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 242342
+    [indikator_sasaran_id] => 4
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 4
+    [tahun] => 2029
+    [target_tahunan] => 242342
+)
+
+Insert result: TRUE
+Insert ID: 30
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE INDIKATOR SASARAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [indikator_sasaran] => dsadasdasd
+    [satuan] => Nilai
+    [definisi_op] => definisi operasiona;
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 11
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 22
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 33
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 344
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 55
+                )
+
+        )
+
+    [sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [sasaran_id] => 5
+    [indikator_sasaran] => dsadasdasd
+    [definisi_op] => definisi operasiona;
+    [satuan] => Nilai
+)
+
+Insert result: TRUE
+Insert ID: 5
+=== END CREATE INDIKATOR SASARAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 11
+    [indikator_sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 5
+    [tahun] => 2025
+    [target_tahunan] => 11
+)
+
+Insert result: TRUE
+Insert ID: 31
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 22
+    [indikator_sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 5
+    [tahun] => 2026
+    [target_tahunan] => 22
+)
+
+Insert result: TRUE
+Insert ID: 32
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 33
+    [indikator_sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 5
+    [tahun] => 2027
+    [target_tahunan] => 33
+)
+
+Insert result: TRUE
+Insert ID: 33
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 344
+    [indikator_sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 5
+    [tahun] => 2028
+    [target_tahunan] => 344
+)
+
+Insert result: TRUE
+Insert ID: 34
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-09-10 16:41:50 ===
+Input data: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 55
+    [indikator_sasaran_id] => 5
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 5
+    [tahun] => 2029
+    [target_tahunan] => 55
+)
+
+Insert result: TRUE
+Insert ID: 35
+=== END CREATE TARGET TAHUNAN ===
+

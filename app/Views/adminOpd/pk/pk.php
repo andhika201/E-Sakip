@@ -16,15 +16,14 @@
             <h2 class="h3 fw-bold text-success text-center mb-4">PK <?= strtoupper($jenis) ?></h2>
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div class="d-flex gap-2 flex-fill">
-                    <select class="form-select">
-                        <option value="">TAHUN</option>
-                        <option>2020</option>
-                        <option>2021</option>
-                        <option>2022</option>
-                        <option>2023</option>
-                        <option>2024</option>
-                        <option>2025</option>
-                    </select>
+                    <form method="get" action="">
+                        <select class="form-select" name="tahun" onchange="this.form.submit()">
+                            <option value="">TAHUN</option>
+                            <?php for ($t = 2020; $t <= 2025; $t++): ?>
+                                <option value="<?= $t ?>" <?= ($tahun == $t ? 'selected' : '') ?>><?= $t ?></option>
+                            <?php endfor; ?>
+                        </select>
+                    </form>
                 </div>
                 <div>
                     <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
@@ -35,35 +34,6 @@
             </div>
             <div class="table-responsive">
                 <?php if (isset($pk_data['jenis']) && $pk_data['jenis'] === $jenis): ?>
-                    <!-- Tabel Misi Bupati untuk jenis JPT -->
-                    <?php if (!empty($pk_data['id']) && strtolower($jenis) === 'jpt'): ?>
-                        <?php $misiBupati = model('App\\Models\\RpjmdModel')->getAllMisi(); ?>
-                        <?php $pkMisiRows = model('App\\Models\\PkModel')->db->table('pk_misi')->where('pk_id', $pk_data['id'])->get()->getResultArray(); ?>
-                        <?php if (!empty($pkMisiRows)): ?>
-                            <h4 class="h5 fw-bold text-primary text-left mb-2">Misi Bupati</h4>
-                            <table class="table table-bordered table-striped text-center small mb-4"
-                                style="max-width:600px; margin-left:0;">
-                                <thead class="table-primary">
-                                    <tr>
-                                        <th class="border p-2" style="width:50px;">NO</th>
-                                        <th class="border p-2" style="width:500px;">Misi Bupati</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $no_misi = 1; ?>
-                                    <?php foreach ($pkMisiRows as $row): ?>
-                                        <?php $misi = model('App\\Models\\RpjmdModel')->getMisiById($row['rpjmd_misi_id']); ?>
-                                        <?php if ($misi): ?>
-                                            <tr>
-                                                <td class="border p-2" style="width:50px;"><?= $no_misi++ ?></td>
-                                                <td class="border p-2" style="width:500px;"><?= esc($misi['misi']) ?></td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        <?php endif; ?>
-                    <?php endif; ?>
                     <!-- Tabel Indikator Acuan (Referensi) -->
                     <?php if (!empty($pk_data['id']) && strtolower($jenis) !== 'jpt'): ?>
                         <?php $indikatorAcuan = model('App\\Models\\PkModel')->getIndikatorAcuanByPkId($pk_data['id']); ?>
@@ -95,6 +65,9 @@
                         <thead class="table-success">
                             <tr>
                                 <th class="border p-2">NO</th>
+                                <?php if (!empty($pk_data['id']) && strtolower($jenis) === 'jpt'): ?>
+                                    <th class="border p-2">MISI BUPATI</th>
+                                <?php endif; ?>
                                 <th class="border p-2">SASARAN</th>
                                 <th class="border p-2">INDIKATOR</th>
                                 <th class="border p-2">TARGET</th>
@@ -109,6 +82,9 @@
                                     <tr>
                                         <?php if ($index === 0): ?>
                                             <td class="border p-2" rowspan="<?= $rowspan ?>"><?= $no++ ?></td>
+                                            <?php $misi = model('App\\Models\\RpjmdModel')->getMisiById($sasaran['rpjmd_misi_id']); ?>
+                                            <td class="border p-2" rowspan="<?= $rowspan ?>"><?= esc($misi ? $misi['misi'] : '-') ?>
+                                            </td>
                                             <td class="border p-2" rowspan="<?= $rowspan ?>"><?= esc($sasaran['sasaran']) ?></td>
                                         <?php endif; ?>
                                         <td class="border p-2"><?= esc($indikator['indikator']) ?></td>
@@ -154,12 +130,12 @@
                         </tbody>
                     </table>
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="<?= base_url(($jenis==='bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
                             class="btn btn-primary btn-sm text-white" target="_blank">
                             <i class="fas fa-download me-1"></i> Download
                         </a>
-                        
-                        <a href="<?= base_url(($jenis==='bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $pk_data['jenis'] . '/edit/' . $pk_data['id']) ?>"
+
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $pk_data['jenis'] . '/edit/' . $pk_data['id']) ?>"
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>

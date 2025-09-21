@@ -105,11 +105,10 @@
                 <thead class="table-success">
                     <tr>
                         <th rowspan="2" class="border p-2 align-middle">RPJMD Sasaran</th>
-                        <th rowspan="2" class="border p-2 align-middle">SASARAN RENSTRA</th>
-                        <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                        <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
-                        
-                        <!-- Target columns header -->
+                        <th rowspan="2" class="border p-2 align-middle">Tujuan Renstra</th>
+                        <th rowspan="2" class="border p-2 align-middle">Sasaran Renstra</th>
+                        <th rowspan="2" class="border p-2 align-middle">Indikator Sasaran</th>
+                        <th rowspan="2" class="border p-2 align-middle">Satuan</th>
                         <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
                             <?php 
                             $totalYears = 0;
@@ -121,12 +120,10 @@
                         <?php else: ?>
                             <th colspan="5" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
                         <?php endif; ?>
-                        
                         <th rowspan="2" class="border p-2 align-middle">Status</th>
                         <th rowspan="2" class="border p-2 align-middle">ACTION</th>
                     </tr>
                     <tr class="border p-2">
-                        <!-- Dynamic year headers for each period -->
                         <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
                             <?php foreach ($grouped_data as $periodIndex => $periodData): ?>
                                 <?php foreach ($periodData['years'] as $year): ?>
@@ -144,12 +141,88 @@
                 </thead>
                 <tbody id="renstra-table-body">
                     <!-- Table content will be built by JavaScript -->
-                    <tr>
-                        <td colspan="12" class="border p-3 text-center text-muted">
-                            Memuat data...
-                        </td>
-                    </tr>
                 </tbody>
+                <script>
+                    // Data dari PHP
+                    const originalData = <?= json_encode($renstra_data ?? []) ?>;
+                    const groupedData = <?= json_encode($grouped_data ?? []) ?>;
+
+                    // Fungsi untuk render tabel sesuai filter
+                    function renderTable(data) {
+                        const tbody = document.getElementById('renstra-table-body');
+                        tbody.innerHTML = '';
+                        if (!data.length) {
+                            tbody.innerHTML = `<tr>
+                                <td colspan="12" class="border p-3 text-center text-muted">Data RENSTRA belum tersedia.</td>
+                            </tr>`;
+                            return;
+                        }
+                        data.forEach(row => {
+                            let tr = `<tr>
+                                <td class="border p-2">${row.rpjmd_sasaran || '-'}</td>
+                                <td class="border p-2">${row.renstra_tujuan || '-'}</td>
+                                <td class="border p-2">${row.sasaran}</td>
+                                <td class="border p-2">${row.indikator_sasaran}</td>
+                                <td class="border p-2">${row.satuan}</td>`;
+                            // Target per tahun
+                            if (groupedData && Object.keys(groupedData).length) {
+                                Object.values(groupedData).forEach(period => {
+                                    period.years.forEach(year => {
+                                        tr += `<td class="border p-2">${(row.targets && row.targets[year]) ? row.targets[year] : '-'}</td>`;
+                                    });
+                                });
+                            } else {
+                                for (let y = 2025; y <= 2029; y++) {
+                                    tr += `<td class="border p-2">${(row.targets && row.targets[y]) ? row.targets[y] : '-'}</td>`;
+                                }
+                            }
+                            tr += `<td class="border p-2">${row.status === 'selesai' ? '<span class="badge bg-success">Selesai</span>' : '<span class="badge bg-secondary">Draft</span>'}</td>
+                                <td class="border p-2">
+                                    <a href="<?= base_url('adminopd/renstra/edit/') ?>${row.sasaran_id}" class="btn btn-sm btn-warning mb-1"><i class="fas fa-edit"></i></a>
+                                    <button onclick="confirmDelete('${row.sasaran_id}')" class="btn btn-sm btn-danger mb-1"><i class="fas fa-trash"></i></button>
+                                    <button onclick="toggleStatus('${row.sasaran_id}')" class="btn btn-sm btn-info mb-1"><i class="fas fa-sync"></i></button>
+                                </td>
+                            </tr>`;
+                            tbody.innerHTML += tr;
+                        });
+                    }
+
+                    // Filter functions
+                    function filterByRpjmd() {
+                        applyFilters();
+                    }
+                    function filterByPeriode() {
+                        applyFilters();
+                    }
+                    function filterByStatus() {
+                        applyFilters();
+                    }
+                    function applyFilters() {
+                        const rpjmd = document.getElementById('rpjmd-filter').value;
+                        const periode = document.getElementById('periode-filter').value;
+                        const status = document.getElementById('status-filter').value;
+                        let filtered = originalData;
+                        if (rpjmd) {
+                            filtered = filtered.filter(row => row.rpjmd_sasaran === rpjmd);
+                        }
+                        if (periode) {
+                            const [mulai, akhir] = periode.split('-');
+                            filtered = filtered.filter(row => row.tahun_mulai == mulai && row.tahun_akhir == akhir);
+                        }
+                        if (status) {
+                            filtered = filtered.filter(row => row.status === status);
+                        }
+                        renderTable(filtered);
+                    }
+
+                    // Render awal
+                    document.addEventListener('DOMContentLoaded', function() {
+                        renderTable(originalData);
+                        document.getElementById('rpjmd-filter').addEventListener('change', filterByRpjmd);
+                        document.getElementById('periode-filter').addEventListener('change', filterByPeriode);
+                        document.getElementById('status-filter').addEventListener('change', filterByStatus);
+                    });
+                </script>
             </table>
         </div>
     </div>

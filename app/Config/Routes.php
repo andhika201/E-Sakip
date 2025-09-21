@@ -134,6 +134,12 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 
+    // target
+    $routes->get('target', 'AdminOpd\TargetController::index');
+    $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');
+    $routes->post('target/save', 'AdminOpd\TargetController::save');
+    $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
+
     //MONEV
     $routes->get('monev', 'MonevController::index');
     $routes->get('monev/tambah', 'MonevController::tambah');

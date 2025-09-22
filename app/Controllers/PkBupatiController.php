@@ -45,6 +45,7 @@ class PkBupatiController extends BaseController
             'title' => 'Perjanjian Kinerja - Bupati'
         ];
 
+
         return view('adminKabupaten/pk_bupati/pk_bupati', $data);
     }
 

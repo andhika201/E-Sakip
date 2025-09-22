@@ -12,7 +12,7 @@ class DashboardModel extends Model
     {
         parent::__construct();
         $this->db = \Config\Database::connect();
-    }
+    }  
 
     /**
      * Get RPJMD statistics by status
@@ -95,7 +95,6 @@ class DashboardModel extends Model
      */
     public function getIkuStats()
     {
-        // Assuming IKU data is stored in a table, adjust table name as needed
         $stats = $this->db->table('iku_sasaran') 
             ->select('status, COUNT(*) as count')
             ->groupBy('status')
@@ -108,15 +107,14 @@ class DashboardModel extends Model
         }
         
         return $result;
-    }
+    } 
 
     /**
      * Get LAKIP Kabupaten statistics by status
      */
     public function getLakipKabupatenStats()
     {
-        // Assuming LAKIP Kabupaten data is stored in a table, adjust table name as needed
-        $stats = $this->db->table('lakip_kabupaten') // Adjust table name
+        $stats = $this->db->table('lakip_kab')
             ->select('status, COUNT(*) as count')
             ->groupBy('status')
             ->get()
@@ -136,7 +134,7 @@ class DashboardModel extends Model
     public function getLakipOpdStats()
     {
         // Get stats by joining with OPD table
-        $stats = $this->db->table('lakip_opd lo') // Adjust table name
+        $stats = $this->db->table('lakip_opd lo')
             ->select('lo.status, COUNT(*) as count')
             ->join('opd o', 'o.id = lo.opd_id', 'left')
             ->groupBy('lo.status')
@@ -161,6 +159,15 @@ class DashboardModel extends Model
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();
+    }
+
+    public function getOpdById($opdId)
+    {
+        return $this->db->table('opd')
+            ->select('id, nama_opd')
+            ->where('id', $opdId)
+            ->get()
+            ->getRowArray();
     }
 
     /**
@@ -225,58 +232,81 @@ class DashboardModel extends Model
      */
     public function getDashboardDataByOpdAndYear($opdId = null, $year = null)
     {
-        $data = [];
+        // Initialize with default structure
+        $data = [
+            'renstra' => ['draft' => 0, 'selesai' => 0],
+            'renja' => ['draft' => 0, 'selesai' => 0],
+            'lakip_opd' => ['draft' => 0, 'selesai' => 0]
+        ];
         
-        if ($opdId) {
-            // Get RENSTRA data for specific OPD
+        // Only proceed if at least one filter is provided
+        if (!$opdId && !$year) {
+            return $data;
+        }
+        
+        try {
+            // Get RENSTRA data
             $renstraQuery = $this->db->table('renstra_sasaran rs')
                 ->select('rs.status, COUNT(*) as count')
                 ->join('opd o', 'o.id = rs.opd_id', 'left')
-                ->where('rs.opd_id', $opdId)
                 ->groupBy('rs.status');
             
+            if ($opdId) {
+                $renstraQuery->where('rs.opd_id', $opdId);
+            }
             if ($year) {
                 $renstraQuery->where('YEAR(rs.created_at)', $year);
             }
             
             $renstraStats = $renstraQuery->get()->getResultArray();
-            $data['renstra'] = ['draft' => 0, 'selesai' => 0];
             foreach ($renstraStats as $stat) {
-                $data['renstra'][$stat['status']] = $stat['count'];
+                if (isset($stat['status']) && isset($data['renstra'][$stat['status']])) {
+                    $data['renstra'][$stat['status']] = (int)$stat['count'];
+                }
             }
             
-            // Get RENJA data for specific OPD
+            // Get RENJA data
             $renjaQuery = $this->db->table('renja_sasaran rs')
                 ->select('rs.status, COUNT(*) as count')
                 ->join('renstra_sasaran rst', 'rst.id = rs.renstra_sasaran_id', 'left')
-                ->where('rst.opd_id', $opdId)
                 ->groupBy('rs.status');
             
+            if ($opdId) {
+                $renjaQuery->where('rst.opd_id', $opdId);
+            }
             if ($year) {
                 $renjaQuery->where('YEAR(rs.created_at)', $year);
             }
             
             $renjaStats = $renjaQuery->get()->getResultArray();
-            $data['renja'] = ['draft' => 0, 'selesai' => 0];
             foreach ($renjaStats as $stat) {
-                $data['renja'][$stat['status']] = $stat['count'];
+                if (isset($stat['status']) && isset($data['renja'][$stat['status']])) {
+                    $data['renja'][$stat['status']] = (int)$stat['count'];
+                }
             }
             
-            // Get LAKIP OPD data for specific OPD
+            // Get LAKIP OPD data
             $lakipQuery = $this->db->table('lakip_opd')
                 ->select('status, COUNT(*) as count')
-                ->where('opd_id', $opdId)
                 ->groupBy('status');
             
+            if ($opdId) {
+                $lakipQuery->where('opd_id', $opdId);
+            }
             if ($year) {
                 $lakipQuery->where('YEAR(created_at)', $year);
             }
             
             $lakipStats = $lakipQuery->get()->getResultArray();
-            $data['lakip_opd'] = ['draft' => 0, 'selesai' => 0];
             foreach ($lakipStats as $stat) {
-                $data['lakip_opd'][$stat['status']] = $stat['count'];
+                if (isset($stat['status']) && isset($data['lakip_opd'][$stat['status']])) {
+                    $data['lakip_opd'][$stat['status']] = (int)$stat['count'];
+                }
             }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting filtered dashboard data: ' . $e->getMessage());
+            // Return default values on error
         }
         
         return $data;

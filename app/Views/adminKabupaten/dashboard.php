@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard e-SAKIP</title>
+  <title>Dashboard AKSARA</title>
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -22,7 +22,7 @@
   <!-- Main Content -->
   <main class="flex-fill p-4 mt-2" id="main-content">
     <div class="bg-white rounded shadow p-4 mb-3">
-      <h2 class="h3 fw-bold text-dark mb-3">Selamat Datang di e-SAKIP</h2>
+      <h2 class="h3 fw-bold text-dark mb-3">Selamat Datang di AKSARA</h2>
       <p class="text-muted">Sistem Akuntabilitas Kinerja Instansi Pemerintah - Admin Kabupaten</p>
       
       <?php if (isset($error_message)): ?>
@@ -32,31 +32,43 @@
         </div>
       <?php endif; ?>
       
-      <!-- Summary Stats -->
+      <!-- Summary Stats Cards -->
       <?php if (isset($summary_stats)): ?>
-      <div class="row g-3 mt-2">
+      <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-          <div class="text-center">
-            <h4 class="fw-bold text-primary mb-0"><?= $summary_stats['total_rpjmd'] ?></h4>
-            <small class="text-muted">Total RPJMD</small>
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-3">
+
+              <h4 class="fw-bold text-primary mb-1"><?= $summary_stats['total_rpjmd'] ?></h4>
+              <small class="text-muted fw-medium">Total RPJMD</small>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="text-center">
-            <h4 class="fw-bold text-success mb-0"><?= $summary_stats['total_renstra'] ?></h4>
-            <small class="text-muted">Total RENSTRA</small>
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-3">
+              
+              <h4 class="fw-bold text-success mb-1"><?= $summary_stats['total_renstra'] ?></h4>
+              <small class="text-muted fw-medium">Total RENSTRA</small>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="text-center">
-            <h4 class="fw-bold text-warning mb-0"><?= $summary_stats['total_renja'] ?></h4>
-            <small class="text-muted">Total RENJA</small>
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-3">
+              
+              <h4 class="fw-bold text-warning mb-1"><?= $summary_stats['total_renja'] ?></h4>
+              <small class="text-muted fw-medium">Total RENJA</small>
+            </div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="text-center">
-            <h4 class="fw-bold text-info mb-0"><?= $summary_stats['total_opd'] ?></h4>
-            <small class="text-muted">Total OPD</small>
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center p-3">
+              
+              <h4 class="fw-bold text-info mb-1"><?= $summary_stats['total_opd'] ?></h4>
+              <small class="text-muted fw-medium">Total OPD</small>
+            </div>
           </div>
         </div>
       </div>
@@ -147,7 +159,7 @@
         <h2 class="h3 fw-bold text-dark mb-3">Data SAKIP Untuk Tiap Unit Kerja</h2>
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
             <div class="d-flex gap-2 flex-fill">
-                <select class="form-select" id="filterOpd" onchange="filterByUnitKerja()">
+                <select class="form-select" id="filterOpd">
                     <option value="">Pilih Unit Kerja</option>
                     <?php if (isset($dashboard_data['opd_list'])): ?>
                         <?php foreach ($dashboard_data['opd_list'] as $opd): ?>
@@ -164,8 +176,9 @@
                     <?php endif; ?>
                 </select>
             </div>
-            <div>
+            <div class="d-flex gap-2">
                 <button class="btn btn-primary" onclick="filterByUnitKerja()">Tampilkan</button>
+                <button class="btn btn-outline-secondary" onclick="resetFilter()">Reset</button>
             </div>
           </div>
       </div>
@@ -173,7 +186,7 @@
       <!-- RENSTRA -->
       <div class="col-12 col-md-6 col-lg-4">
         <div class="bg-white rounded shadow p-4 h-100">
-          <p class="fw-semibold text-dark mb-2">RENSTRA Kabupaten</p>
+          <p class="fw-semibold text-dark mb-2">RENSTRA</p>
           <div style="height: 150px;"><canvas id="renstraChart"></canvas></div>
           <table class="table table-sm table-bordered mt-3 mb-0">
             <thead class="table-light">
@@ -182,7 +195,7 @@
                 <th class="text-end">Jumlah</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="renstraTableBody">
               <tr>
                 <td>Draf</td>
                 <td class="text-end"><?= isset($dashboard_data['renstra']['draft']) ? $dashboard_data['renstra']['draft'] : 0 ?></td>
@@ -209,7 +222,7 @@
                 <th class="text-end">Jumlah</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="renjaTableBody">
               <tr>
                 <td>Draft</td>
                 <td class="text-end"><?= isset($dashboard_data['renja']['draft']) ? $dashboard_data['renja']['draft'] : 0 ?></td>
@@ -226,7 +239,7 @@
       <!-- IKU -->
       <div class="col-12 col-md-6 col-lg-4">
         <div class="bg-white rounded shadow p-4 h-100">
-          <p class="fw-semibold text-dark mb-2">IKU Tahun Ini</p>
+          <p class="fw-semibold text-dark mb-2">IKU</p>
           <div style="height: 150px;"><canvas id="ikuChart"></canvas></div>
           <table class="table table-sm table-bordered mt-3 mb-0">
             <thead class="table-light">
@@ -261,7 +274,7 @@
                 <th class="text-end">Jumlah</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="lakipOpdTableBody">
               <tr>
                 <td>Draft</td>
                 <td class="text-end"><?= isset($dashboard_data['lakip_opd']['draft']) ? $dashboard_data['lakip_opd']['draft'] : 0 ?></td>
@@ -299,8 +312,8 @@
       ];
     }
 
-    // Initialize charts with dynamic data
-    new Chart(document.getElementById('rpjmdChart'), {
+    // Initialize charts with dynamic data and store references globally
+    window.rpjmdChart = new Chart(document.getElementById('rpjmdChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draf'],
@@ -313,7 +326,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('rkpdChart'), {
+    window.rkpdChart = new Chart(document.getElementById('rkpdChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draft'],
@@ -326,7 +339,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('lakipKabChart'), {
+    window.lakipKabChart = new Chart(document.getElementById('lakipKabChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draft'],
@@ -339,7 +352,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('renstraChart'), {
+    window.renstraChart = new Chart(document.getElementById('renstraChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draf'],
@@ -352,7 +365,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('renjaChart'), {
+    window.renjaChart = new Chart(document.getElementById('renjaChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draft'],
@@ -365,7 +378,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('ikuChart'), {
+    window.ikuChart = new Chart(document.getElementById('ikuChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draft'],
@@ -378,7 +391,7 @@
       options: chartOptions
     });
 
-    new Chart(document.getElementById('lakipOpdChart'), {
+    window.lakipOpdChart = new Chart(document.getElementById('lakipOpdChart'), {
       type: 'doughnut',
       data: {
         labels: ['Selesai', 'Draft'],
@@ -441,15 +454,88 @@
 
     // Function to update charts with filtered data
     function updateChartsWithFilteredData(filteredData) {
-      // This function can be expanded to update specific charts
-      // For now, we'll show a message that filtering is applied
       console.log('Filtered data received:', filteredData);
+      
+      // Update RENSTRA chart if exists
+      if (filteredData.renstra && window.renstraChart) {
+        const renstraData = [
+          filteredData.renstra.selesai || 0,
+          filteredData.renstra.draft || 0
+        ];
+        window.renstraChart.data.datasets[0].data = renstraData;
+        window.renstraChart.update();
+      }
+      
+      // Update RENJA chart if exists  
+      if (filteredData.renja && window.renjaChart) {
+        const renjaData = [
+          filteredData.renja.selesai || 0,
+          filteredData.renja.draft || 0
+        ];
+        window.renjaChart.data.datasets[0].data = renjaData;
+        window.renjaChart.update();
+      }
+      
+      // Update LAKIP OPD chart if exists
+      if (filteredData.lakip_opd && window.lakipOpdChart) {
+        const lakipOpdData = [
+          filteredData.lakip_opd.selesai || 0,
+          filteredData.lakip_opd.draft || 0
+        ];
+        window.lakipOpdChart.data.datasets[0].data = lakipOpdData;
+        window.lakipOpdChart.update();
+      }
     }
 
     // Function to update tables with filtered data
     function updateTablesWithFilteredData(filteredData) {
-      // Update table data - can be expanded based on specific requirements
       console.log('Updating tables with filtered data:', filteredData);
+      
+      // Update RENSTRA table
+      if (filteredData.renstra) {
+        const renstraTableBody = document.getElementById('renstraTableBody');
+        if (renstraTableBody) {
+          renstraTableBody.innerHTML = `
+            <tr><td>Draf</td><td class="text-end">${filteredData.renstra.draft || 0}</td></tr>
+            <tr><td>Selesai</td><td class="text-end">${filteredData.renstra.selesai || 0}</td></tr>
+          `;
+        }
+      }
+      
+      // Update RENJA table
+      if (filteredData.renja) {
+        const renjaTableBody = document.getElementById('renjaTableBody');
+        if (renjaTableBody) {
+          renjaTableBody.innerHTML = `
+            <tr><td>Draft</td><td class="text-end">${filteredData.renja.draft || 0}</td></tr>
+            <tr><td>Selesai</td><td class="text-end">${filteredData.renja.selesai || 0}</td></tr>
+          `;
+        }
+      }
+      
+      // Update LAKIP OPD table
+      if (filteredData.lakip_opd) {
+        const lakipOpdTableBody = document.getElementById('lakipOpdTableBody');
+        if (lakipOpdTableBody) {
+          lakipOpdTableBody.innerHTML = `
+            <tr><td>Draft</td><td class="text-end">${filteredData.lakip_opd.draft || 0}</td></tr>
+            <tr><td>Selesai</td><td class="text-end">${filteredData.lakip_opd.selesai || 0}</td></tr>
+          `;
+        }
+      }
+    }
+
+    // Function to reset filter and restore original data
+    function resetFilter() {
+      // Reset dropdown values
+      document.getElementById('filterOpd').value = '';
+      document.getElementById('tahun').value = '';
+      
+      // Restore original charts
+      updateChartsWithFilteredData(dashboardData);
+      updateTablesWithFilteredData(dashboardData);
+      
+      showNotification('Filter telah direset', 'success');
     }
 
     // Function to show notifications

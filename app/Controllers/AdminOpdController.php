@@ -4,67 +4,46 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\DashboardModel;
 
 class AdminOpdController extends BaseController
 {
+    protected $dashboardModel;
+    
+    public function __construct()
+    {
+        $this->dashboardModel = new DashboardModel();
+    }
+
     public function index()
     {
-        return view('adminOpd/dashboard');
-    }
-
-
-    public function renja()
-    {
-        return view('adminOpd/renja/renja');
-    }
-    public function tambah_renja()
-    {
-        return view('adminOpd/renja/tambah_renja');
-    }
-    public function edit_renja()
-    {
-        return view('adminOpd/renja/edit_renja');
-    }
-
-    // IKU Methods
-    public function iku()
-    {
-        return view('adminOpd/iku/iku');
-    }
-
-    public function tambah_iku()
-    {
-        return view('adminOpd/iku/tambah_iku');
-    }
-
-    public function edit_iku()
-    {
-        return view('adminOpd/iku/edit_iku');
-    }
-
-    public function save_iku()
-    {
-        return redirect()->to(base_url('adminOpd/iku'));
-    }
-    
-
-    public function pk_jpt()
-    {
-        return view('adminOpd/pk_jpt/pk_jpt');
-    }
-
-    public function pk_administrator()
-    {
-        return view('adminOpd/pk_administrator/pk_administrator');
-    }
-
-    public function pk_pengawas()
-    {
-        return view('adminOpd/pk_pengawas/pk_pengawas');
-    }
-
-    public function lakip_kabupaten()
-    {
-        return view('adminOpd/lakip_kabupaten/lakip_kabupaten');
+        try {
+            // Get comprehensive dashboard data
+            $dashboardData = $this->dashboardModel->getDashboardData();
+            
+            // Get summary statistics
+            $summaryStats = $this->dashboardModel->getSummaryStats();
+            
+            $data = [
+                'dashboard_data' => $dashboardData,
+                'summary_stats' => $summaryStats,
+                'title' => 'Dashboard'
+            ];
+            
+            return view('adminOpd/dashboard', $data);
+            
+        } catch (\Exception $e) {
+            // Handle error gracefully
+            log_message('error', 'Dashboard error: ' . $e->getMessage());
+            
+            $data = [
+                'dashboard_data' => $this->getDefaultDashboardData(),
+                'summary_stats' => $this->getDefaultSummaryStats(),
+                'error_message' => 'Terjadi kesalahan saat memuat data dashboard.',
+                'title' => 'Dashboard'
+            ];
+            
+            return view('adminOpd/dashboard', $data);
+        }
     }
 }

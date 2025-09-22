@@ -8,29 +8,29 @@ use CodeIgniter\HTTP\ResponseInterface;
 class LoginController extends BaseController
 {
     public function index()
-{
-    // Cek apakah user sudah login
-    if (session()->get('isLoggedIn')) {
-        // Ambil role dari session
-        $role = session()->get('role');
+    {
+        // Cek apakah user sudah login
+        if (session()->get('isLoggedIn')) {
+            // Ambil role dari session
+            $role = session()->get('role');
 
-        // Redirect sesuai dengan role
-        if ($role === 'admin_opd') {
-            return redirect()->to('/adminopd/dashboard')
-                ->with('message', 'Anda sudah login sebagai Admin OPD');
-        } elseif ($role === 'admin_kabupaten') {
-            return redirect()->to('/adminkab/dashboard')
-                ->with('message', 'Anda sudah login sebagai Admin Kabupaten');
-        } else {
-            // Default fallback kalau role tidak dikenali
-            return redirect()->to('/dashboard')
-                ->with('message', 'Anda sudah login');
+            // Redirect sesuai dengan role
+            if ($role === 'admin_opd') {
+                return redirect()->to('/adminopd/dashboard')
+                    ->with('message', 'Anda sudah login sebagai Admin OPD');
+            } elseif ($role === 'admin_kabupaten') {
+                return redirect()->to('/adminkab/dashboard')
+                    ->with('message', 'Anda sudah login sebagai Admin Kabupaten');
+            } else {
+                // Default fallback kalau role tidak dikenali
+                return redirect()->to('/dashboard')
+                    ->with('message', 'Anda sudah login');
+            }
         }
-    }
 
-    // Kalau belum login, tampilkan halaman login
-    return view('login');
-}
+        // Kalau belum login, tampilkan halaman login
+        return view('login');
+    }
 
 
     private function verifyRecaptcha($response)
@@ -142,6 +142,6 @@ class LoginController extends BaseController
     {
         // Hapus semua session data
         session()->destroy();
-        return redirect()->to('/login')->with('message', 'Anda telah berhasil logout');
+        return redirect()->to('/')->with('message', 'Anda telah berhasil logout');
     }
 }

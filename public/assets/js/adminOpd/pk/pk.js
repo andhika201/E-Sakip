@@ -58,12 +58,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td rowspan="${Object.values(pk.sasaran).reduce((t, s) => t + s.indikator.length, 0)}">${programText}</td>
                     <td rowspan="${Object.values(pk.sasaran).reduce((t, s) => t + s.indikator.length, 0)}">${anggaranText}</td>
                     <td rowspan="${Object.values(pk.sasaran).reduce((t, s) => t + s.indikator.length, 0)}">
-                        <a href="${base_url}adminopd/pk_admin/cetak/${pkId}" class="text-primary">
+                        <a href="${base_url}adminopd/pk_opd/cetak/${pkId}" class="text-primary">
                             <i class="fas fa-download"></i> Download
                         </a>
                     </td>
                     <td rowspan="${Object.values(pk.sasaran).reduce((t, s) => t + s.indikator.length, 0)}">
-                        <a href="${base_url}adminopd/pk_admin/edit/${pkId}" class="btn btn-sm btn-success">Edit</a>
+                        <a href="${base_url}adminopd/pk_opd/edit/${pkId}" class="btn btn-sm btn-success">Edit</a>
                         <button class="btn btn-sm btn-danger" onclick="deletePk(${pkId})">Hapus</button>
                     </td>
                 `;
@@ -72,3 +72,42 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+
+/**
+ * Function to delete PK with confirmation
+ * @param {number} pkId - The ID of the PK to delete
+ * @param {string} baseUrl - Base URL for the application (optional, will use global base_url if not provided)
+ */
+function deletePk(pkId, baseUrl = null) {
+    // Use global base_url if baseUrl not provided
+    const url = baseUrl || (typeof base_url !== 'undefined' ? base_url : '');
+    
+    if (!url) {
+        console.error('Base URL is not defined');
+        alert('Terjadi kesalahan sistem. Silakan refresh halaman dan coba lagi.');
+        return;
+    }
+    
+    // Confirmation dialog
+    const confirmMessage = 'Apakah Anda yakin ingin menghapus PK ini?\n\nData yang dihapus tidak dapat dikembalikan.';
+    
+    if (confirm(confirmMessage)) {
+        // Show loading state (optional)
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Menghapus...';
+        button.disabled = true;
+        
+        try {
+            // Redirect to delete URL
+            window.location.href = url + 'adminopd/pk_opd/delete/' + pkId;
+        } catch (error) {
+            console.error('Error during delete:', error);
+            alert('Terjadi kesalahan saat menghapus data.');
+            
+            // Restore button state
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    }
+}

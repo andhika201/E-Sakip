@@ -29,15 +29,22 @@ class AuthFilter implements FilterInterface
 
         if (!$session->get('isLoggedIn')) {
             // User is not logged in, redirect to login page
-            return redirect()->to('/login')->with('error', 'You must be logged in to access this page.');
+            return redirect()->to('/login')->with('error', 'Anda harus login untuk mengakses halaman ini.');
         }
 
         if($arguments !== null && is_array($arguments)) {
             // Check if user has the required role
             $userRole = $session->get('role');
             if (!in_array($userRole, $arguments)) {
-                // User does not have the required role, redirect to unauthorized page
-                return redirect()->to('/unauthorized')->with('error', 'You do not have permission to access this page.');
+                // User does not have the required role, redirect based on their role
+                switch($userRole) {
+                    case 'admin_kabupaten':
+                        return redirect()->to('/adminkab/dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses halaman tersebut.');
+                    case 'admin_opd':
+                        return redirect()->to('/adminopd/dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses halaman tersebut.');
+                    default:
+                        return redirect()->to('/unauthorized')->with('error', 'Anda tidak memiliki izin untuk mengakses halaman ini.');
+                }
             }
         }
     }

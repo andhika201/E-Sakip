@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tentang Kami - e-SAKIP</title>
+  <title>Tentang Kami</title>
   <!-- Style -->
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
@@ -29,9 +29,14 @@
             <!-- Sejarah -->
             <div class="col-12">
                 <div class="bg-light p-4 rounded">
-                    <h3 class="h4 fw-semibold text-success mb-3">Sejarah e-SAKIP</h3>
-                    <p class="text-dark lh-lg">
-                        Sistem Akuntabilitas Kinerja Instansi Pemerintah (SAKIP) merupakan rangkaian sistematik dari berbagai aktivitas, alat, dan prosedur yang dirancang untuk tujuan penetapan dan pengukuran, pengumpulan data, pengklasifikasian, pengikhtisaran dan pelaporan kinerja pada instansi pemerintah, dalam rangka pertanggungjawaban dan peningkatan kinerja instansi pemerintah.
+                    <h3 class="h4 fw-semibold text-success mb-3">AKSARA</h3>
+                    <p class="text-dark lh-lg fw-semibold" style="text-align: justify; text-justify: inter-word;">
+                        Sistem Akuntabilitas Kinerja Instansi Pemerintah (SAKIP) adalah mekanisme yang dirancang untuk mengukur, 
+                        memantau, dan melaporkan kinerja instansi pemerintah secara sistematis demi meningkatkan akuntabilitas, 
+                        transparansi, dan efektivitas aparatur. Untuk mendukung pencapaian tujuan tersebut, AKSARA (Akuntabilitas Sistem Kinerja Aparatur) 
+                        hadir sebagai sistem informasi yang mengimplementasikan prinsip SAKIP secara digital, memfasilitasi pengelolaan, 
+                        pengikhtisaran, dan pelaporan data kinerja secara terstruktur, sehingga membantu instansi pemerintah meningkatkan 
+                        efisiensi, kualitas, dan akuntabilitas kinerja aparatur secara lebih optimal.
                     </p>
                 </div>
             </div>
@@ -40,19 +45,20 @@
             <div class="col-12 col-md-6">
                 <div class="bg-primary bg-opacity-10 p-4 rounded h-100">
                     <h3 class="h4 fw-semibold text-success mb-3">Visi</h3>
-                    <p class="text-dark lh-lg">
-                        Mewujudkan tata kelola pemerintahan yang akuntabel dan transparan melalui sistem pelaporan kinerja yang terintegrasi dan berkualitas.
+                    <p class="text-dark lh-lg fw-semibold" style="text-align: justify; text-justify: inter-word;">
+                        Pringsewu Berdaya Saing, Harmonis, dan Sejahtera (Bersahaja)
                     </p>
                 </div>
             </div>
             <div class="col-12 col-md-6">
                 <div class="bg-primary bg-opacity-10 p-4 rounded h-100">
                     <h3 class="h4 fw-semibold text-success mb-3">Misi</h3>
-                    <ul class="text-dark list-unstyled">
-                        <li class="mb-2">• Meningkatkan kualitas pelaporan kinerja instansi pemerintah</li>
-                        <li class="mb-2">• Mempermudah proses monitoring dan evaluasi kinerja</li>
-                        <li class="mb-2">• Meningkatkan transparansi dan akuntabilitas publik</li>
-                        <li class="mb-2">• Mendukung pengambilan keputusan berbasis data</li>
+                    <ul class="text-dark" style="text-align: justify; text-justify: inter-word;">
+                        <li class="mb-2 fw-semibold ">Peningkatan pembangunan infrastruktur pelayanan dasar masyarakat secara merata.</li>
+                        <li class="mb-2 fw-semibold">Peningkatan kualitas SDM yang sehat, cerdas dan berkarakter melalui pelayanan kesehatan, pendidikan, keagamaan dan sosial kemasyarakatan.</li>
+                        <li class="mb-2 fw-semibold">Meningkatkan perekonomian masyarakat yang berdaya saing dan berwawasan gender.</li>
+                        <li class="mb-2 fw-semibold">Mempertahankan dan meningkatkan ketahanan pangan secara berkualitas dan berwawasan lingkungan.</li>
+                        <li class="mb-2 fw-semibold">Penyelenggaraan tata kelola pemerintahan yang profesional dan bersih dalam situasi yang kondusif.</li>
                     </ul>
                 </div>
             </div>
@@ -63,17 +69,17 @@
                     <h3 class="h4 fw-semibold text-success mb-3">Tim Pengembang</h3>
                     <div class="row g-3">
                         <div class="col-12 col-md-4 text-center">
-                            <div class="bg-success bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
-                                <i class="fas fa-user text-success fs-2"></i>
+                            <div class="bg-primary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-computer text-primary fs-2"></i>
                             </div>
-                            <h4 class="h6 fw-semibold">Tim IT Kabupaten</h4>
+                            <h4 class="h6 fw-semibold">Tim IT</h4>
                             <p class="small text-muted">Developer</p>
                         </div>
                         <div class="col-12 col-md-4 text-center">
-                            <div class="bg-primary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
-                                <i class="fas fa-users text-primary fs-2"></i>
+                            <div class="bg-success bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-users text-light fs-2"></i>
                             </div>
-                            <h4 class="h6 fw-semibold">Bagian Organisasi</h4>
+                            <h4 class="h6 fw-semibold">Organisasi Sekretariat Daerah</h4>
                             <p class="small text-muted">Koordinator</p>
                         </div>
                         <div class="col-12 col-md-4 text-center">

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RENSTRA</title>
+  <title>IKU OPD</title>
   <!-- Style -->
   <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
@@ -22,7 +22,7 @@
   <!-- Konten Utama -->
   <main class="flex-fill p-4 mt-2">
     <div class="bg-white rounded shadow p-4">
-        <h2 class="h3 fw-bold text-success text-center mb-4">Rencana Strategis</h2>
+        <h2 class="h3 fw-bold text-success text-center mb-4">IKU OPD</h2>
 
         <!-- Error Messages -->
         <?php if (session()->getFlashdata('error')): ?>
@@ -59,17 +59,17 @@
                 <!-- Period Filter -->
                 <div class="d-flex align-items-center flex-fill me-3 gap-2">
 
-                    <select id="rpjmd-filter" class="form-select" onchange="filterByRpjmd()" style="flex: 2;">
-                        <option value="">Semua Sasaran RPJMD</option>
-                        <?php if (isset($renstra_data) && !empty($renstra_data)): ?>
+                    <select id="renstra-filter" class="form-select" onchange="filterByRenstra()" style="flex: 2;">
+                        <option value="">Semua Sasaran RENSTRA</option>
+                        <?php if (isset($iku_data) && !empty($iku_data)): ?>
                             <?php 
-                            $rpjmdSasaran = [];
-                            foreach ($renstra_data as $data) {
-                                $rpjmdSasaran[$data['rpjmd_sasaran']] = $data['rpjmd_sasaran'];
+                            $renstraSasaran = [];
+                            foreach ($iku_data as $data) {
+                                $renstraSasaran[$data['renstra_sasaran']] = $data['renstra_sasaran'];
                             }
-                            asort($rpjmdSasaran);
+                            asort($renstraSasaran);
                             ?>
-                            <?php foreach ($rpjmdSasaran as $sasaran): ?>
+                            <?php foreach ($renstraSasaran as $sasaran): ?>
                                 <option value="<?= esc($sasaran) ?>"><?= esc($sasaran) ?></option>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -94,7 +94,7 @@
                 </div>
             </div>
             <div>
-                <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success d-flex align-items-center">
+                <a href="<?= base_url('adminopd/iku_opd/tambah') ?>" class="btn btn-success d-flex align-items-center">
                     <i class="fas fa-plus me-1"></i> TAMBAH
                 </a>
             </div>
@@ -105,11 +105,12 @@
             <table class="table table-bordered table-striped text-center small" style="border-collapse: collapse;">
                 <thead class="table-success">
                     <tr>
-                        <th rowspan="2" class="border p-2 align-middle">RPJMD Sasaran</th>
-                        <th rowspan="2" class="border p-2 align-middle">SASARAN RENSTRA</th>
-                        <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                        <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
-                        
+                        <th rowspan="2" class="border p-2 align-middle">RENSTRA Sasaran</th>
+                        <th rowspan="2" class="border p-2 align-middle">Sasaran IKU</th>
+                        <th rowspan="2" class="border p-2 align-middle">Indikator Kinerja</th>
+                        <th rowspan="2" class="border p-2 align-middle">Definisi Formulasi</th>
+                        <th rowspan="2" class="border p-2 align-middle">Satuan</th>
+
                         <!-- Target columns header -->
                         <?php if (isset($grouped_data) && !empty($grouped_data)): ?>
                             <?php 
@@ -118,11 +119,11 @@
                                 $totalYears += count($periodData['years']);
                             }
                             ?>
-                            <th colspan="<?= $totalYears ?>" class="border p-2 text-center">TARGET CAPAIAN PER TAHUN</th>
+                            <th colspan="<?= $totalYears ?>" class="border p-2 text-center">Target Capaian Pertahun</th>
                         <?php else: ?>
-                            <th colspan="5" class="border p-2">TARGET CAPAIAN PER TAHUN</th>
+                            <th colspan="5" class="border p-2">Target Capaian Pertahun</th>
                         <?php endif; ?>
-                        
+                        <th rowspan="2" class="border p-2 align-middle">Program Pendukung</th>
                         <th rowspan="2" class="border p-2 align-middle">Status</th>
                         <th rowspan="2" class="border p-2 align-middle">ACTION</th>
                     </tr>
@@ -143,7 +144,7 @@
                         <?php endif; ?>
                     </tr>
                 </thead>
-                <tbody id="renstra-table-body">
+                <tbody id="iku-table-body">
                     <!-- Table content will be built by JavaScript -->
                     <tr>
                         <td colspan="12" class="border p-3 text-center text-muted">
@@ -156,7 +157,7 @@
     </div>
   </main>
 
-  <!-- JavaScript for Renstra functionality -->
+  <!-- JavaScript for IKU functionality -->
   <script>
     // Set global variables for JavaScript
     window.base_url = '<?= base_url() ?>';
@@ -168,8 +169,8 @@
     
     // Function to toggle status via AJAX (same as RENJA)
     function toggleStatus(sasaranId) {
-        if (confirm('Apakah Anda yakin ingin mengubah status RENSTRA ini?')) {
-            fetch('<?= base_url('adminopd/renstra/update-status') ?>', {
+        if (confirm('Apakah Anda yakin ingin mengubah status IKU ini?')) {
+            fetch('<?= base_url('adminopd/iku_opd/update-status') ?>', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -198,18 +199,18 @@
     
     // Function to confirm delete (same as RENJA)
     function confirmDelete(id) {
-        if (confirm('Apakah Anda yakin ingin menghapus data RENSTRA ini?')) {
-            window.location.href = '<?= base_url('adminopd/renstra/delete/') ?>' + id;
+        if (confirm('Apakah Anda yakin ingin menghapus data IKU ini?')) {
+            window.location.href = '<?= base_url('adminopd/iku_opd/delete/') ?>' + id;
         }
     }
   </script>
-  <script src="<?= base_url('assets/js/adminOpd/renstra/renstra.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminOpd/iku_opd/iku_opd.js') ?>"></script>
   <script>
     // Set period data for JavaScript
     setPeriodData(<?= json_encode($grouped_data ?? []) ?>);
     
-    // Set original renstra data for filtering
-    setOriginalData(<?= json_encode($renstra_data ?? []) ?>);
+    // Set original IKU data for filtering
+    setOriginalData(<?= json_encode($iku_data ?? []) ?>);
   </script>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>

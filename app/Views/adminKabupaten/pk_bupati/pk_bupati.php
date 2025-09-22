@@ -169,21 +169,24 @@
                             <?php if ($totalProgram > 0): ?>
                                 <?php
                                 // Hitung rowspan untuk setiap program
-                                $programRowspan = floor($totalIndikator / $totalProgram);
-                                $extraRows = $totalIndikator % $totalProgram;
+                                $programRowspan = $totalIndikator > 0 ? max(1, floor($totalIndikator / $totalProgram)) : 1;
+                                $extraRows = $totalProgram > 0 ? $totalIndikator % $totalProgram : 0;
                                 
                                 // Tentukan program mana yang ditampilkan pada baris ini
-                                $currentProgramIndex = floor($i / $programRowspan);
+                                $currentProgramIndex = $programRowspan > 0 ? floor($i / $programRowspan) : 0;
                                 
                                 // Jika ada sisa baris, program terakhir mendapat tambahan
                                 if ($extraRows > 0 && $currentProgramIndex >= $totalProgram - $extraRows) {
                                     $adjustedRowspan = $programRowspan + 1;
-                                    $currentProgramIndex = $totalProgram - 1 - floor(($totalIndikator - 1 - $i) / $adjustedRowspan);
+                                    $currentProgramIndex = $totalProgram - 1 - ($adjustedRowspan > 0 ? floor(($totalIndikator - 1 - $i) / $adjustedRowspan) : 0);
                                 }
+                                
+                                // Pastikan currentProgramIndex tidak melebihi batas array
+                                $currentProgramIndex = min($currentProgramIndex, $totalProgram - 1);
                                 
                                 // Cek apakah ini baris pertama untuk program ini
                                 $isFirstRowOfProgram = false;
-                                if ($currentProgramIndex < $totalProgram) {
+                                if ($currentProgramIndex < $totalProgram && $currentProgramIndex >= 0) {
                                     if ($extraRows > 0 && $currentProgramIndex >= $totalProgram - $extraRows) {
                                         // Program yang mendapat tambahan baris
                                         $startRow = ($totalProgram - $extraRows) * $programRowspan + ($currentProgramIndex - ($totalProgram - $extraRows)) * ($programRowspan + 1);

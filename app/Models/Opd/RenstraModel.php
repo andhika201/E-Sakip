@@ -54,6 +54,20 @@ class RenstraModel extends Model
     }
 
     /**
+     * Get Renstra Sasaran by OPD ID for dropdown
+     */
+    public function getRenstraSasaranByOpd($opdId)
+    {
+        return $this->db->table('renstra_sasaran')
+            ->select('id, sasaran as sasaran_renstra')
+            ->where('opd_id', $opdId)
+            ->where('status', 'selesai') // Only show completed renstra
+            ->orderBy('tahun_mulai', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
      * Get Renstra Sasaran by OPD ID
      */
     public function getSasaranByOpdId($opdId)

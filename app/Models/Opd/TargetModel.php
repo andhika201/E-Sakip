@@ -96,4 +96,62 @@ class TargetModel extends Model
     {
         return $this->select('tahun')->distinct()->orderBy('tahun', 'ASC')->findAll();
     }
+
+    public function getFullTargetData($tahun = null)
+    {
+        $builder = $this->db->table('target_rencana')
+            ->select('
+            target_rencana.*,
+            renja_sasaran.sasaran_renja,
+            renstra_sasaran.sasaran as sasaran_renstra,
+            renstra_tujuan.tujuan as tujuan_renstra,
+            renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.tahun as indikator_tahun,
+            renja_indikator_sasaran.target as indikator_target
+        ')
+            ->join('renja_sasaran', 'renja_sasaran.id = target_rencana.renja_sasaran_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
+            ->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
+
+        if ($tahun) {
+            $builder->where('target_rencana.tahun', $tahun);
+        }
+
+        return $builder->orderBy('target_rencana.tahun', 'ASC')->get()->getResultArray();
+    }
+
+    public function getTargetListByRenja($tahun = null)
+    {
+        $builder = $this->db->table('renja_sasaran')
+            ->select('
+            renja_sasaran.id as renja_sasaran_id,
+            renja_sasaran.sasaran_renja,
+            renstra_sasaran.sasaran as sasaran_renstra,
+            renstra_tujuan.tujuan as tujuan_renstra,
+            renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.tahun as indikator_tahun, 
+            target_rencana.id as target_id,
+            target_rencana.rencana_aksi,
+            target_rencana.satuan,
+            target_rencana.capaian,
+            target_rencana.target,
+            target_rencana.tahun,
+            target_rencana.target_triwulan_1,
+            target_rencana.target_triwulan_2,
+            target_rencana.target_triwulan_3,
+            target_rencana.target_triwulan_4,
+            target_rencana.penanggung_jawab
+        ')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
+            ->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left')
+            ->join('target_rencana', 'target_rencana.renja_sasaran_id = renja_sasaran.id', 'left');
+
+        if ($tahun) {
+            $builder->where('target_rencana.tahun', $tahun);
+        }
+
+        return $builder->orderBy('renja_sasaran.id', 'ASC')->get()->getResultArray();
+    }
 }

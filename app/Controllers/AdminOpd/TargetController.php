@@ -17,27 +17,44 @@ class TargetController extends BaseController
     public function index()
     {
         $tahun = $this->request->getGet('tahun');
-        if ($tahun) {
-            $targets = $this->TargetModel->getByTahun($tahun);
-        } else {
-            $targets = $this->TargetModel->getAllTargetWithRelasi();
+        $raw = $this->TargetModel->getTargetListByRenja($tahun);
+
+        // Grouping: Tujuan > Sasaran > Indikator
+        $grouped = [];
+        foreach ($raw as $row) {
+            $tujuan = $row['tujuan_renstra'];
+            $sasaran = $row['sasaran_renstra'];
+            $indikator = $row['indikator_sasaran'];
+
+            if (!isset($grouped[$tujuan])) $grouped[$tujuan] = [];
+            if (!isset($grouped[$tujuan][$sasaran])) $grouped[$tujuan][$sasaran] = [];
+            $grouped[$tujuan][$sasaran][] = $row;
         }
-        // $tahunList = $this->TargetModel->getAvailableYears(); // pastikan method ini ada di TargetModel
+
+        $tahunList = $this->TargetModel->getAvailableYears();
 
         return view('adminOpd/target/target', [
-            'targets' => $targets,
+            'grouped' => $grouped,
             'tahun' => $tahun,
-            // 'tahunList' => $tahunList // aktifkan jika method tersedia
+            'tahunList' => $tahunList
         ]);
     }
 
-    public function create()
+    public function tambah()
     {
-        // Ambil data relasi jika perlu untuk dropdown
-        return view('adminOpd/target/tambah_target');
+        // Ambil data renja_sasaran untuk dropdown
+        $db = \Config\Database::connect();
+        $renjaSasaran = $db->table('renja_sasaran')
+            ->select('id, sasaran_renja')
+            ->orderBy('sasaran_renja', 'ASC')
+            ->get()->getResultArray();
+
+        return view('adminOpd/target/tambah_target', [
+            'renjaSasaran' => $renjaSasaran
+        ]);
     }
 
-    public function store()
+    public function save()
     {
         $data = $this->request->getPost();
         $this->TargetModel->insert($data);

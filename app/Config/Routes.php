@@ -139,6 +139,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');
     $routes->post('target/save', 'AdminOpd\TargetController::save');
     $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
+    $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
 
     //MONEV
     $routes->get('monev', 'MonevController::index');

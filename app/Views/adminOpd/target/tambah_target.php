@@ -6,13 +6,8 @@
     <title>Tambah Target Rencana</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
     <style>
-        .alert {
-            transition: all 0.3s ease;
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .alert { transition: all 0.3s ease; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -38,6 +33,19 @@
             <?php
                 $selectedRenjaSasaran = isset($_GET['r']) ? $_GET['r'] : '';
                 $selectedRenjaSasaranNama = '';
+                $selectedSatuan = '';
+                $selectedTarget = '';
+                $selectedTahun = '';
+                $db = \Config\Database::connect();
+                $indikator = $db->table('renja_indikator_sasaran')
+                    ->select('satuan, target, tahun')
+                    ->where('renja_sasaran_id', $selectedRenjaSasaran)
+                    ->get()->getRowArray();
+                if ($indikator) {
+                    $selectedSatuan = $indikator['satuan'];
+                    $selectedTarget = $indikator['target'];
+                    $selectedTahun = $indikator['tahun'];
+                }
                 foreach ($renjaSasaran as $s) {
                     if ($selectedRenjaSasaran == $s['id']) {
                         $selectedRenjaSasaranNama = $s['sasaran_renja'];
@@ -48,7 +56,7 @@
             <form action="<?= base_url('adminopd/target/save') ?>" method="post">
                 <?= csrf_field() ?>
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3 mb-md-0">
                         <label class="form-label">Sasaran Renja</label>
                         <input type="hidden" name="renja_sasaran_id" value="<?= esc($selectedRenjaSasaran) ?>">
                         <input type="text" class="form-control" value="<?= esc($selectedRenjaSasaranNama) ?>" readonly>
@@ -59,21 +67,21 @@
                     </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-md-3">
-                        <label for="tahun" class="form-label">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="form-control" required>
-                    </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3 mb-md-0">
                         <label for="satuan" class="form-label">Satuan</label>
-                        <input type="text" name="satuan" id="satuan" class="form-control">
+                        <input type="text" name="satuan" id="satuan" class="form-control" value="<?= esc($selectedSatuan) ?>" readonly>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3 mb-md-0">
                         <label for="capaian" class="form-label">Baseline (Capaian)</label>
                         <input type="text" name="capaian" id="capaian" class="form-control">
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-3 mb-3 mb-md-0">
                         <label for="target" class="form-label">Target</label>
-                        <input type="text" name="target" id="target" class="form-control">
+                        <input type="text" name="target" id="target" class="form-control" value="<?= esc($selectedTarget) ?>" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="tahun" class="form-label">Tahun</label>
+                        <input type="number" name="tahun" id="tahun" class="form-control" value="<?= esc($selectedTahun) ?>" readonly>
                     </div>
                 </div>
                 <div class="mb-3">

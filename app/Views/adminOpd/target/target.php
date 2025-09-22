@@ -34,16 +34,16 @@
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <a href="" class="btn btn-success d-flex align-items-center">
+                        <!-- <a href="" class="btn btn-success d-flex align-items-center">
                             <i class="fas fa-filter me-2"></i> FILTER
-                        </a>
+                        </a> -->
                     </div>
-                    <div>
+                    <!-- <div>
                         <a href="<?= base_url('adminopd/target/tambah') ?>"
                             class="btn btn-success d-flex align-items-center">
                             <i class="fas fa-plus me-1"></i> TAMBAH
                         </a>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Tabel -->
@@ -55,11 +55,10 @@
                                 <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
                                 <th rowspan="2" class="border p-2 align-middle">Indikator</th>
                                 <th rowspan="2" class="border p-2 align-middle">Tahun Renja</th>
-                                <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
                                 <th rowspan="2" class="border p-2 align-middle">Satuan</th>
-                                <th rowspan="2" class="border p-2 align-middle">Baseline (Capaian)</th>
-                                <th rowspan="2" class="border p-2 align-middle">Tahun Target</th>
                                 <th rowspan="2" class="border p-2 align-middle">Target</th>
+                                <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
+                                <th rowspan="2" class="border p-2 align-middle">Baseline (Capaian)</th>
                                 <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
                                 <th rowspan="2" class="border p-2 align-middle">Aksi</th>
@@ -91,22 +90,19 @@
                                                     <td rowspan="<?= $sasaranRowspan ?>"><?= esc($sasaran) ?></td>
                                                     <?php $sasaranPrinted = true; ?>
                                                 <?php endif; ?>
-                                                <td><?= esc($row['indikator_sasaran']) ?></td>
-                                                <td><?= esc($row['indikator_tahun']) ?></td>
-                                                <!-- Tahun Renja dari renja_indikator_sasaran -->
-                                                <!-- Tahun Target dari target_rencana -->
-                                                <td><?= esc($row['rencana_aksi']) ?></td>
-                                                <td><?= esc($row['satuan']) ?></td>
-                                                <td><?= esc($row['capaian']) ?></td>
-                                                <td><?= esc($row['tahun']) ?></td>
-                                                <td><?= esc($row['target']) ?></td>
-                                                <td><?= esc($row['target_triwulan_1']) ?></td>
-                                                <td><?= esc($row['target_triwulan_2']) ?></td>
-                                                <td><?= esc($row['target_triwulan_3']) ?></td>
-                                                <td><?= esc($row['target_triwulan_4']) ?></td>
-                                                <td><?= esc($row['penanggung_jawab']) ?></td>
+                                                <td><?= esc($row['indikator_sasaran']) ?: '-'?></td>
+                                                <td><?= esc($row['indikator_tahun']) ?: '-' ?></td>
+                                                <td><?= esc($row['satuan']) ?: '-' ?></td>
+                                                <td><?= esc($row['indikator_target']) ?: '-' ?></td>
+                                                <td><?= esc($row['rencana_aksi']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_1']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_2']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_3']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_4']) ?: '-' ?></td>
+                                                <td><?= esc($row['penanggung_jawab']) ?: '-' ?></td>
                                                 <td>
-                                                    <?php if (empty($row['rencana_aksi']) && empty($row['satuan']) && empty($row['capaian']) && empty($row['target']) && empty($row['target_triwulan_1']) && empty($row['target_triwulan_2']) && empty($row['target_triwulan_3']) && empty($row['target_triwulan_4']) && empty($row['penanggung_jawab'])): ?>
+                                                    <?php if (empty($row['rencana_aksi']) && empty($row['capaian']) && empty($row['target_triwulan_1']) && empty($row['target_triwulan_2']) && empty($row['target_triwulan_3']) && empty($row['target_triwulan_4']) && empty($row['penanggung_jawab'])): ?>
                                                         <a href="<?= base_url('adminopd/target/tambah?r=' . $row['renja_sasaran_id']) ?>"
                                                             class="btn btn-sm btn-success">Tambah</a>
                                                     <?php else: ?>
@@ -120,7 +116,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="16">Data tidak ditemukan.</td>
+                                    <td colspan="15">Data tidak ditemukan.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

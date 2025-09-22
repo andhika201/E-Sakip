@@ -6,29 +6,26 @@ use CodeIgniter\Model;
 
 class TargetModel extends Model
 {
-    protected $table            = 'target_rencana';
-    protected $primaryKey       = 'id';
+    protected $table = 'target_rencana';
+    protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
+    protected $returnType = 'array';
+    protected $useSoftDeletes = false;
 
-    protected $allowedFields    = [
+    protected $allowedFields = [
         'renja_sasaran_id',
         'rencana_aksi',
-        'tahun',
-        'satuan',
         'capaian',
         'target_triwulan_1',
         'target_triwulan_2',
         'target_triwulan_3',
         'target_triwulan_4',
-        'target',
         'penanggung_jawab'
     ];
 
     protected $useTimestamps = true;
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
 
     /**
      * Ambil semua target_rencana dengan join ke renja_sasaran dan renstra_sasaran
@@ -75,8 +72,8 @@ class TargetModel extends Model
     public function getByRenjaSasaran($renjaSasaranId)
     {
         return $this->where('renja_sasaran_id', $renjaSasaranId)
-                    ->orderBy('tahun', 'ASC')
-                    ->findAll();
+            ->orderBy('tahun', 'ASC')
+            ->findAll();
     }
 
     /**
@@ -85,8 +82,8 @@ class TargetModel extends Model
     public function getByTahun($tahun)
     {
         return $this->where('tahun', $tahun)
-                    ->orderBy('renja_sasaran_id', 'ASC')
-                    ->findAll();
+            ->orderBy('renja_sasaran_id', 'ASC')
+            ->findAll();
     }
 
     /**
@@ -94,7 +91,13 @@ class TargetModel extends Model
      */
     public function getAvailableYears()
     {
-        return $this->select('tahun')->distinct()->orderBy('tahun', 'ASC')->findAll();
+        $db = \Config\Database::connect();
+        return $db->table('renja_indikator_sasaran')
+            ->select('tahun')
+            ->distinct()
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
     public function getFullTargetData($tahun = null)
@@ -130,13 +133,12 @@ class TargetModel extends Model
             renstra_sasaran.sasaran as sasaran_renstra,
             renstra_tujuan.tujuan as tujuan_renstra,
             renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.satuan as satuan, 
+            renja_indikator_sasaran.target as indikator_target, 
             renja_indikator_sasaran.tahun as indikator_tahun, 
             target_rencana.id as target_id,
             target_rencana.rencana_aksi,
-            target_rencana.satuan,
             target_rencana.capaian,
-            target_rencana.target,
-            target_rencana.tahun,
             target_rencana.target_triwulan_1,
             target_rencana.target_triwulan_2,
             target_rencana.target_triwulan_3,
@@ -148,10 +150,17 @@ class TargetModel extends Model
             ->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left')
             ->join('target_rencana', 'target_rencana.renja_sasaran_id = renja_sasaran.id', 'left');
 
+        // Filter tahun dari renja_indikator_sasaran
         if ($tahun) {
-            $builder->where('target_rencana.tahun', $tahun);
+            $builder->where('renja_indikator_sasaran.tahun', $tahun);
         }
 
         return $builder->orderBy('renja_sasaran.id', 'ASC')->get()->getResultArray();
+    }
+
+    // Untuk update:
+    public function updateTarget($id, $data)
+    {
+        $this->update($id, $data);
     }
 }

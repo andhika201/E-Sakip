@@ -31,6 +31,7 @@ class TargetController extends BaseController
             $grouped[$tujuan][$sasaran][] = $row;
         }
 
+        // Ambil tahun dari renja_indikator_sasaran
         $tahunList = $this->TargetModel->getAvailableYears();
 
         return view('adminOpd/target/target', [
@@ -65,6 +66,9 @@ class TargetController extends BaseController
     public function edit($id)
     {
         $target = $this->TargetModel->find($id);
+        if (!$target) {
+            return redirect()->to(base_url('/adminopd/target'))->with('error', 'Data tidak ditemukan');
+        }
         return view('adminOpd/target/edit_target', ['target' => $target]);
     }
 

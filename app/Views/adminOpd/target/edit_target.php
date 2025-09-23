@@ -31,11 +31,11 @@
             ?>
             <form action="<?= base_url('adminopd/target/update/' . $target['id']) ?>" method="post">
                 <?= csrf_field() ?>
+                <input type="hidden" name="renja_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
                 <div class="row mb-3">
                     <div class="col-md-6 mb-3 mb-md-0">
-                        <label class="form-label">Sasaran Renja</label>
-                        <input type="hidden" name="renja_sasaran_id" value="<?= esc($target['renja_sasaran_id']) ?>">
-                        <input type="text" class="form-control" value="<?= esc($sasaranRenja) ?>" readonly>
+                        <label class="form-label">Indikator</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
                     </div>
                     <div class="col-md-6">
                         <label for="rencana_aksi" class="form-label">Rencana Aksi</label>
@@ -44,20 +44,20 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="satuan" class="form-label">Satuan</label>
-                        <input type="text" name="satuan" id="satuan" class="form-control" value="<?= esc($selectedSatuan) ?>" readonly>
+                        <label class="form-label">Satuan</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['satuan']) ?>" readonly>
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="capaian" class="form-label">Baseline (Capaian)</label>
-                        <input type="text" name="capaian" id="capaian" class="form-control" value="<?= esc($target['capaian']) ?>">
+                        <label class="form-label">Target</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['target']) ?>" readonly>
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="target" class="form-label">Target</label>
-                        <input type="text" name="target" id="target" class="form-control" value="<?= esc($selectedTarget) ?>" readonly>
+                        <label class="form-label">Tahun</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['tahun']) ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label for="tahun" class="form-label">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="form-control" value="<?= esc($selectedTahun) ?>" readonly>
+                        <label for="capaian" class="form-label">Baseline (Capaian)</label>
+                        <input type="text" name="capaian" id="capaian" class="form-control" value="<?= esc($target['capaian']) ?>">
                     </div>
                 </div>
                 <div class="mb-3">

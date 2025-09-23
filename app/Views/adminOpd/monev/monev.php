@@ -26,14 +26,13 @@
                 <!-- Filter -->
                 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                     <div class="d-flex gap-2 flex-fill">
-                        <select class="form-select">
+                        <select class="form-select" onchange="window.location.href='?tahun='+this.value">
                             <option value="">TAHUN</option>
-                            <option>2019</option>
-                            <option>2020</option>
-                            <option>2021</option>
-                            <option>2022</option>
-                            <option>2023</option>
-                            <option>2024</option>
+                            <?php foreach ($tahunList as $t): ?>
+                                <option value="<?= esc($t['tahun']) ?>" <?= ($tahun == $t['tahun']) ? 'selected' : '' ?>>
+                                    <?= esc($t['tahun']) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                         <a href="" class="btn btn-success d-flex align-items-center">
                             <i class="fas fa-filter me-2"></i> FILTER
@@ -52,18 +51,19 @@
                     <table class="table table-bordered text-center align-middle small">
                         <thead class="table-success fw-bold text-dark">
                             <tr>
-                                <th rowspan="2" class="border p-2 align-middle">No</th>
                                 <th rowspan="2" class="border p-2 align-middle">Tujuan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
                                 <th rowspan="2" class="border p-2 align-middle">Indikator</th>
                                 <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
                                 <th rowspan="2" class="border p-2 align-middle">Satuan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Baseline (Capaian)</th>
+                                <th rowspan="2" class="border p-2 align-middle">Tahun</th>
                                 <th rowspan="2" class="border p-2 align-middle">Target 2025</th>
                                 <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
                                 <th colspan="4" class="border p-2 align-middle">Capaian 2025</th>
                                 <th rowspan="2" class="border p-2 align-middle">Capaian Total</th>
                                 <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
+                                <th rowspan="2" class="border p-2 align-middle">Aksi</th>
                             </tr>
                             <tr>
                                 <th>I</th>
@@ -77,42 +77,87 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Contoh satu indikator punya 2 rencana aksi -->
-                            <tr>
-                                <td rowspan="2">1</td>
-                                <td rowspan="2">Meningkatkan tata kelola pemerintahan yang baik</td>
-                                <td rowspan="2">Meningkatnya kualitas penyelenggaraan pemerintahan</td>
-                                <td rowspan="2">Indeks Reformasi Birokrasi</td>
-                                <td>Penyusunan Rencana Aksi RB general dan Tematik</td>
-                                <td>Indeks</td>
-                                <td>63.33</td>
-                                <td>57.01</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td rowspan="2">Inspektorat <br> Bagian Organisasi</td>
-                            </tr>
-                            <tr>
-                                <td>Penyusunan Dokumen Laporan Akuntabilitas Instansi Pemerintah</td>
-                                <td>Indeks</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                                <td>-</td>
-                            </tr>
+                            <?php if (!empty($monevList)): ?>
+                                <?php
+                                // Grouping: Tujuan > Sasaran > Indikator
+                                $grouped = [];
+                                foreach ($monevList as $row) {
+                                    $tujuan = $row['tujuan_renstra'];
+                                    $sasaran = $row['sasaran_renstra'];
+                                    $indikator = $row['indikator_sasaran'];
+                                    if (!isset($grouped[$tujuan]))
+                                        $grouped[$tujuan] = [];
+                                    if (!isset($grouped[$tujuan][$sasaran]))
+                                        $grouped[$tujuan][$sasaran] = [];
+                                    $grouped[$tujuan][$sasaran][] = $row;
+                                }
+                                foreach ($grouped as $tujuan => $sasaranArr):
+                                    $tujuanRowspan = 0;
+                                    foreach ($sasaranArr as $indikatorArr)
+                                        $tujuanRowspan += count($indikatorArr);
+                                    $tujuanPrinted = false;
+                                    foreach ($sasaranArr as $sasaran => $indikatorArr):
+                                        $sasaranRowspan = count($indikatorArr);
+                                        $sasaranPrinted = false;
+                                        foreach ($indikatorArr as $row):
+                                            ?>
+                                            <tr>
+                                                <?php if (!$tujuanPrinted): ?>
+                                                    <td rowspan="<?= $tujuanRowspan ?>"><?= esc($tujuan) ?></td>
+                                                    <?php $tujuanPrinted = true; ?>
+                                                <?php endif; ?>
+                                                <?php if (!$sasaranPrinted): ?>
+                                                    <td rowspan="<?= $sasaranRowspan ?>"><?= esc($sasaran) ?></td>
+                                                    <?php $sasaranPrinted = true; ?>
+                                                <?php endif; ?>
+                                                <td><?= esc($row['indikator_sasaran']) ?></td>
+                                                <td><?= esc($row['rencana_aksi']) ?: '-' ?></td>
+                                                <td><?= esc($row['satuan']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian']) ?: '-' ?></td>
+                                                <td><?= esc($row['indikator_tahun']) ?: '-' ?></td>
+                                                <td><?= esc($row['indikator_target']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_1']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_2']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_3']) ?: '-' ?></td>
+                                                <td><?= esc($row['target_triwulan_4']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian_triwulan_1']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian_triwulan_2']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian_triwulan_3']) ?: '-' ?></td>
+                                                <td><?= esc($row['capaian_triwulan_4']) ?: '-' ?></td>
+                                                <td>
+                                                    <?php
+                                                    // Hitung total capaian triwulan
+                                                    $total = 0;
+                                                    $count = 0;
+                                                    foreach (['capaian_triwulan_1', 'capaian_triwulan_2', 'capaian_triwulan_3', 'capaian_triwulan_4'] as $ct) {
+                                                        if (is_numeric($row[$ct])) {
+                                                            $total += floatval($row[$ct]);
+                                                            $count++;
+                                                        }
+                                                    }
+                                                    echo $count ? number_format($total, 2) : '-';
+                                                    ?>
+                                                </td>
+                                                <td><?= esc($row['penanggung_jawab']) ?: '-' ?></td>
+                                                <td>
+                                                    <?php
+                                                    $isCapaianKosong = empty($row['capaian_triwulan_1']) && empty($row['capaian_triwulan_2']) && empty($row['capaian_triwulan_3']) && empty($row['capaian_triwulan_4']);
+                                                    if ($isCapaianKosong):
+                                                    ?>
+                                                        <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . $row['target_rencana_id']) ?>"
+                                                            class="btn btn-sm btn-success">Tambah</a>
+                                                    <?php else: ?>
+                                                        <a href="<?= base_url('adminopd/monev/edit/' . $row['monev_id']) ?>"
+                                                            class="btn btn-sm btn-warning">Edit</a>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; endforeach; endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="19">Data tidak ditemukan.</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

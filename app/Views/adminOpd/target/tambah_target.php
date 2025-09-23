@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tambah Target Rencana</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
     <style>
-        .alert { transition: all 0.3s ease; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .alert {
+            transition: all 0.3s ease;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
+
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
     <!-- Navbar/Header -->
@@ -31,35 +39,27 @@
             </div>
 
             <?php
-                $selectedRenjaSasaran = isset($_GET['r']) ? $_GET['r'] : '';
-                $selectedRenjaSasaranNama = '';
-                $selectedSatuan = '';
-                $selectedTarget = '';
-                $selectedTahun = '';
-                $db = \Config\Database::connect();
+            $db = \Config\Database::connect();
+            $indikatorId = isset($_GET['indikator']) ? $_GET['indikator'] : null;
+            $indikator = null;
+            if ($indikatorId) {
                 $indikator = $db->table('renja_indikator_sasaran')
-                    ->select('satuan, target, tahun')
-                    ->where('renja_sasaran_id', $selectedRenjaSasaran)
+                    ->where('id', $indikatorId)
                     ->get()->getRowArray();
-                if ($indikator) {
-                    $selectedSatuan = $indikator['satuan'];
-                    $selectedTarget = $indikator['target'];
-                    $selectedTahun = $indikator['tahun'];
-                }
-                foreach ($renjaSasaran as $s) {
-                    if ($selectedRenjaSasaran == $s['id']) {
-                        $selectedRenjaSasaranNama = $s['sasaran_renja'];
-                        break;
-                    }
-                }
+            }
+            if (!$indikator) {
+                echo '<div class="alert alert-danger">Indikator tidak ditemukan. Silakan pilih indikator dari tabel.</div>';
+                return;
+            }
             ?>
             <form action="<?= base_url('adminopd/target/save') ?>" method="post">
                 <?= csrf_field() ?>
+                <input type="hidden" name="renja_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
                 <div class="row mb-3">
                     <div class="col-md-6 mb-3 mb-md-0">
-                        <label class="form-label">Sasaran Renja</label>
-                        <input type="hidden" name="renja_sasaran_id" value="<?= esc($selectedRenjaSasaran) ?>">
-                        <input type="text" class="form-control" value="<?= esc($selectedRenjaSasaranNama) ?>" readonly>
+                        <label class="form-label">Indikator</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran']) ?>"
+                            readonly>
                     </div>
                     <div class="col-md-6">
                         <label for="rencana_aksi" class="form-label">Rencana Aksi</label>
@@ -68,29 +68,33 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="satuan" class="form-label">Satuan</label>
-                        <input type="text" name="satuan" id="satuan" class="form-control" value="<?= esc($selectedSatuan) ?>" readonly>
+                        <label class="form-label">Satuan</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['satuan']) ?>" readonly>
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="capaian" class="form-label">Baseline (Capaian)</label>
-                        <input type="text" name="capaian" id="capaian" class="form-control">
+                        <label class="form-label">Target</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['target']) ?>" readonly>
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
-                        <label for="target" class="form-label">Target</label>
-                        <input type="text" name="target" id="target" class="form-control" value="<?= esc($selectedTarget) ?>" readonly>
+                        <label class="form-label">Tahun</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['tahun']) ?>" readonly>
                     </div>
                     <div class="col-md-3">
-                        <label for="tahun" class="form-label">Tahun</label>
-                        <input type="number" name="tahun" id="tahun" class="form-control" value="<?= esc($selectedTahun) ?>" readonly>
+                        <label for="capaian" class="form-label">Baseline (Capaian)</label>
+                        <input type="text" name="capaian" id="capaian" class="form-control">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Target Triwulan</label>
                     <div class="row">
-                        <div class="col"><input type="text" name="target_triwulan_1" class="form-control" placeholder="Triwulan I"></div>
-                        <div class="col"><input type="text" name="target_triwulan_2" class="form-control" placeholder="Triwulan II"></div>
-                        <div class="col"><input type="text" name="target_triwulan_3" class="form-control" placeholder="Triwulan III"></div>
-                        <div class="col"><input type="text" name="target_triwulan_4" class="form-control" placeholder="Triwulan IV"></div>
+                        <div class="col"><input type="text" name="target_triwulan_1" class="form-control"
+                                placeholder="Triwulan I"></div>
+                        <div class="col"><input type="text" name="target_triwulan_2" class="form-control"
+                                placeholder="Triwulan II"></div>
+                        <div class="col"><input type="text" name="target_triwulan_3" class="form-control"
+                                placeholder="Triwulan III"></div>
+                        <div class="col"><input type="text" name="target_triwulan_4" class="form-control"
+                                placeholder="Triwulan IV"></div>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -111,4 +115,5 @@
 
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 </body>
+
 </html>

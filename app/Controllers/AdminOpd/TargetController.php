@@ -24,14 +24,11 @@ class TargetController extends BaseController
         foreach ($raw as $row) {
             $tujuan = $row['tujuan_renstra'];
             $sasaran = $row['sasaran_renstra'];
-            $indikator = $row['indikator_sasaran'];
-
             if (!isset($grouped[$tujuan])) $grouped[$tujuan] = [];
             if (!isset($grouped[$tujuan][$sasaran])) $grouped[$tujuan][$sasaran] = [];
             $grouped[$tujuan][$sasaran][] = $row;
         }
 
-        // Ambil tahun dari renja_indikator_sasaran
         $tahunList = $this->TargetModel->getAvailableYears();
 
         return view('adminOpd/target/target', [
@@ -43,21 +40,34 @@ class TargetController extends BaseController
 
     public function tambah()
     {
-        // Ambil data renja_sasaran untuk dropdown
+        $indikatorId = $this->request->getGet('indikator');
         $db = \Config\Database::connect();
-        $renjaSasaran = $db->table('renja_sasaran')
-            ->select('id, sasaran_renja')
-            ->orderBy('sasaran_renja', 'ASC')
-            ->get()->getResultArray();
+
+        $indikator = $db->table('renja_indikator_sasaran')
+            ->where('id', $indikatorId)
+            ->get()->getRowArray();
+
+        if (!$indikator) {
+            return redirect()->to(base_url('/adminopd/target'))->with('error', 'Indikator tidak ditemukan');
+        }
 
         return view('adminOpd/target/tambah_target', [
-            'renjaSasaran' => $renjaSasaran
+            'indikator' => $indikator
         ]);
     }
 
     public function save()
     {
-        $data = $this->request->getPost();
+        $data = [
+            'renja_indikator_sasaran_id' => $this->request->getPost('renja_indikator_sasaran_id'),
+            'rencana_aksi' => $this->request->getPost('rencana_aksi'),
+            'capaian' => $this->request->getPost('capaian'),
+            'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
+            'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
+            'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
+            'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
+            'penanggung_jawab' => $this->request->getPost('penanggung_jawab')
+        ];
         $this->TargetModel->insert($data);
 
         return redirect()->to(base_url('/adminopd/target'))->with('success', 'Data berhasil ditambahkan');
@@ -65,25 +75,36 @@ class TargetController extends BaseController
 
     public function edit($id)
     {
+        $db = \Config\Database::connect();
         $target = $this->TargetModel->find($id);
+
         if (!$target) {
             return redirect()->to(base_url('/adminopd/target'))->with('error', 'Data tidak ditemukan');
         }
-        return view('adminOpd/target/edit_target', ['target' => $target]);
+
+        $indikator = $db->table('renja_indikator_sasaran')
+            ->where('id', $target['renja_indikator_sasaran_id'])
+            ->get()->getRowArray();
+
+        return view('adminOpd/target/edit_target', [
+            'target' => $target,
+            'indikator' => $indikator
+        ]);
     }
 
     public function update($id)
     {
-        $data = $this->request->getPost();
+        $data = [
+            'rencana_aksi' => $this->request->getPost('rencana_aksi'),
+            'capaian' => $this->request->getPost('capaian'),
+            'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
+            'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
+            'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
+            'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
+            'penanggung_jawab' => $this->request->getPost('penanggung_jawab')
+        ];
         $this->TargetModel->update($id, $data);
 
         return redirect()->to(base_url('/adminopd/target'))->with('success', 'Data berhasil diperbarui');
-    }
-
-    public function delete($id)
-    {
-        $this->TargetModel->delete($id);
-
-        return redirect()->to(base_url('/adminopd/target'))->with('success', 'Data berhasil dihapus');
     }
 }

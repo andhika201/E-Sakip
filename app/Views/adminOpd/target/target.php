@@ -103,7 +103,7 @@
                                                 <td><?= esc($row['penanggung_jawab']) ?: '-' ?></td>
                                                 <td>
                                                     <?php if (empty($row['rencana_aksi']) && empty($row['capaian']) && empty($row['target_triwulan_1']) && empty($row['target_triwulan_2']) && empty($row['target_triwulan_3']) && empty($row['target_triwulan_4']) && empty($row['penanggung_jawab'])): ?>
-                                                        <a href="<?= base_url('adminopd/target/tambah?r=' . $row['renja_sasaran_id']) ?>"
+                                                        <a href="<?= base_url('adminopd/target/tambah?indikator=' . $row['indikator_id']) ?>"
                                                             class="btn btn-sm btn-success">Tambah</a>
                                                     <?php else: ?>
                                                         <a href="<?= base_url('adminopd/target/edit/' . $row['target_id']) ?>"

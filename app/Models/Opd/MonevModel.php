@@ -15,7 +15,8 @@ class MonevModel extends Model
         'capaian_triwulan_1',
         'capaian_triwulan_2',
         'capaian_triwulan_3',
-        'capaian_triwulan_4'
+        'capaian_triwulan_4',
+        'total'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
@@ -47,12 +48,13 @@ class MonevModel extends Model
                 monev.capaian_triwulan_1,
                 monev.capaian_triwulan_2,
                 monev.capaian_triwulan_3,
-                monev.capaian_triwulan_4
+                monev.capaian_triwulan_4,
+                monev.total
             ')
             ->join('renja_sasaran', 'renja_sasaran.id = renja_indikator_sasaran.renja_sasaran_id', 'left')
             ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
             ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
-            ->join('target_rencana', 'target_rencana.renja_sasaran_id = renja_sasaran.id', 'left')
+            ->join('target_rencana', 'target_rencana.renja_indikator_sasaran_id = renja_indikator_sasaran.id', 'left')
             ->join('monev', 'monev.target_rencana_id = target_rencana.id', 'left');
 
         // Filter tahun dari renja_indikator_sasaran

@@ -34,16 +34,16 @@
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <a href="" class="btn btn-success d-flex align-items-center">
+                        <!-- <a href="" class="btn btn-success d-flex align-items-center">
                             <i class="fas fa-filter me-2"></i> FILTER
-                        </a>
+                        </a> -->
                     </div>
-                    <div>
+                    <!-- <div>
                         <a href="<?= base_url('adminopd/iku/tambah') ?>"
                             class="btn btn-success d-flex align-items-center">
                             <i class="fas fa-plus me-1"></i> TAMBAH
                         </a>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Tabel -->
@@ -126,29 +126,26 @@
                                                 <td><?= esc($row['capaian_triwulan_4']) ?: '-' ?></td>
                                                 <td>
                                                     <?php
-                                                    // Hitung total capaian triwulan
-                                                    $total = 0;
-                                                    $count = 0;
-                                                    foreach (['capaian_triwulan_1', 'capaian_triwulan_2', 'capaian_triwulan_3', 'capaian_triwulan_4'] as $ct) {
-                                                        if (is_numeric($row[$ct])) {
-                                                            $total += floatval($row[$ct]);
-                                                            $count++;
-                                                        }
-                                                    }
-                                                    echo $count ? number_format($total, 2) : '-';
+                                                    // Tampilkan total capaian hanya dari field total di tabel monev
+                                                    echo (isset($row['total']) && is_numeric($row['total'])) ? number_format($row['total'], 2) : '-';
                                                     ?>
                                                 </td>
                                                 <td><?= esc($row['penanggung_jawab']) ?: '-' ?></td>
                                                 <td>
                                                     <?php
+                                                    // Sesuaikan aksi berdasarkan relasi target_rencana dan monev
                                                     $isCapaianKosong = empty($row['capaian_triwulan_1']) && empty($row['capaian_triwulan_2']) && empty($row['capaian_triwulan_3']) && empty($row['capaian_triwulan_4']);
-                                                    if ($isCapaianKosong):
+                                                    // Gunakan id target_rencana dari field 'target_id' sesuai rancangan relasi
+                                                    $targetRencanaId = isset($row['target_id']) ? $row['target_id'] : (isset($row['target_rencana_id']) ? $row['target_rencana_id'] : null);
+                                                    if ($isCapaianKosong && $targetRencanaId):
                                                     ?>
-                                                        <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . $row['target_rencana_id']) ?>"
+                                                        <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . $targetRencanaId) ?>"
                                                             class="btn btn-sm btn-success">Tambah</a>
-                                                    <?php else: ?>
+                                                    <?php elseif (isset($row['monev_id'])): ?>
                                                         <a href="<?= base_url('adminopd/monev/edit/' . $row['monev_id']) ?>"
                                                             class="btn btn-sm btn-warning">Edit</a>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">-</span>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>

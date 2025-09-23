@@ -1,29 +1,97 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Edit Renstra e-SAKIP</title>
+  <!-- Style -->
   <?= $this->include('adminOpd/templates/style.php'); ?>
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
-    .alert { transition: all 0.3s ease; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .target-years-container .col-md-2 { margin-bottom: 10px; }
+    .is-invalid {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .alert {
+      transition: all 0.3s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .target-years-container .col-md-2 {
+      margin-bottom: 10px;
+    }
+
+    /* Custom Select2 styles */
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      line-height: 36px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      padding-left: 12px;
+      padding-right: 20px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 36px;
+    }
+
+    .select2-dropdown {
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+    }
+
+    .select2-search--dropdown .select2-search__field {
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      padding: 8px 12px;
+    }
+
+    .select2-results__option--highlighted {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+      background-color: #6c757d;
+      color: white;
+    }
   </style>
 </head>
+
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+
+  <!-- Navbar/Header -->
   <?= $this->include('adminOpd/templates/header.php'); ?>
+
+  <!-- Sidebar -->
   <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+
+  <!-- Konten Utama -->
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
       <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit Renstra</h2>
-      <div id="alert-container">
-        <?php if (session()->getFlashdata('error')): ?>
-          <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
-        <?php endif; ?>
-      </div>
-      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['sasaran_id'] ?? '')) ?>">
+
+      <!-- Alert Container -->
+      <div id="alert-container"></div>
+
+      <form id="renstra-form" method="POST"
+        action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['sasaran_id'] ?? '')) ?>">
         <?= csrf_field() ?>
+
+        <!-- Hidden fields untuk mode edit -->
+        <input type="hidden" name="mode" value="edit">
+        <input type="hidden" name="renstra_tujuan_id" value="<?= esc($renstra_data['renstra_tujuan_id'] ?? '') ?>">
+
         <!-- Informasi Umum -->
         <section class="mb-4">
           <h2 class="h5 fw-semibold mb-3">Informasi Umum Renstra</h2>
@@ -58,6 +126,7 @@
             </div>
           </div>
         </section>
+
         <!-- Daftar Sasaran Renstra -->
         <section>
           <h2 class="h5 fw-semibold mb-3">Daftar Sasaran Renstra</h2>
@@ -126,6 +195,7 @@
                           </div> <!-- End Indikator Sasaran -->
                         <?php endforeach; ?>
                       <?php endif; ?>
+                      <!-- Tombol Tambah Indikator Sasaran -->
                       <div class="text-end mt-3">
                         <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
                           <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
@@ -137,12 +207,15 @@
               <?php endforeach; ?>
             <?php endif; ?>
           </div> <!-- End Sasaran Renstra Container -->
+          <!-- Tombol Tambah Sasaran Renstra -->
           <div class="text-end mt-3">
             <button type="button" id="add-sasaran-renstra" class="btn btn-success btn-sm">
               <i class="fas fa-plus me-1"></i> Tambah Sasaran Renstra
             </button>
           </div>
         </section>
+
+        <!-- Tombol Aksi -->
         <div class="d-flex justify-content-between mt-4">
           <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-1"></i> Kembali
@@ -154,37 +227,89 @@
       </form>
     </div>
   </main>
+
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+
+  <!-- jQuery (required for Select2) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Select2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      // Initialize Select2 for existing elements
+      initializeSelect2();
+
+      // Function to initialize Select2 on elements
+      function initializeSelect2() {
+        // Initialize Select2 for RPJMD Sasaran dropdown
+        $('#rpjmd_sasaran_select').select2({
+          placeholder: "Pilih atau ketik untuk mencari sasaran RPJMD...",
+          allowClear: true,
+          width: '100%'
+        });
+      }
+
+      // Re-initialize Select2 when new elements are added
+      $(document).on('click', '.add-indikator-sasaran, #add-sasaran-renstra', function () {
+        setTimeout(function () {
+          initializeSelect2();
+        }, 100);
+      });
+
+      // Handle selection change
+      $('#rpjmd_sasaran_select').on('change', function () {
+        var selectedOption = $(this).find('option:selected');
+
+        if (selectedOption.val()) {
+          console.log('Selected Sasaran:', {
+            id: selectedOption.val(),
+            sasaran: selectedOption.text()
+          });
+
+          // Show selected info (optional)
+          showSelectedInfo(selectedOption.text());
+        }
+      });
+
+      // Function to show selected sasaran info
+      function showSelectedInfo(sasaran) {
+        var infoHtml = '<div class="alert alert-info alert-dismissible fade show mt-2" role="alert">' +
+          '<strong>Sasaran RPJMD Terpilih:</strong> ' + sasaran +
+          '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+          '</div>';
+
+        $('#alert-container').html(infoHtml);
+      }
+    });
+  </script>
+
   <script src="<?= base_url('assets/js/adminOpd/renstra/renstra-form.js') ?>"></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      document.getElementById('tahun_mulai').addEventListener('input', function () {
-        const mulai = parseInt(this.value);
-        if (!isNaN(mulai)) {
-          document.getElementById('tahun_akhir').value = mulai + 4;
-        } else {
-          document.getElementById('tahun_akhir').value = '';
+      // Populate all satuan selects with options from JavaScript helper
+      document.querySelectorAll('.satuan-select').forEach(select => {
+        const selectedValue = select.getAttribute('data-selected') || '';
+        select.innerHTML = generateSatuanOptions();
+        if (selectedValue) {
+          select.value = selectedValue;
         }
-        updateTahunTarget();
       });
-      function updateTahunTarget() {
-        const tahunMulai = parseInt(document.getElementById('tahun_mulai').value);
-        const tahunAkhir = parseInt(document.getElementById('tahun_akhir').value);
-        if (!isNaN(tahunMulai) && !isNaN(tahunAkhir)) {
-          document.querySelectorAll('.sasaran-renstra-item').forEach(function (sasaranItem) {
-            sasaranItem.querySelectorAll('.indikator-sasaran-item').forEach(function (indikatorItem) {
-              indikatorItem.querySelectorAll('.tahun-target').forEach(function (input, idx) {
-                const tahun = tahunMulai + idx;
-                if (tahun <= tahunAkhir) input.value = tahun;
-                else input.value = '';
-              });
-            });
-          });
+
+      // Initialize tahun akhir berdasarkan tahun mulai (untuk edit mode)
+      const tahunMulaiField = document.getElementById('tahun_mulai');
+      const tahunAkhirField = document.getElementById('tahun_akhir');
+
+      if (tahunMulaiField && tahunAkhirField && tahunMulaiField.value) {
+        const tahunMulai = parseInt(tahunMulaiField.value);
+        if (tahunMulai && !isNaN(tahunMulai)) {
+          // Set tahun akhir (Renstra biasanya 5 tahun)
+          tahunAkhirField.value = tahunMulai + 4;
         }
       }
-      document.getElementById('tahun_akhir').addEventListener('input', updateTahunTarget);
-      updateTahunTarget();
     });
   </script>
 </body>
+
 </html>

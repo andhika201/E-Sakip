@@ -113,20 +113,42 @@ class RenstraController extends BaseController
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
-
-        $currentRenstra = $this->renstraModel->getCompleteRenstraById($id, $opdId);
-        if (!$currentRenstra) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Renstra tidak ditemukan');
+        $currentOpd = $this->opdModel->find($opdId);
+        if (!$currentOpd) {
+            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
         }
-
-        // Untuk dropdown pilih sasaran RPJMD
+        // Ambil struktur lengkap Renstra berdasarkan renstra_tujuan_id (bukan hanya sasaran_id)
+        $renstraData = $this->renstraModel->getCompleteRenstraByTujuanId($id, $opdId);
+        if (!$renstraData) {
+            session()->setFlashdata('error', 'Data Renstra tidak ditemukan');
+            return redirect()->to(base_url('adminopd/renstra'));
+        }
+        // Ambil detail tujuan dari tabel renstra_tujuan
+        $db = \Config\Database::connect();
+        $tujuanRow = $db->table('renstra_tujuan')->where('id', $id)->get()->getRowArray();
+        if ($tujuanRow) {
+            $renstraData['tujuan'] = $tujuanRow['tujuan'];
+            $renstraData['rpjmd_sasaran_id'] = $tujuanRow['rpjmd_sasaran_id'];
+        }
+        // Ambil tahun mulai dan tahun akhir dari renstra_sasaran
+        $sasaranRow = $db->table('renstra_sasaran')
+            ->where('renstra_tujuan_id', $id)
+            ->where('opd_id', $opdId)
+            ->get()->getRowArray();
+        if ($sasaranRow) {
+            $renstraData['tahun_mulai'] = $sasaranRow['tahun_mulai'];
+            $renstraData['tahun_akhir'] = $sasaranRow['tahun_akhir'];
+        }
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-
-        return view('adminOpd/renstra/edit_renstra', [
-            'renstra_data' => $currentRenstra,
+        $data = [
+            'title' => 'Edit RENSTRA',
+            'renstra_data' => $renstraData,
+            'renstra_sasaran_id' => $id,
             'rpjmd_sasaran' => $rpjmdSasaran,
-            'title' => 'Edit Rencana Strategis'
-        ]);
+            'current_opd' => $currentOpd,
+            'validation' => \Config\Services::validation()
+        ];
+        return view('adminOpd/renstra/edit_renstra', $data);
     }
 
 
@@ -144,16 +166,19 @@ class RenstraController extends BaseController
                 throw new \Exception('Data tidak lengkap');
             }
 
+
             // 1. Insert atau ambil tujuan
             $tujuanId = $this->renstraModel->createOrGetTujuan($data['rpjmd_sasaran_id'], trim($data['tujuan_renstra']));
 
             // 2. Loop setiap sasaran_renstra, simpan dengan renstra_tujuan_id
             $sasaranRenstra = [];
             foreach ($data['sasaran_renstra'] as $sasaranItem) {
+                $sasaranText = isset($sasaranItem['sasaran']) ? $sasaranItem['sasaran'] : '';
+                $indikatorArr = isset($sasaranItem['indikator_sasaran']) && is_array($sasaranItem['indikator_sasaran']) ? $sasaranItem['indikator_sasaran'] : [];
                 $sasaranRenstra[] = [
                     'renstra_tujuan_id' => $tujuanId,
-                    'sasaran' => $sasaranItem['sasaran'],
-                    'indikator_sasaran' => $sasaranItem['indikator_sasaran'] ?? []
+                    'sasaran' => $sasaranText,
+                    'indikator_sasaran' => $indikatorArr
                 ];
             }
 
@@ -188,40 +213,39 @@ class RenstraController extends BaseController
             $data = $this->request->getPost();
             $session = session();
             $opdId = $session->get('opd_id');
-
             if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir']) || empty($data['sasaran_renstra'])) {
                 throw new \Exception('Data tidak lengkap');
             }
-
-            $sasaranItem = $data['sasaran_renstra'][0];
-            if (empty($sasaranItem['tujuan_renstra'])) {
-                throw new \Exception('Tujuan Renstra wajib diisi');
+            // Format data multi-level (tujuan, sasaran, indikator, target)
+            $sasaranRenstra = [];
+            foreach ($data['sasaran_renstra'] as $sasaranItem) {
+                $sasaranText = isset($sasaranItem['sasaran']) ? $sasaranItem['sasaran'] : '';
+                $indikatorArr = isset($sasaranItem['indikator_sasaran']) && is_array($sasaranItem['indikator_sasaran']) ? $sasaranItem['indikator_sasaran'] : [];
+                $sasaranRenstra[] = [
+                    'id' => isset($sasaranItem['id']) ? $sasaranItem['id'] : null,
+                    'sasaran' => $sasaranText,
+                    'indikator_sasaran' => $indikatorArr
+                ];
             }
-
             $updateData = [
                 'opd_id' => $opdId,
                 'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
                 'tahun_mulai' => $data['tahun_mulai'],
                 'tahun_akhir' => $data['tahun_akhir'],
-                'tujuan_renstra' => $sasaranItem['tujuan_renstra'],
-                'sasaran' => $sasaranItem['sasaran'],
-                'status' => $data['status'] ?? 'draft',
-                'indikator_sasaran' => $sasaranItem['indikator_sasaran'] ?? []
+                'tujuan_renstra' => $data['tujuan_renstra'],
+                'sasaran_renstra' => $sasaranRenstra,
+                'status' => isset($data['status']) ? $data['status'] : 'draft'
             ];
-
             $success = $this->renstraModel->updateCompleteRenstra($id, $updateData);
-
             if ($success) {
                 return redirect()->to('/adminopd/renstra')->with('success', 'Data Renstra berhasil disimpan');
             } else {
                 return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data Renstra');
             }
-
         } catch (\Exception $e) {
             session()->setFlashdata('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->withInput();
         }
-
-        return redirect()->to(base_url('adminopd/renstra'));
     }
 
     public function delete($id = null)
@@ -317,4 +341,3 @@ class RenstraController extends BaseController
         }
     }
 }
-

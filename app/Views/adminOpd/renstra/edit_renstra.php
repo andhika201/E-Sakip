@@ -22,7 +22,7 @@
           <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
         <?php endif; ?>
       </div>
-      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['sasaran_id'] ?? '')) ?>">
+      <form id="renstra-form" method="POST" action="<?= base_url('adminopd/renstra/update/' . ($renstra_data['renstra_tujuan_id'] ?? '')) ?>">
         <?= csrf_field() ?>
         <!-- Informasi Umum -->
         <section class="mb-4">
@@ -69,69 +69,55 @@
                     <label class="fw-medium sasaran-title">Sasaran Renstra <?= $sasaranIndex + 1 ?></label>
                     <button type="button" class="remove-sasaran-renstra btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                   </div>
+                  <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][id]" value="<?= $sasaran['id'] ?? '' ?>">
                   <div class="row mb-3">
                     <div class="col-md-12">
                       <label class="form-label">Sasaran Renstra</label>
-                      <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][sasaran]" class="form-control" rows="2" required><?= esc($sasaran['sasaran'] ?? '') ?></textarea>
+                      <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][sasaran]" class="form-control" required><?= esc($sasaran['sasaran'] ?? '') ?></textarea>
                     </div>
                   </div>
                   <!-- Indikator Sasaran -->
                   <div class="indikator-sasaran-section">
-                    <h4 class="h5 fw-medium mb-3">Indikator Sasaran</h4>
+                    <h6 class="fw-semibold mb-2">Indikator Sasaran</h6>
                     <div class="indikator-sasaran-container">
                       <?php if (isset($sasaran['indikator_sasaran']) && is_array($sasaran['indikator_sasaran'])): ?>
                         <?php foreach ($sasaran['indikator_sasaran'] as $indikatorIndex => $indikator): ?>
-                          <div class="indikator-sasaran-item border rounded p-3 bg-white mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                              <label class="fw-medium indikator-title">Indikator Sasaran <?= $sasaranIndex + 1 ?>.<?= $indikatorIndex + 1 ?></label>
+                          <div class="indikator-sasaran-item bg-white border rounded p-2 mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                              <label class="fw-medium">Indikator Sasaran <?= ($sasaranIndex+1) . '.' . ($indikatorIndex+1) ?></label>
                               <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                             </div>
-                            <div class="mb-3">
-                              <label class="form-label">Indikator Sasaran</label>
-                              <textarea name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][indikator_sasaran]" class="form-control" rows="2" required><?= esc($indikator['indikator_sasaran'] ?? '') ?></textarea>
-                            </div>
-                            <div class="row mb-3">
+                            <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][id]" value="<?= $indikator['id'] ?? '' ?>">
+                            <div class="row mb-2">
+                              <div class="col-md-6">
+                                <label class="form-label">Indikator Sasaran</label>
+                                <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][indikator_sasaran]" class="form-control" value="<?= esc($indikator['indikator_sasaran'] ?? '') ?>" required>
+                              </div>
                               <div class="col-md-6">
                                 <label class="form-label">Satuan</label>
-                                <select name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-select satuan-select" data-selected="<?= esc($indikator['satuan'] ?? '') ?>">
-                                  <option value="">Pilih Satuan</option>
-                                  <?php if (isset($satuan_options) && is_array($satuan_options)): ?>
-                                    <?php foreach ($satuan_options as $key => $label): ?>
-                                      <option value="<?= $key ?>" <?= ($indikator['satuan'] ?? '') == $key ? 'selected' : '' ?>><?= $label ?></option>
-                                    <?php endforeach; ?>
-                                  <?php endif; ?>
-                                </select>
+                                <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][satuan]" class="form-control" value="<?= esc($indikator['satuan'] ?? '') ?>" required>
                               </div>
                             </div>
                             <!-- Target Tahunan -->
-                            <div class="target-section">
-                              <h5 class="fw-medium mb-3">Target Tahunan</h5>
-                              <div class="target-container">
-                                <?php if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])): ?>
-                                  <?php foreach ($indikator['target_tahunan'] as $targetIndex => $target): ?>
-                                    <div class="target-item row g-2 align-items-center mb-2">
-                                      <div class="col-md-2">
-                                        <label class="form-label">Tahun</label>
-                                        <input type="number" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][tahun]" class="form-control tahun-target" value="<?= esc($target['tahun'] ?? '') ?>" readonly required>
-                                      </div>
-                                      <div class="col-md-4">
-                                        <label class="form-label">Target</label>
-                                        <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][target]" class="form-control" value="<?= esc($target['target'] ?? '') ?>" required>
-                                      </div>
-                                    </div>
-                                  <?php endforeach; ?>
-                                <?php endif; ?>
-                              </div>
+                            <div class="target-years-container row">
+                              <?php if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])): ?>
+                                <?php foreach ($indikator['target_tahunan'] as $targetIndex => $target): ?>
+                                  <div class="col-md-2">
+                                    <label class="form-label">Tahun <?= esc($target['tahun'] ?? '') ?></label>
+                                    <input type="hidden" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][id]" value="<?= $target['id'] ?? '' ?>">
+                                    <input type="number" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][tahun]" class="form-control tahun-target" value="<?= esc($target['tahun'] ?? '') ?>" readonly>
+                                    <input type="text" name="sasaran_renstra[<?= $sasaranIndex ?>][indikator_sasaran][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][target]" class="form-control mt-1" value="<?= esc($target['target'] ?? '') ?>" placeholder="Target">
+                                  </div>
+                                <?php endforeach; ?>
+                              <?php endif; ?>
                             </div>
-                          </div> <!-- End Indikator Sasaran -->
+                          </div>
                         <?php endforeach; ?>
                       <?php endif; ?>
-                      <div class="text-end mt-3">
-                        <button type="button" class="add-indikator-sasaran btn btn-info btn-sm">
-                          <i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran
-                        </button>
-                      </div>
-                    </div> <!-- End Indikator Sasaran Container -->
+                    </div>
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="add-indikator-sasaran btn btn-info btn-sm"><i class="fas fa-plus me-1"></i> Tambah Indikator Sasaran</button>
+                    </div>
                   </div> <!-- End Indikator Sasaran Section -->
                 </div> <!-- End Sasaran Renstra -->
               <?php endforeach; ?>

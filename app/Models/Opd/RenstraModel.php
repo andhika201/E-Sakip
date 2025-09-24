@@ -754,97 +754,86 @@ class RenstraModel extends Model
         $this->db->transStart();
 
         try {
-            // --- 1. Update Tujuan Renstra ---
+            // --- 1. Validasi ---
             if (empty($data['tujuan_renstra'])) {
                 throw new \Exception("Tujuan Renstra tidak boleh kosong");
             }
+
+            // Ambil tujuan id dari sasaran
             $sasaran = $this->getSasaranById($sasaranId);
+            if (!$sasaran) {
+                throw new \Exception("Sasaran tidak ditemukan");
+            }
             $tujuanId = $sasaran['renstra_tujuan_id'];
 
+            // --- 2. Update tujuan ---
             $this->updateTujuan($tujuanId, [
                 'tujuan' => trim($data['tujuan_renstra']),
-                'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id']
+                'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'] ?? null,
             ]);
 
-            // --- 2. Update Sasaran ---
-            $sasaranData = [
-                'opd_id' => $data['opd_id'],
-                'renstra_tujuan_id' => $tujuanId,
-                'sasaran' => $data['sasaran'],
-                'tahun_mulai' => $data['tahun_mulai'],
-                'tahun_akhir' => $data['tahun_akhir'],
-                'status' => $data['status'] ?? 'draft'
-            ];
-            $this->updateSasaran($sasaranId, $sasaranData);
+            // --- 3. Update Sasaran ---
+            if (isset($data['sasaran_renstra']) && is_array($data['sasaran_renstra'])) {
+                foreach ($data['sasaran_renstra'] as $sasaranItem) {
+                    $sasaranItemId = $sasaranItem['id'] ?? null;
 
-            // --- 3. Hapus indikator & target lama ---
-            $existingIndikator = $this->getIndikatorSasaranBySasaranId($sasaranId);
-            foreach ($existingIndikator as $indikator) {
-                $this->deleteTargetTahunanByIndikatorId($indikator['id']);
-            }
-            $this->db->table('renstra_indikator_sasaran')->where('renstra_sasaran_id', $sasaranId)->delete();
-
-            // --- 4. Tambah indikator & target baru ---
-            if (isset($data['indikator_sasaran']) && is_array($data['indikator_sasaran'])) {
-                foreach ($data['indikator_sasaran'] as $indikator) {
-                    if (empty($indikator['indikator_sasaran']) || empty($indikator['satuan']))
+                    if (!$sasaranItemId) {
                         continue;
-                    $indikatorData = [
-                        'renstra_sasaran_id' => $sasaranId,
-                        'indikator_sasaran' => $indikator['indikator_sasaran'],
-                        'satuan' => $indikator['satuan']
-                    ];
-                    $this->db->table('renstra_indikator_sasaran')->insert($indikatorData);
-                    $indikatorId = $this->db->insertID();
+                    }
 
-                    if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
-                        foreach ($indikator['target_tahunan'] as $target) {
-                            if (empty($target['tahun']) || empty($target['target']))
+                    $sasaranData = [
+                        'opd_id' => $data['opd_id'],
+                        'renstra_tujuan_id' => $tujuanId,
+                        'sasaran' => $sasaranItem['sasaran'] ?? '',
+                        'tahun_mulai' => $data['tahun_mulai'],
+                        'tahun_akhir' => $data['tahun_akhir'],
+                        'status' => $data['status'] ?? 'draft',
+                    ];
+
+                    $this->updateSasaran($sasaranItemId, $sasaranData);
+
+                    // --- 4. Hapus indikator & target lama ---
+                    $existingIndikator = $this->getIndikatorSasaranBySasaranId($sasaranItemId);
+                    foreach ($existingIndikator as $indikator) {
+                        $this->deleteTargetTahunanByIndikatorId($indikator['id']);
+                    }
+                    $this->db->table('renstra_indikator_sasaran')
+                        ->where('renstra_sasaran_id', $sasaranItemId)
+                        ->delete();
+
+                    // --- 5. Tambah indikator & target baru ---
+                    if (isset($sasaranItem['indikator_sasaran']) && is_array($sasaranItem['indikator_sasaran'])) {
+                        foreach ($sasaranItem['indikator_sasaran'] as $indikator) {
+                            if (empty($indikator['indikator_sasaran']) || empty($indikator['satuan'])) {
                                 continue;
-                            $targetData = [
-                                'renstra_indikator_id' => $indikatorId,
-                                'tahun' => $target['tahun'],
-                                'target' => $target['target']
+                            }
+
+                            $indikatorData = [
+                                'renstra_sasaran_id' => $sasaranItemId,
+                                'indikator_sasaran' => $indikator['indikator_sasaran'],
+                                'satuan' => $indikator['satuan'],
                             ];
-                            $this->db->table('renstra_target')->insert($targetData);
+                            $this->db->table('renstra_indikator_sasaran')->insert($indikatorData);
+                            $indikatorId = $this->db->insertID();
+
+                            // Target tahunan
+                            if (!empty($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
+                                foreach ($indikator['target_tahunan'] as $target) {
+                                    if (empty($target['tahun']) || empty($target['target'])) {
+                                        continue;
+                                    }
+                                    $targetData = [
+                                        'renstra_indikator_id' => $indikatorId,
+                                        'tahun' => $target['tahun'],
+                                        'target' => $target['target'],
+                                    ];
+                                    $this->db->table('renstra_target')->insert($targetData);
+                                }
+                            }
                         }
                     }
                 }
             }
-
-            $this->db->transComplete();
-
-            return $this->db->transStatus() !== false;
-
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            throw $e;
-        }
-    }
-
-    /**
-     * Delete Complete Renstra (Sasaran + Indikator + Target + Tujuan jika tidak dipakai)
-     */
-    public function deleteCompleteRenstra($sasaranId)
-    {
-        $this->db->transStart();
-
-        try {
-            $sasaran = $this->getSasaranById($sasaranId);
-            $tujuanId = $sasaran['renstra_tujuan_id'];
-
-            // Hapus indikator & target
-            $indikatorList = $this->getIndikatorSasaranBySasaranId($sasaranId);
-            foreach ($indikatorList as $indikator) {
-                $this->deleteTargetTahunanByIndikatorId($indikator['id']);
-            }
-            $this->db->table('renstra_indikator_sasaran')->where('renstra_sasaran_id', $sasaranId)->delete();
-
-            // Hapus sasaran
-            $this->db->table('renstra_sasaran')->where('id', $sasaranId)->delete();
-
-            // Hapus tujuan jika tidak dipakai sasaran lain
-            $this->deleteTujuanIfUnused($tujuanId);
 
             $this->db->transComplete();
             return $this->db->transStatus() !== false;
@@ -908,4 +897,75 @@ class RenstraModel extends Model
             ->update(['status' => $status]);
     }
 
+    // ==================== GET COMPLETE RENSTRA BY TUJUAN ID ====================
+    /**
+     * Ambil seluruh struktur Renstra (sasaran, indikator, target) berdasarkan tujuan_id dan opd_id
+     */
+    public function getCompleteRenstraByTujuanId($tujuanId, $opdId)
+    {
+        $query = $this->db->table('renstra_sasaran rs')
+            ->select('
+                rs.id as sasaran_id,
+                rs.opd_id,
+                rs.renstra_tujuan_id,
+                rs.sasaran,
+                rs.tahun_mulai,
+                rs.tahun_akhir,
+                ris.id as indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rt.id as target_id,
+                rt.tahun,
+                rt.target
+            ')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->join('renstra_target rt', 'rt.renstra_indikator_id = ris.id', 'left')
+            ->where('rs.renstra_tujuan_id', $tujuanId)
+            ->where('rs.opd_id', $opdId)
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $result = [
+            'renstra_tujuan_id' => $tujuanId,
+            'sasaran_renstra' => []
+        ];
+
+        foreach ($query as $row) {
+            $sasaranId = $row['sasaran_id'];
+            if (!isset($result['sasaran_renstra'][$sasaranId])) {
+                $result['sasaran_renstra'][$sasaranId] = [
+                    'id' => $sasaranId,
+                    'sasaran' => $row['sasaran'],
+                    'indikator_sasaran' => []
+                ];
+            }
+            if (!empty($row['indikator_id'])) {
+                $indikatorId = $row['indikator_id'];
+                if (!isset($result['sasaran_renstra'][$sasaranId]['indikator_sasaran'][$indikatorId])) {
+                    $result['sasaran_renstra'][$sasaranId]['indikator_sasaran'][$indikatorId] = [
+                        'id' => $indikatorId,
+                        'indikator_sasaran' => $row['indikator_sasaran'],
+                        'satuan' => $row['satuan'],
+                        'target_tahunan' => []
+                    ];
+                }
+                if (!empty($row['target_id'])) {
+                    $result['sasaran_renstra'][$sasaranId]['indikator_sasaran'][$indikatorId]['target_tahunan'][] = [
+                        'id' => $row['target_id'],
+                        'tahun' => $row['tahun'],
+                        'target' => $row['target']
+                    ];
+                }
+            }
+        }
+        // Ubah ke array numerik agar mudah di-loop di view
+        $result['sasaran_renstra'] = array_map(function ($sasaran) {
+            $sasaran['indikator_sasaran'] = array_values($sasaran['indikator_sasaran']);
+            return $sasaran;
+        }, array_values($result['sasaran_renstra']));
+        return $result;
+    }
 }

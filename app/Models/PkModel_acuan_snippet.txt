@@ -1,0 +1,13 @@
+    /**
+     * Get indikator acuan (referensi) untuk PK tertentu
+     */
+    public function getIndikatorAcuanByPkId($pkId)
+    {
+        $result = $this->db->table('pk_referensi pr')
+            ->select('pr.*, pi.indikator as nama_indikator')
+            ->join('pk_indikator pi', 'pi.id = pr.referensi_indikator_id', 'left')
+            ->where('pr.pk_id', $pkId)
+            ->get()
+            ->getResultArray();
+        return $result;
+    }

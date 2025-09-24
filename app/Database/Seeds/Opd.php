@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Database\Seeds;
+
+use CodeIgniter\Database\Seeder;
+
+class Opd extends Seeder
+{
+    public function run()
+    {
+        $data = [
+            ['id' => '0', 'nama_opd' => 'ADMIN', 'singkatan' => null, 'id_kepala_opd' => 169, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '1', 'nama_opd' => 'BAGIAN ADMIN', 'singkatan' => null, 'id_kepala_opd' => 168, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '2', 'nama_opd' => 'SEKRETARIAT DAERAH', 'singkatan' => null, 'id_kepala_opd' => 172, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '3', 'nama_opd' => 'SEKRETARIAT DPRD', 'singkatan' => null, 'id_kepala_opd' => 16, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '4', 'nama_opd' => 'INSPEKTORAT', 'singkatan' => null, 'id_kepala_opd' => 20, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '5', 'nama_opd' => 'BADAN PENGELOLAAN KEUANGAN DAN ASET DAERAH', 'singkatan' => null, 'id_kepala_opd' => 25, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '6', 'nama_opd' => 'BADAN PENDAPATAN DAERAH', 'singkatan' => null, 'id_kepala_opd' => 31, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '7', 'nama_opd' => 'BADAN PERENCANAAN PEMBANGUNAN DAERAH', 'singkatan' => null, 'id_kepala_opd' => 35, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '8', 'nama_opd' => 'BADAN KEPEGAWAIAN DAN PENGEMBANGAN SUMBER DAYA MANUSIA', 'singkatan' => null, 'id_kepala_opd' => 42, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '9', 'nama_opd' => 'BADAN SATUAN POLISI PAMONG PRAJA', 'singkatan' => null, 'id_kepala_opd' => 46, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '10', 'nama_opd' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN', 'singkatan' => null, 'id_kepala_opd' => 51, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '11', 'nama_opd' => 'DINAS KESEHATAN', 'singkatan' => null, 'id_kepala_opd' => 57, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '12', 'nama_opd' => 'DINAS SOSIAL', 'singkatan' => null, 'id_kepala_opd' => 63, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '13', 'nama_opd' => 'DINAS PEMBERDAYAAN PEREMPUAN, PERLINDUNGAN ANAK, PENGENDALIAN PENDUDUK DAN KELUARGA BENCANA', 'singkatan' => null, 'id_kepala_opd' => 67, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '14', 'nama_opd' => 'DINAS KEPENDUDUKAN DAN PENCATATAN SIPIL', 'singkatan' => null, 'id_kepala_opd' => 72, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '15', 'nama_opd' => 'DINAS KEPEMUDAAN, OLAHRAGA DAN PARIWISATA', 'singkatan' => null, 'id_kepala_opd' => 77, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '16', 'nama_opd' => 'DINAS KOPERASI, USAHA KECIL DAN MENENGAH, PERDAGANGAN DAN PERINDUSTRIAN', 'singkatan' => null, 'id_kepala_opd' => 82, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '17', 'nama_opd' => 'DINAS PERHUBUNGAN', 'singkatan' => null, 'id_kepala_opd' => 87, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '18', 'nama_opd' => 'DINAS PEKERJAAN UMUM DAN PERUMAHAN RAKYAT', 'singkatan' => null, 'id_kepala_opd' => 91, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '19', 'nama_opd' => 'DINAS PERIKANAN', 'singkatan' => null, 'id_kepala_opd' => 99, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '20', 'nama_opd' => 'DINAS KOMUNIKASI DAN INFORMATIKA', 'singkatan' => null, 'id_kepala_opd' => 103, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '21', 'nama_opd' => 'DINAS PERTANIAN', 'singkatan' => null, 'id_kepala_opd' => 107, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '22', 'nama_opd' => 'BADAN PEMBERDAYAAN MASYARAKAT DAN PEKON', 'singkatan' => null, 'id_kepala_opd' => 114, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '23', 'nama_opd' => 'DINAS LINGKUNGAN HIDUP', 'singkatan' => null, 'id_kepala_opd' => 118, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '24', 'nama_opd' => 'DINAS KETAHANAN PANGAN', 'singkatan' => null, 'id_kepala_opd' => 122, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '25', 'nama_opd' => 'DINAS PENANAMAN MODAL DAN PELAYANAN TERPADU SATU PINTU', 'singkatan' => null, 'id_kepala_opd' => 126, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '26', 'nama_opd' => 'DINAS PERPUSTAKAAN DAN KEARSIPAN', 'singkatan' => null, 'id_kepala_opd' => 128, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '27', 'nama_opd' => 'DINAS TENAGA KERJA DAN TRANSMIGRASI', 'singkatan' => null, 'id_kepala_opd' => 132, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '28', 'nama_opd' => 'BADAN KESATUAN BANGSA DAN POLITIK', 'singkatan' => null, 'id_kepala_opd' => 136, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '29', 'nama_opd' => 'BADAN PENANGGULANGAN BENCANA DAERAH', 'singkatan' => null, 'id_kepala_opd' => 141, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '30', 'nama_opd' => 'RUMAH SAKIT UMUM DAERAH PRINGSEWU', 'singkatan' => null, 'id_kepala_opd' => 146, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '31', 'nama_opd' => 'KECAMATAN PRINGSEWU', 'singkatan' => null, 'id_kepala_opd' => 151, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '32', 'nama_opd' => 'KECAMATAN GADING REJO', 'singkatan' => null, 'id_kepala_opd' => 153, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '33', 'nama_opd' => 'KECAMATAN AMBARAWA', 'singkatan' => null, 'id_kepala_opd' => 155, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '34', 'nama_opd' => 'KECAMATAN SUKOHARJO', 'singkatan' => null, 'id_kepala_opd' => 157, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '35', 'nama_opd' => 'KECAMATAN ADILUWIH', 'singkatan' => null, 'id_kepala_opd' => 159, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '36', 'nama_opd' => 'KECAMATAN BANYUMAS', 'singkatan' => null, 'id_kepala_opd' => 161, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '37', 'nama_opd' => 'KECAMATAN PAGELARAN', 'singkatan' => null, 'id_kepala_opd' => 163, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '38', 'nama_opd' => 'KECAMATAN PARDASUKA', 'singkatan' => null, 'id_kepala_opd' => 165, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '39', 'nama_opd' => 'KECAMATAN PAGELARAN UTARA', 'singkatan' => null, 'id_kepala_opd' => 167, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '40', 'nama_opd' => 'UPT PENGEMBANGAN BUDIDAYA IKAN DINAS PERIKANAN', 'singkatan' => null, 'id_kepala_opd' => 99, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '41', 'nama_opd' => 'KELURAHAN PAJARESUK', 'singkatan' => null, 'id_kepala_opd' => 1009, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '42', 'nama_opd' => 'KELURAHAN PRINGSEWU BARAT', 'singkatan' => null, 'id_kepala_opd' => 1010, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '43', 'nama_opd' => 'KELURAHAN PRINGSEWU SELATAN', 'singkatan' => null, 'id_kepala_opd' => 1011, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '44', 'nama_opd' => 'KELURAHAN PRINGSEWU TIMUR', 'singkatan' => null, 'id_kepala_opd' => 1012, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '45', 'nama_opd' => 'KELURAHAN PRINGSEWU UTARA', 'singkatan' => null, 'id_kepala_opd' => 1013, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '46', 'nama_opd' => 'UPT SMP N 1 PAGELARAN', 'singkatan' => null, 'id_kepala_opd' => 1322, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '47', 'nama_opd' => 'UPT SMP N 1 ADILUWIH', 'singkatan' => null, 'id_kepala_opd' => 1371, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '48', 'nama_opd' => 'UPT SMP N 2 PRINGSEWU', 'singkatan' => null, 'id_kepala_opd' => 1407, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '49', 'nama_opd' => 'SD N 1 PRINGSEWU SELATAN', 'singkatan' => null, 'id_kepala_opd' => 1442, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '50', 'nama_opd' => 'SD N 1 FAJARAGUNG', 'singkatan' => null, 'id_kepala_opd' => 1463, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '51', 'nama_opd' => 'SD N 3 PRINGSEWU BARAT', 'singkatan' => null, 'id_kepala_opd' => 1473, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '52', 'nama_opd' => 'SD N 3 REJOSARI', 'singkatan' => null, 'id_kepala_opd' => 1479, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '53', 'nama_opd' => 'SDN 1 GADINGREJO TIMUR', 'singkatan' => null, 'id_kepala_opd' => 1485, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '54', 'nama_opd' => 'SDN 1 MATARAM', 'singkatan' => null, 'id_kepala_opd' => 1493, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '55', 'nama_opd' => 'SDN 1 TEGALSARI', 'singkatan' => null, 'id_kepala_opd' => 1510, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '56', 'nama_opd' => 'SDN 1 YOGYAKARTA', 'singkatan' => null, 'id_kepala_opd' => 1516, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '57', 'nama_opd' => 'SDN 2 MATARAM', 'singkatan' => null, 'id_kepala_opd' => 1524, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '58', 'nama_opd' => 'SDN 1 AMBARAWA', 'singkatan' => null, 'id_kepala_opd' => 1531, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '59', 'nama_opd' => 'SDN 1 SUMBERAGUNG', 'singkatan' => null, 'id_kepala_opd' => 1546, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '60', 'nama_opd' => 'SDN 3 KRESNAMULYO', 'singkatan' => null, 'id_kepala_opd' => 1562, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '61', 'nama_opd' => 'SDN 1 BANYUMAS', 'singkatan' => null, 'id_kepala_opd' => 1576, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '62', 'nama_opd' => 'SDN 3 BANYUWANGI', 'singkatan' => null, 'id_kepala_opd' => 1583, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '63', 'nama_opd' => 'SDN 1 SUKAMULYA', 'singkatan' => null, 'id_kepala_opd' => 1591, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '64', 'nama_opd' => 'SDN 1 GIRITUNGGAL', 'singkatan' => null, 'id_kepala_opd' => 1601, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '65', 'nama_opd' => 'SDN 1 PARDASUKA', 'singkatan' => null, 'id_kepala_opd' => 1611, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '66', 'nama_opd' => 'SDN 3 SUKOREJO', 'singkatan' => null, 'id_kepala_opd' => 1622, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '67', 'nama_opd' => 'SDN 1 WARGOMULYO', 'singkatan' => null, 'id_kepala_opd' => 1639, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '68', 'nama_opd' => 'SDN 1 KEPUTRAN', 'singkatan' => null, 'id_kepala_opd' => 1646, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '69', 'nama_opd' => 'SDN 1 SUKOHARJO II', 'singkatan' => null, 'id_kepala_opd' => 1656, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '70', 'nama_opd' => 'SDN 1 PANDANSARI', 'singkatan' => null, 'id_kepala_opd' => 1662, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '71', 'nama_opd' => 'SDN 1 GANJARAN', 'singkatan' => null, 'id_kepala_opd' => 1670, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '72', 'nama_opd' => 'SDN 1 GUMUKREJO', 'singkatan' => null, 'id_kepala_opd' => 1680, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '73', 'nama_opd' => 'SDN 1 PAGELARAN', 'singkatan' => null, 'id_kepala_opd' => 1688, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+            ['id' => '74', 'nama_opd' => 'Bupati', 'singkatan' => null, 'id_kepala_opd' => 1688, 'created_at' => '2025-08-08 13:36:22', 'updated_at' => '2025-08-08 13:36:22'],
+        ];
+
+        // Insert data using insertBatch for better performance
+        $this->db->table('opd')->insertBatch($data);
+    }
+}

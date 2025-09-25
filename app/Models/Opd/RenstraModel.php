@@ -787,7 +787,7 @@ class RenstraModel extends Model
                         'sasaran' => $sasaranItem['sasaran'] ?? '',
                         'tahun_mulai' => $data['tahun_mulai'],
                         'tahun_akhir' => $data['tahun_akhir'],
-                        'status' => $data['status'] ?? 'draft',
+                        // 'status' => $data['status'] ?? 'draft',
                     ];
 
                     $this->updateSasaran($sasaranItemId, $sasaranData);

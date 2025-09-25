@@ -234,7 +234,7 @@ class RenstraController extends BaseController
                 'tahun_akhir' => $data['tahun_akhir'],
                 'tujuan_renstra' => $data['tujuan_renstra'],
                 'sasaran_renstra' => $sasaranRenstra,
-                'status' => isset($data['status']) ? $data['status'] : 'draft'
+                // 'status' => isset($data['status']) ? $data['status'] : 'draft'
             ];
             $success = $this->renstraModel->updateCompleteRenstra($id, $updateData);
             if ($success) {

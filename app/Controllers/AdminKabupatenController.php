@@ -33,7 +33,7 @@ class AdminKabupatenController extends BaseController
             return view('adminKabupaten/dashboard', $data);
             
         } catch (\Exception $e) {
-            // Handle error gracefully
+            // Handle error
             log_message('error', 'Dashboard error: ' . $e->getMessage());
             
             $data = [
@@ -78,6 +78,7 @@ class AdminKabupatenController extends BaseController
             $defaultStructure = [
                 'renstra' => ['draft' => 0, 'selesai' => 0],
                 'renja' => ['draft' => 0, 'selesai' => 0],
+                'iku_opd' => ['draft' => 0, 'selesai' => 0],
                 'lakip_opd' => ['draft' => 0, 'selesai' => 0]
             ];
             
@@ -121,7 +122,7 @@ class AdminKabupatenController extends BaseController
             'rkpd' => ['draft' => 0, 'selesai' => 0],
             'renstra' => ['draft' => 0, 'selesai' => 0],
             'renja' => ['draft' => 0, 'selesai' => 0],
-            'iku' => ['draft' => 0, 'selesai' => 0],
+            'iku_opd' => ['draft' => 0, 'selesai' => 0],
             'lakip_kabupaten' => ['draft' => 0, 'selesai' => 0],
             'lakip_opd' => ['draft' => 0, 'selesai' => 0],
             'opd_list' => [],
@@ -138,11 +139,13 @@ class AdminKabupatenController extends BaseController
             'total_rpjmd' => 0,
             'total_renstra' => 0,
             'total_renja' => 0,
+            'total_iku_opd' => 0,
+            'total_lakip_opd' => 0,
             'total_opd' => 0,
             'active_year' => date('Y')
         ];
     }
-
+    
 
     public function tentangKami()
     {

@@ -391,6 +391,56 @@ class RenstraModel extends Model
         return $indikatorData;
     }
 
+     /**
+     * Get Completed Renstra data for display table (flattened structure)
+     */
+    public function getAllCompletedRenstra($opdId = null)
+    {
+        $query = $this->db->table('renstra_sasaran rs')
+            ->select('
+                rs.id as sasaran_id,
+                rs.opd_id,
+                rs.sasaran,
+                rs.status,
+                ris.id as indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rs.tahun_mulai,
+                rs.tahun_akhir,
+                o.nama_opd,
+                o.singkatan,
+                rps.sasaran_rpjmd as rpjmd_sasaran
+            ')
+            ->join('opd o', 'o.id = rs.opd_id')
+            ->join('rpjmd_sasaran rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id');
+        $query->where('rs.status', 'selesai');
+
+        if ($opdId !== null) {
+            $query->where('rs.opd_id', $opdId);
+        }
+
+        $indikatorData = $query->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Get target data for each indikator
+        foreach ($indikatorData as &$indikator) {
+            if ($indikator['indikator_id']) {
+                $targets = $this->getTargetTahunanByIndikatorId($indikator['indikator_id']);
+                
+                // Convert targets to year-based array
+                $indikator['targets'] = [];
+                foreach ($targets as $target) {
+                    $indikator['targets'][$target['tahun']] = $target['target'];
+                }
+            }
+        }
+
+        return $indikatorData;
+    }
+
 
     // ==================== CRUD OPERATIONS FOR RENSTRA SASARAN ====================
 

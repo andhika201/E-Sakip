@@ -221,7 +221,7 @@ class LakipKabupatenController extends BaseController
         } else {
             return redirect()->to('/adminkab/lakip_kabupaten')
                            ->with('error', 'Gagal menghapus LAKIP');
-        }
+        }   
     }
 
     /**

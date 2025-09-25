@@ -40,27 +40,27 @@
 
         <!-- Filter -->
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <div class="d-flex gap-2 flex-fill">
-            <select class="form-select" onchange="filterByYear(this.value)">
-            <option value="">Semua Tahun</option>
-            <?php if (!empty($available_years)): ?>
-                <?php foreach ($available_years as $year): ?>
-                <option value="<?= $year ?>" <?= (isset($selected_year) && $selected_year == $year) ? 'selected' : '' ?>><?= $year ?></option>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            </select>
-            <?php if (isset($selected_year) && !empty($selected_year)): ?>
-            <a href="<?= base_url('adminkab/pk_bupati') ?>" class="btn btn-outline-secondary d-flex align-items-center">
-            <i class="fas fa-times me-2"></i> RESET
-            </a>
-            <?php endif; ?>
-                </div>
-                <div>
+            <div class="d-flex gap-2 flex-fill">
+                <select class="form-select" onchange="filterByYear(this.value)">
+                    <option value="">Semua Tahun</option>
+                    <?php if (!empty($available_years)): ?>
+                        <?php foreach ($available_years as $year): ?>
+                        <option value="<?= $year ?>" <?= (isset($selected_year) && $selected_year == $year) ? 'selected' : '' ?>><?= $year ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+                <?php if (isset($selected_year) && !empty($selected_year)): ?>
+                    <a href="<?= base_url('adminkab/pk_bupati') ?>" class="btn btn-outline-secondary d-flex align-items-center">
+                        <i class="fas fa-times me-2"></i> RESET
+                    </a>
+                <?php endif; ?>
+            </div>
+            <div>
                 <a href="<?= base_url('adminkab/pk_bupati/tambah') ?>" class="btn btn-success d-flex align-items-center">
-            <i class="fas fa-plus me-1"></i> TAMBAH
-            </a>
+                    <i class="fas fa-plus me-1"></i> TAMBAH
+                </a>
+            </div>
         </div>
-    </div>
 
     <!-- Info Filter Aktif -->
     <?php if (isset($selected_year) && !empty($selected_year)): ?>

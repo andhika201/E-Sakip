@@ -114,6 +114,71 @@ class RenjaModel extends Model
         return array_values($grouped);
     }
 
+     /* * Get All RENJA Data Per OPD
+     * This method retrieves all RENJA data including indicators
+     */
+    public function getAllCompletedRenja($opdId)
+    {
+        $builder = $this->db->table('renja_sasaran');
+        $builder->select('
+            renja_sasaran.id AS renja_sasaran_id,
+            renja_sasaran.opd_id,
+            renja_sasaran.renstra_sasaran_id,
+            renja_sasaran.sasaran_renja,
+            renja_sasaran.status,
+            renja_indikator_sasaran.id AS indikator_id,
+            renja_indikator_sasaran.indikator_sasaran,
+            renja_indikator_sasaran.satuan,
+            renja_indikator_sasaran.tahun,
+            renja_indikator_sasaran.target,
+            renstra_sasaran.sasaran AS renstra_sasaran
+        ');
+        $builder->join('renja_indikator_sasaran', 'renja_indikator_sasaran.renja_sasaran_id = renja_sasaran.id', 'left');
+        $builder->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left');
+        
+        // Only filter by OPD ID if provided
+        if ($opdId !== null) {
+            $builder->where('renja_sasaran.opd_id', $opdId);
+        }
+        
+        $builder->where('renja_sasaran.status', 'selesai');
+        $builder->orderBy('renja_sasaran.id', 'ASC');
+        $builder->orderBy('renja_indikator_sasaran.tahun', 'ASC');
+        
+        $query = $builder->get();
+        $results = $query->getResultArray();
+
+        // Kelompokkan data berdasarkan renja_sasaran_id
+        $grouped = [];
+        foreach ($results as $row) {
+            $id = $row['renja_sasaran_id'];
+            if (!isset($grouped[$id])) {
+                $grouped[$id] = [
+                    'id' => $row['renja_sasaran_id'],
+                    'opd_id' => $row['opd_id'],
+                    'renstra_sasaran_id' => $row['renstra_sasaran_id'],
+                    'renstra_sasaran' => $row['renstra_sasaran'],
+                    'sasaran_renja' => $row['sasaran_renja'],
+                    'status' => $row['status'],
+                    'indikator' => []
+                ];
+            }
+
+            // Tambahkan indikator jika ada
+            if (!empty($row['indikator_id'])) {
+                $grouped[$id]['indikator'][] = [
+                    'id' => $row['indikator_id'],
+                    'indikator_sasaran' => $row['indikator_sasaran'],
+                    'satuan' => $row['satuan'],
+                    'tahun' => $row['tahun'],
+                    'target' => $row['target'],
+                ];
+            }
+        }
+
+        return array_values($grouped);
+    }
+
     /**
      * Get RENJA data by RPJMD Sasaran ID (for edit)
      */

@@ -127,6 +127,57 @@ class IkuOpdModel extends Model
     }
 
     /**
+     * Get detailed IKU data for all IKU by OPD with all relations
+     */
+    public function getCompletedIkuOpd($opdId = null)
+    {
+        $query = $this->db->table('iku_sasaran is')
+            ->select('
+                is.id as sasaran_id,
+                is.sasaran,
+                is.opd_id,
+                is.status,
+                ik.id as indikator_id,
+                ik.indikator_kinerja,
+                ik.definisi_formulasi,
+                ik.satuan,
+                ik.program_pendukung,
+                is.tahun_mulai,
+                is.tahun_akhir,
+                o.nama_opd,
+                o.singkatan,
+                rs.sasaran as renstra_sasaran
+            ')
+            ->join('opd o', 'o.id = is.opd_id')
+            ->join('renstra_sasaran rs', 'rs.id = is.renstra_sasaran_id', 'left')
+            ->join('iku_indikator_kinerja ik', 'ik.iku_sasaran_id = is.id');
+
+        if ($opdId !== null) {
+            $query->where('is.opd_id', $opdId);
+        }
+
+        $indikatorData = $query->orderBy('is.id', 'ASC')
+            ->orderBy('ik.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Get target data for each indikator
+        foreach ($indikatorData as &$indikator) {
+            if ($indikator['indikator_id']) {
+                $targets = $this->getTargetTahunanByIndikatorId($indikator['indikator_id']);
+                
+                // Convert targets to year-based array
+                $indikator['targets'] = [];
+                foreach ($targets as $target) {
+                    $indikator['targets'][$target['tahun']] = $target['target'];
+                }
+            }
+        }
+
+        return $indikatorData;
+    }
+
+    /**
      * Create new IKU Sasaran
      */
     public function createSasaran($data)
@@ -399,10 +450,10 @@ class IkuOpdModel extends Model
                 throw new \Exception('IKU tidak ditemukan');
             }
 
-            // Update basic IKU info
+            // Update basic IKU info (mengikuti pola Renstra)
             $updateData = [
                 'renstra_sasaran_id' => $data['renstra_sasaran_id'],
-                'sasaran' => $data['sasaran_iku'][0]['sasaran'] ?? $existingIku['sasaran'],
+                'sasaran' => $data['sasaran'], // Direct dari data seperti Renstra
                 'tahun_mulai' => $data['tahun_mulai'],
                 'tahun_akhir' => $data['tahun_akhir'],
                 'updated_at' => date('Y-m-d H:i:s')
@@ -417,11 +468,15 @@ class IkuOpdModel extends Model
             // Delete existing indikator and targets (cascade delete)
             $this->deleteIndikatorByIkuId($ikuId);
 
-            // Re-create indikator and targets with new data
-            if (!empty($data['sasaran_iku'][0]['indikator_kinerja']) && is_array($data['sasaran_iku'][0]['indikator_kinerja'])) {
-                foreach ($data['sasaran_iku'][0]['indikator_kinerja'] as $ikIndex => $indikatorItem) {
+            // Re-create indikator and targets with new data 
+            if (!empty($data['indikator_kinerja']) && is_array($data['indikator_kinerja'])) {
+                foreach ($data['indikator_kinerja'] as $ikIndex => $indikatorItem) {
                     
-                    if (empty($indikatorItem['indikator_kinerja'])) {
+                    // Skip empty indikator
+                    if (empty($indikatorItem['indikator_kinerja']) ||
+                        empty($indikatorItem['definisi_formulasi']) ||
+                        empty($indikatorItem['satuan']) ||
+                        empty($indikatorItem['program_pendukung'])) {
                         continue;
                     }
 
@@ -429,21 +484,22 @@ class IkuOpdModel extends Model
                     $indikatorData = [
                         'iku_sasaran_id' => $ikuId,
                         'indikator_kinerja' => trim($indikatorItem['indikator_kinerja']),
-                        'definisi_formulasi' => $indikatorItem['definisi_formulasi'] ?? '',
-                        'satuan' => $indikatorItem['satuan'] ?? '',
-                        'program_pendukung' => $indikatorItem['program_pendukung'] ?? '',
+                        'definisi_formulasi' => trim($indikatorItem['definisi_formulasi']),
+                        'satuan' => trim($indikatorItem['satuan']),
+                        'program_pendukung' => trim($indikatorItem['program_pendukung']),
                     ];
 
                     $indikatorId = $this->createIndikatorKinerja($indikatorData);
                     
                     if (!$indikatorId) {
-                        throw new \Exception("Gagal menyimpan indikator kinerja {$ikIndex}");
+                        throw new \Exception("Gagal menyimpan indikator kinerja " . ($ikIndex + 1));
                     }
 
                     // Create targets for this indikator
                     if (!empty($indikatorItem['target_tahunan']) && is_array($indikatorItem['target_tahunan'])) {
                         foreach ($indikatorItem['target_tahunan'] as $targetIndex => $targetItem) {
                             
+                            // Skip incomplete targets
                             if (empty($targetItem['tahun']) || empty($targetItem['target'])) {
                                 continue;
                             }
@@ -457,7 +513,7 @@ class IkuOpdModel extends Model
                             $targetId = $this->createTargetTahunan($targetData);
                             
                             if (!$targetId) {
-                                throw new \Exception("Gagal menyimpan target tahunan {$targetIndex}");
+                                throw new \Exception("Gagal menyimpan target tahunan " . ($targetIndex + 1));
                             }
                         }
                     }

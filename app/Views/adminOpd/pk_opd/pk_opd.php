@@ -146,7 +146,7 @@
                                     <?= $pkNumber ?>
                                 </td>
                                 <td class="align-middle text-center" rowspan="<?= $totalRows ?>">
-                                    <span class="badge bg-info text-dark"><?= esc(ucwords($pk['jenis'])) ?></span>
+                                    <span class="badge text-dark"><?= esc(ucwords($pk['jenis'])) ?></span>
                                 </td>
                             <?php endif; ?>
 

@@ -102,8 +102,7 @@
         </div>
       </div>
 
-
-      <!-- RKPD Aktif -->
+      <!-- RKPD -->
       <div class="col-12 col-md-6 col-lg-4">
         <div class="bg-white rounded shadow p-4 h-100">
           <p class="fw-semibold text-dark mb-2">RKPD</p>

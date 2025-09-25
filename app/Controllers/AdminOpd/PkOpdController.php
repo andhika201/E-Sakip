@@ -59,12 +59,10 @@ class PkOpdController extends BaseController
             'title' => 'Perjanjian Kinerja - ' . $titleSuffix
         ];
 
-        // dd($data);
-
         return view('adminOpd/pk_opd/pk_opd', $data);
     }
 
-      public function tambah(){
+    public function tambah(){
 
          // Get OPD ID from session (logged in user's OPD)
         $session = session();
@@ -75,14 +73,12 @@ class PkOpdController extends BaseController
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
 
-        // Load the view for adding a new PK Admin
-        // $pegawai = $this->pegawaiModel->getAllPegawai();
+
         $program = $this->programPkModel->getAllPrograms();
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         
         // Pass the data to the view
         $data = [
-            // 'pegawai' => $pegawai,
             'opd_user' => $opdId,
             'pegawaiOpd' => $pegawaiOpd,
             'program' => $program,

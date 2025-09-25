@@ -1,9 +1,50 @@
 <?php
 
 namespace App\Controllers;
+use App\Controllers\BaseController;
+use App\Models\RpjmdModel;
+use App\Models\RkpdModel;
+use App\Models\LakipKabupatenModel;
+use App\Models\PkBupatiModel;
+use App\Models\ProgramPkModel;
+use App\Models\OpdModel;
+use App\Models\Opd\RenstraModel;
+use App\Models\Opd\RenjaModel;
+use App\Models\Opd\IkuOpdModel;
+use App\Models\Opd\PkModel;
+use App\Models\Opd\LakipOpdModel;
+
 
 class UserController extends BaseController
 {
+    protected $rpjmdModel;
+    protected $rkpdModel;
+    protected $pkBupatiModel;
+    protected $programPkModel;
+    protected $lakipModel;
+    protected $OpdModel;
+    protected $renstraModel;
+    protected $renjaModel;
+    protected $ikuOpdModel;
+    protected $pkOpdModel;
+    protected $lakipOpdModel;
+
+    public function __construct()
+    {
+        $this->rpjmdModel = new RpjmdModel();
+        $this->rkpdModel = new RkpdModel();
+        $this->lakipModel = new LakipKabupatenModel();
+        $this->pkBupatiModel = new PkBupatiModel();
+        $this->programPkModel = new ProgramPkModel();
+        $this->renstraModel = new RenstraModel();
+        $this->renjaModel = new RenjaModel();
+        $this->ikuOpdModel = new IkuOpdModel();
+        $this->pkOpdModel = new PkModel();
+        $this->lakipOpdModel = new LakipOpdModel();
+        $this->OpdModel = new OpdModel();
+
+        helper(['form', 'url']);
+    }
     public function index()
     {
         return view('dashboard');
@@ -45,6 +86,7 @@ class UserController extends BaseController
         // Sort periods by tahun_mulai
         ksort($groupedData);
         
+        dd( $groupedData );
         return view('user/rpjmd', [
             'rpjmdGrouped' => $groupedData
         ]);
@@ -52,125 +94,234 @@ class UserController extends BaseController
 
     public function rkpd()
     {
-    // Simulasi data dari database
-        $rkpdData = [
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
-        ];
+        $status = 'selesai';
+        // Get all RKPD data (no server-side filtering)
+        $rkpdData = $this->rkpdModel->getAllRkpdByStatus($status);
+        
+        // Get unique years for filter dropdown
+        $availableYears = [];
+        foreach ($rkpdData as $rkpd) {
+            foreach ($rkpd['indikator'] as $indikator) {
+                if (!empty($indikator['tahun']) && !in_array($indikator['tahun'], $availableYears)) {
+                    $availableYears[] = $indikator['tahun'];
+                }
+            }
+        }
+        sort($availableYears);
 
-        return view('user/rkpd', [
-            'rkpdData' => $rkpdData
-        ]);
+        $data = [
+            'title' => 'Rencana Kerja Tahunan',
+            'rkpd_data' => $rkpdData,
+            'available_years' => $availableYears
+        ];
+        
+        return view('user/rkpd', $data);
     }
 
-    public function lakip_kabupaten()
-    {   
-        $lakipKabupatenData = [
-            [
-                'sasaran' => 'Meningkatkan Kerukunana dan Toleransi Antar Umat Beragama',
-                'indikator' => 'Indeks Kerukunan Umat Beraga',
-                'capaian_sebelumnya' => '78',
-                'target_tahun_ini' => '79',
-                'capaian_tahun_ini' => '78',
-            ],
-            [
-                'sasaran' => 'Meningkatkan Kerukunana dan Toleransi Antar Umat Beragama',
-                'indikator' => 'Indeks Kerukunan Umat Beraga',
-                'capaian_sebelumnya' => '78',
-                'target_tahun_ini' => '79',
-                'capaian_tahun_ini' => '78',
-            ]
-        ];
-
-        return view('user/lakip_kabupaten', [
-            'lakipKabupatenData' => $lakipKabupatenData
-        ]);
-    }
-
-    public function pk_bupati()
+    public function lakipKabupaten()
     {
-        $pkBupatiData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
+        // Get filter parameters
+        $tahun = $this->request->getVar('tahun');
+        $status = 'selesai'; 
+
+        // Build query with filters
+        $builder = $this->lakipModel->orderBy('created_at', 'DESC')->where('status', $status);
+        
+        if ($tahun) {
+            $builder = $builder->where('YEAR(tanggal_laporan)', $tahun)->where('status', $status);
+        }
+          
+        // Get all data
+        $lakips = $builder->findAll();
+
+        $data = [
+            'lakips' => $lakips,
+            'availableYears' => $this->lakipModel->getAvailableYears(),
+            'selected_year' => $tahun,
+            'filters' => [
+                'tahun' => $tahun,
             ]
         ];
-
-        return view('user/pk_bupati', [
-        'pkBupatiData' => $pkBupatiData
-        ]);
+        
+        return view('user/lakip_kabupaten', $data);
     }
 
-    public function renja()
+    /**
+     * Download file LAKIP
+     */
+    public function downloadLakip($id)
     {
-        $renjaData = [
-            [
-                'sasaran' => "Indeks Keterbukaan Informaasi Publik",
-                'indikator_sasaran' => "Nilai indeks didapat dari hasil penilaian indeks keterbukaan informasi publik oleh komisi informasi",
-                'target_capaian_per_tahun' => "2025"
-            ],
-            [
-                'sasaran' => "Indeks Keterbukaan Informaasi Publik",
-                'indikator_sasaran' => "Nilai indeks didapat dari hasil penilaian indeks keterbukaan informasi publik oleh komisi informasi",
-                'target_capaian_per_tahun' => "2025"
-            ]
-            ];
+        $lakip = $this->lakipModel->find($id);
+        
+        if (!$lakip || empty($lakip['file'])) {
+            return redirect()->to('/user/lakip_kabupaten')
+                           ->with('error', 'File tidak ditemukan');
+        }
 
-        return view('user/renja', [
-            'renjaData' => $renjaData
-        ]);
+        $filePath = WRITEPATH . 'uploads/lakip/kabupaten/' . $lakip['file'];
+        
+        if (!file_exists($filePath)) {
+            return redirect()->to('/user/lakip_kabupaten')
+                           ->with('error', 'File tidak ditemukan di server');
+        }
+
+        // Get file extension from stored file
+        $fileExtension = pathinfo($lakip['file'], PATHINFO_EXTENSION);
+        
+        // Clean judul for filename (remove special characters)
+        $cleanJudul = preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $lakip['judul']);
+        $cleanJudul = preg_replace('/\s+/', '_', trim($cleanJudul));
+        
+        // Ensure filename doesn't exceed limits
+        if (strlen($cleanJudul) > 100) {
+            $cleanJudul = substr($cleanJudul, 0, 100);
+        }
+        
+        // Create download filename with judul + extension
+        $downloadName = $cleanJudul . '.' . $fileExtension;
+
+        // Force download with custom filename
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+        header('Content-Length: ' . filesize($filePath));
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Pragma: no-cache');
+        
+        readfile($filePath);
+        exit;
+    }
+
+    public function pkBupati()
+    {
+        // Get filter parameter
+        $tahun = $this->request->getVar('tahun');
+        
+        // Get available years from database
+        $availableYears = $this->pkBupatiModel->getAvailableYears();
+        
+        // Get PK data dengan filter tahun jika ada
+        if ($tahun) {
+            $pkData = $this->pkBupatiModel->getCompletePkByYear($tahun);
+        } else {
+            $pkData = $this->pkBupatiModel->getCompletePk();
+        }
+        
+        // Load the view for PK Bupati
+        $data = [
+            'pk_data' => $pkData,
+            'available_years' => $availableYears,
+            'selected_year' => $tahun,
+            'title' => 'Perjanjian Kinerja - Bupati'
+        ];
+
+        return view('user/pk_bupati', $data);
     }
 
     public function renstra()
     {
-        $tahunList = ['2025', '2026', '2027', '2028', '2029', '2030'];
-        $opdList = ['Unit Kerja', 'Dinas Pendidikan', 'Dinas Kesehatan'];
-        $renstraData = [
-            [
-                'opd' => 'Unit Kerja',
-                'sasaran' => 'Indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian Indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target_capaian' => [
-                    '2025' => '70',
-                    '2026' => '80',
-                    '2027' => '85',
-                    '2028' => '90',
-                    '2029' => '90',
-                    '2030' => '95',
-                ]
-            ],
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
+
+        // Get all Renstra data (no server-side filtering)
+        $renstraData = $this->renstraModel->getAllCompletedRenstra(null);
+
+        // Get all available periods for filter dropdown
+        $availablePeriods = [];
+        foreach ($renstraData as $data) {
+            $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
+            if (!in_array($periodKey, $availablePeriods)) {
+                $availablePeriods[] = $periodKey;
+            }
+        }
+        sort($availablePeriods);
+        
+        $data = [
+            'renstra_data' => $renstraData,
+            'opd_data' => $opdData,
+            'available_periods' => $availablePeriods,
+            'title' => 'Rencana Strategis'
         ];
 
-        return view('user/renstra', [
-            'tahunList' => $tahunList,
-            'opdList' => $opdList,
-            'renstraData' => $renstraData
-        ]);
+        return view('user/renstra', $data);
     }
 
+    public function renja()
+    {
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
 
-    public function lakip_opd()
+        // Get all RENJA data (no server-side filtering - pass null for all data)
+        $renjaData = $this->renjaModel->getAllCompletedRenja(null);
+        
+        // Get unique years for filter dropdown
+        $availableYears = [];
+        foreach ($renjaData as $renja) {
+            foreach ($renja['indikator'] as $indikator) {
+                if (!empty($indikator['tahun']) && !in_array($indikator['tahun'], $availableYears)) {
+                    $availableYears[] = $indikator['tahun'];
+                }
+            }
+        }
+        sort($availableYears);
+
+        $data = [
+            'title' => 'Rencana Kerja Tahunan',
+            'renja_data' => $renjaData,
+            'opd_data' => $opdData,
+            'available_years' => $availableYears
+        ];
+        
+        return view('user/renja', $data);
+    }    
+
+    public function ikuOpd()
+    {
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
+
+        // Get IKU data filtered by user's OPD
+        $ikuData = $this->ikuOpdModel->getCompletedIkuOpd(null);
+
+        $groupedData = [];
+        foreach ($ikuData as $data) {
+            $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
+            
+            if (!isset($groupedData[$periodKey])) {
+                $groupedData[$periodKey] = [
+                    'period' => $periodKey,
+                    'tahun_mulai' => $data['tahun_mulai'],
+                    'tahun_akhir' => $data['tahun_akhir'],
+                    'years' => range($data['tahun_mulai'], $data['tahun_akhir']),
+                    'iku_data' => []
+                ];
+            }
+
+            $groupedData[$periodKey]['iku_data'][] = $data;
+        }
+        
+        // Sort periods
+        ksort($groupedData);
+        
+        // Extract available periods for filter
+        $availablePeriods = [];
+        foreach ($groupedData as $periodData) {
+            $availablePeriods[] = $periodData['period'];
+        }
+        $availablePeriods = array_unique($availablePeriods);
+        sort($availablePeriods);
+        
+        $data = [
+            'iku_data' => $ikuData,
+            'grouped_data' => $groupedData,
+            'opd_data' => $opdData,
+            'available_periods' => $availablePeriods,
+            'title' => 'IKU OPD'
+        ];
+
+        return view('user/iku_opd', $data);
+    }
+
+    public function lakipOpd()
     {
          $lakipOpdData = [
             [
@@ -194,82 +345,19 @@ class UserController extends BaseController
         ]);
     }
 
-    public function iku_opd()
-    {
-        $tahunList = ['2025', '2026', '2027', '2028'];
-        
-        $ikuOpdData = [
-            [
-                'sasaran' => 'Pendidikan',
-                'indikator' => 'Meningkatkan Mutu Pendidikan',
-                'definisi' => 'Angka Partisipasi Sekolah',
-                'satuan' => '%',
-                'target_capaian' => [
-                    '2025' => '95',
-                    '2026' => '95',
-                    '2027' => '95',
-                    '2028' => '95',
-                ]
-                ],
-            [
-                'sasaran' => 'Pendidikan',
-                'indikator' => 'Meningkatkan Mutu Pendidikan',
-                'definisi' => 'Angka Partisipasi Sekolah',
-                'satuan' => '%',
-                'target_capaian' => [
-                    '2025' => '95',
-                    '2026' => '95',
-                    '2027' => '95',
-                    '2028' => '95',
-                ]
-            ]
-        ];
-
-        return view('user/iku_opd',
-        [
-            'tahunList' => $tahunList,
-            'ikuOpdData' => $ikuOpdData
-        ]);
-    }
 
     public function pk_pimpinan()
     {
-        $pkPimpinanData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-        ];
-
+        $pkPimpinanData = $this->pkOpdModel->getCompletePkByRole('pimpinan');
         return view('user/pk_pimpinan', [
-        'pkPimpinanData' => $pkPimpinanData
+            'pkPimpinanData' => $pkPimpinanData
         ]);
     }
 
     public function pk_administrator()
     {
-        $pkAdministratorData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-            ];
+        $pkAdministratorData = $this->pkOpdModel->getCompletePkByRole('administrator'); 
+
         return view('user/pk_administrator',[
             'pkAdministratorData' => $pkAdministratorData
         ]);
@@ -277,22 +365,9 @@ class UserController extends BaseController
 
     public function pk_pengawas()
     {
-        $pkPengawasData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-        ];
+        $pkPengawasData = $this->pkOpdModel->getCompletePkByRole('pengawas');
 
-        return view('user/pk_pengawas',[
+        return view('user/pk_pengawas', [
             'pkPengawasData' => $pkPengawasData
         ]);
     }

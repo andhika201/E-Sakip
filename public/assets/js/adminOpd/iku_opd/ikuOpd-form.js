@@ -101,7 +101,7 @@ function updateLabels() {
 // Fungsi untuk mengupdate nama form setelah penghapusan atau penambahan
 function updateFormNames() {
     document.querySelectorAll('.sasaran-iku-item').forEach((sasaranItem, sasaranIndex) => {
-        // Update sasaran IKU names
+        // Update sasaran IKU names - SAMA SEPERTI RENSTRA
         const sasaranTextarea = sasaranItem.querySelector('textarea[name*="sasaran"]');
         const sasaranIdInput = sasaranItem.querySelector('input[name*="[id]"]');
         
@@ -112,7 +112,7 @@ function updateFormNames() {
             sasaranIdInput.name = `sasaran_iku[${sasaranIndex}][id]`;
         }
 
-        // Update indikator kinerja names
+        // Update indikator kinerja names - SAMA SEPERTI RENSTRA
         sasaranItem.querySelectorAll('.indikator-kinerja-item').forEach((indikatorItem, indikatorIndex) => {
             const indikatorTextarea = indikatorItem.querySelector('textarea[name*="indikator_kinerja"]');
             const definisiTextarea = indikatorItem.querySelector('textarea[name*="definisi_formulasi"]');
@@ -136,17 +136,17 @@ function updateFormNames() {
                 idInput.name = `sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][id]`;
             }
 
-            // Update target tahunan names
+            // Update nama field target tahunan - SAMA SEPERTI RENSTRA
             indikatorItem.querySelectorAll('.target-item').forEach((targetItem, targetIndex) => {
-                const tahunInput = targetItem.querySelector('input[name*="tahun"]');
-                const targetInput = targetItem.querySelector('input[name*="target"]:not([name*="tahun"])');
-                const targetIdInput = targetItem.querySelector('input[name*="target_id"]');
+                const targetInput = targetItem.querySelector('input[type="text"]');
+                const tahunInput = targetItem.querySelector('.tahun-target');
+                const targetIdInput = targetItem.querySelector('input[name*="[id]"]');
                 
-                if (tahunInput) {
-                    tahunInput.name = `sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${targetIndex}][tahun]`;
-                }
                 if (targetInput) {
                     targetInput.name = `sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${targetIndex}][target]`;
+                }
+                if (tahunInput) {
+                    tahunInput.name = `sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${targetIndex}][tahun]`;
                 }
                 if (targetIdInput) {
                     targetIdInput.name = `sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${targetIndex}][id]`;
@@ -238,32 +238,35 @@ document.addEventListener('click', function(e) {
         populateAllSatuanSelects();
     }
     
-    // Hapus sasaran IKU
+    // Hapus sasaran IKU - SAMA SEPERTI RENSTRA
     else if (e.target.classList.contains('remove-sasaran-iku') || e.target.closest('.remove-sasaran-iku')) {
-        const sasaranItem = e.target.closest('.sasaran-iku-item');
-        if (document.querySelectorAll('.sasaran-iku-item').length > 1) {
-            if (confirm('Yakin ingin menghapus sasaran IKU ini?')) {
-                sasaranItem.remove();
-                updateLabels();
-                updateFormNames();
-                updateDeleteButtonVisibility();
-            }
+        const sasaranItems = document.querySelectorAll('.sasaran-iku-item');
+        if (sasaranItems.length <= 1) {
+            alert('Minimal harus ada 1 Sasaran IKU!');
+            return;
+        }
+        
+        if (confirm('Hapus sasaran IKU ini dan semua indikator kinerjanya?')) {
+            e.target.closest('.sasaran-iku-item').remove();
+            updateLabels();
+            updateFormNames();
         }
     }
     
-    // Hapus indikator kinerja  
+    // Hapus indikator kinerja - SAMA SEPERTI RENSTRA
     else if (e.target.classList.contains('remove-indikator-kinerja') || e.target.closest('.remove-indikator-kinerja')) {
-        const indikatorItem = e.target.closest('.indikator-kinerja-item');
-        const sasaranItem = indikatorItem.closest('.sasaran-iku-item');
+        const sasaranItem = e.target.closest('.sasaran-iku-item');
         const indikatorItems = sasaranItem.querySelectorAll('.indikator-kinerja-item');
         
-        if (indikatorItems.length > 1) {
-            if (confirm('Yakin ingin menghapus indikator kinerja ini?')) {
-                indikatorItem.remove();
-                updateLabels();
-                updateFormNames();
-                updateDeleteButtonVisibility();
-            }
+        if (indikatorItems.length <= 1) {
+            alert('Minimal harus ada 1 Indikator Kinerja per Sasaran IKU!');
+            return;
+        }
+        
+        if (confirm('Yakin ingin menghapus indikator kinerja ini?')) {
+            e.target.closest('.indikator-kinerja-item').remove();
+            updateLabels();
+            updateFormNames();
         }
     }
 });
@@ -344,6 +347,7 @@ function createNewSasaranTemplate(index, tahunAwal) {
     
     return `
     <div class="sasaran-iku-item bg-light border rounded p-3 mb-3">
+        <input type="hidden" name="sasaran_iku[${index}][id]" value="">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <label class="fw-medium sasaran-title">Sasaran IKU ${index + 1}</label>
             <button type="button" class="remove-sasaran-iku btn btn-outline-danger btn-sm">
@@ -383,6 +387,7 @@ function createNewIndikatorTemplate(sasaranIndex, indikatorIndex, tahunAwal) {
     
     const targetsHtml = Array.from({length: 5}, (_, i) => `
         <div class="target-item row g-2 align-items-center mb-2">
+            <input type="hidden" name="sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${i}][id]" value="">
             <div class="col-auto">
                 <input type="number" name="sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][target_tahunan][${i}][tahun]" value="${tahunAwal + i}" class="form-control form-control-sm tahun-target" style="width: 80px;" readonly>
             </div>
@@ -394,6 +399,7 @@ function createNewIndikatorTemplate(sasaranIndex, indikatorIndex, tahunAwal) {
     
     return `
     <div class="indikator-kinerja-item border rounded p-3 bg-white mb-3">
+        <input type="hidden" name="sasaran_iku[${sasaranIndex}][indikator_kinerja][${indikatorIndex}][id]" value="">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <label class="fw-medium indikator-title">Indikator Kinerja ${sasaranIndex + 1}.${indikatorIndex + 1}</label>
             <button type="button" class="remove-indikator-kinerja btn btn-outline-danger btn-sm">
@@ -454,6 +460,9 @@ document.getElementById('ikuOpdForm').addEventListener('submit', function(e) {
         if (tahunMulai) tahunMulai.focus();
         return;
     }
+    
+    // Final form names update before submit
+    updateFormNames();
     
     // Submit form
     isSubmitting = true;

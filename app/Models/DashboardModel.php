@@ -93,7 +93,7 @@ class DashboardModel extends Model
     /**
      * Get IKU statistics by status for current year
      */
-    public function getIkuStats()
+    public function getIkuOpdStats()
     {
         $stats = $this->db->table('iku_sasaran') 
             ->select('status, COUNT(*) as count')
@@ -219,7 +219,7 @@ class DashboardModel extends Model
             'rkpd' => $this->getRkpdStats(),
             'renstra' => $this->getRenstraStats(),
             'renja' => $this->getRenjaStats(),
-            'iku' => $this->getIkuStats(),
+            'iku_opd' => $this->getIkuOpdStats(),
             'lakip_kabupaten' => $this->getLakipKabupatenStats(),
             'lakip_opd' => $this->getLakipOpdStats(),
             'opd_list' => $this->getAllOpd(),
@@ -236,7 +236,9 @@ class DashboardModel extends Model
         $data = [
             'renstra' => ['draft' => 0, 'selesai' => 0],
             'renja' => ['draft' => 0, 'selesai' => 0],
-            'lakip_opd' => ['draft' => 0, 'selesai' => 0]
+            'iku_opd' => ['draft' => 0, 'selesai' => 0],
+            'lakip_opd' => ['draft' => 0, 'selesai' => 0],
+            'available_years' => $this->getAvailableYears()
         ];
         
         // Only proceed if at least one filter is provided
@@ -284,6 +286,26 @@ class DashboardModel extends Model
                     $data['renja'][$stat['status']] = (int)$stat['count'];
                 }
             }
+
+            // Get IKU data
+            $ikuQuery = $this->db->table('iku_sasaran is')
+                ->select('is.status, COUNT(*) as count')
+                ->join('opd o', 'o.id = is.opd_id', 'left')
+                ->groupBy('is.status');
+
+            if ($opdId) {
+                $ikuQuery->where('is.opd_id', $opdId);
+            }
+            if ($year) {
+                $ikuQuery->where('YEAR(is.created_at)', $year);
+            }
+
+            $ikuStats = $ikuQuery->get()->getResultArray();
+            foreach ($ikuStats as $stat) {
+                if (isset($stat['status']) && isset($data['iku_opd'][$stat['status']])) {
+                    $data['iku_opd'][$stat['status']] = (int)$stat['count'];
+                }
+            }
             
             // Get LAKIP OPD data
             $lakipQuery = $this->db->table('lakip_opd')
@@ -312,6 +334,8 @@ class DashboardModel extends Model
         return $data;
     }
 
+
+
     /**
      * Get summary statistics for quick overview
      */
@@ -322,6 +346,7 @@ class DashboardModel extends Model
             'total_rkpd' => $this->db->table('rkpd_sasaran')->countAllResults(),
             'total_renstra' => $this->db->table('renstra_sasaran')->countAllResults(),
             'total_renja' => $this->db->table('renja_sasaran')->countAllResults(),
+            'total_iku_opd' => $this->db->table('iku_sasaran')->countAllResults(),
             'total_opd' => $this->db->table('opd')->countAllResults(),
             'active_year' => date('Y')
         ];

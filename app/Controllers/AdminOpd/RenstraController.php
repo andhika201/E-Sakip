@@ -190,8 +190,8 @@ class RenstraController extends BaseController
     {
         try {
             $data = $this->request->getPost();
-            
-           
+
+            dd($data['sasaran_renstra']);
             // Validate required fields
             if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
                 throw new \Exception('Data tidak lengkap');

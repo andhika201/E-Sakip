@@ -17,7 +17,7 @@
             </div>
             <div>
               <p class="small fw-medium text-white mb-0">User</p>
-              <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Viewer</p>
+              <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Guest</p>
             </div>
           </div>
           <ul class="dropdown-menu " aria-labelledby="dropdownMenuButton1">
@@ -48,8 +48,8 @@
           </a>
           <ul class="dropdown-menu" aria-labelledby="kabupatenDropdown">
             <li><a class="dropdown-item" href="<?= base_url('rpjmd') ?>">RPJMD</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('pk_bupati') ?>">PK-Bupati</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('rkt') ?>">RKT</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('rkpd') ?>">RKPD</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('pk_bupati') ?>">PK Bupati</a></li>
             <li><a class="dropdown-item" href="<?= base_url('lakip_kabupaten') ?>">LAKIP</a></li>
           </ul>
         </li>
@@ -60,13 +60,13 @@
             Kinerja Perangkat Daerah
           </a>
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">
-            <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('renstra') ?>">RENSTRA</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('iku_opd') ?>">IKU</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('pk_pimpinan') ?>">PK Pimpinan</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('pk_jpt') ?>">PK JPT</a></li>
             <li><a class="dropdown-item" href="<?= base_url('pk_administrator') ?>">PK Administrator</a></li>
             <li><a class="dropdown-item" href="<?= base_url('pk_pengawas') ?>">PK Pengawas</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
           </ul>
         </li>
 

@@ -20,41 +20,6 @@ class IkuOpdController extends BaseController
         $this->renstraModel = new RenstraModel();
     }
 
-    // public function index()
-    // {
-    //     // Get OPD ID from session (logged in user's OPD)
-    //     $session = session();
-    //     $opdId = $session->get('opd_id');
-        
-    //     // If no OPD ID in session, redirect to login or show error
-    //     if (!$opdId) {
-    //         return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-    //     }
-
-    //     // Get IKU data using simple method like RENSTRA
-    //     $ikuData = $this->ikuOpdModel->getCompleteIkuByOpd($opdId);
-        
-    //     // Group data by period like RENSTRA
-    //     $groupedData = [];
-    //     foreach ($ikuData as $item) {
-    //         $periodKey = $item['tahun_mulai'] . '-' . $item['tahun_akhir'];
-    //         if (!isset($groupedData[$periodKey])) {
-    //             $groupedData[$periodKey] = [
-    //                 'period' => $periodKey,
-    //                 'years' => range($item['tahun_mulai'], $item['tahun_akhir'])
-    //             ];
-    //         }
-    //     }
-        
-    //     $data = [
-    //         'iku_data' => $ikuData,
-    //         'grouped_data' => $groupedData,
-    //         'title' => 'Data IKU OPD'
-    //     ];
-
-    //     return view('adminOpd/iku_opd/iku_opd', $data);
-    // }
-
     public function index()
     {
         // Get OPD ID from session (logged in user's OPD)
@@ -102,7 +67,7 @@ class IkuOpdController extends BaseController
             'iku_data' => $ikuData,
             'grouped_data' => $groupedData,
             'current_opd' => $currentOpd,
-            'title' => 'Rencana Strategis - ' . $titleSuffix
+            'title' => 'IKU - ' . $titleSuffix
         ];
 
         return view('adminOpd/iku_opd/iku_opd', $data);
@@ -200,7 +165,15 @@ class IkuOpdController extends BaseController
     public function update($id = null)
     {
         try {
+            // Validate ID parameter
+            if (!$id) {
+                throw new \Exception('ID IKU OPD tidak ditemukan');
+            }
+
             $data = $this->request->getPost();
+            
+            // Debug: Tampilkan data mentah untuk analisis
+            log_message('info', 'IKU Update - Raw Data: ' . print_r($data['sasaran_iku'] ?? [], true));
 
             // Validate required fields
             if (empty($data['renstra_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
@@ -216,29 +189,55 @@ class IkuOpdController extends BaseController
                 throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
             }
 
-            // Prepare data for updating (following RENSTRA pattern)
+            // Prepare data for updating (mengikuti pola Renstra)
             $updateData = [
                 'opd_id' => $opdId,
                 'renstra_sasaran_id' => $data['renstra_sasaran_id'],
                 'tahun_mulai' => $data['tahun_mulai'],
                 'tahun_akhir' => $data['tahun_akhir'],
                 'status' => $data['status'] ?? 'draft',
-                'sasaran_iku' => []
+                'sasaran' => $data['sasaran_iku'][0]['sasaran'] ?? '', // Extract sasaran from first item
+                'indikator_kinerja' => [] // Direct array like Renstra
             ];
             
-            // Process sasaran IKU (similar to RENSTRA's indikator_sasaran processing)
+            // Process sasaran IKU (mengikuti pola Renstra - tanpa ID)
             if (isset($data['sasaran_iku']) && is_array($data['sasaran_iku'])) {
-                foreach ($data['sasaran_iku'] as $sasaran) {
-                    $sasaranData = [
-                        'id' => $sasaran['id'] ?? null,
-                        'sasaran' => $sasaran['sasaran'],
-                        'indikator_kinerja' => []
-                    ];
-
+                log_message('info', 'IKU Update - Processing sasaran_iku with count: ' . count($data['sasaran_iku']));
+                
+                foreach ($data['sasaran_iku'] as $sasaranIdx => $sasaran) {
+                    log_message('info', "IKU Update - Processing sasaran index: $sasaranIdx");
+                    
                     if (isset($sasaran['indikator_kinerja']) && is_array($sasaran['indikator_kinerja'])) {
-                        foreach ($sasaran['indikator_kinerja'] as $indikator) {
+                        log_message('info', "IKU Update - Sasaran $sasaranIdx has " . count($sasaran['indikator_kinerja']) . " indikator");
+                        
+                        foreach ($sasaran['indikator_kinerja'] as $indikatorIdx => $indikator) {
+                            log_message('info', "IKU Update - Processing indikator index: $indikatorIdx");
+                            log_message('info', "IKU Update - Indikator data: " . print_r([
+                                'indikator_kinerja' => $indikator['indikator_kinerja'] ?? 'EMPTY',
+                                'definisi_formulasi' => $indikator['definisi_formulasi'] ?? 'EMPTY',
+                                'satuan' => $indikator['satuan'] ?? 'EMPTY',
+                                'program_pendukung' => $indikator['program_pendukung'] ?? 'EMPTY'
+                            ], true));
+                            
+                            // Skip indikator yang kosong (mengikuti pola Renstra)
+                            if (!is_array($indikator) || empty($indikator)) {
+                                log_message('info', "IKU Update - Skipping indikator $indikatorIdx: not array or empty");
+                                continue;
+                            }
+                            
+                            // Skip jika field wajib kosong (mengikuti pola Renstra)
+                            if (!isset($indikator['indikator_kinerja']) || empty(trim($indikator['indikator_kinerja'])) ||
+                                !isset($indikator['definisi_formulasi']) || empty(trim($indikator['definisi_formulasi'])) ||
+                                !isset($indikator['satuan']) || empty(trim($indikator['satuan'])) ||
+                                !isset($indikator['program_pendukung']) || empty(trim($indikator['program_pendukung']))) {
+                                log_message('info', "IKU Update - Skipping indikator $indikatorIdx: required fields empty");
+                                continue;
+                            }
+                            
+                            log_message('info', "IKU Update - Adding valid indikator $indikatorIdx to result");
+                            
                             $indikatorData = [
-                                'id' => $indikator['id'] ?? null,
+                                // Tidak menggunakan ID - mengikuti pola Renstra
                                 'indikator_kinerja' => $indikator['indikator_kinerja'],
                                 'definisi_formulasi' => $indikator['definisi_formulasi'],
                                 'satuan' => $indikator['satuan'],
@@ -248,21 +247,28 @@ class IkuOpdController extends BaseController
 
                             if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
                                 foreach ($indikator['target_tahunan'] as $target) {
+                                    // Skip target yang kosong (mengikuti pola Renstra)
+                                    if (!is_array($target) || !isset($target['tahun']) || !isset($target['target']) ||
+                                        empty($target['tahun']) || empty(trim($target['target']))) {
+                                        continue;
+                                    }
+                                    
                                     $indikatorData['target_tahunan'][] = [
-                                        'id' => $target['id'] ?? null,
+                                        // Tidak menggunakan ID - mengikuti pola Renstra
                                         'tahun' => $target['tahun'],
                                         'target' => $target['target']
                                     ];
                                 }
                             }
 
-                            $sasaranData['indikator_kinerja'][] = $indikatorData;
+                            $updateData['indikator_kinerja'][] = $indikatorData;
                         }
                     }
-
-                    $updateData['sasaran_iku'][] = $sasaranData;
                 }
             }
+
+            log_message('info', 'IKU Update - Final indikator count: ' . count($updateData['indikator_kinerja']));
+            log_message('info', 'IKU Update - Final data: ' . print_r($updateData['indikator_kinerja'], true));
 
             // Update in database (following RENSTRA pattern)
             $success = $this->ikuOpdModel->updateCompleteIku($id, $updateData);

@@ -28,22 +28,6 @@ class RkpdModel extends Model
     }
 
     /**
-     * Get all RKPD Sasaran with optional status filter
-     */
-    public function getAllRkpdByStatus($status = null)
-    {
-        $query = $this->db->table('rkpd_sasaran');
-        
-        if ($status !== null) {
-            $query->where('status', $status);
-        }
-        
-        return $query->orderBy('id', 'ASC')
-            ->get()
-            ->getResultArray();
-    }
-
-    /**
      * Get all Completed RKPD Sasaran
      */
     public function getCompletedRkpd()
@@ -84,6 +68,65 @@ class RkpdModel extends Model
         ');
         $builder->join('rkpd_indikator_sasaran', 'rkpd_indikator_sasaran.rkpd_sasaran_id = rkpd_sasaran.id', 'left');
         $builder->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rkpd_sasaran.rpjmd_sasaran_id', 'left');
+        $builder->orderBy('rkpd_sasaran.id', 'ASC');
+        $builder->orderBy('rkpd_indikator_sasaran.tahun', 'ASC');
+        
+        $query = $builder->get();
+        $results = $query->getResultArray();
+
+        // Kelompokkan data berdasarkan rkpd_sasaran_id
+        $grouped = [];
+        foreach ($results as $row) {
+            $id = $row['rkpd_sasaran_id'];
+            if (!isset($grouped[$id])) {
+                $grouped[$id] = [
+                    'id' => $row['rkpd_sasaran_id'],
+                    'rpjmd_sasaran_id' => $row['rpjmd_sasaran_id'],
+                    'rpjmd_sasaran' => $row['rpjmd_sasaran'],
+                    'sasaran' => $row['sasaran'],
+                    'status' => $row['status'],
+                    'indikator' => []
+                ];
+            }
+
+            // Tambahkan indikator jika ada
+            if (!empty($row['indikator_id'])) {
+                $grouped[$id]['indikator'][] = [
+                    'id' => $row['indikator_id'],
+                    'indikator_sasaran' => $row['indikator_sasaran'],
+                    'satuan' => $row['satuan'],
+                    'tahun' => $row['tahun'],
+                    'target' => $row['target'],
+                ];
+            }
+        }
+
+        return array_values($grouped);
+    }
+
+    /* * Get All RKPD Data by Status
+     * This method retrieves all Completed RKPD data including indicators
+     */
+    public function getAllRkpdbyStatus($status = null)
+    {
+        $builder = $this->db->table('rkpd_sasaran');
+        $builder->select('
+            rkpd_sasaran.id AS rkpd_sasaran_id,
+            rkpd_sasaran.rpjmd_sasaran_id,
+            rkpd_sasaran.sasaran,
+            rkpd_sasaran.status,
+            rkpd_indikator_sasaran.id AS indikator_id,
+            rkpd_indikator_sasaran.indikator_sasaran,
+            rkpd_indikator_sasaran.satuan,
+            rkpd_indikator_sasaran.tahun,
+            rkpd_indikator_sasaran.target,
+            rpjmd_sasaran.sasaran_rpjmd AS rpjmd_sasaran
+        ');
+        $builder->join('rkpd_indikator_sasaran', 'rkpd_indikator_sasaran.rkpd_sasaran_id = rkpd_sasaran.id', 'left');
+        $builder->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rkpd_sasaran.rpjmd_sasaran_id', 'left');
+        if ($status !== null) {
+            $builder->where('rkpd_sasaran.status', $status);
+        }
         $builder->orderBy('rkpd_sasaran.id', 'ASC');
         $builder->orderBy('rkpd_indikator_sasaran.tahun', 'ASC');
         

@@ -82,7 +82,7 @@
       <!-- Alert Container -->
       <div id="alert-container"></div>
 
-      <form id="iku-opd-form" method="POST" action="<?= base_url('adminopd/iku_opd/update/' . ($iku_data['sasaran_id'] ?? '')) ?>">
+      <form id="ikuOpdForm" method="POST" action="<?= base_url('adminopd/iku_opd/update/' . ($iku_data['id'] ?? '')) ?>">
       <?= csrf_field() ?>
 
         <!-- Hidden fields untuk mode edit -->
@@ -133,7 +133,7 @@
               </div>
               
               <!-- Hidden field for sasaran ID -->
-              <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][id]" value="<?= $iku_data['sasaran_id'] ?? '' ?>">
+              <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][id]" value="<?= $iku_data['id'] ?? '' ?>">
               
               <div class="row mb-3">
                 <div class="col-md-12">
@@ -157,7 +157,7 @@
                         </div>
                         
                         <!-- Hidden field for indikator ID -->
-                        <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][indikator_kinerja][<?= $indikatorIndex ?>][id]" value="<?= $indikator['indikator_id'] ?? '' ?>">
+                        <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][indikator_kinerja][<?= $indikatorIndex ?>][id]" value="<?= $indikator['id'] ?? '' ?>">
                         
                         <div class="mb-3">
                           <label class="form-label">Indikator Kinerja</label>
@@ -196,7 +196,7 @@
                                     <input type="text" name="sasaran_iku[<?= $sasaranIndex ?>][indikator_kinerja][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][target]" value="<?= esc($target['target'] ?? '') ?>" class="form-control form-control-sm" placeholder="Target <?= esc($target['tahun'] ?? '') ?>" required>
                                   </div>
                                   <!-- Hidden field for target ID -->
-                                  <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][indikator_kinerja][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][id]" value="<?= $target['target_id'] ?? '' ?>">
+                                  <input type="hidden" name="sasaran_iku[<?= $sasaranIndex ?>][indikator_kinerja][<?= $indikatorIndex ?>][target_tahunan][<?= $targetIndex ?>][id]" value="<?= $target['id'] ?? '' ?>">
                                 </div>
                               <?php endforeach; ?>
                             <?php else: ?>

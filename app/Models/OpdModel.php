@@ -38,17 +38,13 @@ class OpdModel extends Model
         ],
     ];
 
-    protected $skipValidation = false;
-    protected $cleanValidationRules = true;
-
-    // Callbacks
-    protected $allowCallbacks = true;
-    protected $beforeInsert = [];
-    protected $afterInsert = [];
-    protected $beforeUpdate = [];
-    protected $afterUpdate = [];
-    protected $beforeFind = [];
-    protected $afterFind = [];
-    protected $beforeDelete = [];
-    protected $afterDelete = [];
+    /**
+     * Get all OPD data for dropdown
+     */
+    public function getAllOpd()
+    {
+        return $this->where('nama_opd !=', 'ADMIN')
+                ->orderBy('nama_opd', 'ASC')
+                ->findAll();
+    }
 }

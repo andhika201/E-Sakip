@@ -17,17 +17,16 @@ $routes->get('/unauthorized', 'Home::unauthorized');
  */
  // User Routes
 $routes->get('/dashboard', 'UserController::index');
-$routes->get('/rkpd', 'UserController::rkpd');
 $routes->get('/rpjmd', 'UserController::rpjmd');
-$routes->get('/lakip_kabupaten', 'UserController::lakip_kabupaten');
-$routes->get('/pk_bupati', 'UserController::pk_bupati');
+$routes->get('/rkpd', 'UserController::rkpd');
+$routes->get('/lakip_kabupaten', 'UserController::lakipKabupaten');
+$routes->get('/lakip_kabupaten/download/(:num)', 'UserController::downloadLakip/$1');
+$routes->get('/pk_bupati', 'UserController::pkBupati');
 $routes->get('/renja', 'UserController::renja');
 $routes->get('/renstra', 'UserController::renstra');
-$routes->get('/lakip_opd', 'UserController::lakip_opd');
-$routes->get('/iku_opd', 'UserController::iku_opd');
-$routes->get('/pk_pimpinan', 'UserController::pk_pimpinan');
-$routes->get('/pk_administrator', 'UserController::pk_administrator');
-$routes->get('/pk_pengawas', 'UserController::pk_pengawas');
+$routes->get('/lakip_opd', 'UserController::lakipOpd');
+$routes->get('/iku_opd', 'UserController::ikuOpd');
+$routes->get('/pk_opd', 'UserController::pkOpd');
 $routes->get('/tentang_kami', 'UserController::tentang_kami');
 
 
@@ -105,6 +104,7 @@ $routes->group('adminkab', ['filter' => 'auth:admin_kabupaten'], function($route
 
 // Admin OPD Routes
 $routes->group('adminopd', ['filter' => 'auth:admin_opd'], function($routes) {
+
     $routes->get('dashboard', 'AdminOpdController::index');
 
     // Renstra Routes
@@ -146,7 +146,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd'], function($routes) {
     $routes->get('iku_opd/tambah', 'AdminOpd\IkuOpdController::tambah');
     $routes->post('iku_opd/save', 'AdminOpd\IkuOpdController::save');
     $routes->get('iku_opd/edit/(:num)', 'AdminOpd\IkuOpdController::edit/$1');
-    $routes->post('iku_opd/update', 'AdminOpd\IkuOpdController::update');
+    $routes->post('iku_opd/update/(:num)', 'AdminOpd\IkuOpdController::update/$1');
     $routes->get('iku_opd/delete/(:num)', 'AdminOpd\IkuOpdController::delete/$1');
     $routes->post('iku_opd/delete/(:num)', 'AdminOpd\IkuOpdController::delete/$1');
     $routes->delete('iku_opd/delete/(:num)', 'AdminOpd\IkuOpdController::delete/$1');

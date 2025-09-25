@@ -141,7 +141,7 @@
                                     <div class="mb-3">
                                         <div class="misi-container">
                                             <label class="form-label misi-label">Misi Bupati Terkait</label>
-                                            <select name="misi_bupati_id" id="misi_bupati-select"
+                                            <select name="rpjmd_misi_id" id="misi_bupati-select"
                                                 class="form-select mb-3" required>
                                                 <option value="">Pilih Misi Bupati</option>
                                                 <?php if (isset($misiList) && !empty($misiList)): ?>
@@ -384,23 +384,23 @@
                 });
             });
 
-            // Fungsi untuk misi bupati
-            const misiCheckboxes = document.querySelectorAll('input[name="misi_bupati_id[]"]');
-            const misiContainer = document.getElementById('selected-misi-container');
+            // // Fungsi untuk misi bupati
+            // const misiCheckboxes = document.querySelectorAll('input[name="misi_bupati_id[]"]');
+            // const misiContainer = document.getElementById('selected-misi-container');
 
-            misiCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedMisi);
-            });
+            // misiCheckboxes.forEach(cb => {
+            //     cb.addEventListener('change', updateSelectedMisi);
+            // });
 
-            function updateSelectedMisi() {
-                const selected = Array.from(misiCheckboxes)
-                    .filter(c => c.checked)
-                    .map(c => c.getAttribute('data-misi'));
+            // function updateSelectedMisi() {
+            //     const selected = Array.from(misiCheckboxes)
+            //         .filter(c => c.checked)
+            //         .map(c => c.getAttribute('data-misi'));
 
-                misiContainer.innerHTML = selected.length ?
-                    '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
-                    '';
-            }
+            //     misiContainer.innerHTML = selected.length ?
+            //         '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
+            //         '';
+            // }
 
             // Fungsi untuk indikator acuan
             const indikatorCheckboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');

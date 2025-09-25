@@ -29,54 +29,50 @@ class PkController extends BaseController
     {
         $session = session();
         $opdId = $session->get('opd_id');
-        $tahun = $this->request->getGet('tahun');
+        $tahun = $this->request->getGet('tahun') ?: date('Y');
 
-        if (!$tahun) {
-            $tahun = date('Y'); // default ke tahun sekarang jika belum dipilih
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
 
-
-        if (!$opdId)
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        // Ambil semua PK sesuai OPD, jenis, dan tahun
         $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
-        // If multiple, pick the first (or null if none)
         $currentOpd = $this->opdModel->find($opdId);
 
-        $pkMisiRows = [];
-        if ($pkData && !empty($pkData['sasaran'])) {
-            foreach ($pkData['sasaran'] as $sasaran) {
-                $misi = $this->rpjmdModel->getMisiById($sasaran['rpjmd_misi_id']);
-                $pkMisiRows[] = [
-                    'rpjmd_misi_id' => $sasaran['rpjmd_misi_id'],
-                    'nama_misi' => $misi ? $misi['misi'] : '-'
-                ];
+        // Ambil daftar misi berdasarkan PK (bukan dari sasaran lagi)
+        $misiListById = [];
+        if ($pkData) {
+            // Kalau hasil dari model berupa array banyak PK
+            if (isset($pkData[0])) {
+                foreach ($pkData as $pk) {
+                    if (!empty($pk['rpjmd_misi_id'])) {
+                        $misi = $this->rpjmdModel->getMisiById($pk['rpjmd_misi_id']);
+                        if ($misi) {
+                            $misiListById[$pk['rpjmd_misi_id']] = $misi['misi'];
+                        }
+                    }
+                }
+            } else {
+                // Kalau hasil dari model hanya 1 PK
+                if (!empty($pkData['rpjmd_misi_id'])) {
+                    $misi = $this->rpjmdModel->getMisiById($pkData['rpjmd_misi_id']);
+                    if ($misi) {
+                        $misiListById[$pkData['rpjmd_misi_id']] = $misi['misi'];
+                    }
+                }
             }
         }
 
-        // dd($pkData);
-        if (is_array($pkData) && count($pkData) > 0) {
-            $pkData = $pkData[0];
-        } else {
-            $pkData = null;
-        }
-        if (strtolower($jenis) === 'bupati') {
-            return view('adminopd/pk/pk', [
-                'pk_data' => $pkData,
-                'current_opd' => $currentOpd,
-                'tahun' => $tahun,
-                'jenis' => $jenis,
-                'pkMisiRows' => $pkMisiRows,
-            ]);
-        } else {
-            return view('adminOpd/pk/pk', [
-                'pk_data' => $pkData,
-                'current_opd' => $currentOpd,
-                'tahun' => $tahun,
-                'jenis' => $jenis,
-                'pkMisiRows' => $pkMisiRows,
-            ]);
-        }
+        return view(strtolower($jenis) === 'bupati' ? 'adminopd/pk/pk' : 'adminOpd/pk/pk', [
+            'pk_data' => $pkData,
+            'current_opd' => $currentOpd,
+            'tahun' => $tahun,
+            'jenis' => $jenis,
+            'misiListById' => $misiListById,
+        ]);
     }
+
+
 
     public function tambah($jenis)
     {
@@ -139,7 +135,10 @@ class PkController extends BaseController
 
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         $program = $this->pkModel->getAllPrograms();
+        $misiList = $this->rpjmdModel->getAllMisi();
         $satuan = $this->pkModel->getAllSatuan();
+
+        // dd($pk);
         if (strtolower($jenis) === 'bupati') {
             return view('adminopd/pk/edit_pk', [
                 'pk' => $pk,
@@ -148,6 +147,7 @@ class PkController extends BaseController
                 'satuan' => $satuan,
                 'title' => 'Edit PK ',
                 'jenis' => $jenis,
+                'misiList' => $misiList,
                 'validation' => session()->getFlashdata('validation')
             ]);
         } else {
@@ -158,6 +158,7 @@ class PkController extends BaseController
                 'satuan' => $satuan,
                 'title' => 'Edit PK ',
                 'jenis' => $jenis,
+                'misiList' => $misiList,
                 'validation' => session()->getFlashdata('validation')
             ]);
         }
@@ -210,9 +211,9 @@ class PkController extends BaseController
             'pihak_1' => $data['pegawai_1_id'] ?? null,
             'pihak_2' => $data['pegawai_2_id'] ?? null,
             'tanggal' => $now,
+            'rpjmd_misi_id' => $data['rpjmd_misi_id'],
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiIndikatorArr,
-            'misi_bupati_id' => isset($data['misi_bupati_id']) ? $data['misi_bupati_id'] : [],
         ];
 
         if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
@@ -250,6 +251,9 @@ class PkController extends BaseController
             }
         }
 
+        // dd($saveData);
+
+        // Untuk PK Bupati, program dan anggaran tidak perlu diisi
 
         try {
             // Panggil model untuk menyimpan data
@@ -281,8 +285,10 @@ class PkController extends BaseController
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
+
         $data = $this->request->getPost();
         $now = date('Y-m-d');
+
         $updateData = [
             'id' => $id,
             'opd_id' => $opdId,
@@ -291,8 +297,11 @@ class PkController extends BaseController
             'pihak_2' => $data['pegawai_2_id'] ?? null,
             'tanggal' => $now,
             'sasaran_pk' => [],
-            'program' => [],
+            'tahun' => $data['tahun'] ?? null,
+
         ];
+
+
         if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
             foreach ($data['sasaran_pk'] as $sasaranItem) {
                 $sasaranData = [
@@ -300,19 +309,31 @@ class PkController extends BaseController
                     'indikator' => [],
                 ];
                 if (isset($sasaranItem['indikator']) && is_array($sasaranItem['indikator'])) {
-                    foreach ($sasaranItem['indikator'] as $indikatorItem) {
-                        $sasaranData['indikator'][] = [
+                    foreach ($sasaranItem['indikator'] as $indikatorIndex => $indikatorItem) {
+                        $indikatorData = [
                             'indikator' => $indikatorItem['indikator'] ?? '',
                             'target' => $indikatorItem['target'] ?? '',
                             'id_satuan' => $indikatorItem['id_satuan'] ?? null,
                             'jenis_indikator' => $indikatorItem['jenis_indikator'] ?? null,
+                            'program' => [],
                         ];
+
+                        // Proses program untuk setiap indikator
+                        if (isset($indikatorItem['program']) && is_array($indikatorItem['program'])) {
+                            foreach ($indikatorItem['program'] as $programItem) {
+                                $indikatorData['program'][] = [
+                                    'program_id' => $programItem['program_id'] ?? null,
+                                    'anggaran' => $programItem['anggaran'] ?? 0,
+                                ];
+                            }
+                        }
+
+                        $sasaranData['indikator'][] = $indikatorData;
                     }
                 }
                 $updateData['sasaran_pk'][] = $sasaranData;
             }
         }
-        // dd($updateData);
         // Untuk PK Bupati, program dan anggaran tidak perlu diisi
         if (strtolower($jenis) !== 'bupati' && isset($data['program']) && is_array($data['program'])) {
             foreach ($data['program'] as $programItem) {
@@ -322,6 +343,8 @@ class PkController extends BaseController
                 ];
             }
         }
+        // dd($updateData);
+
         $success = $this->pkModel->updateCompletePk($id, $updateData);
         if ($success) {
             if (strtolower($jenis) === 'bupati') {

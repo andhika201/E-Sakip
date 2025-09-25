@@ -63,54 +63,74 @@ class PkModel extends Model
     {
         $db = \Config\Database::connect();
         $db->transStart();
+        $now = date('Y-m-d H:i:s');
+
         try {
             // Update main PK table
             $db->table('pk')->where('id', $id)->update([
                 'opd_id' => $data['opd_id'],
                 'jenis' => $data['jenis'],
+                'tahun' => $data['tahun'],
                 'pihak_1' => $data['pihak_1'],
                 'pihak_2' => $data['pihak_2'],
                 'tanggal' => $data['tanggal'],
+                'updated_at' => $now
             ]);
 
             // Delete old sasaran, indikator, and program
-            $sasaranIds = $db->table('pk_sasaran')->select('id')->where('pk_id', $id)->get()->getResultArray();
+            $sasaranIds = $db->table('pk_sasaran')
+                ->select('id')
+                ->where('pk_id', $id)
+                ->get()
+                ->getResultArray();
+
             $sasaranIdArr = array_column($sasaranIds, 'id');
+
             if (!empty($sasaranIdArr)) {
                 $db->table('pk_indikator')->whereIn('pk_sasaran_id', $sasaranIdArr)->delete();
             }
+
             $db->table('pk_sasaran')->where('pk_id', $id)->delete();
             $db->table('pk_program')->where('pk_id', $id)->delete();
 
             // Insert new sasaran and indikator
-            if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
+            if (!empty($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
                 foreach ($data['sasaran_pk'] as $sasaran) {
                     $db->table('pk_sasaran')->insert([
                         'pk_id' => $id,
-                        'sasaran' => $sasaran['sasaran']
+                        'sasaran' => $sasaran['sasaran'],
+                        'created_at' => $now,
+                        'updated_at' => $now,
                     ]);
                     $sasaranId = $db->insertID();
-                    if (isset($sasaran['indikator']) && is_array($sasaran['indikator'])) {
+
+                    if (!empty($sasaran['indikator']) && is_array($sasaran['indikator'])) {
                         foreach ($sasaran['indikator'] as $indikator) {
                             $db->table('pk_indikator')->insert([
                                 'pk_sasaran_id' => $sasaranId,
                                 'indikator' => $indikator['indikator'],
                                 'target' => $indikator['target'],
                                 'id_satuan' => $indikator['id_satuan'] ?? null,
-                                'jenis_indikator' => $indikator['jenis_indikator'] ?? null
+                                'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
+                                'created_at' => $now,
+                                'updated_at' => $now,
                             ]);
+                            $indikatorId = $db->insertID();
+
+                            // Insert program terkait indikator
+                            if (!empty($indikator['program']) && is_array($indikator['program'])) {
+                                foreach ($indikator['program'] as $program) {
+                                    $db->table('pk_program')->insert([
+                                        'pk_id' => $id,
+                                        'program_id' => $program['program_id'] ?? null,
+                                        'id_indikator' => $indikatorId,
+                                        'created_at' => $now,
+                                        'updated_at' => $now
+                                    ]);
+                                }
+                            }
                         }
                     }
-                }
-            }
-
-            // Insert new program
-            if (isset($data['program']) && is_array($data['program'])) {
-                foreach ($data['program'] as $program) {
-                    $db->table('pk_program')->insert([
-                        'pk_id' => $id,
-                        'program_id' => $program['program_id']
-                    ]);
                 }
             }
 
@@ -118,6 +138,7 @@ class PkModel extends Model
             return $db->transStatus();
         } catch (\Exception $e) {
             $db->transRollback();
+            log_message('error', 'Error updateCompletePk: ' . $e->getMessage());
             return false;
         }
     }
@@ -532,6 +553,7 @@ class PkModel extends Model
                 'tahun' => $data['tahun'],
                 'pihak_1' => $data['pihak_1'],
                 'pihak_2' => $data['pihak_2'],
+                'rpjmd_misi_id' => $data['rpjmd_misi_id'],
                 'tanggal' => $data['tanggal'],
                 'created_at' => $now,
                 'updated_at' => $now
@@ -552,55 +574,54 @@ class PkModel extends Model
             }
 
             // Simpan sasaran, indikator, dan program
-        foreach ($data['sasaran_pk'] as $sasaran) {
-            // Simpan sasaran
-            $db->table('pk_sasaran')->insert([
-                'pk_id' => $pkId,
-                'sasaran' => $sasaran['sasaran'],
-                'created_at' => $now,
-                'updated_at' => $now,
-                'rpjmd_misi_id' =>$data['misi_bupati_id'],
-            ]);
-            $pkSasaranId = $db->insertID();
+            foreach ($data['sasaran_pk'] as $sasaran) {
+                // Simpan sasaran
+                $db->table('pk_sasaran')->insert([
+                    'pk_id' => $pkId,
+                    'sasaran' => $sasaran['sasaran'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+                $pkSasaranId = $db->insertID();
 
-            if (!empty($sasaran['indikator'])) {
-                foreach ($sasaran['indikator'] as $indikator) {
-                    // Simpan indikator
-                    $db->table('pk_indikator')->insert([
-                        'pk_sasaran_id' => $pkSasaranId,
-                        'indikator' => $indikator['indikator'],
-                        'target' => $indikator['target'],
-                        'id_satuan' => $indikator['id_satuan'] ?? null,
-                        'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
-                        'created_at' => $now,
-                        'updated_at' => $now
-                    ]);
-                    $pkIndikatorId = $db->insertID();
+                if (!empty($sasaran['indikator'])) {
+                    foreach ($sasaran['indikator'] as $indikator) {
+                        // Simpan indikator
+                        $db->table('pk_indikator')->insert([
+                            'pk_sasaran_id' => $pkSasaranId,
+                            'indikator' => $indikator['indikator'],
+                            'target' => $indikator['target'],
+                            'id_satuan' => $indikator['id_satuan'] ?? null,
+                            'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
+                            'created_at' => $now,
+                            'updated_at' => $now
+                        ]);
+                        $pkIndikatorId = $db->insertID();
 
-                    // Simpan program untuk indikator ini, jika ada
-                    if (isset($indikator['program']) && is_array($indikator['program'])) {
-                        foreach ($indikator['program'] as $programItem) {
-                            $db->table('pk_program')->insert([
-                                'pk_id' => $pkId,
-                                'program_id' => $programItem['program_id'] ?? null,
-                                'id_indikator' => $pkIndikatorId,
-                                'created_at' => $now,
-                                'updated_at' => $now
-                            ]);
+                        // Simpan program untuk indikator ini, jika ada
+                        if (isset($indikator['program']) && is_array($indikator['program'])) {
+                            foreach ($indikator['program'] as $programItem) {
+                                $db->table('pk_program')->insert([
+                                    'pk_id' => $pkId,
+                                    'program_id' => $programItem['program_id'] ?? null,
+                                    'id_indikator' => $pkIndikatorId,
+                                    'created_at' => $now,
+                                    'updated_at' => $now
+                                ]);
+                            }
                         }
                     }
                 }
             }
-        }
-        // Simpan misi bupati jika ada (untuk jenis JPT)
-        if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
-            foreach ($data['misi_bupati_id'] as $misiId) {
-                $db->table('pk_misi')->insert([
-                    'pk_id' => $pkId,
-                    'misi_bupati_id' => $misiId
-                ]);
+            // Simpan misi bupati jika ada (untuk jenis JPT)
+            if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
+                foreach ($data['misi_bupati_id'] as $misiId) {
+                    $db->table('pk_misi')->insert([
+                        'pk_id' => $pkId,
+                        'misi_bupati_id' => $misiId
+                    ]);
+                }
             }
-        }
             $db->transComplete();
 
             return $db->transStatus() ? $pkId : false;
@@ -661,8 +682,8 @@ class PkModel extends Model
     public function getPkPimpinan($opdId, $referensiJenis)
     {
         return $this->where('opd_id', $opdId)
-                    ->where('jenis', $referensiJenis)
-                    ->findAll();
+            ->where('jenis', $referensiJenis)
+            ->findAll();
     }
 
     /**

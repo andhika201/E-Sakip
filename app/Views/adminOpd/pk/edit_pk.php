@@ -4,9 +4,49 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit PK e-SAKIP</title>
-    <!-- Style -->
+    <title>Edit PK <?= ucfirst($jenis) ?> - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .misi-container,
+        .indikator-acuan-container {
+            margin-bottom: 20px;
+        }
+
+        .btn-check:checked+.btn-outline-primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .btn-check:checked+.btn-outline-info {
+            background-color: #0dcaf0;
+            color: black;
+        }
+
+        #selected-misi-container,
+        #selected-indikator-container {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .misi-label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .content-wrapper {
+            transition: margin-left 0.3s ease;
+        }
+
+        .bg-custom {
+            background-color: #00743e;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -31,7 +71,22 @@
                     <section class="mb-4">
                         <h2 class="h5 fw-semibold mb-3">Informasi Umum PK</h2>
                         <div class="col">
+                            <label class="form-label fw-bold">Jenis PK</label>
+                            <select name="jenis" id="jenis-pk" class="form-select mb-3 border-secondary" disabled>
+                                <option value="<?= esc($jenis) ?>" selected>PK <?= ucfirst($jenis) ?></option>
+                            </select>
+                            <label class="form-label fw-bold">Tahun PK</label>
+                            <select name="tahun" id="tahun-pk" class="form-select mb-3 border-secondary" required>
+                                <option value="">Pilih Tahun</option>
+                                
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                                <option value="2027">2027</option>
+                                <option value="2028">2028</option>
+                                <option value="2029">2029</option></div>
                             <?php
+
                             // Ambil indikator acuan yang sudah dipilih
                             $indikatorAcuanChecked = [];
                             if (!empty($pk['pk_id'])) {
@@ -223,14 +278,72 @@
                                                             </div>
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Jenis Indikator</label>
-                                                                <select name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][jenis_indikator]"
+                                                                <select
+                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][jenis_indikator]"
                                                                     class="form-select mb-3 border-secondary" required>
                                                                     <option value="">Pilih Jenis Indikator</option>
-                                                                    <option value="Indikator Positif" <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Positif') ? 'selected' : '' ?>>Indikator Positif</option>
-                                                                    <option value="Indikator Negatif" <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Negatif') ? 'selected' : '' ?>>Indikator Negatif</option>
+                                                                    <option value="Indikator Positif"
+                                                                        <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Positif') ? 'selected' : '' ?>>Indikator Positif</option>
+                                                                    <option value="Indikator Negatif"
+                                                                        <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Negatif') ? 'selected' : '' ?>>Indikator Negatif</option>
                                                                 </select>
                                                             </div>
                                                         </div>
+                                                        <!-- Program Container Dinamis per Indikator -->
+                                                        <?php if ($jenis !== 'bupati'): ?>
+                                                            <div class="program-container">
+                                                                <?php
+                                                                $programList = isset($pk['program_pk']) && is_array($pk['program_pk']) && count($pk['program_pk']) > 0 ? $pk['program_pk'] : [['program_id' => '', 'anggaran' => '', 'program_kegiatan' => '']];
+                                                                foreach ($programList as $pi => $prog) {
+                                                                    ?>
+                                                                    <div class="row program-item">
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label">Program</label>
+                                                                            <select
+                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
+                                                                                class="form-select program-select mb-3 border-secondary"
+                                                                                required>
+                                                                                <option value="">Pilih Program</option>
+                                                                                <?php
+                                                                                if (!empty($program)) {
+                                                                                    foreach ($program as $programItem) {
+                                                                                        $selected = '';
+                                                                                        if (isset($prog['program_id']) && $prog['program_id'] == $programItem['id']) {
+                                                                                            $selected = ' selected';
+                                                                                        } elseif (isset($prog['program_kegiatan']) && $prog['program_kegiatan'] == $programItem['program_kegiatan']) {
+                                                                                            $selected = ' selected';
+                                                                                        }
+                                                                                        echo "<option value=\"{$programItem['id']}\" data-anggaran=\"{$programItem['anggaran']}\"$selected>" . esc($programItem['program_kegiatan']) . "</option>";
+                                                                                    }
+                                                                                } else {
+                                                                                    echo '<option value="" disabled>Tidak ada Program yang tersedia</option>';
+                                                                                }
+                                                                                ?>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <label class="form-label">Anggaran</label>
+                                                                            <input type="text" name="program[<?= $pi ?>][anggaran]"
+                                                                                class="form-control mb-3 border-secondary"
+                                                                                value="<?= isset($prog['anggaran']) ? esc($prog['anggaran']) : '' ?>"
+                                                                                placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
+                                                                                readonly>
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <button type="button"
+                                                                                class="remove-program btn btn-outline-danger btn-sm">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php } ?>
+                                                            </div>
+                                                            <div class="d-flex justify-content-end mt-2">
+                                                                <button type="button" class="add-program btn btn-success btn-sm">
+                                                                    <i class="fas fa-plus me-1"></i> Tambah Program
+                                                                </button>
+                                                            </div>
+                                                        <?php endif; ?>
                                                     </div>
                                                 <?php } ?>
                                             </div>
@@ -252,67 +365,7 @@
                                 <i class="fas fa-plus me-1"></i> Tambah Sasaran
                             </button>
                         </div>
-
-                        <!-- Program PK -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h3 class="fw-medium">Program PK</h3>
-                        </div>
-
-                        <div class="program-container">
-                            <?php
-                            $programList = isset($pk['program_pk']) && is_array($pk['program_pk']) && count($pk['program_pk']) > 0 ? $pk['program_pk'] : [['program_id' => '', 'anggaran' => '', 'program_kegiatan' => '']];
-                            foreach ($programList as $pi => $prog) {
-                                ?>
-                                <div class="program-item border border-secondary rounded p-3 bg-white mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <label class="fw-medium">Program <?= $pi + 1 ?></label>
-                                        <button type="button" class="remove-program btn btn-outline-danger btn-sm"><i
-                                                class="fas fa-trash"></i></button>
-                                    </div>
-                                    <div class="mb-3">
-                                        <div class="row">
-                                            <div class="col-md-8">
-                                                <label class="form-label">Program</label>
-                                                <select name="program[<?= $pi ?>][program_id]"
-                                                    class="form-select program-select mb-3" <?= ($jenis !== 'bupati') ? 'required' : '' ?>>
-                                                    <option value="">Pilih Program</option>
-                                                    <?php
-                                                    if (!empty($program)) {
-                                                        foreach ($program as $programItem) {
-                                                            $selected = '';
-                                                            if (isset($prog['program_id']) && $prog['program_id'] == $programItem['id']) {
-                                                                $selected = ' selected';
-                                                            } elseif (isset($prog['program_kegiatan']) && $prog['program_kegiatan'] == $programItem['program_kegiatan']) {
-                                                                $selected = ' selected';
-                                                            }
-                                                            echo "<option value=\"{$programItem['id']}\" data-anggaran=\"{$programItem['anggaran']}\"$selected>" . esc($programItem['program_kegiatan']) . "</option>";
-                                                        }
-                                                    } else {
-                                                        echo '<option value="" disabled>Tidak ada Program yang tersedia</option>';
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Anggaran</label>
-                                                <input type="text" name="program[<?= $pi ?>][anggaran]"
-                                                    class="form-control mb-3 border-secondary"
-                                                    value="<?= isset($prog['anggaran']) ? esc($prog['anggaran']) : '' ?>"
-                                                    placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
-                                                    readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php } ?>
-                        </div>
-                        <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="add-program btn btn-success btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Program
-                            </button>
-                        </div>
                     </section>
-
                     <!-- Tombol Aksi -->
                     <div class="d-flex justify-content-between mt-4">
                         <a href="<?= base_url('adminopd/pk/' . $jenis) ?>" class="btn btn-secondary">
@@ -340,6 +393,60 @@
             echo '<option value="" disabled>Tidak ada satuan</option>';
         }
         ?>`;
+        window.programDropdownTemplate = `<?php
+        if (isset($program) && !empty($program)) {
+            foreach ($program as $programItem) {
+                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
+            document.querySelectorAll('.pegawai-select').forEach(select => {
+                select.addEventListener('change', function () {
+                    const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
+                    if (targetField && this.selectedOptions[0]) {
+                        targetField.value = this.selectedOptions[0].dataset.nip || '';
+                    }
+                });
+            });
+
+            // Fungsi untuk program anggaran
+            document.querySelectorAll('.program-select').forEach(select => {
+                select.addEventListener('change', function () {
+                    const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
+                    if (anggaranField && this.selectedOptions[0]) {
+                        anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';
+                    }
+                });
+            });
+
+            // Fungsi untuk indikator acuan
+            const indikatorCheckboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
+            const indikatorContainer = document.getElementById('selected-indikator-container');
+
+            indikatorCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedIndikator);
+            });
+
+            function updateSelectedIndikator() {
+                const selected = Array.from(indikatorCheckboxes)
+                    .filter(c => c.checked)
+                    .map(c => c.getAttribute('data-indikator'));
+
+                indikatorContainer.innerHTML = selected.length ?
+                    '<strong>Indikator Acuan Terpilih:</strong><br>' + selected.join('<br>') :
+                    '';
+            }
+
+            // Inisialisasi awal
+            updateSelectedMisi();
+            updateSelectedIndikator();
+        });
     </script>
     <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>
 

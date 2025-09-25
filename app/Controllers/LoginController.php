@@ -77,20 +77,20 @@ class LoginController extends BaseController
 
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
-        $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
+        // $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
 
-        // Validasi CAPTCHA
-        if (empty($recaptchaResponse)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Silakan verifikasi CAPTCHA terlebih dahulu');
-        }
+        // // Validasi CAPTCHA
+        // if (empty($recaptchaResponse)) {
+        //     return redirect()->back()
+        //         ->withInput()
+        //         ->with('error', 'Silakan verifikasi CAPTCHA terlebih dahulu');
+        // }
 
-        if (!$this->verifyRecaptcha($recaptchaResponse)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Verifikasi CAPTCHA gagal. Silakan coba lagi');
-        }
+        // if (!$this->verifyRecaptcha($recaptchaResponse)) {
+        //     return redirect()->back()
+        //         ->withInput()
+        //         ->with('error', 'Verifikasi CAPTCHA gagal. Silakan coba lagi');
+        // }
 
         // Load model untuk cek user di database
         $userModel = new \App\Models\UserModel();

@@ -104,7 +104,7 @@ function rebuildTable(data, selectedPeriod) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="${totalColumns}" class="border p-3 text-center text-muted">
-                    Belum ada data Renstra. <a href="${window.base_url}adminopd/renstra/tambah" class="text-success">Tambah data pertama</a>
+                    Belum ada data Renstra. <a href="${window.base_url}renstra/tambah" class="text-success">Tambah data pertama</a>
                 </td>
             </tr>
         `;

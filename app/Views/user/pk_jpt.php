@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PK Pengawas</title>
+  <title>PK JPT</title>
   <?= $this->include('user/templates/style.php'); ?>
 </head>
 <body>
@@ -14,7 +14,7 @@
     <div class="container my-5" style="max-width: 1700px;">
     <div class="bg-white p-4 rounded shadow-sm">
       <h4 class="fw-bold text-center text-success mb-4">
-        PERJANJIAN KINERJA PENGAWAS
+        PERJANJIAN KINERJA PIMPINAN
       </h4>
       
       <!-- Filter -->
@@ -43,7 +43,7 @@
           </div>
       </div>
       
-      <!-- Tabel PK Pengawas -->
+      <!-- Tabel PK JPT -->
       <div class="table-responsive">
         <table class="table table-bordered text-center align-middle">
           <thead class="table-success">
@@ -55,19 +55,19 @@
               <th class="text-center" style="width: 10%;">PROGRAM</th>
             </tr>
           </thead>
-          <tbody id="pkPengawasTableBody">
+          <tbody id="pkJptTableBody">
             <!-- Default message -->
             <tr id="defaultMessage" style="display: block;">
               <td colspan="5" class="text-center text-muted py-4">
                 <i class="fas fa-info-circle mb-2"></i><br>
-                Silakan pilih Unit Kerja untuk menampilkan data PK Pengawas
+                Silakan pilih Unit Kerja untuk menampilkan data PK JPT
               </td>
             </tr>
             
             <!-- Data will be populated here by JavaScript -->
-            <?php if (!empty($pkPengawasData) && is_array($pkPengawasData)): ?>
+            <?php if (!empty($pkJptData) && is_array($pkJptData)): ?>
               <?php $globalNo = 1; ?>
-              <?php foreach ($pkPengawasData as $pk): ?>
+              <?php foreach ($pkJptData as $pk): ?>
                 <?php $year = date('Y', strtotime($pk['tanggal'])); ?>
                 
                 <?php if (!empty($pk['sasaran_pk'])): ?>
@@ -254,13 +254,13 @@ function hideDefaultMessage() {
 }
 
 function showNoDataMessage() {
-    const tbody = document.getElementById('pkPengawasTableBody');
+    const tbody = document.getElementById('pkJptTableBody');
     const noDataRow = document.createElement('tr');
     noDataRow.className = 'no-data-message';
     noDataRow.innerHTML = `
         <td colspan="5" class="text-center text-muted py-4">
             <i class="fas fa-search mb-2"></i><br>
-            Tidak ada data PK Pengawas untuk filter yang dipilih
+            Tidak ada data PK JPT untuk filter yang dipilih
         </td>
     `;
     tbody.appendChild(noDataRow);

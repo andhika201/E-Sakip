@@ -419,6 +419,55 @@ class PkModel extends Model
         return $pk;
     }
 
+    public function getCompletePkByRole($type)
+    {
+        // Ambil semua PK berdasarkan jenis
+        $pks = $this->db->table('pk p')
+            ->select('
+                p.id as pk_id,
+                p.opd_id,
+                p.jenis,
+                p.pihak_1,
+                p.pihak_2,
+                p.tanggal,
+                o.nama_opd
+            ')
+            ->join('opd o', 'o.id = p.opd_id')
+            ->where('p.jenis', $type)
+            ->orderBy('p.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        if (!$pks) return [];
+
+        // Loop semua PK untuk ambil sasaran, indikator, dan program
+        foreach ($pks as &$pk) {
+            // Ambil sasaran
+            $pk['sasaran_pk'] = $this->db->table('pk_sasaran')
+                ->where('pk_id', $pk['pk_id'])
+                ->get()
+                ->getResultArray();
+
+            foreach ($pk['sasaran_pk'] as &$s) {
+                $s['indikator'] = $this->db->table('pk_indikator')
+                    ->where('pk_sasaran_id', $s['id'])
+                    ->get()
+                    ->getResultArray();
+            }
+
+            // Ambil program
+            $pk['program'] = $this->db->table('pk_program pp')
+                ->select('pp.id as pk_program_id, pp.program_id, pr.program_kegiatan, pr.anggaran')
+                ->join('program_pk pr', 'pr.id = pp.program_id')
+                ->where('pp.pk_id', $pk['pk_id'])
+                ->get()
+                ->getResultArray();
+        }
+
+        return $pks;
+    }
+
+
     public function updateCompletePk($id, $data)
     {
         $db = \Config\Database::connect();

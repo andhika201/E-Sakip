@@ -38,7 +38,7 @@
       
       <!-- Tabel PK Bupati -->
       <div class="table-responsive">
-        <table class="table table-bordered text-center align-middle">
+        <table class="table table-striped table-bordered text-center align-middle">
           <thead class="table-success">
             <tr>
                 <th class="border p-2" style="width: 50px;">NO</th>

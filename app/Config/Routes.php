@@ -24,9 +24,11 @@ $routes->get('/lakip_kabupaten/download/(:num)', 'UserController::downloadLakip/
 $routes->get('/pk_bupati', 'UserController::pkBupati');
 $routes->get('/renja', 'UserController::renja');
 $routes->get('/renstra', 'UserController::renstra');
-$routes->get('/lakip_opd', 'UserController::lakipOpd');
 $routes->get('/iku_opd', 'UserController::ikuOpd');
-$routes->get('/pk_opd', 'UserController::pkOpd');
+$routes->get('/pk_jpt', 'UserController::pkJpt');
+$routes->get('/pk_administrator', 'UserController::pkAdministrator');
+$routes->get('/pk_pengawas', 'UserController::pkPengawas');
+$routes->get('/lakip_opd', 'UserController::lakipOpd');
 $routes->get('/tentang_kami', 'UserController::tentang_kami');
 
 

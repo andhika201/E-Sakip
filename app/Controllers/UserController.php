@@ -86,7 +86,6 @@ class UserController extends BaseController
         // Sort periods by tahun_mulai
         ksort($groupedData);
         
-        dd( $groupedData );
         return view('user/rpjmd', [
             'rpjmdGrouped' => $groupedData
         ]);
@@ -346,29 +345,79 @@ class UserController extends BaseController
     }
 
 
-    public function pk_pimpinan()
+    public function pkJpt()
     {
-        $pkPimpinanData = $this->pkOpdModel->getCompletePkByRole('pimpinan');
-        return view('user/pk_pimpinan', [
-            'pkPimpinanData' => $pkPimpinanData
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
+
+        // Get PK JPT data 
+        $pkJptData = $this->pkOpdModel->getCompletePkByRole('jpt');
+
+        // Get available years for filter dropdown
+        $availableYears = [];
+        foreach ($pkJptData as $pk) {
+            $year = date('Y', strtotime($pk['tanggal']));
+            if (!in_array($year, $availableYears)) {
+                $availableYears[] = $year;
+            }
+        }
+        sort($availableYears);
+
+        return view('user/pk_jpt', [
+            'pkJptData' => $pkJptData,
+            'opd_data' => $opdData,
+            'available_years' => $availableYears
         ]);
     }
 
-    public function pk_administrator()
-    {
-        $pkAdministratorData = $this->pkOpdModel->getCompletePkByRole('administrator'); 
 
-        return view('user/pk_administrator',[
-            'pkAdministratorData' => $pkAdministratorData
+    public function pkAdministrator()
+    {
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
+
+        // Get PK Administrator data 
+        $pkAdminData = $this->pkOpdModel->getCompletePkByRole('administrator');
+
+        // Get available years for filter dropdown
+        $availableYears = [];
+        foreach ($pkAdminData as $pk) {
+            $year = date('Y', strtotime($pk['tanggal']));
+            if (!in_array($year, $availableYears)) {
+                $availableYears[] = $year;
+            }
+        }
+        sort($availableYears);
+
+        return view('user/pk_administrator', [
+            'pkAdminData' => $pkAdminData,
+            'opd_data' => $opdData,
+            'available_years' => $availableYears
         ]);
     }
 
-    public function pk_pengawas()
+    public function pkPengawas()
     {
+        // Get all OPD for filter dropdown
+        $opdData = $this->OpdModel->getAllOpd();
+
+        // Get PK Pengawas data 
         $pkPengawasData = $this->pkOpdModel->getCompletePkByRole('pengawas');
 
+        // Get available years for filter dropdown
+        $availableYears = [];
+        foreach ($pkPengawasData as $pk) {
+            $year = date('Y', strtotime($pk['tanggal']));
+            if (!in_array($year, $availableYears)) {
+                $availableYears[] = $year;
+            }
+        }
+        sort($availableYears);
+
         return view('user/pk_pengawas', [
-            'pkPengawasData' => $pkPengawasData
+            'pkPengawasData' => $pkPengawasData,
+            'opd_data' => $opdData,
+            'available_years' => $availableYears
         ]);
     }
 

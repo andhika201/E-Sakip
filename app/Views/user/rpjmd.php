@@ -164,9 +164,41 @@
             </table>
           </div>
         <?php endif; ?>
+
+        <!-- Tabel Program & Anggaran -->
+        <div class="table-responsive mt-5">
+          <h5 class="fw-bold text-center text-success mb-3">
+            DAFTAR PROGRAM DAN ANGGARAN
+          </h5>
+          <table class="table table-bordered table-striped text-center small">
+            <thead class="table-success">
+              <tr>
+                <th class="border p-2 align-middle" style="width: 50px;">No</th>
+                <th class="border p-2 align-middle">Program</th>
+                <th class="border p-2 align-middle">Anggaran</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="border p-2">1</td>
+                <td class="border p-2 text-start">Peningkatan Infrastruktur Jalan</td>
+                <td class="border p-2">Rp 5.000.000.000</td>
+              </tr>
+              <tr>
+                <td class="border p-2">2</td>
+                <td class="border p-2 text-start">Pengembangan SDM Aparatur</td>
+                <td class="border p-2">Rp 1.200.000.000</td>
+              </tr>
+              <tr>
+                <td class="border p-2">3</td>
+                <td class="border p-2 text-start">Peningkatan Kesehatan Masyarakat</td>
+                <td class="border p-2">Rp 3.500.000.000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </main>
   </main>
 
   <script>

@@ -54,27 +54,49 @@ class UserController extends BaseController
 
     public function rkpd()
     {
-    // Simulasi data dari database
-        $rkpdData = [
+        // Simulasi data dari database 
+        $rkpd_data = [
             [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
+                'id' => 1,
+                'rpjmd_sasaran_id' => 1,
+                'rpjmd_sasaran' => 'Meningkatkan kualitas tata kelola pemerintahan',
+                'sasaran' => 'Indeks Keterbukaan Informasi Publik',
+                'status' => 'draft',
+                'indikator' => [
+                    [
+                        'indikator_sasaran' => 'Nilai indeks dari Komisi Informasi',
+                        'satuan' => 'Skor',
+                        'tahun' => '2025',
+                        'target' => '85'
+                    ],
+                    [
+                        'indikator_sasaran' => 'Persentase keterbukaan dokumen publik',
+                        'satuan' => '%',
+                        'tahun' => '2025',
+                        'target' => '90'
+                    ]
+                ]
             ],
             [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
-            ],
-            [
-                'sasaran' => 'indeks Keterbukaan Informasi Publik',
-                'indikator' => 'Nilai Indeks didapat dari hasil penilaian indeks Keterbukaan Informasi Publik oleh Komisi Informasi',
-                'target' => '2025'
+                'id' => 2,
+                'rpjmd_sasaran_id' => 2,
+                'rpjmd_sasaran' => 'Meningkatkan kualitas pendidikan',
+                'sasaran' => 'Indeks Partisipasi Sekolah',
+                'status' => 'selesai',
+                'indikator' => [
+                    [
+                        'indikator_sasaran' => 'Angka Partisipasi Murni SMP',
+                        'satuan' => '%',
+                        'tahun' => '2025',
+                        'target' => '98'
+                    ]
+                ]
             ],
         ];
 
         return view('user/rkpd', [
-            'rkpdData' => $rkpdData
+            'rkpd_data' => $rkpd_data,
+            'available_years' => ['2023', '2024', '2025']
         ]);
     }
 
@@ -239,12 +261,14 @@ class UserController extends BaseController
         $pkPimpinanData = [
             [
                 'tahun' => '2023',
+                'misi' => 'Meningkatkan kualitas sumber daya manusia yang berdaya saing',
                 'sasaran' => 'Meningkatkan kualitas pendidikan',
                 'indikator' => 'Angkat Partisipsi Sekolah',
                 'target' => '98%',
             ],
             [
                 'tahun' => '2023',
+                'misi' => 'Meningkatkan kualitas sumber daya manusia yang berdaya saing',
                 'sasaran' => 'Meningkatkan kualitas pendidikan',
                 'indikator' => 'Angkat Partisipsi Sekolah',
                 'target' => '98%',

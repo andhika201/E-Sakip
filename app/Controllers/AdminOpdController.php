@@ -50,7 +50,30 @@ class AdminOpdController extends BaseController
 
     public function pk_jpt()
     {
-        return view('adminOpd/pk_jpt/pk_jpt');
+        $pkJptData = [
+            [
+                'tahun' => '2023',
+                'indikator' => 'Angka Partisipasi Sekolah',
+                'satuan' => '%',
+                'target' => '98',
+                'capaian_sebelumnya' => '95',
+                'target_tahun_ini' => '98',
+                'capaian_tahun_ini' => '96',
+            ],
+            [
+                'tahun' => '2023',
+                'indikator' => 'Angka Putus Sekolah',
+                'satuan' => '%',
+                'target' => '2',
+                'capaian_sebelumnya' => '3',
+                'target_tahun_ini' => '2',
+                'capaian_tahun_ini' => '2.5',
+            ]
+        ];
+
+        return view('adminOpd/pk_jpt', [
+            'pkJptData' => $pkJptData
+        ]);
     }
 
     public function pk_admin()

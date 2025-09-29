@@ -56,12 +56,9 @@
         <!-- Filter -->
         <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
             <div class="d-flex gap-2 flex-fill">
-                <select id="renstraSasaranFilter" class="form-select w-50" onchange="filterData()">
-                    <option value="all">SEMUA SASARAN RENSTRA</option>
-                    <!-- Options will be populated by JavaScript -->
-                </select>
-                <select id="yearFilter" class="form-select w-25" onchange="filterData()">
-                    <option value="all">SEMUA TAHUN</option>
+                <!-- Tahun -->
+                <select id="yearFilter" class="form-select w-50" onchange="filterData()">
+                    <option value="">Tahun</option>
                     <?php if (isset($available_years)): ?>
                         <?php foreach ($available_years as $year): ?>
                             <option value="<?= $year ?>">
@@ -70,32 +67,17 @@
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
-                <select id="statusFilter" class="form-select w-25" onchange="filterData()">
-                    <option value="all">SEMUA STATUS</option>
-                    <option value="draft">Draft</option>
-                    <option value="selesai">Selesai</option>
+
+                <!-- Satuan Kerja OPD -->
+                <select id="opdFilter" class="form-select w-50" onchange="filterData()">
+                    <option value="">OPD</option>
+                    <option value="Biro Pemerintahan dan Otonomi Daerah">Biro Pemerintahan dan Otonomi Daerah</option>
+                    <option value="Biro Hukum">Biro Hukum</option>
+                    <option value="Biro Kesejahteraan Rakyat">Biro Kesejahteraan Rakyat</option>
+                    <option value="Biro Perekonomian">Biro Perekonomian</option>
                 </select>
             </div>
-            <div>
-                <a href="<?= base_url('adminopd/renja/tambah') ?>" class="btn btn-success d-flex align-items-center">
-                    <i class="fas fa-plus me-1"></i> TAMBAH
-                </a>
-            </div>
         </div>
-
-    <!-- Data Summary -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">
-                    <span id="visible-data-count">Memuat data...</span>
-                </small>
-                <small class="text-muted">
-                    Filter aktif: <span id="active-filters">Semua Sasaran, Semua Tahun, Semua Status</span>
-                </small>
-            </div>
-        </div>
-    </div>
 
     <!-- Tabel -->
     <div class="table-responsive">
@@ -103,14 +85,14 @@
             <thead class="table-success">
             <tr>
                 <th class="border p-2">NO</th>
-                <th class="border p-2">SASARAN RENSTRA</th>
-                <th class="border p-2">SASARAN RENJA</th>
-                <th class="border p-2">INDIKATOR SASARAN</th>
-                <th class="border p-2">SATUAN</th>
-                <th class="border p-2">TAHUN</th>
+                <th class="border p-2">SATUAN KERJA</th>
+                <th class="border p-2">SASARAN</th>
+                <th class="border p-2">INDIKATOR</th>
                 <th class="border p-2">TARGET</th>
-                <th class="border p-2">STATUS</th>
-                <th class="border p-2">ACTION</th>
+                <th class="border p-2">PROGRAM</th>
+                <th class="border p-2">KEGIATAN</th>
+                <th class="border p-2">SUB KEGIATAN</th>
+                <th class="border p-2">TARGET ANGGARAN</th>
             </tr>   
             </thead>
             <tbody>
@@ -118,98 +100,99 @@
                 <tr id="no-data-message">
                     <td colspan="9" class="border p-4 text-center text-muted">
                         <i class="fas fa-info-circle me-2"></i>
-                             Tidak ada data RENJA. <a href="<?= base_url('adminopd/renja/tambah') ?>" class="text-success">Tambah data pertama</a>
+                            Tidak ada data RENJA. <a href="<?= base_url('adminopd/renja/tambah') ?>" class="text-success">Tambah data pertama</a>
                     </td>
                 </tr>
             <?php else: ?>
             <?php 
-                // Group data by renstra_sasaran first
+                // Group data by renstra_sasaran
                 $renstraGroups = [];
                 foreach ($renja_data as $renja) {
-                    $renstraSasaran = $renja['renstra_sasaran'];
-                    if (!isset($renstraGroups[$renstraSasaran])) {
-                        $renstraGroups[$renstraSasaran] = [
-                            'renstra_sasaran' => $renstraSasaran,
+                    $sasaran = $renja['renstra_sasaran'];
+                    if (!isset($renstraGroups[$sasaran])) {
+                        $renstraGroups[$sasaran] = [
+                            'sasaran' => $sasaran,
                             'renja_list' => []
                         ];
                     }
-                    $renstraGroups[$renstraSasaran]['renja_list'][] = $renja;
+                    $renstraGroups[$sasaran]['renja_list'][] = $renja;
                 }
-                
+
                 $globalNo = 1;
             ?>
-            <?php foreach ($renstraGroups as $renstraGroup): ?>
+
+            <?php foreach ($renstraGroups as $group): ?>
                 <?php 
-                    // Calculate total rows for this RENSTRA group
-                    $totalRowsForRenstra = 0;
-                    foreach ($renstraGroup['renja_list'] as $renja) {
-                        $totalRowsForRenstra += count($renja['indikator']);
+                    // Hitung total baris untuk 1 sasaran
+                    $totalRowsForSasaran = 0;
+                    foreach ($group['renja_list'] as $renja) {
+                        $totalRowsForSasaran += count($renja['indikator']);
                     }
-                    $isFirstRowOfRenstra = true;
+                    $isFirstRowOfSasaran = true;
                 ?>
-                <?php foreach ($renstraGroup['renja_list'] as $renja): ?>
+
+                <?php foreach ($group['renja_list'] as $renja): ?>
                     <?php 
                         $indikatorList = $renja['indikator']; 
                         $rowspanRenja = count($indikatorList);
-                        // Skip if no indicators
                         if ($rowspanRenja == 0) continue;
                     ?>
+
                     <?php foreach ($indikatorList as $i => $indikator): ?>
-                        <tr class="renja-row" data-status="<?= $renja['status'] ?? 'draft' ?>" data-year="<?= $indikator['tahun'] ?>" data-renja-group="<?= $renja['id'] ?>">
-                            <!-- Nomor - show only once per RENSTRA group -->
-                            <?php if ($isFirstRowOfRenstra): ?>
-                                <td class="border p-2" rowspan="<?= $totalRowsForRenstra ?>"><?= $globalNo++ ?></td>
-                            <?php endif; ?>
-
-                            <!-- Sasaran RENSTRA - show only once per RENSTRA group -->
-                            <?php if ($isFirstRowOfRenstra): ?>
-                                <td class="border p-2 text-start" rowspan="<?= $totalRowsForRenstra ?>">
-                                    <?= esc($renstraGroup['renstra_sasaran']) ?>
+                        <tr>
+                            <!-- NO (sekali untuk 1 sasaran) -->
+                            <?php if ($isFirstRowOfSasaran): ?>
+                                <td class="border p-2" rowspan="<?= $totalRowsForSasaran ?>">
+                                    <?= $globalNo++ ?>
                                 </td>
-                                <?php $isFirstRowOfRenstra = false; ?>
                             <?php endif; ?>
 
-                            <!-- Sasaran RENJA - show only once per RENJA -->
+                            <!-- SATUAN KERJA (sekali untuk setiap renja) -->
                             <?php if ($i === 0): ?>
                                 <td class="border p-2 text-start" rowspan="<?= $rowspanRenja ?>">
-                                    <?= esc($renja['sasaran_renja']) ?>
+                                    <?= esc($renja['satuan_kerja']) ?>
                                 </td>
                             <?php endif; ?>
 
-                            <!-- Indikator -->
+                            <!-- SASARAN (sekali per group) -->
+                            <?php if ($isFirstRowOfSasaran): ?>
+                                <td class="border p-2 text-start" rowspan="<?= $totalRowsForSasaran ?>">
+                                    <?= esc($group['sasaran']) ?>
+                                </td>
+                                <?php $isFirstRowOfSasaran = false; ?>
+                            <?php endif; ?>
+
+                            <!-- INDIKATOR -->
                             <td class="border p-2 text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                            <td class="border p-2"><?= esc($indikator['satuan']) ?></td>
-                            <td class="border p-2"><?= esc($indikator['tahun']) ?></td>
-                            <td class="border p-2"><?= esc($indikator['target']) ?></td>
 
-                            <!-- Status - show only once per RENJA -->
+                            <!-- TARGET -->
+                            <td class="border p-2"><?= esc($indikator['target']) ?> <?= esc($indikator['satuan']) ?></td>
+
+                            <!-- PROGRAM (sekali per renja) -->
                             <?php if ($i === 0): ?>
-                                <td class="border p-2" rowspan="<?= $rowspanRenja ?>">
-                                    <?php 
-                                        $status = $renja['status'] ?? 'draft';
-                                        $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning';
-                                    ?>
-                                    <button 
-                                        class="badge <?= $badgeClass ?> border-0" 
-                                        onclick="toggleStatus(<?= $renja['id'] ?>, '<?= base_url() ?>', '<?= csrf_header() ?>', '<?= csrf_hash() ?>')" 
-                                        style="cursor: pointer;" 
-                                        title="Klik untuk mengubah status">
-                                        <?= ucfirst($status) ?>
-                                    </button>
+                                <td class="border p-2 text-start" rowspan="<?= $rowspanRenja ?>">
+                                    <?= esc($renja['program']) ?>
                                 </td>
                             <?php endif; ?>
 
-                            <!-- Action - show only once per RENJA -->
+                            <!-- KEGIATAN (sekali per renja) -->
                             <?php if ($i === 0): ?>
-                                <td class="border p-2 align-middle text-center" rowspan="<?= $rowspanRenja ?>">
-                                    <div class="d-flex flex-column align-items-center gap-2">
-                                        <a href="<?= base_url('adminopd/renja/edit/' . $renja['id']) ?>" class="btn btn-success btn-sm">
-                                            <i class="fas fa-edit me-1"></i>Edit
-                                        </a>
-                                        <button class="btn btn-danger btn-sm" onclick="confirmDelete(<?= $renja['id'] ?>)">
-                                            <i class="fas fa-trash me-1"></i>Hapus
-                                        </button>
-                                    </div>
+                                <td class="border p-2 text-start" rowspan="<?= $rowspanRenja ?>">
+                                    <?= esc($renja['kegiatan']) ?>
+                                </td>
+                            <?php endif; ?>
+
+                            <!-- SUB KEGIATAN (sekali per renja) -->
+                            <?php if ($i === 0): ?>
+                                <td class="border p-2 text-start" rowspan="<?= $rowspanRenja ?>">
+                                    <?= esc($renja['sub_kegiatan']) ?>
+                                </td>
+                            <?php endif; ?>
+
+                            <!-- TARGET ANGGARAN (sekali per renja) -->
+                            <?php if ($i === 0): ?>
+                                <td class="border p-2 text-end" rowspan="<?= $rowspanRenja ?>">
+                                    Rp <?= number_format($renja['target_anggaran'], 0, ',', '.') ?>
                                 </td>
                             <?php endif; ?>
                         </tr>
@@ -217,7 +200,8 @@
                 <?php endforeach; ?>
             <?php endforeach; ?>
             <?php endif; ?>
-            
+            </tbody>
+                    
             <!-- No data message (hidden by default, shown by JavaScript when no filtered results) -->
             <tr id="no-data-message" style="display: none;">
                 <td colspan="9" class="border p-4 text-center text-muted">
@@ -269,49 +253,44 @@
   }
 
   // Function to filter and rebuild table
-  function filterData() {
-      const renstraSasaranFilter = document.getElementById('renstraSasaranFilter').value;
-      const yearFilter = document.getElementById('yearFilter').value;
-      const statusFilter = document.getElementById('statusFilter').value;
-      
-      // Filter original data
-      const filteredData = originalData.filter(function(renja) {
-          const statusMatch = statusFilter === 'all' || renja.status === statusFilter;
-          
-          const renstraSasaranMatch = renstraSasaranFilter === 'all' || 
-              renja.renstra_sasaran === renstraSasaranFilter;
-          
-          // Check if any indicator matches the year filter
-          const yearMatch = yearFilter === 'all' || 
-              renja.indikator.some(function(indikator) {
-                  return indikator.tahun === yearFilter;
-              });
-          
-          return statusMatch && renstraSasaranMatch && yearMatch;
-      });
-      
-      // If year filter is applied, filter indicators within each RENJA
-      const processedData = filteredData.map(function(renja) {
-          if (yearFilter === 'all') {
-              return renja;
-          } else {
-              return {
-                  ...renja,
-                  indikator: renja.indikator.filter(function(indikator) {
-                      return indikator.tahun === yearFilter;
-                  })
-              };
-          }
-      });
-      
-      // Rebuild table
-      rebuildTable(processedData);
-      
-      // Update summary
-      const totalIndicators = processedData.reduce((sum, renja) => sum + renja.indikator.length, 0);
-      const originalTotal = originalData.reduce((sum, renja) => sum + renja.indikator.length, 0);
-      updateDataSummary(totalIndicators, originalTotal, renstraSasaranFilter, yearFilter, statusFilter);
-  }
+function filterData() {
+    const yearFilter = document.getElementById('yearFilter').value;
+    const opdFilter = document.getElementById('opdFilter').value;
+
+    // Kalau salah satu belum dipilih, kosongkan tabel
+    if (!yearFilter || !opdFilter) {
+        rebuildTable([]); 
+        updateDataSummary(0, originalData.length, yearFilter, opdFilter);
+        return;
+    }
+
+    // Filter original data
+    const filteredData = originalData.filter(function(renja) {
+        const yearMatch = renja.indikator.some(function(indikator) {
+            return indikator.tahun === yearFilter;
+        });
+        const opdMatch = renja.opd === opdFilter; // pastikan field 'opd' ada di data
+        return yearMatch && opdMatch;
+    });
+
+    // Ambil indikator sesuai tahun
+    const processedData = filteredData.map(function(renja) {
+        return {
+            ...renja,
+            indikator: renja.indikator.filter(function(indikator) {
+                return indikator.tahun === yearFilter;
+            })
+        };
+    });
+
+    // Rebuild table
+    rebuildTable(processedData);
+
+    // Update summary
+    const totalIndicators = processedData.reduce((sum, renja) => sum + renja.indikator.length, 0);
+    updateDataSummary(totalIndicators, originalData.length, yearFilter, opdFilter);
+}
+
   
   // Function to rebuild table with filtered data
   function rebuildTable(data) {
@@ -456,37 +435,24 @@
   }
 
   // Function to update data summary
-  function updateDataSummary(visibleCount, totalCount, renstraSasaranFilter, yearFilter, statusFilter) {
-      const countElement = document.getElementById('visible-data-count');
-      if (countElement) {
-          countElement.textContent = `Menampilkan ${visibleCount} dari ${totalCount} data`;
-      }
-      
-      const filtersElement = document.getElementById('active-filters');
-      if (filtersElement) {
-          let filterText = '';
-          
-          if (renstraSasaranFilter !== 'all') {
-              filterText += `Sasaran: ${renstraSasaranFilter.length > 50 ? renstraSasaranFilter.substring(0, 50) + '...' : renstraSasaranFilter}`;
-          } else {
-              filterText += 'Semua Sasaran';
-          }
-          
-          if (yearFilter !== 'all') {
-              filterText += `, Tahun ${yearFilter}`;
-          } else {
-              filterText += ', Semua Tahun';
-          }
-          
-          if (statusFilter !== 'all') {
-              filterText += `, Status ${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}`;
-          } else {
-              filterText += ', Semua Status';
-          }
-          
-          filtersElement.textContent = filterText;
-      }
-  }
+function updateDataSummary(visibleCount, totalCount, yearFilter, opdFilter) {
+    const countElement = document.getElementById('visible-data-count');
+    if (countElement) {
+        countElement.textContent = visibleCount > 0
+            ? `Menampilkan ${visibleCount} dari ${totalCount} data`
+            : `Belum ada data ditampilkan`;
+    }
+
+    const filtersElement = document.getElementById('active-filters');
+    if (filtersElement) {
+        if (!yearFilter || !opdFilter) {
+            filtersElement.textContent = 'Harap pilih Tahun dan Satuan Kerja OPD';
+        } else {
+            filtersElement.textContent = `Tahun: ${yearFilter}, OPD: ${opdFilter}`;
+        }
+    }
+}
+
 
   // Function to confirm delete
   function confirmDelete(id) {
@@ -509,7 +475,7 @@
       
       const filtersElement = document.getElementById('active-filters');
       if (filtersElement) {
-          filtersElement.textContent = 'Semua Sasaran, Semua Tahun, Semua Status';
+          filtersElement.textContent = 'Tahun, OPD';
       }
   });
   </script>

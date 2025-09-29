@@ -16,96 +16,59 @@
       <h4 class="fw-bold text-center text-success mb-4">
         PERJANJIAN KINERJA PIMPINAN
       </h4>
-      
-      <!-- Filter Tahun -->
-      <div class="row justify-content-center mb-4">
-        <div class="col-md-4">
-          <input type="number" id="filterTahun" class="form-control" placeholder="Filter Tahun">
+
+      <!-- Info Misi dan Sasaran -->
+      <div class="mb-4">
+        <div class="mb-3">
+          <label for="misi" class="form-label fw-bold">Misi ke
+          <input type="text" id="misi" name="misi" 
+                class="form-control" 
+                value="<?= esc($pkJptData[0]['misi'] ?? '-') ?>" 
+                readonly>
+          </label>
         </div>
-        <div class="col-md-2">
-          <button class="btn btn-success w-100" onclick="filterPkPimpinan()">
-            <i class="fas fa-filter"></i> Filter
-          </button>
+        <div>
+          <label for="sasaran" class="form-label fw-bold">Sasaran
+          <input type="text" id="sasaran" name="sasaran" 
+                class="form-control" 
+                value="<?= esc($pkJptData[0]['sasaran'] ?? '-') ?>" 
+                readonly>
+          </label>
         </div>
       </div>
-      
-      <!-- Tabel PK OPD -->
+    
+      <!-- Tabel PK Opd -->
       <div class="table-responsive">
         <table class="table table-bordered text-center align-middle">
           <thead class="table-success">
             <tr>
               <th style="width: 5%;">No</th>
-              <th>Misi</th>
-              <th>Sasaran</th>
               <th>Indikator</th>
+              <th>Satuan</th>
               <th>Target</th>
+              <th>Capaian Tahun Sebelumnya</th>
+              <th>Target Tahun Ini</th>
+              <th>Capaian Tahun Ini</th>
             </tr>
           </thead>
-          <tbody id="pkPimpinanTableBody">
-            <?php $no = 1; foreach ($pkPimpinanData as $item): ?>
+          <tbody id="pkJptTableBody">
+            <?php $no = 1; foreach ($pkJptData as $item): ?>
               <tr data-tahun="<?= esc($item['tahun']) ?>">
                 <td><?= $no++ ?></td>
-                <td><?= esc($item['misi']) ?></td>
-                <td><?= esc($item['sasaran']) ?></td>
                 <td><?= esc($item['indikator']) ?></td>
+                <td><?= esc($item['satuan']) ?></td>
                 <td><?= esc($item['target']) ?></td>
+                <td><?= esc($item['capaian_sebelumnya']) ?></td>
+                <td><?= esc($item['target_tahun_ini']) ?></td>
+                <td><?= esc($item['capaian_tahun_ini']) ?></td>
               </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-      </div>
-      <!-- Tabel Program & Anggaran -->
-      <div class="table-responsive mt-5">
-        <h5 class="fw-bold text-center text-success mb-3">
-          DAFTAR PROGRAM DAN ANGGARAN
-        </h5>
-        <table class="table table-bordered table-striped text-center small">
-          <thead class="table-success">
-            <tr>
-              <th class="border p-2 align-middle" style="width: 50px;">No</th>
-              <th class="border p-2 align-middle">Program</th>
-              <th class="border p-2 align-middle">Anggaran</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="border p-2">1</td>
-              <td class="border p-2 text-start">Peningkatan Infrastruktur Jalan</td>
-              <td class="border p-2">Rp 5.000.000.000</td>
-            </tr>
-            <tr>
-              <td class="border p-2">2</td>
-              <td class="border p-2 text-start">Pengembangan SDM Aparatur</td>
-              <td class="border p-2">Rp 1.200.000.000</td>
-            </tr>
-            <tr>
-              <td class="border p-2">3</td>
-              <td class="border p-2 text-start">Peningkatan Kesehatan Masyarakat</td>
-              <td class="border p-2">Rp 3.500.000.000</td>
-            </tr>
+            <?php endforeach; ?>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 </main>
-
-<script>
-  function filterPkPimpinan() {
-    const tahun = document.getElementById('filterTahun').value.trim();
-    
-    if (!tahun) {
-      alert('Masukkan tahun untuk memfilter!');
-      return;
-    }
-    
-    const rows = document.querySelectorAll('#pkPimpinanTableBody tr');
-    rows.forEach(row => {
-      const rowTahun = row.getAttribute('data-tahun');
-      row.style.display = (rowTahun === tahun) ? '' : 'none';
-    });
-  }
-</script>
 
 <?= $this->include('adminOpd/templates/footer'); ?>
 </body>

@@ -82,9 +82,9 @@
                                 // Grouping: Tujuan > Sasaran > Indikator
                                 $grouped = [];
                                 foreach ($monevList as $row) {
-                                    $tujuan = $row['tujuan_renstra'];
-                                    $sasaran = $row['sasaran_renstra'];
-                                    $indikator = $row['indikator_sasaran'];
+                                    $tujuan = $row['tujuan_rpjmd'];
+                                    $sasaran = $row['sasaran_renstra']; // atau 'sasaran_rpjmd' jika ingin pakai sasaran RPJMD
+                                                $indikator = $row['indikator_sasaran'];
                                     if (!isset($grouped[$tujuan]))
                                         $grouped[$tujuan] = [];
                                     if (!isset($grouped[$tujuan][$sasaran]))
@@ -138,8 +138,8 @@
                                                     // Gunakan id target_rencana dari field 'target_id' sesuai rancangan relasi
                                                     $targetRencanaId = isset($row['target_id']) ? $row['target_id'] : (isset($row['target_rencana_id']) ? $row['target_rencana_id'] : null);
                                                     if ($isCapaianKosong && $targetRencanaId):
-                                                    ?>
-                                                        <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . $targetRencanaId) ?>"
+                                                        ?>
+                                        <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . $targetRencanaId) ?>"
                                                             class="btn btn-sm btn-success">Tambah</a>
                                                     <?php elseif (isset($row['monev_id'])): ?>
                                                         <a href="<?= base_url('adminopd/monev/edit/' . $row['monev_id']) ?>"

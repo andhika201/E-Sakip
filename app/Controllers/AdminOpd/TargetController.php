@@ -20,12 +20,19 @@ class TargetController extends BaseController
         $raw = $this->TargetModel->getTargetListByRenja($tahun);
 
         // Grouping: Tujuan > Sasaran > Indikator
+        // Grouping: Tujuan RPJMD > Sasaran Renstra > Indikator
         $grouped = [];
         foreach ($raw as $row) {
-            $tujuan = $row['tujuan_renstra'];
-            $sasaran = $row['sasaran_renstra'];
-            if (!isset($grouped[$tujuan])) $grouped[$tujuan] = [];
-            if (!isset($grouped[$tujuan][$sasaran])) $grouped[$tujuan][$sasaran] = [];
+            $tujuan = $row['tujuan_rpjmd'] ?? 'Belum ada Tujuan';
+            $sasaran = $row['sasaran_renstra'] ?? 'Belum ada Sasaran';
+
+            if (!isset($grouped[$tujuan])) {
+                $grouped[$tujuan] = [];
+            }
+            if (!isset($grouped[$tujuan][$sasaran])) {
+                $grouped[$tujuan][$sasaran] = [];
+            }
+
             $grouped[$tujuan][$sasaran][] = $row;
         }
 

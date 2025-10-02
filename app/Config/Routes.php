@@ -134,11 +134,19 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 
+    // target
+    $routes->get('target', 'AdminOpd\TargetController::index');
+    $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');
+    $routes->post('target/save', 'AdminOpd\TargetController::save');
+    $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
+    $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
+
     //MONEV
-    $routes->get('monev', 'MonevController::index');
-    $routes->get('monev/tambah', 'MonevController::tambah');
-    $routes->post('monev/save', 'MonevController::save');
-    $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
+    $routes->get('monev', 'AdminOpd\MonevController::index');
+    $routes->get('monev/tambah', 'AdminOpd\MonevController::tambah');
+    $routes->post('monev/save', 'AdminOpd\MonevController::save');
+    $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
+    $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
     
     // Lakip OPD
     $routes->get('lakip_opd', 'AdminOpd\LakipOpdController::index');

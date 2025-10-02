@@ -25,77 +25,69 @@ class RenstraController extends BaseController
 
     public function index()
     {
-        // Get OPD ID from session (logged in user's OPD)
         $session = session();
         $opdId = $session->get('opd_id');
-        
-        // If no OPD ID in session, redirect to login or show error
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
-        
-        // Get Renstra data filtered by user's OPD
-        $renstraData = $this->renstraModel->getAllRenstra($opdId);
-        
-        // Get current OPD info
-        $currentOpd = $this->opdModel->find($opdId);
-        if (!$currentOpd) {
-            return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
-        }
-        
-        // Set title based on current OPD
-        $titleSuffix = $currentOpd['nama_opd'];  // Group data by period
 
-        $groupedData = [];
-        foreach ($renstraData as $data) {
-            $periodKey = $data['tahun_mulai'] . '-' . $data['tahun_akhir'];
-            
-            if (!isset($groupedData[$periodKey])) {
-                $groupedData[$periodKey] = [
-                    'period' => $periodKey,
-                    'tahun_mulai' => $data['tahun_mulai'],
-                    'tahun_akhir' => $data['tahun_akhir'],
-                    'years' => range($data['tahun_mulai'], $data['tahun_akhir']),
-                    'renstra_data' => []
-                ];
-            }
-            
-            $groupedData[$periodKey]['renstra_data'][] = $data;
-        }
-        
-        // Sort periods
-        ksort($groupedData);
-        
+        // 🔎 Ambil semua filter dari query GET
+        $misi = $this->request->getGet('misi');
+        $tujuan = $this->request->getGet('tujuan');
+        $rpjmd = $this->request->getGet('rpjmd');
+        $status = $this->request->getGet('status');
+        $periode = $this->request->getGet('periode');
+
+        // 📊 Ambil data RENSTRA terfilter dari model
+        $renstraData = $this->renstraModel->getFilteredRenstra(
+            $opdId,
+            $misi,
+            $tujuan,
+            $rpjmd,
+            $status,
+            $periode
+        );
+
+        $currentOpd = $this->opdModel->find($opdId);
+
         $data = [
             'renstra_data' => $renstraData,
-            'grouped_data' => $groupedData,
             'current_opd' => $currentOpd,
-            'title' => 'Rencana Strategis - ' . $titleSuffix
+            'title' => 'Rencana Strategis - ' . $currentOpd['nama_opd'],
+            'filters' => [
+                'misi' => $misi,
+                'tujuan' => $tujuan,
+                'rpjmd' => $rpjmd,
+                'status' => $status,
+                'periode' => $periode
+            ]
         ];
 
         return view('adminOpd/renstra/renstra', $data);
     }
+
 
     public function tambah_renstra()
     {
         // Get OPD ID from session
         $session = session();
         $opdId = $session->get('opd_id');
-        
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
-        
+
         // Get current OPD info
         $currentOpd = $this->opdModel->find($opdId);
 
         if (!$currentOpd) {
             return redirect()->to('/login')->with('error', 'Data OPD tidak ditemukan');
         }
-        
+
         // Get RPJMD Sasaran from completed Misi only
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-        
+
         // Get satuan options
         $satuanOptions = [
             'Persen' => 'Persen (%)',
@@ -108,7 +100,7 @@ class RenstraController extends BaseController
             'Nilai' => 'Nilai',
             'Predikat' => 'Predikat'
         ];
-        
+
         $data = [
             'rpjmd_sasaran' => $rpjmdSasaran,
             'satuan_options' => $satuanOptions,
@@ -137,7 +129,7 @@ class RenstraController extends BaseController
 
         // Get RPJMD Sasaran from completed Misi only
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-        
+
         $data = [
             'renstra_data' => $currentRenstra,
             'rpjmd_sasaran' => $rpjmdSasaran,
@@ -154,10 +146,10 @@ class RenstraController extends BaseController
         try {
             $data = $this->request->getPost();
 
-             // Get OPD ID from session
+            // Get OPD ID from session
             $session = session();
             $opdId = $session->get('opd_id');
-            
+
             // Create new - Use createCompleteRpjmdTransaction for tambah form
             $formattedData = [
                 'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
@@ -169,13 +161,13 @@ class RenstraController extends BaseController
             ];
 
             $success = $this->renstraModel->createCompleteRenstra($formattedData);
-            
+
             if ($success) {
                 session()->setFlashdata('success', 'Data RENSTRA berhasil ditambahkan');
             } else {
                 session()->setFlashdata('error', 'Gagal menambahkan data RENSTRA');
             }
-            
+
         } catch (\Exception $e) {
             log_message('error', 'RENSTRA Save Error: ' . $e->getMessage());
             session()->setFlashdata('error', 'Terjadi kesalahan saat menyimpan data.');
@@ -185,13 +177,13 @@ class RenstraController extends BaseController
         return redirect()->to(base_url('adminopd/renstra'));
     }
 
-    
+
     public function update($id = null)
     {
         try {
             $data = $this->request->getPost();
-            
-           
+
+
             // Validate required fields
             if (empty($data['rpjmd_sasaran_id']) || empty($data['tahun_mulai']) || empty($data['tahun_akhir'])) {
                 throw new \Exception('Data tidak lengkap');
@@ -200,7 +192,7 @@ class RenstraController extends BaseController
             // Get OPD ID from session (logged in user's OPD)
             $session = session();
             $opdId = $session->get('opd_id');
-            
+
             // Validate OPD ID exists
             if (!$opdId) {
                 throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
@@ -216,7 +208,7 @@ class RenstraController extends BaseController
                 'tahun_akhir' => $data['tahun_akhir'],
                 'indikator_sasaran' => []
             ];
-            
+
             // Process indikator sasaran (similar to save method)
             if (isset($data['sasaran_renstra']) && is_array($data['sasaran_renstra'])) {
                 foreach ($data['sasaran_renstra'] as $sasaran) {
@@ -251,7 +243,7 @@ class RenstraController extends BaseController
             } else {
                 return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data Renstra');
             }
-            
+
             if ($success) {
                 if ($this->request->isAJAX()) {
                     return $this->response->setJSON([
@@ -283,14 +275,14 @@ class RenstraController extends BaseController
             // Get OPD ID from session
             $session = session();
             $opdId = $session->get('opd_id');
-            
+
             if (!$opdId) {
                 return redirect()->to('/login')->with('error', 'Session expired. Silakan login ulang.');
             }
 
             // Verify that the Renstra exists and belongs to user's OPD
             $renstraData = $this->renstraModel->getSasaranById($id);
-            
+
             if (!$renstraData) {
                 return redirect()->back()->with('error', 'Data Renstra tidak ditemukan');
             }
@@ -321,7 +313,7 @@ class RenstraController extends BaseController
         if (!$this->request->isAJAX()) {
             return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
         }
-        
+
         // Get JSON input (like RENJA)
         $json = $this->request->getJSON(true);
         $id = $json['id'] ?? null;
@@ -329,28 +321,28 @@ class RenstraController extends BaseController
         if (!$id) {
             return $this->response->setJSON(['success' => false, 'message' => 'ID harus diisi']);
         }
-        
+
         try {
             // Check OPD session
             $session = session();
             $opdId = $session->get('opd_id');
-            
+
             if (!$opdId) {
                 return $this->response->setJSON(['success' => false, 'message' => 'Session expired. Silakan login ulang.']);
             }
-            
+
             // Get current status
             $currentRenstra = $this->renstraModel->getRenstraById($id);
             if (!$currentRenstra) {
                 return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
             }
-            
+
             // Toggle status
             $currentStatus = $currentRenstra['status'] ?? 'draft';
             $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
-            
+
             $result = $this->renstraModel->updateRenstraStatus($id, $newStatus);
-            
+
             if ($result) {
                 return $this->response->setJSON([
                     'success' => true,
@@ -366,4 +358,3 @@ class RenstraController extends BaseController
         }
     }
 }
-

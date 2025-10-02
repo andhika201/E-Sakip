@@ -86,7 +86,7 @@ class RenstraModel extends Model
             ->orderBy('rs.tahun_mulai', 'ASC')
             ->get()
             ->getResultArray();
-    } 
+    }
 
     /**
      * Get Renstra Sasaran by year range
@@ -121,7 +121,7 @@ class RenstraModel extends Model
     // }
 
     // ==================== RENSTRA INDIKATOR SASARAN ====================
-    
+
     /**
      * Get all Indikator Sasaran
      */
@@ -162,7 +162,7 @@ class RenstraModel extends Model
 
 
     // ==================== RENSTRA TARGET TAHUNAN ====================
-    
+
     /**
      * Get Target Tahunan by Indikator ID
      */
@@ -189,7 +189,7 @@ class RenstraModel extends Model
 
 
     // ==================== COMPLETE RENSTRA STRUCTURE ====================
-    
+
     /**
      * Get complete Renstra structure with all related data
      */
@@ -231,7 +231,7 @@ class RenstraModel extends Model
         $grouped = [];
         foreach ($results as $row) {
             $sasaranKey = $row['sasaran_id'];
-            
+
             if (!isset($grouped[$sasaranKey])) {
                 $grouped[$sasaranKey] = [
                     'sasaran_id' => $row['sasaran_id'],
@@ -248,7 +248,7 @@ class RenstraModel extends Model
 
             if ($row['indikator_id']) {
                 $indikatorKey = $row['indikator_id'];
-                
+
                 if (!isset($grouped[$sasaranKey]['indikator_sasaran'][$indikatorKey])) {
                     $grouped[$sasaranKey]['indikator_sasaran'][$indikatorKey] = [
                         'indikator_id' => $row['indikator_id'],
@@ -323,7 +323,7 @@ class RenstraModel extends Model
         foreach ($query as $row) {
             if ($row['indikator_id']) {
                 $indikatorId = $row['indikator_id'];
-                
+
                 if (!isset($result['indikator_sasaran'][$indikatorId])) {
                     $result['indikator_sasaran'][$indikatorId] = [
                         'indikator_id' => $indikatorId,
@@ -348,6 +348,81 @@ class RenstraModel extends Model
 
         return $result;
     }
+    public function getFilteredRenstra($opdId = null, $misi = null, $tujuan = null, $rpjmd = null, $status = null, $periode = null)
+    {
+        $query = $this->db->table('renstra_sasaran rs')
+            ->select('
+            rs.id as sasaran_id,
+            rs.sasaran,
+            rs.status,
+            ris.id as indikator_id,
+            ris.indikator_sasaran,
+            ris.satuan,
+            rs.tahun_mulai,
+            rs.tahun_akhir,
+            o.nama_opd,
+            o.singkatan,
+            rps.sasaran_rpjmd as rpjmd_sasaran,
+            rtj.tujuan_rpjmd as rpjmd_tujuan,
+            rm.misi as rpjmd_misi
+        ')
+            ->join('opd o', 'o.id = rs.opd_id')
+            ->join('rpjmd_sasaran rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan rtj', 'rtj.id = rps.tujuan_id', 'left')
+            ->join('rpjmd_misi rm', 'rm.id = rtj.misi_id', 'left')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id');
+
+        // 🏢 Filter OPD
+        if ($opdId !== null) {
+            $query->where('rs.opd_id', $opdId);
+        }
+
+        // 🧭 Filter Misi
+        if (!empty($misi)) {
+            $query->like('rm.misi', $misi);
+        }
+
+        // 🎯 Filter Tujuan
+        if (!empty($tujuan)) {
+            $query->like('rtj.tujuan_rpjmd', $tujuan);
+        }
+
+        // 🥅 Filter Sasaran RPJMD
+        if (!empty($rpjmd)) {
+            $query->like('rps.sasaran_rpjmd', $rpjmd);
+        }
+
+        // 📊 Filter Status
+        if (!empty($status)) {
+            $query->where('rs.status', $status);
+        }
+
+        // 📆 Filter Periode (format: "2021-2026")
+        if (!empty($periode)) {
+            [$start, $end] = explode('-', $periode);
+            $query->where('rs.tahun_mulai >=', (int) $start);
+            $query->where('rs.tahun_akhir <=', (int) $end);
+        }
+
+        $indikatorData = $query
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Ambil target tahunan
+        foreach ($indikatorData as &$indikator) {
+            if ($indikator['indikator_id']) {
+                $targets = $this->getTargetTahunanByIndikatorId($indikator['indikator_id']);
+                $indikator['targets'] = [];
+                foreach ($targets as $target) {
+                    $indikator['targets'][$target['tahun']] = $target['target'];
+                }
+            }
+        }
+
+        return $indikatorData;
+    }
 
     /**
      * Get Renstra data for display table (flattened structure)
@@ -356,20 +431,24 @@ class RenstraModel extends Model
     {
         $query = $this->db->table('renstra_sasaran rs')
             ->select('
-                rs.id as sasaran_id,
-                rs.sasaran,
-                rs.status,
-                ris.id as indikator_id,
-                ris.indikator_sasaran,
-                ris.satuan,
-                rs.tahun_mulai,
-                rs.tahun_akhir,
-                o.nama_opd,
-                o.singkatan,
-                rps.sasaran_rpjmd as rpjmd_sasaran
-            ')
+            rs.id as sasaran_id,
+            rs.sasaran,
+            rs.status,
+            ris.id as indikator_id,
+            ris.indikator_sasaran,
+            ris.satuan,
+            rs.tahun_mulai,
+            rs.tahun_akhir,
+            o.nama_opd,
+            o.singkatan,
+            rps.sasaran_rpjmd as rpjmd_sasaran,
+            rtj.tujuan_rpjmd as rpjmd_tujuan,
+            rm.misi as rpjmd_misi
+        ')
             ->join('opd o', 'o.id = rs.opd_id')
             ->join('rpjmd_sasaran rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan rtj', 'rtj.id = rps.tujuan_id', 'left')
+            ->join('rpjmd_misi rm', 'rm.id = rtj.misi_id', 'left') // ✅ JOIN MISI
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id');
 
         if ($opdId !== null) {
@@ -381,12 +460,9 @@ class RenstraModel extends Model
             ->get()
             ->getResultArray();
 
-        // Get target data for each indikator
         foreach ($indikatorData as &$indikator) {
             if ($indikator['indikator_id']) {
                 $targets = $this->getTargetTahunanByIndikatorId($indikator['indikator_id']);
-                
-                // Convert targets to year-based array
                 $indikator['targets'] = [];
                 foreach ($targets as $target) {
                     $indikator['targets'][$target['tahun']] = $target['target'];
@@ -412,24 +488,24 @@ class RenstraModel extends Model
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
             }
         }
-        
+
         $insertData = [
             'opd_id' => $data['opd_id'],
             'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
             'sasaran' => $data['sasaran'],
             'status' => $data['status'] ?? 'draft',
-            'tahun_mulai' => $data['tahun_mulai'],  
+            'tahun_mulai' => $data['tahun_mulai'],
             'tahun_akhir' => $data['tahun_akhir']
         ];
-        
+
         $result = $this->db->table('renstra_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
-        
+
         if (!$result) {
             $error = $this->db->error();
             throw new \Exception("Failed to insert sasaran: " . $error['message']);
         }
-        
+
         return $insertId;
     }
 
@@ -440,27 +516,27 @@ class RenstraModel extends Model
     {
         return $this->db->table('renstra_sasaran')->where('id', $id)->update($data);
     }
-    
+
     /**
      * Delete RENSTRA Sasaran (with cascade delete)
-     */ 
+     */
     public function deleteSasaran($id)
     {
         $this->db->transStart();
-        
+
         try {
             // Get and delete related indikator sasaran
             $indikatorList = $this->getIndikatorSasaranBySasaranId($id);
             foreach ($indikatorList as $indikator) {
                 $this->deleteIndikatorSasaran($indikator['id']);
             }
-            
+
             // Delete the sasaran
             $result = $this->db->table('renstra_sasaran')->delete(['id' => $id]);
-            
+
             $this->db->transComplete();
             return $result;
-            
+
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -469,7 +545,7 @@ class RenstraModel extends Model
 
 
     // ==================== CRUD OPERATIONS FOR RENSTRA INDIAKTOR SASARAN ====================
-     /**
+    /**
      * Create new RENSTRA Indikator Sasaran
      */
     public function createIndikatorSasaran($data)
@@ -481,23 +557,23 @@ class RenstraModel extends Model
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
             }
         }
-        
+
         $insertData = [
             'renstra_sasaran_id' => $data['renstra_sasaran_id'],
             'indikator_sasaran' => $data['indikator_sasaran'],
             'satuan' => $data['satuan'],
         ];
-        
-    
+
+
         $result = $this->db->table('renstra_indikator_sasaran')->insert($insertData);
         $insertId = $this->db->insertID();
-    
-        
+
+
         if (!$result) {
             $error = $this->db->error();
             throw new \Exception("Failed to insert indikator sasaran: " . $error['message']);
         }
-        
+
         return $insertId;
     }
 
@@ -508,24 +584,24 @@ class RenstraModel extends Model
     {
         return $this->db->table('renstra_indikator_sasaran')->where('id', $id)->update($data);
     }
-    
+
     /**
      * Delete RENSTRA Indikator Sasaran (with cascade delete)
      */
     public function deleteIndikatorSasaran($id)
     {
         $this->db->transStart();
-        
+
         try {
             // Delete related target tahunan
             $this->db->table('renstra_target')->delete(['renstra_indikator_id' => $id]);
-            
+
             // Delete the indikator sasaran
             $result = $this->db->table('renstra_indikator_sasaran')->delete(['id' => $id]);
-            
+
             $this->db->transComplete();
             return $result;
-            
+
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -534,13 +610,13 @@ class RenstraModel extends Model
 
 
     // ==================== CRUD OPERATIONS FOR RENSTRA TARGET TAHUNAN ====================
-    
+
     /**
      * Create new RENSTRA Target Tahunan
      */
     public function createTargetTahunan($data)
     {
-        
+
         // Validation
         $required = ['renstra_indikator_id', 'tahun'];
         foreach ($required as $field) {
@@ -548,25 +624,25 @@ class RenstraModel extends Model
                 throw new \InvalidArgumentException("Field {$field} harus diisi");
             }
         }
-        
+
         // target_tahunan is optional and can be empty
         $insertData = [
             'renstra_indikator_id' => $data['renstra_indikator_id'],
             'tahun' => $data['tahun'],
             'target' => $data['target'] ?? ''
         ];
-        
+
         $result = $this->db->table('renstra_target')->insert($insertData);
         $insertId = $this->db->insertID();
-    
+
         if (!$result) {
             $error = $this->db->error();
             throw new \Exception("Failed to insert target tahunan: " . $error['message']);
         }
-        
+
         return $insertId;
     }
-    
+
     /**
      * Update RENSTRA Target Tahunan
      */
@@ -574,7 +650,7 @@ class RenstraModel extends Model
     {
         return $this->db->table('renstra_target')->where('id', $id)->update($data);
     }
-    
+
     /**
      * Delete RENSTRA Target Tahunan
      */
@@ -582,7 +658,7 @@ class RenstraModel extends Model
     {
         return $this->db->table('renstra_target')->where('id', $id)->delete();
     }
-    
+
     /**
      * Delete all RENSTRA Target Tahunan by Indikator Sasaran ID
      */
@@ -594,7 +670,7 @@ class RenstraModel extends Model
     }
 
 
-// ==================== COMPLETE RENSTRA OPERATIONS ====================
+    // ==================== COMPLETE RENSTRA OPERATIONS ====================
 
     /**
      * Save complete Renstra data (Sasaran + Indikator + Target)
@@ -613,7 +689,7 @@ class RenstraModel extends Model
 
             // Loop through each sasaran_renstra
             foreach ($data['sasaran_renstra'] as $index => $sasaranItem) {
-                
+
                 // Validasi sasaran item
                 if (empty($sasaranItem['sasaran'])) {
                     throw new \Exception("Sasaran pada index {$index} tidak boleh kosong");
@@ -628,21 +704,21 @@ class RenstraModel extends Model
                     'tahun_mulai' => $data['tahun_mulai'],
                     'tahun_akhir' => $data['tahun_akhir'],
                 ];
-                
+
                 // Insert sasaran ke database
                 $sasaranId = $this->createSasaran($sasaranData);
-                
+
                 if (!$sasaranId) {
                     throw new \Exception("Gagal menyimpan sasaran pada index {$index}");
                 }
-                
+
                 $sasaranIds[] = $sasaranId;
 
                 // Process Indikator Sasaran untuk sasaran ini
                 if (isset($sasaranItem['indikator_sasaran']) && is_array($sasaranItem['indikator_sasaran'])) {
-                    
+
                     foreach ($sasaranItem['indikator_sasaran'] as $indikatorIndex => $indikator) {
-                        
+
                         // Validasi indikator
                         if (empty($indikator['indikator_sasaran'])) {
                             throw new \Exception("Indikator sasaran pada sasaran {$index}, indikator {$indikatorIndex} tidak boleh kosong");
@@ -654,19 +730,19 @@ class RenstraModel extends Model
                             'indikator_sasaran' => trim($indikator['indikator_sasaran']),
                             'satuan' => trim($indikator['satuan'] ?? ''),
                         ];
-                        
+
                         // Insert indikator ke database
                         $indikatorId = $this->createIndikatorSasaran($indikatorData);
-                        
+
                         if (!$indikatorId) {
                             throw new \Exception("Gagal menyimpan indikator pada sasaran {$index}, indikator {$indikatorIndex}");
                         }
 
                         // Process Target Tahunan untuk indikator ini
                         if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
-                            
+
                             foreach ($indikator['target_tahunan'] as $targetIndex => $target) {
-                                
+
                                 // Validasi target
                                 if (empty($target['tahun']) || empty($target['target'])) {
                                     // Skip jika target kosong, atau bisa throw exception sesuai kebutuhan
@@ -680,10 +756,10 @@ class RenstraModel extends Model
                                     'tahun' => $target['tahun'],
                                     'target' => trim($target['target']),
                                 ];
-                                
+
                                 // Insert target ke database
                                 $targetId = $this->createTargetTahunan($targetData);
-                                
+
                                 if (!$targetId) {
                                     throw new \Exception("Gagal menyimpan target pada sasaran {$index}, indikator {$indikatorIndex}, target {$targetIndex}");
                                 }
@@ -709,7 +785,7 @@ class RenstraModel extends Model
             throw $e;
         }
     }
- 
+
 
     /**
      * Update complete Renstra data
@@ -737,7 +813,7 @@ class RenstraModel extends Model
             foreach ($existingIndikator as $indikator) {
                 $this->deleteTargetTahunanByIndikatorId($indikator['id']);
             }
-            
+
             $this->db->table('renstra_indikator_sasaran')
                 ->where('renstra_sasaran_id', $sasaranId)
                 ->delete();
@@ -749,13 +825,15 @@ class RenstraModel extends Model
                     if (!is_array($indikator) || empty($indikator)) {
                         continue;
                     }
-                    
+
                     // Skip if required fields are missing
-                    if (!isset($indikator['indikator_sasaran']) || empty($indikator['indikator_sasaran']) ||
-                        !isset($indikator['satuan']) || empty($indikator['satuan'])) {
+                    if (
+                        !isset($indikator['indikator_sasaran']) || empty($indikator['indikator_sasaran']) ||
+                        !isset($indikator['satuan']) || empty($indikator['satuan'])
+                    ) {
                         continue;
                     }
-                    
+
                     $indikatorData = [
                         'renstra_sasaran_id' => $sasaranId,
                         'indikator_sasaran' => $indikator['indikator_sasaran'],
@@ -769,11 +847,13 @@ class RenstraModel extends Model
                     if (isset($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
                         foreach ($indikator['target_tahunan'] as $target) {
                             // Skip if target data is incomplete
-                            if (!is_array($target) || !isset($target['tahun']) || !isset($target['target']) ||
-                                empty($target['tahun']) || empty($target['target'])) {
+                            if (
+                                !is_array($target) || !isset($target['tahun']) || !isset($target['target']) ||
+                                empty($target['tahun']) || empty($target['target'])
+                            ) {
                                 continue;
                             }
-                            
+
                             $targetData = [
                                 'renstra_indikator_id' => $indikatorId,
                                 'tahun' => $target['tahun'],
@@ -809,14 +889,14 @@ class RenstraModel extends Model
                 ->where('renstra_sasaran_id', $sasaranId)
                 ->get()
                 ->getResultArray();
-            
+
             foreach ($renjaSasaranList as $renjaSasaran) {
                 // Delete RENJA indikator sasaran first
                 $this->db->table('renja_indikator_sasaran')
                     ->where('renja_sasaran_id', $renjaSasaran['id'])
                     ->delete();
             }
-            
+
             // Delete all RENJA sasaran that reference this RENSTRA sasaran
             $this->db->table('renja_sasaran')
                 ->where('renstra_sasaran_id', $sasaranId)
@@ -824,7 +904,7 @@ class RenstraModel extends Model
 
             // Get indikator IDs first
             $indikatorList = $this->getIndikatorSasaranBySasaranId($sasaranId);
-            
+
             // Delete targets for each indikator
             foreach ($indikatorList as $indikator) {
                 $this->deleteTargetTahunanByIndikatorId($indikator['id']);

@@ -10,7 +10,14 @@ class IkuModel extends Model
     protected $table = 'iku_sasaran';
     protected $primaryKey = 'id';
     protected $allowedFields = [
-        'opd_id', 'renstra_sasaran_id', 'sasaran', 'status', 'tahun_mulai', 'tahun_akhir', 'created_at', 'updated_at'
+        'opd_id',
+        'renstra_sasaran_id',
+        'sasaran',
+        'status',
+        'tahun_mulai',
+        'tahun_akhir',
+        'created_at',
+        'updated_at'
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
@@ -26,48 +33,28 @@ class IkuModel extends Model
         $db = \Config\Database::connect();
         $db->transStart();
         try {
-            // 1. Simpan Sasaran IKU
-            $sasaranData = [
-                'opd_id' => $data['opd_id'],
-                'renstra_sasaran_id' => $data['renstra_sasaran_id'],
-                'sasaran' => $data['sasaran'],
-                'status' => $data['status'] ?? 'draft',
-                'tahun_mulai' => $data['tahun_mulai'] ?? null,
-                'tahun_akhir' => $data['tahun_akhir'] ?? null,
+            // 1. Simpan IKU
+            $ikuData = [
+                'rpjmd_id' => $data['rpjmd_id'] ?? null, // hanya terisi jika admin kabupaten
+                'renstra_id' => $data['renstra_id'] ?? null, // hanya terisi jika admin opd
+                'definisi' => $data['definisi'],
             ];
-            $this->insert($sasaranData);
-            $ikuSasaranId = $this->getInsertID();
+            $db->table('iku')->insert($ikuData);
+            $ikuId = $db->insertID();
 
-            // 2. Simpan Indikator-indikator
-            if (!empty($data['indikator']) && is_array($data['indikator'])) {
-                foreach ($data['indikator'] as $indikator) {
-                    $indikatorData = [
-                        'iku_sasaran_id' => $ikuSasaranId,
-                        'indikator_kinerja' => $indikator['indikator_kinerja'],
-                        'definisi_formulasi' => $indikator['definisi_formulasi'] ?? null,
-                        'satuan' => $indikator['satuan'] ?? null,
-                        'program_pendukung' => $indikator['program_pendukung'] ?? null,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ];
-                    $db->table('iku_indikator')->insert($indikatorData);
-                    $ikuIndikatorId = $db->insertID();
-
-                    // 3. Simpan Target Tahunan
-                    if (!empty($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
-                        foreach ($indikator['target_tahunan'] as $target) {
-                            $targetData = [
-                                'iku_indikator_id' => $ikuIndikatorId,
-                                'tahun' => $target['tahun'],
-                                'target' => $target['target'],
-                                'created_at' => date('Y-m-d H:i:s'),
-                                'updated_at' => date('Y-m-d H:i:s'),
-                            ];
-                            $db->table('iku_target_tahunan')->insert($targetData);
-                        }
+            // 2. Simpan Program Pendukung (jika ada)
+            if (!empty($data['program_pendukung']) && is_array($data['program_pendukung'])) {
+                foreach ($data['program_pendukung'] as $program) {
+                    if (trim($program) !== '') {
+                        $programData = [
+                            'iku_indikator_id' => $ikuId,
+                            'program' => $program,
+                        ];
+                        $db->table('iku_program_pendukung')->insert($programData);
                     }
                 }
             }
+
             $db->transComplete();
             if ($db->transStatus() === false) {
                 throw new \Exception('Transaction failed');
@@ -82,24 +69,134 @@ class IkuModel extends Model
     /**
      * Get all IKU sasaran beserta indikator dan target tahunan (nested array)
      */
-    public function getAllIkuByOpd($opdId)
+    public function getIkuWithPrograms($opd_id)
     {
-        $sasaranList = $this->where('opd_id', $opdId)->findAll();
-        $db = \Config\Database::connect();
-        foreach ($sasaranList as &$sasaran) {
-            $indikatorList = $db->table('iku_indikator')
-                ->where('iku_sasaran_id', $sasaran['id'])
-                ->get()->getResultArray();
-            foreach ($indikatorList as &$indikator) {
-                $targetList = $db->table('iku_target_tahunan')
-                    ->where('iku_indikator_id', $indikator['id'])
-                    ->get()->getResultArray();
-                $indikator['target_tahunan'] = $targetList;
-            }
-            $sasaran['indikator'] = $indikatorList;
+        // Ambil data IKU saja
+        $ikuList = $this->db->table('iku')
+            ->select("
+            iku.*,
+            rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+            rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+            renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+            renstra_indikator_sasaran.satuan AS renstra_satuan,
+            renstra_sasaran.sasaran AS sasaran_renstra,
+            renstra_tujuan.tujuan AS tujuan_renstra
+        ", false)
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = iku.rpjmd_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = iku.renstra_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
+            ->where('renstra_sasaran.opd_id', $opd_id)
+            ->orderBy('iku.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Ambil semua program pendukung
+        $programs = $this->db->table('iku_program_pendukung')
+            ->select('iku_indikator_id, program')
+            ->get()
+            ->getResultArray();
+
+        // Mapping program ke IKU
+        $programMap = [];
+        foreach ($programs as $p) {
+            $programMap[$p['iku_indikator_id']][] = $p['program'];
         }
-        return $sasaranList;
+
+        // Gabungkan ke dalam $ikuList
+        foreach ($ikuList as &$iku) {
+            $iku['program_pendukung'] = $programMap[$iku['id']] ?? [];
+        }
+
+        return $ikuList;
     }
+
+
+    public function getFullIkuDataById($indikatorId)
+    {
+        return $this->db->table('iku')
+            ->select("
+            iku.*,
+            rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+            rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+            renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+            renstra_indikator_sasaran.satuan AS renstra_satuan,
+            renstra_sasaran.sasaran AS sasaran_renstra,
+            renstra_tujuan.tujuan AS tujuan_renstra,
+            GROUP_CONCAT(iku_program_pendukung.program SEPARATOR '; ') AS daftar_program_pendukung
+        ", false)
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = iku.rpjmd_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = iku.renstra_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
+            ->join('iku_program_pendukung', 'iku_program_pendukung.iku_indikator_id = iku.id', 'left')
+            ->where('iku.renstra_id', $indikatorId)
+            ->get()
+            ->getRowArray();
+    }
+
+    public function getIkuDetail($id)
+    {
+        // Ambil detail IKU
+        $iku = $this->db->table('iku')
+            ->select("
+            iku.*,
+            rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+            rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+            renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+            renstra_indikator_sasaran.satuan AS renstra_satuan,
+            renstra_sasaran.sasaran AS sasaran_renstra,
+            renstra_tujuan.tujuan AS tujuan_renstra
+        ", false)
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = iku.rpjmd_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = iku.renstra_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
+            ->where('renstra_indikator_sasaran.id', $id)
+            ->get()
+            ->getRowArray();
+
+        // Ambil program pendukung
+        $programs = $this->db->table('iku_program_pendukung')
+            ->select('program')
+            ->where('iku_indikator_id', $iku['id'])
+            ->get()
+            ->getResultArray();
+
+        $iku['program_pendukung'] = array_column($programs, 'program');
+
+        return $iku;
+    }
+
+
+    //update IKU beserta program pendukungnya
+
+    public function updateIku($id, $data)
+    {
+        return $this->db->table('iku')
+            ->where('renstra_id', $id) // atau sesuaikan dengan primary key sebenarnya
+            ->update($data);
+    }
+
+    public function updateProgramPendukung($ikuId, $programs)
+    {
+        // Hapus program lama
+        $this->db->table('iku_program_pendukung')
+            ->where('iku_indikator_id', $ikuId)
+            ->delete();
+
+        // Insert program baru
+        foreach ($programs as $program) {
+            if (trim($program) !== '') {
+                $this->db->table('iku_program_pendukung')->insert([
+                    'iku_indikator_id' => $ikuId,
+                    'program' => $program
+                ]);
+            }
+        }
+    }
+
+
 
     // Tambahkan method update & delete bertingkat sesuai kebutuhan
 }

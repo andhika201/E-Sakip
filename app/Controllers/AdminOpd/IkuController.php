@@ -13,11 +13,15 @@ class IkuController extends BaseController
     protected $ikuModel;
     protected $opdModel;
 
+    protected $db;
+
     public function __construct()
     {
         $this->renstraModel = new RenstraModel();
         $this->ikuModel = new IkuModel();
         $this->opdModel = new OpdModel();
+        $this->db = \Config\Database::connect();
+
     }
 
     public function index()
@@ -27,127 +31,209 @@ class IkuController extends BaseController
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
-        $ikuData = $this->ikuModel->where('opd_id', $opdId)->findAll();
+        $status = $this->request->getGet('status');
+        $periode = $this->request->getGet('periode');
+
+        $renstraData = $this->renstraModel->getAllRenstra($opdId, null, $periode, $status);
+
+        // Ambil daftar periode unik untuk dropdown filter
+        $db = \Config\Database::connect();
+        $periodeList = $db->table('renstra_sasaran')
+            ->select('tahun_mulai, tahun_akhir')
+            ->groupBy('tahun_mulai, tahun_akhir')
+            ->get()->getResultArray();
+
+        // Grouped data untuk header tahun
+        $grouped_data = [];
+        foreach ($periodeList as $p) {
+            $years = [];
+            for ($y = $p['tahun_mulai']; $y <= $p['tahun_akhir']; $y++) {
+                $years[] = $y;
+            }
+            $key = $p['tahun_mulai'] . '-' . $p['tahun_akhir'];
+            $grouped_data[$key] = [
+                'period' => $key,
+                'years' => $years
+            ];
+        }
+        $ikuData = $this->ikuModel->getIkuWithPrograms($opdId);
         $data = [
+            'renstra_data' => $renstraData,
             'title' => 'Indikator Kinerja Utama',
-            'iku_data' => $ikuData
+            'iku_data' => $ikuData,
+            'grouped_data' => $grouped_data,
+            'selected_opd' => $opdId,
+            'selected_status' => $status,
+            'selected_periode' => $periode
         ];
+        // dd($ikuData);
+        // dd($renstraData);
         return view('adminOpd/iku/iku', $data);
     }
 
-    public function tambah()
+    /**
+     * Tampilkan form tambah IKU
+     * - Hanya bisa diakses jika user sudah login
+     * - Mengambil data indikator berdasarkan parameter GET 'indikator'
+     * - Jika indikator tidak ditemukan, tampilkan pesan error
+     * - Kirim data renstra_sasaran ke view untuk dropdown
+     */
+    public function tambah($indikatorId = null)
     {
         $session = session();
         $opdId = $session->get('opd_id');
         $status = 'selesai';
+
+        // Cek autentikasi
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        // Ambil data indikator berdasarkan $indikatorId
+        $indikator = null;
+        if ($indikatorId) {
+            $db = \Config\Database::connect();
+            $indikator = $db->table('renstra_indikator_sasaran')
+                ->where('id', $indikatorId)
+                ->get()
+                ->getRowArray();
+        }
+
+        // Ambil data renstra_sasaran untuk dropdown
         $renstraSasaran = $this->renstraModel->getAllRenstraByStatus($status, $opdId);
+
+        $renstraData = $this->renstraModel->getAllRenstra($opdId, null, null, $status);
+
+        // Siapkan data untuk view
         $data = [
+            'renstra_data' => $renstraData,
             'renstra_sasaran' => $renstraSasaran,
+            'indikator' => $indikator,
             'title' => 'Tambah IKU',
-            'validation' => \Config\Services::validation()
+            'validation' => \Config\Services::validation(),
+            // 'indikator' => $indikator, // Jika ingin mengirim data indikator ke view
         ];
+        // dd($indikator);
         return view('adminOpd/iku/tambah_iku', $data);
     }
 
     public function save()
     {
         try {
+            // Ambil data POST
             $data = $this->request->getPost();
             $session = session();
             $opdId = $session->get('opd_id');
+
+            // Cek autentikasi
             if (!$opdId) {
                 return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
             }
-            // Loop over each sasaran_iku and call createCompleteIku for each
-            $sasaranIkuList = $data['sasaran_iku'] ?? [];
-            if (empty($sasaranIkuList)) {
-                throw new \Exception('Data sasaran IKU tidak ditemukan');
+
+            // Validasi minimal field wajib
+            if (empty($data['definisi'])) {
+                throw new \Exception('Definisi IKU wajib diisi.');
             }
-            foreach ($sasaranIkuList as $sasaranIku) {
-                $ikuData = [
-                    'opd_id' => $opdId,
-                    'renstra_sasaran_id' => $data['renstra_sasaran_id'] ?? null,
-                    'sasaran' => $sasaranIku['sasaran'] ?? null,
-                    'status' => 'draft',
-                    // tahun_mulai & tahun_akhir can be set from renstra_sasaran if needed
-                ];
-                // Prepare indikator array for model
-                $ikuData['indikator'] = [];
-                if (!empty($sasaranIku['indikator_kinerja']) && is_array($sasaranIku['indikator_kinerja'])) {
-                    foreach ($sasaranIku['indikator_kinerja'] as $indikator) {
-                        $indikatorData = [
-                            'indikator_kinerja' => $indikator['indikator_kinerja'] ?? null,
-                            'definisi_formulasi' => $indikator['definisi_formulasi'] ?? null,
-                            'satuan' => $indikator['satuan'] ?? null,
-                            'program_pendukung' => $indikator['program_pendukung'] ?? null,
-                            'target_tahunan' => $indikator['target_tahunan'] ?? [],
-                        ];
-                        $ikuData['indikator'][] = $indikatorData;
-                    }
-                }
-                $this->ikuModel->createCompleteIku($ikuData);
-            }
-            session()->setFlashdata('success', 'Data IKU berhasil ditambahkan');
+
+            // Kirim data langsung ke model
+            $this->ikuModel->createCompleteIku([
+                'definisi' => $data['definisi'],
+                'rpjmd_id' => $data['rpjmd_id'] ?? null,   // isi jika admin kabupaten
+                'renstra_id' => $data['renja_indikator_sasaran_id'] ?? null, // isi jika admin opd
+                'program_pendukung' => $data['program_pendukung'] ?? [] // array
+            ]);
+
+            // Sukses
+            session()->setFlashdata('success', 'IKU berhasil ditambahkan.');
+            return redirect()->to(base_url('adminopd/iku'));
         } catch (\Exception $e) {
+            // Gagal
+            log_message('error', '[IKU SAVE ERROR] ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
             session()->setFlashdata('error', 'Gagal menambahkan data IKU: ' . $e->getMessage());
             return redirect()->back()->withInput();
         }
-        return redirect()->to(base_url('adminopd/iku'));
     }
 
-    public function edit($id)
-    {
+    public function edit($indikatorId = null)
+{
+    $session = session();
+    $opdId = $session->get('opd_id');
+
+    if (!$opdId) {
+        return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+    }
+
+    // Ambil data indikator berdasarkan $indikatorId
+    $db = \Config\Database::connect();
+    $indikator = $db->table('renstra_indikator_sasaran')
+        ->where('id', $indikatorId)
+        ->get()
+        ->getRowArray();
+
+    if (!$indikator) {
+        return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
+    }
+
+    $ikuData = $this->ikuModel->getIkuDetail($indikatorId);
+
+    $renstraSasaran = $this->renstraModel->getAllRenstraByStatus('selesai', $opdId);
+
+    $data = [
+        'title'            => 'Edit IKU',
+        'iku_data'         => $ikuData,   // null kalau belum ada
+        'indikator'        => $indikator, // data indikator renstra
+        'renstra_sasaran'  => $renstraSasaran,
+        'validation'       => \Config\Services::validation()
+    ];
+
+    // dd($ikuData);
+
+    return view('adminOpd/iku/edit_iku', $data);
+}
+
+    public function update()
+{
+    try {
+        $data = $this->request->getPost();
         $session = session();
         $opdId = $session->get('opd_id');
-        $status = 'selesai';
+
+
+        // dd($data);
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
-        $ikuData = $this->ikuModel->find($id);
-        $renstraSasaran = $this->renstraModel->getAllRenstraByStatus($status, $opdId);
-        $data = [
-            'title' => 'Edit IKU',
-            'iku_data' => $ikuData,
-            'renstra_sasaran' => $renstraSasaran,
-            'validation' => \Config\Services::validation()
-        ];
-        return view('adminOpd/iku/edit_iku', $data);
-    }
 
-    public function update()
-    {
-        try {
-            $data = $this->request->getPost();
-            $session = session();
-            $opdId = $session->get('opd_id');
-            if (!$opdId) {
-                return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-            }
-            $id = $data['id'] ?? null;
-            if (!$id) {
-                session()->setFlashdata('error', 'ID IKU tidak ditemukan');
-                return redirect()->back()->withInput();
-            }
-            $updateData = [
-                'opd_id' => $opdId,
-                'renstra_sasaran_id' => $data['renstra_sasaran_id'] ?? null,
-                'sasaran_iku' => $data['sasaran_iku'] ?? null,
-                'indikator' => $data['indikator'] ?? null,
-                'target' => $data['target'] ?? null,
-                'satuan' => $data['satuan'] ?? null,
-                'tahun' => $data['tahun'] ?? null,
-            ];
-            $this->ikuModel->update($id, $updateData);
-            session()->setFlashdata('success', 'Data IKU berhasil diupdate');
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Gagal mengupdate data IKU: ' . $e->getMessage());
+        // Ambil id dari form
+        $id = $data['renja_indikator_sasaran_id'] ?? null;
+        if (!$id) {
+            session()->setFlashdata('error', 'ID IKU tidak ditemukan');
             return redirect()->back()->withInput();
         }
-        return redirect()->to(base_url('adminopd/iku'));
+        $ikuid = $data['iku_id'] ?? null;
+
+        // Data untuk tabel utama IKU
+        $updateData = [
+            'definisi' => $data['definisi'] ?? null,
+        ];
+
+        // Update ke tabel iku
+        $this->ikuModel->updateIku($id, $updateData);
+
+        // Update program pendukung (hapus dulu → insert ulang)
+        if (!empty($data['program_pendukung'])) {
+            $this->ikuModel->updateProgramPendukung($ikuid, $data['program_pendukung']);
+        }
+
+        session()->setFlashdata('success', 'Data IKU berhasil diperbarui');
+    } catch (\Exception $e) {
+        session()->setFlashdata('error', 'Gagal mengupdate data IKU: ' . $e->getMessage());
+        return redirect()->back()->withInput();
     }
+
+    return redirect()->to(base_url('adminopd/iku'));
+}
+
 
     public function delete($id)
     {

@@ -10,16 +10,10 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-
     <!-- Content Wrapper -->
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
-
-        <!-- Navbar/Header -->
         <?= $this->include('adminOpd/templates/header.php'); ?>
-
-        <!-- Sidebar -->
         <?= $this->include('adminOpd/templates/sidebar.php'); ?>
-
         <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">

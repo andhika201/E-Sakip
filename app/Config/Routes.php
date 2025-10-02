@@ -122,16 +122,16 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('renja/tambah', 'AdminOpd\RenjaController::tambah');
     $routes->get('renja/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
     $routes->post('renja/save', 'AdminOpd\RenjaController::save');
-    $routes->post('renja/update', 'AdminOpd\RenjaController::update');
+    $routes->post('renja/update/(:num)', 'AdminOpd\RenjaController::update/$1');
     $routes->match(['get', 'post', 'delete'], 'renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
     $routes->post('renja/update-status', 'AdminOpd\RenjaController::updateStatus');
 
     // IKU
-    $routes->get('iku', 'AdminOpd\IkuController::index');
-    $routes->get('iku/tambah', 'AdminOpd\IkuController::tambah');
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->get('iku', 'AdminOpd\IkuController::index');
+    $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
-    $routes->post('iku/update', 'AdminOpd\IkuController::update');
+    $routes->post('iku/update/(:num)', 'AdminOpd\IkuController::update/$1');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 
     // target

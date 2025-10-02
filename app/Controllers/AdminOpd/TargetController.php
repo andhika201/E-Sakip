@@ -32,6 +32,7 @@ class TargetController extends BaseController
             if (!isset($grouped[$tujuan][$sasaran])) {
                 $grouped[$tujuan][$sasaran] = [];
             }
+
             $grouped[$tujuan][$sasaran][] = $row;
         }
 

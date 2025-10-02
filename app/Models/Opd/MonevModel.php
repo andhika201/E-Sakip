@@ -60,6 +60,7 @@ class MonevModel extends Model
             ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left')
             ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left');
 
+
         if ($tahun) {
             $builder->where('renja_indikator_sasaran.tahun', $tahun);
         }

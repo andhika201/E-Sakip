@@ -157,6 +157,7 @@ class TargetModel extends Model
             ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
             ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left')
             ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left')
+
             ->join('target_rencana', 'target_rencana.renja_indikator_sasaran_id = renja_indikator_sasaran.id', 'left');
 
         if ($tahun) {
@@ -172,6 +173,7 @@ class TargetModel extends Model
 
 
     // ntuk update:
+
     public function updateTarget($id, $data)
     {
         $this->update($id, $data);

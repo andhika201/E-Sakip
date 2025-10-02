@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Capaian Monev</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
-
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
     <?= $this->include('adminOpd/templates/header.php'); ?>
     <?= $this->include('adminOpd/templates/sidebar.php'); ?>
@@ -69,6 +67,12 @@
                         </div>
                     </div>
                     <!-- <script>
+
+                            <input type="number" name="total" id="totalCapaianEdit" class="form-control" value="<?= esc($monev['total']) ?>" readonly>
+                        </div>
+                    </div>
+                    <script>
+
                     function hitungTotalEdit() {
                         var t1 = parseFloat(document.getElementsByName('capaian_triwulan_1')[0].value) || 0;
                         var t2 = parseFloat(document.getElementsByName('capaian_triwulan_2')[0].value) || 0;
@@ -77,8 +81,9 @@
                         var total = t1 + t2 + t3 + t4;
                         document.getElementById('totalCapaianEdit').value = total;
                     }
+
                     </script> -->
-                </div>
+   </div>
                 <div class="d-flex justify-content-between mt-4">
                     <a href="<?= base_url('adminopd/monev') ?>" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
@@ -92,5 +97,4 @@
     </main>
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 </body>
-
 </html>

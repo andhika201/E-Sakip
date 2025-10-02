@@ -16,6 +16,7 @@
             <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit Target Rencana</h2>
 
             <?php
+// <<<<<<< monev
                     $db = \Config\Database::connect();
                     // Ambil data indikator berdasarkan renja_indikator_sasaran_id dari target
                     $indikator = $db->table('renja_indikator_sasaran')
@@ -31,6 +32,20 @@
                         $sasaran = $db->table('renja_sasaran')->select('sasaran_renja')->where('id', $renjaSasaranId)->get()->getRowArray();
                         if ($sasaran) $sasaranRenja = $sasaran['sasaran_renja'];
                     }
+// =======
+//                 $db = \Config\Database::connect();
+//                 $indikator = $db->table('renja_indikator_sasaran')
+//                     ->select('satuan, target, tahun')
+//                     ->where('renja_sasaran_id', $target['renja_sasaran_id'])
+//                     ->get()->getRowArray();
+//                 $selectedSatuan = $indikator ? $indikator['satuan'] : '';
+//                 $selectedTarget = $indikator ? $indikator['target'] : '';
+//                 $selectedTahun = $indikator ? $indikator['tahun'] : '';
+//                 // Ambil nama sasaran renja
+//                 $sasaranRenja = '';
+//                 $sasaran = $db->table('renja_sasaran')->select('sasaran_renja')->where('id', $target['renja_sasaran_id'])->get()->getRowArray();
+//                 if ($sasaran) $sasaranRenja = $sasaran['sasaran_renja'];
+// >>>>>>> main
             ?>
             <form action="<?= base_url('adminopd/target/update/' . $target['id']) ?>" method="post">
                 <?= csrf_field() ?>

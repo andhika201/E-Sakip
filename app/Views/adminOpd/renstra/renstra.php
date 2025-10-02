@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?= esc($title) ?></title>
+
+    <title>RENSTRA - e-SAKIP</title>
+    <!-- Style -->
     <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
 
@@ -306,8 +308,6 @@
             });
         });
     </script>
-
-
 </body>
 
 </html>

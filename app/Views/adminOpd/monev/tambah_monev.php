@@ -32,6 +32,7 @@
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
                         <label class="form-label">Target</label>
+
                         <input type="text" class="form-control" value="<?= esc($target['indikator_target']) ?>" readonly>
                     </div>
                     <div class="col-md-3 mb-3 mb-md-0">
@@ -40,25 +41,34 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Penanggung Jawab</label>
-                        <input type="text" class="form-control" value="<?= esc($target['penanggung_jawab']) ?>" readonly>
+                        <input type="text" class="form-control" value="<?= esc($target['penanggung_jawab']) ?>"
+                            readonly>
+
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Capaian Triwulan</label>
                     <div class="row mb-2">
-                        <div class="col"><input type="number" name="capaian_triwulan_1" class="form-control" placeholder="Triwulan I" min="0" oninput="hitungTotal()"></div>
-                        <div class="col"><input type="number" name="capaian_triwulan_2" class="form-control" placeholder="Triwulan II" min="0" oninput="hitungTotal()"></div>
-                        <div class="col"><input type="number" name="capaian_triwulan_3" class="form-control" placeholder="Triwulan III" min="0" oninput="hitungTotal()"></div>
-                        <div class="col"><input type="number" name="capaian_triwulan_4" class="form-control" placeholder="Triwulan IV" min="0" oninput="hitungTotal()"></div>
+
+                        <div class="col"><input type="number" name="capaian_triwulan_1" class="form-control"
+                                placeholder="Triwulan I" min="0" oninput="hitungTotal()"></div>
+                        <div class="col"><input type="number" name="capaian_triwulan_2" class="form-control"
+                                placeholder="Triwulan II" min="0" oninput="hitungTotal()"></div>
+                        <div class="col"><input type="number" name="capaian_triwulan_3" class="form-control"
+                                placeholder="Triwulan III" min="0" oninput="hitungTotal()"></div>
+                        <div class="col"><input type="number" name="capaian_triwulan_4" class="form-control"
+                                placeholder="Triwulan IV" min="0" oninput="hitungTotal()"></div>
+
                     </div>
                     <div class="row">
                         <div class="col-md-3">
                             <label class="form-label">Total Capaian</label>
-                            <input type="number" name="total" id="totalCapaian" class="form-control" readonly>
+
+                            <input type="number" name="total" id="totalCapaian" class="form-control">
                         </div>
                     </div>
-                    <script>
-                    function hitungTotal() {
+                    <!-- <script>
+                  function hitungTotal() {
                         var t1 = parseFloat(document.getElementsByName('capaian_triwulan_1')[0].value) || 0;
                         var t2 = parseFloat(document.getElementsByName('capaian_triwulan_2')[0].value) || 0;
                         var t3 = parseFloat(document.getElementsByName('capaian_triwulan_3')[0].value) || 0;
@@ -66,7 +76,9 @@
                         var total = t1 + t2 + t3 + t4;
                         document.getElementById('totalCapaian').value = total;
                     }
-                    </script>
+
+                    </script> -->
+
                 </div>
                 <div class="d-flex justify-content-between mt-4">
                     <a href="<?= base_url('adminopd/monev') ?>" class="btn btn-secondary">

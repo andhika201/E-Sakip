@@ -59,76 +59,90 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = 1; ?>
-                            <?php foreach ($renstra_data as $row): ?>
+                            <?php
+                            $no = 1;
+
+                            // Tentukan sumber data berdasarkan role
+                            $dataSource = ($role === 'admin_kab') ? $rpjmd_data : $renstra_data;
+
+                            foreach ($dataSource as $row):
+                                // Tentukan field sasaran sesuai role
+                                $sasaranText = ($role === 'admin_kab') ? $row['sasaran_rpjmd'] : $row['sasaran'];
+                                ?>
+
+                                <?php foreach ($row['indikator_sasaran'] as $indikator): ?>
 
                                 <?php
-
+                                // Cari data IKU yang cocok
                                 $iku = null;
-                                if (!empty($iku_data)) {
+                                if (isset($iku_data) && is_array($iku_data)) {
                                     foreach ($iku_data as $item) {
-                                        if ($item['renstra_id'] == $row['indikator_id']) {
+                                        $match = false;
+
+                                        if ($role === 'admin_kab' && isset($item['rpjmd_id'], $indikator['id'])) {
+                                            $match = ($item['rpjmd_id'] == $indikator['id']);
+                                        }
+                                        if ($role === 'admin_opd' && isset($item['renstra_id'], $row['indikator_id'])) {
+                                            $match = ($item['renstra_id'] == $row['indikator_id']);
+                                        }
+
+                                        if ($match) {
                                             $iku = $item;
                                             break;
                                         }
                                     }
                                 }
                                 ?>
-                                <?php
-                                // Tentukan jumlah program pendukung (minimal 1 agar tidak error)
-                                $programPendukung = !empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])
-                                    ? $iku['program_pendukung']
-                                    : ['-'];
-                                $jumlahProgram = count($programPendukung);
-                                ?>
 
-                                <tr>
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>"><?= $no++ ?></td>
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                        <?= esc($row['sasaran']) ?></td>
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                        <?= esc($row['indikator_sasaran']) ?></td>
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                        <?= esc($row['satuan']) ?></td>
+                                    <tr>
+                                        <td class="border p-2 align-middle"><?= $no++ ?></td>
+                                        <td class="border p-2 align-middle"><?= esc($sasaranText) ?></td>
+                                        <td class="border p-2 align-middle"><?= esc($indikator['indikator_sasaran']) ?></td>
+                                        <td class="border p-2 align-middle"><?= esc($indikator['satuan']) ?></td>
 
-                                    <?php foreach ($grouped_data as $periodData): ?>
-                                        <?php foreach ($periodData['years'] as $tahun): ?>
-                                            <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                                <?= $row['targets'][$tahun] ?? '-' ?>
-                                            </td>
+                                        <?php foreach ($grouped_data as $periodData): ?>
+                                            <?php foreach ($indikator['target_tahunan'] as $target): ?>
+                                                <td class="border p-2 align-middle">
+                                                    <?= esc($target['target_tahunan'] ?? '-') ?>
+                                                </td>
+                                            <?php endforeach; ?>
                                         <?php endforeach; ?>
-                                    <?php endforeach; ?>
 
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                        <?= esc($iku['definisi'] ?? '-') ?>
-                                    </td>
+                                        <td class="border p-2 align-middle"><?= esc($iku['definisi'] ?? '-') ?></td>
+                                        <td class="border p-2 align-middle"><?= esc($iku['daftar_program_pendukung'] ?? '-') ?>
+                                        </td>
 
-                                    <!-- Cetak program pendukung pertama -->
-                                    <td class="border p-2 align-middle"><?= esc($programPendukung[0]) ?></td>
-
-                                    <td class="border p-2 align-middle" rowspan="<?= $jumlahProgram ?>">
-                                        <?php if (isset($row['indikator_id'])): ?>
-                                            <?php if (empty($iku['definisi'])): ?>
-                                                <a href="<?= base_url('adminopd/iku/tambah/' . $row['indikator_id']) ?>"
-                                                    class="btn btn-sm btn-success">Tambah</a>
-                                            <?php else: ?>
-                                                <a href="<?= base_url('adminopd/iku/edit/' . $row['indikator_id']) ?>"
-                                                    class="btn btn-sm btn-warning">Edit</a>
-                                            <?php endif; ?>
+                                        <?php if ($role == 'admin_kab'): ?>
+                                            <td class="border p-2 align-middle">
+                                                <?php if (isset($indikator['id'])): ?>
+                                                    <?php if (empty($iku['definisi'])): ?>
+                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
+                                                            class="btn btn-sm btn-success">Tambah</a>
+                                                    <?php else: ?>
+                                                        <a href="<?= base_url('adminopd/iku/edit/' . $iku['id']) ?>"
+                                                            class="btn btn-sm btn-warning">Edit</a>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
                                         <?php else: ?>
-                                            <span class="text-muted">-</span>
+                                            <td class="border p-2 align-middle">
+                                                <?php if (isset($row['indikator_id'])): ?>
+                                                    <?php if (empty($iku['definisi'])): ?>
+                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $row['indikator_id']) ?>"
+                                                            class="btn btn-sm btn-success">Tambah</a>
+                                                    <?php else: ?>
+                                                        <a href="<?= base_url('adminopd/iku/edit/' . $iku['id']) ?>"
+                                                            class="btn btn-sm btn-warning">Edit</a>
+                                                    <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
                                         <?php endif; ?>
-                                    </td>
-                                </tr>
-
-                                <!-- Tambahan baris untuk program pendukung berikutnya -->
-                                <?php if ($jumlahProgram > 1): ?>
-                                    <?php for ($i = 1; $i < $jumlahProgram; $i++): ?>
-                                        <tr>
-                                            <td class="border p-2 align-middle"><?= esc($programPendukung[$i]) ?></td>
-                                        </tr>
-                                    <?php endfor; ?>
-                                <?php endif; ?>
+                                    </tr>
+                                <?php endforeach; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

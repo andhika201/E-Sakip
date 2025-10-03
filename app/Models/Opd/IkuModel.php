@@ -69,7 +69,7 @@ class IkuModel extends Model
     /**
      * Get all IKU sasaran beserta indikator dan target tahunan (nested array)
      */
-    public function getIkuWithPrograms($opd_id)
+    public function getRenstraWithPrograms($opd_id)
     {
         // Ambil data IKU saja
         $ikuList = $this->db->table('iku')
@@ -87,6 +87,47 @@ class IkuModel extends Model
             ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
             ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
             ->where('renstra_sasaran.opd_id', $opd_id)
+            ->orderBy('iku.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Ambil semua program pendukung
+        $programs = $this->db->table('iku_program_pendukung')
+            ->select('iku_indikator_id, program')
+            ->get()
+            ->getResultArray();
+
+        // Mapping program ke IKU
+        $programMap = [];
+        foreach ($programs as $p) {
+            $programMap[$p['iku_indikator_id']][] = $p['program'];
+        }
+
+        // Gabungkan ke dalam $ikuList
+        foreach ($ikuList as &$iku) {
+            $iku['program_pendukung'] = $programMap[$iku['id']] ?? [];
+        }
+
+        return $ikuList;
+    }
+
+    public function getRPJMDWithPrograms()
+    {
+        // Ambil data IKU saja
+        $ikuList = $this->db->table('iku')
+            ->select("
+            iku.*,
+            rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+            rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+            renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+            renstra_indikator_sasaran.satuan AS renstra_satuan,
+            renstra_sasaran.sasaran AS sasaran_renstra,
+            renstra_tujuan.tujuan AS tujuan_renstra
+        ", false)
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = iku.rpjmd_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = iku.renstra_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
             ->orderBy('iku.id', 'ASC')
             ->get()
             ->getResultArray();

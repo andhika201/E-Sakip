@@ -40,7 +40,13 @@
 
       <form action="<?= base_url('adminopd/iku/save') ?>" method="post">
         <?= csrf_field() ?>
-        <input type="hidden" name="renja_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
+
+        <?php if ($role == 'admin_kab'): ?>
+          <input type="hidden" name="rpjmd_id" value="<?= esc($indikator['id']) ?>">
+        <?php else: ?>
+          <input type="hidden" name="renstra_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
+        <?php endif; ?>
+        
         <div class="row mb-3">
           <div class="col-md-6 mb-3 mb-md-0">
             <label class="form-label">Indikator</label>

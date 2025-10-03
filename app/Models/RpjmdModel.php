@@ -1391,4 +1391,36 @@ class RpjmdModel extends Model
         
         return $misiList;
     }
+
+    public function getSasaranWithIndikatorAndTarget()
+{
+    $sasaranList = $this->db->table('rpjmd_sasaran s')
+        ->select('s.id, s.sasaran_rpjmd')
+        ->orderBy('s.id', 'ASC')
+        ->get()
+        ->getResultArray();
+
+    foreach ($sasaranList as &$sasaran) {
+        // Ambil indikator untuk setiap sasaran
+        $indikatorList = $this->db->table('rpjmd_indikator_sasaran i')
+            ->select('i.id, i.indikator_sasaran, i.satuan')
+            ->where('i.sasaran_id', $sasaran['id'])
+            ->get()
+            ->getResultArray();
+
+        foreach ($indikatorList as &$indikator) {
+            // Ambil target tahunan untuk setiap indikator
+            $indikator['target_tahunan'] = $this->db->table('rpjmd_target t')
+                ->select('t.tahun, t.target_tahunan')
+                ->where('t.indikator_sasaran_id', $indikator['id'])
+                ->orderBy('t.tahun', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        $sasaran['indikator_sasaran'] = $indikatorList;
+    }
+
+    return $sasaranList;
+}
 }

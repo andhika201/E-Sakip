@@ -176,10 +176,9 @@ class IkuModel extends Model
             ->getRowArray();
     }
 
-    public function getIkuDetail($id)
+    public function getIkuDetail($id, $role = 'admin_opd')
     {
-        // Ambil detail IKU
-        $iku = $this->db->table('iku')
+        $builder = $this->db->table('iku')
             ->select("
             iku.*,
             rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
@@ -192,10 +191,20 @@ class IkuModel extends Model
             ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = iku.rpjmd_id', 'left')
             ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = iku.renstra_id', 'left')
             ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
-            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left')
-            ->where('renstra_indikator_sasaran.id', $id)
-            ->get()
-            ->getRowArray();
+            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left');
+
+        // Kondisi sesuai role
+        if ($role === 'admin_kab') {
+            $builder->where('rpjmd_indikator_sasaran.id', $id);
+        } else {
+            $builder->where('renstra_indikator_sasaran.id', $id);
+        }
+
+        $iku = $builder->get()->getRowArray();
+
+        if (!$iku) {
+            return null;
+        }
 
         // Ambil program pendukung
         $programs = $this->db->table('iku_program_pendukung')
@@ -208,6 +217,7 @@ class IkuModel extends Model
 
         return $iku;
     }
+
 
 
     //update IKU beserta program pendukungnya

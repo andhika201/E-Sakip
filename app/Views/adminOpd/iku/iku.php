@@ -61,42 +61,44 @@
                         <tbody>
                             <?php
                             $no = 1;
-
-                            // Tentukan sumber data berdasarkan role
                             $dataSource = ($role === 'admin_kab') ? $rpjmd_data : $renstra_data;
 
                             foreach ($dataSource as $row):
                                 // Tentukan field sasaran sesuai role
                                 $sasaranText = ($role === 'admin_kab') ? $row['sasaran_rpjmd'] : $row['sasaran'];
-                                ?>
 
-                                <?php foreach ($row['indikator_sasaran'] as $indikator): ?>
+                                // Hitung jumlah indikator untuk rowspan
+                                $indikatorCount = count($row['indikator_sasaran']);
+                                $firstRow = true;
 
-                                <?php
-                                // Cari data IKU yang cocok
-                                $iku = null;
-                                if (isset($iku_data) && is_array($iku_data)) {
-                                    foreach ($iku_data as $item) {
-                                        $match = false;
+                                foreach ($row['indikator_sasaran'] as $indikator):
+                                    // Cari data IKU yang cocok
+                                    $iku = null;
+                                    if (isset($iku_data) && is_array($iku_data)) {
+                                        foreach ($iku_data as $item) {
+                                            $match = false;
 
-                                        if ($role === 'admin_kab' && isset($item['rpjmd_id'], $indikator['id'])) {
-                                            $match = ($item['rpjmd_id'] == $indikator['id']);
-                                        }
-                                        if ($role === 'admin_opd' && isset($item['renstra_id'], $row['indikator_id'])) {
-                                            $match = ($item['renstra_id'] == $row['indikator_id']);
-                                        }
+                                            if ($role === 'admin_kab' && isset($item['rpjmd_id'], $indikator['id'])) {
+                                                $match = ($item['rpjmd_id'] == $indikator['id']);
+                                            }
+                                            if ($role === 'admin_opd' && isset($item['renstra_id'], $indikator['id'])) {
+                                                $match = ($item['renstra_id'] == $indikator['id']);
+                                            }
 
-                                        if ($match) {
-                                            $iku = $item;
-                                            break;
+                                            if ($match) {
+                                                $iku = $item;
+                                                break;
+                                            }
                                         }
                                     }
-                                }
-                                ?>
-
+                                    ?>
                                     <tr>
-                                        <td class="border p-2 align-middle"><?= $no++ ?></td>
-                                        <td class="border p-2 align-middle"><?= esc($sasaranText) ?></td>
+                                        <?php if ($firstRow): ?>
+                                            <td class="border p-2 align-middle" rowspan="<?= $indikatorCount ?>"><?= $no++ ?></td>
+                                            <td class="border p-2 align-middle" rowspan="<?= $indikatorCount ?>">
+                                                <?= esc($sasaranText) ?></td>
+                                            <?php $firstRow = false; endif; ?>
+
                                         <td class="border p-2 align-middle"><?= esc($indikator['indikator_sasaran']) ?></td>
                                         <td class="border p-2 align-middle"><?= esc($indikator['satuan']) ?></td>
 
@@ -108,43 +110,36 @@
                                             <?php endforeach; ?>
                                         <?php endforeach; ?>
 
-                                        <td class="border p-2 align-middle"><?= esc($iku['definisi'] ?? '-') ?></td>
-                                        <td class="border p-2 align-middle"><?= esc($iku['daftar_program_pendukung'] ?? '-') ?>
+                                        <td class="border p-2 align-middle" ><?= esc($iku['definisi'] ?? '-') ?></td>
+
+                                        <td class="border p-2 align-middle">
+                                            <?php if (!empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])): ?>
+                                                <?php foreach ($iku['program_pendukung'] as $program): ?>
+                                                    <?= esc($program ?? '-') ?><br>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <span>-</span>
+                                            <?php endif; ?>
                                         </td>
 
-                                        <?php if ($role == 'admin_kab'): ?>
-                                            <td class="border p-2 align-middle">
-                                                <?php if (isset($indikator['id'])): ?>
-                                                    <?php if (empty($iku['definisi'])): ?>
-                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
-                                                            class="btn btn-sm btn-success">Tambah</a>
-                                                    <?php else: ?>
-                                                        <a href="<?= base_url('adminopd/iku/edit/' . $iku['id']) ?>"
-                                                            class="btn btn-sm btn-warning">Edit</a>
-                                                    <?php endif; ?>
+                                        <td class="border p-2 align-middle">
+                                            <?php if (isset($indikator['id'])): ?>
+                                                <?php if (empty($iku['definisi'])): ?>
+                                                    <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
+                                                        class="btn btn-sm btn-success">Tambah</a>
                                                 <?php else: ?>
-                                                    <span class="text-muted">-</span>
+                                                    <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
+                                                        class="btn btn-sm btn-warning">Edit</a>
                                                 <?php endif; ?>
-                                            </td>
-                                        <?php else: ?>
-                                            <td class="border p-2 align-middle">
-                                                <?php if (isset($row['indikator_id'])): ?>
-                                                    <?php if (empty($iku['definisi'])): ?>
-                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $row['indikator_id']) ?>"
-                                                            class="btn btn-sm btn-success">Tambah</a>
-                                                    <?php else: ?>
-                                                        <a href="<?= base_url('adminopd/iku/edit/' . $iku['id']) ?>"
-                                                            class="btn btn-sm btn-warning">Edit</a>
-                                                    <?php endif; ?>
-                                                <?php else: ?>
-                                                    <span class="text-muted">-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endforeach; ?>
                         </tbody>
+
                     </table>
                 </div>
             </div>

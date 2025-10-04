@@ -40,7 +40,7 @@ class IkuController extends BaseController
         $status = $this->request->getGet('status');
         $periode = $this->request->getGet('periode');
 
-        $renstraData = $this->renstraModel->getAllRenstra($opdId, null, $periode, $status);
+        $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId);
         $rpjmdData = $this->rpjmdModel->getSasaranWithIndikatorAndTarget();
 
         // dd($rpjmdData);
@@ -70,8 +70,6 @@ class IkuController extends BaseController
         } else {
             $ikuData = $this->ikuModel->getRenstraWithPrograms($opdId);
         }
-
-        dd($ikuData);
 
         $data = [
             'renstra_data' => $renstraData,
@@ -180,23 +178,28 @@ class IkuController extends BaseController
     {
         $session = session();
         $opdId = $session->get('opd_id');
+        $role = $session->get('role');
 
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
 
         // Ambil data indikator berdasarkan $indikatorId
+        $table = ($role === 'admin_kab')
+            ? 'rpjmd_indikator_sasaran'
+            : 'renstra_indikator_sasaran';
         $db = \Config\Database::connect();
-        $indikator = $db->table('renstra_indikator_sasaran')
+        $indikator = $db->table($table)
             ->where('id', $indikatorId)
             ->get()
             ->getRowArray();
+
 
         if (!$indikator) {
             return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
         }
 
-        $ikuData = $this->ikuModel->getIkuDetail($indikatorId);
+        $ikuData = $this->ikuModel->getIkuDetail($indikatorId, $role);
 
         $renstraSasaran = $this->renstraModel->getAllRenstraByStatus('selesai', $opdId);
 
@@ -208,7 +211,6 @@ class IkuController extends BaseController
             'validation' => \Config\Services::validation()
         ];
 
-        // dd($ikuData);
 
         return view('adminOpd/iku/edit_iku', $data);
     }

@@ -39,7 +39,6 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
         $routes->get('pk_bupati/cetak', 'AdminKab\PkBupatiController::view_cetak');
 
-
         $routes->get('dashboard', 'AdminKabupatenController::index');
         $routes->post('getDashboardData', 'AdminKabupatenController::getDashboardData');
         $routes->get('getStats', 'AdminKabupatenController::getStats');
@@ -61,13 +60,6 @@ $routes->group(
         $routes->post('rkpd/update', 'RkpdController::update');
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
-
-        // Capaian PK
-        $routes->get('capaian_pk/tambah', 'CapaianPkController::tambah');
-        $routes->get('capaian_pk/edit/(:num)', 'CapaianPkController::edit/$1');
-        $routes->post('capaian_pk/save', 'CapaianPkController::save');
-        $routes->post('capaian_pk/update/(:num)', 'CapaianPkController::update/$1');
-        $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
 
         // Lakip Kabupaten
         $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');
@@ -117,23 +109,24 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->match(['get', 'post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
 
+    // IKU
+    $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->get('iku', 'AdminOpd\IkuController::index');
+    $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
+    $routes->post('iku/save', 'AdminOpd\IkuController::save');
+    $routes->post('iku/update/(:num)', 'AdminOpd\IkuController::update/$1');
+    $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
+
     // RENJA
     $routes->get('renja', 'AdminOpd\RenjaController::index');
     $routes->get('renja/tambah', 'AdminOpd\RenjaController::tambah');
     $routes->get('renja/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
     $routes->post('renja/save', 'AdminOpd\RenjaController::save');
-    $routes->post('renja/update', 'AdminOpd\RenjaController::update');
+    $routes->post('renja/update/(:num)', 'AdminOpd\RenjaController::update/$1');
     $routes->match(['get', 'post', 'delete'], 'renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
     $routes->post('renja/update-status', 'AdminOpd\RenjaController::updateStatus');
 
-    // IKU
-    $routes->get('iku', 'AdminOpd\IkuController::index');
-    $routes->get('iku/tambah', 'AdminOpd\IkuController::tambah');
-    $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
-    $routes->post('iku/save', 'AdminOpd\IkuController::save');
-    $routes->post('iku/update', 'AdminOpd\IkuController::update');
-    $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
-
+    
     // target
     $routes->get('target', 'AdminOpd\TargetController::index');
     $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');

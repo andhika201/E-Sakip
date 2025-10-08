@@ -50,6 +50,45 @@ class RenstraModel extends Model
             ->get()
             ->getResultArray();
     }
+    public function getAllSasaranWithIndikatorAndTarget($opdId = null)
+    {
+        // Ambil semua sasaran renstra berdasarkan opd_id
+        $builder = $this->db->table('renstra_sasaran rs')
+            ->select('rs.*, rs.sasaran, o.nama_opd, rt.tujuan as renstra_tujuan')
+            ->join('opd o', 'o.id = rs.opd_id')
+            ->join('renstra_tujuan rt', 'rt.id = rs.renstra_tujuan_id')
+            ->orderBy('rs.tahun_mulai', 'ASC')
+            ->orderBy('rs.id', 'ASC');
+
+        if ($opdId !== null) {
+            $builder->where('rs.opd_id', $opdId);
+        }
+
+        $sasaranList = $builder->get()->getResultArray();
+
+        foreach ($sasaranList as &$sasaran) {
+            // Ambil indikator untuk setiap sasaran renstra
+            $indikatorList = $this->db->table('renstra_indikator_sasaran ri')
+                ->select('ri.id, ri.indikator_sasaran, ri.satuan')
+                ->where('ri.renstra_sasaran_id', $sasaran['id'])
+                ->get()
+                ->getResultArray();
+
+            foreach ($indikatorList as &$indikator) {
+                // Ambil target tahunan untuk setiap indikator renstra
+                $indikator['target_tahunan'] = $this->db->table('renstra_target rt')
+                    ->select('rt.tahun, rt.target as target_tahunan')
+                    ->where('rt.renstra_indikator_id', $indikator['id'])
+                    ->orderBy('rt.tahun ', 'ASC')
+                    ->get()
+                    ->getResultArray();
+            }
+
+            $sasaran['indikator_sasaran'] = $indikatorList;
+        }
+
+        return $sasaranList;
+    }
 
     /**
      * Get Renstra Sasaran by ID
@@ -100,31 +139,7 @@ class RenstraModel extends Model
             ->getResultArray();
     }
 
-    /**
-     * Get all RENSTRA Sasaran dengan filter status
-     */
-    // public function getAllRenstraByStatus($status = null, $opdId = null)
-    // {
-    //     $query = $this->db->table('renstra_sasaran rs');
-
-    //     if ($status !== null) {
-    //         $query->where('rs.status', $status);
-    //     }
-
-    //     if ($opdId !== null) {
-    //         $query->where('rs.opd_id', $opdId);
-    //     }
-
-    //     return $query->orderBy('rs.tahun_mulai', 'ASC')
-    //         ->get()
-    //         ->getResultArray();
-    // }
-
-    // ==================== RENSTRA INDIKATOR SASARAN ====================
-
-    /**
-     * Get all Indikator Sasaran
-     */
+    
     public function getAllIndikatorSasaran()
     {
         return $this->db->table('renstra_indikator_sasaran ris')

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 25 Sep 2025 pada 08.39
+-- Waktu pembuatan: 10 Okt 2025 pada 08.14
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -24,52 +24,46 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `iku_indikator_kinerja`
+-- Struktur dari tabel `iku`
 --
 
-CREATE TABLE `iku_indikator_kinerja` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `iku_sasaran_id` int(10) UNSIGNED NOT NULL,
-  `indikator_kinerja` text NOT NULL,
-  `definisi_formulasi` text NOT NULL,
-  `satuan` varchar(50) NOT NULL,
-  `program_pendukung` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp()
+CREATE TABLE `iku` (
+  `id` int(11) NOT NULL,
+  `rpjmd_id` int(11) DEFAULT NULL,
+  `renstra_id` int(11) DEFAULT NULL,
+  `definisi` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `iku`
+--
+
+INSERT INTO `iku` (`id`, `rpjmd_id`, `renstra_id`, `definisi`) VALUES
+(8, NULL, 4, 'sdws'),
+(9, NULL, 5, 'sassasa');
 
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `iku_sasaran`
+-- Struktur dari tabel `iku_program_pendukung`
 --
 
-CREATE TABLE `iku_sasaran` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `opd_id` int(10) UNSIGNED NOT NULL,
-  `renstra_sasaran_id` int(10) UNSIGNED NOT NULL,
-  `sasaran` text NOT NULL,
-  `status` enum('draft','selesai') NOT NULL DEFAULT 'draft',
-  `tahun_mulai` year(4) NOT NULL,
-  `tahun_akhir` year(4) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp()
+CREATE TABLE `iku_program_pendukung` (
+  `id` int(11) NOT NULL,
+  `iku_indikator_id` int(11) DEFAULT NULL,
+  `program` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Struktur dari tabel `iku_target_tahunan`
+-- Dumping data untuk tabel `iku_program_pendukung`
 --
 
-CREATE TABLE `iku_target_tahunan` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `iku_indikator_id` int(10) UNSIGNED NOT NULL,
-  `tahun` year(4) NOT NULL,
-  `target` varchar(100) NOT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `iku_program_pendukung` (`id`, `iku_indikator_id`, `program`) VALUES
+(18, 8, 'ws'),
+(19, 8, 'wwssa'),
+(20, 9, 'asa'),
+(21, 9, 'asaa'),
+(22, 9, 'asss');
 
 -- --------------------------------------------------------
 
@@ -1056,6 +1050,13 @@ CREATE TABLE `lakip_opd` (
   `updated_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `lakip_opd`
+--
+
+INSERT INTO `lakip_opd` (`id`, `opd_id`, `judul`, `tanggal_laporan`, `file`, `status`, `created_at`, `updated_at`) VALUES
+(1, 20, 'nbb', '2025-10-02', '1759378349_4716e4eb88e69710fb27.xlsx', 'draft', '2025-10-02 04:12:29', '2025-10-02 04:12:29');
+
 -- --------------------------------------------------------
 
 --
@@ -1133,6 +1134,14 @@ CREATE TABLE `monev` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `monev`
+--
+
+INSERT INTO `monev` (`id`, `target_rencana_id`, `capaian_triwulan_1`, `capaian_triwulan_2`, `capaian_triwulan_3`, `capaian_triwulan_4`, `total`, `created_at`, `updated_at`) VALUES
+(3, 8, '1', '2', '3', '5', 11, '2025-10-01 20:49:08', '2025-10-01 20:49:08'),
+(4, 9, '12', '21', '1211', '21', 1000, '2025-10-01 20:50:33', '2025-10-01 20:50:33');
 
 -- --------------------------------------------------------
 
@@ -3626,9 +3635,8 @@ CREATE TABLE `renja_indikator_sasaran` (
 --
 
 INSERT INTO `renja_indikator_sasaran` (`id`, `renja_sasaran_id`, `indikator_sasaran`, `satuan`, `tahun`, `target`, `created_at`, `updated_at`) VALUES
-(5, 4, 'sdsd', 'Nilai', '2025', '12', '2025-09-24 13:35:41', '2025-09-24 13:35:41'),
-(6, 5, 'asas', 'Nilai', '2025', '12', '2025-09-24 13:36:07', '2025-09-24 13:36:07'),
-(7, 4, 'assa', 'Nilai', '2026', '12', '2025-09-24 13:36:57', '2025-09-24 13:36:57');
+(1, 1, 'indikator renja dari sasaran 1', 'Nilai', '2028', '1212', '2025-09-03 11:06:59', '2025-09-03 11:06:59'),
+(2, 1, 'indikator 2 dari sasaran 1', 'Dokumen', '2028', '21', '2025-09-03 11:06:59', '2025-09-03 11:06:59');
 
 -- --------------------------------------------------------
 
@@ -3651,8 +3659,7 @@ CREATE TABLE `renja_sasaran` (
 --
 
 INSERT INTO `renja_sasaran` (`id`, `opd_id`, `renstra_sasaran_id`, `sasaran_renja`, `status`, `created_at`, `updated_at`) VALUES
-(4, 20, 17, 'szxs', 'draft', '2025-09-24 13:35:41', '2025-09-24 13:35:41'),
-(5, 20, 17, 'sasa', 'draft', '2025-09-24 13:36:07', '2025-09-24 13:36:07');
+(1, 20, 1, 'sasaran renja 1', 'selesai', '2025-09-03 11:06:59', '2025-09-03 11:06:59');
 
 -- --------------------------------------------------------
 
@@ -3674,11 +3681,9 @@ CREATE TABLE `renstra_indikator_sasaran` (
 --
 
 INSERT INTO `renstra_indikator_sasaran` (`id`, `renstra_sasaran_id`, `indikator_sasaran`, `satuan`, `created_at`, `updated_at`) VALUES
-(23, 18, 'asa', 'Nilai', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(24, 19, 'asa', 'Nilai', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(25, 19, 'asa', 'Nilai', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(26, 20, 'asas', 'Nilai', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(29, 17, 'saa', 'Nilai', '2025-09-25 13:38:40', '2025-09-25 13:38:40');
+(3, 3, 'sas', 'Nilai', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(4, 1, 'indikator dari sasaran 1', 'Nilai', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(5, 1, 'asas', 'Nilai', '2025-10-01 14:31:10', '2025-10-01 14:31:10');
 
 -- --------------------------------------------------------
 
@@ -3689,7 +3694,7 @@ INSERT INTO `renstra_indikator_sasaran` (`id`, `renstra_sasaran_id`, `indikator_
 CREATE TABLE `renstra_sasaran` (
   `id` int(10) UNSIGNED NOT NULL,
   `opd_id` int(10) UNSIGNED NOT NULL,
-  `renstra_tujuan_id` int(10) UNSIGNED DEFAULT NULL,
+  `rpjmd_sasaran_id` int(10) UNSIGNED NOT NULL,
   `sasaran` text NOT NULL,
   `status` enum('draft','selesai') NOT NULL DEFAULT 'draft',
   `tahun_mulai` int(11) NOT NULL,
@@ -3702,11 +3707,9 @@ CREATE TABLE `renstra_sasaran` (
 -- Dumping data untuk tabel `renstra_sasaran`
 --
 
-INSERT INTO `renstra_sasaran` (`id`, `opd_id`, `renstra_tujuan_id`, `sasaran`, `status`, `tahun_mulai`, `tahun_akhir`, `created_at`, `updated_at`) VALUES
-(17, 20, 17, 'asas', 'selesai', 2025, 2029, '2025-09-24 13:06:01', '2025-09-25 13:38:31'),
-(18, 20, 18, 'asa', 'draft', 2025, 2029, '2025-09-24 13:32:37', '2025-09-24 13:32:37'),
-(19, 20, 18, 'asa', 'draft', 2025, 2029, '2025-09-24 13:42:24', '2025-09-24 13:42:24'),
-(20, 20, 18, 'sas', 'draft', 2025, 2029, '2025-09-24 13:42:24', '2025-09-24 13:42:24');
+INSERT INTO `renstra_sasaran` (`id`, `opd_id`, `rpjmd_sasaran_id`, `sasaran`, `status`, `tahun_mulai`, `tahun_akhir`, `created_at`, `updated_at`) VALUES
+(1, 20, 2, 'sasaran renstra 1', 'selesai', 2025, 2029, '2025-09-03 10:04:16', '2025-09-03 10:04:20'),
+(3, 20, 2, 'ssa', 'draft', 2030, 2034, '2025-10-01 12:49:45', '2025-10-01 12:49:45');
 
 -- --------------------------------------------------------
 
@@ -3728,53 +3731,21 @@ CREATE TABLE `renstra_target` (
 --
 
 INSERT INTO `renstra_target` (`id`, `renstra_indikator_id`, `tahun`, `target`, `created_at`, `updated_at`) VALUES
-(111, 23, '2025', '13', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(112, 23, '2026', '13', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(113, 23, '2027', '13', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(114, 23, '2028', '13', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(115, 23, '2029', '14', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(116, 24, '2025', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(117, 24, '2026', '12', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(118, 24, '2027', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(119, 24, '2028', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(120, 24, '2029', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(121, 25, '2025', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(122, 25, '2026', '2', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(123, 25, '2027', '21', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(124, 25, '2028', '12', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(125, 25, '2029', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(126, 26, '2025', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(127, 26, '2026', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(128, 26, '2027', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(129, 26, '2028', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(130, 26, '2029', '1', '2025-09-24 16:01:49', '2025-09-24 16:01:49'),
-(141, 29, '2025', '30', '2025-09-25 13:38:40', '2025-09-25 13:38:40'),
-(142, 29, '2026', '15', '2025-09-25 13:38:40', '2025-09-25 13:38:40'),
-(143, 29, '2027', '12', '2025-09-25 13:38:40', '2025-09-25 13:38:40'),
-(144, 29, '2028', '12', '2025-09-25 13:38:40', '2025-09-25 13:38:40'),
-(145, 29, '2029', '12', '2025-09-25 13:38:40', '2025-09-25 13:38:40');
-
--- --------------------------------------------------------
-
---
--- Struktur dari tabel `renstra_tujuan`
---
-
-CREATE TABLE `renstra_tujuan` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `rpjmd_sasaran_id` int(10) UNSIGNED DEFAULT NULL,
-  `tujuan` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data untuk tabel `renstra_tujuan`
---
-
-INSERT INTO `renstra_tujuan` (`id`, `rpjmd_sasaran_id`, `tujuan`, `created_at`, `updated_at`) VALUES
-(17, 1, 'asa', '2025-09-23 23:06:01', '2025-09-24 23:38:40'),
-(18, 1, 'asas', '2025-09-23 23:32:37', '2025-09-24 02:01:49');
+(11, 3, '2030', '1', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(12, 3, '2031', '1', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(13, 3, '2032', '2', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(14, 3, '2033', '3', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(15, 3, '2034', '4', '2025-10-01 12:49:45', '2025-10-01 12:49:45'),
+(16, 4, '2025', '12', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(17, 4, '2026', '122', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(18, 4, '2027', '23', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(19, 4, '2028', '4', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(20, 4, '2029', '54', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(21, 5, '2025', '1', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(22, 5, '2026', '23', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(23, 5, '2027', '3', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(24, 5, '2028', '12', '2025-10-01 14:31:10', '2025-10-01 14:31:10'),
+(25, 5, '2029', '13', '2025-10-01 14:31:10', '2025-10-01 14:31:10');
 
 -- --------------------------------------------------------
 
@@ -3793,13 +3764,6 @@ CREATE TABLE `rkpd_indikator_sasaran` (
   `updated_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data untuk tabel `rkpd_indikator_sasaran`
---
-
-INSERT INTO `rkpd_indikator_sasaran` (`id`, `rkpd_sasaran_id`, `indikator_sasaran`, `satuan`, `tahun`, `target`, `created_at`, `updated_at`) VALUES
-(1, 1, 'sads', 'Nilai', '2025', '21212', '2025-09-18 14:33:41', '2025-09-18 14:33:41');
-
 -- --------------------------------------------------------
 
 --
@@ -3814,13 +3778,6 @@ CREATE TABLE `rkpd_sasaran` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data untuk tabel `rkpd_sasaran`
---
-
-INSERT INTO `rkpd_sasaran` (`id`, `rpjmd_sasaran_id`, `sasaran`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 'sds', 'draft', '2025-09-18 14:33:41', '2025-09-18 14:33:41');
 
 -- --------------------------------------------------------
 
@@ -4017,6 +3974,14 @@ CREATE TABLE `target_rencana` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data untuk tabel `target_rencana`
+--
+
+INSERT INTO `target_rencana` (`id`, `renja_indikator_sasaran_id`, `rencana_aksi`, `capaian`, `target_triwulan_1`, `target_triwulan_2`, `target_triwulan_3`, `target_triwulan_4`, `penanggung_jawab`, `created_at`, `updated_at`) VALUES
+(8, 1, 'asas', '212', '12', '2', '', '', 'asas', '2025-10-01 01:40:20', '2025-10-01 20:32:39'),
+(9, 2, 'sddd', '21', '12', '', '', '', 'saasas', '2025-10-01 20:32:32', '2025-10-01 20:32:32');
+
 -- --------------------------------------------------------
 
 --
@@ -4040,7 +4005,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `username`, `password`, `email`, `role`, `opd_id`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'superadmin', '$2y$10$3jGNWs5pzhKcLkJzo2cva.ZP9wtYxNVegsxfV.4yKqKuwNLK646Mi', 'admin@admin', 'admin', NULL, 0, '2025-08-20 02:26:41', '2025-08-20 02:26:41'),
+(1, 'superadmin', '$2y$12$gzePKqh3CNmRuuFavJcR2uNxp6zyDrAZGDGL8wg.bJ.3HIGi/Rdta', 'admin@admin', 'admin', NULL, 0, '2025-08-20 02:26:41', '2025-08-20 02:26:41'),
 (2, 'admin_kab', '$2y$12$gzePKqh3CNmRuuFavJcR2uNxp6zyDrAZGDGL8wg.bJ.3HIGi/Rdta', 'adminkabupaten@kabupaten.go.id', 'admin_kab', NULL, 0, '2025-08-20 02:26:41', '2025-08-20 02:26:41'),
 (3, 'admin_diskominfo', '$2y$12$gzePKqh3CNmRuuFavJcR2uNxp6zyDrAZGDGL8wg.bJ.3HIGi/Rdta', 'admin@diskominfo.kabupaten.go.id', 'admin_opd', 20, 0, '2025-08-20 02:26:41', '2025-08-20 02:26:41'),
 (4, 'admin_diknas', '$2y$10$5E8GPKpVRu4Txwfz9O4.L.mK0zLrY2Uyc9.fjK4kEut.T/KBwUHZy', 'admin@diknas.kabupaten.go.id', 'admin_opd', NULL, 0, '2025-08-20 02:26:41', '2025-08-20 02:26:41'),
@@ -4052,26 +4017,16 @@ INSERT INTO `users` (`user_id`, `username`, `password`, `email`, `role`, `opd_id
 --
 
 --
--- Indeks untuk tabel `iku_indikator_kinerja`
+-- Indeks untuk tabel `iku`
 --
-ALTER TABLE `iku_indikator_kinerja`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `iku_indikator_kinerja_iku_sasaran_id_foreign` (`iku_sasaran_id`);
+ALTER TABLE `iku`
+  ADD PRIMARY KEY (`id`);
 
 --
--- Indeks untuk tabel `iku_sasaran`
+-- Indeks untuk tabel `iku_program_pendukung`
 --
-ALTER TABLE `iku_sasaran`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `iku_sasaran_opd_id_foreign` (`opd_id`),
-  ADD KEY `iku_sasaran_renstra_sasaran_id_foreign` (`renstra_sasaran_id`);
-
---
--- Indeks untuk tabel `iku_target_tahunan`
---
-ALTER TABLE `iku_target_tahunan`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `iku_target_tahunan_iku_indikator_id_foreign` (`iku_indikator_id`);
+ALTER TABLE `iku_program_pendukung`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indeks untuk tabel `jabatan`
@@ -4209,7 +4164,7 @@ ALTER TABLE `renstra_indikator_sasaran`
 ALTER TABLE `renstra_sasaran`
   ADD PRIMARY KEY (`id`),
   ADD KEY `renstra_sasaran_opd_id_foreign` (`opd_id`),
-  ADD KEY `fk_renstra_tujuan` (`renstra_tujuan_id`);
+  ADD KEY `renstra_sasaran_rpjmd_sasaran_id_foreign` (`rpjmd_sasaran_id`);
 
 --
 -- Indeks untuk tabel `renstra_target`
@@ -4217,13 +4172,6 @@ ALTER TABLE `renstra_sasaran`
 ALTER TABLE `renstra_target`
   ADD PRIMARY KEY (`id`),
   ADD KEY `renstra_target_renstra_indikator_id_foreign` (`renstra_indikator_id`);
-
---
--- Indeks untuk tabel `renstra_tujuan`
---
-ALTER TABLE `renstra_tujuan`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_renstra_tujuan_rpjmd_sasaran` (`rpjmd_sasaran_id`);
 
 --
 -- Indeks untuk tabel `rkpd_indikator_sasaran`
@@ -4308,22 +4256,16 @@ ALTER TABLE `users`
 --
 
 --
--- AUTO_INCREMENT untuk tabel `iku_indikator_kinerja`
+-- AUTO_INCREMENT untuk tabel `iku`
 --
-ALTER TABLE `iku_indikator_kinerja`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+ALTER TABLE `iku`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT untuk tabel `iku_sasaran`
+-- AUTO_INCREMENT untuk tabel `iku_program_pendukung`
 --
-ALTER TABLE `iku_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT untuk tabel `iku_target_tahunan`
---
-ALTER TABLE `iku_target_tahunan`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+ALTER TABLE `iku_program_pendukung`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT untuk tabel `jabatan`
@@ -4341,7 +4283,7 @@ ALTER TABLE `lakip_kab`
 -- AUTO_INCREMENT untuk tabel `lakip_opd`
 --
 ALTER TABLE `lakip_opd`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `migrations`
@@ -4353,7 +4295,7 @@ ALTER TABLE `migrations`
 -- AUTO_INCREMENT untuk tabel `monev`
 --
 ALTER TABLE `monev`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT untuk tabel `opd`
@@ -4419,49 +4361,43 @@ ALTER TABLE `program_pk`
 -- AUTO_INCREMENT untuk tabel `renja_indikator_sasaran`
 --
 ALTER TABLE `renja_indikator_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT untuk tabel `renja_sasaran`
 --
 ALTER TABLE `renja_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `renstra_indikator_sasaran`
 --
 ALTER TABLE `renstra_indikator_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT untuk tabel `renstra_sasaran`
 --
 ALTER TABLE `renstra_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT untuk tabel `renstra_target`
 --
 ALTER TABLE `renstra_target`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
-
---
--- AUTO_INCREMENT untuk tabel `renstra_tujuan`
---
-ALTER TABLE `renstra_tujuan`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT untuk tabel `rkpd_indikator_sasaran`
 --
 ALTER TABLE `rkpd_indikator_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `rkpd_sasaran`
 --
 ALTER TABLE `rkpd_sasaran`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT untuk tabel `rpjmd_indikator_sasaran`
@@ -4509,7 +4445,7 @@ ALTER TABLE `satuan`
 -- AUTO_INCREMENT untuk tabel `target_rencana`
 --
 ALTER TABLE `target_rencana`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT untuk tabel `users`
@@ -4520,25 +4456,6 @@ ALTER TABLE `users`
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
 --
-
---
--- Ketidakleluasaan untuk tabel `iku_indikator_kinerja`
---
-ALTER TABLE `iku_indikator_kinerja`
-  ADD CONSTRAINT `iku_indikator_kinerja_iku_sasaran_id_foreign` FOREIGN KEY (`iku_sasaran_id`) REFERENCES `iku_sasaran` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Ketidakleluasaan untuk tabel `iku_sasaran`
---
-ALTER TABLE `iku_sasaran`
-  ADD CONSTRAINT `iku_sasaran_opd_id_foreign` FOREIGN KEY (`opd_id`) REFERENCES `opd` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `iku_sasaran_renstra_sasaran_id_foreign` FOREIGN KEY (`renstra_sasaran_id`) REFERENCES `renstra_sasaran` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Ketidakleluasaan untuk tabel `iku_target_tahunan`
---
-ALTER TABLE `iku_target_tahunan`
-  ADD CONSTRAINT `iku_target_tahunan_iku_indikator_id_foreign` FOREIGN KEY (`iku_indikator_id`) REFERENCES `iku_indikator_kinerja` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `jabatan`
@@ -4631,20 +4548,14 @@ ALTER TABLE `renstra_indikator_sasaran`
 -- Ketidakleluasaan untuk tabel `renstra_sasaran`
 --
 ALTER TABLE `renstra_sasaran`
-  ADD CONSTRAINT `fk_renstra_tujuan` FOREIGN KEY (`renstra_tujuan_id`) REFERENCES `renstra_tujuan` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `renstra_sasaran_opd_id_foreign` FOREIGN KEY (`opd_id`) REFERENCES `opd` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `renstra_sasaran_opd_id_foreign` FOREIGN KEY (`opd_id`) REFERENCES `opd` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `renstra_sasaran_rpjmd_sasaran_id_foreign` FOREIGN KEY (`rpjmd_sasaran_id`) REFERENCES `rpjmd_sasaran` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `renstra_target`
 --
 ALTER TABLE `renstra_target`
   ADD CONSTRAINT `renstra_target_renstra_indikator_id_foreign` FOREIGN KEY (`renstra_indikator_id`) REFERENCES `renstra_indikator_sasaran` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Ketidakleluasaan untuk tabel `renstra_tujuan`
---
-ALTER TABLE `renstra_tujuan`
-  ADD CONSTRAINT `fk_renstra_tujuan_rpjmd_sasaran` FOREIGN KEY (`rpjmd_sasaran_id`) REFERENCES `rpjmd_sasaran` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `rkpd_indikator_sasaran`

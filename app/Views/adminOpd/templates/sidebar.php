@@ -129,9 +129,10 @@
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
             <li><a class="dropdown-item" href="<?= base_url('adminopd/target') ?>">Target & Rencana Aksi</a></li>
             <li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">MONEV</a></li>
+             <li><a class="dropdown-item" href="<?= base_url('adminopd/lakip_opd') ?>">LAKIP OPD</a></li>
           </ul>
         </div>
-        <a href="<?= base_url('adminopd/lakip_opd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP OPD</a>
+        <!-- <a href="<?= base_url('adminopd/lakip_opd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP OPD</a> -->
       </div>
     </nav>
   </div>

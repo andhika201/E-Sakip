@@ -68,6 +68,19 @@ $routes->group(
         $routes->post('capaian_pk/save', 'CapaianPkController::save');
         $routes->post('capaian_pk/update/(:num)', 'CapaianPkController::update/$1');
         $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
+        // target
+        $routes->get('target', 'TargetController::index');
+        $routes->get('target/tambah', 'TargetController::tambah');
+        $routes->post('target/save', 'TargetController::save');
+        $routes->get('target/edit/(:num)', 'TargetController::edit/$1');
+        $routes->post('target/update/(:num)', 'TargetController::update/$1');
+
+        //MONEV
+        $routes->get('monev', 'MonevController::index');
+        $routes->get('monev/tambah', 'MonevController::tambah');
+        $routes->post('monev/save', 'MonevController::save');
+        $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
+        $routes->post('monev/update/(:num)', 'MonevController::update/$1');
 
         // Lakip Kabupaten
         $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');
@@ -127,10 +140,11 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('renja/update-status', 'AdminOpd\RenjaController::updateStatus');
 
     // IKU
-    $routes->get('iku', 'AdminOpd\IkuController::index');
-    $routes->get('iku/tambah', 'AdminOpd\IkuController::tambah');
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->get('iku', 'AdminOpd\IkuController::index');
+    $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
+    // $routes->post('iku/update/(:num)', 'AdminOpd\IkuController::update/$1');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 
@@ -147,7 +161,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('monev/save', 'AdminOpd\MonevController::save');
     $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
     $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
-    
+
     // Lakip OPD
     $routes->get('lakip_opd', 'AdminOpd\LakipOpdController::index');
     $routes->get('lakip_opd/tambah', 'AdminOpd\LakipOpdController::tambah');

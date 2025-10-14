@@ -44,6 +44,13 @@ $routes->group(
         $routes->post('getDashboardData', 'AdminKabupatenController::getDashboardData');
         $routes->get('getStats', 'AdminKabupatenController::getStats');
 
+        // iku
+        $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');
+        $routes->get('iku', 'AdminKab\IkuController::index');
+        $routes->get('iku/tambah/(:num)', 'AdminKab\IkuController::tambah/$1');
+        $routes->post('iku/save', 'AdminKab\IkuController::save');
+        $routes->post('iku/update', 'AdminKab\IkuController::update');
+
         // RPJMD
         $routes->get('rpjmd', 'RpjmdController::index');
         $routes->get('rpjmd/tambah', 'RpjmdController::tambah');
@@ -144,7 +151,6 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('iku', 'AdminOpd\IkuController::index');
     $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
-    // $routes->post('iku/update/(:num)', 'AdminOpd\IkuController::update/$1');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
 

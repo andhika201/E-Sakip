@@ -942,11 +942,10 @@ class RenstraModel extends Model
     }
     public function getAllSasaranWithIndikatorAndTarget($opdId = null)
     {
-        // Ambil semua sasaran renstra berdasarkan opd_id
         $builder = $this->db->table('renstra_sasaran rs')
-            ->select('rs.*, rs.sasaran, o.nama_opd, rps.sasaran_rpjmd as rpjmd_sasaran')
+            ->select('rs.*, rs.sasaran, o.nama_opd, rps.sasaran_rpjmd AS sasaran_rpjmd')
             ->join('opd o', 'o.id = rs.opd_id')
-            ->join('rpjmd_sasaran rps', 'rps.id = rs.rpjmd_sasaran_id')
+            ->join('rpjmd_sasaran rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
             ->orderBy('rs.tahun_mulai', 'ASC')
             ->orderBy('rs.id', 'ASC');
 
@@ -957,7 +956,6 @@ class RenstraModel extends Model
         $sasaranList = $builder->get()->getResultArray();
 
         foreach ($sasaranList as &$sasaran) {
-            // Ambil indikator untuk setiap sasaran renstra
             $indikatorList = $this->db->table('renstra_indikator_sasaran ri')
                 ->select('ri.id, ri.indikator_sasaran, ri.satuan')
                 ->where('ri.renstra_sasaran_id', $sasaran['id'])
@@ -965,11 +963,10 @@ class RenstraModel extends Model
                 ->getResultArray();
 
             foreach ($indikatorList as &$indikator) {
-                // Ambil target tahunan untuk setiap indikator renstra
                 $indikator['target_tahunan'] = $this->db->table('renstra_target rt')
-                    ->select('rt.tahun, rt.target as target_tahunan')
+                    ->select('rt.tahun, rt.target AS target_tahunan')
                     ->where('rt.renstra_indikator_id', $indikator['id'])
-                    ->orderBy('rt.tahun ', 'ASC')
+                    ->orderBy('rt.tahun', 'ASC')
                     ->get()
                     ->getResultArray();
             }
@@ -979,4 +976,5 @@ class RenstraModel extends Model
 
         return $sasaranList;
     }
+
 }

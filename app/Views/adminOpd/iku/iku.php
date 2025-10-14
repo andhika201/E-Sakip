@@ -15,7 +15,7 @@
         <?= $this->include('adminOpd/templates/header.php'); ?>
 
         <!-- Sidebar -->
-        <?= $this->include('adminOpd/templates/sidebar.php'); ?>>
+        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow-sm p-4">

@@ -94,7 +94,7 @@
         <a href="<?= base_url('adminkab/dashboard') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
         <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD Kabupaten</a>
         <a href="<?= base_url('adminkab/rkpd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
-        <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
+        <a href="<?= base_url('adminkab/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
         <a href="<?= base_url('adminkab/pk/bupati') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Bupati</a>
         <a href="<?= base_url('adminkab/lakip_kabupaten') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">LAKIP Kabupaten</a>
         <a href="<?= base_url('adminkab/target') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Target & Rencana Aksi</a>

@@ -65,7 +65,7 @@ class LakipOpdController extends BaseController
             'opdInfo' => $opdInfo
         ];
 
-        return view('adminOpd/lakip_opd/lakip_opd', $data);
+        return view('adminOpd/lakip/lakip', $data);
     }
 
     /**

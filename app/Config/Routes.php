@@ -163,14 +163,14 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
 
     // Lakip OPD
-    $routes->get('lakip_opd', 'AdminOpd\LakipOpdController::index');
-    $routes->get('lakip_opd/tambah', 'AdminOpd\LakipOpdController::tambah');
-    $routes->post('lakip_opd/save', 'AdminOpd\LakipOpdController::save');
-    $routes->get('lakip_opd/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
-    $routes->post('lakip_opd/update/(:num)', 'AdminOpd\LakipOpdController::update/$1');
-    $routes->get('lakip_opd/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
-    $routes->post('lakip_opd/update-status', 'AdminOpd\LakipOpdController::updateStatus');
-    $routes->match(['get', 'post', 'delete'], 'lakip_opd/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+    $routes->get('lakip', 'AdminOpd\LakipOpdController::index');
+    $routes->get('lakip/tambah', 'AdminOpd\LakipOpdController::tambah');
+    $routes->post('lakip/save', 'AdminOpd\LakipOpdController::save');
+    $routes->get('lakip/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
+    $routes->post('lakip/update/(:num)', 'AdminOpd\LakipOpdController::update/$1');
+    $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
+    $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
+    $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');

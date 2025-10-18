@@ -6,54 +6,26 @@ use CodeIgniter\Model;
 
 class LakipOpdModel extends Model
 {
-    protected $table = 'lakip_opd';
+    protected $table = 'lakip';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
-        'opd_id',
-        'judul',
-        'tanggal_laporan',
-        'file',
-        'status'
+        'renstra_indikator_id',
+        'rpjmd_indikator_id',
+        'target_lalu',
+        'capaian_lalu',
+        'capaian_tahun_ini',
     ];
 
     // Dates
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
-    protected $createdField = 'created_at';
-    protected $updatedField = 'updated_at';
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
 
-    // Validation
-    protected $validationRules = [
-        'opd_id' => 'required|integer',
-        'judul' => 'required|min_length[3]|max_length[255]',
-        'tanggal_laporan' => 'permit_empty|valid_date',
-        'status' => 'in_list[draft,selesai]'
-    ];
-
-    protected $validationMessages = [
-        'opd_id' => [
-            'required' => 'ID OPD harus diisi',
-            'integer' => 'ID OPD harus berupa angka'
-        ],
-        'judul' => [
-            'required' => 'Judul laporan harus diisi',
-            'min_length' => 'Judul laporan minimal 3 karakter',
-            'max_length' => 'Judul laporan melebihi maksimal karakter'
-        ],
-        'tanggal_laporan' => [
-            'valid_date' => 'Format tanggal tidak valid'
-        ],
-        'status' => [
-            'in_list' => 'Status harus draft atau selesai'
-        ]
-    ];
-
-    protected $skipValidation = false;
-    protected $cleanValidationRules = true;
 
     /**
      * Get all LAKIP records with pagination

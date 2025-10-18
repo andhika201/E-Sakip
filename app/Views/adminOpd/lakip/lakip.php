@@ -79,15 +79,17 @@
                                     $iku = null;
                                     foreach ($lakip ?? [] as $item) {
                                         if (
-                                            ($role === 'admin_kab' && ($item['rpjmd_id'] ?? null) == $indikator['id']) ||
-                                            ($role === 'admin_opd' && ($item['renstra_id'] ?? null) == $indikator['id'])
+                                            ($role === 'admin_kab' && ($item['rpjmd_indikator_id'] ?? null) == $indikator['id']) ||
+                                            ($role === 'admin_opd' && ($item['renstra_indikator_id'] ?? null) == $indikator['id'])
                                         ) {
                                             $iku = $item;
                                             break;
                                         }
                                     }
                                     ?>
+                                    
                                     <tr>
+                                        
                                         <?php if ($firstRow): ?>
                                             <td rowspan="<?= $indikatorCount ?>" class="align-middle"><?= $no++ ?></td>
                                             <td rowspan="<?= $indikatorCount ?>" class="align-middle text-start">
@@ -114,13 +116,13 @@
 
                                         <td>
                                             <?php if (!empty($indikator['id'])): ?>
-                                                <?php if (empty($iku['definisi'])): ?>
-                                                    <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
+                                                <?php if (empty($iku['target_lalu'])): ?>
+                                                    <a href="<?= base_url('adminopd/lakip/tambah_lakip/' . $indikator['id']) ?>"
                                                         class="btn btn-sm btn-success" title="Tambah IKU">
                                                         <i class="bi bi-plus-circle"></i> Tambah
                                                     </a>
                                                 <?php else: ?>
-                                                    <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
+                                                    <a href="<?= base_url('adminopd/lakip/edit_lakip/' . $indikator['id']) ?>"
                                                         class="btn btn-sm btn-warning text-dark" title="Edit IKU">
                                                         <i class="bi bi-pencil-square"></i> Edit
                                                     </a>

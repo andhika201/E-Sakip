@@ -83,23 +83,58 @@ class LakipOpdController extends BaseController
     /**
      * Show form to create new LAKIP
      */
-    public function tambah()
+    public function tambah($indikatorId = null)
     {
         $opdId = session()->get('opd_id');
+        $role = session()->get('role');
+        $tahun = date('Y');
+
 
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
+
+        // Ambil data indikator berdasarkan $indikatorId
+        $indikator = null;
+        if ($indikatorId) {
+            $db = \Config\Database::connect();
+            if ($role == 'admin_kab') {
+                // Ambil dari tabel RPJMD
+                $indikator = $db->table('rpjmd_indikator_sasaran')
+                    ->where('id', $indikatorId)
+                    ->get()
+                    ->getRowArray();
+            } else {
+                // Default admin_opd ambil dari tabel Renstra
+                $indikator = $db->table('renstra_indikator_sasaran')
+                    ->where('id', $indikatorId)
+                    ->get()
+                    ->getRowArray();
+            }
+        }
+
+        // Ambil daftar target berdasarkan indikator ini
+        $targetList = $db->table('renstra_target')
+            ->where('renstra_indikator_id', $indikatorId)
+            ->where('tahun', $tahun)
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getRowArray();
+
         $opdInfo = $this->opdModel->find($opdId);
 
         $data = [
             'title' => 'Tambah LAKIP OPD',
+            'role' => $role,
+            'indikator' => $indikator,
             'opdInfo' => $opdInfo,
+            'targetList' => $targetList,
+
             'validation' => \Config\Services::validation()
         ];
 
-        return view('adminOpd/lakip_opd/tambah_lakip', $data);
+        return view('adminOpd/lakip/tambah_lakip', $data);
     }
 
     /**
@@ -107,71 +142,46 @@ class LakipOpdController extends BaseController
      */
     public function save()
     {
-        $opdId = session()->get('opd_id');
 
-        if (!$opdId) {
-            return redirect()->to('/login')->with('error', 'Session tidak valid');
+        $session = session();
+        $role = $session->get('role');
+
+        // Ambil data dari form
+        $renstraIndikatorId = $this->request->getPost('renstra_indikator_sasaran_id');
+        $targetPrev = $this->request->getPost('target_lalu');
+        $capaianPrev = $this->request->getPost('capaian_lalu');
+        $capaianNow = $this->request->getPost('capaian_tahun_ini');
+
+        // Validasi dasar
+        if (empty($renstraIndikatorId)) {
+            return redirect()->back()->with('error', 'Data indikator tidak valid.');
         }
 
-        // Validation rules sesuai dengan struktur database
-        $validationRules = [
-            'judul_laporan' => [
-                'rules' => 'required|min_length[3]|max_length[255]',
-                'errors' => [
-                    'required' => 'Judul laporan harus diisi',
-                    'min_length' => 'Judul laporan minimal 3 karakter',
-                    'max_length' => 'Judul laporan maksimal 255 karakter'
-                ]
-            ],
-            'tanggal_laporan' => [
-                'rules' => 'permit_empty|valid_date',
-                'errors' => [
-                    'valid_date' => 'Format tanggal tidak valid'
-                ]
-            ],
-            'file_laporan' => [
-                'rules' => 'uploaded[file_laporan]|max_size[file_laporan,51200]|ext_in[file_laporan,pdf,doc,docx,xls,xlsx]',
-                'errors' => [
-                    'uploaded' => 'File harus diupload',
-                    'max_size' => 'Ukuran file maksimal 50MB',
-                    'ext_in' => 'File harus berformat PDF, DOC, DOCX, XLS, atau XLSX'
-                ]
-            ]
-        ];
-
-        if (!$this->validate($validationRules)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('errors', $this->validator->getErrors());
+        // Siapkan data untuk disimpan ke tabel `lakip`
+        if ($role === 'admin_kab') {
+            $data = [
+                'renstra_indikator_id' => null,
+                'rpjmd_indikator_id' => $renstraIndikatorId,
+                'target_lalu' => $targetPrev ?? null,
+                'capaian_lalu' => $capaianPrev ?? null,
+                'capaian_tahun_ini' => $capaianNow ?? null,
+            ];
+        } else {
+            $data = [
+                'renstra_indikator_id' => $renstraIndikatorId,
+                'rpjmd_indikator_id' => null,
+                'target_lalu' => $targetPrev ?? null,
+                'capaian_lalu' => $capaianPrev ?? null,
+                'capaian_tahun_ini' => $capaianNow ?? null,
+            ];
         }
 
-        $file = $this->request->getFile('file_laporan');
+        $this->lakipModel->insert($data);
+        return redirect()->to('/adminopd/lakip')->with('success', 'Data berhasil disimpan.');
 
-        // Prepare data for database sesuai struktur
-        $data = [
-            'opd_id' => $opdId,
-            'judul' => $this->request->getPost('judul_laporan'), // Map form field to database field
-            'tanggal_laporan' => $this->request->getPost('tanggal_laporan') ?: null,
-            'status' => 'draft' // default status
-        ];
-
-        try {
-            $result = $this->lakipModel->createLakipWithFile($data, $file);
-
-            if ($result) {
-                return redirect()->to('/adminopd/lakip_opd')
-                    ->with('success', 'LAKIP berhasil disimpan');
-            } else {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Gagal menyimpan LAKIP');
-            }
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+        
     }
+
 
     /**
      * Show form to edit LAKIP

@@ -164,7 +164,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
 
     // Lakip OPD
     $routes->get('lakip', 'AdminOpd\LakipOpdController::index');
-    $routes->get('lakip/tambah', 'AdminOpd\LakipOpdController::tambah');
+    $routes->get('lakip/tambah_lakip/(:num)', 'AdminOpd\LakipOpdController::tambah/$1');
     $routes->post('lakip/save', 'AdminOpd\LakipOpdController::save');
     $routes->get('lakip/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
     $routes->post('lakip/update/(:num)', 'AdminOpd\LakipOpdController::update/$1');

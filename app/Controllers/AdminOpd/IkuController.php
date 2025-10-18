@@ -187,7 +187,7 @@ class IkuController extends BaseController
         }
     }
 
-     public function edit($indikatorId = null)
+    public function edit($indikatorId = null)
     {
         $session = session();
         $opdId = $session->get('opd_id');

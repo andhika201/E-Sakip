@@ -23,8 +23,8 @@ class LakipOpdModel extends Model
     // Dates
     protected $useTimestamps = true;
     protected $dateFormat = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
 
 
     /**
@@ -34,6 +34,39 @@ class LakipOpdModel extends Model
     {
         return $this->orderBy('created_at', 'DESC')
             ->findAll($limit, $offset);
+    }
+
+    /**
+     * Get LAKIP detail for editing
+     */
+
+    public function getLakipDetail($indikatorId, $role = 'admin_opd')
+    {
+        $builder = $this->db->table('lakip')
+            ->select("
+                lakip.*,
+                rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+                rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+                renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+                renstra_indikator_sasaran.satuan AS renstra_satuan,
+                renstra_sasaran.sasaran AS sasaran_renstra,
+                rpjmd_sasaran.sasaran_rpjmd
+            ")
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = lakip.rpjmd_indikator_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = lakip.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left');
+
+        if ($role === 'admin_kab') {
+            $builder->where('rpjmd_indikator_sasaran.id', $indikatorId);
+        } else {
+            $builder->where('renstra_indikator_sasaran.id', $indikatorId);
+        }
+
+        $lakip = $builder->get()->getRowArray();
+        if (!$lakip)
+            return null;
+        return $lakip;
     }
 
     /**
@@ -47,17 +80,6 @@ class LakipOpdModel extends Model
     }
 
     /**
-     * Get LAKIP by status
-     */
-    public function getLakipByStatus($status)
-    {
-        return $this->where('status', $status)
-            ->orderBy('created_at', 'DESC')
-            ->findAll();
-    }
-
-
-    /**
      * Get latest LAKIP
      */
     public function getLatestLakip($limit = 5)
@@ -66,20 +88,31 @@ class LakipOpdModel extends Model
             ->findAll($limit);
     }
 
-    public function getAvailableYears()
-{
-    $query = $this->db->table('renstra_target')
-        ->select('DISTINCT tahun', false)
-        ->orderBy('tahun', 'ASC')
-        ->get();
 
-    $years = [];
-    foreach ($query->getResultArray() as $row) {
-        $years[] = $row['tahun'];
+    /**
+     * UPDATE LAKIP UTAMA
+     */
+    public function updateLakip($id, $data, $by = 'id')
+    {
+        return $this->db->table('lakip')
+            ->where($by, $id)
+            ->update($data);
     }
+    
+    public function getAvailableYears()
+    {
+        $query = $this->db->table('renstra_target')
+            ->select('DISTINCT tahun', false)
+            ->orderBy('tahun', 'ASC')
+            ->get();
 
-    return $years;
-}
+        $years = [];
+        foreach ($query->getResultArray() as $row) {
+            $years[] = $row['tahun'];
+        }
+
+        return $years;
+    }
 
 
 

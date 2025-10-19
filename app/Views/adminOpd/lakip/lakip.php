@@ -117,12 +117,12 @@
                                         <td>
                                             <?php if (!empty($indikator['id'])): ?>
                                                 <?php if (empty($iku['target_lalu'])): ?>
-                                                    <a href="<?= base_url('adminopd/lakip/tambah_lakip/' . $indikator['id']) ?>"
+                                                    <a href="<?= base_url('adminopd/lakip/tambah/' . $indikator['id']) ?>"
                                                         class="btn btn-sm btn-success" title="Tambah IKU">
                                                         <i class="bi bi-plus-circle"></i> Tambah
                                                     </a>
                                                 <?php else: ?>
-                                                    <a href="<?= base_url('adminopd/lakip/edit_lakip/' . $indikator['id']) ?>"
+                                                    <a href="<?= base_url('adminopd/lakip/edit/' . $indikator['id']) ?>"
                                                         class="btn btn-sm btn-warning text-dark" title="Edit IKU">
                                                         <i class="bi bi-pencil-square"></i> Edit
                                                     </a>

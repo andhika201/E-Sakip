@@ -213,7 +213,7 @@ class LakipOpdModel extends Model
     public function getRenstra($opd_id)
     {
         // Ambil data IKU saja
-        $ikuList = $this->db->table('lakip')
+        $lakipList = $this->db->table('lakip')
             ->select("
             lakip.*,
             rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
@@ -232,6 +232,30 @@ class LakipOpdModel extends Model
             ->get()
             ->getResultArray();
 
-        return $ikuList;
+        return $lakipList;
+    }
+
+    public function getRPJMD()
+    {
+        // Ambil data IKU saja
+        $lakipList = $this->db->table('lakip')
+            ->select("
+            lakip.*,
+            rpjmd_indikator_sasaran.indikator_sasaran AS rpjmd_indikator,
+            rpjmd_indikator_sasaran.satuan AS rpjmd_satuan,
+            renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
+            renstra_indikator_sasaran.satuan AS renstra_satuan,
+            renstra_sasaran.sasaran AS sasaran_renstra,
+            rpjmd_sasaran.sasaran_rpjmd
+        ", false)
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = lakip.rpjmd_indikator_id', 'left')
+            ->join('renstra_indikator_sasaran', 'renstra_indikator_sasaran.id = lakip.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran', 'renstra_sasaran.id = renstra_indikator_sasaran.renstra_sasaran_id', 'left')
+            ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left')
+            ->orderBy('lakip.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $lakipList;
     }
 }

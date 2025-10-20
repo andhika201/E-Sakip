@@ -25,7 +25,12 @@
         enctype="multipart/form-data">
         <?= csrf_field() ?>
 
-        <input type="hidden" name="renstra_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
+        <?php if ($role == 'admin_kab'): ?>
+          <input type="hidden" name="rpjmd_id" value="<?= esc($indikator['id']) ?>">
+        <?php else: ?>
+          <input type="hidden" name="renstra_indikator_sasaran_id" value="<?= esc($indikator['id']) ?>">
+        <?php endif; ?>
+
         <input type="hidden" name="lakip_id" value="<?= esc($lakip['id'] ?? '') ?>">
 
         <!-- Informasi Indikator -->
@@ -58,7 +63,9 @@
 
           <div class="col-md-4">
             <label for="target_tahun_ini" class="form-label">Target Tahun Ini</label>
-            <input type="text" class="form-control" value="<?= esc($targetList['target']) ?>" readonly>
+            <input type="text" class="form-control"
+              value="<?= esc(($role === 'admin_kab') ? ($targetList['target_tahunan'] ?? '-') : ($targetList['target'] ?? '-')) ?>"
+              readonly>
           </div>
         </div>
 

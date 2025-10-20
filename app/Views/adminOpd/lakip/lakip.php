@@ -15,10 +15,10 @@
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
         <!-- Navbar/Header -->
-        <?= $this->include('adminOpd/templates/header.php'); ?>
-
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
         <!-- Sidebar -->
-        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
+
 
         <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
@@ -87,9 +87,9 @@
                                         }
                                     }
                                     ?>
-                                    
+
                                     <tr>
-                                        
+
                                         <?php if ($firstRow): ?>
                                             <td rowspan="<?= $indikatorCount ?>" class="align-middle"><?= $no++ ?></td>
                                             <td rowspan="<?= $indikatorCount ?>" class="align-middle text-start">
@@ -107,7 +107,8 @@
                                         <td class="text-center"><?= esc($iku['capaian_lalu'] ?? '-') ?></td>
                                         <td class="text-center">
                                             <?php
-                                            $targetTahun = $indikator['target_tahunan'][0]['target'] ?? null;
+                                            $keyTarget = ($role === 'admin_kab') ? 'target_tahunan' : 'target';
+                                            $targetTahun = $indikator['target_tahunan'][0][$keyTarget] ?? null;
                                             echo $targetTahun ? esc($targetTahun) : '-';
                                             ?>
                                         </td>
@@ -144,16 +145,16 @@
     </div> <!-- End of Content Wrapper -->
 </body>
 <script>
-function filterData() {
-    const tahun = document.getElementById('tahun_filter').value;
-    const status = document.getElementById('status_filter') ? document.getElementById('status_filter').value : '';
-    const params = new URLSearchParams();
+    function filterData() {
+        const tahun = document.getElementById('tahun_filter').value;
+        const status = document.getElementById('status_filter') ? document.getElementById('status_filter').value : '';
+        const params = new URLSearchParams();
 
-    if (tahun) params.append('tahun', tahun);
-    if (status) params.append('status', status);
+        if (tahun) params.append('tahun', tahun);
+        if (status) params.append('status', status);
 
-    window.location.href = "?" + params.toString();
-}
+        window.location.href = "?" + params.toString();
+    }
 </script>
 
 

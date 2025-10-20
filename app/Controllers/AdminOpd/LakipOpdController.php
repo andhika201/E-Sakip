@@ -8,13 +8,14 @@ use App\Models\Opd\IkuModel;
 use App\Models\Opd\RenstraModel;
 
 use App\Models\OpdModel;
+use App\Models\RpjmdModel;
 
 class LakipOpdController extends BaseController
 {
     protected $lakipModel;
     protected $ikuModel;
     protected $renstraModel;
-
+    protected $RpjmdModel;
     protected $opdModel;
     protected $db;
 
@@ -25,6 +26,7 @@ class LakipOpdController extends BaseController
         $this->opdModel = new OpdModel();
         $this->ikuModel = new IkuModel();
         $this->renstraModel = new RenstraModel();
+        $this->RpjmdModel = new RpjmdModel();
         $this->db = \Config\Database::connect();
 
         helper(['form', 'url']);
@@ -56,10 +58,10 @@ class LakipOpdController extends BaseController
         }
 
         $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId, $tahun);
-
+        $rpjmdData = $this->RpjmdModel->getSasaranWithIndikatorAndTarget();
 
         $lakip_data = ($role === 'admin_kab')
-            ? $this->lakipModel->getRPJMDWithPrograms()
+            ? $this->lakipModel->getRPJMD()
             : $this->lakipModel->getRenstra($opdId);
 
         // Get available years
@@ -68,13 +70,13 @@ class LakipOpdController extends BaseController
         // Get OPD info
         $opdInfo = $this->opdModel->find($opdId);
 
-        // dd($lakip_data);
 
         $data = [
             'title' => 'LAKIP OPD - ' . ($opdInfo['nama_opd'] ?? 'Unknown'),
             'availableYears' => $availableYears,
             'opdInfo' => $opdInfo,
             'renstraData' => $renstraData,
+            'rpjmdData' => $rpjmdData,
             'role' => $role,
             'lakip' => $lakip_data,
             'filters' => ['tahun' => $tahun],
@@ -118,9 +120,18 @@ class LakipOpdController extends BaseController
             }
         }
 
+        $table = ($role === 'admin_kab')
+            ? 'rpjmd_target'
+            : 'renstra_target';
+
+        $by = ($role === 'admin_kab')
+            ? 'indikator_sasaran_id'
+            : 'renstra_indikator_id';
+
+
         // Ambil daftar target berdasarkan indikator ini
-        $targetList = $db->table('renstra_target')
-            ->where('renstra_indikator_id', $indikatorId)
+        $targetList = $db->table($table)
+            ->where($by, $indikatorId)
             ->where('tahun', $tahun)
             ->orderBy('tahun', 'ASC')
             ->get()
@@ -151,28 +162,29 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
 
         // Ambil data dari form
-        $renstraIndikatorId = $this->request->getPost('renstra_indikator_sasaran_id');
+        $Indikator_Sasaran_Id = ($role === 'admin_kab')
+            ? $this->request->getPost('rpjmd_id')
+            : $this->request->getPost('renstra_indikator_sasaran_id');
         $targetPrev = $this->request->getPost('target_lalu');
         $capaianPrev = $this->request->getPost('capaian_lalu');
         $capaianNow = $this->request->getPost('capaian_tahun_ini');
 
         // Validasi dasar
-        if (empty($renstraIndikatorId)) {
+        if (empty($Indikator_Sasaran_Id)) {
             return redirect()->back()->with('error', 'Data indikator tidak valid.');
         }
-
         // Siapkan data untuk disimpan ke tabel `lakip`
         if ($role === 'admin_kab') {
             $data = [
                 'renstra_indikator_id' => null,
-                'rpjmd_indikator_id' => $renstraIndikatorId,
+                'rpjmd_indikator_id' => $Indikator_Sasaran_Id,
                 'target_lalu' => $targetPrev ?? null,
                 'capaian_lalu' => $capaianPrev ?? null,
                 'capaian_tahun_ini' => $capaianNow ?? null,
             ];
         } else {
             $data = [
-                'renstra_indikator_id' => $renstraIndikatorId,
+                'renstra_indikator_id' => $Indikator_Sasaran_Id,
                 'rpjmd_indikator_id' => null,
                 'target_lalu' => $targetPrev ?? null,
                 'capaian_lalu' => $capaianPrev ?? null,
@@ -212,9 +224,18 @@ class LakipOpdController extends BaseController
             ->get()
             ->getRowArray();
 
+        $tableTarget = ($role === 'admin_kab')
+            ? 'rpjmd_target'
+            : 'renstra_target';
+
+        $by = ($role === 'admin_kab')
+            ? 'indikator_sasaran_id'
+            : 'renstra_indikator_id';
+
+
         // Ambil daftar target berdasarkan indikator ini
-        $targetList = $this->db->table('renstra_target')
-            ->where('renstra_indikator_id', $indikatorId)
+        $targetList = $this->db->table($tableTarget)
+            ->where($by, $indikatorId)
             ->where('tahun', $tahun)
             ->orderBy('tahun', 'ASC')
             ->get()
@@ -232,6 +253,7 @@ class LakipOpdController extends BaseController
         $data = [
             'indikator' => $indikator,
             'title' => 'Edit LAKIP OPD',
+            'role' => $role,
             'lakip' => $lakip,
             'targetList' => $targetList,
             'validation' => \Config\Services::validation()
@@ -258,7 +280,6 @@ class LakipOpdController extends BaseController
             session()->setFlashdata('error', 'ID IKU tidak ditemukan');
             return redirect()->back()->withInput();
         }
-
 
         try {
             // Update definisi IKU

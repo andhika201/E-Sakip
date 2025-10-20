@@ -11,10 +11,9 @@
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
   <!-- Navbar/Header -->
-  <?= $this->include('adminOpd/templates/header.php'); ?>
-
+  <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
   <!-- Sidebar -->
-  <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+  <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
 
   <!-- Konten Utama -->
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">
@@ -75,8 +74,11 @@
 
           <div class="col-md-4">
             <label for="target_tahun_ini" class="form-label">Target Tahun Ini</label>
-            <input type="text" class="form-control" value="<?= esc($targetList['target']) ?>" readonly>
+            <input type="text" class="form-control"
+              value="<?= esc(($role === 'admin_kab') ? ($targetList['target_tahunan'] ?? '-') : ($targetList['target'] ?? '-')) ?>"
+              readonly>
           </div>
+
         </div>
 
 

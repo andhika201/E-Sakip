@@ -101,8 +101,8 @@
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
         <a href="<?= base_url('adminopd/renstra') ?>"
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renstra</a>
-        <a href="<?= base_url('adminopd/renja') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja</a>
+        <a href="<?= base_url('adminopd/rkt') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja/RKT</a>
         <a href="<?= base_url('adminopd/iku') ?>"
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
         <a href="<?= base_url('adminopd/pk/jpt') ?>"

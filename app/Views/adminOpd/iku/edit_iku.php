@@ -19,8 +19,10 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-  <?= $this->include('adminOpd/templates/header.php'); ?>
-  <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+  <!-- Navbar/Header -->
+  <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
+  <!-- Sidebar -->
+  <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
 
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">
     <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 900px;">

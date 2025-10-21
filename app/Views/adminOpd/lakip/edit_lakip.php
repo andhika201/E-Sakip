@@ -10,11 +10,11 @@
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
-  <!-- Navbar/Header -->
-  <?= $this->include('adminOpd/templates/header.php'); ?>
+   <!-- Navbar/Header -->
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
+        <!-- Sidebar -->
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
 
-  <!-- Sidebar -->
-  <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
   <!-- Konten Utama -->
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">

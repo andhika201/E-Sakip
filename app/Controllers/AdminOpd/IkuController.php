@@ -114,7 +114,6 @@ class IkuController extends BaseController
         $opdId = $session->get('opd_id');
         $role = $session->get('role');
 
-        $status = 'selesai';
 
         // Cek autentikasi
         if (!$opdId) {

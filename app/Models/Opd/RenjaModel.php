@@ -47,13 +47,7 @@ class RenjaModel extends Model
             ->getResultArray();
     }
 
-    // Update status RENJA
-    public function updateStatus($id, $status)
-    {
-        return $this->db->table('renja_sasaran')
-            ->where('id', $id)
-            ->update(['status' => $status]);
-    }
+   
 
     /* * Get All RENJA Data Per OPD
      * This method retrieves all RENJA data including indicators
@@ -219,130 +213,7 @@ class RenjaModel extends Model
     }
 
 
-    // ==================== CRUD OPERATIONS FOR RENJA SASARAN ====================
-
-    public function createSasaran($data)
-    {
-        // Validation
-        $required = ['renstra_sasaran_id', 'sasaran_renja',];
-        foreach ($required as $field) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                throw new \InvalidArgumentException("Field {$field} harus diisi");
-            }
-        }
-        
-        $insertData = [
-            'opd_id' => $data['opd_id'],
-            'renstra_sasaran_id' => $data['renstra_sasaran_id'],
-            'sasaran_renja' => $data['sasaran_renja'],
-            'status' => $data['status'] ?? 'draft',
-        ];
-        
-        $result = $this->db->table('renja_sasaran')->insert($insertData);
-        $insertId = $this->db->insertID();
-
-        if (!$result) {
-            $error = $this->db->error();
-            throw new \Exception("Failed to insert sasaran: " . $error['message']);
-        }
-        
-        return $insertId;
-    }
-
-     /**
-     * Update RENJA Sasaran
-     */
-    public function updateSasaran($id, $data)
-    {
-        return $this->db->table('renja_sasaran')->where('id', $id)->update($data);
-    }
     
-    /**
-     * Delete RENJA Sasaran (with cascade delete)
-     */ 
-    public function deleteSasaran($id)
-    {
-        $this->db->transStart();
-        
-        try {
-            // Get and delete related indikator sasaran
-            $indikatorList = $this->getIndikatorSasaranBySasaranId($id);
-            foreach ($indikatorList as $indikator) {
-                $this->deleteIndikatorSasaran($indikator['id']);
-            }
-            
-            // Delete the sasaran
-            $result = $this->db->table('renja_sasaran')->delete(['id' => $id]);
-            
-            $this->db->transComplete();
-            return $result;
-            
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            throw $e;
-        }
-    }
-
-
-
-    // ==================== CRUD OPERATIONS FOR RENJA INDIKATOR SASARAN ====================
-
-    public function createIndikatorSasaran($data)
-    {
-        // Validation
-        $required = ['renja_sasaran_id', 'indikator_sasaran', 'satuan', 'tahun', 'target'];
-        foreach ($required as $field) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                throw new \InvalidArgumentException("Field {$field} harus diisi");
-            }
-        }
-        
-        $insertData = [
-            'renja_sasaran_id' => $data['renja_sasaran_id'],
-            'indikator_sasaran' => $data['indikator_sasaran'],
-            'satuan' => $data['satuan'],
-            'tahun' => $data['tahun'],
-            'target' => $data['target']
-        ];
-        
-
-        $result = $this->db->table('renja_indikator_sasaran')->insert($insertData);
-        $insertId = $this->db->insertID();
-
-        if (!$result) {
-            $error = $this->db->error();
-            throw new \Exception("Failed to insert sasaran: " . $error['message']);
-        }
-        
-        return $insertId;
-    }
-
-     /**
-     * Update RENJA Indikator Sasaran
-     */
-    public function updateIndikatorSasaran($id, $data)
-    {
-        return $this->db->table('renja_indikator_sasaran')->where('id', $id)->update($data);
-    }
-    
-    /**
-     * Delete RENJA Indikator Sasaran
-     */ 
-    public function deleteIndikatorSasaran($id)
-    {
-        try {
-            $result = $this->db->table('renja_indikator_sasaran')->where('id', $id)->delete();
-            if (!$result) {
-                $error = $this->db->error();
-                log_message('error', 'Failed to delete indikator sasaran ID ' . $id . ': ' . $error['message']);
-            }
-            return $result;
-            
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            throw $e;
-        }
-    }
 
 // ==================== COMPLETE RENJA OPERATIONS ====================
 

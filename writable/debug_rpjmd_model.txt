@@ -13873,3 +13873,153 @@ Cleaning up orphaned records for misi ID: 2
 SUCCESS: Transaction completed successfully
 === END UPDATE TRANSACTION ===
 
+=== CREATE INDIKATOR SASARAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [indikator_sasaran] => bjhjsas
+    [satuan] => Dokumen
+    [definisi_op] => hshsbn
+    [target_tahunan] => Array
+        (
+            [0] => Array
+                (
+                    [tahun] => 2025
+                    [target_tahunan] => 77
+                )
+
+            [1] => Array
+                (
+                    [tahun] => 2026
+                    [target_tahunan] => 77
+                )
+
+            [2] => Array
+                (
+                    [tahun] => 2027
+                    [target_tahunan] => 89
+                )
+
+            [3] => Array
+                (
+                    [tahun] => 2028
+                    [target_tahunan] => 86
+                )
+
+            [4] => Array
+                (
+                    [tahun] => 2029
+                    [target_tahunan] => 55
+                )
+
+        )
+
+    [sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [sasaran_id] => 3
+    [indikator_sasaran] => bjhjsas
+    [definisi_op] => hshsbn
+    [satuan] => Dokumen
+)
+
+Insert result: TRUE
+Insert ID: 3
+=== END CREATE INDIKATOR SASARAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [tahun] => 2025
+    [target_tahunan] => 77
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2025
+    [target_tahunan] => 77
+)
+
+Insert result: TRUE
+Insert ID: 21
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [tahun] => 2026
+    [target_tahunan] => 77
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2026
+    [target_tahunan] => 77
+)
+
+Insert result: TRUE
+Insert ID: 22
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [tahun] => 2027
+    [target_tahunan] => 89
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2027
+    [target_tahunan] => 89
+)
+
+Insert result: TRUE
+Insert ID: 23
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [tahun] => 2028
+    [target_tahunan] => 86
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2028
+    [target_tahunan] => 86
+)
+
+Insert result: TRUE
+Insert ID: 24
+=== END CREATE TARGET TAHUNAN ===
+
+=== CREATE TARGET TAHUNAN - 2025-10-08 03:20:08 ===
+Input data: Array
+(
+    [tahun] => 2029
+    [target_tahunan] => 55
+    [indikator_sasaran_id] => 3
+)
+
+Insert data: Array
+(
+    [indikator_sasaran_id] => 3
+    [tahun] => 2029
+    [target_tahunan] => 55
+)
+
+Insert result: TRUE
+Insert ID: 25
+=== END CREATE TARGET TAHUNAN ===
+

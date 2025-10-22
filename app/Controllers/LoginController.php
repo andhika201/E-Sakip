@@ -32,34 +32,34 @@ class LoginController extends BaseController
     return view('login');
 }
 
-    private function verifyRecaptcha($response)
-    {
-        $secretKey = env('RECAPTCHA_SECRET_KEY');
+    // private function verifyRecaptcha($response)
+    // {
+    //     $secretKey = env('RECAPTCHA_SECRET_KEY');
 
-        if (empty($secretKey)) {
-            log_message('error', 'RECAPTCHA_SECRET_KEY not found in environment variables');
-            return false;
-        }
+    //     if (empty($secretKey)) {
+    //         log_message('error', 'RECAPTCHA_SECRET_KEY not found in environment variables');
+    //         return false;
+    //     }
 
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
+    //     $url = 'https://www.google.com/recaptcha/api/siteverify';
 
-        $data = [
-            'secret' => $secretKey,
-            'response' => $response,
-            'remoteip' => $this->request->getIPAddress()
-        ];
+    //     $data = [
+    //         'secret' => $secretKey,
+    //         'response' => $response,
+    //         'remoteip' => $this->request->getIPAddress()
+    //     ];
 
-        try {
-            $client = \Config\Services::curlrequest();
-            $response = $client->post($url, ['form_params' => $data]);
-            $result = json_decode($response->getBody(), true);
+    //     try {
+    //         $client = \Config\Services::curlrequest();
+    //         $response = $client->post($url, ['form_params' => $data]);
+    //         $result = json_decode($response->getBody(), true);
 
-            return isset($result['success']) && $result['success'] === true;
-        } catch (\Exception $e) {
-            log_message('error', 'reCAPTCHA verification failed: ' . $e->getMessage());
-            return false;
-        }
-    }
+    //         return isset($result['success']) && $result['success'] === true;
+    //     } catch (\Exception $e) {
+    //         log_message('error', 'reCAPTCHA verification failed: ' . $e->getMessage());
+    //         return false;
+    //     }
+    // }
 
     public function authenticate()
     {
@@ -80,17 +80,17 @@ class LoginController extends BaseController
         $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
 
         // Validasi CAPTCHA
-        if (empty($recaptchaResponse)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Silakan verifikasi CAPTCHA terlebih dahulu');
-        }
+        // if (empty($recaptchaResponse)) {
+        //     return redirect()->back()
+        //         ->withInput()
+        //         ->with('error', 'Silakan verifikasi CAPTCHA terlebih dahulu');
+        // }
 
-        if (!$this->verifyRecaptcha($recaptchaResponse)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Verifikasi CAPTCHA gagal. Silakan coba lagi');
-        }
+        // if (!$this->verifyRecaptcha($recaptchaResponse)) {
+        //     return redirect()->back()
+        //         ->withInput()
+        //         ->with('error', 'Verifikasi CAPTCHA gagal. Silakan coba lagi');
+        // }
 
         // Load model untuk cek user di database
         $userModel = new \App\Models\UserModel();

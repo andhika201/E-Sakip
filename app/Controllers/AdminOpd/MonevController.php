@@ -16,7 +16,7 @@ class MonevController extends BaseController
 
     public function index()
     {
-        $tahun = $this->request->getGet('tahun');
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
         $monevList = $this->MonevModel->getMonevWithRelasi($tahun);
         $tahunList = $this->MonevModel->getAvailableYears();
 

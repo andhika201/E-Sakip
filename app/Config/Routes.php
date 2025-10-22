@@ -69,12 +69,6 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
-        // Capaian PK
-        $routes->get('capaian_pk/tambah', 'CapaianPkController::tambah');
-        $routes->get('capaian_pk/edit/(:num)', 'CapaianPkController::edit/$1');
-        $routes->post('capaian_pk/save', 'CapaianPkController::save');
-        $routes->post('capaian_pk/update/(:num)', 'CapaianPkController::update/$1');
-        $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
         // target
         $routes->get('target', 'TargetController::index');
         $routes->get('target/tambah', 'TargetController::tambah');
@@ -137,14 +131,14 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->match(['get', 'post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
 
-    // RENJA
-    $routes->get('renja', 'AdminOpd\RenjaController::index');
-    $routes->get('renja/tambah', 'AdminOpd\RenjaController::tambah');
-    $routes->get('renja/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
-    $routes->post('renja/save', 'AdminOpd\RenjaController::save');
-    $routes->post('renja/update', 'AdminOpd\RenjaController::update');
+    // RKT
+    $routes->get('rkt', 'AdminOpd\RenjaController::index');
+    $routes->get('rkt/tambah/(:num)', 'AdminOpd\RenjaController::tambah/$1');
+    $routes->get('rkt/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
+    $routes->post('rkt/save', 'AdminOpd\RenjaController::save');
+    $routes->post('rkt/update', 'AdminOpd\RenjaController::update');
     $routes->match(['get', 'post', 'delete'], 'renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
-    $routes->post('renja/update-status', 'AdminOpd\RenjaController::updateStatus');
+    $routes->post('rkt/update-status', 'AdminOpd\RenjaController::updateStatus');
 
     // IKU
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
@@ -169,14 +163,14 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
 
     // Lakip OPD
-    $routes->get('lakip_opd', 'AdminOpd\LakipOpdController::index');
-    $routes->get('lakip_opd/tambah', 'AdminOpd\LakipOpdController::tambah');
-    $routes->post('lakip_opd/save', 'AdminOpd\LakipOpdController::save');
-    $routes->get('lakip_opd/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
-    $routes->post('lakip_opd/update/(:num)', 'AdminOpd\LakipOpdController::update/$1');
-    $routes->get('lakip_opd/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
-    $routes->post('lakip_opd/update-status', 'AdminOpd\LakipOpdController::updateStatus');
-    $routes->match(['get', 'post', 'delete'], 'lakip_opd/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+    $routes->get('lakip', 'AdminOpd\LakipOpdController::index');
+    $routes->get('lakip/tambah/(:num)', 'AdminOpd\LakipOpdController::tambah/$1');
+    $routes->post('lakip/save', 'AdminOpd\LakipOpdController::save');
+    $routes->get('lakip/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
+    $routes->post('lakip/update/', 'AdminOpd\LakipOpdController::update');
+    $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
+    $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
+    $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');
@@ -184,8 +178,6 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });
-
-
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login/authenticate', 'LoginController::authenticate');
 $routes->get('/logout', 'LoginController::logout');

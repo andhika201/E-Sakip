@@ -51,4 +51,9 @@ class OpdModel extends Model
     protected $afterFind = [];
     protected $beforeDelete = [];
     protected $afterDelete = [];
+
+    public function getAllOpd()
+    {
+        return $this->findAll();
+    }
 }

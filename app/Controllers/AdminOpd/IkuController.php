@@ -60,6 +60,7 @@ class IkuController extends BaseController
 
         // 🔽 Filter Renstra berdasarkan periode yang dipilih
         $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId);
+        $rpjmdData = $this->rpjmdModel->getSasaranWithIndikatorAndTarget();
 
         if (!empty($periode) && strpos($periode, '-') !== false) {
             [$tahunMulai, $tahunAkhir] = explode('-', $periode);
@@ -90,6 +91,7 @@ class IkuController extends BaseController
         return view('adminOpd/iku/iku', [
             'title' => 'Indikator Kinerja Utama',
             'renstra_data' => $renstraData,
+            'rpjmd_data' => $rpjmdData,
             'iku_data' => $ikuData,
             'grouped_data' => $grouped_data,
             'selected_periode' => $periode,
@@ -112,7 +114,6 @@ class IkuController extends BaseController
         $opdId = $session->get('opd_id');
         $role = $session->get('role');
 
-        $status = 'selesai';
 
         // Cek autentikasi
         if (!$opdId) {

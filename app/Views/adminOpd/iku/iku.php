@@ -10,12 +10,13 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
-        <!-- Navbar/Header -->
-        <?= $this->include('adminOpd/templates/header.php'); ?>
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
+        <!-- Navbar/Header -->
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
         <!-- Sidebar -->
-        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
+
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow-sm p-4">
@@ -28,10 +29,10 @@
                     <div class="row align-items-end g-3">
                         <div class="col-md-6">
                             <label for="periode" class="form-label fw-semibold text-secondary">
-                                Periode Renstra
+                                Periode
                             </label>
                             <select name="periode" id="periode" class="form-select" required>
-                                <option value="">-- Pilih Periode Renstra --</option>
+                                <option value="">-- Pilih Periode --</option>
                                 <?php foreach ($grouped_data ?? [] as $key => $periode): ?>
                                     <option value="<?= esc($key) ?>" <?= ($selected_periode ?? '') === $key ? 'selected' : '' ?>>
                                         <?= esc($periode['period']) ?>
@@ -173,7 +174,7 @@
                         </table>
                     </div>
                 <?php endif; ?>
-                            </div>
+            </div>
         </main>
         <?= $this->include('adminOpd/templates/footer.php'); ?>
     </div>

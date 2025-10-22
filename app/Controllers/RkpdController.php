@@ -3,210 +3,235 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
-use App\Models\RpjmdModel;
-use App\Models\RkpdModel;
+use App\Models\RktModel;
+use App\Models\ProgramPkModel;
+use App\Models\OpdModel;
+use App\Models\Opd\LakipOpdModel;
 
 class RkpdController extends BaseController
 {
-    protected $rpjmdModel;
-    protected $rkpdModel;
+    protected $rktModel;
+    protected $programModel;
+    protected $opdModel;
+    protected $db;
+    protected $lakipModel;
+
+
 
     public function __construct()
     {
-        $this->rpjmdModel = new RpjmdModel();
-        $this->rkpdModel = new RkpdModel();
+        $this->rktModel = new RktModel();
+        $this->programModel = new ProgramPkModel();
+        $this->opdModel = new OpdModel();
+        $this->lakipModel = new LakipOpdModel();
+        $this->db = \Config\Database::connect();
+
     }
 
+    /**
+     * Index: show RKPD list. If opd_id provided via GET => filter per OPD.
+     * We'll also accept tahun via GET (default current year).
+     */
     public function index()
     {
-        // Get all RKPD data (no server-side filtering)
-        $rkpdData = $this->rkpdModel->getAllRkpd();
-        
-        // Get unique years for filter dropdown
-        $availableYears = [];
-        foreach ($rkpdData as $rkpd) {
-            foreach ($rkpd['indikator'] as $indikator) {
-                if (!empty($indikator['tahun']) && !in_array($indikator['tahun'], $availableYears)) {
-                    $availableYears[] = $indikator['tahun'];
+        $session = session();
+        $curropd = $session->get('opd_id');
+
+
+        $opdId = $this->request->getGet('opd_id') ?? 'all';
+
+        // dd($opdId);
+        $tahun = $this->request->getGet('tahun') ?? 'all';
+
+        if ($opdId !== 'all') {
+            $currentOpd = $this->rktModel->getOpdById((int) $opdId);
+        }
+        $currentOpd = $this->opdModel->getAllOpd();
+
+        dd($currentOpd[8]['nama_opd']);
+        $allOPd = $this->opdModel->getAllOpd();
+
+        $indicators = $this->rktModel->getIndicatorsWithRkt($curropd, $tahun);
+        $availableYears = $this->lakipModel->getAvailableYears();
+        // Ambil data RKPD berdasarkan filter
+        $rkpdData = $this->rktModel->getIndicatorsForRkpd($opdId, $tahun);
+
+        // dd($indicators);
+        // kirim ke view
+        return view('adminkabupaten/rkpd/rkpd', [
+            'currentOpd' => $currentOpd,
+            'allOpd' => $allOPd,
+            'rktdata' => $indicators,
+            'rkpdData' => $rkpdData,
+            'available_years' => $availableYears,
+            'tahun' => $tahun,
+            'opdId' => $opdId,
+        ]);
+    }
+
+    public function tambah()
+    {
+        $db = \Config\Database::connect();
+
+        // load programs and indikator list
+        $programs = $this->programModel->findAll();
+
+        // get all indikator (for all OPD) — you may refine to only indikator for selected OPD later
+        $indikators = $db->table('renstra_indikator_sasaran i')
+            ->select('i.*, s.sasaran, s.opd_id')
+            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+            ->orderBy('s.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // OPD list so admin_kab can pick target OPD when creating RKPD entries
+        $opds = $this->opdModel->findAll();
+
+        return view('adminKab/rkpd/tambah', [
+            'title' => 'Tambah RKPD',
+            'program' => $programs,
+            'indikators' => $indikators,
+            'opds' => $opds,
+            'role' => session()->get('role'),
+        ]);
+    }
+
+    /**
+     * Store RKPD (multiple program->kegiatan->sub) for selected opd and indikator.
+     * We reuse RktModel->saveRkt expects data array with opd_id, indikator_id, program[] structure.
+     */
+    public function store()
+    {
+        $request = service('request');
+
+        $post = $request->getPost();
+
+        // basic required fields
+        $opdId = $post['opd_id'] ?? null;
+        $indikatorId = $post['indikator_id'] ?? null;
+        $tahun = $post['tahun'] ?? date('Y');
+
+        if (!$opdId || !$indikatorId) {
+            session()->setFlashdata('error', 'OPD dan Indikator harus dipilih.');
+            return redirect()->back()->withInput();
+        }
+
+        // Prepare payload for RktModel::saveRkt
+        $payload = [
+            'opd_id' => (int) $opdId,
+            'indikator_id' => (int) $indikatorId,
+            'tahun' => $tahun, // note: saveRkt currently doesn't include tahun — we'll include it in each insert below
+            'program' => $post['program'] ?? []
+        ];
+
+        // Since existing saveRkt in your model doesn't accept tahun in insert,
+        // we will add tahun into each inserted rkt inside the model; but to be safe,
+        // we can temporarily extend save here: loop through programs and insert.
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $rktTable = $db->table('rkt');
+        $kegiatanTable = $db->table('rkt_kegiatan');
+        $subTable = $db->table('rkt_subkegiatan');
+
+        if (!empty($payload['program'])) {
+            foreach ($payload['program'] as $prog) {
+                // insert rkt
+                $rktData = [
+                    'opd_id' => $payload['opd_id'],
+                    'tahun' => $payload['tahun'],
+                    'indikator_id' => $payload['indikator_id'],
+                    'program_id' => $prog['program_id'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+                $rktTable->insert($rktData);
+                $rktId = $db->insertID();
+
+                // kegiatan
+                if (!empty($prog['kegiatan'])) {
+                    foreach ($prog['kegiatan'] as $keg) {
+                        $kegiatanTable->insert([
+                            'rkt_id' => $rktId,
+                            'program_id' => $prog['program_id'],
+                            'nama_kegiatan' => $keg['nama_kegiatan'],
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                        $kegiatanId = $db->insertID();
+
+                        if (!empty($keg['subkegiatan'])) {
+                            foreach ($keg['subkegiatan'] as $sub) {
+                                $subTable->insert([
+                                    'kegiatan_id' => $kegiatanId,
+                                    'nama_subkegiatan' => $sub['nama_subkegiatan'],
+                                    'target_anggaran' => $sub['target_anggaran'] ?? 0,
+                                    'created_at' => date('Y-m-d H:i:s'),
+                                    'updated_at' => date('Y-m-d H:i:s'),
+                                ]);
+                            }
+                        }
+                    }
                 }
             }
         }
-        sort($availableYears);
 
-        $data = [
-            'title' => 'Rencana Kerja Tahunan',
-            'rkpd_data' => $rkpdData,
-            'available_years' => $availableYears
-        ];
-        
-        return view('adminKabupaten/rkpd/rkpd', $data);
-    }  
-    
-    public function tambah()
-    {
-        // Get RPJMD Sasaran from completed Misi only
-        $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-        
-        $data = [
-            'rpjmd_sasaran' => $rpjmdSasaran,
-            'title' => 'Tambah Kerja Tahunan',
-            'validation' => \Config\Services::validation()
-        ];
+        $db->transComplete();
 
-        return view('adminKabupaten/rkpd/tambah_rkpd', $data);
-    }
-
-    public function save()
-    {
-        try {
-            $data = $this->request->getPost();
-            
-            // Create new - Use createCompleteRpjmdTransaction for tambah form
-            $formattedData = [
-                'rpjmd_sasaran_id' => $data['rpjmd_sasaran_id'],
-                'status' => 'draft',
-                'sasaran_rkpd' => $data['sasaran_rkpd'] ?? [],
-            ];
-
-            $success = $this->rkpdModel->createCompleteRkpd($formattedData);
-            
-            if ($success) {
-                session()->setFlashdata('success', 'Data RKPD berhasil ditambahkan');
-            } else {
-                session()->setFlashdata('error', 'Gagal menambahkan data RKPD');
-                return redirect()->back()->withInput();
-            }
-            
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
-        }
-
-        return redirect()->to(base_url('adminkab/rkpd'));
-    }
-    
-    public function edit($id = null){
-
-        if (!$id) {
-            session()->setFlashdata('error', 'ID RKPD Sasaran tidak ditemukan');
+        if ($db->transStatus()) {
+            session()->setFlashdata('success', 'Data RKPD berhasil disimpan.');
             return redirect()->to(base_url('adminkab/rkpd'));
+        } else {
+            session()->setFlashdata('error', 'Gagal menyimpan data RKPD.');
+            return redirect()->back()->withInput();
         }
-
-        // Fetch the complete RKPD data for the RPJMD Sasaran ID
-        $rkpdData = $this->rkpdModel->getRkpdById($id);
-
-        // Get RPJMD Sasaran data
-        $rpjmdSasaranData = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
-        if (!$rpjmdSasaranData) {
-            session()->setFlashdata('error', 'Data RPJMD Sasaran tidak ditemukan');
-            return redirect()->to(base_url('adminkab/rkpd'));
-        }
-
-        $data = [
-            'title' => 'Edit RKPD',
-            'rkpd_data' => $rkpdData,
-            'rkpd_sasaran_id' => $id,
-            'rpjmd_sasaran' => $rpjmdSasaranData,
-            'validation' => \Config\Services::validation()
-        ];
-
-        return view('adminKabupaten/rkpd/edit_rkpd', $data);
     }
 
-    public function update(){
-
-        try {
-            $data = $this->request->getPost();
-            
-            if (!isset($data['rkpd_sasaran_id']) || empty($data['rkpd_sasaran_id'])) {
-                session()->setFlashdata('error', 'ID RKPD Sasaran tidak ditemukan');
-                return redirect()->back()->withInput();
-            }
-
-            $rkpdSasaranId = $data['rkpd_sasaran_id'];
-
-            // Use the updateCompleteRkpd method
-            $result = $this->rkpdModel->updateCompleteRkpd($rkpdSasaranId, $data);
-
-           
-            if ($result) {
-                session()->setFlashdata('success', 'Data RKPD berhasil diupdate');
-            } else {
-                session()->setFlashdata('error', 'Gagal mengupdate data RKPD');
-            }
-            
-        } catch (\Exception $e) {
-            session()->setFlashdata('error', 'Error: ' . $e->getMessage());
+    /**
+     * Delete a single rkt record (and cascade kegiatan/sub via DB foreign keys if present),
+     * or we do manual deletes for safety.
+     */
+    public function delete($rktId = null)
+    {
+        if (!$rktId) {
+            session()->setFlashdata('error', 'ID RKT tidak valid.');
+            return redirect()->back();
         }
+        $db = \Config\Database::connect();
+        $db->transStart();
 
+        // delete subkegiatan -> kegiatan -> rkt
+        $keg = $db->table('rkt_kegiatan')->where('rkt_id', $rktId)->get()->getResultArray();
+        foreach ($keg as $k) {
+            $db->table('rkt_subkegiatan')->where('kegiatan_id', $k['id'])->delete();
+        }
+        $db->table('rkt_kegiatan')->where('rkt_id', $rktId)->delete();
+        $db->table('rkt')->where('id', $rktId)->delete();
+
+        $db->transComplete();
+
+        if ($db->transStatus()) {
+            session()->setFlashdata('success', 'RKT berhasil dihapus.');
+        } else {
+            session()->setFlashdata('error', 'Gagal menghapus RKT.');
+        }
         return redirect()->to(base_url('adminkab/rkpd'));
     }
 
-    public function delete($id)
+
+    /**
+     * (Optional) edit() / update() stubs: if you want full edit/hard-sync like in OPD,
+     * I can implement update() that handles deleted_* arrays and inserts/updates accordingly.
+     */
+    public function edit($id = null)
     {
-        try {
-            // Verify that the RKPD exists and belongs to user's OPD
-            $rkpdData = $this->rkpdModel->getRkpdById($id);
-
-            if (!$rkpdData) {
-                return redirect()->back()->with('error', 'Data RKPD tidak ditemukan');
-            }
-
-            $success = $this->rkpdModel->deleteCompleteRkpd($id);
-
-            if ($success) {
-                return redirect()->to(base_url('adminkab/rkpd'))->with('success', 'Data RKPD berhasil dihapus');
-            } else {
-                return redirect()->back()->with('error', 'Gagal menghapus data');
-            }
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
-        }
-        
+        // Simple redirect for now — implement if you want full edit experience.
         return redirect()->to(base_url('adminkab/rkpd'));
     }
 
-    public function updateStatus()
+    public function update($id = null)
     {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
-        }
-        
-        // Get JSON input
-        $json = $this->request->getJSON(true);
-        $id = $json['id'] ?? null;
-
-        if (!$id) {
-            return $this->response->setJSON(['success' => false, 'message' => 'ID harus diisi']);
-        }
-        
-        try {
-            // Get current status
-            $currentRkpd = $this->rkpdModel->getRkpdSasaranById($id);
-            if (!$currentRkpd) {
-                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
-            }
-            
-            // Toggle status
-            $currentStatus = $currentRkpd['status'] ?? 'draft';
-            $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
-            
-            $result = $this->rkpdModel->updateRkpdStatus($id, $newStatus);
-            
-            if ($result) {
-                return $this->response->setJSON([
-                    'success' => true,
-                    'message' => 'Status berhasil diupdate',
-                    'oldStatus' => $currentStatus,
-                    'newStatus' => $newStatus
-                ]);
-            } else {
-                return $this->response->setJSON(['success' => false, 'message' => 'Gagal mengupdate status']);
-            }
-        } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
-        }
+        // TODO: implement hard-sync multi-program update (delete/insert/update)
+        return redirect()->to(base_url('adminkab/rkpd'));
     }
-
 }

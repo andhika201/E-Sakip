@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RKDP - e-SAKIP</title>
+    <title>RENJA - e-SAKIP</title>
     <!-- Style -->
-    <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -15,15 +15,15 @@
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
         <!-- Navbar/Header -->
-        <?= $this->include('adminKabupaten/templates/header.php'); ?>
+        <?= $this->include('adminOpd/templates/header.php'); ?>
 
         <!-- Sidebar -->
-        <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
+        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
         <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA KERJA PERANGKAT DAERAH</h2>
+                <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA KERJA TAHUNAN</h2>
 
                 <!-- Error Messages -->
                 <?php if (session()->getFlashdata('error')): ?>
@@ -57,16 +57,6 @@
                 <!-- Filter -->
                 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                     <div class="d-flex gap-2 flex-fill">
-                        <select id="opdFilter" class="form-select w-25" onchange="filterData()">
-                            <option value="all">SEMUA OPD</option>
-                            <?php if (isset($allOpd)): ?>
-                                <?php foreach ($allOpd as $opd): ?>
-                                    <option value="<?= $opd['nama_opd'] ?>">
-                                        <?= $opd['nama_opd'] ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
                         <select id="renstraSasaranFilter" class="form-select w-50" onchange="filterData()">
                             <option value="all">SEMUA SASARAN RENSTRA</option>
                             <!-- Options will be populated by JavaScript -->
@@ -75,11 +65,16 @@
                             <option value="all">SEMUA TAHUN</option>
                             <?php if (isset($available_years)): ?>
                                 <?php foreach ($available_years as $year): ?>
-                                    <option value="<?=$year?>">
+                                    <option value="<?= $year ?>">
                                         <?= $year ?>
                                     </option>
                                 <?php endforeach; ?>
                             <?php endif; ?>
+                        </select>
+                        <select id="statusFilter" class="form-select w-25" onchange="filterData()">
+                            <option value="all">SEMUA STATUS</option>
+                            <option value="draft">Draft</option>
+                            <option value="selesai">Selesai</option>
                         </select>
                     </div>
                 </div>
@@ -113,6 +108,7 @@
                                 <th class="border p-2">KEGIATAN</th>
                                 <th class="border p-2">SUB KEGIATAN</th>
                                 <th class="border p-2">TARGET ANGGARAN</th>
+                                <th class="border p-2">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>

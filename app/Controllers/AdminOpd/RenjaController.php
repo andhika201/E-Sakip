@@ -138,159 +138,172 @@ class RenjaController extends BaseController
     }
 
     public function edit($indikatorId)
-{
-    $db = \Config\Database::connect();
-    $role = session()->get('role');
+    {
+        $db = \Config\Database::connect();
+        $role = session()->get('role');
 
-    // Models
-    $programModel = new \App\Models\ProgramPkModel();
+        // Models
+        $programModel = new \App\Models\ProgramPkModel();
 
-    // Ambil indikator (renstra_indikator_sasaran) + nama sasaran
-    $indicator = $db->table('renstra_indikator_sasaran i')
-        ->select('i.*, s.sasaran')
-        ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
-        ->where('i.id', $indikatorId)
-        ->get()
-        ->getRowArray();
+        // Ambil indikator (renstra_indikator_sasaran) + nama sasaran
+        $indicator = $db->table('renstra_indikator_sasaran i')
+            ->select('i.*, s.sasaran')
+            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+            ->where('i.id', $indikatorId)
+            ->get()
+            ->getRowArray();
 
-    if (! $indicator) {
-        // jika indikator tidak ditemukan, redirect atau tampilkan error sesuai alur aplikasi
-        return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
-    }
+        if (!$indicator) {
+            // jika indikator tidak ditemukan, redirect atau tampilkan error sesuai alur aplikasi
+            return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
+        }
 
-    // Ambil semua RKT (program) untuk indikator ini — MULTI PROGRAM
-    $rkts = $db->table('rkt r')
-        ->select('r.*, p.program_kegiatan AS program_nama')
-        ->join('program_pk p', 'p.id = r.program_id', 'left')
-        ->where('r.indikator_id', $indikatorId)
-        ->orderBy('r.id', 'ASC')
-        ->get()
-        ->getResultArray();
-
-    // Untuk tiap rkt (program) ambil kegiatan -> subkegiatan, dan attach sebagai nested
-    foreach ($rkts as &$rkt) {
-        // ambil kegiatan milik rkt ini
-        $kegiatans = $db->table('rkt_kegiatan rk')
-            ->select('rk.*')
-            ->where('rk.rkt_id', $rkt['id'])
-            ->orderBy('rk.id', 'ASC')
+        // Ambil semua RKT (program) untuk indikator ini — MULTI PROGRAM
+        $rkts = $db->table('rkt r')
+            ->select('r.*, p.program_kegiatan AS program_nama')
+            ->join('program_pk p', 'p.id = r.program_id', 'left')
+            ->where('r.indikator_id', $indikatorId)
+            ->orderBy('r.id', 'ASC')
             ->get()
             ->getResultArray();
 
-        // untuk tiap kegiatan ambil subkegiatan
-        foreach ($kegiatans as &$keg) {
-            $subs = $db->table('rkt_subkegiatan rs')
-                ->select('rs.*')
-                ->where('rs.kegiatan_id', $keg['id'])
-                ->orderBy('rs.id', 'ASC')
+        // Untuk tiap rkt (program) ambil kegiatan -> subkegiatan, dan attach sebagai nested
+        foreach ($rkts as &$rkt) {
+            // ambil kegiatan milik rkt ini
+            $kegiatans = $db->table('rkt_kegiatan rk')
+                ->select('rk.*')
+                ->where('rk.rkt_id', $rkt['id'])
+                ->orderBy('rk.id', 'ASC')
                 ->get()
                 ->getResultArray();
 
-            $keg['subkegiatan'] = $subs ?: [];
+            // untuk tiap kegiatan ambil subkegiatan
+            foreach ($kegiatans as &$keg) {
+                $subs = $db->table('rkt_subkegiatan rs')
+                    ->select('rs.*')
+                    ->where('rs.kegiatan_id', $keg['id'])
+                    ->orderBy('rs.id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                $keg['subkegiatan'] = $subs ?: [];
+            }
+
+            // attach kegiatan ke rkt
+            $rkt['kegiatan'] = $kegiatans ?: [];
         }
 
-        // attach kegiatan ke rkt
-        $rkt['kegiatan'] = $kegiatans ?: [];
+        // attach rkts ke indikator -> sesuai struktur view yang kamu gunakan
+        $indicator['rkts'] = $rkts ?: [];
+
+        // daftar program untuk dropdown
+        $programs = $programModel->findAll();
+
+        // kirim data ke view (view memakai $indicator dan $programs)
+        return view('adminOpd/rkt/edit_rkt', [
+            'indicator' => $indicator,
+            'programs' => $programs,
+            'role' => $role,
+        ]);
     }
-
-    // attach rkts ke indikator -> sesuai struktur view yang kamu gunakan
-    $indicator['rkts'] = $rkts ?: [];
-
-    // daftar program untuk dropdown
-    $programs = $programModel->findAll();
-
-    // kirim data ke view (view memakai $indicator dan $programs)
-    return view('adminOpd/rkt/edit_rkt', [
-        'indicator'    => $indicator,
-        'programs'     => $programs,
-        'role'         => $role,
-    ]);
-}
 
 
     // app/Controllers/Adminopd/RenjaController.php (method update)
     public function update()
-{
-    $db = \Config\Database::connect();
-    $builderRkt = $db->table('rkt');
-    $builderKeg = $db->table('rkt_kegiatan');
-    $builderSub = $db->table('rkt_subkegiatan');
+    {
+        $db = \Config\Database::connect();
+        $builderRkt = $db->table('rkt');
+        $builderKeg = $db->table('rkt_kegiatan');
+        $builderSub = $db->table('rkt_subkegiatan');
 
-    // ambil post
-    $postPrograms = $this->request->getPost('program') ?? [];
-    $deletedSubs = $this->request->getPost('deleted_subkegiatan_ids') ?? [];
-    $deletedKegs = $this->request->getPost('deleted_kegiatan_ids') ?? [];
-    $deletedRkts = $this->request->getPost('deleted_program_ids') ?? [];
+        // ambil post
+        $postPrograms = $this->request->getPost('program') ?? [];
+        $deletedSubs = $this->request->getPost('deleted_subkegiatan_ids') ?? [];
+        $deletedKegs = $this->request->getPost('deleted_kegiatan_ids') ?? [];
+        $deletedRkts = $this->request->getPost('deleted_program_ids') ?? [];
 
-    // ambil indikator_id & opd_id & tahun (tahun bisa dikirimkan dari form; fallback ke tahun sekarang)
-    $indikatorId = $this->request->getPost('indikator_id');
-    $opdId = session()->get('opd_id') ?? $this->request->getPost('opd_id') ?? null;
-    $tahun = $this->request->getPost('tahun') ?? date('Y');
+        // ambil indikator_id & opd_id & tahun (tahun bisa dikirimkan dari form; fallback ke tahun sekarang)
+        $indikatorId = $this->request->getPost('indikator_id');
+        $opdId = session()->get('opd_id') ?? $this->request->getPost('opd_id') ?? null;
+        $tahun = $this->request->getPost('tahun') ?? date('Y');
 
-    // helper kecil untuk bersihkan angka (target_anggaran)
-    $cleanNumber = function ($v) {
-        if ($v === null || $v === '') return null;
-        // hapus semua non-digit
-        $digits = preg_replace('/[^\d]/', '', (string)$v);
-        return $digits === '' ? null : (int)$digits;
-    };
+        // helper kecil untuk bersihkan angka (target_anggaran)
+        $cleanNumber = function ($v) {
+            if ($v === null || $v === '')
+                return null;
+            // hapus semua non-digit
+            $digits = preg_replace('/[^\d]/', '', (string) $v);
+            return $digits === '' ? null : (int) $digits;
+        };
 
-    $db->transStart();
+        $db->transStart();
 
-    try {
-        // 1) DELETE (dari daftar deleted_ids) — lakukan sub -> kegiatan -> rkt (cascade)
-        if (!empty($deletedSubs)) {
-            // pastikan array integer
-            $deletedSubs = array_filter(array_map('intval', (array)$deletedSubs));
+        try {
+            // 1) DELETE (dari daftar deleted_ids) — lakukan sub -> kegiatan -> rkt (cascade)
             if (!empty($deletedSubs)) {
-                $builderSub->whereIn('id', $deletedSubs)->delete();
-            }
-        }
-
-        if (!empty($deletedKegs)) {
-            $deletedKegs = array_filter(array_map('intval', (array)$deletedKegs));
-            if (!empty($deletedKegs)) {
-                // hapus semua sub yang berhubungan dulu
-                $builderSub->whereIn('kegiatan_id', $deletedKegs)->delete();
-                // hapus kegiatan
-                $builderKeg->whereIn('id', $deletedKegs)->delete();
-            }
-        }
-
-        if (!empty($deletedRkts)) {
-            $deletedRkts = array_filter(array_map('intval', (array)$deletedRkts));
-            if (!empty($deletedRkts)) {
-                // cari kegiatan id yang berhubungan
-                $kegs = $db->table('rkt_kegiatan')->select('id')->whereIn('rkt_id', $deletedRkts)->get()->getResultArray();
-                $kegIds = array_column($kegs, 'id');
-                if (!empty($kegIds)) {
-                    $builderSub->whereIn('kegiatan_id', $kegIds)->delete();
-                    $builderKeg->whereIn('id', $kegIds)->delete();
+                // pastikan array integer
+                $deletedSubs = array_filter(array_map('intval', (array) $deletedSubs));
+                if (!empty($deletedSubs)) {
+                    $builderSub->whereIn('id', $deletedSubs)->delete();
                 }
-                // hapus rkt (program) sendiri
-                $builderRkt->whereIn('id', $deletedRkts)->delete();
             }
-        }
 
-        // 2) Iterate posted programs (insert / update)
-        // Each $p is: ['id' => rkt_id or '', 'program_id' => pk_id, 'kegiatan' => [...]]
-        foreach ($postPrograms as $pIndex => $p) {
-            // normalize
-            $pId = isset($p['id']) && $p['id'] !== '' ? (int)$p['id'] : null;
-            $programIdSelected = isset($p['program_id']) ? (int)$p['program_id'] : null;
+            if (!empty($deletedKegs)) {
+                $deletedKegs = array_filter(array_map('intval', (array) $deletedKegs));
+                if (!empty($deletedKegs)) {
+                    // hapus semua sub yang berhubungan dulu
+                    $builderSub->whereIn('kegiatan_id', $deletedKegs)->delete();
+                    // hapus kegiatan
+                    $builderKeg->whereIn('id', $deletedKegs)->delete();
+                }
+            }
 
-            // if existing rkt row -> update program_id (and tahun/opd/indikator if needed)
-            if ($pId) {
-                // safety: ensure the row exists and belongs to this indikator (optional)
-                $exists = $builderRkt->where('id', $pId)->where('indikator_id', $indikatorId)->get()->getRowArray();
-                if ($exists) {
-                    $builderRkt->where('id', $pId)->update([
-                        'program_id' => $programIdSelected,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-                    $rktId = $pId;
+            if (!empty($deletedRkts)) {
+                $deletedRkts = array_filter(array_map('intval', (array) $deletedRkts));
+                if (!empty($deletedRkts)) {
+                    // cari kegiatan id yang berhubungan
+                    $kegs = $db->table('rkt_kegiatan')->select('id')->whereIn('rkt_id', $deletedRkts)->get()->getResultArray();
+                    $kegIds = array_column($kegs, 'id');
+                    if (!empty($kegIds)) {
+                        $builderSub->whereIn('kegiatan_id', $kegIds)->delete();
+                        $builderKeg->whereIn('id', $kegIds)->delete();
+                    }
+                    // hapus rkt (program) sendiri
+                    $builderRkt->whereIn('id', $deletedRkts)->delete();
+                }
+            }
+
+            // 2) Iterate posted programs (insert / update)
+            // Each $p is: ['id' => rkt_id or '', 'program_id' => pk_id, 'kegiatan' => [...]]
+            foreach ($postPrograms as $pIndex => $p) {
+                // normalize
+                $pId = isset($p['id']) && $p['id'] !== '' ? (int) $p['id'] : null;
+                $programIdSelected = isset($p['program_id']) ? (int) $p['program_id'] : null;
+
+                // if existing rkt row -> update program_id (and tahun/opd/indikator if needed)
+                if ($pId) {
+                    // safety: ensure the row exists and belongs to this indikator (optional)
+                    $exists = $builderRkt->where('id', $pId)->where('indikator_id', $indikatorId)->get()->getRowArray();
+                    if ($exists) {
+                        $builderRkt->where('id', $pId)->update([
+                            'program_id' => $programIdSelected,
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                        $rktId = $pId;
+                    } else {
+                        // jika tidak ditemukan (safety), treat as insert
+                        $builderRkt->insert([
+                            'opd_id' => $opdId,
+                            'tahun' => $tahun,
+                            'indikator_id' => $indikatorId,
+                            'program_id' => $programIdSelected,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                        $rktId = $db->insertID();
+                    }
                 } else {
-                    // jika tidak ditemukan (safety), treat as insert
+                    // insert new rkt
                     $builderRkt->insert([
                         'opd_id' => $opdId,
                         'tahun' => $tahun,
@@ -301,127 +314,76 @@ class RenjaController extends BaseController
                     ]);
                     $rktId = $db->insertID();
                 }
-            } else {
-                // insert new rkt
-                $builderRkt->insert([
-                    'opd_id' => $opdId,
-                    'tahun' => $tahun,
-                    'indikator_id' => $indikatorId,
-                    'program_id' => $programIdSelected,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
-                $rktId = $db->insertID();
-            }
 
-            // proses kegiatan (jika ada)
-            $kegList = $p['kegiatan'] ?? [];
-            foreach ($kegList as $kIndex => $k) {
-                $kegId = isset($k['id']) && $k['id'] !== '' ? (int)$k['id'] : null;
-                $namaKeg = isset($k['nama_kegiatan']) ? trim($k['nama_kegiatan']) : null;
+                // proses kegiatan (jika ada)
+                $kegList = $p['kegiatan'] ?? [];
+                foreach ($kegList as $kIndex => $k) {
+                    $kegId = isset($k['id']) && $k['id'] !== '' ? (int) $k['id'] : null;
+                    $namaKeg = isset($k['nama_kegiatan']) ? trim($k['nama_kegiatan']) : null;
 
-                if ($kegId) {
-                    // update existing kegiatan
-                    $builderKeg->where('id', $kegId)->update([
-                        'rkt_id' => $rktId,
-                        'program_id' => $programIdSelected,
-                        'nama_kegiatan' => $namaKeg,
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-                    $kegiatanId = $kegId;
-                } else {
-                    // insert new kegiatan
-                    $builderKeg->insert([
-                        'rkt_id' => $rktId,
-                        'program_id' => $programIdSelected,
-                        'nama_kegiatan' => $namaKeg,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-                    $kegiatanId = $db->insertID();
-                }
-
-                // proses subkegiatan
-                $subs = $k['subkegiatan'] ?? [];
-                foreach ($subs as $sIndex => $s) {
-                    $subId = isset($s['id']) && $s['id'] !== '' ? (int)$s['id'] : null;
-                    $namaSub = isset($s['nama_subkegiatan']) ? trim($s['nama_subkegiatan']) : null;
-                    $targetRaw = $s['target_anggaran'] ?? null;
-                    $target = $cleanNumber($targetRaw);
-
-                    if ($subId) {
-                        $builderSub->where('id', $subId)->update([
-                            'kegiatan_id' => $kegiatanId,
-                            'nama_subkegiatan' => $namaSub,
-                            'target_anggaran' => $target,
+                    if ($kegId) {
+                        // update existing kegiatan
+                        $builderKeg->where('id', $kegId)->update([
+                            'rkt_id' => $rktId,
+                            'program_id' => $programIdSelected,
+                            'nama_kegiatan' => $namaKeg,
                             'updated_at' => date('Y-m-d H:i:s'),
                         ]);
+                        $kegiatanId = $kegId;
                     } else {
-                        $builderSub->insert([
-                            'kegiatan_id' => $kegiatanId,
-                            'nama_subkegiatan' => $namaSub,
-                            'target_anggaran' => $target,
+                        // insert new kegiatan
+                        $builderKeg->insert([
+                            'rkt_id' => $rktId,
+                            'program_id' => $programIdSelected,
+                            'nama_kegiatan' => $namaKeg,
                             'created_at' => date('Y-m-d H:i:s'),
                             'updated_at' => date('Y-m-d H:i:s'),
                         ]);
+                        $kegiatanId = $db->insertID();
                     }
-                } // end subs loop
-            } // end kegiatan loop
-        } // end programs loop
 
-        $db->transComplete();
+                    // proses subkegiatan
+                    $subs = $k['subkegiatan'] ?? [];
+                    foreach ($subs as $sIndex => $s) {
+                        $subId = isset($s['id']) && $s['id'] !== '' ? (int) $s['id'] : null;
+                        $namaSub = isset($s['nama_subkegiatan']) ? trim($s['nama_subkegiatan']) : null;
+                        $targetRaw = $s['target_anggaran'] ?? null;
+                        $target = $cleanNumber($targetRaw);
 
-        if ($db->transStatus() === false) {
-            // rollback happened
-            return redirect()->back()->with('error', 'Gagal menyimpan perubahan (transaksi gagal).');
+                        if ($subId) {
+                            $builderSub->where('id', $subId)->update([
+                                'kegiatan_id' => $kegiatanId,
+                                'nama_subkegiatan' => $namaSub,
+                                'target_anggaran' => $target,
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+                        } else {
+                            $builderSub->insert([
+                                'kegiatan_id' => $kegiatanId,
+                                'nama_subkegiatan' => $namaSub,
+                                'target_anggaran' => $target,
+                                'created_at' => date('Y-m-d H:i:s'),
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+                        }
+                    } // end subs loop
+                } // end kegiatan loop
+            } // end programs loop
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                // rollback happened
+                return redirect()->back()->with('error', 'Gagal menyimpan perubahan (transaksi gagal).');
+            }
+
+            return redirect()->to(base_url('adminopd/rkt'))->with('success', 'Perubahan RKT disimpan.');
+        } catch (\Throwable $th) {
+            $db->transRollback();
+            // log error bila perlu
+            // log_message('error', $th->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $th->getMessage());
         }
-
-        return redirect()->to(base_url('adminopd/rkt'))->with('success', 'Perubahan RKT disimpan.');
-    } catch (\Throwable $th) {
-        $db->transRollback();
-        // log error bila perlu
-        // log_message('error', $th->getMessage());
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $th->getMessage());
-    }
-}
-
-
-
-
-    public function delete($id)
-    {
-        try {
-
-            $session = session();
-            $opdId = $session->get('opd_id');
-
-            if (!$opdId) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'Session expired. Silakan login ulang.'
-                ]);
-            }
-
-            // Verify that the RENJA exists and belongs to user's OPD
-            $renjaData = $this->renjaModel->getRenjaById($id);
-
-            if (!$renjaData) {
-                return redirect()->back()->with('error', 'Data RENJA tidak ditemukan');
-            }
-
-            $success = $this->renjaModel->deleteCompleteRenja($id);
-
-            if ($success) {
-                return redirect()->to(base_url('adminopd/renja'))->with('success', 'Data RENJA berhasil dihapus');
-            } else {
-                return redirect()->back()->with('error', 'Gagal menghapus data');
-            }
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
-        }
-
-        return redirect()->to(base_url('adminopd/renja'));
     }
 
 

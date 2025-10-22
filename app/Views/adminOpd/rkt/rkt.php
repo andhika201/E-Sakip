@@ -266,5 +266,16 @@
     </div> <!-- End of main-content -->
 
 </body>
+<script>
+function filterData() {
+    let opd    = document.getElementById('opdFilter').value;
+    let sasaran = document.getElementById('renstraSasaranFilter').value;
+    let tahun   = document.getElementById('yearFilter').value;
+    let status  = document.getElementById('statusFilter').value;
+
+    let url = `?opd=${opd}&sasaran=${sasaran}&tahun=${tahun}&status=${status}`;
+    window.location.href = url;
+}
+</script>
 
 </html>

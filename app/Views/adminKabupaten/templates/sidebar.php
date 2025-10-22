@@ -93,7 +93,7 @@
       <div class="d-grid gap-2">
         <a href="<?= base_url('adminkab/dashboard') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
         <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD Kabupaten</a>
-        <a href="<?= base_url('adminkab/rkpd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
+        <a href="<?= base_url('adminkab/dashboard') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
         <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
         <a href="<?= base_url('adminkab/pk/bupati') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Bupati</a>
         <a href="<?= base_url('adminkab/program_pk') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Program PK</a>
@@ -107,7 +107,7 @@
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
             <li><a class="dropdown-item" href="<?= base_url('adminkab/target') ?>">Target & Rencana Aksi</a></li>
             <li><a class="dropdown-item" href="<?= base_url('adminkab/monev') ?>">MONEV</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP OPD</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/lakip') ?>">LAKIP OPD</a></li>
           </ul>
         </div>
                 

@@ -24,6 +24,11 @@
           <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
         </div>
 
+        <div class="mb-3">
+          <label class="form-label fw-bold">Tahun</label>
+          <input type="number" name="tahun" class="form-control" placeholder="Masukkan Tahun"
+            value="<?= isset($rkt['tahun']) ? esc($rkt['tahun']) : date('Y') ?>" required>
+        </div>
         <!-- ================= PROGRAM ================= -->
         <section>
           <div class="d-flex justify-content-between align-items-center mb-3">

@@ -62,12 +62,6 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
-        // Capaian PK
-        $routes->get('capaian_pk/tambah', 'CapaianPkController::tambah');
-        $routes->get('capaian_pk/edit/(:num)', 'CapaianPkController::edit/$1');
-        $routes->post('capaian_pk/save', 'CapaianPkController::save');
-        $routes->post('capaian_pk/update/(:num)', 'CapaianPkController::update/$1');
-        $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
         // target
         $routes->get('target', 'TargetController::index');
         $routes->get('target/tambah', 'TargetController::tambah');
@@ -130,7 +124,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->match(['get', 'post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
 
-    // RENJA
+    // RKT
     $routes->get('rkt', 'AdminOpd\RenjaController::index');
     $routes->get('rkt/tambah/(:num)', 'AdminOpd\RenjaController::tambah/$1');
     $routes->get('rkt/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
@@ -178,8 +172,6 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });
-
-
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login/authenticate', 'LoginController::authenticate');
 $routes->get('/logout', 'LoginController::logout');

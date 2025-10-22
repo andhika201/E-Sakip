@@ -8,7 +8,7 @@ class RktModel extends Model
 {
     protected $table = 'rkt';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['opd_id', 'indikator_id', 'program_id'];
+    protected $allowedFields = ['opd_id','tahun', 'indikator_id', 'program_id'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
@@ -29,6 +29,7 @@ class RktModel extends Model
                 // 1️⃣ Simpan program ke tabel rkt
                 $rktData = [
                     'opd_id' => $data['opd_id'],
+                    'tahun' => $data['tahun'],
                     'indikator_id' => $data['indikator_id'],
                     'program_id' => $prog['program_id'],
                     'created_at' => date('Y-m-d H:i:s'),
@@ -270,5 +271,29 @@ class RktModel extends Model
         $db = \Config\Database::connect();
         return $db->table('opd')->where('id', $opdId)->get()->getRowArray();
     }
+
+    public function getIndicatorsForRkpd($opdId, $tahun)
+{
+    $builder = $this->db->table('rkt r')
+        ->select('r.*, i.indikator_sasaran, s.sasaran, o.nama_opd, p.program_kegiatan')
+        ->join('renstra_indikator_sasaran i', 'i.id = r.indikator_id', 'left')
+        ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+        ->join('opd o', 'o.id = s.opd_id', 'left')
+        ->join('program_pk p', 'p.id = r.program_id', 'left')
+        ->orderBy('o.nama_opd', 'ASC')
+        ->orderBy('s.sasaran', 'ASC')
+        ->orderBy('i.indikator_sasaran', 'ASC');
+
+    if ($opdId !== 'all') {
+        $builder->where('o.id', $opdId);
+    }
+
+    if ($tahun !== 'all') {
+        $builder->where('r.tahun', $tahun);
+    }
+
+    return $builder->get()->getResultArray();
+}
+
 
 }

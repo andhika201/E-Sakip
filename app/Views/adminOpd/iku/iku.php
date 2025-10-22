@@ -29,10 +29,10 @@
                     <div class="row align-items-end g-3">
                         <div class="col-md-6">
                             <label for="periode" class="form-label fw-semibold text-secondary">
-                                Periode Renstra
+                                Periode
                             </label>
                             <select name="periode" id="periode" class="form-select" required>
-                                <option value="">-- Pilih Periode Renstra --</option>
+                                <option value="">-- Pilih Periode --</option>
                                 <?php foreach ($grouped_data ?? [] as $key => $periode): ?>
                                     <option value="<?= esc($key) ?>" <?= ($selected_periode ?? '') === $key ? 'selected' : '' ?>>
                                         <?= esc($periode['period']) ?>

@@ -96,6 +96,7 @@
                                 <th rowspan="2" class="border p-2 align-middle">MISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
+                                <!-- <th colspan="5" class="border p-2" id="year-header-span">TARGET TUJUAN PER TAHUN</th> -->
                                 <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">Definisi Operasional</th>

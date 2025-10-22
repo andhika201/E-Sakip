@@ -940,7 +940,7 @@ class RenstraModel extends Model
             ->where('id', $id)
             ->update(['status' => $status]);
     }
-    public function getAllSasaranWithIndikatorAndTarget($opdId = null)
+    public function getAllSasaranWithIndikatorAndTarget($opdId = null, $tahun = null)
     {
         $builder = $this->db->table('renstra_sasaran rs')
             ->select('rs.*, rs.sasaran, o.nama_opd, rps.sasaran_rpjmd AS sasaran_rpjmd')
@@ -963,12 +963,21 @@ class RenstraModel extends Model
                 ->getResultArray();
 
             foreach ($indikatorList as &$indikator) {
-                $indikator['target_tahunan'] = $this->db->table('renstra_target rt')
-                    ->select('rt.tahun, rt.target AS target_tahunan')
-                    ->where('rt.renstra_indikator_id', $indikator['id'])
-                    ->orderBy('rt.tahun', 'ASC')
-                    ->get()
-                    ->getResultArray();
+                // Ambil target tahunan
+                $targetQuery = $this->db->table('renstra_target rt')
+                    ->select('rt.tahun, rt.target')
+                    ->where('rt.renstra_indikator_id', $indikator['id']);
+
+                if ($tahun) {
+                    $targetQuery->where('rt.tahun', $tahun);
+                }
+
+                $targetData = $targetQuery->get()->getResultArray();
+
+                // Jika user belum pilih tahun, kosongkan target jadi "-"
+                $indikator['target_tahunan'] = (!empty($targetData))
+                    ? $targetData
+                    : [['tahun' => $tahun, 'target' => null]];
             }
 
             $sasaran['indikator_sasaran'] = $indikatorList;

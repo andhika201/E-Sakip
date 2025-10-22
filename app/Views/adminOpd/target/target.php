@@ -54,7 +54,7 @@
                                 <th rowspan="2" class="border p-2 align-middle">Tujuan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
                                 <th rowspan="2" class="border p-2 align-middle">Indikator</th>
-                                <th rowspan="2" class="border p-2 align-middle">Tahun Renja</th>
+                                <th rowspan="2" class="border p-2 align-middle">Tahun</th>
                                 <th rowspan="2" class="border p-2 align-middle">Satuan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Target</th>
                                 <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>

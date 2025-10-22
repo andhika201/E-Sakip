@@ -4,18 +4,33 @@ namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
 use App\Models\Opd\LakipOpdModel;
+use App\Models\Opd\IkuModel;
+use App\Models\Opd\RenstraModel;
+
 use App\Models\OpdModel;
+use App\Models\RpjmdModel;
 
 class LakipOpdController extends BaseController
 {
     protected $lakipModel;
+    protected $ikuModel;
+    protected $renstraModel;
+    protected $RpjmdModel;
     protected $opdModel;
+    protected $db;
+
 
     public function __construct()
     {
         $this->lakipModel = new LakipOpdModel();
         $this->opdModel = new OpdModel();
+        $this->ikuModel = new IkuModel();
+        $this->renstraModel = new RenstraModel();
+        $this->RpjmdModel = new RpjmdModel();
+        $this->db = \Config\Database::connect();
+
         helper(['form', 'url']);
+
     }
 
     /**
@@ -24,15 +39,15 @@ class LakipOpdController extends BaseController
     public function index()
     {
         // Get OPD ID from session
-        $opdId = session()->get('opd_id');
-        
+        $session = session();
+        $opdId = $session->get('opd_id');
+        $tahun = $this->request->getGet('tahun'); // dari filter tahun
+
+        $role = $session->get('role');
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
-
-        // Get filters from request
-        $tahun = $this->request->getVar('tahun');
-        $status = $this->request->getVar('status');
 
         // Build query based on OPD
         $query = $this->lakipModel->where('opd_id', $opdId);
@@ -42,52 +57,99 @@ class LakipOpdController extends BaseController
             $query->where('YEAR(tanggal_laporan)', $tahun);
         }
 
-        if (!empty($status)) {
-            $query->where('status', $status);
-        }
+        $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId, $tahun);
+        $rpjmdData = $this->RpjmdModel->getSasaranWithIndikatorAndTarget();
 
-        $lakip = $query->orderBy('created_at', 'DESC')->findAll();
+        $lakip_data = ($role === 'admin_kab')
+            ? $this->lakipModel->getRPJMD()
+            : $this->lakipModel->getRenstra($opdId);
 
         // Get available years
-        $availableYears = $this->lakipModel->getAvailableYearsByOpd($opdId);
+        $availableYears = $this->lakipModel->getAvailableYears();
 
         // Get OPD info
         $opdInfo = $this->opdModel->find($opdId);
 
+
         $data = [
             'title' => 'LAKIP OPD - ' . ($opdInfo['nama_opd'] ?? 'Unknown'),
-            'lakips' => $lakip,
             'availableYears' => $availableYears,
-            'filters' => [
-                'tahun' => $tahun,
-                'status' => $status
-            ],
-            'opdInfo' => $opdInfo
+            'opdInfo' => $opdInfo,
+            'renstraData' => $renstraData,
+            'rpjmdData' => $rpjmdData,
+            'role' => $role,
+            'lakip' => $lakip_data,
+            'filters' => ['tahun' => $tahun],
+
         ];
 
-        return view('adminOpd/lakip_opd/lakip_opd', $data);
+        return view('adminOpd/lakip/lakip', $data);
     }
 
     /**
      * Show form to create new LAKIP
      */
-    public function tambah()
+    public function tambah($indikatorId = null)
     {
         $opdId = session()->get('opd_id');
-        
+        $role = session()->get('role');
+        $tahun = date('Y');
+
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
+
+
+        // Ambil data indikator berdasarkan $indikatorId
+        $indikator = null;
+        if ($indikatorId) {
+            $db = \Config\Database::connect();
+            if ($role == 'admin_kab') {
+                // Ambil dari tabel RPJMD
+                $indikator = $db->table('rpjmd_indikator_sasaran')
+                    ->where('id', $indikatorId)
+                    ->get()
+                    ->getRowArray();
+            } else {
+                // Default admin_opd ambil dari tabel Renstra
+                $indikator = $db->table('renstra_indikator_sasaran')
+                    ->where('id', $indikatorId)
+                    ->get()
+                    ->getRowArray();
+            }
+        }
+
+        $table = ($role === 'admin_kab')
+            ? 'rpjmd_target'
+            : 'renstra_target';
+
+        $by = ($role === 'admin_kab')
+            ? 'indikator_sasaran_id'
+            : 'renstra_indikator_id';
+
+
+        // Ambil daftar target berdasarkan indikator ini
+        $targetList = $db->table($table)
+            ->where($by, $indikatorId)
+            ->where('tahun', $tahun)
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getRowArray();
 
         $opdInfo = $this->opdModel->find($opdId);
 
         $data = [
             'title' => 'Tambah LAKIP OPD',
+            'role' => $role,
+            'indikator' => $indikator,
             'opdInfo' => $opdInfo,
+            'targetList' => $targetList,
+
             'validation' => \Config\Services::validation()
         ];
 
-        return view('adminOpd/lakip_opd/tambah_lakip', $data);
+        return view('adminOpd/lakip/tambah_lakip', $data);
     }
 
     /**
@@ -95,183 +157,147 @@ class LakipOpdController extends BaseController
      */
     public function save()
     {
-        $opdId = session()->get('opd_id');
-        
-        if (!$opdId) {
-            return redirect()->to('/login')->with('error', 'Session tidak valid');
+
+        $session = session();
+        $role = $session->get('role');
+
+        // Ambil data dari form
+        $Indikator_Sasaran_Id = ($role === 'admin_kab')
+            ? $this->request->getPost('rpjmd_id')
+            : $this->request->getPost('renstra_indikator_sasaran_id');
+        $targetPrev = $this->request->getPost('target_lalu');
+        $capaianPrev = $this->request->getPost('capaian_lalu');
+        $capaianNow = $this->request->getPost('capaian_tahun_ini');
+
+        // Validasi dasar
+        if (empty($Indikator_Sasaran_Id)) {
+            return redirect()->back()->with('error', 'Data indikator tidak valid.');
+        }
+        // Siapkan data untuk disimpan ke tabel `lakip`
+        if ($role === 'admin_kab') {
+            $data = [
+                'renstra_indikator_id' => null,
+                'rpjmd_indikator_id' => $Indikator_Sasaran_Id,
+                'target_lalu' => $targetPrev ?? null,
+                'capaian_lalu' => $capaianPrev ?? null,
+                'capaian_tahun_ini' => $capaianNow ?? null,
+            ];
+        } else {
+            $data = [
+                'renstra_indikator_id' => $Indikator_Sasaran_Id,
+                'rpjmd_indikator_id' => null,
+                'target_lalu' => $targetPrev ?? null,
+                'capaian_lalu' => $capaianPrev ?? null,
+                'capaian_tahun_ini' => $capaianNow ?? null,
+            ];
         }
 
-        // Validation rules sesuai dengan struktur database
-        $validationRules = [
-            'judul_laporan' => [
-                'rules' => 'required|min_length[3]|max_length[255]',
-                'errors' => [
-                    'required' => 'Judul laporan harus diisi',
-                    'min_length' => 'Judul laporan minimal 3 karakter',
-                    'max_length' => 'Judul laporan maksimal 255 karakter'
-                ]
-            ],
-            'tanggal_laporan' => [
-                'rules' => 'permit_empty|valid_date',
-                'errors' => [
-                    'valid_date' => 'Format tanggal tidak valid'
-                ]
-            ],
-            'file_laporan' => [
-                'rules' => 'uploaded[file_laporan]|max_size[file_laporan,51200]|ext_in[file_laporan,pdf,doc,docx,xls,xlsx]',
-                'errors' => [
-                    'uploaded' => 'File harus diupload',
-                    'max_size' => 'Ukuran file maksimal 50MB',
-                    'ext_in' => 'File harus berformat PDF, DOC, DOCX, XLS, atau XLSX'
-                ]
-            ]
-        ];
+        $this->lakipModel->insert($data);
+        return redirect()->to('/adminopd/lakip')->with('success', 'Data berhasil disimpan.');
 
-        if (!$this->validate($validationRules)) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('errors', $this->validator->getErrors());
-        }
 
-        $file = $this->request->getFile('file_laporan');
-
-        // Prepare data for database sesuai struktur
-        $data = [
-            'opd_id' => $opdId,
-            'judul' => $this->request->getPost('judul_laporan'), // Map form field to database field
-            'tanggal_laporan' => $this->request->getPost('tanggal_laporan') ?: null,
-            'status' => 'draft' // default status
-        ];
-
-        try {
-            $result = $this->lakipModel->createLakipWithFile($data, $file);
-            
-            if ($result) {
-                return redirect()->to('/adminopd/lakip_opd')
-                               ->with('success', 'LAKIP berhasil disimpan');
-            } else {
-                return redirect()->back()
-                               ->withInput()
-                               ->with('error', 'Gagal menyimpan LAKIP');
-            }
-        } catch (\Exception $e) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
     }
+
 
     /**
      * Show form to edit LAKIP
      */
-    public function edit($id)
+    public function edit($indikatorId)
     {
-        $opdId = session()->get('opd_id');
-        
+        $session = session();
+        $opdId = $session->get('opd_id');
+        $role = $session->get('role');
+        $tahun = date('Y');
+
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
-        $lakip = $this->lakipModel->where('id', $id)
-                                 ->where('opd_id', $opdId)
-                                 ->first();
+        // Ambil data indikator
+        $table = ($role === 'admin_kab')
+            ? 'rpjmd_indikator_sasaran'
+            : 'renstra_indikator_sasaran';
 
-        if (!$lakip) {
-            return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'LAKIP tidak ditemukan');
+        $indikator = $this->db->table($table)
+            ->where('id', $indikatorId)
+            ->get()
+            ->getRowArray();
+
+        $tableTarget = ($role === 'admin_kab')
+            ? 'rpjmd_target'
+            : 'renstra_target';
+
+        $by = ($role === 'admin_kab')
+            ? 'indikator_sasaran_id'
+            : 'renstra_indikator_id';
+
+
+        // Ambil daftar target berdasarkan indikator ini
+        $targetList = $this->db->table($tableTarget)
+            ->where($by, $indikatorId)
+            ->where('tahun', $tahun)
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getRowArray();
+
+
+        if (!$indikator) {
+            return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
         }
 
-        $opdInfo = $this->opdModel->find($opdId);
+
+        $lakip = $this->lakipModel->getLakipDetail($indikatorId, $role);
+
 
         $data = [
+            'indikator' => $indikator,
             'title' => 'Edit LAKIP OPD',
+            'role' => $role,
             'lakip' => $lakip,
-            'opdInfo' => $opdInfo,
+            'targetList' => $targetList,
             'validation' => \Config\Services::validation()
         ];
 
-        return view('adminOpd/lakip_opd/edit_lakip', $data);
+        return view('adminOpd/lakip/edit_lakip', $data);
     }
 
     /**
      * Update LAKIP
      */
-    public function update($id)
+    public function update()
     {
         $opdId = session()->get('opd_id');
-        
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
-        $lakip = $this->lakipModel->where('id', $id)
-                                 ->where('opd_id', $opdId)
-                                 ->first();
+        $data = $this->request->getPost();
+        $lakipId = $data['lakip_id'] ?? null;
 
-        if (!$lakip) {
-            return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'LAKIP tidak ditemukan');
+        if (!$lakipId) {
+            session()->setFlashdata('error', 'ID IKU tidak ditemukan');
+            return redirect()->back()->withInput();
         }
-
-        // Validation rules sesuai dengan struktur database
-        $validationRules = [
-            'judul_laporan' => [
-                'rules' => 'required|min_length[3]|max_length[255]',
-                'errors' => [
-                    'required' => 'Judul laporan harus diisi',
-                    'min_length' => 'Judul laporan minimal 3 karakter',
-                    'max_length' => 'Judul laporan maksimal 255 karakter'
-                ]
-            ],
-            'tanggal_laporan' => [
-                'rules' => 'permit_empty|valid_date',
-                'errors' => [
-                    'valid_date' => 'Format tanggal tidak valid'
-                ]
-            ]
-        ];
-
-        // Add file validation only if file is uploaded
-        $file = $this->request->getFile('file_laporan');
-        if ($file && $file->isValid()) {
-            $validationRules['file_laporan'] = [
-                'rules' => 'max_size[file_laporan,51200]|ext_in[file_laporan,pdf,doc,docx,xls,xlsx]',
-                'errors' => [
-                    'max_size' => 'Ukuran file maksimal 50MB',
-                    'ext_in' => 'File harus berformat PDF, DOC, DOCX, XLS, atau XLSX'
-                ]
-            ];
-        }
-
-        if (!$this->validate($validationRules)) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('errors', $this->validator->getErrors());
-        }
-
-        // Prepare update data sesuai struktur database
-        $updateData = [
-            'judul' => $this->request->getPost('judul_laporan'), // Map form field to database field
-            'tanggal_laporan' => $this->request->getPost('tanggal_laporan') ?: null
-        ];
 
         try {
-            // Update with file upload handling
-            $result = $this->lakipModel->updateLakipWithFile($id, $updateData, $file);
-            
-            if ($result) {
-                return redirect()->to('/adminopd/lakip_opd')
-                               ->with('success', 'LAKIP berhasil diperbarui');
-            } else {
-                return redirect()->back()
-                               ->withInput()
-                               ->with('error', 'Gagal memperbarui data');
-            }
-        } catch (\Exception $e) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            // Update definisi IKU
+            $updateData = [
+                'target_lalu' => $data['target_lalu'] ?? null,
+                'capaian_lalu' => $data['capaian_lalu'] ?? null,
+                'capaian_tahun_ini' => $data['capaian_tahun_ini'] ?? null,
+            ];
+            $this->lakipModel->updateLakip($lakipId, $updateData, 'id');
+
+            session()->setFlashdata('success', 'Data Lakip berhasil diperbarui');
+        } catch (\Throwable $e) {
+            session()->setFlashdata('error', 'Gagal mengupdate data Lakip: ' . $e->getMessage());
         }
+
+        return redirect()->to(base_url('adminopd/lakip'));
+
+
     }
 
     /**
@@ -280,182 +306,26 @@ class LakipOpdController extends BaseController
     public function delete($id)
     {
         $opdId = session()->get('opd_id');
-        
+
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
         $lakip = $this->lakipModel->where('id', $id)
-                                 ->where('opd_id', $opdId)
-                                 ->first();
+            ->where('opd_id', $opdId)
+            ->first();
 
         if (!$lakip) {
             return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'Data LAKIP tidak ditemukan');
+                ->with('error', 'Data LAKIP tidak ditemukan');
         }
 
         if ($this->lakipModel->deleteLakip($id)) {
             return redirect()->to('/adminopd/lakip_opd')
-                           ->with('success', 'LAKIP berhasil dihapus');
+                ->with('success', 'LAKIP berhasil dihapus');
         } else {
             return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'Gagal menghapus LAKIP');
+                ->with('error', 'Gagal menghapus LAKIP');
         }
-    }
-
-    /**
-     * Update status via AJAX
-     */
-    public function updateStatus()
-    {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
-        }
-
-        $opdId = session()->get('opd_id');
-        
-        if (!$opdId) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Session tidak valid'
-            ]);
-        }
-
-        // Get JSON input
-        $json = $this->request->getJSON(true);
-        $id = $json['id'] ?? null;
-
-        if (!$id) {
-            return $this->response->setJSON(['success' => false, 'message' => 'ID harus diisi']);
-        }
-
-        $lakip = $this->lakipModel->where('id', $id)
-                                 ->where('opd_id', $opdId)
-                                 ->first();
-
-        if (!$lakip) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'LAKIP tidak ditemukan'
-            ]);
-        }
-
-        try {
-            // Get current status
-            $currentStatus = $lakip['status'] ?? 'draft';
-            
-            // Toggle status
-            $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
-            
-            $this->lakipModel->updateStatus($id, $newStatus);
-            return $this->response->setJSON([
-                'success' => true,
-                'message' => 'Status berhasil diperbarui',
-                'oldStatus' => $currentStatus,
-                'newStatus' => $newStatus
-            ]);
-        } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Gagal memperbarui status: ' . $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Download LAKIP file
-     */
-    public function download($id)
-    {
-        $opdId = session()->get('opd_id');
-        
-        if (!$opdId) {
-            return redirect()->to('/login')->with('error', 'Session tidak valid');
-        }
-
-        $lakip = $this->lakipModel->where('id', $id)
-                                 ->where('opd_id', $opdId)
-                                 ->first();
-        
-        if (!$lakip || empty($lakip['file'])) {
-            return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'File tidak ditemukan');
-        }
-
-        $filePath = WRITEPATH . 'uploads/lakip/opd/' . $lakip['file'];
-        
-        if (!file_exists($filePath)) {
-            return redirect()->to('/adminopd/lakip_opd')
-                           ->with('error', 'File tidak ditemukan di server');
-        }
-
-        // Get file extension from stored file
-        $fileExtension = pathinfo($lakip['file'], PATHINFO_EXTENSION);
-        
-        // Clean judul for filename (remove special characters)
-        $cleanJudul = preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $lakip['judul']);
-        $cleanJudul = preg_replace('/\s+/', '_', trim($cleanJudul));
-        
-        // Ensure filename doesn't exceed limits
-        if (strlen($cleanJudul) > 100) {
-            $cleanJudul = substr($cleanJudul, 0, 100);
-        }
-        
-        // Create download filename with judul + extension
-        $downloadName = $cleanJudul . '.' . $fileExtension;
-
-        // Force download with custom filename
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $downloadName . '"');
-        header('Content-Length: ' . filesize($filePath));
-        header('Cache-Control: no-cache, must-revalidate');
-        header('Pragma: no-cache');
-        
-        readfile($filePath);
-        exit;
-    }
-
-    /**
-     * Get LAKIP statistics for dashboard
-     */
-    public function getStats()
-    {
-        $opdId = session()->get('opd_id');
-        
-        if (!$opdId) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Session tidak valid'
-            ]);
-        }
-
-        $stats = $this->lakipModel->getStatsByStatusAndOpd($opdId);
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'data' => $stats
-        ]);
-    }
-
-    /**
-     * Get available years from LAKIP data for this OPD
-     */
-    public function getAvailableYears()
-    {
-        $opdId = session()->get('opd_id');
-        
-        if (!$opdId) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'Session tidak valid'
-            ]);
-        }
-
-        $years = $this->lakipModel->getAvailableYearsByOpd($opdId);
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'data' => $years
-        ]);
     }
 }

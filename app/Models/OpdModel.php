@@ -56,4 +56,9 @@ class OpdModel extends Model
     {
         return $this->findAll();
     }
+    public function getOpdById(int $opdId)
+    {
+        $db = \Config\Database::connect();
+        return $db->table('opd')->where('id', $opdId)->get()->getRowArray();
+    }
 }

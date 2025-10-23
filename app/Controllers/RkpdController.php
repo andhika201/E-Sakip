@@ -35,37 +35,37 @@ class RkpdController extends BaseController
     public function index()
     {
         $session = session();
-        $curropd = $session->get('opd_id');
+        $opdLogin = $session->get('opd_id'); // jika login OPD diperlukan (opsional)
 
-
+        // Ambil filter GET
         $opdId = $this->request->getGet('opd_id') ?? 'all';
+        $tahun = $this->request->getGet('tahun') ?? date('Y'); // default = tahun berjalan
+
+        // Data dropdown
+        $allOpd = $this->opdModel->getAllOpd();
+        $availableYears = $this->lakipModel->getAvailableYears();
+
+        // Ambil data utama berdasarkan kondisi OPD
+        if ($opdId === 'all') {
+            // MODE SEMUA OPD
+            $rktdata = $this->rktModel->getIndicatorsForRkpdAll($tahun);
+            $currentOpd = ['nama_opd' => 'SEMUA OPD'];
+        } else {
+            // MODE OPD TUNGGAL
+            $rktdata = $this->rktModel->getIndicatorsWithRkt((int) $opdId, $tahun);
+            $currentOpd = $this->opdModel->getOpdById((int) $opdId);
+        }
 
         // dd($opdId);
-        $tahun = $this->request->getGet('tahun') ?? 'all';
 
-        if ($opdId !== 'all') {
-            $currentOpd = $this->rktModel->getOpdById((int) $opdId);
-        }
-        $currentOpd = $this->opdModel->getAllOpd();
-
-        dd($currentOpd[8]['nama_opd']);
-        $allOPd = $this->opdModel->getAllOpd();
-
-        $indicators = $this->rktModel->getIndicatorsWithRkt($curropd, $tahun);
-        $availableYears = $this->lakipModel->getAvailableYears();
-        // Ambil data RKPD berdasarkan filter
-        $rkpdData = $this->rktModel->getIndicatorsForRkpd($opdId, $tahun);
-
-        // dd($indicators);
-        // kirim ke view
+        // Kirim ke view
         return view('adminkabupaten/rkpd/rkpd', [
+            'rktdata' => $rktdata,
             'currentOpd' => $currentOpd,
-            'allOpd' => $allOPd,
-            'rktdata' => $indicators,
-            'rkpdData' => $rkpdData,
+            'allOpd' => $allOpd,
             'available_years' => $availableYears,
             'tahun' => $tahun,
-            'opdId' => $opdId,
+            'opdId' => $opdId
         ]);
     }
 

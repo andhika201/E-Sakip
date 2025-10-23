@@ -8,7 +8,7 @@ class RktModel extends Model
 {
     protected $table = 'rkt';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['opd_id','tahun', 'indikator_id', 'program_id'];
+    protected $allowedFields = ['opd_id', 'tahun', 'indikator_id', 'program_id'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
@@ -129,7 +129,7 @@ class RktModel extends Model
 
     public function getIndicatorsWithRkt(int $opdId, $tahun)
     {
-         $db = \Config\Database::connect();
+        $db = \Config\Database::connect();
 
         // 1) Ambil semua indikator RENSTRA untuk OPD tersebut (master list)
         //    dan ambil target RENSTRA untuk $tahun via correlated subquery.
@@ -195,10 +195,101 @@ class RktModel extends Model
         return $indicators;
     }
 
+    public function getIndicatorsForRkpdAll($tahun)
+    {
+        $db = \Config\Database::connect();
+        $result = [];
+
+        // 1) Ambil semua OPD
+        $opds = $db->table('opd')->orderBy('id', 'ASC')->get()->getResultArray();
+
+        // 2) Loop setiap OPD
+        foreach ($opds as $opd) {
+
+            // 2a) Ambil semua sasaran & indikator renstra untuk OPD ini
+            $sql = "
+            SELECT 
+                i.*,
+                s.sasaran,
+                s.id AS sasaran_id,
+                (SELECT target 
+                 FROM renstra_target t2 
+                 WHERE t2.renstra_indikator_id = i.id 
+                 AND t2.tahun = ?
+                 LIMIT 1
+                ) AS target
+            FROM renstra_indikator_sasaran i
+            JOIN renstra_sasaran s ON s.id = i.renstra_sasaran_id
+            WHERE s.opd_id = ?
+            ORDER BY s.id ASC, i.id ASC
+        ";
+
+            $indicators = $db->query($sql, [$tahun, $opd['id']])->getResultArray();
+
+            // Struktur nested per sasaran
+            $sasaranData = [];
+
+            // 3) Loop indikator per sasaran
+            foreach ($indicators as $ind) {
+
+                // Get Program RKT untuk indikator & tahun ini
+                $rkts = $db->table('rkt r')
+                    ->select('r.*, p.program_kegiatan AS program_nama, p.anggaran AS program_anggaran')
+                    ->join('program_pk p', 'p.id = r.program_id', 'left')
+                    ->where('r.opd_id', $opd['id'])
+                    ->where('r.tahun', $tahun)
+                    ->where('r.indikator_id', $ind['id'])
+                    ->orderBy('r.id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                // Loop setiap program → ambil kegiatan & subkegiatan
+                foreach ($rkts as &$rkt) {
+                    $kegiatans = $db->table('rkt_kegiatan')
+                        ->where('rkt_id', $rkt['id'])
+                        ->orderBy('id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    foreach ($kegiatans as &$kegiatan) {
+                        $sub = $db->table('rkt_subkegiatan')
+                            ->where('kegiatan_id', $kegiatan['id'])
+                            ->orderBy('id', 'ASC')
+                            ->get()
+                            ->getResultArray();
+
+                        $kegiatan['subkegiatan'] = $sub;
+                    }
+
+                    $rkt['kegiatan'] = $kegiatans;
+                }
+
+                // Masukkan ke dalam grup sasaran
+                $sasaranData[$ind['sasaran_id']]['sasaran'] = $ind['sasaran'];
+                $sasaranData[$ind['sasaran_id']]['indikator'][] = [
+                    'indikator_id' => $ind['id'],
+                    'indikator' => $ind['indikator_sasaran'],
+                    'target' => $ind['target'],
+                    'rkts' => $rkts
+                ];
+            }
+
+            // 4) Masukkan ke hasil final
+            $result[] = [
+                'opd_id' => $opd['id'],
+                'nama_opd' => $opd['nama_opd'],
+                'sasaran' => array_values($sasaranData)
+            ];
+        }
+
+        return $result;
+    }
+
+
 
     public function getRktbyIndicator(int $opdId, $tahun, $indicatorId)
     {
-         $db = \Config\Database::connect();
+        $db = \Config\Database::connect();
 
         // 1) Ambil semua indikator RENSTRA untuk OPD tersebut (master list)
         //    dan ambil target RENSTRA untuk $tahun via correlated subquery.
@@ -266,34 +357,30 @@ class RktModel extends Model
     /**
      * Ambil data OPD (nama_opd) by id
      */
-    public function getOpdById(int $opdId)
-    {
-        $db = \Config\Database::connect();
-        return $db->table('opd')->where('id', $opdId)->get()->getRowArray();
-    }
+
 
     public function getIndicatorsForRkpd($opdId, $tahun)
-{
-    $builder = $this->db->table('rkt r')
-        ->select('r.*, i.indikator_sasaran, s.sasaran, o.nama_opd, p.program_kegiatan')
-        ->join('renstra_indikator_sasaran i', 'i.id = r.indikator_id', 'left')
-        ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
-        ->join('opd o', 'o.id = s.opd_id', 'left')
-        ->join('program_pk p', 'p.id = r.program_id', 'left')
-        ->orderBy('o.nama_opd', 'ASC')
-        ->orderBy('s.sasaran', 'ASC')
-        ->orderBy('i.indikator_sasaran', 'ASC');
+    {
+        $builder = $this->db->table('rkt r')
+            ->select('r.*, i.indikator_sasaran, s.sasaran, o.nama_opd, p.program_kegiatan')
+            ->join('renstra_indikator_sasaran i', 'i.id = r.indikator_id', 'left')
+            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+            ->join('opd o', 'o.id = s.opd_id', 'left')
+            ->join('program_pk p', 'p.id = r.program_id', 'left')
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('s.sasaran', 'ASC')
+            ->orderBy('i.indikator_sasaran', 'ASC');
 
-    if ($opdId !== 'all') {
-        $builder->where('o.id', $opdId);
+        if ($opdId !== 'all') {
+            $builder->where('o.id', $opdId);
+        }
+
+        if ($tahun !== 'all') {
+            $builder->where('r.tahun', $tahun);
+        }
+
+        return $builder->get()->getResultArray();
     }
-
-    if ($tahun !== 'all') {
-        $builder->where('r.tahun', $tahun);
-    }
-
-    return $builder->get()->getResultArray();
-}
 
 
 }

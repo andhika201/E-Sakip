@@ -43,12 +43,12 @@ class RenjaController extends BaseController
             throw new \Exception("OPD id required");
         }
 
-        $currentOpd = $this->rktModel->getOpdById($opdId);
+        $currentOpd = $this->opdModel->getOpdById($opdId);
         $indicators = $this->rktModel->getIndicatorsWithRkt($opdId, $tahun);
 
         // dd($indicators);
         // kirim ke view
-        return view('adminopd/rkt/rkt', [
+        return view('adminOpd/rkt/rkt', [
             'currentOpd' => $currentOpd,
             'rktdata' => $indicators,
             'tahun' => $tahun,

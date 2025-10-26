@@ -176,7 +176,7 @@
                                                     <td>
                                                         <?php if (empty($row['target_id'])): ?>
                                                             <?php
-                                                            $addUrl = base_url('adminKabupaten/target/tambah?rt=' . (int) ($row['renstra_target_id'] ?? 0));
+                                                            $addUrl = base_url('adminkab/target/tambah?rt=' . (int) ($row['renstra_target_id'] ?? 0));
                                                             if (!empty($opdFilter))
                                                                 $addUrl .= '&opd_id=' . (int) $opdFilter;
                                                             if ($tahunSelected !== null)
@@ -186,7 +186,7 @@
                                                                 <i class="bi bi-plus-lg"></i> Tambah
                                                             </a>
                                                         <?php else: ?>
-                                                            <a href="<?= base_url('adminKabupaten/target/edit/' . (int) $row['target_id']) ?>"
+                                                            <a href="<?= base_url('adminkab/target/edit/' . (int) $row['target_id']) ?>"
                                                                 class="btn btn-sm btn-warning">
                                                                 <i class="bi bi-pencil-square"></i> Edit
                                                             </a>

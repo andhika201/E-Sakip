@@ -25,12 +25,12 @@
             <?php if (empty($detail)): ?>
                 <div class="alert alert-danger">Data tidak ditemukan. Silakan kembali ke daftar.</div>
                 <div class="text-end">
-                    <a href="<?= base_url('adminKabupaten/target') ?>" class="btn btn-secondary">
+                    <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-1"></i> Kembali
                     </a>
                 </div>
             <?php else: ?>
-                <form action="<?= base_url('adminKabupaten/target/update/' . (int) $detail['id']) ?>" method="post" novalidate>
+                <form action="<?= base_url('adminkab/target/update/' . (int) $detail['id']) ?>" method="post" novalidate>
                     <?= csrf_field() ?>
 
                     <!-- Info kontekstual (read-only) -->
@@ -104,7 +104,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="<?= base_url('adminKabupaten/target') ?>" class="btn btn-secondary">
+                        <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Kembali
                         </a>
                         <button type="submit" class="btn btn-success">

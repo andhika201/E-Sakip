@@ -89,75 +89,67 @@ class TargetController extends BaseController
     /**
      * Tambah: gunakan ?rt={renstra_target_id} (&opd_id=... jika admin_kab)
      */
+    // Tambah Target Rencana (UPDATE: admin_kab bisa memilih OPD di form)
     public function tambah()
     {
         $rtId = (int) $this->request->getGet('rt'); // renstra_target_id
         if ($rtId <= 0) {
-            return redirect()->to(base_url('adminKabupaten/target'))
+            return redirect()->to(base_url('adminkab/target'))
                 ->with('error', 'Parameter tidak valid.');
         }
 
         $session = session();
         $role = (string) ($session->get('role') ?? '');
         $sessOpd = (int) ($session->get('opd_id') ?? 0);
-        $passOpd = (int) ($this->request->getGet('opd_id') ?? 0); // untuk admin_kab
+        $passOpd = (int) ($this->request->getGet('opd_id') ?? 0); // dari index (admin_kab)
+        $tahunQS = trim((string) ($this->request->getGet('tahun') ?? ''));
 
-        // Ambil info renstra_target + indikator + sasaran + opd pemilik indikator
-        $rt = $this->db->table('renstra_target rt')
+        // Info RENSTRA target + indikator + sasaran + OPD pemilik indikator
+        $rt = $this->db->table('renstra_target AS rt')
             ->select('
-                rt.id AS renstra_target_id, rt.tahun, rt.target,
-                ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan,
-                rs.id AS renstra_sasaran_id, rs.sasaran AS sasaran_renstra, rs.opd_id
-            ')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            rt.id AS renstra_target_id, rt.tahun, rt.target,
+            ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan,
+            rs.id AS renstra_sasaran_id, rs.sasaran AS sasaran_renstra, rs.opd_id
+        ')
+            ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
             ->where('rt.id', $rtId)
             ->get()->getRowArray();
 
         if (!$rt) {
-            return redirect()->to(base_url('adminKabupaten/target'))
+            return redirect()->to(base_url('adminkab/target'))
                 ->with('error', 'Target Renstra tidak ditemukan.');
         }
 
-        // Tentukan OPD yang dipakai untuk simpan
-        $opdToUse = $sessOpd;
-        if ($role === 'admin_kab' && !$opdToUse) {
-            // admin_kab tanpa opd di sesi → pakai dari filter/link
-            $opdToUse = $passOpd;
+        // Ambil daftar OPD untuk dropdown (khusus admin_kab)
+        $opdList = [];
+        if ($role === 'admin_kab') {
+            $opdList = $this->db->table('opd')->select('id, nama_opd')->orderBy('nama_opd', 'ASC')->get()->getResultArray();
         }
 
-        if ($opdToUse <= 0) {
-            return redirect()->to(base_url('adminKabupaten/target'))
-                ->with('error', 'OPD belum dipilih.');
-        }
+        // Nilai awal OPD pada form:
+        // - admin_opd: kunci ke session
+        // - admin_kab: pakai dari filter jika ada, kalau tidak, biarkan kosong agar user memilih
+        $opdToUse = ($role === 'admin_kab') ? ($passOpd ?: 0) : $sessOpd;
 
-        // (opsional) Pastikan indikator memang milik OPD tersebut
-        if ((int) $rt['opd_id'] !== (int) $opdToUse) {
-            return redirect()->to(base_url('adminKabupaten/target'))
-                ->with('error', 'Indikator bukan milik OPD yang dipilih.');
-        }
-
-        // Anti duplikat: jika (opd_id, renstra_target_id) sudah ada → arahkan ke edit
-        $existing = $this->targets->existsFor($opdToUse, $rtId);
-        if ($existing) {
-            return redirect()->to(base_url('adminKabupaten/target/edit/' . (int) $existing['id']))
-                ->with('success', 'Data sudah ada. Silakan edit.');
-        }
+        // NOTE: Jangan validasi kepemilikan OPD di sini (GET) supaya admin_kab bisa memilih dulu.
+        // Validasi kepemilikan dilakukan di save().
 
         return view('adminKabupaten/target/tambah_target', [
             'role' => $role,
-            'opdIdToUse' => $opdToUse,
-            'rt' => $rt, // info indikator, satuan, tahun, target
+            'opdIdToUse' => $opdToUse,  // nilai awal select
+            'opdList' => $opdList,   // sumber dropdown
+            'rt' => $rt,        // info indikator
+            'tahunQS' => $tahunQS,   // keep filter saat kembali
         ]);
     }
 
-    /**
-     * Simpan hasil Tambah
-     */
+    // Simpan hasil Tambah (tidak berubah besar, hanya pastikan ambil opd_id dari form utk admin_kab)
     public function save()
     {
         $rules = [
             'renstra_target_id' => 'required|integer',
+            'opd_id' => 'required|integer', // wajib ada di form
             'rencana_aksi' => 'required|string',
             'capaian' => 'permit_empty|string',
             'target_triwulan_1' => 'permit_empty|string',
@@ -165,7 +157,9 @@ class TargetController extends BaseController
             'target_triwulan_3' => 'permit_empty|string',
             'target_triwulan_4' => 'permit_empty|string',
             'penanggung_jawab' => 'permit_empty|string',
+            'tahun_qs' => 'permit_empty|string',
         ];
+
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
@@ -173,55 +167,61 @@ class TargetController extends BaseController
 
         $session = session();
         $role = (string) ($session->get('role') ?? '');
-        $opdId = (int) ($session->get('opd_id') ?? 0);
 
-        // admin_kab tanpa opd di sesi → ambil dari form
-        if ($role === 'admin_kab' && $opdId <= 0) {
+        // Ambil OPD: admin_opd dari session, admin_kab dari form
+        $opdId = (int) ($session->get('opd_id') ?? 0);
+        if ($role === 'admin_kab') {
             $opdId = (int) $this->request->getPost('opd_id');
         }
 
         $rtId = (int) $this->request->getPost('renstra_target_id');
+        $tahunQS = trim((string) ($this->request->getPost('tahun_qs') ?? ''));
+
         if ($opdId <= 0 || $rtId <= 0) {
-            return redirect()->to(base_url('adminKabupaten/target'))
+            return redirect()->to(base_url('adminkab/target'))
                 ->with('error', 'OPD/Target Renstra tidak valid.');
         }
 
-        // Validasi RT & kepemilikan OPD
-        $rt = $this->db->table('renstra_target rt')
+        // Validasi RT & kepemilikan OPD (indikator harus milik OPD yg dipilih)
+        $rt = $this->db->table('renstra_target AS rt')
             ->select('rt.id, rs.opd_id')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
             ->where('rt.id', $rtId)
             ->get()->getRowArray();
 
         if (!$rt || (int) $rt['opd_id'] !== (int) $opdId) {
-            return redirect()->to(base_url('adminKabupaten/target'))
-                ->with('error', 'Target Renstra/OPD tidak cocok.');
+            $q = http_build_query(['opd_id' => $opdId, 'tahun' => $tahunQS ?: 'all']);
+            return redirect()->to(base_url('adminKabupaten/target') . '?' . $q)
+                ->with('error', 'Indikator bukan milik OPD yang dipilih.');
         }
 
         // Anti duplikat
         if ($this->targets->existsFor($opdId, $rtId)) {
-            return redirect()->to(base_url('adminKabupaten/target'))
+            $q = http_build_query(['opd_id' => $opdId, 'tahun' => $tahunQS ?: 'all']);
+            return redirect()->to(base_url('adminKabupaten/target') . '?' . $q)
                 ->with('error', 'Data sudah ada untuk OPD & tahun ini.');
         }
 
         $data = [
             'opd_id' => $opdId,
             'renstra_target_id' => $rtId,
-            'rencana_aksi' => $this->request->getPost('rencana_aksi'),
-            'capaian' => $this->request->getPost('capaian'),
-            'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
-            'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
-            'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
-            'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
-            'penanggung_jawab' => $this->request->getPost('penanggung_jawab'),
+            'rencana_aksi' => (string) $this->request->getPost('rencana_aksi'),
+            'capaian' => (string) $this->request->getPost('capaian'),
+            'target_triwulan_1' => (string) $this->request->getPost('target_triwulan_1'),
+            'target_triwulan_2' => (string) $this->request->getPost('target_triwulan_2'),
+            'target_triwulan_3' => (string) $this->request->getPost('target_triwulan_3'),
+            'target_triwulan_4' => (string) $this->request->getPost('target_triwulan_4'),
+            'penanggung_jawab' => (string) $this->request->getPost('penanggung_jawab'),
         ];
 
         $this->targets->insert($data);
 
-        return redirect()->to(base_url('adminKabupaten/target'))
+        $q = http_build_query(['opd_id' => $opdId, 'tahun' => $tahunQS ?: 'all']);
+        return redirect()->to(base_url('adminkab/target') . '?' . $q)
             ->with('success', 'Target rencana berhasil ditambahkan.');
     }
+
 
     public function edit($id)
     {
@@ -283,7 +283,7 @@ class TargetController extends BaseController
             ->getRowArray();
 
         if (!$row) {
-            return redirect()->to(base_url('adminKabupaten/target'))
+            return redirect()->to(base_url('adminkab/target'))
                 ->with('error', 'Data tidak ditemukan.');
         }
 
@@ -294,7 +294,7 @@ class TargetController extends BaseController
 
         if ($role !== 'admin_kab' && $myOpdId > 0) {
             if ((int) $row['opd_id'] !== $myOpdId) {
-                return redirect()->to(base_url('adminKabupaten/target'))
+                return redirect()->to(base_url('adminkab/target'))
                     ->with('error', 'Anda tidak berhak mengubah data ini.');
             }
         }
@@ -312,7 +312,7 @@ class TargetController extends BaseController
 
         $this->targets->update($id, $data);
 
-        return redirect()->to(base_url('adminKabupaten/target'))
+        return redirect()->to(base_url('adminkab/target'))
             ->with('success', 'Data berhasil diperbarui.');
     }
 

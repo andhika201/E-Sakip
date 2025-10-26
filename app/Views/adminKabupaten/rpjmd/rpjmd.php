@@ -94,7 +94,7 @@
                                 </th>
                                 <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
-                                <th rowspan="2" class="border p-2 align-middle">Definisi Operasional</th>
+                                <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
                                 <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                                 <th colspan="5" class="border p-2" id="year-header-span-sasaran">TARGET CAPAIAN PER
                                     TAHUN</th>

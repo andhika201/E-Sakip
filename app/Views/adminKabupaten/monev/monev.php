@@ -103,7 +103,7 @@
                         <table class="table table-bordered text-center align-middle small">
                             <thead class="table-success fw-bold text-dark">
                                 <tr>
-                                    <th rowspan="2" class="border p-2 align-middle">Satuan/OPD</th>
+                                    <th rowspan="2" class="border p-2 align-middle">Satuan Kerja</th>
                                     <th rowspan="2" class="border p-2 align-middle">Tujuan</th>
                                     <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
                                     <th rowspan="2" class="border p-2 align-middle">Indikator</th>

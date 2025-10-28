@@ -48,7 +48,7 @@
                 <form method="get" action="<?= current_url(); ?>" class="row g-2 align-items-end mb-4">
                     <div class="col-12 col-md-3">
                         <label class="form-label mb-1">Tahun</label>
-                        <select name="tahun" class="form-select">
+                        <select name="tahun" class="form-select" onchange="this.form.submit()">
                             <option value="all" <?= $tahunSelected === null ? 'selected' : '' ?>>Semua Tahun</option>
                             <?php foreach ($tahunList as $t):
                                 $year = is_array($t) ? ($t['tahun'] ?? null) : $t;
@@ -63,7 +63,7 @@
 
                     <div class="col-12 col-md-5">
                         <label class="form-label mb-1">OPD <span class="text-danger">*</span></label>
-                        <select name="opd_id" class="form-select" required>
+                        <select name="opd_id" class="form-select" onchange="this.form.submit()" required>
                             <option value="">-- Pilih OPD --</option>
                             <?php foreach (($opdList ?? []) as $opd): ?>
                                 <option value="<?= (int) $opd['id'] ?>" <?= (isset($opdFilter) && (string) $opdFilter === (string) $opd['id']) ? 'selected' : '' ?>>
@@ -73,11 +73,11 @@
                         </select>
                     </div>
 
-                    <div class="col-6 col-md-2">
+                    <!-- <div class="col-6 col-md-2">
                         <button type="submit" class="btn btn-success w-100">
                             <i class="fas fa-filter me-1"></i> Filter
                         </button>
-                    </div>
+                    </div> -->
 
                     <div class="col-6 col-md-2">
                         <a class="btn btn-outline-secondary w-100" href="<?= current_url(); ?>">Reset</a>
@@ -94,7 +94,7 @@
                         <table class="table table-bordered text-center align-middle small">
                             <thead class="table-success fw-bold text-dark">
                                 <tr>
-                                    <th rowspan="2" class="border p-2 align-middle">Satuan/OPD</th>
+                                    <th rowspan="2" class="border p-2 align-middle">Satuan Kerja</th>
                                     <th rowspan="2" class="border p-2 align-middle">Tujuan</th>
                                     <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
                                     <th rowspan="2" class="border p-2 align-middle">Indikator</th>

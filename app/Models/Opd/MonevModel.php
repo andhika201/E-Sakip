@@ -29,7 +29,7 @@ class MonevModel extends Model
             ->select('
             rpjmd_tujuan.tujuan_rpjmd,
             rpjmd_sasaran.sasaran_rpjmd,
-            renstra_sasaran.sasaran as sasaran_renstra,
+            renstra_sasaran.sasaran as sasaran,
             renja_sasaran.sasaran_renja,
             renja_indikator_sasaran.id as indikator_id,
             renja_indikator_sasaran.indikator_sasaran,
@@ -60,12 +60,52 @@ class MonevModel extends Model
             ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left')
             ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left');
 
-
         if ($tahun) {
             $builder->where('renja_indikator_sasaran.tahun', $tahun);
         }
 
         return $builder->orderBy('renja_sasaran.id', 'ASC')->get()->getResultArray();
+    }
+
+    public function getMonevKabupaten ($tahun = null)
+    {
+        $builder = $this->db ->table($this->table . ' as monev')
+            ->select('
+            rpjmd_tujuan.tujuan_rpjmd,
+            rpjmd_sasaran.sasaran_rpjmd as sasaran,
+            rpjmd_indikator_sasaran.indikator_sasaran as indikator_sasaran,
+            rpjmd_indikator_sasaran.id as indikator_id,
+            rpjmd_indikator_sasaran.satuan,
+            rpjmd_target.target_tahunan as indikator_target,
+            rpjmd_target.tahun as indikator_tahun,
+
+            target_rencana.id as target_id,
+            target_rencana.rencana_aksi,
+            target_rencana.capaian,
+            target_rencana.target_triwulan_1,
+            target_rencana.target_triwulan_2,
+            target_rencana.target_triwulan_3,
+            target_rencana.target_triwulan_4,
+            target_rencana.penanggung_jawab,
+
+            monev.id as monev_id,
+            monev.capaian_triwulan_1,
+            monev.capaian_triwulan_2,
+            monev.capaian_triwulan_3,
+            monev.capaian_triwulan_4,
+            monev.total
+            ')
+            ->join('target_rencana', 'target_rencana.id = monev.target_rencana_id', 'right')
+            ->join('rpjmd_indikator_sasaran', 'rpjmd_indikator_sasaran.id = target_rencana.renja_indikator_sasaran_id', 'left')
+            ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rpjmd_indikator_sasaran.sasaran_id', 'left')
+            ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left')
+            ->join('rpjmd_target', 'rpjmd_target.indikator_sasaran_id = rpjmd_indikator_sasaran.id', 'left');
+
+            if ($tahun) {
+                $builder->where('rpjmd_target.tahun', $tahun);
+            }
+
+            return $builder->orderBy('rpjmd_indikator_sasaran.id', 'ASC')->get()->getResultArray();
     }
 
     // Ambil tahun-tahun monev yang tersedia

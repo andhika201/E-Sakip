@@ -8,7 +8,7 @@ use App\Models\Opd\MonevModel;
 
 class MonevController extends BaseController
 {
-     protected $MonevModel;
+    protected $MonevModel;
 
     public function __construct()
     {
@@ -17,10 +17,19 @@ class MonevController extends BaseController
 
     public function index()
     {
-        $tahun = $this->request->getGet('tahun')?? date('Y');
-        $monevList = $this->MonevModel->getMonevWithRelasi($tahun);
-        $tahunList = $this->MonevModel->getAvailableYears();
+        $role = session()->get('role');
+                $tahun = $this->request->getGet('tahun') ?? date('Y');
+                        $tahunList = $this->MonevModel->getAvailableYears();
 
+
+        if($role=='admin_kab'){
+            $monevList = $this->MonevModel->getMonevKabupaten($tahun);
+        }else{
+            $monevList = $this->MonevModel->getMonevWithRelasi($tahun);
+        }
+        
+
+        // dd($monevList);
         return view('adminKabupaten/monev/monev', [
             'monevList' => $monevList,
             'tahun' => $tahun,
@@ -54,13 +63,13 @@ class MonevController extends BaseController
     public function save()
     {
         $data = [
-            'target_rencana_id'   => $this->request->getPost('target_rencana_id'),
-            'tahun'               => $this->request->getPost('tahun'),
-            'capaian_triwulan_1'  => $this->request->getPost('capaian_triwulan_1'),
-            'capaian_triwulan_2'  => $this->request->getPost('capaian_triwulan_2'),
-            'capaian_triwulan_3'  => $this->request->getPost('capaian_triwulan_3'),
-            'capaian_triwulan_4'  => $this->request->getPost('capaian_triwulan_4'),
-            'total'               => $this->request->getPost('total'),
+            'target_rencana_id' => $this->request->getPost('target_rencana_id'),
+            'tahun' => $this->request->getPost('tahun'),
+            'capaian_triwulan_1' => $this->request->getPost('capaian_triwulan_1'),
+            'capaian_triwulan_2' => $this->request->getPost('capaian_triwulan_2'),
+            'capaian_triwulan_3' => $this->request->getPost('capaian_triwulan_3'),
+            'capaian_triwulan_4' => $this->request->getPost('capaian_triwulan_4'),
+            'total' => $this->request->getPost('total'),
         ];
         $this->MonevModel->insert($data);
 
@@ -94,11 +103,11 @@ class MonevController extends BaseController
     public function update($id)
     {
         $data = [
-            'capaian_triwulan_1'  => $this->request->getPost('capaian_triwulan_1'),
-            'capaian_triwulan_2'  => $this->request->getPost('capaian_triwulan_2'),
-            'capaian_triwulan_3'  => $this->request->getPost('capaian_triwulan_3'),
-            'capaian_triwulan_4'  => $this->request->getPost('capaian_triwulan_4'),
-            'total'               => $this->request->getPost('total'),
+            'capaian_triwulan_1' => $this->request->getPost('capaian_triwulan_1'),
+            'capaian_triwulan_2' => $this->request->getPost('capaian_triwulan_2'),
+            'capaian_triwulan_3' => $this->request->getPost('capaian_triwulan_3'),
+            'capaian_triwulan_4' => $this->request->getPost('capaian_triwulan_4'),
+            'total' => $this->request->getPost('total'),
         ];
         $this->MonevModel->update($id, $data);
 

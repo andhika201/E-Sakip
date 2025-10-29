@@ -39,14 +39,6 @@
             </div>
 
             <?php
-            $db = \Config\Database::connect();
-            $indikatorId = isset($_GET['indikator']) ? $_GET['indikator'] : null;
-            $indikator = null;
-            if ($indikatorId) {
-                $indikator = $db->table('renja_indikator_sasaran')
-                    ->where('id', $indikatorId)
-                    ->get()->getRowArray();
-            }
             if (!$indikator) {
                 echo '<div class="alert alert-danger">Indikator tidak ditemukan. Silakan pilih indikator dari tabel.</div>';
                 return;

@@ -139,10 +139,10 @@ class TargetModel extends Model
             renja_sasaran.sasaran_renja,
 
             renstra_sasaran.id as renstra_sasaran_id,
-            renstra_sasaran.sasaran as sasaran_renstra,
 
-            rpjmd_sasaran.sasaran_rpjmd,
-            rpjmd_tujuan.tujuan_rpjmd,
+
+            rpjmd_sasaran.sasaran_rpjmd as sasaran,
+            rpjmd_tujuan.tujuan_rpjmd as tujuan_rpjmd,
 
             target_rencana.id as target_id,
             target_rencana.rencana_aksi,
@@ -172,7 +172,49 @@ class TargetModel extends Model
     }
 
 
-    // ntuk update:
+    public function getTargetListByRPJMD($tahun = null)
+    {
+        $builder = $this->db->table('rpjmd_indikator_sasaran')
+            ->select(
+                'rpjmd_indikator_sasaran.id as indikator_id,
+            rpjmd_indikator_sasaran.indikator_sasaran,
+            rpjmd_indikator_sasaran.satuan,
+
+            rpjmd_target.target_tahunan as indikator_target,
+            rpjmd_target.tahun as indikator_tahun,
+
+            rpjmd_sasaran.id as rpjmd_sasaran_id,
+            rpjmd_sasaran.sasaran_rpjmd as sasaran,
+
+            rpjmd_tujuan.tujuan_rpjmd as tujuan_rpjmd,
+
+            target_rencana.id as target_id,
+            target_rencana.rencana_aksi,
+            target_rencana.capaian,
+            target_rencana.target_triwulan_1,
+            target_rencana.target_triwulan_2,
+            target_rencana.target_triwulan_3,
+            target_rencana.target_triwulan_4,
+            target_rencana.penanggung_jawab
+            '
+            )
+            ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = rpjmd_indikator_sasaran.sasaran_id', 'left')
+            ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left')
+            ->join('rpjmd_target', 'rpjmd_target.indikator_sasaran_id = rpjmd_indikator_sasaran.id', 'left')
+
+            ->join('target_rencana', 'target_rencana.renja_indikator_sasaran_id = rpjmd_indikator_sasaran.id', 'left');
+        if ($tahun) {
+            $builder->where('rpjmd_target.tahun', $tahun);
+        }
+        return $builder
+            ->orderBy('rpjmd_tujuan.id', 'ASC')
+            ->orderBy('rpjmd_sasaran.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+
+    // untuk update:
 
     public function updateTarget($id, $data)
     {

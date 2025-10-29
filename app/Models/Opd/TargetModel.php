@@ -13,14 +13,18 @@ class TargetModel extends Model
     protected $useSoftDeletes = false;
 
     protected $allowedFields = [
-        'renja_indikator_sasaran_id',
+        // relasi per tahun (mengacu ke renstra_target)
+        'renstra_target_id',
+        // simpan OPD jika tabel target_rencana memiliki kolom ini
+        'opd_id',
+
         'rencana_aksi',
         'capaian',
         'target_triwulan_1',
         'target_triwulan_2',
         'target_triwulan_3',
         'target_triwulan_4',
-        'penanggung_jawab'
+        'penanggung_jawab',
     ];
 
     protected $useTimestamps = true;
@@ -28,71 +32,103 @@ class TargetModel extends Model
     protected $updatedField = 'updated_at';
 
     /**
-     * Ambil semua target_rencana dengan join ke renja_sasaran dan renstra_sasaran
+     * Ambil seluruh target_rencana + relasinya (tanpa filter tahun/OPD)
+     * Relasi utama via renstra_target_id -> renstra_target -> renstra_indikator_sasaran -> renstra_sasaran
      */
-    public function getAllTargetWithRelasi()
+    public function getAllTargetWithRelasi(): array
     {
-        return $this->select('
-                target_rencana.*,
-                renja_sasaran.sasaran_renja,
-                renja_sasaran.status as status_renja,
-                renstra_sasaran.sasaran as sasaran_renstra
+        return $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.*,
+                rt.id        AS renstra_target_id,
+                rt.tahun     AS indikator_tahun,
+                rt.target    AS indikator_target,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rs.sasaran   AS sasaran_renstra
             ')
-            ->join('renja_sasaran', 'renja_sasaran.id = target_rencana.renja_sasaran_id', 'left')
-            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
-            ->orderBy('target_rencana.tahun', 'ASC')
-            ->findAll();
+            ->join('renstra_target             AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran  AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran            AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->orderBy('tr.id', 'ASC')
+            ->get()->getResultArray();
     }
 
     /**
-     * Ambil 1 target_rencana beserta relasi lengkapnya
+     * Detail 1 baris target_rencana + relasi lengkap
      */
-    public function getTargetDetail($id)
+    public function getTargetDetail(int $id): ?array
     {
-        return $this->select('
-                target_rencana.*,
-                renja_sasaran.sasaran_renja,
-                renstra_sasaran.sasaran as sasaran_renstra,
-                monev.tahun as monev_tahun,
-                monev.capaian_triwulan_1,
-                monev.capaian_triwulan_2,
-                monev.capaian_triwulan_3,
-                monev.capaian_triwulan_4
+        return $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.*,
+                rt.id        AS renstra_target_id,
+                rt.tahun     AS indikator_tahun,
+                rt.target    AS indikator_target,
+
+                ris.id       AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
+
+                rs.id        AS renstra_sasaran_id,
+                rs.sasaran   AS sasaran_renstra
             ')
-            ->join('renja_sasaran', 'renja_sasaran.id = target_rencana.renja_sasaran_id', 'left')
-            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
-            ->join('monev', 'monev.target_rencana_id = target_rencana.id', 'left')
-            ->where('target_rencana.id', $id)
-            ->first();
+            ->join('renstra_target             AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran  AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran            AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->where('tr.id', $id)
+            ->get()->getRowArray();
     }
 
     /**
-     * Ambil semua target_rencana milik satu renja_sasaran tertentu
+     * Ambil semua target_rencana milik satu RENSTRA sasaran
      */
-    public function getByRenjaSasaran($renjaSasaranId)
+    public function getByRenstraSasaran(int $renstraSasaranId): array
     {
-        return $this->where('renja_sasaran_id', $renjaSasaranId)
-            ->orderBy('tahun', 'ASC')
-            ->findAll();
+        return $this->db->table('target_rencana AS tr')
+            ->select('tr.*')
+            ->join('renstra_target             AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran  AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran            AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->where('rs.id', $renstraSasaranId)
+            ->orderBy('tr.id', 'ASC')
+            ->get()->getResultArray();
     }
 
     /**
-     * Ambil semua target_rencana berdasarkan tahun
+     * Ambil seluruh target_rencana berdasarkan TAHUN RENSTRA (renstra_target.tahun)
+     * Opsional filter OPD (rs.opd_id) dan/atau tr.opd_id bila dibutuhkan.
      */
-    public function getByTahun($tahun)
+    public function getByTahun(string $tahun, ?int $opdId = null): array
     {
-        return $this->where('tahun', $tahun)
-            ->orderBy('renja_sasaran_id', 'ASC')
-            ->findAll();
+        $b = $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.*,
+                rt.tahun     AS indikator_tahun,
+                rt.target    AS indikator_target,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rs.sasaran   AS sasaran_renstra
+            ')
+            ->join('renstra_target             AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran  AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran            AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->where('rt.tahun', $tahun);
+
+        if (!empty($opdId)) {
+            // tampilkan TR milik OPD tsb
+            $b->where('tr.opd_id', $opdId);
+        }
+
+        return $b->orderBy('rs.id', 'ASC')->get()->getResultArray();
     }
 
     /**
-     * Ambil semua tahun yang tersedia
+     * Daftar tahun tersedia (dari renstra_target)
      */
-    public function getAvailableYears()
+    public function getAvailableYears(): array
     {
-        $db = \Config\Database::connect();
-        return $db->table('renja_indikator_sasaran')
+        return $this->db->table('renstra_target')
             ->select('tahun')
             ->distinct()
             ->orderBy('tahun', 'ASC')
@@ -100,82 +136,163 @@ class TargetModel extends Model
             ->getResultArray();
     }
 
-    public function getFullTargetData($tahun = null)
+    /**
+     * Dataset lengkap (target_rencana + renstra indikator/sasaran + rpjmd + renstra_target)
+     * Opsional filter tahun (rt.tahun) dan OPD (rs.opd_id atau tr.opd_id).
+     */
+    public function getFullTargetData(?string $tahun = null, ?int $opdId = null): array
     {
-        $builder = $this->db->table('target_rencana')
+        $b = $this->db->table('target_rencana AS tr')
             ->select('
-            target_rencana.*,
-            renja_indikator_sasaran.indikator_sasaran,
-            renja_indikator_sasaran.satuan,
-            renja_indikator_sasaran.target as indikator_target,
-            renja_indikator_sasaran.tahun as indikator_tahun,
-            renja_sasaran.sasaran_renja,
-            renstra_sasaran.sasaran as sasaran_renstra,
-            renstra_tujuan.tujuan as tujuan_renstra
-        ')
-            ->join('renja_indikator_sasaran', 'renja_indikator_sasaran.id = target_rencana.renja_indikator_sasaran_id', 'left')
-            ->join('renja_sasaran', 'renja_sasaran.id = renja_indikator_sasaran.renja_sasaran_id', 'left')
-            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
-            ->join('renstra_tujuan', 'renstra_tujuan.id = renstra_sasaran.renstra_tujuan_id', 'left');
+                tr.*,
+                rt.target  AS indikator_target,
+                rt.tahun   AS indikator_tahun,
+
+                ris.indikator_sasaran,
+                ris.satuan,
+
+                rs.sasaran        AS sasaran_renstra,
+                rps.sasaran_rpjmd,
+                rpt.tujuan_rpjmd
+            ')
+            ->join('renstra_target             AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran  AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran            AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('rpjmd_sasaran              AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan               AS rpt', 'rpt.id = rps.tujuan_id', 'left');
 
         if ($tahun) {
-            $builder->where('renja_indikator_sasaran.tahun', $tahun);
+            $b->where('rt.tahun', $tahun);
+        }
+        if (!empty($opdId)) {
+            // jika Anda ingin menampilkan hanya TR milik OPD tertentu, gunakan tr.opd_id
+            $b->where('tr.opd_id', $opdId);
         }
 
-        return $builder->orderBy('renja_sasaran.id', 'ASC')->get()->getResultArray();
+        return $b->orderBy('rs.id', 'ASC')->get()->getResultArray();
     }
 
-    public function getTargetListByRenja($tahun = null)
+    /**
+     * List indikator RENSTRA + target renstra (per tahun) + data target_rencana (triwulan)
+     * Dipakai untuk tampilan daftar per tahun.
+     * Join target_rencana melalui renstra_target_id.
+     * Opsional filter tahun & OPD.
+     *
+     * Penting:
+     * - Jika $opdId diberikan, join ke TR diberi syarat tambahan "AND tr.opd_id = $opdId"
+     *   agar yang ditampilkan hanya TR milik OPD tsb, tapi indikator/tahun yang belum punya TR tetap muncul.
+     */
+    public function getTargetListByRenstra(?string $tahun = null, ?int $opdId = null): array
     {
-        $builder = $this->db->table('renja_indikator_sasaran')
+        // Join ke TR dengan kondisi dinamis (supaya tidak "mengambil" TR milik OPD lain)
+        $trJoin = 'tr.renstra_target_id = rt.id';
+        if (!empty($opdId)) {
+            $trJoin .= ' AND tr.opd_id = ' . (int) $opdId;
+        }
+
+        $b = $this->db->table('renstra_indikator_sasaran AS ris')
             ->select('
-            renja_indikator_sasaran.id as indikator_id,
-            renja_indikator_sasaran.indikator_sasaran,
-            renja_indikator_sasaran.satuan,
-            renja_indikator_sasaran.target as indikator_target,
-            renja_indikator_sasaran.tahun as indikator_tahun,
+                ris.id            AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
 
-            renja_sasaran.id as renja_sasaran_id,
-            renja_sasaran.sasaran_renja,
+                rt.id             AS renstra_target_id,
+                rt.target         AS indikator_target,
+                rt.tahun          AS indikator_tahun,
 
-            renstra_sasaran.id as renstra_sasaran_id,
-            renstra_sasaran.sasaran as sasaran_renstra,
+                rs.id             AS renstra_sasaran_id,
+                rs.sasaran        AS sasaran_renstra,
+                rs.opd_id         AS opd_id,
 
-            rpjmd_sasaran.sasaran_rpjmd,
-            rpjmd_tujuan.tujuan_rpjmd,
+                rps.sasaran_rpjmd,
+                rpt.tujuan_rpjmd,
 
-            target_rencana.id as target_id,
-            target_rencana.rencana_aksi,
-            target_rencana.capaian,
-            target_rencana.target_triwulan_1,
-            target_rencana.target_triwulan_2,
-            target_rencana.target_triwulan_3,
-            target_rencana.target_triwulan_4,
-            target_rencana.penanggung_jawab
-        ')
-            ->join('renja_sasaran', 'renja_sasaran.id = renja_indikator_sasaran.renja_sasaran_id', 'left')
-            ->join('renstra_sasaran', 'renstra_sasaran.id = renja_sasaran.renstra_sasaran_id', 'left')
-            ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = renstra_sasaran.rpjmd_sasaran_id', 'left')
-            ->join('rpjmd_tujuan', 'rpjmd_tujuan.id = rpjmd_sasaran.tujuan_id', 'left')
-
-            ->join('target_rencana', 'target_rencana.renja_indikator_sasaran_id = renja_indikator_sasaran.id', 'left');
+                tr.id             AS target_id,
+                tr.rencana_aksi,
+                tr.capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab
+            ')
+            ->join('renstra_target  AS rt', 'rt.renstra_indikator_id = ris.id', 'left')
+            ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('rpjmd_sasaran   AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan    AS rpt', 'rpt.id = rps.tujuan_id', 'left')
+            // LEFT JOIN ke target_rencana dengan filter OPD tersemat (jika ada)
+            ->join('target_rencana  AS tr', $trJoin, 'left');
 
         if ($tahun) {
-            $builder->where('renja_indikator_sasaran.tahun', $tahun);
+            $b->where('rt.tahun', $tahun);
+        }
+        if (!empty($opdId)) {
+            // batasi indikator ke OPD tersebut (yang bertanggung jawab)
+            $b->where('rs.opd_id', $opdId);
         }
 
-        return $builder->orderBy('rpjmd_tujuan.id', 'ASC')
-            ->orderBy('rpjmd_sasaran.id', 'ASC')
-            ->orderBy('renstra_sasaran.id', 'ASC')
-            ->get()
-            ->getResultArray();
+        return $b->orderBy('rpt.id', 'ASC')
+            ->orderBy('rps.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC')
+            ->get()->getResultArray();
+    }
+    public function getTargetListByRenstraAdminKab(?string $tahun = null, ?int $opdId = null): array
+    {
+        $trJoin = 'tr.renstra_target_id = rt.id';
+        if (!empty($opdId)) {
+            $trJoin .= ' AND tr.opd_id = ' . (int) $opdId;
+        }
+
+        $b = $this->db->table('renstra_target AS rt')
+            // RENSTRA (basis baris)
+            ->select('rt.id AS renstra_target_id, rt.tahun AS indikator_tahun, rt.target AS indikator_target')
+            // Indikator & Satuan
+            ->select('ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan')
+            // Sasaran & OPD pemilik
+            ->select('rs.id AS renstra_sasaran_id, rs.sasaran AS sasaran_renstra, rs.opd_id AS opd_id')
+            // RPJMD
+            ->select('rps.sasaran_rpjmd, rpt.tujuan_rpjmd')
+            // Target Rencana (bisa NULL)
+            ->select('tr.id AS target_id, tr.rencana_aksi, tr.capaian, tr.target_triwulan_1, tr.target_triwulan_2, tr.target_triwulan_3, tr.target_triwulan_4, tr.penanggung_jawab')
+            ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran          AS rs', 'rs.id  = ris.renstra_sasaran_id', 'left')
+            ->join('rpjmd_sasaran            AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan             AS rpt', 'rpt.id = rps.tujuan_id', 'left')
+            ->join('target_rencana           AS tr', $trJoin, 'left');
+
+        if (!empty($tahun)) {
+            $b->where('rt.tahun', $tahun);
+        }
+        if (!empty($opdId)) {
+            $b->where('rs.opd_id', $opdId);
+        }
+
+        return $b->orderBy('rpt.id', 'ASC')
+            ->orderBy('rps.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC')
+            ->get()->getResultArray();
     }
 
 
-    // ntuk update:
-
-    public function updateTarget($id, $data)
+    /**
+     * Cek apakah sudah ada target_rencana untuk kombinasi OPD + renstra_target_id
+     * (mencegah duplikasi entri per tahun per indikator per OPD)
+     */
+    public function existsFor(int $opdId, int $renstraTargetId): ?array
     {
-        $this->update($id, $data);
+        return $this->where([
+            'opd_id' => $opdId,
+            'renstra_target_id' => $renstraTargetId,
+        ])->first();
+    }
+
+    /** Update helper */
+    public function updateTarget(int $id, array $data): bool
+    {
+        return $this->update($id, $data);
     }
 }

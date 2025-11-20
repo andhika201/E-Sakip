@@ -130,13 +130,13 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
 
     // RKT
-    $routes->get('rkt', 'AdminOpd\RenjaController::index');
-    $routes->get('rkt/tambah/(:num)', 'AdminOpd\RenjaController::tambah/$1');
-    $routes->get('rkt/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
-    $routes->post('rkt/save', 'AdminOpd\RenjaController::save');
-    $routes->post('rkt/update', 'AdminOpd\RenjaController::update');
-    $routes->match(['get', 'post', 'delete'], 'renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
-    $routes->post('rkt/update-status', 'AdminOpd\RenjaController::updateStatus');
+    $routes->get('rkt', 'AdminOpd\RktController::index');
+    $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
+    $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
+    $routes->post('rkt/save', 'AdminOpd\RktController::save');
+    $routes->post('rkt/update', 'AdminOpd\RktController::update');
+    $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
+    $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 
     // IKU
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');

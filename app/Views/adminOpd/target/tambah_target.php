@@ -10,11 +10,6 @@
         .alert {
             transition: all .3s ease;
         }
-
-        .btn:disabled {
-            opacity: .6;
-            cursor: not-allowed;
-        }
     </style>
 </head>
 
@@ -74,6 +69,24 @@
                                 value="<?= old('capaian') ?>">
                         </div>
                     </div>
+
+                    <!-- (Opsional) link ke RPJMD untuk admin_kab -->
+                    <?php if (($role ?? '') === 'admin_kab'): ?>
+                        <div class="mb-3">
+                            <label class="form-label" for="rpjmd_target_id">Target RPJMD (Opsional)</label>
+                            <select name="rpjmd_target_id" id="rpjmd_target_id" class="form-select">
+                                <option value="">-- Pilih Target RPJMD (jika relevan) --</option>
+                                <?php foreach (($rpjmdTargets ?? []) as $r): ?>
+                                    <option value="<?= (int) $r['id'] ?>" <?= old('rpjmd_target_id') == $r['id'] ? 'selected' : '' ?>>
+                                        Tahun <?= esc($r['tahun']) ?> - <?= esc($r['target_tahunan']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted" style="font-size: 0.8rem;">
+                                Opsional: gunakan jika indikator ini terkait langsung dengan target RPJMD.
+                            </small>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="mb-3">
                         <label class="form-label" for="rencana_aksi">Rencana Aksi</label>

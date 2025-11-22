@@ -148,10 +148,13 @@
                                                             $addUrl .= '&opd_id=' . (int) $opdFilter;
                                                         }
                                                         ?>
-                                                        <a href="<?= $addUrl ?>" class="btn btn-sm btn-success">Tambah</a>
+                                                        <a href="<?= $addUrl ?>" class="btn btn-primary btn-sm" title="Tambah Target">
+                                                            <i class="fas fa-plus"></i></a>
                                                     <?php else: ?>
                                                         <a href="<?= base_url('adminopd/target/edit/' . (int) $row['target_id']) ?>"
-                                                            class="btn btn-sm btn-warning">Edit</a>
+                                                            class="btn btn-warning btn-sm" title="Edit Target">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
                                             </td>

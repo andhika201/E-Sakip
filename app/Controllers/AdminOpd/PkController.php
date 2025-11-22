@@ -61,7 +61,11 @@ class PkController extends BaseController
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         $program = $this->pkModel->getAllPrograms();
+        $jptProgram = $this->pkModel->getJptPrograms($opdId);
+        $kegiatan = $this->pkModel->getKegiatan();
+        $subkegiatan = $this->pkModel->getSubKegiatan();
         $satuan = $this->pkModel->getAllSatuan();
+        $kegiatanAdmin = $this->pkModel->getKegiatanAdmin($opdId);
         // Dapatkan PK Pimpinan sebagai acuan sesuai jenis
         $referensiJenis = null;
         if ($jenis === 'administrator') {
@@ -76,25 +80,18 @@ class PkController extends BaseController
                 ->where('jenis', $referensiJenis)
                 ->findAll();
         }
-        if (strtolower($jenis) === 'bupati') {
-            return view('adminopd/pk/tambah_pk', [
-                'pegawaiOpd' => $pegawaiOpd,
-                'program' => $program,
-                'satuan' => $satuan,
-                'pkPimpinan' => $pkPimpinan,
-                'title' => 'Tambah PK ' . ucfirst($jenis),
-                'jenis' => $jenis
-            ]);
-        } else {
-            return view('adminOpd/pk/tambah_pk', [
-                'pegawaiOpd' => $pegawaiOpd,
-                'program' => $program,
-                'satuan' => $satuan,
-                'pkPimpinan' => $pkPimpinan,
-                'title' => 'Tambah PK ' . ucfirst($jenis),
-                'jenis' => $jenis
-            ]);
-        }
+        return view('adminOpd/pk/tambah_pk', [
+            'pegawaiOpd' => $pegawaiOpd,
+            'program' => $program,
+            'kegiatan' => $kegiatan,
+            'subkegiatan' => $subkegiatan,
+            'satuan' => $satuan,
+            'pkPimpinan' => $pkPimpinan,
+            'jptProgram' => $jptProgram,
+            'kegiatanAdmin' => $kegiatanAdmin,
+            'title' => 'Tambah PK ' . ucfirst($jenis),
+            'jenis' => $jenis
+        ]);
     }
 
     public function edit($jenis, $id)
@@ -136,11 +133,12 @@ class PkController extends BaseController
     public function save($jenis)
     {
         $validation = \Config\Services::validation();
-        // Validasi khusus untuk PK Bupati
+
+        // Validasi pihak penandatangan
         if (strtolower($jenis) === 'bupati') {
             $rules = [
-                'pegawai_1_id' => 'permit_empty|numeric', // NIP boleh kosong
-                'pegawai_2_id' => 'permit_empty|numeric', // pihak kedua boleh kosong
+                'pegawai_1_id' => 'permit_empty|numeric',
+                'pegawai_2_id' => 'permit_empty|numeric',
             ];
         } else {
             $rules = [
@@ -148,66 +146,142 @@ class PkController extends BaseController
                 'pegawai_2_id' => 'required|numeric',
             ];
         }
+
         $validation->setRules($rules);
         if (!$validation->run($this->request->getPost())) {
             return redirect()->back()->withInput()->with('validation', $validation->getErrors());
         }
+
         $session = session();
         $opdId = $session->get('opd_id');
         if (!$opdId) {
-            throw new \Exception('OPD ID tidak ditemukan dalam session. Silakan login ulang.');
+            throw new \Exception("OPD ID tidak ditemukan di session");
         }
-        $data = $this->request->getPost();
 
+        $post = $this->request->getPost();
         $now = date('Y-m-d');
-        // Proses referensi indikator acuan: value = pkid-indikatorid
-        $referensiIndikatorArr = [];
-        if (isset($data['referensi_indikator_id']) && is_array($data['referensi_indikator_id'])) {
-            foreach ($data['referensi_indikator_id'] as $val) {
-                $parts = explode('-', $val);
+
+        // -----------------------------------
+        // REF REFERENSI INDIKATOR
+        // -----------------------------------
+        $referensiAcuanArr = [];
+        if (!empty($post['referensi_indikator_id'])) {
+            foreach ($post['referensi_indikator_id'] as $val) {
+                $parts = explode('-', $val); // pkid-indikatorid
                 if (count($parts) == 2) {
-                    $referensiIndikatorArr[] = [
+                    $referensiAcuanArr[] = [
                         'referensi_pk_id' => $parts[0],
-                        'referensi_indikator_id' => $parts[1]
+                        'referensi_indikator_id' => $parts[1],
                     ];
                 }
             }
         }
+
+        // -----------------------------------
+        // BENTUK STRUCTURE FINAL SAVE DATA
+        // -----------------------------------
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
-            'pihak_1' => $data['pegawai_1_id'] ?? null,
-            'pihak_2' => $data['pegawai_2_id'] ?? null,
+            'pihak_1' => $post['pegawai_1_id'] ?? null,
+            'pihak_2' => $post['pegawai_2_id'] ?? null,
             'tanggal' => $now,
             'sasaran_pk' => [],
-            'referensi_acuan' => $referensiIndikatorArr,
-            'misi_bupati_id' => isset($data['misi_bupati_id']) ? $data['misi_bupati_id'] : [],
+            'referensi_acuan' => $referensiAcuanArr,
+            'misi_bupati_id' => $post['misi_bupati_id'] ?? [],
         ];
 
-        if (isset($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
-            foreach ($data['sasaran_pk'] as $sasaranIndex => $sasaranItem) {
+        // -----------------------------------
+        // PARSE S A S A R A N
+        // -----------------------------------
+        if (!empty($post['sasaran_pk'])) {
+            foreach ($post['sasaran_pk'] as $s) {
+
                 $sasaranData = [
-                    'sasaran' => $sasaranItem['sasaran'] ?? '',
+                    'sasaran' => $s['sasaran'] ?? '',
                     'indikator' => [],
                 ];
 
-                if (isset($sasaranItem['indikator']) && is_array($sasaranItem['indikator'])) {
-                    foreach ($sasaranItem['indikator'] as $indikatorIndex => $indikatorItem) {
+                // -----------------------------------
+                // PARSE I N D I K A T O R
+                // -----------------------------------
+                if (!empty($s['indikator'])) {
+                    foreach ($s['indikator'] as $indikator) {
+
                         $indikatorData = [
-                            'indikator' => $indikatorItem['indikator'] ?? '',
-                            'target' => $indikatorItem['target'] ?? '',
-                            'id_satuan' => $indikatorItem['id_satuan'] ?? null,
-                            'jenis_indikator' => $indikatorItem['jenis_indikator'] ?? null,
+                            'indikator' => $indikator['indikator'] ?? '',
+                            'target' => $indikator['target'] ?? '',
+                            'id_satuan' => $indikator['id_satuan'] ?? null,
+                            'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
                             'program' => [],
+                            'kegiatan' => [],
                         ];
 
-                        // Proses program untuk setiap indikator
-                        if (isset($indikatorItem['program']) && is_array($indikatorItem['program'])) {
-                            foreach ($indikatorItem['program'] as $programItem) {
-                                $indikatorData['program'][] = [
-                                    'program_id' => $programItem['program_id'] ?? null,
-                                    'anggaran' => $programItem['anggaran'] ?? 0,
-                                ];
+                        // -----------------------------------
+                        // JENIS = JPT (INDIKATOR → PROGRAM)
+                        // -----------------------------------
+                        if ($jenis === 'jpt') {
+                            if (!empty($indikator['program'])) {
+                                foreach ($indikator['program'] as $p) {
+                                    $indikatorData['program'][] = [
+                                        'program_id' => $p['program_id'] ?? null,
+                                        'anggaran' => $p['anggaran'] ?? 0,
+                                    ];
+                                }
+                            }
+                        }
+
+                        // -----------------------------------
+                        // JENIS = ADMINISTRATOR
+                        // (INDIKATOR → PROGRAM → KEGIATAN)
+                        // -----------------------------------
+                        if ($jenis === 'administrator') {
+                            if (!empty($indikator['program'])) {
+                                foreach ($indikator['program'] as $p) {
+
+                                    $programData = [
+                                        'program_id' => $p['program_id'] ?? null,
+                                        'kegiatan' => []
+                                    ];
+
+                                    if (!empty($p['kegiatan'])) {
+                                        foreach ($p['kegiatan'] as $k) {
+                                            $programData['kegiatan'][] = [
+                                                'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                                'anggaran' => $k['anggaran'] ?? 0,
+                                            ];
+                                        }
+                                    }
+
+                                    $indikatorData['program'][] = $programData;
+                                }
+                            }
+                        }
+
+                        // -----------------------------------
+                        // JENIS = PENGAWAS
+                        // (INDIKATOR → KEGIATAN → SUBKEGIATAN)
+                        // -----------------------------------
+                        if ($jenis === 'pengawas') {
+                            if (!empty($indikator['kegiatan'])) {
+                                foreach ($indikator['kegiatan'] as $k) {
+
+                                    $kegiatanData = [
+                                        'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                        'subkegiatan' => [],
+                                    ];
+
+                                    if (!empty($k['subkegiatan'])) {
+                                        foreach ($k['subkegiatan'] as $sk) {
+                                            $kegiatanData['subkegiatan'][] = [
+                                                'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
+                                                'anggaran' => $sk['anggaran'] ?? 0,
+                                            ];
+                                        }
+                                    }
+
+                                    $indikatorData['kegiatan'][] = $kegiatanData;
+                                }
                             }
                         }
 
@@ -219,26 +293,31 @@ class PkController extends BaseController
             }
         }
 
-
+        // -----------------------------------
+        // SIMPAN KE DB via MODEL
+        // -----------------------------------
         try {
-            // Panggil model untuk menyimpan data
             $pkId = $this->pkModel->saveCompletePk($saveData);
 
             if ($pkId) {
-                if (strtolower($jenis) === 'bupati') {
-                    return redirect()->to('/adminkab/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+                if ($jenis === 'bupati') {
+                    return redirect()->to('/adminkab/pk/' . $jenis)
+                        ->with('success', 'Data PK berhasil disimpan');
                 } else {
-                    return redirect()->to('/adminopd/pk/' . $jenis)->with('success', 'Data PK berhasil disimpan');
+                    return redirect()->to('/adminopd/pk/' . $jenis)
+                        ->with('success', 'Data PK berhasil disimpan');
                 }
-            } else {
-                log_message('error', 'Gagal menyimpan data PK: ' . print_r($saveData, true));
-                return redirect()->back()->withInput()->with('error', 'Gagal menyimpan data PK. Silakan coba lagi.');
             }
+
+            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan PK');
+
         } catch (\Exception $e) {
-            log_message('error', 'Error saving PK: ' . $e->getMessage());
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+
+            log_message('error', 'SAVE ERROR: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }
+
 
 
 

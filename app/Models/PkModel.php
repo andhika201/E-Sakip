@@ -191,6 +191,9 @@ class PkModel extends Model
 
     /**
      * Get PK with pegawai relationships
+     *
+     * @deprecated This method is not referenced outside this model and may be removed in a future release.
+     * @unused Kept for backward-compatibility; no external callers were found in the repository.
      */
     public function getPkWithPegawai($id = null)
     {
@@ -516,15 +519,16 @@ class PkModel extends Model
 
     public function saveCompletePk($data)
     {
-        // Prepare data for saving
         $db = \Config\Database::connect();
         $db->transStart();
 
         try {
 
-            // Simpan ke tabel pk
-
             $now = date('Y-m-d H:i:s');
+
+            // ======================================================
+            // 1. SIMPAN DATA PK
+            // ======================================================
             $pkData = [
                 'opd_id' => $data['opd_id'],
                 'jenis' => $data['jenis'],
@@ -535,13 +539,15 @@ class PkModel extends Model
                 'updated_at' => $now
             ];
 
-            $this->db->table('pk')->insert($pkData);
-            $pkId = $this->db->insertID();
+            $db->table('pk')->insert($pkData);
+            $pkId = $db->insertID();
 
-            // Simpan referensi indikator acuan jika ada
-            if (!empty($data['referensi_acuan']) && is_array($data['referensi_acuan'])) {
+            // ======================================================
+            // 2. REFERENSI ACUAN
+            // ======================================================
+            if (!empty($data['referensi_acuan'])) {
                 foreach ($data['referensi_acuan'] as $ref) {
-                    $this->db->table('pk_referensi')->insert([
+                    $db->table('pk_referensi')->insert([
                         'pk_id' => $pkId,
                         'referensi_pk_id' => $ref['referensi_pk_id'],
                         'referensi_indikator_id' => $ref['referensi_indikator_id']
@@ -549,67 +555,108 @@ class PkModel extends Model
                 }
             }
 
-            // Simpan sasaran, indikator, dan program
-        foreach ($data['sasaran_pk'] as $sasaran) {
-            // Simpan sasaran
-            $db->table('pk_sasaran')->insert([
-                'pk_id' => $pkId,
-                'sasaran' => $sasaran['sasaran'],
-                'created_at' => $now,
-                'updated_at' => $now
-            ]);
-            $pkSasaranId = $db->insertID();
+            // ======================================================
+            // 3. LOOP: SASARAN → INDIKATOR → PROGRAM → KEGIATAN → SUBKEGIATAN
+            // ======================================================
+            foreach ($data['sasaran_pk'] as $sasaran) {
 
-            if (!empty($sasaran['indikator'])) {
-                foreach ($sasaran['indikator'] as $indikator) {
-                    // Simpan indikator
-                    $db->table('pk_indikator')->insert([
-                        'pk_sasaran_id' => $pkSasaranId,
-                        'indikator' => $indikator['indikator'],
-                        'target' => $indikator['target'],
-                        'id_satuan' => $indikator['id_satuan'] ?? null,
-                        'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
-                        'created_at' => $now,
-                        'updated_at' => $now
-                    ]);
-                    $pkIndikatorId = $db->insertID();
+                // === SIMPAN SASARAN ===
+                $db->table('pk_sasaran')->insert([
+                    'pk_id' => $pkId,
+                    'sasaran' => $sasaran['sasaran'],
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ]);
+                $pkSasaranId = $db->insertID();
 
-                    // Simpan program untuk indikator ini, jika ada
-                    if (isset($indikator['program']) && is_array($indikator['program'])) {
-                        foreach ($indikator['program'] as $programItem) {
-                            $db->table('pk_program')->insert([
-                                'pk_id' => $pkId,
-                                'program_id' => $programItem['program_id'] ?? null,
-                                'id_indikator' => $pkIndikatorId,
-                                'created_at' => $now,
-                                'updated_at' => $now
-                            ]);
+                if (!empty($sasaran['indikator'])) {
+                    foreach ($sasaran['indikator'] as $indikator) {
+
+                        // === SIMPAN INDIKATOR ===
+                        $db->table('pk_indikator')->insert([
+                            'pk_sasaran_id' => $pkSasaranId,
+                            'indikator' => $indikator['indikator'],
+                            'target' => $indikator['target'],
+                            'id_satuan' => $indikator['id_satuan'],
+                            'jenis_indikator' => $indikator['jenis_indikator'],
+                            'created_at' => $now,
+                            'updated_at' => $now
+                        ]);
+                        $pkIndikatorId = $db->insertID();
+
+                        // =======================
+                        // PROGRAM
+                        // =======================
+                        if (!empty($indikator['program'])) {
+                            foreach ($indikator['program'] as $programItem) {
+
+                                // SIMPAN PROGRAM
+                                $db->table('pk_program')->insert([
+                                    'pk_id' => $pkId,
+                                    'program_id' => $programItem['program_id'],
+                                    'id_indikator' => $pkIndikatorId,
+                                    'created_at' => $now,
+                                    'updated_at' => $now
+                                ]);
+                                $pkProgramId = $db->insertID();
+
+                                // =======================
+                                // KEGIATAN
+                                // =======================
+                                if (!empty($programItem['kegiatan'])) {
+                                    foreach ($programItem['kegiatan'] as $kegiatanItem) {
+
+                                        $db->table('pk_kegiatan')->insert([
+                                            'pk_program_id' => $pkProgramId,
+                                            'kegiatan_id' => $kegiatanItem['kegiatan_id'],
+                                            'created_at' => $now,
+                                            'updated_at' => $now
+                                        ]);
+                                        $pkKegiatanId = $db->insertID();
+
+                                        // =======================
+                                        // SUBKEGIATAN
+                                        // =======================
+                                        if (!empty($kegiatanItem['subkegiatan'])) {
+                                            foreach ($kegiatanItem['subkegiatan'] as $subItem) {
+
+                                                $db->table('pk_subkegiatan')->insert([
+                                                    'pk_kegiatan_id' => $pkKegiatanId,
+                                                    'subkegiatan_id' => $subItem['subkegiatan_id'],
+                                                    'created_at' => $now,
+                                                    'updated_at' => $now
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-        
-        // Simpan misi bupati jika ada (untuk jenis JPT)
-        if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
-            foreach ($data['misi_bupati_id'] as $misiId) {
-                $db->table('pk_misi')->insert([
-                    'pk_id' => $pkId,
-                    'rpjmd_misi_id' => $misiId
-                ]);
+
+            // ======================================================
+            // 4. MISI BUPATI (khusus JPT)
+            // ======================================================
+            if (!empty($data['misi_bupati_id'])) {
+                foreach ($data['misi_bupati_id'] as $misiId) {
+                    $db->table('pk_misi')->insert([
+                        'pk_id' => $pkId,
+                        'rpjmd_misi_id' => $misiId
+                    ]);
+                }
             }
-        }
 
             $db->transComplete();
-
             return $db->transStatus() ? $pkId : false;
 
         } catch (\Exception $e) {
-            $this->db->transRollback();
-            dd($e->getMessage());
+            $db->transRollback();
             throw $e;
         }
     }
+
 
     /**
      * Get all satuan
@@ -627,8 +674,55 @@ class PkModel extends Model
         return $this->db->table('program_pk')->orderBy('created_at', 'DESC')->get()->getResultArray();
     }
 
+    public function getKegiatan()
+    {
+        return $this->db->table('kegiatan_pk')
+            ->select('id, kegiatan, anggaran')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getSubKegiatan()
+    {
+        return $this->db->table('sub_kegiatan_pk')
+            ->select('id, sub_kegiatan, anggaran')
+            ->get()
+            ->getResultArray();
+    }
+    public function getJptPrograms($opdId)
+    {
+        return $this->db->table('pk_program')
+            ->select('program_pk.program_kegiatan, program_pk.id')
+            ->join('pk', 'pk.id = pk_program.pk_id')
+            ->join('program_pk', 'program_pk.id = pk_program.program_id')
+            ->where('pk.jenis', 'jpt')
+            ->where('pk.opd_id', $opdId)
+            ->orderBy('pk.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getKegiatanAdmin($opdId)
+    {
+        return $this->db->table('pk_kegiatan')
+            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id')
+            ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
+            ->join('pk', 'pk.id = pk_program.pk_id')
+            ->join('kegiatan_pk', 'kegiatan_pk.id = pk_kegiatan.kegiatan_id')
+            ->where('pk.jenis', 'administrator')
+            ->where('pk.opd_id', $opdId)
+            ->orderBy('pk.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+    }
+
+
     /**
      * Get program by ID
+     *
+     * @deprecated Duplicate helper: prefer `App\Models\ProgramPkModel::getProgramById`.
+     * @duplicate App\Models\ProgramPkModel::getProgramById
+     * @unused No external callers of `PkModel::getProgramById` were found; use `ProgramPkModel` instead.
      */
     public function getProgramById($id)
     {
@@ -637,6 +731,10 @@ class PkModel extends Model
 
     /**
      * Format anggaran as currency
+     *
+     * @deprecated Duplicate helper: `App\Models\ProgramPkModel::formatAnggaran` provides the same functionality.
+     * @duplicate App\Models\ProgramPkModel::formatAnggaran
+     * @unused No external callers of `PkModel::formatAnggaran` were found; consider consolidating into ProgramPkModel.
      */
     public function formatAnggaran($anggaran)
     {
@@ -645,6 +743,10 @@ class PkModel extends Model
 
     /**
      * Search programs
+     *
+     * @deprecated Duplicate helper: prefer `App\Models\ProgramPkModel::searchPrograms`.
+     * @duplicate App\Models\ProgramPkModel::searchPrograms
+     * @unused No external callers of `PkModel::searchPrograms` were found in the repository.
      */
     public function searchPrograms($keyword)
     {
@@ -656,16 +758,22 @@ class PkModel extends Model
 
     /**
      * Get PK Pimpinan (referensi PK) by OPD and jenis
+     *
+     * @deprecated Not used outside the model; consider removing if no external consumers exist.
+     * @unused No external calls found in the codebase referencing `PkModel::getPkPimpinan`.
      */
     public function getPkPimpinan($opdId, $referensiJenis)
     {
         return $this->where('opd_id', $opdId)
-                    ->where('jenis', $referensiJenis)
-                    ->findAll();
+            ->where('jenis', $referensiJenis)
+            ->findAll();
     }
 
     /**
      * Get jenis_indikator for PK Bupati by PK ID
+     *
+     * @deprecated Currently unused by controllers/views; keep only if future code requires it.
+     * @unused No external callers of `getJenisIndikatorByPkId` found in the repository search.
      */
     public function getJenisIndikatorByPkId($pkId)
     {
@@ -682,6 +790,9 @@ class PkModel extends Model
 
     /**
      * Update capaian indikator
+     *
+     * @deprecated Unreferenced helper for bulk update of capaian; consider removing or keeping behind a stable API.
+     * @unused No external callers of `updateCapaianIndikator` found in the repository search.
      */
     public function updateCapaianIndikator($capaianArr)
     {

@@ -67,6 +67,15 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
+        // rkt
+        $routes->get('rkt', 'AdminOpd\RktController::index');
+        $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
+        $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
+        $routes->post('rkt/save', 'AdminOpd\RktController::save');
+        $routes->post('rkt/update', 'AdminOpd\RktController::update');
+        $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
+        $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
+
         // target
         $routes->get('target', 'TargetController::index');
         $routes->get('target/tambah', 'TargetController::tambah');
@@ -80,6 +89,13 @@ $routes->group(
         $routes->post('monev/save', 'MonevController::save');
         $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
         $routes->post('monev/update/(:num)', 'MonevController::update/$1');
+
+        // target
+        $routes->get('target', 'AdminOpd\TargetController::index');
+        $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');
+        $routes->post('target/save', 'AdminOpd\TargetController::save');
+        $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
+        $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
 
         // Lakip Kabupaten
         $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');

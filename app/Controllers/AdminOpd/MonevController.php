@@ -16,32 +16,100 @@ class MonevController extends BaseController
         $this->monev = new MonevModel();
     }
 
-    /** Listing Monev untuk ADMIN OPD */
+    /**
+     * INDEX MONEV
+     * - Jika role = admin_opd  → tampilkan halaman Monev OPD (adminOpd/monev/monev)
+     * - Jika role = admin_kab  → tampilkan halaman Monev Kab (adminKabupaten/monev/index)
+     */
     public function index()
     {
         $session = session();
         $role = (string) ($session->get('role') ?? '');
         $opdId = (int) ($session->get('opd_id') ?? 0);
 
-        if ($role !== 'admin_opd' || $opdId <= 0) {
-            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak / OPD tidak terdeteksi.');
+        // ======================
+        // MODE ADMIN OPD
+        // ======================
+        if ($role === 'admin_opd') {
+            if ($opdId <= 0) {
+                return redirect()->to(base_url('/'))
+                    ->with('error', 'OPD tidak terdeteksi.');
+            }
+
+            $tahunParam = trim((string) ($this->request->getGet('tahun') ?? 'all'));
+            $tahun = ($tahunParam === '' || strtolower($tahunParam) === 'all')
+                ? null
+                : (string) (int) $tahunParam;
+
+            $monevList = $this->monev->getIndexDataAdminOpd($tahun, $opdId);
+            $tahunList = $this->monev->getAvailableYears();
+
+            return view('adminOpd/monev/monev', [
+                'monevList' => $monevList,
+                'tahun' => $tahun ?? 'all',
+                'tahunList' => $tahunList,
+            ]);
         }
 
-        $tahunParam = trim((string) ($this->request->getGet('tahun') ?? 'all'));
-        $tahun = ($tahunParam === '' || strtolower($tahunParam) === 'all') ? null : (string) (int) $tahunParam;
+        // ======================
+        // MODE ADMIN KABUPATEN
+        // ======================
+        if ($role === 'admin_kab') {
+            // mode: 'opd' (default) atau 'kab'
+            $modeParam = strtolower((string) ($this->request->getGet('mode') ?? 'opd'));
+            $mode = in_array($modeParam, ['opd', 'kab'], true) ? $modeParam : 'opd';
 
-        // Ambil data index berbasis Target OPD (TR left join Monev)
-        $monevList = $this->monev->getIndexDataAdminOpd($tahun, $opdId);
-        $tahunList = $this->monev->getAvailableYears();
+            // filter tahun
+            $tahunParam = trim((string) ($this->request->getGet('tahun') ?? 'all'));
+            $tahun = ($tahunParam === '' || strtolower($tahunParam) === 'all')
+                ? null
+                : (string) (int) $tahunParam;
 
-        return view('adminOpd/monev/monev', [
-            'monevList' => $monevList,
-            'tahun' => $tahun ?? 'all',
-            'tahunList' => $tahunList,
-        ]);
+            // filter opd_id (hanya dipakai jika mode = opd)
+            $opdIdParam = $this->request->getGet('opd_id') ?? 'all';
+            $filterOpdId = ($opdIdParam === 'all' || $opdIdParam === '' || $opdIdParam === null)
+                ? null
+                : (int) $opdIdParam;
+
+            if ($mode === 'kab') {
+                // MODE KABUPATEN:
+                // Data monev dari target_rencana yang punya rpjmd_target_id (kabupaten),
+                // tanpa filter opd_id.
+                $monevList = $this->monev->getIndexDataAdminKabModeKab($tahun);
+            } else {
+                // MODE OPD:
+                // Data monev berdasarkan target_rencana semua OPD,
+                // bisa difilter per opd_id & tahun.
+                $monevList = $this->monev->getIndexDataAdminKabModeOpd($tahun, $filterOpdId);
+            }
+
+            $tahunList = $this->monev->getAvailableYears();
+
+            // daftar OPD untuk dropdown (sesuaikan nama tabel/kolom jika beda)
+            $opdList = $this->db->table('opd')
+                ->select('id, nama_opd')
+                ->orderBy('nama_opd', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            return view('adminKabupaten/monev/index', [
+                'mode' => $mode,
+                'tahun' => $tahun ?? 'all',
+                'tahunList' => $tahunList,
+                'opdId' => $opdIdParam,  // untuk set selected di dropdown
+                'opdList' => $opdList,
+                'monevList' => $monevList,
+            ]);
+        }
+
+        // Role lain: tolak
+        return redirect()->to(base_url('/'))->with('error', 'Tidak berhak mengakses halaman Monev.');
     }
 
-    /** Form Tambah Monev untuk 1 Target Rencana */
+    /**
+     * FORM TAMBAH MONEV
+     * Hanya untuk admin_opd
+     */
     public function tambah()
     {
         $session = session();
@@ -49,15 +117,14 @@ class MonevController extends BaseController
         $opdId = (int) ($session->get('opd_id') ?? 0);
 
         if ($role !== 'admin_opd' || $opdId <= 0) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Tidak berhak.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Tidak berhak.');
         }
 
         $targetId = (int) $this->request->getGet('target_rencana_id');
         if ($targetId <= 0) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Parameter tidak valid.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Parameter tidak valid.');
         }
 
-        // Detail target_rencana + relasi RENSTRA (pastikan milik OPD login)
         $target = $this->db->table('target_rencana AS tr')
             ->select('
                 tr.id AS target_id, tr.opd_id, tr.rencana_aksi, tr.penanggung_jawab,
@@ -72,16 +139,15 @@ class MonevController extends BaseController
             ->get()->getRowArray();
 
         if (!$target) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Target tidak ditemukan.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Target tidak ditemukan.');
         }
         if ((int) $target['rs_opd_id'] !== $opdId) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Target bukan milik OPD Anda.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Target bukan milik OPD Anda.');
         }
 
-        // Cegah duplikat: jika sudah ada monev untuk (opd, target) → ke edit
         $existing = $this->monev->findByTargetAndOpd($targetId, $opdId);
         if ($existing) {
-            return redirect()->to(base_url('adminOpd/monev/edit/' . (int) $existing['id']))
+            return redirect()->to(base_url('adminopd/monev/edit/' . (int) $existing['id']))
                 ->with('success', 'Data sudah ada. Silakan edit.');
         }
 
@@ -90,7 +156,9 @@ class MonevController extends BaseController
         ]);
     }
 
-    /** Simpan hasil Tambah (insert / upsert) */
+    /**
+     * SIMPAN (UPSERT) DATA MONEV - ADMIN OPD
+     */
     public function save()
     {
         $session = session();
@@ -98,7 +166,7 @@ class MonevController extends BaseController
         $opdId = (int) ($session->get('opd_id') ?? 0);
 
         if ($role !== 'admin_opd' || $opdId <= 0) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Tidak berhak.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Tidak berhak.');
         }
 
         $rules = [
@@ -110,12 +178,12 @@ class MonevController extends BaseController
             'total' => 'permit_empty|integer',
         ];
         if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', implode(' ', $this->validator->getErrors()));
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
         $targetId = (int) $this->request->getPost('target_rencana_id');
 
-        // Validasi target milik OPD + ambil tahun untuk redirect filter
         $rt = $this->db->table('target_rencana AS tr')
             ->select('tr.id, rs.opd_id, rt.tahun')
             ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
@@ -125,7 +193,7 @@ class MonevController extends BaseController
             ->get()->getRowArray();
 
         if (!$rt || (int) $rt['opd_id'] !== $opdId) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Target/OPD tidak cocok.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Target/OPD tidak cocok.');
         }
 
         $payload = [
@@ -138,14 +206,15 @@ class MonevController extends BaseController
             $payload['total'] = (int) $this->request->getPost('total');
         }
 
-        // Insert/Update per (opd_id, target_rencana_id)
         $this->monev->upsertForTarget($targetId, $opdId, $payload);
 
         return redirect()->to(base_url('adminopd/monev?tahun=' . urlencode($rt['tahun'])))
             ->with('success', 'Data capaian berhasil disimpan.');
     }
 
-    /** Form Edit Monev */
+    /**
+     * FORM EDIT MONEV - ADMIN OPD
+     */
     public function edit($id)
     {
         $session = session();
@@ -153,7 +222,7 @@ class MonevController extends BaseController
         $opdId = (int) ($session->get('opd_id') ?? 0);
 
         if ($role !== 'admin_opd' || $opdId <= 0) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Tidak berhak.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Tidak berhak.');
         }
 
         $row = $this->db->table('monev AS m')
@@ -172,10 +241,10 @@ class MonevController extends BaseController
             ->get()->getRowArray();
 
         if (!$row) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Data tidak ditemukan.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Data tidak ditemukan.');
         }
         if ((int) $row['opd_id'] !== $opdId) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Data bukan milik OPD Anda.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Data bukan milik OPD Anda.');
         }
 
         return view('adminOpd/monev/edit_monev', [
@@ -183,7 +252,9 @@ class MonevController extends BaseController
         ]);
     }
 
-    /** Update data Monev */
+    /**
+     * UPDATE MONEV - ADMIN OPD
+     */
     public function update($id)
     {
         $session = session();
@@ -191,12 +262,25 @@ class MonevController extends BaseController
         $opdId = (int) ($session->get('opd_id') ?? 0);
 
         if ($role !== 'admin_opd' || $opdId <= 0) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Tidak berhak.');
+            return redirect()->to(base_url('adminopd/monev'))->with('error', 'Tidak berhak.');
         }
 
         $row = $this->monev->find((int) $id);
         if (!$row || (int) $row['opd_id'] !== $opdId) {
-            return redirect()->to(base_url('adminOpd/monev'))->with('error', 'Data tidak ditemukan / bukan milik OPD Anda.');
+            return redirect()->to(base_url('adminopd/monev'))
+                ->with('error', 'Data tidak ditemukan / bukan milik OPD Anda.');
+        }
+
+        $rules = [
+            'capaian_triwulan_1' => 'permit_empty|string',
+            'capaian_triwulan_2' => 'permit_empty|string',
+            'capaian_triwulan_3' => 'permit_empty|string',
+            'capaian_triwulan_4' => 'permit_empty|string',
+            'total' => 'permit_empty|integer',
+        ];
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
         $payload = [
@@ -205,18 +289,16 @@ class MonevController extends BaseController
             'capaian_triwulan_3' => (string) $this->request->getPost('capaian_triwulan_3'),
             'capaian_triwulan_4' => (string) $this->request->getPost('capaian_triwulan_4'),
         ];
-        // Hitung total jika kosong
-        $payload['total'] = ($this->request->getPost('total') !== null && $this->request->getPost('total') !== '')
-            ? (int) $this->request->getPost('total')
-            : $this->monev->calcTotal(
-                $payload['capaian_triwulan_1'],
-                $payload['capaian_triwulan_2'],
-                $payload['capaian_triwulan_3'],
-                $payload['capaian_triwulan_4']
-            );
+
+        if ($this->request->getPost('total') !== null && $this->request->getPost('total') !== '') {
+            $payload['total'] = (int) $this->request->getPost('total');
+        } else {
+            $payload['total'] = null;
+        }
 
         $this->monev->update((int) $id, $payload);
 
-        return redirect()->to(base_url('adminopd/monev'))->with('success', 'Data capaian berhasil diperbarui.');
+        return redirect()->to(base_url('adminopd/monev'))
+            ->with('success', 'Data capaian berhasil diperbarui.');
     }
 }

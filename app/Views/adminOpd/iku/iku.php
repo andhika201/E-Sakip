@@ -112,13 +112,11 @@
                                         : ($row['sasaran'] ?? '-');
 
                                     $indikators = $row['indikator_sasaran'] ?? [];
-                                    $indikatorCount = count($indikators);
-                                    $firstRow = true;
                                     ?>
 
                                     <?php foreach ($indikators as $indikator): ?>
                                         <?php
-                                        // Cari IKU yang terkait indikator ini
+                                        // Cari IKU terkait indikator ini
                                         $iku = null;
                                         if (!empty($iku_data)) {
                                             foreach ($iku_data as $item) {
@@ -132,7 +130,7 @@
                                             }
                                         }
 
-                                        // Build map target per tahun
+                                        // Map target per tahun
                                         $targetMap = [];
                                         if (!empty($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
                                             foreach ($indikator['target_tahunan'] as $key => $target) {
@@ -150,40 +148,47 @@
                                             }
                                         }
 
-                                        // Ambil list program pendukung (bisa kosong / banyak)
+                                        // Program pendukung (bisa beberapa baris)
                                         $programList = [];
                                         if (!empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])) {
                                             $programList = $iku['program_pendukung'];
                                         }
 
-                                        // Kalau tidak ada program, buat 1 baris kosong supaya struktur tabel tetap rapi
+                                        // Jika tidak ada program, tetap buat satu baris agar struktur tabel rapi
                                         if (empty($programList)) {
                                             $programList = [null];
                                         }
 
+                                        $programCount = count($programList);
                                         ?>
 
                                         <?php foreach ($programList as $pIndex => $programName): ?>
                                             <tr>
-                                                <?php if ($firstRow && $pIndex === 0): ?>
-                                                    <!-- No & Sasaran hanya di baris pertama sasaran -->
-                                                    <td class="align-middle"><?= $no++ ?></td>
-                                                    <td class="align-middle text-start"><?= esc($sasaranText) ?></td>
-                                                    <?php $firstRow = false; ?>
-                                                <?php else: ?>
-                                                    <!-- Baris berikutnya dikosongkan -->
-                                                    <td></td>
-                                                    <td></td>
-                                                <?php endif; ?>
 
                                                 <?php if ($pIndex === 0): ?>
-                                                    <!-- Indikator & Satuan hanya di baris pertama indikator -->
-                                                    <td class="text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-                                                    <td><?= esc($indikator['satuan']) ?></td>
+                                                    <!-- No -->
+                                                    <td rowspan="<?= $programCount ?>" class="align-middle">
+                                                        <?= $no++ ?>
+                                                    </td>
 
-                                                    <!-- Target per tahun hanya di baris pertama indikator -->
+                                                    <!-- Sasaran -->
+                                                    <td rowspan="<?= $programCount ?>" class="align-middle text-start">
+                                                        <?= esc($sasaranText) ?>
+                                                    </td>
+
+                                                    <!-- Indikator -->
+                                                    <td rowspan="<?= $programCount ?>" class="text-start">
+                                                        <?= esc($indikator['indikator_sasaran']) ?>
+                                                    </td>
+
+                                                    <!-- Satuan -->
+                                                    <td rowspan="<?= $programCount ?>">
+                                                        <?= esc($indikator['satuan']) ?>
+                                                    </td>
+
+                                                    <!-- Target per Tahun -->
                                                     <?php if (!empty($grouped_data)): ?>
-                                                        <?php foreach ($grouped_data as $periodKey => $dataPeriod): ?>
+                                                        <?php foreach ($grouped_data as $dataPeriod): ?>
                                                             <?php foreach ($dataPeriod['years'] as $year): ?>
                                                                 <?php
                                                                 $y = (int) $year;
@@ -192,28 +197,18 @@
                                                                     $value = $targetMap[$y];
                                                                 }
                                                                 ?>
-                                                                <td><?= esc($value) ?></td>
+                                                                <td rowspan="<?= $programCount ?>"><?= esc($value) ?></td>
                                                             <?php endforeach; ?>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
 
-                                                    <!-- Definisi IKU hanya di baris pertama indikator -->
-                                                    <td class="text-start"><?= esc($iku['definisi'] ?? '-') ?></td>
-                                                <?php else: ?>
-                                                    <!-- Baris program berikutnya: kolom indikator, satuan, target, definisi dikosongkan -->
-                                                    <td></td>
-                                                    <td></td>
-                                                    <?php if (!empty($grouped_data)): ?>
-                                                        <?php foreach ($grouped_data as $periodKey => $dataPeriod): ?>
-                                                            <?php foreach ($dataPeriod['years'] as $year): ?>
-                                                                <td></td>
-                                                            <?php endforeach; ?>
-                                                        <?php endforeach; ?>
-                                                    <?php endif; ?>
-                                                    <td></td>
+                                                    <!-- Definisi Operasional -->
+                                                    <td rowspan="<?= $programCount ?>" class="text-start">
+                                                        <?= esc($iku['definisi'] ?? '-') ?>
+                                                    </td>
                                                 <?php endif; ?>
 
-                                                <!-- Program Pendukung: 1 program per baris -->
+                                                <!-- Program Pendukung (satu program per baris) -->
                                                 <td class="text-start">
                                                     <?php if (!empty($programName)): ?>
                                                         <?= esc($programName) ?>
@@ -222,28 +217,27 @@
                                                     <?php endif; ?>
                                                 </td>
 
-                                                <!-- Aksi hanya di baris pertama indikator -->
                                                 <?php if ($pIndex === 0): ?>
-                                                    <td>
+                                                    <!-- Aksi -->
+                                                    <td rowspan="<?= $programCount ?>">
                                                         <?php if (!empty($indikator['id'])): ?>
                                                             <?php if (empty($iku['definisi'])): ?>
                                                                 <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
-                                                                    class="btn btn-sm btn-success" title="Tambah IKU">
-                                                                    <i class="bi bi-plus-circle"></i> Tambah
+                                                                    class="btn btn-primary btn-sm" title="Tambah IKU">
+                                                                    <i class="fas fa-plus"></i>
                                                                 </a>
                                                             <?php else: ?>
                                                                 <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
-                                                                    class="btn btn-sm btn-warning text-dark" title="Edit IKU">
-                                                                    <i class="bi bi-pencil-square"></i> Edit
+                                                                    class="btn btn-warning btn-sm" title="Edit IKU">
+                                                                    <i class="fas fa-edit"></i>
                                                                 </a>
                                                             <?php endif; ?>
                                                         <?php else: ?>
                                                             <span class="text-muted">-</span>
                                                         <?php endif; ?>
                                                     </td>
-                                                <?php else: ?>
-                                                    <td></td>
                                                 <?php endif; ?>
+
                                             </tr>
                                         <?php endforeach; ?>
 

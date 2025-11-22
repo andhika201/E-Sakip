@@ -101,7 +101,8 @@
                             <input type="number" step="any" name="total" id="totalCapaian" class="form-control"
                                 value="<?= esc(old('total')) ?>">
                             <small class="text-muted d-block mt-1">
-                                Jika dikosongkan, sistem akan menghitung <em>rata-rata</em> dari triwulan yang terisi.
+                                Nilai total akan terisi otomatis sebagai rata-rata dari capaian triwulan yang diisi,
+                                namun tetap bisa Anda ubah manual jika diperlukan.
                             </small>
                         </div>
                     </div>
@@ -125,14 +126,27 @@
         // Hitung total sebagai rata-rata nilai triwulan yang terisi
         function hitungTotal() {
             const get = n => {
-                const v = document.getElementsByName(n)[0]?.value ?? '';
+                const el = document.getElementsByName(n)[0];
+                if (!el) return null;
+                const v = el.value ?? '';
                 return v === '' ? null : parseFloat(v);
             };
-            const vals = [get('capaian_triwulan_1'), get('capaian_triwulan_2'), get('capaian_triwulan_3'), get('capaian_triwulan_4')].filter(v => v !== null && !isNaN(v));
+            const vals = [
+                get('capaian_triwulan_1'),
+                get('capaian_triwulan_2'),
+                get('capaian_triwulan_3'),
+                get('capaian_triwulan_4')
+            ].filter(v => v !== null && !isNaN(v));
+
             const total = (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : '');
             const el = document.getElementById('totalCapaian');
             if (el) el.value = (total === '' ? '' : Math.round(total));
         }
+
+        // Panggil saat halaman selesai load (untuk old input)
+        window.addEventListener('DOMContentLoaded', function () {
+            hitungTotal();
+        });
 
         // Cegah double submit
         (function () {

@@ -205,7 +205,7 @@ class LakipOpdController extends BaseController
         $targetPrev = $this->request->getPost('target_lalu');
         $capaianPrev = $this->request->getPost('capaian_lalu');
         $capaianNow = $this->request->getPost('capaian_tahun_ini');
-        $status = $this->request->getPost('status') ?: 'draft';
+        $status = $this->request->getPost('status') ?: 'proses';
 
         if (empty($indikatorId)) {
             return redirect()->back()->with('error', 'Data indikator tidak valid.')->withInput();
@@ -360,5 +360,42 @@ class LakipOpdController extends BaseController
 
         return redirect()->to(base_url('adminopd/lakip'))
             ->with('error', 'Gagal menghapus LAKIP');
+    }
+    /**
+     * UBAH STATUS LAKIP
+     */
+    public function status($id, $to)
+    {
+        $session = session();
+        $role = $session->get('role');
+        $opdId = $session->get('opd_id');
+
+        if ($role === 'admin_opd' && !$opdId) {
+            return redirect()->to('/login')->with('error', 'Session tidak valid');
+        }
+
+        // status yang diperbolehkan
+        $allowedStatus = ['proses', 'siap'];
+        if (!in_array($to, $allowedStatus)) {
+            return redirect()->to(base_url('adminopd/lakip'))
+                ->with('error', 'Status tidak valid.');
+        }
+
+        // cek data lakip
+        $lakip = $this->lakipModel->find($id);
+        if (!$lakip) {
+            return redirect()->to(base_url('adminopd/lakip'))
+                ->with('error', 'Data LAKIP tidak ditemukan.');
+        }
+
+        // update status
+        try {
+            $this->lakipModel->updateLakip((int) $id, ['status' => $to]);
+            return redirect()->to(base_url('adminopd/lakip'))
+                ->with('success', 'Status LAKIP berhasil diubah menjadi: ' . ucfirst($to));
+        } catch (\Throwable $e) {
+            return redirect()->to(base_url('adminopd/lakip'))
+                ->with('error', 'Gagal mengubah status: ' . $e->getMessage());
+        }
     }
 }

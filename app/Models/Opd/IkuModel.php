@@ -47,7 +47,7 @@ class IkuModel extends Model
                 'rpjmd_id' => $data['rpjmd_id'] ?? null,
                 'renstra_id' => $data['renstra_id'] ?? null,
                 'definisi' => $data['definisi'],
-                'status' => $data['status'] ?? 'draft',
+                'status' => $data['status'] ?? 'belum',
             ];
 
             $db->table('iku')->insert($ikuData);

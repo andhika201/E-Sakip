@@ -85,6 +85,7 @@
                                     <?php endif; ?>
 
                                     <th rowspan="2" class="align-middle">Definisi Operasional</th>
+                                    <th rowspan="2" class="align-middle">Status</th>
                                     <th rowspan="2" class="align-middle">Program Pendukung</th>
                                     <th rowspan="2" class="align-middle">Aksi</th>
                                 </tr>
@@ -206,6 +207,26 @@
                                                     <td rowspan="<?= $programCount ?>" class="text-start">
                                                         <?= esc($iku['definisi'] ?? '-') ?>
                                                     </td>
+
+                                                    <!-- Status (badge) -->
+                                                        <td rowspan="<?= $programCount ?>" class="align-middle">
+                                                            <?php
+                                                            $rawStatus   = $iku['status'] ?? null;
+                                                            $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+
+                                                            if ($statusLower === 'tercapai') {
+                                                                $badgeClass  = 'bg-success';
+                                                                $statusLabel = 'Tercapai';
+                                                            } else {
+                                                                // default: Belum (baik null, kosong, atau nilai lain)
+                                                                $badgeClass  = 'bg-secondary';
+                                                                $statusLabel = 'Belum';
+                                                            }
+                                                            ?>
+                                                            <span class="badge <?= $badgeClass ?>">
+                                                                <?= esc($statusLabel) ?>
+                                                            </span>
+                                                        </td>
                                                 <?php endif; ?>
 
                                                 <!-- Program Pendukung (satu program per baris) -->
@@ -222,14 +243,22 @@
                                                     <td rowspan="<?= $programCount ?>">
                                                         <?php if (!empty($indikator['id'])): ?>
                                                             <?php if (empty($iku['definisi'])): ?>
+                                                                <!-- Belum ada IKU: hanya tombol tambah -->
                                                                 <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
                                                                     class="btn btn-primary btn-sm" title="Tambah IKU">
                                                                     <i class="fas fa-plus"></i>
                                                                 </a>
                                                             <?php else: ?>
+                                                                <!-- Sudah ada IKU: tombol edit + change status -->
                                                                 <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
                                                                     class="btn btn-warning btn-sm" title="Edit IKU">
                                                                     <i class="fas fa-edit"></i>
+                                                                </a>
+
+                                                                <a href="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>"
+                                                                   class="btn btn-info btn-sm change-status-btn"
+                                                                    title="Ubah Status IKU">
+                                                                    <i class="fas fa-sync-alt"></i>
                                                                 </a>
                                                             <?php endif; ?>
                                                         <?php else: ?>

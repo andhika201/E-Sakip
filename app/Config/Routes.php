@@ -161,6 +161,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
+    $routes->get('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
+
 
     // target
     $routes->get('target', 'AdminOpd\TargetController::index');
@@ -185,6 +187,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
     $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
     $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+    // ubah status lakip
+    $routes->get('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');

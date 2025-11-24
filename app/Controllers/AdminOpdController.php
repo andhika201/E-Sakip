@@ -3,68 +3,107 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminOpdController extends BaseController
 {
+    protected $db;
+
+    public function __construct()
+    {
+        $this->db = \Config\Database::connect();
+    }
+
     public function index()
     {
-        return view('adminOpd/dashboard');
-    }
+        /**
+         * ================= RENSTRA (tabel renstra_sasaran) =================
+         * Kolom status: Draft/Draf/Selesai
+         */
+        $renstraDraft = $this->db->table('renstra_sasaran')
+            ->groupStart()
+            ->where('status', 'Draft')
+            ->orWhere('status', 'Draf')
+            ->groupEnd()
+            ->countAllResults();
 
+        $renstraSelesai = $this->db->table('renstra_sasaran')
+            ->where('status', 'Selesai')
+            ->countAllResults();
 
-    public function renja()
-    {
-        return view('adminOpd/renja/renja');
-    }
-    public function tambah_renja()
-    {
-        return view('adminOpd/renja/tambah_renja');
-    }
-    public function edit_renja()
-    {
-        return view('adminOpd/renja/edit_renja');
-    }
+        $renstraStats = [
+            'draft' => $renstraDraft,
+            'selesai' => $renstraSelesai,
+        ];
 
-    // IKU Methods
-    public function iku()
-    {
-        return view('adminOpd/iku/iku');
-    }
+        /**
+         * ================= RENJA / RKT (tabel rkt) =================
+         */
+        $renjaDraft = $this->db->table('rkt')
+            ->groupStart()
+            ->where('status', 'Draft')
+            ->orWhere('status', 'Draf')
+            ->groupEnd()
+            ->countAllResults();
 
-    public function tambah_iku()
-    {
-        return view('adminOpd/iku/tambah_iku');
-    }
+        $renjaSelesai = $this->db->table('rkt')
+            ->where('status', 'Selesai')
+            ->countAllResults();
 
-    public function edit_iku()
-    {
-        return view('adminOpd/iku/edit_iku');
-    }
+        $renjaStats = [
+            'draft' => $renjaDraft,
+            'selesai' => $renjaSelesai,
+        ];
 
-    public function save_iku()
-    {
-        return redirect()->to(base_url('adminOpd/iku'));
-    }
-    
+        /**
+         * ================= IKU (tabel iku) =================
+         * Asumsi kolom status berisi 'Tercapai' / 'Belum'
+         */
+        $ikuTercapai = $this->db->table('iku')
+            ->where('status', 'Tercapai')
+            ->countAllResults();
 
-    public function pk_jpt()
-    {
-        return view('adminOpd/pk_jpt/pk_jpt');
-    }
+        $ikuBelum = $this->db->table('iku')
+            ->where('status', 'Belum')
+            ->countAllResults();
 
-    public function pk_admin()
-    {
-        return view('adminOpd/pk_admin/pk-admin');
-    }
+        $ikuStats = [
+            'tercapai' => $ikuTercapai,
+            'belum' => $ikuBelum,
+        ];
 
-    public function pk_pengawas()
-    {
-        return view('adminOpd/pk_pengawas/pk_pengawas');
-    }
+        /**
+         * ================= LAKIP (tabel lakip) =================
+         * Tidak pakai filter tahun (langsung total per status)
+         */
+        $lakipSiap = $this->db->table('lakip')
+            ->where('status', 'Siap')
+            ->countAllResults();
 
-    public function lakip_kabupaten()
-    {
-        return view('adminOpd/lakip_kabupaten/lakip_kabupaten');
+        $lakipProses = $this->db->table('lakip')
+            ->where('status', 'Proses')
+            ->countAllResults();
+
+        $lakipStats = [
+            'siap' => $lakipSiap,
+            'proses' => $lakipProses,
+        ];
+
+        /**
+         * ================= PK (sementara 0 dulu) =================
+         * Nanti kalau sudah jelas tabel PK-nya, baru kita sambungkan.
+         */
+        $pkStats = [
+            'ditandatangani' => 0,
+            'belum' => 0,
+        ];
+
+        return view('adminOpd/dashboard', [
+            'title' => 'Dashboard e-SAKIP - Admin OPD',
+            'renstraStats' => $renstraStats,
+            'renjaStats' => $renjaStats,
+            'ikuStats' => $ikuStats,
+            'lakipStats' => $lakipStats,
+            'pkStats' => $pkStats,
+        ]);
     }
 }

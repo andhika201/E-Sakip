@@ -113,10 +113,11 @@
                             <!-- Status -->
                             <select id="status_filter" class="form-select border-secondary" onchange="filterData()">
                                 <option value="">Semua Status</option>
-                                <option value="draft" <?= (($filters['status'] ?? '') === 'draft') ? 'selected' : '' ?>>Draft
+                                <option value="proses" <?= (($filters['status'] ?? '') === 'proses') ? 'selected' : '' ?>>
+                                    Proses
                                 </option>
-                                <option value="selesai" <?= (($filters['status'] ?? '') === 'selesai') ? 'selected' : '' ?>>
-                                    Selesai</option>
+                                <option value="siap" <?= (($filters['status'] ?? '') === 'siap') ? 'selected' : '' ?>>
+                                    Siap</option>
                             </select>
                         </div>
                     <?php endif; ?>
@@ -197,12 +198,12 @@
                                     $badgeClass = '';
                                     $statusLabel = '';
 
-                                    if ($statusText === 'selesai') {
+                                    if ($statusText === 'siap') {
                                         $badgeClass = 'badge bg-success';
-                                        $statusLabel = 'Selesai';
-                                    } elseif ($statusText === 'draft') {
+                                        $statusLabel = 'Siap';
+                                    } elseif ($statusText === 'proses') {
                                         $badgeClass = 'badge bg-warning text-dark';
-                                        $statusLabel = 'Draft';
+                                        $statusLabel = 'Proses';
                                     } elseif (!empty($statusText)) {
                                         $badgeClass = 'badge bg-secondary';
                                         $statusLabel = $statusText;
@@ -212,12 +213,14 @@
                                     $changeStatusUrl = '';
                                     $nextStatus = '';
                                     if (!empty($lakipItem['id'])) {
-                                        if ($statusText === 'selesai') {
-                                            $nextStatus = 'draft';
-                                            $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/draft');
+                                        if ($statusText === 'siap') {
+                                            // dari siap balik ke proses
+                                            $nextStatus = 'proses';
+                                            $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/proses');
                                         } else {
-                                            $nextStatus = 'selesai';
-                                            $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/selesai');
+                                            // default: dari kosong / proses jadi siap
+                                            $nextStatus = 'siap';
+                                            $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/siap');
                                         }
                                     }
                                     ?>

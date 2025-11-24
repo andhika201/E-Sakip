@@ -293,4 +293,31 @@ class IkuController extends BaseController
 
         return redirect()->to(base_url('adminopd/iku'));
     }
+    public function change_status($id)
+    {
+        $ikuModel = new IkuModel();
+
+        // Ambil data IKU berdasarkan indikator (renstra_id)
+        $iku = $ikuModel->where('renstra_id', $id)->first();
+
+        if (!$iku) {
+            return redirect()->back()->with('error', 'Data IKU tidak ditemukan.');
+        }
+
+        $current = strtolower(trim($iku['status'] ?? ''));
+
+        // Toggle: kalau belum / kosong → Tercapai, kalau Tercapai → Belum
+        if ($current === 'tercapai') {
+            $newStatus = 'Belum';
+        } else {
+            $newStatus = 'Tercapai';
+        }
+
+        $ikuModel->update($iku['id'], [
+            'status' => $newStatus,
+        ]);
+
+        return redirect()->back()->with('success', 'Status IKU berhasil diubah menjadi ' . $newStatus . '.');
+    }
+
 }

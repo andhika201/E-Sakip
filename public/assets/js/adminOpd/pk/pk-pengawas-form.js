@@ -127,55 +127,62 @@ function updateFormNames() {
                                 </select>
                             </div>
                         </div>
-                        <div class="program-container">
-                            <div class="program-item border rounded p-3 bg-white mb-3">
-                                <div class="row program-item">
+                        <div class="kegiatan-container">
+                            <div class="kegiatan-item border rounded p-3 bg-white mb-4">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Program</label>
-                                        <select name="sasaran_pk[0][indikator][0][program][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
-                                            ${window.jptProgramDropdownTemplate}
+                                        <label class="form-label">Kegiatan (Pilih)</label>
+                                        <select
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
+                                            class="form-select kegiatan-select border-secondary"
+                                            required>
+                                            ${window.kegiatanAdminDropdownTemplate || ''}
                                         </select>
                                     </div>
-                                    <div class="col-md-3">
-                                        <button type="button" class="remove-program btn btn-outline-danger btn-sm">
-                                        <i class="fas fa-trash"></i>
+
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button"
+                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </div>
-                            
-                                <div class="kegiatan-container">
-                                    <div class="kegiatan-item border rounded bg-light p-3">
+
+                                <div class="subkeg-container">
+                                    <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <label class="form-label">Kegiatan</label>
+                                                <label class="form-label">Sub Kegiatan</label>
                                                 <select
-                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                                    class="form-select kegiatan-select border-secondary"
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                                    class="form-select subkeg-select border-secondary"
                                                     required>
-                                                    ${window.kegiatanDropdownTemplate || ''}
+                                                    ${window.subkegiatanDropdownTemplate || ''}
                                                 </select>
                                             </div>
 
                                             <div class="col-md-3 d-flex align-items-end">
                                                 <button type="button"
-                                                    class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                    class="remove-subkeg btn btn-outline-danger btn-sm">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="d-flex justify-content-end mt-2">
                                     <button type="button"
-                                        class="add-kegiatan btn btn-success btn-sm">
-                                        <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                                        class="add-subkeg btn btn-success btn-sm">
+                                        <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                     </button>
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="add-program btn btn-success btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Program
+                            <button type="button" class="add-kegiatan btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                             </button>
                         </div>
                     </div>
@@ -235,55 +242,62 @@ function updateFormNames() {
                     </div>
                 </div>
 
-                <div class="program-container">
-                    <div class="program-item border rounded p-3 bg-white mb-3">
-                        <div class="row program-item">
+                <div class="kegiatan-container">
+                    <div class="kegiatan-item border rounded p-3 bg-white mb-4">
+                        <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Program</label>
-                                <select name="sasaran_pk[0][indikator][0][program][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
-                                    ${window.jptProgramDropdownTemplate}
+                                <label class="form-label">Kegiatan (Pilih)</label>
+                                <select
+                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
+                                    class="form-select kegiatan-select border-secondary"
+                                    required>
+                                    ${window.kegiatanAdminDropdownTemplate || ''}
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <button type="button" class="remove-program btn btn-outline-danger btn-sm">
-                                <i class="fas fa-trash"></i>
+
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button"
+                                    class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
-                    
-                        <div class="kegiatan-container">
-                            <div class="kegiatan-item border rounded bg-light p-3">
+
+                        <div class="subkeg-container">
+                            <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label">Kegiatan</label>
+                                        <label class="form-label">Sub Kegiatan</label>
                                         <select
-                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                            class="form-select kegiatan-select border-secondary"
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                            class="form-select subkeg-select border-secondary"
                                             required>
-                                            ${window.kegiatanDropdownTemplate || ''}
+                                            ${window.subkegiatanDropdownTemplate || ''}
                                         </select>
                                     </div>
 
                                     <div class="col-md-3 d-flex align-items-end">
                                         <button type="button"
-                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                            class="remove-subkeg btn btn-outline-danger btn-sm">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button"
-                                class="add-kegiatan btn btn-success btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                                class="add-subkeg btn btn-success btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                             </button>
                         </div>
                     </div>
                 </div>
+
                 <div class="d-flex justify-content-end mt-2">
-                    <button type="button" class="add-program btn btn-success btn-sm">
-                        <i class="fas fa-plus me-1"></i> Tambah Program
+                    <button type="button" class="add-kegiatan btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                     </button>
                 </div>
             `;

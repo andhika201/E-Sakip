@@ -293,6 +293,8 @@ class PkController extends BaseController
             }
         }
 
+        dd($this->request->getPost()['sasaran_pk'][0]);
+
         // -----------------------------------
         // SIMPAN KE DB via MODEL
         // -----------------------------------

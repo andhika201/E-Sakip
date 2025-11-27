@@ -127,38 +127,35 @@ function updateFormNames() {
                                 </select>
                             </div>
                         </div>
-                        <div class="program-container">
-                            <div class="program-item border rounded p-3 bg-white mb-3">
-                                <div class="row program-item">
+                        <div class="kegiatan-container">
+                            <div class="kegiatan-item border rounded p-3 bg-white mb-3">
+                                <div class="row mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Program</label>
-                                        <select name="sasaran_pk[0][indikator][0][program][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
-                                            ${window.jptProgramDropdownTemplate}
+                                        <label class="form-label">Kegiatan</label>
+                                        <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                                            ${window.kegiatanAdminDropdownTemplate}
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                                        <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
                                         <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </div>
                             
-                                <div class="kegiatan-container">
-                                    <div class="kegiatan-item border rounded bg-light p-3">
+                                <div class="subkeg-container">
+                                    <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <label class="form-label">Kegiatan</label>
-                                                <select
-                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                                    class="form-select kegiatan-select border-secondary"
-                                                    required>
-                                                    ${window.kegiatanDropdownTemplate || ''}
+                                                <label class="form-label">Sub Kegiatan</label>
+                                                <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                                    ${window.subkegiatanDropdownTemplate || ''}
                                                 </select>
                                             </div>
 
                                             <div class="col-md-3 d-flex align-items-end">
                                                 <button type="button"
-                                                    class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                    class="remove-subkeg btn btn-outline-danger btn-sm">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -167,19 +164,21 @@ function updateFormNames() {
                                 </div>
                                 <div class="d-flex justify-content-end mt-2">
                                     <button type="button"
-                                        class="add-kegiatan btn btn-success btn-sm">
-                                        <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                                        class="add-subkeg btn btn-success btn-sm">
+                                        <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                     </button>
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="add-program btn btn-success btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Program
+                            <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                             </button>
                         </div>
                     </div>
                 </div>
+
                 <div class="d-flex justify-content-end mt-2">
                     <button type="button" class="add-indikator btn btn-info btn-sm">
                         <i class="fas fa-plus me-1"></i> Tambah Indikator
@@ -235,38 +234,35 @@ function updateFormNames() {
                     </div>
                 </div>
 
-                <div class="program-container">
-                    <div class="program-item border rounded p-3 bg-white mb-3">
-                        <div class="row program-item">
+                <div class="kegiatan-container">
+                    <div class="kegiatan-item border rounded p-3 bg-white mb-3">
+                        <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Program</label>
-                                <select name="sasaran_pk[0][indikator][0][program][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
-                                    ${window.jptProgramDropdownTemplate}
+                                <label class="form-label">Kegiatan</label>
+                                <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                                    ${window.kegiatanAdminDropdownTemplate}
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                                <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
                                 <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                     
-                        <div class="kegiatan-container">
-                            <div class="kegiatan-item border rounded bg-light p-3">
+                        <div class="subkeg-container">
+                            <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label">Kegiatan</label>
-                                        <select
-                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                            class="form-select kegiatan-select border-secondary"
-                                            required>
-                                            ${window.kegiatanDropdownTemplate || ''}
+                                        <label class="form-label">Sub Kegiatan</label>
+                                        <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                            ${window.subkegiatanDropdownTemplate || ''}
                                         </select>
                                     </div>
 
                                     <div class="col-md-3 d-flex align-items-end">
                                         <button type="button"
-                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                            class="remove-subkeg btn btn-outline-danger btn-sm">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
@@ -275,15 +271,16 @@ function updateFormNames() {
                         </div>
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button"
-                                class="add-kegiatan btn btn-success btn-sm">
-                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                                class="add-subkeg btn btn-success btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                             </button>
                         </div>
                     </div>
                 </div>
+
                 <div class="d-flex justify-content-end mt-2">
-                    <button type="button" class="add-program btn btn-success btn-sm">
-                        <i class="fas fa-plus me-1"></i> Tambah Program
+                    <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                     </button>
                 </div>
             `;
@@ -292,48 +289,45 @@ function updateFormNames() {
         }
     });
 
-    // Tambah Program pada setiap indikator template baru
+    // Tambah Kegiatan pada setiap indikator template baru
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('add-program') || e.target.closest('.add-program')) {
+        if (e.target.classList.contains('add-kegiatan') || e.target.closest('.add-kegiatan')) {
             const indikatorItem = e.target.closest('.indikator-item');
             if (!indikatorItem) return;
-            const programContainer = indikatorItem.querySelector('.program-container');
-            if (!programContainer) return;
-            const programCount = programContainer.querySelectorAll('.program-item').length + 1;
-            // Buat template program-item baru
-            const newProgram = document.createElement('div');
-            newProgram.className = 'program-item border rounded p-3 bg-white mb-3';
-            newProgram.innerHTML = `
-            <div class="row">
+            const kegiatanContainer = indikatorItem.querySelector('.kegiatan-container');
+            if (!kegiatanContainer) return;
+            const kegiatanCount = kegiatanContainer.querySelectorAll('.kegiatan-item').length + 1;
+            // Buat template kegiatan-item baru
+            const newKegiatan = document.createElement('div');
+            newKegiatan.className = 'kegiatan-item border rounded p-3 bg-white mb-4';
+            newKegiatan.innerHTML = `
+            <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Program</label>
-                    <select name="sasaran_pk[0][indikator][0][program][0][program_id]" class="form-select program-select mb-3 border-secondary" required>
-                        ${window.jptProgramDropdownTemplate || ''}
+                    <label class="form-label">Kegiatan</label>
+                    <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                        ${window.kegiatanAdminDropdownTemplate}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <button type="button" class="remove-program btn btn-outline-danger btn-sm">
-                        <i class="fas fa-trash"></i>
+                    <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </div>
-
-            <div class="kegiatan-container">
-                <div class="kegiatan-item border rounded bg-light p-3">
+        
+            <div class="subkeg-container">
+                <div class="subkeg-item border rounded bg-light p-3 mb-3">
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label">Kegiatan</label>
-                            <select
-                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                class="form-select kegiatan-select border-secondary"
-                                required>
-                                ${window.kegiatanDropdownTemplate || ''}
+                            <label class="form-label">Sub Kegiatan</label>
+                            <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                ${window.subkegiatanDropdownTemplate || ''}
                             </select>
                         </div>
 
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="button"
-                                class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                class="remove-subkeg btn btn-outline-danger btn-sm">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -342,47 +336,45 @@ function updateFormNames() {
             </div>
             <div class="d-flex justify-content-end mt-2">
                 <button type="button"
-                    class="add-kegiatan btn btn-success btn-sm">
-                    <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                    class="add-subkeg btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                 </button>
             </div>
             `;
-            programContainer.appendChild(newProgram);
+            kegiatanContainer.appendChild(newKegiatan);
             updateFormNames();
         }
     });
 
-    // Tambah Kegiatan pada setiap Program baru
+    // Tambah Subkegiatan pada setiap kegiatan baru
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('add-kegiatan') || e.target.closest('.add-kegiatan')) {
-            const programItem = e.target.closest('.program-item');
-            if (!programItem) return;
-            const kegiatanContainer = programItem.querySelector('.kegiatan-container');
-            if (!kegiatanContainer) return;
-            const kegiatanCount = kegiatanContainer.querySelectorAll('.kegiatan-item').length + 1;
+        if (e.target.classList.contains('add-subkeg') || e.target.closest('.add-subkeg')) {
+            const kegiatanItem = e.target.closest('.kegiatan-item');
+            if (!kegiatanItem) return;
+            const subkegContainer = kegiatanItem.querySelector('.subkeg-container');
+            if (!subkegContainer) return;
+            const kegiatanCount = subkegContainer.querySelectorAll('.subkeg-item').length + 1;
             
-            const newKegiatan = document.createElement('div');
-            newKegiatan.className = 'kegiatan-item border rounded bg-light p-3';
-            newKegiatan.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label">Kegiatan</label>
-                            <select
-                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                class="form-select kegiatan-select mb-3 border-secondary"
-                                required>
-                                ${window.kegiatanDropdownTemplate || ''}
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="button"
-                                class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
+            const newSubkeg = document.createElement('div');
+            newSubkeg.className = 'subkeg-item border rounded bg-light p-3';
+            newSubkeg.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Sub Kegiatan</label>
+                    <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                        ${window.subkegiatanDropdownTemplate || ''}
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button"
+                        class="remove-subkeg btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
             `;
-            kegiatanContainer.appendChild(newKegiatan);
+            subkegContainer.appendChild(newSubkeg);
             updateFormNames();
         }
     });
@@ -416,21 +408,22 @@ function updateFormNames() {
                 alert('Minimal harus ada 1 indikator!');
             }
         }
-        // Hapus Program pada setiap indikator
-        if (e.target.classList.contains('remove-program') || e.target.closest('.remove-program')) {
+        
+        // Hapus Kegiatan pada setiap indikator
+        if (e.target.classList.contains('remove-kegiatan') || e.target.closest('.remove-kegiatan')) {
             const indikatorItem = e.target.closest('.indikator-item');
             if (!indikatorItem) return;
-            const programContainer = indikatorItem.querySelector('.program-container');
+            const programContainer = indikatorItem.querySelector('.kegiatan-container');
             if (!programContainer) return;
-            const programItems = programContainer.querySelectorAll('.program-item');
+            const programItems = programContainer.querySelectorAll('.kegiatan-item');
             if (programItems.length > 1) {
-                if (confirm('Yakin ingin menghapus program ini?')) {
-                    e.target.closest('.program-item').remove();
+                if (confirm('Yakin ingin menghapus kegiatan ini?')) {
+                    e.target.closest('.kegiatan-item').remove();
                     updateFormNames();
                 }
             } else {
                 // Jika hanya satu, kosongkan saja
-                const firstProgram = programContainer.querySelector('.program-item');
+                const firstProgram = programContainer.querySelector('.kegiatan-item');
                 if (firstProgram) {
                     firstProgram.querySelectorAll('input, select').forEach(el => {
                         if (el.tagName === 'INPUT') el.value = '';
@@ -440,69 +433,46 @@ function updateFormNames() {
             }
         }
 
-        // Hapus Kegiatan pada setiap program
-        if (e.target.classList.contains('remove-kegiatan') || e.target.closest('.remove-kegiatan')) {
-            const programItem = e.target.closest('.program-item');
-            if (!programItem) return;
-            const kegiatanContainer = programItem.querySelector('.kegiatan-container');
-            if (!kegiatanContainer) return;
-            const kegiatanItems = kegiatanContainer.querySelectorAll('.kegiatan-item');
-            if (kegiatanItems.length > 1) {
-                if (confirm('Yakin ingin menghapus kegiatan ini?')) {
-                    e.target.closest('.kegiatan-item').remove();
-                    updateFormNames();
-                }
+        // Hapus subkegiatan
+        if (e.target.classList.contains('remove-subkeg') || e.target.closest('.remove-subkeg')) {
+            const subContainer = e.target.closest('.subkeg-container');
+            const subItem = e.target.closest('.subkeg-item');
+
+            if (subContainer.querySelectorAll('.subkeg-item').length > 1) {
+                subItem.remove();
+                updateFormNames();
             } else {
-                // Jika hanya satu, kosongkan saja
-                const firstKegiatan = kegiatanContainer.querySelector('.kegiatan-item');
-                if (firstKegiatan) {
-                    firstKegiatan.querySelectorAll('input, select').forEach(el => {
-                        if (el.tagName === 'INPUT') el.value = '';
-                        if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                    });
-                }
+                // Jika hanya satu subkegiatan, kosongkan nilai
+                subItem.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
             }
         }
+
+
     });
     // Tambah dan hapus program pada setiap indikator
     document.addEventListener('DOMContentLoaded', function () {
     // Handler tambah program
     document.body.addEventListener('click', function (e) {
-        if (e.target.classList.contains('add-program') || e.target.closest('.add-program')) {
+        if (e.target.classList.contains('add-kegiatan') || e.target.closest('.add-kegiatan')) {
         const indikatorItem = e.target.closest('.indikator-item');
         if (!indikatorItem) return;
         
-        const programContainer = indikatorItem.querySelector('.program-container');
-        if (!programContainer) return;
+        const kegiatanContainer = indikatorItem.querySelector('.kegiatan-container');
+        if (!kegiatanContainer) return;
         
         // Clone program item pertama sebagai template
-        const template = programContainer.querySelector('.program-item').cloneNode(true);
+        const template = kegiatanContainer.querySelector('.kegiatan-item').cloneNode(true);
         
         // Kosongkan nilai
         template.querySelector('select').selectedIndex = 0;
         template.querySelector('input').value = '';
         
         // Tambahkan program baru
-        programContainer.appendChild(template);
+        kegiatanContainer.appendChild(template);
         
         // Update nama form
         updateFormNames();
     }
-        // Handler hapus program
-        if (e.target.classList.contains('remove-program') || e.target.closest('.remove-program')) {
-        const programItem = e.target.closest('.program-item');
-        const programContainer = programItem.closest('.program-container');
-        
-        if (programContainer.querySelectorAll('.program-item').length > 1) {
-            programItem.remove();
-            updateFormNames();
-        } else {
-            // Jika hanya satu program, kosongkan nilai
-            programItem.querySelector('select').selectedIndex = 0;
-            programItem.querySelector('input').value = '';
-        }
-    }
-
         // Handler hapus kegiatan
         if (e.target.classList.contains('remove-kegiatan') || e.target.closest('.remove-kegiatan')) {
         const kegiatanItem = e.target.closest('.kegiatan-item');

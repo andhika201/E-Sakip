@@ -378,12 +378,12 @@
                                                 <?php elseif ($jenis === 'pengawas'): ?>
 
                                                     <!-- PENGAWAS: Kegiatan (dari admin) -> Sub Kegiatan -->
-                                                    <div class="program-container">
-                                                        <div class="program-item border rounded p-3 bg-white mb-4">
+                                                    <div class="kegiatan-container">
+                                                        <div class="kegiatan-item border rounded p-3 bg-white mb-4">
                                                             <!-- NOTE: program select kept for structure but hidden for pengawas -->
                                                             <div class="row mb-3">
                                                                 <div class="col-md-6">
-                                                                    <label class="form-label">Kegiatan (Pilih)</label>
+                                                                    <label class="form-label">Kegiatan</label>
                                                                     <select
                                                                         name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
                                                                         class="form-select kegiatan-select border-secondary"
@@ -526,6 +526,17 @@
         window.kegiatanDropdownTemplate = `<?php
         if (isset($kegiatan) && !empty($kegiatan)) {
             foreach ($kegiatan as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
+
+        // kegiatan admin dropdown
+        window.kegiatanAdminDropdownTemplate = `<?php
+        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+            foreach ($kegiatanAdmin as $kegiatanItem) {
                 echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
             }
         } else {

@@ -128,7 +128,7 @@ function updateFormNames() {
                             </div>
                         </div>
                         <div class="kegiatan-container">
-                            <div class="kegiatan-item border rounded p-3 bg-white mb-3">
+                            <div class="kegiatan-item border rounded p-3 bg-white mb-4">
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Kegiatan</label>
@@ -136,19 +136,24 @@ function updateFormNames() {
                                             ${window.kegiatanAdminDropdownTemplate}
                                         </select>
                                     </div>
-                                    <div class="col-md-3">
-                                        <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                        <i class="fas fa-trash"></i>
+
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button"
+                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </div>
-                            
+
                                 <div class="subkeg-container">
                                     <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <label class="form-label">Sub Kegiatan</label>
-                                                <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                                <select
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                                    class="form-select subkeg-select border-secondary"
+                                                    required>
                                                     ${window.subkegiatanDropdownTemplate || ''}
                                                 </select>
                                             </div>
@@ -162,6 +167,7 @@ function updateFormNames() {
                                         </div>
                                     </div>
                                 </div>
+
                                 <div class="d-flex justify-content-end mt-2">
                                     <button type="button"
                                         class="add-subkeg btn btn-success btn-sm">
@@ -172,7 +178,7 @@ function updateFormNames() {
                         </div>
 
                         <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                            <button type="button" class="add-kegiatan btn btn-primary btn-sm">
                                 <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                             </button>
                         </div>
@@ -243,19 +249,24 @@ function updateFormNames() {
                                     ${window.kegiatanAdminDropdownTemplate}
                                 </select>
                             </div>
-                            <div class="col-md-3">
-                                <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                <i class="fas fa-trash"></i>
+
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button"
+                                    class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
-                    
+
                         <div class="subkeg-container">
                             <div class="subkeg-item border rounded bg-light p-3 mb-3">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Sub Kegiatan</label>
-                                        <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                        <select
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                            class="form-select subkeg-select border-secondary"
+                                            required>
                                             ${window.subkegiatanDropdownTemplate || ''}
                                         </select>
                                     </div>
@@ -269,6 +280,7 @@ function updateFormNames() {
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-end mt-2">
                             <button type="button"
                                 class="add-subkeg btn btn-success btn-sm">

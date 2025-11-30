@@ -60,18 +60,22 @@ function updateFormNames() {
                 }
             });
 
-            // Update kegiatan untuk setiap program
+            // Update subkegiatan untuk setiap kegiatan
             programItems.forEach((program, programIndex) => {
                 const kegiatanItems = program.querySelectorAll('.kegiatan-item');
                 kegiatanItems.forEach((kegiatan, kegiatanIndex) => {
-                    const kegiatanSelect = kegiatan.querySelector('select[name*="[kegiatan_id]"]');
-                    if (kegiatanSelect) {
-                        kegiatanSelect.name =
-                            `sasaran_pk[${sasaranIndex}]`
-                            + `[indikator][${indikatorIndex}]`
-                            + `[program][${programIndex}]`
-                            + `[kegiatan][${kegiatanIndex}][kegiatan_id]`;
-                    }
+                    const subItems = kegiatan.querySelectorAll('.subkeg-item');
+                    subItems.forEach((sub, subIndex) => {
+                        const subSelect = sub.querySelector('select[name*="[subkegiatan_id]"]');
+                        if (subSelect) {
+                            subSelect.name =
+                                `sasaran_pk[${sasaranIndex}]`
+                                + `[indikator][${indikatorIndex}]`
+                                + `[program][${programIndex}]`
+                                + `[kegiatan][${kegiatanIndex}]`
+                                + `[subkegiatan][${subIndex}][subkegiatan_id]`;
+                        }
+                    });
                 });
             });
         });
@@ -132,6 +136,8 @@ function updateFormNames() {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Kegiatan</label>
+
+                                        <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
                                         <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
                                             ${window.kegiatanAdminDropdownTemplate}
                                         </select>
@@ -245,6 +251,7 @@ function updateFormNames() {
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Kegiatan</label>
+                                <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
                                 <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
                                     ${window.kegiatanAdminDropdownTemplate}
                                 </select>
@@ -316,6 +323,7 @@ function updateFormNames() {
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Kegiatan</label>
+                    <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
                     <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
                         ${window.kegiatanAdminDropdownTemplate}
                     </select>

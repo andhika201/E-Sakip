@@ -224,10 +224,11 @@
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
-                        <button class="btn btn-danger btn-sm"
-                            onclick="deletePk(<?= $pk_data['id'] ?>, '<?= base_url() ?>')">
+                        
+                        <button class="btn btn-danger btn-sm" onclick="deletePk(<?= $pk_data['id'] ?>)">
                             <i class="fas fa-trash me-1"></i> Hapus
                         </button>
+                        
                     </div>
                 <?php else: ?>
                     <div class="alert alert-warning text-center">Belum ada data PK</div>
@@ -241,8 +242,8 @@
         window.base_url = '<?= base_url() ?>';
         window.jenis = '<?= $jenis ?>';
     </script>
-    <!-- PK page logic -->
-    <script src="<?= base_url('assets/js/adminOpd/pk/pk.js') ?>"></script>
+    <!-- <script src="<?= base_url('assets/js/adminOpd/pk/pk.js') ?>"></script> -->
+    <script src="<?= base_url('assets/js/adminOpd/pk/pk_detail.js') ?>"></script>
 </body>
 
 </html>

@@ -2,6 +2,7 @@
 function deletePk(pkId) {
     if (!confirm('Yakin ingin menghapus data PK ini?')) return;
     const jenis = typeof window.jenis !== 'undefined' ? window.jenis : (window.pkJenis || 'administrator');
+console.log("pkData:", pkData);
     fetch(`${base_url}adminopd/pk/${jenis}/delete/${pkId}`, {
         method: 'POST',
         headers: {

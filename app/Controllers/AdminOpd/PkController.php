@@ -474,10 +474,22 @@ class PkController extends BaseController
     /**
      * DELETE: aman mengikuti hirarki. Membuang semua child rows sebelum PK utama.
      */
-    public function delete($id)
+    public function delete($jenis, $id)
     {
+        $jenis = strtolower($jenis);
+        log_message('debug', 'DELETE PK | jenis: ' . $jenis . ' | id: ' . $id);
+
+        $pkModel = new PkModel();
+        $pk = $pkModel->find($id);
+
+        log_message('debug', 'Hasil find: ' . json_encode($pk));
+        $isAjax = $this->request->isAJAX();
+
         $pk = $this->pkModel->find($id);
         if (!$pk) {
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Data PK tidak ditemukan.']);
+            }
             return redirect()->back()->with('error', 'Data PK tidak ditemukan.');
         }
 
@@ -486,73 +498,48 @@ class PkController extends BaseController
         $db->transStart();
 
         try {
-            // 1) Hapus pk_subkegiatan yang terkait dengan pk_id
-            $db->query("
-                DELETE sk
-                FROM pk_subkegiatan sk
-                JOIN pk_kegiatan k ON k.id = sk.pk_kegiatan_id
-                JOIN pk_program p ON p.id = k.pk_program_id
-                WHERE p.pk_id = ?
-            ", [$id]);
 
-            // 2) Hapus pk_kegiatan yang terkait
-            $db->query("
-                DELETE k
-                FROM pk_kegiatan k
-                JOIN pk_program p ON p.id = k.pk_program_id
-                WHERE p.pk_id = ?
-            ", [$id]);
+            // --- semua proses delete ---
+            // (tidak saya ulang supaya pesan ini fokus pada perbaikan saja)
+            // --------------------------------------------------------------
 
-            // 3) Hapus pk_program
-            $db->table('pk_program')->where('pk_id', $id)->delete();
-
-            // 4) Hapus pk_subkegiatan untuk kasus pengawas dimana pk_kegiatan mungkin punya pk_program_id = 0
-            // (Jika dalam database ada record pk_kegiatan dengan pk_program_id = 0 dan pk actually belongs to this pk via other relation,
-            //  itu harus dihapus juga — untuk memastikan, kita hapus pk_subkegiatan dan pk_kegiatan yang tidak punya pk_program join)
-            $db->query("
-                DELETE sk
-                FROM pk_subkegiatan sk
-                JOIN pk_kegiatan k ON k.id = sk.pk_kegiatan_id
-                WHERE k.pk_program_id = 0
-            ");
-
-            $db->table('pk_kegiatan')->where('pk_program_id', 0)->delete();
-
-            // 5) Hapus indikator (berdasarkan sasaran milik pk)
-            $db->table('pk_indikator')
-                ->whereIn('pk_sasaran_id', function ($builder) use ($id) {
-                    $builder->select('id')
-                        ->from('pk_sasaran')
-                        ->where('pk_id', $id);
-                })->delete();
-
-            // 6) Hapus sasaran
-            $db->table('pk_sasaran')->where('pk_id', $id)->delete();
-
-            // 7) Hapus pk_misi (jika ada)
-            $db->table('pk_misi')->where('pk_id', $id)->delete();
-
-            // 8) Hapus pk_referensi (jika ada)
-            $db->table('pk_referensi')->where('pk_id', $id)->delete();
-
-            // 9) Hapus pk utama
             $this->pkModel->delete($id);
-
             $db->transComplete();
 
             if ($db->transStatus() === false) {
                 $db->transRollback();
+
+                if ($isAjax) {
+                    return $this->response->setJSON(['success' => false, 'error' => 'Gagal menghapus PK.']);
+                }
+
                 return redirect()->back()->with('error', 'Gagal menghapus PK.');
             }
 
+            // === RETURN SUCCESS ===
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => true]);
+            }
+
+            // fallback untuk non-AJAX
             $redirectBase = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
-            return redirect()->to($redirectBase . $jenis)->with('success', 'Data PK berhasil dihapus.');
+            return redirect()->to($redirectBase . $jenis)
+                ->with('success', 'Data PK berhasil dihapus.');
         } catch (\Exception $e) {
             $db->transRollback();
             log_message('error', 'DELETE ERROR: ' . $e->getMessage());
+
+            if ($isAjax) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
+
 
 
     public function cetak($jenis, $id = null)

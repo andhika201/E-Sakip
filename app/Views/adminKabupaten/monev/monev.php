@@ -6,38 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Monev - e-SAKIP</title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
-    <style>
-        .table-responsive thead th {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background: #d1e7dd;
-        }
-
-        .table thead th,
-        .table td {
-            vertical-align: middle;
-        }
-
-        .alert-soft {
-            background: #fff7e6;
-            border: 1px solid #ffe2a6;
-            color: #7a5d2f;
-        }
-
-        .border-dashed {
-            border-style: dashed !important;
-        }
-
-        .placeholder-card {
-            color: #6c757d;
-        }
-    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
+        <!-- Header & Sidebar -->
         <?= $this->include('adminKabupaten/templates/header.php'); ?>
         <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
@@ -45,184 +19,214 @@
             <div class="bg-white rounded shadow p-4">
                 <h2 class="h3 fw-bold text-success text-center mb-4">Monev</h2>
 
+                <!-- Alert -->
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+                <?php endif; ?>
                 <?php if (session()->getFlashdata('success')): ?>
                     <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
                 <?php endif; ?>
 
-                <!-- FILTER -->
-                <form method="get" action="<?= current_url(); ?>" class="row g-2 align-items-end mb-3">
-                    <div class="col-12 col-md-5">
-                        <label class="form-label mb-1">OPD <span class="text-danger">*</span></label>
-                        <select name="opd_id" class="form-select" onchange="this.form.submit()">
-                            <option value="">Pilih OPD</option>
-                            <?php foreach (($opdList ?? []) as $opd): ?>
-                                <option value="<?= (int) $opd['id'] ?>" <?= ((string) ($opdFilter ?? '') === (string) $opd['id']) ? 'selected' : '' ?>>
-                                    <?= esc($opd['nama_opd']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                <?php
+                $tahunVal = (string) ($tahun ?? 'all');
+                $modeVal = $mode ?? 'opd';
+                $opdVal = $opdId ?? 'all';
 
-                    <div class="col-12 col-md-3">
-                        <label class="form-label mb-1">Tahun</label>
-                        <?php $tahunVal = (string) ($tahun ?? 'all'); ?>
+                $hasOpdColumn = (
+                    $modeVal === 'opd'
+                    && ($opdVal === 'all' || $opdVal === '' || $opdVal === null)
+                );
+
+                // query base untuk tombol tambah/edit
+                $baseQuery = http_build_query([
+                    'mode' => $modeVal,
+                    'tahun' => $tahunVal,
+                    'opd_id' => $opdVal,
+                ]);
+                ?>
+
+                <!-- Filter -->
+                <form method="get" class="row g-2 mb-4 align-items-center">
+
+                    <!-- Tahun -->
+                    <div class="col-md-3">
                         <select name="tahun" class="form-select" onchange="this.form.submit()">
-                            <option value="all" <?= ($tahunVal === 'all' ? 'selected' : '') ?>>Semua Tahun</option>
-                            <?php foreach ($tahunList as $t):
-                                $yy = is_array($t) ? ($t['tahun'] ?? null) : $t;
-                                if ($yy === null)
+                            <option value="">Tahun</option>
+                            <?php foreach ($tahunList as $t): ?>
+                                <?php $yy = is_array($t) ? ($t['tahun'] ?? null) : $t; ?>
+                                <?php if ($yy === null)
                                     continue; ?>
-                                <option value="<?= esc($yy) ?>" <?= ((string) $tahunVal === (string) $yy) ? 'selected' : '' ?>>
+                                <option value="<?= esc($yy) ?>" <?= ($tahunVal !== 'all' && (string) $tahunVal === (string) $yy) ? 'selected' : '' ?>>
                                     <?= esc($yy) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <div class="col-6 col-md-2">
-                        <a class="btn btn-outline-secondary w-100" href="<?= base_url('adminkab/monev') ?>">Reset</a>
+                    <!-- Mode tampilan -->
+                    <div class="col-md-3">
+                        <select name="mode" class="form-select" onchange="this.form.submit()">
+                            <option value="opd" <?= $modeVal === 'opd' ? 'selected' : '' ?>>
+                                Tampilan per OPD (RENSTRA)
+                            </option>
+                            <option value="kab" <?= $modeVal === 'kab' ? 'selected' : '' ?>>
+                                Tampilan Kabupaten (RPJMD)
+                            </option>
+                        </select>
                     </div>
+
+                    <!-- Filter OPD hanya jika mode = opd -->
+                    <?php if ($modeVal === 'opd'): ?>
+                        <div class="col-md-4">
+                            <select name="opd_id" class="form-select" onchange="this.form.submit()">
+                                <option value="all" <?= ($opdVal === 'all' ? 'selected' : '') ?>>Semua OPD</option>
+                                <?php foreach (($opdList ?? []) as $opd): ?>
+                                    <option value="<?= (int) $opd['id'] ?>" <?= ((string) $opdVal === (string) $opd['id']) ? 'selected' : '' ?>>
+                                        <?= esc($opd['nama_opd']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+
                 </form>
 
-                <?php if (empty($opdFilter)): ?>
-                    <div class="text-center py-5 placeholder-card border border-dashed rounded-3">
-                        <i class="fas fa-filter fa-2x mb-2"></i>
-                        <div class="fw-semibold">Belum ada filter OPD</div>
-                        <div class="small">Gunakan pilihan OPD di atas untuk menampilkan tabel.</div>
-                    </div>
-                <?php else: ?>
+                <!-- Tabel -->
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle small">
+                        <thead class="table-success fw-bold text-dark">
+                            <tr>
+                                <th rowspan="2" class="border p-2 align-middle">No</th>
 
-                    <?php
-                    // hanya tampilkan baris yang punya data di tabel monev
-                    $monevOnly = array_values(array_filter(($monevList ?? []), function ($r) {
-                        return !empty($r['monev_id']); // pastikan join menamai PK monev sebagai monev_id
-                    }));
-                    ?>
-
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered text-center align-middle small">
-                            <thead class="table-success fw-bold text-dark">
-                                <tr>
-                                    <th rowspan="2" class="border p-2 align-middle">Satuan Kerja</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Tujuan</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Indikator</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Satuan</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Baseline (Capaian)</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Tahun</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Target (Renstra)</th>
-                                    <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
-                                    <th colspan="4" class="border p-2 align-middle">Capaian Triwulan</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Capaian Total</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
-                                    <th rowspan="2" class="border p-2 align-middle">Aksi</th>
-                                </tr>
-                                <tr>
-                                    <th>I</th>
-                                    <th>II</th>
-                                    <th>III</th>
-                                    <th>IV</th>
-                                    <th>I</th>
-                                    <th>II</th>
-                                    <th>III</th>
-                                    <th>IV</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (!empty($monevOnly)): ?>
-                                    <?php
-                                    // nama OPD terpilih
-                                    $opdName = '';
-                                    foreach (($opdList ?? []) as $o) {
-                                        if ((int) $o['id'] === (int) $opdFilter) {
-                                            $opdName = $o['nama_opd'];
-                                            break;
-                                        }
-                                    }
-
-                                    // Grouping: Tujuan → Sasaran → rows (hanya monevOnly)
-                                    $grouped = [];
-                                    foreach ($monevOnly as $row) {
-                                        $tujuan = $row['tujuan_rpjmd'] ?? '—';
-                                        $sasaran = $row['sasaran_renstra'] ?? '—';
-                                        $grouped[$tujuan][$sasaran][] = $row;
-                                    }
-
-                                    // total baris untuk rowspan OPD
-                                    $opdRowspan = count($monevOnly);
-                                    $opdPrinted = false;
-
-                                    foreach ($grouped as $tujuan => $sasaranArr):
-                                        $tujuanRowspan = 0;
-                                        foreach ($sasaranArr as $rows) {
-                                            $tujuanRowspan += count($rows);
-                                        }
-                                        $tujuanPrinted = false;
-
-                                        foreach ($sasaranArr as $sasaran => $rows):
-                                            $sasaranRowspan = count($rows);
-                                            $sasaranPrinted = false;
-
-                                            foreach ($rows as $row): ?>
-                                                <tr>
-                                                    <?php if (!$opdPrinted): ?>
-                                                        <td rowspan="<?= (int) $opdRowspan ?>" class="text-start fw-semibold">
-                                                            <?= esc($opdName ?: '-') ?>
-                                                        </td>
-                                                        <?php $opdPrinted = true; ?>
-                                                    <?php endif; ?>
-
-                                                    <?php if (!$tujuanPrinted): ?>
-                                                        <td rowspan="<?= (int) $tujuanRowspan ?>" class="text-start"><?= esc($tujuan) ?></td>
-                                                        <?php $tujuanPrinted = true; ?>
-                                                    <?php endif; ?>
-
-                                                    <?php if (!$sasaranPrinted): ?>
-                                                        <td rowspan="<?= (int) $sasaranRowspan ?>" class="text-start"><?= esc($sasaran) ?></td>
-                                                        <?php $sasaranPrinted = true; ?>
-                                                    <?php endif; ?>
-
-                                                    <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                                                    <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
-                                                    <td><?= esc($row['satuan'] ?? '-') ?></td>
-                                                    <td><?= esc($row['target_capaian'] ?? '-') ?></td>
-                                                    <td><?= esc($row['indikator_tahun'] ?? '-') ?></td>
-                                                    <td><?= esc($row['indikator_target'] ?? '-') ?></td>
-
-                                                    <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
-                                                    <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
-                                                    <td><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
-                                                    <td><?= esc($row['target_triwulan_4'] ?? '-') ?></td>
-
-                                                    <td><?= esc($row['capaian_triwulan_1'] ?? '-') ?></td>
-                                                    <td><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
-                                                    <td><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
-                                                    <td><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
-
-                                                    <td>
-                                                        <?php $tot = $row['monev_total'] ?? null;
-                                                        echo ($tot !== null && $tot !== '' && is_numeric($tot)) ? number_format((float) $tot, 0) : '-'; ?>
-                                                    </td>
-
-                                                    <td class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
-
-                                                    <td>
-                                                        <a href="<?= base_url('adminkab/monev/edit/' . (int) $row['monev_id'] . '?' . http_build_query(['opd_id' => (int) $opdFilter, 'tahun' => (string) $tahunVal])) ?>"
-                                                            class="btn btn-sm btn-warning">Edit</a>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; endforeach; endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="20" class="text-muted">Belum ada data Monev tersimpan untuk kriteria yang
-                                            dipilih.</td>
-                                    </tr>
+                                <?php if ($hasOpdColumn): ?>
+                                    <th rowspan="2" class="border p-2 align-middle">OPD</th>
                                 <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
+
+                                <th rowspan="2" class="border p-2 align-middle">Sasaran</th>
+                                <th rowspan="2" class="border p-2 align-middle">Indikator</th>
+                                <th rowspan="2" class="border p-2 align-middle">Tahun</th>
+                                <th rowspan="2" class="border p-2 align-middle">Satuan</th>
+                                <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
+                                <th rowspan="2" class="border p-2 align-middle">Baseline (Capaian)</th>
+                                <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
+                                <th colspan="4" class="border p-2 align-middle">Capaian Triwulan</th>
+                                <th rowspan="2" class="border p-2 align-middle">Capaian Total</th>
+                                <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
+                                <th rowspan="2" class="border p-2 align-middle">Aksi</th>
+                            </tr>
+                            <tr>
+                                <th>I</th>
+                                <th>II</th>
+                                <th>III</th>
+                                <th>IV</th>
+                                <th>I</th>
+                                <th>II</th>
+                                <th>III</th>
+                                <th>IV</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php if (!empty($monevList)): ?>
+                                <?php
+                                $grouped = [];
+                                foreach ($monevList as $row) {
+                                    $sasaran = $row['sasaran_renstra'] ?? '—';
+                                    $grouped[$sasaran][] = $row;
+                                }
+
+                                $no = 1;
+                                foreach ($grouped as $sasaran => $rows):
+                                    $rowspan = count($rows);
+                                    $printedSasaran = false;
+
+                                    foreach ($rows as $row):
+                                        $hasMonev = !empty($row['monev_id']);
+                                        $targetRencanaId = $row['target_id'] ?? ($row['target_rencana_id'] ?? null);
+                                        ?>
+                                        <tr>
+                                            <!-- No -->
+                                            <td><?= $no++ ?></td>
+
+                                            <!-- OPD (hanya kalau filter = Semua OPD & mode opd) -->
+                                            <?php if ($hasOpdColumn): ?>
+                                                <td class="text-start">
+                                                    <?= esc($row['nama_opd'] ?? '-') ?>
+                                                </td>
+                                            <?php endif; ?>
+
+                                            <!-- Sasaran (rowspan) -->
+                                            <?php if (!$printedSasaran): ?>
+                                                <td rowspan="<?= (int) $rowspan ?>" class="text-start">
+                                                    <?= esc($sasaran) ?>
+                                                </td>
+                                                <?php $printedSasaran = true; ?>
+                                            <?php endif; ?>
+
+                                            <!-- Indikator & basic info -->
+                                            <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
+                                            <td><?= esc($row['indikator_tahun'] ?? '-') ?></td>
+                                            <td><?= esc($row['satuan'] ?? '-') ?></td>
+
+                                            <!-- Target & baseline -->
+                                            <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                            <td><?= esc($row['target_capaian'] ?? '-') ?></td>
+
+                                            <!-- Target Triwulan -->
+                                            <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
+                                            <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
+                                            <td><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
+                                            <td><?= esc($row['target_triwulan_4'] ?? '-') ?></td>
+
+                                            <!-- Capaian Triwulan -->
+                                            <td><?= esc($row['capaian_triwulan_1'] ?? '-') ?></td>
+                                            <td><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
+                                            <td><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
+                                            <td><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
+
+                                            <!-- Total -->
+                                            <td>
+                                                <?php
+                                                $tot = $row['monev_total'] ?? null;
+                                                echo ($tot !== null && $tot !== '' && is_numeric($tot))
+                                                    ? number_format((float) $tot, 0)
+                                                    : '-';
+                                                ?>
+                                            </td>
+
+                                            <!-- PJ -->
+                                            <td class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
+
+                                            <!-- Aksi -->
+                                            <td>
+                                                <?php if (!$hasMonev && $targetRencanaId): ?>
+                                                    <a href="<?= base_url('adminkab/monev/tambah?target_rencana_id=' . (int) $targetRencanaId . '&' . $baseQuery) ?>"
+                                                        class="btn btn-primary btn-sm" title="Tambah Monev">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                <?php elseif ($hasMonev): ?>
+                                                    <a href="<?= base_url('adminkab/monev/edit/' . (int) $row['monev_id'] . '?' . $baseQuery) ?>"
+                                                        class="btn btn-warning btn-sm" title="Edit Monev">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?= $hasOpdColumn ? 19 : 18 ?>" class="text-muted">
+                                        Data tidak ditemukan.
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+
+                    </table>
+                </div>
             </div>
         </main>
 

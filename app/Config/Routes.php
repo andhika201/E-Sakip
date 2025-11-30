@@ -68,34 +68,27 @@ $routes->group(
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
         // rkt
-        $routes->get('rkt', 'AdminOpd\RktController::index');
-        $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
-        $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
-        $routes->post('rkt/save', 'AdminOpd\RktController::save');
-        $routes->post('rkt/update', 'AdminOpd\RktController::update');
-        $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
-        $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
-
-        // target
-        $routes->get('target', 'TargetController::index');
-        $routes->get('target/tambah', 'TargetController::tambah');
-        $routes->post('target/save', 'TargetController::save');
-        $routes->get('target/edit/(:num)', 'TargetController::edit/$1');
-        $routes->post('target/update/(:num)', 'TargetController::update/$1');
+        $routes->get('rkt', 'AdminKab\RktController::index');
+        $routes->get('rkt/tambah/(:num)', 'AdminKab\RktController::tambah/$1');
+        $routes->get('rkt/edit/(:num)', 'AdminKab\RktController::edit/$1');
+        $routes->post('rkt/save', 'AdminKab\RktController::save');
+        $routes->post('rkt/update', 'AdminKab\RktController::update');
+        $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminKab\RktController::delete/$1');
+        $routes->post('rkt/update-status', 'AdminKab\RktController::updateStatus');
 
         //MONEV
-        $routes->get('monev', 'MonevController::index');
-        $routes->get('monev/tambah', 'MonevController::tambah');
-        $routes->post('monev/save', 'MonevController::save');
-        $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
-        $routes->post('monev/update/(:num)', 'MonevController::update/$1');
+        $routes->get('monev', 'AdminKab\MonevController::index');
+        $routes->get('monev/tambah', 'AdminKab\MonevController::tambah');
+        $routes->post('monev/save', 'AdminKab\MonevController::save');
+        $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
+        $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
 
         // target
-        $routes->get('target', 'AdminOpd\TargetController::index');
-        $routes->get('target/tambah', 'AdminOpd\TargetController::tambah');
-        $routes->post('target/save', 'AdminOpd\TargetController::save');
-        $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
-        $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
+        $routes->get('target', 'AdminKab\TargetController::index');
+        $routes->get('target/tambah', 'AdminKab\TargetController::tambah');
+        $routes->post('target/save', 'AdminKab\TargetController::save');
+        $routes->get('target/edit/(:num)', 'AdminKab\TargetController::edit/$1');
+        $routes->post('target/update/(:num)', 'AdminKab\TargetController::update/$1');
 
         // Lakip Kabupaten
         $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');

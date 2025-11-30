@@ -34,6 +34,7 @@ class TargetModel extends Model
 
     public function getAvailableYears(): array
     {
+        // Tahun diambil dari renstra_target (buat dropdown tahun)
         return $this->db->table('renstra_target')
             ->select('tahun')
             ->distinct()
@@ -60,9 +61,9 @@ class TargetModel extends Model
         return $this->db->table('target_rencana tr')
             ->select("
                 tr.*,
-                rt.id    AS renstra_target_id,
-                rt.tahun AS indikator_tahun,
-                rt.target AS indikator_target,
+                rt.id      AS renstra_target_id,
+                rt.tahun   AS indikator_tahun,
+                rt.target  AS indikator_target,
                 ris.indikator_sasaran,
                 ris.satuan,
                 rs.sasaran AS sasaran_renstra
@@ -75,11 +76,8 @@ class TargetModel extends Model
             ->getRowArray();
     }
 
-    /* ========== LIST UNTUK HALAMAN INDEX (ADMIN OPD) ========= */
+    /* ========== LIST UNTUK ADMIN OPD (RENSTRA OPD SENDIRI) ========= */
 
-    /**
-     * List indikator RENSTRA + target_rencana (triwulan) untuk OPD tertentu
-     */
     public function getTargetListByRenstra(?string $tahun = null, ?int $opdId = null): array
     {
         $trJoin = "tr.renstra_target_id = rt.id";
@@ -128,7 +126,7 @@ class TargetModel extends Model
             ->getResultArray();
     }
 
-    /* ========== LIST UNTUK ADMIN KAB (MODE OPD) ============== */
+    /* ========== LIST UNTUK ADMIN KAB (MODE OPD / RENSTRA) ============== */
 
     public function getTargetListByRenstraAdminKab(?string $tahun = null, ?int $opdId = null): array
     {
@@ -139,29 +137,31 @@ class TargetModel extends Model
 
         $b = $this->db->table('renstra_target rt')
             ->select("
-                rt.id     AS renstra_target_id,
-                rt.tahun  AS indikator_tahun,
-                rt.target AS indikator_target,
+            rt.id      AS renstra_target_id,
+            rt.tahun   AS indikator_tahun,
+            rt.target  AS indikator_target,
 
-                ris.id    AS indikator_id,
-                ris.indikator_sasaran,
-                ris.satuan,
+            ris.id     AS indikator_id,
+            ris.indikator_sasaran,
+            ris.satuan,
 
-                rs.id     AS renstra_sasaran_id,
-                rs.sasaran AS sasaran_renstra,
-                rs.opd_id AS opd_id,
+            rs.id      AS renstra_sasaran_id,
+            rs.sasaran AS sasaran_renstra,
+            rs.opd_id  AS opd_id,
+            o.nama_opd AS nama_opd,   
 
-                tr.id     AS target_id,
-                tr.rencana_aksi,
-                tr.capaian,
-                tr.target_triwulan_1,
-                tr.target_triwulan_2,
-                tr.target_triwulan_3,
-                tr.target_triwulan_4,
-                tr.penanggung_jawab
-            ")
+            tr.id      AS target_id,
+            tr.rencana_aksi,
+            tr.capaian,
+            tr.target_triwulan_1,
+            tr.target_triwulan_2,
+            tr.target_triwulan_3,
+            tr.target_triwulan_4,
+            tr.penanggung_jawab
+        ")
             ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('opd o', 'o.id = rs.opd_id', 'left')   
             ->join('target_rencana tr', $trJoin, 'left');
 
         if (!empty($tahun)) {
@@ -178,28 +178,29 @@ class TargetModel extends Model
             ->getResultArray();
     }
 
+
     /* ========== LIST UNTUK ADMIN KAB (MODE KABUPATEN / RPJMD) = */
 
-    /**
-     * List target berbasis RPJMD untuk tampilan kabupaten (admin_kab, mode = 'kabupaten')
-     * - Indikator & satuan diambil dari tabel RPJMD
-     * - Tahun & target_tahunan dari rpjmd_target
-     * - Data triwulan / rencana aksi dari target_rencana yang mengacu ke rpjmd_target_id
-     */
+
     public function getTargetListByRpjmdKabupaten(?string $tahun = null): array
     {
+        // Di schema: rpjmd_target.indikator_sasaran_id → rpjmd_indikator_sasaran.id
+        //            rpjmd_indikator_sasaran.sasaran_id → rpjmd_sasaran.id
+
         $b = $this->db->table('rpjmd_target rpj')
             ->select("
-                rpj.id              AS rpjmd_target_id,
-                rpj.tahun           AS indikator_tahun,
-                rpj.target_tahunan,
+                rpj.id                  AS rpjmd_target_id,
+                rpj.tahun               AS indikator_tahun,
+                rpj.target_tahunan      AS indikator_target,
 
-                ri.indikator_rpjmd  AS indikator_sasaran,
-                ri.satuan,
+                ris.id                  AS indikator_id,
+                ris.indikator_sasaran   AS indikator_sasaran,
+                ris.satuan              AS satuan,
 
-                rs.sasaran_rpjmd    AS sasaran_renstra,
+                rs.id                   AS rpjmd_sasaran_id,
+                rs.sasaran_rpjmd        AS sasaran_renstra,
 
-                tr.id               AS target_id,
+                tr.id                   AS target_id,
                 tr.rencana_aksi,
                 tr.capaian,
                 tr.target_triwulan_1,
@@ -208,8 +209,8 @@ class TargetModel extends Model
                 tr.target_triwulan_4,
                 tr.penanggung_jawab
             ")
-            ->join('rpjmd_indikator ri', 'ri.id = rpj.indikator_id', 'left')
-            ->join('rpjmd_sasaran rs', 'rs.id = ri.sasaran_id', 'left')
+            ->join('rpjmd_indikator_sasaran ris', 'ris.id = rpj.indikator_sasaran_id', 'left')
+            ->join('rpjmd_sasaran rs', 'rs.id = ris.sasaran_id', 'left')
             ->join('target_rencana tr', 'tr.rpjmd_target_id = rpj.id', 'left');
 
         if (!empty($tahun)) {
@@ -217,7 +218,7 @@ class TargetModel extends Model
         }
 
         return $b->orderBy('rs.id', 'ASC')
-            ->orderBy('ri.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
             ->orderBy('rpj.tahun', 'ASC')
             ->get()
             ->getResultArray();

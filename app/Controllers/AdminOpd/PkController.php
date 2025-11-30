@@ -39,6 +39,8 @@ class PkController extends BaseController
             $pkData = null;
         }
 
+        // dd($pkData);
+
         return view('adminOpd/pk/pk', [
             'pk_data' => $pkData,
             'current_opd' => $currentOpd,
@@ -184,6 +186,7 @@ class PkController extends BaseController
 
                 $sasaranData = [
                     'sasaran' => $s['sasaran'] ?? '',
+                    'jenis'   => $jenis,
                     'indikator' => [],
                 ];
 
@@ -199,9 +202,9 @@ class PkController extends BaseController
                             'target'          => $indikator['target'] ?? '',
                             'id_satuan'       => $indikator['id_satuan'] ?? null,
                             'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
+                            'jenis'           => $jenis,
 
                             'program'  => [], // untuk jpt & admin
-                            'kegiatan' => [], // untuk pengawas
                         ];
 
                         // ------------------------------------------------------
@@ -212,7 +215,6 @@ class PkController extends BaseController
                                 foreach ($indikator['program'] as $p) {
                                     $indikatorData['program'][] = [
                                         'program_id' => $p['program_id'] ?? null,
-                                        'anggaran'   => $p['anggaran'] ?? 0,
                                     ];
                                 }
                             }
@@ -235,11 +237,9 @@ class PkController extends BaseController
                                         foreach ($p['kegiatan'] as $k) {
                                             $programData['kegiatan'][] = [
                                                 'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                                'anggaran'    => $k['anggaran'] ?? 0,
                                             ];
                                         }
                                     }
-
                                     $indikatorData['program'][] = $programData;
                                 }
                             }
@@ -249,25 +249,44 @@ class PkController extends BaseController
                         // JENIS = PENGAWAS → indikator → kegiatan → subkegiatan
                         // ------------------------------------------------------
                         if ($jenis === 'pengawas') {
-                            if (!empty($indikator['kegiatan'])) {
 
-                                foreach ($indikator['kegiatan'] as $k) {
+                            if (!empty($indikator['program']) && is_array($indikator['program'])) {
 
-                                    $kegiatanData = [
-                                        'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                        'subkegiatan' => [],
+                                foreach ($indikator['program'] as $p) {
+
+                                    // --- PROGRAM LEVEL ---
+                                    $programData = [
+                                        'program_id' => $p['program_id'] ?? null,
+                                        'kegiatan'   => [],
                                     ];
 
-                                    if (!empty($k['subkegiatan'])) {
-                                        foreach ($k['subkegiatan'] as $sk) {
-                                            $kegiatanData['subkegiatan'][] = [
-                                                'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
-                                                'anggaran'       => $sk['anggaran'] ?? 0,
+                                    // --- KEGIATAN LEVEL ---
+                                    if (!empty($p['kegiatan']) && is_array($p['kegiatan'])) {
+
+                                        foreach ($p['kegiatan'] as $k) {
+
+                                            $kegiatanData = [
+                                                'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                                'subkegiatan' => [],
                                             ];
+
+                                            // --- SUBKEGIATAN LEVEL ---
+                                            if (!empty($k['subkegiatan']) && is_array($k['subkegiatan'])) {
+
+                                                foreach ($k['subkegiatan'] as $sk) {
+                                                    $kegiatanData['subkegiatan'][] = [
+                                                        'subkegiatan_id' => $sk['subkegiatan_id'] ?? null
+                                                    ];
+                                                }
+                                            }
+
+                                            // masukkan kegiatan ke dalam program
+                                            $programData['kegiatan'][] = $kegiatanData;
                                         }
                                     }
 
-                                    $indikatorData['kegiatan'][] = $kegiatanData;
+                                    // masukkan program ke dalam indikator
+                                    $indikatorData['program'][] = $programData;
                                 }
                             }
                         }
@@ -279,35 +298,53 @@ class PkController extends BaseController
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         }
+        // dd($post['sasaran_pk'][0]['indikator'][0]);
+        // dd($saveData);
 
         // ------------------------------
         // SIMPAN KE MODEL
         // ------------------------------
         try {
-
             $pkId = $this->pkModel->saveCompletePk($saveData);
 
-            if ($pkId) {
-                $redirectBase = (strtolower($jenis) === 'bupati')
-                    ? '/adminKab/pk/'
-                    : '/adminOpd/pk/';
+            // Jika saveCompletePk() gagal tetapi tidak melempar exception
+            if (!$pkId) {
 
-                return redirect()->to($redirectBase . $jenis)
-                    ->with('success', 'Data PK berhasil disimpan');
+                // Ambil pesan error DB terakhir
+                $db = \Config\Database::connect();
+                $dbError = $db->error();
+
+                // Jika ada pesan error DB, tampilkan
+                if (!empty($dbError['message'])) {
+                    log_message('error', 'DB ERROR (saveCompletePk): ' . $dbError['message']);
+
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Gagal menyimpan PK: ' . $dbError['message']);
+                }
+
+                // Jika tidak ada pesan DB, fallback general error
+                return redirect()->back()->withInput()
+                    ->with('error', 'Gagal menyimpan PK (Unknown database error)');
             }
 
-            return redirect()->back()->withInput()
-                ->with('error', 'Gagal menyimpan PK');
+            // Jika berhasil
+            $redirectBase = (strtolower($jenis) === 'bupati')
+                ? '/adminKab/pk/'
+                : '/adminopd/pk/';
+
+            return redirect()->to($redirectBase . $jenis)
+                ->with('success', 'Data PK berhasil disimpan');
         } catch (\Exception $e) {
 
-            log_message('error', 'SAVE ERROR: ' . $e->getMessage());
+            // Tangkap error yang dilempar model
+            log_message('error', 'SAVE EXCEPTION: ' . $e->getMessage());
 
             return redirect()->back()->withInput()
-                ->with('error', 'Error: ' . $e->getMessage());
+                ->with('error', 'Exception: ' . $e->getMessage());
         }
     }
 
-   /**
+    /**
      * UPDATE: gunakan model updateCompletePk untuk konsistensi (replace seluruh struktur)
      * signature: update($id)
      */
@@ -434,7 +471,7 @@ class PkController extends BaseController
         }
     }
 
-   /**
+    /**
      * DELETE: aman mengikuti hirarki. Membuang semua child rows sebelum PK utama.
      */
     public function delete($id)

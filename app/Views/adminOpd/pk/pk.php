@@ -119,19 +119,19 @@
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                    <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
-                    <table class="table table-bordered table-striped text-center small">
-                        <thead class="table-info">
-                            <tr>
-                                <th class="border p-2">NO</th>
-                                <th class="border p-2">PROGRAM</th>
-                                <th class="border p-2">ANGGARAN</th>
-                                <th class="border p-2">Tingkat PK</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php $no_program = 1; ?>
-                            <?php if (strtolower($jenis) === 'bupati'): ?>
+                    <?php if (strtolower($jenis) === 'bupati'): ?>
+                        <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
+                        <table class="table table-bordered table-striped text-center small">
+                            <thead class="table-info">
+                                <tr>
+                                    <th class="border p-2">NO</th>
+                                    <th class="border p-2">PROGRAM</th>
+                                    <th class="border p-2">ANGGARAN</th>
+                                    <th class="border p-2">Tingkat PK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no_program = 1; ?>
                                 <?php $allPrograms = model('App\\Models\\PkModel')->getAllPrograms(); ?>
                                 <?php foreach ($allPrograms as $program): ?>
                                     <tr>
@@ -141,7 +141,21 @@
                                         <td class="border p-2">Bupati</td>
                                     </tr>
                                 <?php endforeach; ?>
-                            <?php else: ?>
+                            </tbody>
+                        </table>
+                    <?php elseif ($jenis === 'jpt'): ?>
+                        <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
+                        <table class="table table-bordered table-striped text-center small">
+                            <thead class="table-info">
+                                <tr>
+                                    <th class="border p-2">NO</th>
+                                    <th class="border p-2">PROGRAM</th>
+                                    <th class="border p-2">ANGGARAN</th>
+                                    <th class="border p-2">Tingkat PK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no_program = 1; ?>
                                 <?php foreach ($pk_data['program'] as $program): ?>
                                     <tr>
                                         <td class="border p-2"><?= $no_program++ ?></td>
@@ -150,16 +164,63 @@
                                         <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    <?php elseif ($jenis === 'administrator'): ?>
+                        <h4 class="h3 fw-bold text-success text-left mb-4">KEGIATAN DAN ANGGARAN</h4>
+                        <table class="table table-bordered table-striped text-center small">
+                            <thead class="table-info">
+                                <tr>
+                                    <th class="border p-2">NO</th>
+                                    <th class="border p-2">KEGIATAN</th>
+                                    <th class="border p-2">ANGGARAN</th>
+                                    <th class="border p-2">Tingkat PK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no_kegiatan = 1; ?>
+                                <?php foreach ($pk_data['kegiatan'] as $kegiatan): ?>
+                                    <tr>
+                                        <td class="border p-2"><?= $no_kegiatan++ ?></td>
+                                        <td class="border p-2"><?= esc($kegiatan['kegiatan']) ?></td>
+                                        <td class="border p-2">Rp <?= number_format($kegiatan['anggaran'], 0, ',', '.') ?></td>
+                                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+
+                    <?php elseif ($jenis === 'pengawas'): ?>
+                        <h4 class="h3 fw-bold text-success text-left mb-4">SUBKEGIATAN DAN ANGGARAN</h4>
+                        <table class="table table-bordered table-striped text-center small">
+                            <thead class="table-info">
+                                <tr>
+                                    <th class="border p-2">NO</th>
+                                    <th class="border p-2">SUBKEGIATAN</th>
+                                    <th class="border p-2">ANGGARAN</th>
+                                    <th class="border p-2">Tingkat PK</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no_subkegiatan = 1; ?>
+                                <?php foreach ($pk_data['subkegiatan'] as $subkegiatan): ?>
+                                    <tr>
+                                        <td class="border p-2"><?= $no_subkegiatan++ ?></td>
+                                        <td class="border p-2"><?= esc($subkegiatan['sub_kegiatan']) ?></td>
+                                        <td class="border p-2">Rp <?= number_format($subkegiatan['anggaran'], 0, ',', '.') ?></td>
+                                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="<?= base_url(($jenis==='bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
                             class="btn btn-primary btn-sm text-white" target="_blank">
                             <i class="fas fa-download me-1"></i> Download
                         </a>
-                        
-                        <a href="<?= base_url(($jenis==='bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $pk_data['jenis'] . '/edit/' . $pk_data['id']) ?>"
+
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $pk_data['jenis'] . '/edit/' . $pk_data['id']) ?>"
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>

@@ -81,10 +81,41 @@ class PkModel extends Model
     public function getProgramByPkId($pkId)
     {
         return $this->db->table('pk_program pp')
-            ->select('pp.id as pk_program_id, pr.program_kegiatan, pr.anggaran, pp.program_id, pp.id_indikator')
+            ->select('pp.id as pk_program_id, pr.program_kegiatan, pr.anggaran, pp.program_id, pp.pk_indikator_id')
             ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
-            ->where('pp.pk_id', $pkId)
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->where('ps.pk_id', $pkId)
             ->orderBy('pp.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getKegiatanByPkId($pkId)
+    {
+        return $this->db->table('pk_kegiatan kk')
+            ->select('kk.id as pk_kegiatan_id, kp.kegiatan, kp.anggaran, kk.kegiatan_id, kk.pk_program_id')
+            ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
+            ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->where('ps.pk_id', $pkId)
+            ->orderBy('kk.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getSubKegiatanByPkId($pkId)
+    {
+        return $this->db->table('pk_subkegiatan psk')
+            ->select('psk.id as pk_subkegiatan_id, skp.sub_kegiatan, skp.anggaran, psk.subkegiatan_id, psk.pk_kegiatan_id')
+            ->join('sub_kegiatan_pk skp', 'skp.id = psk.subkegiatan_id', 'left')
+            ->join('pk_kegiatan kk', 'kk.id = psk.pk_kegiatan_id', 'left')
+            ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->where('ps.pk_id', $pkId)
+            ->orderBy('psk.id', 'ASC')
             ->get()
             ->getResultArray();
     }
@@ -146,132 +177,127 @@ class PkModel extends Model
         try {
             $now = date('Y-m-d H:i:s');
 
-            // 1. insert pk
+            // ---------------------------------------
+            // 1. INSERT PK
+            // ---------------------------------------
             $pkData = [
-                'opd_id' => $data['opd_id'],
-                'jenis' => $data['jenis'],
-                'pihak_1' => $data['pihak_1'],
-                'pihak_2' => $data['pihak_2'],
-                'tanggal' => $data['tanggal'],
+                'opd_id'     => $data['opd_id'],
+                'jenis'      => $data['jenis'],
+                'pihak_1'    => $data['pihak_1'],
+                'pihak_2'    => $data['pihak_2'],
+                'tanggal'    => $data['tanggal'],
                 'created_at' => $now,
                 'updated_at' => $now
             ];
 
             $db->table('pk')->insert($pkData);
+            $this->logDbError($db, 'INSERT PK');
             $pkId = $db->insertID();
 
-            // 2. referensi_acuan
-            if (!empty($data['referensi_acuan']) && is_array($data['referensi_acuan'])) {
+
+            // ---------------------------------------
+            // 2. REFERENSI ACUAN
+            if (!empty($data['referensi_acuan'])) {
                 foreach ($data['referensi_acuan'] as $ref) {
                     $db->table('pk_referensi')->insert([
-                        'pk_id' => $pkId,
-                        'referensi_pk_id' => $ref['referensi_pk_id'] ?? null,
-                        'referensi_indikator_id' => $ref['referensi_indikator_id'] ?? null
+                        'pk_id'                  => $pkId,
+                        'referensi_pk_id'        => $ref['referensi_pk_id'] ?? null,
+                        'referensi_indikator_id' => $ref['referensi_indikator_id'] ?? null,
                     ]);
+                    $this->logDbError($db, 'INSERT PK REFERENSI');
                 }
             }
 
-            // 3. iterate sasaran -> indikator -> program -> kegiatan -> subkegiatan
-            if (!empty($data['sasaran_pk']) && is_array($data['sasaran_pk'])) {
+
+            // ---------------------------------------
+            // 3. LOOP: SASARAN → INDIKATOR → PROGRAM → KEGIATAN → SUBKEGIATAN
+            // ---------------------------------------
+            if (!empty($data['sasaran_pk'])) {
+
                 foreach ($data['sasaran_pk'] as $sasaran) {
 
+                    // Insert Sasaran
                     $db->table('pk_sasaran')->insert([
-                        'pk_id' => $pkId,
-                        'sasaran' => $sasaran['sasaran'] ?? '',
+                        'pk_id'      => $pkId,
+                        'jenis'      => $data['jenis'],
+                        'sasaran'    => $sasaran['sasaran'],
                         'created_at' => $now,
                         'updated_at' => $now
                     ]);
+                    $this->logDbError($db, 'INSERT PK SASARAN');
                     $pkSasaranId = $db->insertID();
 
-                    if (!empty($sasaran['indikator']) && is_array($sasaran['indikator'])) {
+
+                    if (!empty($sasaran['indikator'])) {
+
                         foreach ($sasaran['indikator'] as $indikator) {
 
-                            // support variabel key yang mungkin beda ('id_satuan' atau 'satuan')
                             $idSatuan = $indikator['id_satuan'] ?? ($indikator['satuan'] ?? null);
 
+                            // Insert Indikator
                             $db->table('pk_indikator')->insert([
-                                'pk_sasaran_id' => $pkSasaranId,
-                                'indikator' => $indikator['indikator'] ?? '',
-                                'target' => $indikator['target'] ?? '',
-                                'id_satuan' => $idSatuan,
-                                'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
-                                'created_at' => $now,
-                                'updated_at' => $now
+                                'pk_sasaran_id'  => $pkSasaranId,
+                                'jenis'          => $data['jenis'],
+                                'indikator'      => $indikator['indikator'] ?? '',
+                                'target'         => $indikator['target'] ?? '',
+                                'id_satuan'      => $idSatuan,
+                                'jenis_indikator' => $indikator['jenis_indikator'],
+                                'created_at'     => $now,
+                                'updated_at'     => $now
                             ]);
+                            $this->logDbError($db, 'INSERT PK INDIKATOR');
                             $pkIndikatorId = $db->insertID();
 
-                            // program (jpt or administrator)
-                            if (!empty($indikator['program']) && is_array($indikator['program'])) {
+
+                            // ================================
+                            // 🔥 INSERT PROGRAM (JPT / ADMIN / PENGAWAS)
+                            // ================================
+                            if (!empty($indikator['program'])) {
+
                                 foreach ($indikator['program'] as $programItem) {
 
-                                    $db->table('pk_program')->insert([
-                                        'pk_id' => $pkId,
-                                        'program_id' => $programItem['program_id'] ?? null,
-                                        'id_indikator' => $pkIndikatorId,
-                                        'created_at' => $now,
-                                        'updated_at' => $now
+                                    // Insert program
+                                    $db->table('pk_program')->insert([                                        
+                                        'program_id'            => $programItem['program_id'] ?? null,
+                                        'pk_indikator_id'       => $pkIndikatorId,
+                                        'created_at'            => $now,
+                                        'updated_at'            => $now
                                     ]);
+                                    $this->logDbError($db, 'INSERT PK PROGRAM');
                                     $pkProgramId = $db->insertID();
 
-                                    // kegiatan (administrator / pengawas)
-                                    if (!empty($programItem['kegiatan']) && is_array($programItem['kegiatan'])) {
+
+                                    // ================================
+                                    // 🔥 INSERT KEGIATAN (admin + pengawas)
+                                    // ================================
+                                    if (!empty($programItem['kegiatan'])) {
                                         foreach ($programItem['kegiatan'] as $kegiatanItem) {
 
                                             $db->table('pk_kegiatan')->insert([
                                                 'pk_program_id' => $pkProgramId,
-                                                'kegiatan_id' => $kegiatanItem['kegiatan_id'] ?? null,
-                                                'created_at' => $now,
-                                                'updated_at' => $now
+                                                'kegiatan_id'   => $kegiatanItem['kegiatan_id'] ?? null,
+                                                'created_at'    => $now,
+                                                'updated_at'    => $now
                                             ]);
+                                            $this->logDbError($db, 'INSERT PK KEGIATAN');
                                             $pkKegiatanId = $db->insertID();
 
-                                            // subkegiatan (pengawas)
-                                            if (!empty($kegiatanItem['subkegiatan']) && is_array($kegiatanItem['subkegiatan'])) {
+
+                                            // ================================
+                                            // 🔥 INSERT SUBKEGIATAN (pengawas)
+                                            // ================================
+                                            if (!empty($kegiatanItem['subkegiatan'])) {
+
                                                 foreach ($kegiatanItem['subkegiatan'] as $subItem) {
                                                     $db->table('pk_subkegiatan')->insert([
                                                         'pk_kegiatan_id' => $pkKegiatanId,
                                                         'subkegiatan_id' => $subItem['subkegiatan_id'] ?? null,
-                                                        'created_at' => $now,
-                                                        'updated_at' => $now
+                                                        'created_at'     => $now,
+                                                        'updated_at'     => $now
                                                     ]);
+                                                    $this->logDbError($db, 'INSERT PK SUBKEGIATAN');
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Pengawas-only flow (indikator -> kegiatan -> subkegiatan)
-                            if (!empty($indikator['kegiatan']) && is_array($indikator['kegiatan'])) {
-                                // When pengawas submits, kegiatan are attached directly to program entries that were previously created.
-                                // But in save flow if pengawas provides kegiatan under indikator (no program), we should create program placeholder (if needed).
-                                // For safety, create a pk_program row with null program_id linking to this indikator, then attach kegiatan.
-                                $db->table('pk_program')->insert([
-                                    'pk_id' => $pkId,
-                                    'program_id' => $indikator['program_id'] ?? null,
-                                    'id_indikator' => $pkIndikatorId,
-                                    'created_at' => $now,
-                                    'updated_at' => $now
-                                ]);
-                                $pkProgramIdForPengawas = $db->insertID();
-
-                                foreach ($indikator['kegiatan'] as $kegiatanItem) {
-                                    $db->table('pk_kegiatan')->insert([
-                                        'pk_program_id' => $pkProgramIdForPengawas,
-                                        'kegiatan_id' => $kegiatanItem['kegiatan_id'] ?? null,
-                                        'created_at' => $now,
-                                        'updated_at' => $now
-                                    ]);
-                                    $pkKegiatanId = $db->insertID();
-
-                                    if (!empty($kegiatanItem['subkegiatan']) && is_array($kegiatanItem['subkegiatan'])) {
-                                        foreach ($kegiatanItem['subkegiatan'] as $subItem) {
-                                            $db->table('pk_subkegiatan')->insert([
-                                                'pk_kegiatan_id' => $pkKegiatanId,
-                                                'subkegiatan_id' => $subItem['subkegiatan_id'] ?? null,
-                                                'created_at' => $now,
-                                                'updated_at' => $now
-                                            ]);
                                         }
                                     }
                                 }
@@ -281,21 +307,35 @@ class PkModel extends Model
                 }
             }
 
-            // 4. misi bupati (if any)
-            if (!empty($data['misi_bupati_id']) && is_array($data['misi_bupati_id'])) {
+
+            // ---------------------------------------
+            // 4. MISI BUPATI
+            // ---------------------------------------
+            if (!empty($data['misi_bupati_id'])) {
                 foreach ($data['misi_bupati_id'] as $misiId) {
                     $db->table('pk_misi')->insert([
-                        'pk_id' => $pkId,
-                        'rpjmd_misi_id' => $misiId
+                        'pk_id'          => $pkId,
+                        'rpjmd_misi_id'  => $misiId,
                     ]);
+                    $this->logDbError($db, 'INSERT PK MISI');
                 }
             }
 
+            // commit
             $db->transComplete();
-            return $db->transStatus() ? $pkId : false;
+            return $pkId;
         } catch (\Exception $e) {
             $db->transRollback();
             throw $e;
+        }
+    }
+
+
+    private function logDbError($db, $label)
+    {
+        $error = $db->error();
+        if (!empty($error['code'])) {
+            log_message('error', "DB ERROR on {$label}: " . $error['message']);
         }
     }
 
@@ -387,7 +427,7 @@ class PkModel extends Model
                                     $db->table('pk_program')->insert([
                                         'pk_id' => $id,
                                         'program_id' => $programItem['program_id'] ?? null,
-                                        'id_indikator' => $pkIndikatorId,
+                                        'pk_indikator_id' => $pkIndikatorId,
                                         'created_at' => $now,
                                         'updated_at' => $now
                                     ]);
@@ -424,7 +464,6 @@ class PkModel extends Model
                                 $db->table('pk_program')->insert([
                                     'pk_id' => $id,
                                     'program_id' => $indikatorItem['program_id'] ?? null,
-                                    'id_indikator' => $pkIndikatorId,
                                     'created_at' => $now,
                                     'updated_at' => $now
                                 ]);
@@ -507,27 +546,27 @@ class PkModel extends Model
     {
         return $this->db->table('pk_program')
             ->select('program_pk.program_kegiatan, program_pk.id')
-            ->join('pk', 'pk.id = pk_program.pk_id')
             ->join('program_pk', 'program_pk.id = pk_program.program_id')
-            ->where('pk.jenis', 'jpt')
+            ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
+            ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
+            ->join('pk', 'pk.id = pk_sasaran.pk_id')
+            ->where('pk_indikator.jenis', 'jpt')
             ->where('pk.opd_id', $opdId)
             ->orderBy('pk.created_at', 'DESC')
             ->get()
             ->getResultArray();
     }
 
-    /**
-     * Get kegiatan entries that belong to administrator PKs in the OPD
-     * Returns kegiatan_pk rows (kegiatan + id)
-     */
     public function getKegiatanAdmin($opdId)
     {
         return $this->db->table('pk_kegiatan')
-            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id')
-            ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
-            ->join('pk', 'pk.id = pk_program.pk_id')
+            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id, pk_program_id')
             ->join('kegiatan_pk', 'kegiatan_pk.id = pk_kegiatan.kegiatan_id')
-            ->where('pk.jenis', 'administrator')
+            ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
+            ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
+            ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
+            ->join('pk', 'pk.id = pk_sasaran.pk_id')
+            ->where('pk_indikator.jenis', 'administrator')
             ->where('pk.opd_id', $opdId)
             ->orderBy('pk.created_at', 'DESC')
             ->get()
@@ -624,6 +663,8 @@ class PkModel extends Model
         foreach ($results as &$pk) {
             $pk['sasaran'] = $this->getSasaranByPkId($pk['id']);
             $pk['program'] = $this->getProgramByPkId($pk['id']);
+            $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
+            $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
         }
 
         return $results;

@@ -291,65 +291,98 @@
 
                                                         <?php elseif ($jenis === 'administrator'): ?>
                                                             <div class="program-container">
-                                                                <div class="program-item border rounded p-3 bg-white mb-4">
-                                                                    <div class="row mb-3">
-                                                                        <div class="col-md-6">
-                                                                            <label class="form-label">Program</label>
-                                                                            <select
-                                                                                name="sasaran_pk[0][indikator][0][program][0][program_id]"
-                                                                                class="form-select program-select border-secondary"
-                                                                                required>
-                                                                                <option value="">Pilih Program</option>
-                                                                                <?php foreach ($jptProgram as $programItem): ?>
-                                                                                    <option value="<?= $programItem['id'] ?>">
-                                                                                        <?= esc($programItem['program_kegiatan']) ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
-                                                                            </select>
+                                                                <?php
+                                                                $programList = isset($indikator['program']) && is_array($indikator['program']) && count($indikator['program']) > 0 ? $indikator['program'] : [['program_id' => '', 'anggaran' => '', 'program_kegiatan' => '']];
+                                                                foreach ($programList as $pi => $prog) {
+                                                                ?>
+                                                                    <div class="program-item border rounded p-3 bg-white mb-4">
+                                                                        <div class="row mb-3">
+                                                                            <div class="col-md-6">
+                                                                                <label class="form-label">Program</label>
+                                                                                <select
+                                                                                    name="sasaran_pk[0][indikator][0][program][0][program_id]"
+                                                                                    class="form-select program-select border-secondary"
+                                                                                    required>
+                                                                                    <option value="">Pilih Program</option>
+                                                                                    <?php
+                                                                                    if (!empty($jptProgram)) {
+                                                                                        foreach ($jptProgram as $programItem) {
+                                                                                            $selected = '';
+                                                                                            if (isset($prog['program_id']) && $prog['program_id'] == $programItem['id']) {
+                                                                                                $selected = ' selected';
+                                                                                            } elseif (isset($prog['program_kegiatan']) && $prog['program_kegiatan'] == $programItem['program_kegiatan']) {
+                                                                                                $selected = ' selected';
+                                                                                            }
+                                                                                            echo "<option value=\"{$programItem['id']}\"$selected>" . esc($programItem['program_kegiatan']) . "</option>";
+                                                                                        }
+                                                                                    } else {
+                                                                                        echo '<option value="" disabled>Tidak ada Program yang tersedia</option>';
+                                                                                    }
+                                                                                    ?>
+                                                                                </select>
+                                                                            </div>
+
+                                                                            <div class="col-md-3 d-flex align-items-end">
+                                                                                <button type="button"
+                                                                                    class="remove-program btn btn-outline-danger btn-sm">
+                                                                                    <i class="fas fa-trash"></i>
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
 
-                                                                        <div class="col-md-3 d-flex align-items-end">
+                                                                        <div class="kegiatan-container">
+                                                                            <?php
+                                                                            $kegiatanList = isset($prog['kegiatan']) && is_array($prog['kegiatan']) && count($prog['kegiatan']) > 0
+                                                                                ? $prog['kegiatan']
+                                                                                : [['kegiatan_id' => '', 'anggaran' => '', 'kegiatan' => '']];
+                                                                            foreach ($kegiatanList as $ke => $keg) {
+                                                                            ?>
+                                                                                <div class="kegiatan-item border rounded bg-light p-3">
+                                                                                    <div class="row">
+                                                                                        <div class="col-md-6">
+                                                                                            <label class="form-label">Kegiatan</label>
+                                                                                            <select
+                                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
+                                                                                                class="form-select kegiatan-select border-secondary"
+                                                                                                required>
+                                                                                                <option value="">Pilih Kegiatan</option>
+                                                                                                <?php
+                                                                                                if (!empty($kegiatan)) {
+                                                                                                    foreach ($kegiatan as $kegiatanItem) {
+                                                                                                        $selected = '';
+                                                                                                        if (isset($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) {
+                                                                                                            $selected = ' selected';
+                                                                                                        } elseif (isset($keg['kegiatan']) && $keg['kegiatan'] == $kegiatanItem['kegiatan']) {
+                                                                                                            $selected = ' selected';
+                                                                                                        }
+                                                                                                        echo "<option value=\"{$kegiatanItem['id']}\" data-anggaran=\"{$kegiatanItem['anggaran']}\"$selected>" . esc($kegiatanItem['kegiatan']) . "</option>";
+                                                                                                    }
+                                                                                                } else {
+                                                                                                    echo '<option value="" disabled>Tidak ada Program yang tersedia</option>';
+                                                                                                }
+                                                                                                ?>
+
+                                                                                            </select>
+                                                                                        </div>
+
+                                                                                        <div class="col-md-3 d-flex align-items-end">
+                                                                                            <button type="button"
+                                                                                                class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                                                                <i class="fas fa-trash"></i>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            <?php } ?>
+                                                                        </div>
+                                                                        <div class="d-flex justify-content-end mt-2">
                                                                             <button type="button"
-                                                                                class="remove-program btn btn-outline-danger btn-sm">
-                                                                                <i class="fas fa-trash"></i>
+                                                                                class="add-kegiatan btn btn-success btn-sm">
+                                                                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
                                                                             </button>
                                                                         </div>
                                                                     </div>
-
-                                                                    <div class="kegiatan-container">
-                                                                        <div class="kegiatan-item border rounded bg-light p-3">
-                                                                            <div class="row">
-                                                                                <div class="col-md-6">
-                                                                                    <label class="form-label">Kegiatan</label>
-                                                                                    <select
-                                                                                        name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                                                                        class="form-select kegiatan-select border-secondary"
-                                                                                        required>
-                                                                                        <option value="">Pilih Kegiatan</option>
-                                                                                        <?php foreach ($kegiatan as $kegiatanItem): ?>
-                                                                                            <option value="<?= $kegiatanItem['id'] ?>">
-                                                                                                <?= esc($kegiatanItem['kegiatan']) ?>
-                                                                                            </option>
-                                                                                        <?php endforeach; ?>
-                                                                                    </select>
-                                                                                </div>
-
-                                                                                <div class="col-md-3 d-flex align-items-end">
-                                                                                    <button type="button"
-                                                                                        class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                                                                        <i class="fas fa-trash"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="d-flex justify-content-end mt-2">
-                                                                        <button type="button"
-                                                                            class="add-kegiatan btn btn-success btn-sm">
-                                                                            <i class="fas fa-plus me-1"></i> Tambah Kegiatan
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
+                                                                <?php } ?>
                                                             </div>
 
                                                             <div class="d-flex justify-content-end mt-2">
@@ -483,6 +516,7 @@
 
     <!-- JavaScript Function For Handling RPJMD Form-->
     <script>
+        // satuan dropdown
         window.satuanDropdownTemplate = `<?php
                                             if (isset($satuan) && !empty($satuan)) {
                                                 foreach ($satuan as $s) {
@@ -492,7 +526,63 @@
                                                 echo '<option value="" disabled>Tidak ada satuan</option>';
                                             }
                                             ?>`;
+
+        // program dropdown
+        window.programDropdownTemplate = `<?php
+                                            if (isset($program) && !empty($program)) {
+                                                foreach ($program as $programItem) {
+                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada program</option>';
+                                            }
+                                            ?>`;
+
+        //program jpt dropdown
+        window.jptProgramDropdownTemplate = `<?php
+                                                if (isset($jptProgram) && !empty($jptProgram)) {
+                                                    foreach ($jptProgram as $programItem) {
+                                                        echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada program</option>';
+                                                }
+                                                ?>`;
+
+        // kegiatan dropdown
+        window.kegiatanDropdownTemplate = `<?php
+                                            if (isset($kegiatan) && !empty($kegiatan)) {
+                                                foreach ($kegiatan as $kegiatanItem) {
+                                                    echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                            }
+                                            ?>`;
+
+        // kegiatan admin dropdown
+        window.kegiatanAdminDropdownTemplate = `<?php
+                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
+                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                                }
+                                                ?>`;
+
+        // subkegiatan dropdown
+        window.subkegiatanDropdownTemplate = `<?php
+                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
+                                                    foreach ($subkegiatan as $sk) {
+                                                        echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+                                                }
+                                                ?>`;
     </script>
+
     <?php if ($jenis === 'jpt'): ?>
         <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>
     <?php elseif ($jenis === 'administrator'): ?>

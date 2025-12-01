@@ -873,7 +873,9 @@ class PkModel extends Model
             return null;
         }
 
-        // ambil sasaran pk
+        // =======================
+        // AMBIL SASARAN PK
+        // =======================
         $pk['sasaran_pk'] = $this->db->table('pk_sasaran')
             ->where('pk_id', $id)
             ->orderBy('id', 'ASC')
@@ -882,7 +884,9 @@ class PkModel extends Model
 
         foreach ($pk['sasaran_pk'] as &$s) {
 
-            // ambil indikator setiap sasaran
+            // =======================
+            // AMBIL INDIKATOR
+            // =======================
             $indikatorList = $this->db->table('pk_indikator')
                 ->select('pk_indikator.*, satuan.satuan as satuan_nama')
                 ->join('satuan', 'satuan.id = pk_indikator.id_satuan', 'left')
@@ -892,17 +896,20 @@ class PkModel extends Model
                 ->getResultArray();
 
             foreach ($indikatorList as &$indikator) {
-                // format nama satuan
+
+                // format satuan
                 $indikator['satuan'] = $indikator['satuan_nama'] ?? ($indikator['id_satuan'] ?? '-');
 
-                // 🔥 ambil program berdasarkan indikator
+                // =======================
+                // AMBIL PROGRAM
+                // =======================
                 $programList = $this->db->table('pk_program pp')
                     ->select('
                     pp.id as pk_program_id,
                     pr.program_kegiatan,
                     pr.anggaran,
-                    pp.pk_indikator_id,
-                    pp.program_id
+                    pp.program_id,
+                    pp.pk_indikator_id
                 ')
                     ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
                     ->where('pp.pk_indikator_id', $indikator['id'])
@@ -910,7 +917,49 @@ class PkModel extends Model
                     ->get()
                     ->getResultArray();
 
-                // masukkan program ke indikator
+                // =======================
+                // AMBIL KEGIATAN DALAM PROGRAM
+                // =======================
+                foreach ($programList as &$program) {
+
+                    // 🔥 ambil kegiatan berdasarkan program
+                    $kegiatanList = $this->db->table('pk_kegiatan pkeg')
+                        ->select('
+                                    pkeg.id as kegiatan_id,
+                                    keg.kegiatan,
+                                    pkeg.pk_program_id,
+                                    pkeg.kegiatan_id
+                                ')
+                        ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
+                        ->where('pkeg.pk_program_id', $program['pk_program_id'])
+                        ->orderBy('pkeg.id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    // looping kegiatan → ambil subkegiatan
+                    foreach ($kegiatanList as &$keg) {
+
+                        $subList = $this->db->table('pk_subkegiatan psub')
+                            ->select('psub.id as sub_id,
+                                    sub.sub_kegiatan,
+                                    psub.pk_kegiatan_id,
+                                    psub.subkegiatan_id
+                                ')
+                            ->join('sub_kegiatan_pk sub', 'sub.id = psub.subkegiatan_id', 'left')
+                            ->where('psub.pk_kegiatan_id', $keg['kegiatan_id'])
+                            ->orderBy('psub.id', 'ASC')
+                            ->get()
+                            ->getResultArray();
+
+                        // masukkan subkegiatan ke dalam kegiatan
+                        $keg['subkegiatan'] = $subList;
+                    }
+
+                    // masukkan kegiatan ke dalam program
+                    $program['kegiatan'] = $kegiatanList;
+                }
+
+                // simpan program lengkap ke indikator
                 $indikator['program'] = $programList;
             }
 

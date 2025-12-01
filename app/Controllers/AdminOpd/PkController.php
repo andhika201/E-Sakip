@@ -107,7 +107,7 @@ class PkController extends BaseController
         $satuan = $this->pkModel->getAllSatuan();
         $kegiatanAdmin = $this->pkModel->getKegiatanAdmin($opdId);
 
-        // dd($pk['sasaran_pk'][0]['indikator'][0]);
+        // dd($pk['sasaran_pk'][0]['indikator']);
 
         return view('adminOpd/pk/edit_pk', [
             'pk' => $pk,

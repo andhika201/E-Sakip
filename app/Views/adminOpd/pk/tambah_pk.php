@@ -225,7 +225,7 @@
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <label class="form-label">Indikator</label>
-                                                        <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>">
+                                                        <!-- <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>"> -->
                                                         <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
                                                             class="form-control mb-3 border-secondary" value=""
                                                             placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
@@ -459,9 +459,6 @@
                                                         </button>
                                                     </div>
                                                 <?php endif; ?>
-
-
-
                                             </div> <!-- End Indikator Item -->
                                         </div> <!-- End Indikator Container -->
                                         <div class="d-flex justify-content-end mt-2">

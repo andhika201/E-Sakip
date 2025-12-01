@@ -101,13 +101,23 @@ class PkController extends BaseController
 
         $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
         $program = $this->pkModel->getAllPrograms();
+        $jptProgram = $this->pkModel->getJptPrograms($opdId);
+        $kegiatan = $this->pkModel->getKegiatan();
+        $subkegiatan = $this->pkModel->getSubKegiatan();
         $satuan = $this->pkModel->getAllSatuan();
+        $kegiatanAdmin = $this->pkModel->getKegiatanAdmin($opdId);
+
+        // dd($pk['sasaran_pk'][0]['indikator'][0]);
 
         return view('adminOpd/pk/edit_pk', [
             'pk' => $pk,
             'pegawaiOpd' => $pegawaiOpd,
             'program' => $program,
+            'kegiatan' => $kegiatan,
+            'subkegiatan' => $subkegiatan,
             'satuan' => $satuan,
+            'kegiatanAdmin' => $kegiatanAdmin,
+            'jptProgram' => $jptProgram,
             'title' => 'Edit PK ',
             'jenis' => $jenis,
             'validation' => session()->getFlashdata('validation')
@@ -299,7 +309,7 @@ class PkController extends BaseController
             }
         }
         // dd($post['sasaran_pk'][0]['indikator'][0]);
-        // dd($saveData);
+        // dd($saveData['sasaran_pk'][0]['indikator']);
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -348,125 +358,164 @@ class PkController extends BaseController
      * UPDATE: gunakan model updateCompletePk untuk konsistensi (replace seluruh struktur)
      * signature: update($id)
      */
-    public function update($id)
+    public function update($jenis,$id)
     {
-        $pk = $this->pkModel->find($id);
+        log_message('debug', "=== UPDATE PK START: ID {$id} ===");
 
+        $pk = $this->pkModel->find($id);
         if (!$pk) {
+            log_message('error', "PK ID {$id} tidak ditemukan.");
             return redirect()->back()->with('error', 'Data PK tidak ditemukan.');
         }
 
-        $jenis = $pk['jenis']; // jpt / administrator / pengawas
-
         $post = $this->request->getPost();
-        $session = session();
-        $opdId = $session->get('opd_id') ?: $pk['opd_id'];
+        log_message('debug', "POST DATA: " . json_encode($post));
 
-        // Build saveData sama seperti save(), tapi untuk update -> kirim ke model updateCompletePk
+        $session = session();
+        $jenis = $pk['jenis'];
+        $opdId = $session->get('opd_id') ?? $pk['opd_id'];
         $now = date('Y-m-d');
 
-        // parse referensi indikator jika ada
+        // --------------------------
+        // LOG: Info dasar
+        // --------------------------
+        log_message('debug', "Jenis: {$jenis}, OPD ID: {$opdId}, Tanggal: {$now}");
+
+        // ============================
+        // Parse referensi indikator
+        // ============================
         $referensiAcuanArr = [];
         if (!empty($post['referensi_indikator_id'])) {
-            foreach ($post['referensi_indikator_id'] as $val) {
-                $parts = explode('-', $val);
-                if (count($parts) == 2) {
+            foreach ($post['referensi_indikator_id'] as $ref) {
+                [$pkId, $indId] = explode('-', $ref) + [null, null];
+                if ($pkId && $indId) {
                     $referensiAcuanArr[] = [
-                        'referensi_pk_id' => $parts[0],
-                        'referensi_indikator_id' => $parts[1],
+                        'referensi_pk_id' => $pkId,
+                        'referensi_indikator_id' => $indId
                     ];
                 }
             }
         }
 
+        // ============================
+        // Data Utama PK
+        // ============================
         $saveData = [
-            'opd_id' => $opdId,
-            'jenis' => $jenis,
-            'pihak_1' => $post['pegawai_1_id'] ?? null,
-            'pihak_2' => $post['pegawai_2_id'] ?? null,
-            'tanggal' => $now,
-            'sasaran_pk' => [],
-            'referensi_acuan' => $referensiAcuanArr,
-            'misi_bupati_id' => $post['misi_bupati_id'] ?? []
+            'opd_id'            => $opdId,
+            'jenis'             => $jenis,
+            'pihak_1'           => $post['pegawai_1_id'] ?? null,
+            'pihak_2'           => $post['pegawai_2_id'] ?? null,
+            'tanggal'           => $now,
+            'sasaran_pk'        => [],
+            'referensi_acuan'   => $referensiAcuanArr,
+            'misi_bupati_id'    => $post['misi_bupati_id'] ?? []
         ];
 
-        // parse sasaran/indikator/program/kegiatan/subkegiatan sama persis seperti pada save()
-        if (!empty($post['sasaran_pk']) && is_array($post['sasaran_pk'])) {
-            foreach ($post['sasaran_pk'] as $s) {
+        // --------------------------
+        // LOG: After basic structure
+        // --------------------------
+        log_message('debug', "SAVE DATA AWAL: " . json_encode($saveData));
+
+        // ============================
+        // Parse Sasaran → Indikator → Program/Kegiatan/Subkegiatan
+        // ============================
+        if (!empty($post['sasaran_pk'])) {
+            foreach ($post['sasaran_pk'] as $sIndex => $s) {
+
                 $sasaranData = [
-                    'sasaran' => $s['sasaran'] ?? '',
+                    'sasaran'   => $s['sasaran'] ?? '',
                     'indikator' => []
                 ];
 
-                if (!empty($s['indikator']) && is_array($s['indikator'])) {
-                    foreach ($s['indikator'] as $indikator) {
-                        $indikatorData = [
-                            'indikator' => $indikator['indikator'] ?? '',
-                            'target' => $indikator['target'] ?? '',
-                            'id_satuan' => $indikator['id_satuan'] ?? null,
-                            'jenis_indikator' => $indikator['jenis_indikator'] ?? null,
-                            'program' => [],
-                            'kegiatan' => []
-                        ];
+                foreach (($s['indikator'] ?? []) as $iIndex => $ind) {
 
-                        if ($jenis === 'jpt') {
-                            foreach ($indikator['program'] ?? [] as $p) {
-                                $indikatorData['program'][] = [
-                                    'program_id' => $p['program_id'] ?? null,
-                                    'anggaran' => $p['anggaran'] ?? 0
-                                ];
-                            }
-                        } elseif ($jenis === 'administrator') {
-                            foreach ($indikator['program'] ?? [] as $p) {
-                                $programData = [
-                                    'program_id' => $p['program_id'] ?? null,
-                                    'kegiatan' => []
-                                ];
-                                foreach ($p['kegiatan'] ?? [] as $k) {
-                                    $programData['kegiatan'][] = [
-                                        'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                        'anggaran' => $k['anggaran'] ?? 0
-                                    ];
-                                }
-                                $indikatorData['program'][] = $programData;
-                            }
-                        } elseif ($jenis === 'pengawas') {
-                            foreach ($indikator['kegiatan'] ?? [] as $k) {
-                                $kegiatanData = [
-                                    'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                    'subkegiatan' => []
-                                ];
-                                foreach ($k['subkegiatan'] ?? [] as $sk) {
-                                    $kegiatanData['subkegiatan'][] = [
-                                        'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
-                                        'anggaran' => $sk['anggaran'] ?? 0
-                                    ];
-                                }
-                                $indikatorData['kegiatan'][] = $kegiatanData;
-                            }
+                    $indikatorData = [
+                        'indikator'       => $ind['indikator'] ?? '',
+                        'target'          => $ind['target'] ?? '',
+                        'id_satuan'       => $ind['id_satuan'] ?? null,
+                        'jenis_indikator' => $ind['jenis_indikator'] ?? null,
+                        'program'         => [],
+                        'kegiatan'        => []
+                    ];
+
+                    // logging indikator
+                    log_message('debug', "Parsing indikator [{$sIndex}][{$iIndex}]: " . json_encode($indikatorData));
+
+                    if ($jenis === 'jpt') {
+                        foreach ($ind['program'] ?? [] as $p) {
+                            $indikatorData['program'][] = [
+                                'program_id' => $p['program_id'] ?? null,
+                                'anggaran'   => $p['anggaran'] ?? 0
+                            ];
                         }
-
-                        $sasaranData['indikator'][] = $indikatorData;
                     }
+
+                    if ($jenis === 'administrator') {
+                        foreach ($ind['program'] ?? [] as $p) {
+                            $programData = [
+                                'program_id' => $p['program_id'] ?? null,
+                                'kegiatan'   => []
+                            ];
+                            foreach ($p['kegiatan'] ?? [] as $k) {
+                                $programData['kegiatan'][] = [
+                                    'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                    'anggaran'    => $k['anggaran'] ?? 0
+                                ];
+                            }
+                            $indikatorData['program'][] = $programData;
+                        }
+                    }
+
+                    if ($jenis === 'pengawas') {
+                        foreach ($ind['kegiatan'] ?? [] as $k) {
+                            $kg = [
+                                'kegiatan_id'  => $k['kegiatan_id'] ?? null,
+                                'subkegiatan'  => []
+                            ];
+                            foreach ($k['subkegiatan'] ?? [] as $sk) {
+                                $kg['subkegiatan'][] = [
+                                    'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
+                                    'anggaran'        => $sk['anggaran'] ?? 0
+                                ];
+                            }
+                            $indikatorData['kegiatan'][] = $kg;
+                        }
+                    }
+
+                    $sasaranData['indikator'][] = $indikatorData;
                 }
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         }
 
-        // Panggil model updateCompletePk yang melakukan delete/insert dalam transaction
+        // --------------------------
+        // LOG: Final SAVE DATA
+        // --------------------------
+        log_message('debug', "FINAL SAVE DATA: " . json_encode($saveData));
+
+        // ============================
+        // EXECUTE UPDATE
+        // ============================
         try {
+            log_message('debug', "CALLING updateCompletePk($id)");
             $ok = $this->pkModel->updateCompletePk($id, $saveData);
 
+            // Setelah query
+            $db = \Config\Database::connect();
+            log_message('debug', "LAST QUERY: " . $db->getLastQuery());
+
             if ($ok) {
-                $redirectBase = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
-                return redirect()->to($redirectBase . $jenis)
-                    ->with('success', 'Data PK berhasil diperbarui');
-            } else {
-                return redirect()->back()->withInput()->with('error', 'Gagal memperbarui PK');
+                log_message('debug', "UPDATE SUCCESS ID {$id}");
+                $base = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
+                return redirect()->to($base . $jenis)->with('success', 'Data PK berhasil diperbarui.');
             }
+
+            log_message('error', "updateCompletePk gagal untuk ID {$id}");
+            return redirect()->back()->with('error', 'Gagal memperbarui PK');
         } catch (\Exception $e) {
-            log_message('error', 'UPDATE ERROR: ' . $e->getMessage());
+            log_message('error', "EXCEPTION UPDATE PK: {$e->getMessage()}");
+            log_message('error', $e->getTraceAsString());
             return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
         }
     }

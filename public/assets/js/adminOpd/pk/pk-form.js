@@ -27,10 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatRupiahNumber(val) {
-    if (val === null || val === undefined || val === '') return '';
-    const n = Number(String(val).replace(/[^0-9\-]+/g, '')) || 0;
+    if (!val) return '';
+
+    let n = parseInt(val, 10);
+    if (isNaN(n)) return '';
+
     return 'Rp ' + n.toLocaleString('id-ID');
-  }
+}
+
 
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
   const templateSasaran = document.querySelector('.sasaran-item')?.cloneNode(true);

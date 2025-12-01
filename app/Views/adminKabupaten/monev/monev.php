@@ -28,21 +28,18 @@
                 <?php endif; ?>
 
                 <?php
-                $tahunVal = (string) ($tahun ?? 'all');
-                $modeVal = $mode ?? 'opd';
-                $opdVal = $opdId ?? 'all';
-
+                // Normalisasi nilai filter
+                $tahunVal = (string) ($tahun ?? 'all');        // 'all' atau angka tahun
+                $modeVal = $mode ?? 'opd';                    // 'opd' atau 'kab'
+                $opdVal = $opdId ?? 'all';                   // 'all' / id opd
+                
+                // Kolom OPD hanya muncul jika:
+                // - mode = opd, dan
+                // - filter OPD = "Semua OPD"
                 $hasOpdColumn = (
                     $modeVal === 'opd'
                     && ($opdVal === 'all' || $opdVal === '' || $opdVal === null)
                 );
-
-                // query base untuk tombol tambah/edit
-                $baseQuery = http_build_query([
-                    'mode' => $modeVal,
-                    'tahun' => $tahunVal,
-                    'opd_id' => $opdVal,
-                ]);
                 ?>
 
                 <!-- Filter -->
@@ -128,7 +125,9 @@
 
                         <tbody>
                             <?php if (!empty($monevList)): ?>
+
                                 <?php
+                                // Grouping per Sasaran (baik RENSTRA maupun RPJMD)
                                 $grouped = [];
                                 foreach ($monevList as $row) {
                                     $sasaran = $row['sasaran_renstra'] ?? '—';
@@ -136,13 +135,23 @@
                                 }
 
                                 $no = 1;
+
+                                // Parameter dasar untuk query string tombol tambah/edit
+                                $baseQuery = [
+                                    'mode' => $modeVal,
+                                    'tahun' => $tahunVal,
+                                ];
+                                if ($modeVal === 'opd') {
+                                    $baseQuery['opd_id'] = $opdVal;
+                                }
+
                                 foreach ($grouped as $sasaran => $rows):
                                     $rowspan = count($rows);
                                     $printedSasaran = false;
 
                                     foreach ($rows as $row):
-                                        $hasMonev = !empty($row['monev_id']);
                                         $targetRencanaId = $row['target_id'] ?? ($row['target_rencana_id'] ?? null);
+                                        $hasMonev = !empty($row['monev_id']);
                                         ?>
                                         <tr>
                                             <!-- No -->
@@ -194,18 +203,24 @@
                                                 ?>
                                             </td>
 
-                                            <!-- PJ -->
+                                            <!-- Penanggung Jawab -->
                                             <td class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
 
                                             <!-- Aksi -->
                                             <td>
                                                 <?php if (!$hasMonev && $targetRencanaId): ?>
-                                                    <a href="<?= base_url('adminkab/monev/tambah?target_rencana_id=' . (int) $targetRencanaId . '&' . $baseQuery) ?>"
+                                                    <?php
+                                                    $qsTambah = $baseQuery + [
+                                                        'target_rencana_id' => (int) $targetRencanaId,
+                                                    ];
+                                                    ?>
+                                                    <a href="<?= base_url('adminkab/monev/tambah?' . http_build_query($qsTambah)) ?>"
                                                         class="btn btn-primary btn-sm" title="Tambah Monev">
                                                         <i class="fas fa-plus"></i>
                                                     </a>
                                                 <?php elseif ($hasMonev): ?>
-                                                    <a href="<?= base_url('adminkab/monev/edit/' . (int) $row['monev_id'] . '?' . $baseQuery) ?>"
+                                                    <?php $qsEdit = $baseQuery; ?>
+                                                    <a href="<?= base_url('adminkab/monev/edit/' . (int) $row['monev_id'] . '?' . http_build_query($qsEdit)) ?>"
                                                         class="btn btn-warning btn-sm" title="Edit Monev">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
@@ -216,6 +231,7 @@
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
+
                             <?php else: ?>
                                 <tr>
                                     <td colspan="<?= $hasOpdColumn ? 19 : 18 ?>" class="text-muted">

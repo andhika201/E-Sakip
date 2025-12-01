@@ -12,10 +12,9 @@ class MonevModel extends Model
     protected $returnType = 'array';
     protected $protectFields = true;
 
-    // Kolom tabel monev
     protected $allowedFields = [
         'opd_id',
-        'target_rencana_id',      // SELALU mengarah ke target_rencana.id (target_id)
+        'target_rencana_id',      // SELALU mengarah ke target_rencana.id
         'capaian_triwulan_1',
         'capaian_triwulan_2',
         'capaian_triwulan_3',
@@ -28,9 +27,8 @@ class MonevModel extends Model
     protected $updatedField = 'updated_at';
 
     /**
-     * Versi lama untuk kompatibilitas (kalau masih dipakai di tempat lain).
-     * Basis: monev RIGHT JOIN target_rencana (RENSTRA).
-     * Di sini kita pastikan hanya ambil target yang punya renstra_target_id.
+     * Versi lama (kompatibilitas) – basis RENSTRA, semua target_rencana
+     * yang punya renstra_target_id.
      */
     public function getMonevWithRelasi(?string $tahun = null, ?int $opdId = null): array
     {
@@ -68,7 +66,6 @@ class MonevModel extends Model
             ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
             ->join('opd AS o', 'o.id = tr.opd_id', 'left')
             ->select('o.nama_opd')
-            // HANYA data yang punya renstra_target_id
             ->where('tr.renstra_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
@@ -92,9 +89,6 @@ class MonevModel extends Model
 
     /* =========================================================
      *  ADMIN KAB – MODE "OPD"  (RENSTRA)
-     *  - Basis: target_rencana yang punya renstra_target_id
-     *  - Bisa filter per tahun & opd_id
-     *  - monev di-link via (m.target_rencana_id = tr.id AND m.opd_id = tr.opd_id)
      * =======================================================*/
     public function getIndexDataAdminKabModeOpd(?string $tahun = null, ?int $opdId = null): array
     {
@@ -145,7 +139,6 @@ class MonevModel extends Model
                 'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
                 'left'
             )
-            // penting: hanya target RENSTRA
             ->where('tr.renstra_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
@@ -153,7 +146,6 @@ class MonevModel extends Model
         }
 
         if (!empty($opdId)) {
-            // filter 1 OPD; kalau null → semua OPD
             $b->where('tr.opd_id', (int) $opdId);
         }
 
@@ -167,9 +159,7 @@ class MonevModel extends Model
 
     /* =========================================================
      *  ADMIN KAB – MODE "KABUPATEN" (RPJMD)
-     *  - Basis: target_rencana yang punya rpjmd_target_id (bukan NULL)
-     *  - Join ke tabel RPJMD untuk mendapatkan sasaran/indikator/satuan
-     *  - monev di-link via target_rencana_id & opd_id
+     *  opd_id di monev = NULL
      * =======================================================*/
     public function getIndexDataAdminKabModeKab(?string $tahun = null): array
     {
@@ -186,19 +176,19 @@ class MonevModel extends Model
                 tr.penanggung_jawab,
                 tr.rpjmd_target_id
             ')
-            // ambil tahun & target dari rpjmd_target
+            // RPJMD target (tahun + target tahunan)
             ->select('
                 rpt.id    AS rpjmd_target_id,
                 rpt.tahun AS indikator_tahun,
                 rpt.target_tahunan AS indikator_target
             ')
-            // indikator & satuan dari rpjmd_indikator_sasaran
+            // indikator & satuan RPJMD
             ->select('
                 rpis.id AS indikator_id,
                 rpis.indikator_sasaran,
                 rpis.satuan
             ')
-            // sasaran dari rpjmd_sasaran
+            // sasaran RPJMD
             ->select('
                 rps.id      AS rpjmd_sasaran_id,
                 rps.sasaran_rpjmd AS sasaran_renstra
@@ -212,20 +202,17 @@ class MonevModel extends Model
                 m.capaian_triwulan_4,
                 m.total AS monev_total
             ')
-            // join RPJMD chain
             ->join('rpjmd_target AS rpt', 'rpt.id = tr.rpjmd_target_id', 'left')
             ->join('rpjmd_indikator_sasaran AS rpis', 'rpis.id = rpt.indikator_sasaran_id', 'left')
             ->join('rpjmd_sasaran AS rps', 'rps.id = rpis.sasaran_id', 'left')
-            // join OPD (kalau mau pakai nama OPD di view, tapi kolomnya bisa disembunyikan)
             ->join('opd AS o', 'o.id = tr.opd_id', 'left')
             ->select('o.nama_opd')
-            // join monev
+            // >>> di mode KAB, monev.opd_id = NULL <<<
             ->join(
                 $this->table . ' AS m',
-                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
+                'm.target_rencana_id = tr.id AND m.opd_id IS NULL',
                 'left'
             )
-            // hanya target yang punya rpjmd_target_id
             ->where('tr.rpjmd_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
@@ -293,7 +280,6 @@ class MonevModel extends Model
                 'left'
             )
             ->where('tr.opd_id', (int) $opdId)
-            // penting: hanya target RENSTRA utk admin OPD
             ->where('tr.renstra_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
@@ -309,8 +295,7 @@ class MonevModel extends Model
     }
 
     /**
-     * Daftar tahun RENSTRA (utk dropdown filter).
-     * Kalau mau lebih lengkap, bisa ditambah UNION dengan tahun dari rpjmd_target.
+     * Daftar tahun RENSTRA (untuk dropdown).
      */
     public function getAvailableYears(): array
     {
@@ -323,20 +308,28 @@ class MonevModel extends Model
     }
 
     /**
-     * Ambil satu monev berdasarkan (target_rencana_id, opd_id).
+     * Ambil satu baris monev berdasarkan (target_rencana_id, opd_id).
+     * Untuk mode KAB: $opdId = null (cari m.opd_id IS NULL).
      */
-    public function findByTargetAndOpd(int $targetRencanaId, int $opdId): ?array
+    public function findByTargetAndOpd(int $targetRencanaId, ?int $opdId): ?array
     {
-        return $this->where([
-            'target_rencana_id' => $targetRencanaId,
-            'opd_id' => $opdId,
-        ])->first();
+        $builder = $this->where('target_rencana_id', $targetRencanaId);
+
+        if ($opdId === null) {
+            $builder->where('opd_id IS NULL', null, false);
+        } else {
+            $builder->where('opd_id', $opdId);
+        }
+
+        return $builder->first();
     }
 
     /**
      * Upsert per (target_rencana_id, opd_id).
+     * - Mode OPD:  $opdId = id OPD
+     * - Mode KAB:  $opdId = null
      */
-    public function upsertForTarget(int $targetRencanaId, int $opdId, array $payload): array
+    public function upsertForTarget(int $targetRencanaId, ?int $opdId, array $payload): array
     {
         $row = $this->findByTargetAndOpd($targetRencanaId, $opdId);
 

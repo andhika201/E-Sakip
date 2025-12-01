@@ -35,20 +35,27 @@
                     </a>
                 </div>
             <?php else: ?>
+
+                <?php
+                $mode = $mode ?? 'opd';
+                $labelSas = ($mode === 'kab' ? 'Sasaran RPJMD' : 'Sasaran RENSTRA');
+                $labelTgt = ($mode === 'kab' ? 'Target (RPJMD)' : 'Target (RENSTRA)');
+                ?>
+
                 <form action="<?= base_url('adminkab/monev/save') ?>" method="post" id="formMonev" novalidate>
                     <?= csrf_field() ?>
 
-                    <!-- Hidden -->
+                    <!-- Hidden context -->
                     <input type="hidden" name="target_rencana_id"
                         value="<?= (int) ($target['target_id'] ?? $target['id'] ?? 0) ?>">
-                    <input type="hidden" name="mode" value="<?= esc($mode ?? 'opd') ?>">
+                    <input type="hidden" name="mode" value="<?= esc($mode) ?>">
                     <input type="hidden" name="tahun" value="<?= esc($tahun ?? 'all') ?>">
                     <input type="hidden" name="opd_filter" value="<?= esc($opdFilter ?? 'all') ?>">
 
                     <!-- Info target (read-only) -->
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <label class="form-label">Sasaran RENSTRA</label>
+                            <label class="form-label"><?= esc($labelSas) ?></label>
                             <input type="text" class="form-control" value="<?= esc($target['sasaran_renstra'] ?? '-') ?>"
                                 readonly>
                         </div>
@@ -65,7 +72,7 @@
                             <input type="text" class="form-control" value="<?= esc($target['satuan'] ?? '-') ?>" readonly>
                         </div>
                         <div class="col-md-3 mb-3 mb-md-0">
-                            <label class="form-label">Target (RENSTRA)</label>
+                            <label class="form-label"><?= esc($labelTgt) ?></label>
                             <input type="text" class="form-control" value="<?= esc($target['indikator_target'] ?? '-') ?>"
                                 readonly>
                         </div>

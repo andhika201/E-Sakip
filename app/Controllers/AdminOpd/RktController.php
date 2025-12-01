@@ -37,14 +37,14 @@ class RktController extends BaseController
      */
     public function index()
     {
-        $db   = Database::connect();
+        $db = Database::connect();
         $role = session()->get('role');
         $opdId = session()->get('opd_id');
 
         // ------------ FILTER ------------
         $filterSasaran = $this->request->getGet('sasaran') ?? 'all';  // indikator_id
-        $filterTahun   = $this->request->getGet('tahun') ?? date('Y');
-        $filterStatus  = $this->request->getGet('status') ?? 'all';
+        $filterTahun = $this->request->getGet('tahun') ?? 'all';    // <-- bisa 'all'
+        $filterStatus = $this->request->getGet('status') ?? 'all';
 
         // OPD aktif
         $currentOpd = $db->table('opd')
@@ -66,7 +66,7 @@ class RktController extends BaseController
         foreach ($indikators as $ind) {
             $indikatorId = $ind['id'];
 
-            // filter indikator (dropdown "Indikator Sasaran Renstra")
+            // filter indikator
             if ($filterSasaran !== 'all' && (string) $filterSasaran !== (string) $indikatorId) {
                 continue;
             }
@@ -78,9 +78,11 @@ class RktController extends BaseController
                 ->where('r.indikator_id', $indikatorId)
                 ->where('r.opd_id', $opdId);
 
-            if (!empty($filterTahun)) {
+            // kalau TAHUN bukan 'all' baru difilter
+            if (!empty($filterTahun) && $filterTahun !== 'all') {
                 $builderRkt->where('r.tahun', $filterTahun);
             }
+
             if ($filterStatus !== 'all') {
                 $builderRkt->where('r.status', $filterStatus);
             }
@@ -90,9 +92,9 @@ class RktController extends BaseController
                 ->get()
                 ->getResultArray();
 
-            // ------------ SUSUN NESTED: PROGRAM -> KEGIATAN -> SUB KEGIATAN ------------
+            // ... (bagian susun nested kegiatan/sub tetap seperti punyamu)
+            // KEGIATAN + SUB KEGIATAN
             foreach ($rkts as &$rkt) {
-                // KEGIATAN
                 $kegiatans = $db->table('rkt_kegiatan rk')
                     ->select('rk.id, rk.kegiatan_id, k.kegiatan')
                     ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
@@ -102,7 +104,6 @@ class RktController extends BaseController
                     ->getResultArray();
 
                 foreach ($kegiatans as &$keg) {
-                    // SUB KEGIATAN (pakai anggaran dari sub_kegiatan_pk)
                     $subs = $db->table('rkt_subkegiatan rs')
                         ->select('rs.id, rs.sub_kegiatan_id, sk.sub_kegiatan, sk.anggaran')
                         ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
@@ -120,38 +121,35 @@ class RktController extends BaseController
             unset($rkt);
 
             $ind['rkts'] = $rkts;
-            $rktdata[]   = $ind;
+            $rktdata[] = $ind;
         }
 
-        // ------------ DATA UNTUK FILTER DROPDOWN ------------
-        // Indikator (untuk filter)
-        $sasaranList = $db->table('renstra_indikator_sasaran')
-            ->select('id, indikator_sasaran')
-            ->orderBy('indikator_sasaran', 'ASC')
+        // ------------ DATA UNTUK FILTER TAHUN (dari RENSTRA_TARGET) ------------
+        $yearRows = $db->table('renstra_target rt')
+            ->select('DISTINCT rt.tahun', false)
+            ->join('renstra_indikator_sasaran i', 'i.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+            ->where('s.opd_id', $opdId)
+            ->orderBy('rt.tahun', 'ASC')
             ->get()
             ->getResultArray();
 
-        // Tahun tersedia (distinct dari tabel rkt)
-        $yearRows = $db->table('rkt')
-            ->select('DISTINCT tahun', false)
-            ->where('opd_id', $opdId)
-            ->orderBy('tahun', 'ASC')
-            ->get()
-            ->getResultArray();
         $availableYears = array_column($yearRows, 'tahun');
 
         return view('adminOpd/rkt/rkt', [
-            'title'           => 'RENJA (RKT)',
-            'role'            => $role,
-            'rktdata'         => $rktdata,
-            'sasaranList'     => $sasaranList,
+            'title' => 'RENJA (RKT)',
+            'role' => $role,
+            'rktdata' => $rktdata,
+            'sasaranList' => $sasaranList ?? [],
             'available_years' => $availableYears,
-            'filter_sasaran'  => $filterSasaran,
-            'filter_tahun'    => $filterTahun,
-            'filter_status'   => $filterStatus,
-            'currentOpd'      => $currentOpd,
+            'filter_sasaran' => $filterSasaran,
+            'filter_tahun' => $filterTahun,   // bisa 'all'
+            'filter_status' => $filterStatus,
+            'currentOpd' => $currentOpd,
         ]);
     }
+
+
 
     // /**
     //  * Toggle status draft <-> selesai untuk semua RKT

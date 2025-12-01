@@ -16,8 +16,6 @@ class RkpdController extends BaseController
     protected $db;
     protected $lakipModel;
 
-
-
     public function __construct()
     {
         $this->rktModel = new RktModel();
@@ -29,45 +27,66 @@ class RkpdController extends BaseController
     }
 
     /**
-     * Index: show RKPD list. If opd_id provided via GET => filter per OPD.
-     * We'll also accept tahun via GET (default current year).
+     * Halaman index RKPD
+     * - Filter: opd_id (all / id OPD), tahun (all / tahun tertentu)
+     * - Data diambil flat dari RktModel::getIndicatorsForRkpd()
      */
     public function index()
     {
         $session = session();
-        $opdLogin = $session->get('opd_id'); // jika login OPD diperlukan (opsional)
 
-        // Ambil filter GET
+        // filter GET
         $opdId = $this->request->getGet('opd_id') ?? 'all';
-        $tahun = $this->request->getGet('tahun') ?? date('Y'); // default = tahun berjalan
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
 
-        // Data dropdown
-        $allOpd = $this->opdModel->getAllOpd();
-        $availableYears = $this->lakipModel->getAvailableYears();
+        // daftar OPD untuk filter
+        $allOpd = $this->opdModel->getAllOpd(); // atau ->findAll() jika itu yg dipakai
 
-        // Ambil data utama berdasarkan kondisi OPD
-        if ($opdId === 'all') {
-            // MODE SEMUA OPD
-            $rktdata = $this->rktModel->getIndicatorsForRkpdAll($tahun);
-            $currentOpd = ['nama_opd' => 'SEMUA OPD'];
-        } else {
-            // MODE OPD TUNGGAL
-            $rktdata = $this->rktModel->getIndicatorsWithRkt((int) $opdId, $tahun);
-            $currentOpd = $this->opdModel->getOpdById((int) $opdId);
+        // daftar tahun dari tabel RKT
+        $availableYears = $this->rktModel->getAvailableYears();
+
+        // ambil data RKPD: HANYA RKT yang status-nya 'selesai'
+        $rows = $this->rktModel->getIndicatorsForRkpd($opdId, $tahun, 'selesai');
+
+        // kelompokkan per OPD supaya gampang rowspan
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$row['opd_id']][] = $row;
         }
 
-        // dd($opdId);
+        // hitung total indikator (unique indikator_id)
+        $indikatorSet = [];
+        foreach ($rows as $row) {
+            $indikatorSet[$row['indikator_id']] = true;
+        }
+        $totalIndikator = count($indikatorSet);
 
-        // Kirim ke view
+        // current OPD untuk teks filter
+        $currentOpdName = 'SEMUA OPD';
+        if ($opdId !== 'all') {
+            foreach ($allOpd as $o) {
+                if ((string) $o['id'] === (string) $opdId) {
+                    $currentOpdName = $o['nama_opd'];
+                    break;
+                }
+            }
+        }
+
         return view('adminkabupaten/rkpd/rkpd', [
-            'rktdata' => $rktdata,
-            'currentOpd' => $currentOpd,
+            'rows_grouped' => $grouped,
+            'total_indikator' => $totalIndikator,
             'allOpd' => $allOpd,
             'available_years' => $availableYears,
-            'tahun' => $tahun,
-            'opdId' => $opdId
+            'filter_opd' => $opdId,
+            'filter_tahun' => $tahun,
+            'currentOpdName' => $currentOpdName,
         ]);
     }
+
+    /**
+     * Show form to add new RKPD entries.
+     * Admin Kabupaten can select target OPD and indikator.
+     */
 
     public function tambah()
     {

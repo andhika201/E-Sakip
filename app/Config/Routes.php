@@ -103,11 +103,12 @@ $routes->group(
         // Program PK
         $routes->get('program_pk', 'ProgramPkController::index');
         $routes->get('program_pk/tambah', 'ProgramPkController::tambah');
+        $routes->get('program_pk/import', 'ProgramPkController::import');
+        $routes->post('program_pk/import/process', 'ProgramPkController::processImport');
         $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
         $routes->post('program_pk/save', 'ProgramPkController::save');
         $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
         $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
-
         // Tentang Kami
         $routes->get('tentang_kami', 'AdminKabupatenController::tentang_kami');
         $routes->get('tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');

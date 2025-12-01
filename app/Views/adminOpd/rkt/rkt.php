@@ -38,10 +38,11 @@
             <!-- FILTER -->
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div class="d-flex gap-2 flex-fill">
+
                     <!-- Filter Indikator Sasaran Renstra -->
                     <select id="indikatorFilter" class="form-select w-50" onchange="applyFilter()">
                         <option value="all">SEMUA INDIKATOR SASARAN RENSTRA</option>
-                        <?php if (!empty($sasaranList)): ?>
+                        <?php if (!empty($sasaranList ?? [])): ?>
                             <?php foreach ($sasaranList as $s): ?>
                                 <option value="<?= esc($s['id']) ?>"
                                     <?= (isset($filter_sasaran) && (string)$filter_sasaran === (string)$s['id']) ? 'selected' : '' ?>>
@@ -51,19 +52,18 @@
                         <?php endif; ?>
                     </select>
 
-                    <!-- Filter Tahun -->
-                    <?php $selectedYear = $filter_tahun ?? date('Y'); ?>
+                    <!-- Filter Tahun (ambil dari renstra_target) -->
+                    <?php $selectedYear = $filter_tahun ?? 'all'; ?>
                     <select id="yearFilter" class="form-select w-25" onchange="applyFilter()">
-                        <?php if (!empty($available_years)): ?>
+                        <option value="all" <?= $selectedYear === 'all' ? 'selected' : '' ?>>
+                            SEMUA TAHUN
+                        </option>
+                        <?php if (!empty($available_years ?? [])): ?>
                             <?php foreach ($available_years as $y): ?>
                                 <option value="<?= esc($y) ?>" <?= (string)$selectedYear === (string)$y ? 'selected' : '' ?>>
                                     <?= esc($y) ?>
                                 </option>
                             <?php endforeach; ?>
-                        <?php else: ?>
-                            <option value="<?= esc($selectedYear) ?>" selected>
-                                <?= esc($selectedYear) ?>
-                            </option>
                         <?php endif; ?>
                     </select>
 
@@ -104,8 +104,6 @@
                         <th class="border p-2">TAHUN</th>
                         <th class="border p-2">SASARAN</th>
                         <th class="border p-2">INDIKATOR SASARAN</th>
-                        <th class="border p-2">SATUAN</th>
-                        <th class="border p-2">TARGET RENSTRA</th>
                         <th class="border p-2">PROGRAM</th>
                         <th class="border p-2">KEGIATAN</th>
                         <th class="border p-2">SUB KEGIATAN</th>
@@ -170,7 +168,7 @@
                                 }
                             }
                         }
-                        $statusList      = array_values(array_unique($statusList));
+                        $statusList        = array_values(array_unique($statusList));
                         $firstIndicatorRow = true;
                         $statusRendered    = false;
                         $actionRendered    = false;
@@ -187,19 +185,13 @@
 
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle"><?= $no++ ?></td>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                    <?= esc($selectedYear) ?>
+                                    <?= ($selectedYear === 'all') ? '-' : esc($selectedYear) ?>
                                 </td>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                     <?= esc($ind['sasaran']) ?>
                                 </td>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                     <?= esc($ind['indikator_sasaran']) ?>
-                                </td>
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                    <?= esc($ind['satuan'] ?? '-') ?>
-                                </td>
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                    <?= esc($ind['target'] ?? '-') ?>
                                 </td>
 
                                 <td class="text-start">-</td>
@@ -239,8 +231,8 @@
                                 // --- Ada kegiatan ---
                                 if (!empty($rkt['kegiatan'])):
                                     foreach ($rkt['kegiatan'] as $keg):
-                                        $subCount   = count($keg['subkegiatan'] ?? []);
-                                        $kegRows    = ($subCount > 0 ? $subCount : 1);
+                                        $subCount    = count($keg['subkegiatan'] ?? []);
+                                        $kegRows     = ($subCount > 0 ? $subCount : 1);
                                         $firstKegRow = true;
 
                                         // --- Ada subkegiatan ---
@@ -259,19 +251,15 @@
                                                             <?= $no++ ?>
                                                         </td>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                            <?= esc($selectedYear) ?>
+                                                            <?= ($selectedYear === 'all')
+                                                                ? '-'
+                                                                : esc($selectedYear) ?>
                                                         </td>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                             <?= esc($ind['sasaran']) ?>
                                                         </td>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                             <?= esc($ind['indikator_sasaran']) ?>
-                                                        </td>
-                                                        <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                            <?= esc($ind['satuan'] ?? '-') ?>
-                                                        </td>
-                                                        <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                            <?= esc($ind['target'] ?? '-') ?>
                                                         </td>
                                                         <?php $firstIndicatorRow = false; ?>
                                                     <?php endif; ?>
@@ -362,19 +350,15 @@
                                                         <?= $no++ ?>
                                                     </td>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                        <?= esc($selectedYear) ?>
+                                                        <?= ($selectedYear === 'all')
+                                                            ? '-'
+                                                            : esc($selectedYear) ?>
                                                     </td>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                         <?= esc($ind['sasaran']) ?>
                                                     </td>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                         <?= esc($ind['indikator_sasaran']) ?>
-                                                    </td>
-                                                    <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                        <?= esc($ind['satuan'] ?? '-') ?>
-                                                    </td>
-                                                    <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                        <?= esc($ind['target'] ?? '-') ?>
                                                     </td>
                                                     <?php $firstIndicatorRow = false; ?>
                                                 <?php endif; ?>
@@ -455,19 +439,15 @@
                                                 <?= $no++ ?>
                                             </td>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                <?= esc($selectedYear) ?>
+                                                <?= ($selectedYear === 'all')
+                                                    ? '-'
+                                                    : esc($selectedYear) ?>
                                             </td>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                 <?= esc($ind['sasaran']) ?>
                                             </td>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                 <?= esc($ind['indikator_sasaran']) ?>
-                                            </td>
-                                            <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                <?= esc($ind['satuan'] ?? '-') ?>
-                                            </td>
-                                            <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                <?= esc($ind['target'] ?? '-') ?>
                                             </td>
                                             <?php $firstIndicatorRow = false; ?>
                                         <?php endif; ?>
@@ -540,16 +520,15 @@
 <script>
     function applyFilter() {
         const indikator = document.getElementById('indikatorFilter')?.value || 'all';
-        const tahun     = document.getElementById('yearFilter')?.value || '';
+        const tahun     = document.getElementById('yearFilter')?.value || 'all';
         const status    = document.getElementById('statusFilter')?.value || 'all';
 
         const params = new URLSearchParams();
 
         if (indikator !== 'all') {
-            // di controller dipakai sebagai $filterSasaran
-            params.set('sasaran', indikator);
+            params.set('sasaran', indikator); // di controller: $filterSasaran
         }
-        if (tahun !== '') {
+        if (tahun !== 'all') {
             params.set('tahun', tahun);
         }
         if (status !== 'all') {

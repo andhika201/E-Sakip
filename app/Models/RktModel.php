@@ -6,7 +6,9 @@ use CodeIgniter\Model;
 
 class RktModel extends Model
 {
-    // ---------- meta ----------
+    // ------------------------------------------------------------------
+    // META
+    // ------------------------------------------------------------------
     protected $table = 'rkt';
     protected $primaryKey = 'id';
     protected $allowedFields = ['opd_id', 'tahun', 'indikator_id', 'program_id', 'status'];
@@ -14,9 +16,9 @@ class RktModel extends Model
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
 
-    // ======================================================================
-    // HELPERS
-    // ======================================================================
+    // ------------------------------------------------------------------
+    //  HELPERS
+    // ------------------------------------------------------------------
 
     /** Ambil daftar tahun yang ada di tabel rkt (DESC) */
     public function getAvailableYears(): array
@@ -25,9 +27,11 @@ class RktModel extends Model
             ->distinct()
             ->select('tahun')
             ->orderBy('tahun', 'DESC')
-            ->get()->getResultArray();
+            ->get()
+            ->getResultArray();
 
-        return array_map(fn($r) => (string) $r['tahun'], $rows);
+        // kembalikan sebagai array string tahun
+        return array_map(static fn($r) => (string) $r['tahun'], $rows);
     }
 
     /** Hapus 1 RKT dan mapping-nya (kegiatan & subkegiatan) */
@@ -51,12 +55,13 @@ class RktModel extends Model
         return $db->transStatus();
     }
 
-    // ======================================================================
-    // CREATE
-    // ======================================================================
+    // ------------------------------------------------------------------
+    //  CREATE
+    // ------------------------------------------------------------------
 
     /**
      * Simpan RKT baru (header rkt + mapping rkt_kegiatan + rkt_subkegiatan).
+     *
      * Struktur $payload:
      * [
      *   'opd_id'=>, 'tahun'=>, 'indikator_id'=>, 'status'=>'draft|selesai',
@@ -85,12 +90,14 @@ class RktModel extends Model
         $tblRktSub = $db->table('rkt_subkegiatan');
 
         $programs = $payload['program'] ?? [];
-        if (!is_array($programs))
+        if (!is_array($programs)) {
             $programs = [];
+        }
 
         foreach ($programs as $prog) {
-            if (empty($prog['program_id']))
+            if (empty($prog['program_id'])) {
                 continue;
+            }
 
             // header RKT
             $tblRkt->insert([
@@ -102,13 +109,15 @@ class RktModel extends Model
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+
             $rktId = (int) $db->insertID();
 
             // mapping kegiatan
             $kegiatanList = $prog['kegiatan'] ?? [];
             foreach ($kegiatanList as $keg) {
-                if (empty($keg['kegiatan_id']))
+                if (empty($keg['kegiatan_id'])) {
                     continue;
+                }
 
                 $tblRktKeg->insert([
                     'rkt_id' => $rktId,
@@ -121,8 +130,9 @@ class RktModel extends Model
                 // mapping subkegiatan
                 $subs = $keg['subkegiatan'] ?? [];
                 foreach ($subs as $sub) {
-                    if (empty($sub['sub_kegiatan_id']))
+                    if (empty($sub['sub_kegiatan_id'])) {
                         continue;
+                    }
                     $tblRktSub->insert([
                         'rkt_kegiatan_id' => $rktKegId,
                         'sub_kegiatan_id' => $sub['sub_kegiatan_id'],
@@ -137,14 +147,20 @@ class RktModel extends Model
         return $db->transStatus();
     }
 
-    // ======================================================================
-    // UPDATE
-    // ======================================================================
+    // ------------------------------------------------------------------
+    //  UPDATE
+    // ------------------------------------------------------------------
 
     /**
      * Update RKT per indikator & tahun.
-     * Menerima daftar id yang dihapus: deleted_program_ids[], deleted_kegiatan_ids[], deleted_subkegiatan_ids[]
-     * Payload program sama seperti saveRkt tetapi setiap item boleh memiliki 'id' (rkt.id / rkt_kegiatan.id / rkt_subkegiatan.id).
+     *
+     * Menerima daftar id yang dihapus:
+     *  - deleted_program_ids[]
+     *  - deleted_kegiatan_ids[]
+     *  - deleted_subkegiatan_ids[]
+     *
+     * Payload program sama seperti saveRkt tetapi setiap item boleh memiliki
+     * 'id' (rkt.id / rkt_kegiatan.id / rkt_subkegiatan.id).
      */
     public function updateRkt(array $payload): bool
     {
@@ -155,31 +171,39 @@ class RktModel extends Model
         $tblRktKeg = $db->table('rkt_kegiatan');
         $tblRktSub = $db->table('rkt_subkegiatan');
 
-        // delete sub
+        // ----------------- DELETE SUB -----------------
         $delSubs = array_filter(array_map('intval', (array) ($payload['deleted_subkegiatan_ids'] ?? [])));
-        if (!empty($delSubs))
+        if (!empty($delSubs)) {
             $tblRktSub->whereIn('id', $delSubs)->delete();
+        }
 
-        // delete kegiatan (+ subnya)
+        // ----------------- DELETE KEGIATAN (+ SUB) -----------------
         $delKegs = array_filter(array_map('intval', (array) ($payload['deleted_kegiatan_ids'] ?? [])));
         if (!empty($delKegs)) {
             $tblRktSub->whereIn('rkt_kegiatan_id', $delKegs)->delete();
             $tblRktKeg->whereIn('id', $delKegs)->delete();
         }
 
-        // delete program (+ semua keg & sub)
+        // ----------------- DELETE PROGRAM (+ KEG + SUB) -------------
         $delRkts = array_filter(array_map('intval', (array) ($payload['deleted_program_ids'] ?? [])));
         if (!empty($delRkts)) {
-            $kRows = $db->table('rkt_kegiatan')->select('id')->whereIn('rkt_id', $delRkts)->get()->getResultArray();
+            $kRows = $db->table('rkt_kegiatan')
+                ->select('id')
+                ->whereIn('rkt_id', $delRkts)
+                ->get()
+                ->getResultArray();
+
             $kIds = array_column($kRows, 'id');
+
             if (!empty($kIds)) {
                 $tblRktSub->whereIn('rkt_kegiatan_id', $kIds)->delete();
                 $tblRktKeg->whereIn('id', $kIds)->delete();
             }
+
             $tblRkt->whereIn('id', $delRkts)->delete();
         }
 
-        // upsert program/kegiatan/subkegiatan
+        // ----------------- UPSERT PROGRAM / KEGIATAN / SUB -----------
         $opdId = $payload['opd_id'] ?? session()->get('opd_id');
         $tahun = $payload['tahun'] ?? date('Y');
         $indikatorId = $payload['indikator_id'] ?? null;
@@ -187,8 +211,8 @@ class RktModel extends Model
         foreach ((array) ($payload['program'] ?? []) as $p) {
             $rktId = !empty($p['id']) ? (int) $p['id'] : null;
 
+            // upsert RKT (header)
             if ($rktId) {
-                // pastikan row ada
                 $exist = $tblRkt->select('id')->where('id', $rktId)->get()->getRowArray();
                 if ($exist) {
                     $tblRkt->where('id', $rktId)->update([
@@ -266,11 +290,11 @@ class RktModel extends Model
         return $db->transStatus();
     }
 
-    // ======================================================================
-    // READ (NESTED)
-    // ======================================================================
+    // ------------------------------------------------------------------
+    //  READ (NESTED) – UNTUK OPD
+    // ------------------------------------------------------------------
 
-    /** Ambil RKT lengkap untuk satu OPD (nested program→kegiatan→subkegiatan) */
+    /** Ambil RKT lengkap untuk satu OPD (nested program → kegiatan → subkegiatan) */
     public function getRktByOpd(int $opdId): array
     {
         $db = $this->db;
@@ -289,7 +313,8 @@ class RktModel extends Model
             ->join('program_pk p', 'p.id = r.program_id', 'left')
             ->where('r.opd_id', $opdId)
             ->orderBy('r.id', 'ASC')
-            ->get()->getResultArray();
+            ->get()
+            ->getResultArray();
 
         foreach ($rows as &$rkt) {
             $kegs = $db->table('rkt_kegiatan rk')
@@ -301,7 +326,8 @@ class RktModel extends Model
                 ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
                 ->where('rk.rkt_id', $rkt['id'])
                 ->orderBy('rk.id', 'ASC')
-                ->get()->getResultArray();
+                ->get()
+                ->getResultArray();
 
             foreach ($kegs as &$k) {
                 $subs = $db->table('rkt_subkegiatan rs')
@@ -313,7 +339,8 @@ class RktModel extends Model
                     ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
                     ->where('rs.rkt_kegiatan_id', $k['id'])
                     ->orderBy('rs.id', 'ASC')
-                    ->get()->getResultArray();
+                    ->get()
+                    ->getResultArray();
 
                 $k['subkegiatan'] = $subs;
             }
@@ -325,8 +352,8 @@ class RktModel extends Model
     }
 
     /**
-     * Ambil indikator OPD + RKT tahun tertentu (dengan filter status opsional).
-     * Return: array indikator, masing2 berisi 'rkts' (program→kegiatan→subkegiatan).
+     * Ambil indikator OPD + RKT tahun tertentu (nested).
+     * Return: array indikator, masing2 berisi 'rkts' (program → kegiatan → subkegiatan).
      */
     public function getIndicatorsWithRkt(int $opdId, $tahun, string $status = 'all'): array
     {
@@ -364,8 +391,9 @@ class RktModel extends Model
                 ->where('r.indikator_id', $ind['id'])
                 ->orderBy('r.id', 'ASC');
 
-            if ($status !== 'all')
+            if ($status !== 'all') {
                 $q->where('r.status', $status);
+            }
 
             $rkts = $q->get()->getResultArray();
 
@@ -379,7 +407,8 @@ class RktModel extends Model
                     ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
                     ->where('rk.rkt_id', $rkt['id'])
                     ->orderBy('rk.id', 'ASC')
-                    ->get()->getResultArray();
+                    ->get()
+                    ->getResultArray();
 
                 foreach ($kegs as &$k) {
                     $subs = $db->table('rkt_subkegiatan rs')
@@ -391,7 +420,8 @@ class RktModel extends Model
                         ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
                         ->where('rs.rkt_kegiatan_id', $k['id'])
                         ->orderBy('rs.id', 'ASC')
-                        ->get()->getResultArray();
+                        ->get()
+                        ->getResultArray();
 
                     $k['subkegiatan'] = $subs;
                 }
@@ -405,7 +435,7 @@ class RktModel extends Model
         return $indicators;
     }
 
-    /** Ambil hanya untuk 1 indikator (filter OPD & tahun) */
+    /** Ambil hanya untuk 1 indikator (filter OPD & tahun) – nested. */
     public function getRktbyIndicator(int $opdId, $tahun, int $indicatorId, string $status = 'all'): array
     {
         $db = $this->db;
@@ -441,26 +471,37 @@ class RktModel extends Model
                 ->where('r.indikator_id', $ind['id'])
                 ->orderBy('r.id', 'ASC');
 
-            if ($status !== 'all')
+            if ($status !== 'all') {
                 $q->where('r.status', $status);
+            }
 
             $rkts = $q->get()->getResultArray();
 
             foreach ($rkts as &$rkt) {
                 $kegs = $db->table('rkt_kegiatan rk')
-                    ->select("rk.*, k.kegiatan AS nama_kegiatan, k.anggaran AS kegiatan_anggaran")
+                    ->select("
+                        rk.*,
+                        k.kegiatan AS nama_kegiatan,
+                        k.anggaran AS kegiatan_anggaran
+                    ")
                     ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
                     ->where('rk.rkt_id', $rkt['id'])
                     ->orderBy('rk.id', 'ASC')
-                    ->get()->getResultArray();
+                    ->get()
+                    ->getResultArray();
 
                 foreach ($kegs as &$k) {
                     $subs = $db->table('rkt_subkegiatan rs')
-                        ->select("rs.*, sk.sub_kegiatan AS nama_subkegiatan, sk.anggaran AS target_anggaran")
+                        ->select("
+                            rs.*,
+                            sk.sub_kegiatan AS nama_subkegiatan,
+                            sk.anggaran    AS target_anggaran
+                        ")
                         ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
                         ->where('rs.rkt_kegiatan_id', $k['id'])
                         ->orderBy('rs.id', 'ASC')
-                        ->get()->getResultArray();
+                        ->get()
+                        ->getResultArray();
 
                     $k['subkegiatan'] = $subs;
                 }
@@ -473,36 +514,89 @@ class RktModel extends Model
 
         return $indicators;
     }
+    // ------------------------------------------------------------------
+//  READ (FLAT) – UNTUK RKPD (RINGKAS)
+// ------------------------------------------------------------------
 
-    // ======================================================================
-    // READ (FLAT) – untuk laporan cepat
-    // ======================================================================
-
+    /**
+     * Ambil data flat untuk laporan RKPD.
+     *
+     * @param mixed  $opdId  'all' atau id OPD
+     * @param mixed  $tahun  'all' atau tahun tertentu
+     * @param string $status 'all' | 'draft' | 'selesai'
+     */
     public function getIndicatorsForRkpd($opdId, $tahun, string $status = 'all'): array
     {
         $b = $this->db->table('rkt r')
             ->select("
-                r.*,
-                i.indikator_sasaran,
-                s.sasaran,
-                o.nama_opd,
-                p.program_kegiatan
-            ")
+            r.id              AS rkt_id,
+            r.opd_id,
+            r.indikator_id,
+            r.tahun,
+            r.status,
+
+            s.id              AS sasaran_id,
+            s.sasaran,
+            i.indikator_sasaran,
+            i.satuan,
+
+            o.nama_opd,
+
+            (
+                SELECT t2.target
+                FROM renstra_target t2
+                WHERE t2.renstra_indikator_id = i.id
+                  AND t2.tahun = r.tahun
+                LIMIT 1
+            ) AS target_renstra,
+
+            p.program_kegiatan      AS program_kegiatan,
+            k.kegiatan              AS nama_kegiatan,
+            sk.sub_kegiatan         AS nama_subkegiatan,
+            sk.anggaran             AS target_anggaran
+        ")
             ->join('renstra_indikator_sasaran i', 'i.id = r.indikator_id', 'left')
             ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
             ->join('opd o', 'o.id = s.opd_id', 'left')
             ->join('program_pk p', 'p.id = r.program_id', 'left')
-            ->orderBy('o.nama_opd', 'ASC')
-            ->orderBy('s.sasaran', 'ASC')
-            ->orderBy('i.indikator_sasaran', 'ASC');
+            ->join('rkt_kegiatan rk', 'rk.rkt_id = r.id', 'left')
+            ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
+            ->join('rkt_subkegiatan rs', 'rs.rkt_kegiatan_id = rk.id', 'left')
+            ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left');
 
-        if ($opdId !== 'all')
-            $b->where('o.id', $opdId);
-        if ($tahun !== 'all')
+        // Filter OPD
+        if ($opdId !== 'all') {
+            $b->where('r.opd_id', (int) $opdId);
+        }
+
+        // Filter tahun
+        if ($tahun !== 'all') {
             $b->where('r.tahun', $tahun);
-        if ($status !== 'all')
-            $b->where('r.status', $status);
+        }
 
-        return $b->get()->getResultArray();
+        // Filter status
+        if ($status !== 'all') {
+            $b->where('r.status', $status);
+        }
+
+        return $b
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('i.id', 'ASC')
+            ->orderBy('p.id', 'ASC')
+            ->orderBy('k.id', 'ASC')
+            ->orderBy('sk.id', 'ASC')
+            ->get()
+            ->getResultArray();
     }
+
+    /**
+     * Wrapper sederhana: ambil data RKPD semua OPD (ringkas).
+     * Sama saja dengan getIndicatorsForRkpd('all', $tahun, $status)
+     */
+    public function getIndicatorsForRkpdAll($tahun, string $status = 'all'): array
+    {
+        return $this->getIndicatorsForRkpd('all', $tahun, $status);
+    }
+
 }

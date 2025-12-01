@@ -3,302 +3,337 @@
 <html lang="id">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RKPD - e-SAKIP</title>
-  <?= $this->include('adminKabupaten/templates/style.php'); ?>
-  <style>
-    /* minor styles for clean table */
-    .opd-header {
-      text-transform: uppercase;
-      font-weight: 700;
-      text-align: center;
-      vertical-align: middle;
-    }
-
-    .nowrap {
-      white-space: nowrap;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><?= esc($title ?? 'RKPD') ?></title>
+    <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
-  <?= $this->include('adminKabupaten/templates/header.php'); ?>
-  <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
+    <?= $this->include('adminKabupaten/templates/header.php'); ?>
+    <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
-  <main class="flex-fill p-4 mt-2">
-    <div class="bg-white rounded shadow p-4">
+    <?php
+    helper('format_helper');
 
-      <h2 class="h3 fw-bold text-success text-center mb-4">RENCANA KERJA PERANGKAT DAERAH</h2>
+    // ==================================================================
+    // GROUPING: dari rows_grouped (per opd_id) -> per nama_opd + indikator
+    // ==================================================================
+    $grouped = [];
 
-      <!-- Alerts -->
-      <?php if (session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
-      <?php endif; ?>
-      <?php if (session()->getFlashdata('success')): ?>
-        <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
-      <?php endif; ?>
+    if (!empty($rows_grouped)) {
+        foreach ($rows_grouped as $opdId => $rows) {
+            foreach ($rows as $row) {
+                $opdName = $row['nama_opd'] ?? '-';
 
-      <!-- FILTER -->
-      <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <div class="d-flex gap-2 flex-fill">
-          <select id="opdFilter" class="form-select w-25">
-            <option value="all" <?= ($opdId === 'all') ? 'selected' : '' ?>>SEMUA OPD</option>
-            <?php if (!empty($allOpd)):
-              foreach ($allOpd as $opd): ?>
-                <option value="<?= esc($opd['id']) ?>" <?= ((string) $opdId === (string) $opd['id']) ? 'selected' : '' ?>>
-                  <?= esc($opd['nama_opd']) ?>
-                </option>
-              <?php endforeach; endif; ?>
-          </select>
+                // key indikator (tahun + sasaran + indikator)
+                $metaKey = implode('|', [
+                    $row['tahun'] ?? '',
+                    $row['sasaran'] ?? '',
+                    $row['indikator_sasaran'] ?? '',
+                ]);
 
-          <select id="yearFilter" class="form-select w-25">
-            <?php
-            $curYear = date('Y');
-            $yearSelected = isset($tahun) ? $tahun : $curYear;
-            ?>
-            <option value="all" <?= ($yearSelected === 'all') ? 'selected' : '' ?>>SEMUA TAHUN</option>
-            <?php if (!empty($available_years)):
-              foreach ($available_years as $y): ?>
-                <option value="<?= esc($y) ?>" <?= ((string) $yearSelected === (string) $y) ? 'selected' : '' ?>>
-                  <?= esc($y) ?>
-                </option>
-              <?php endforeach; endif; ?>
-          </select>
-        </div>
-      </div>
-
-      <!-- SUMMARY -->
-      <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-between">
-          <small class="text-muted"><span id="visible-data-count">Memuat data...</span></small>
-          <small class="text-muted">Filter aktif: <span id="active-filters">
-              OPD: <?= ($opdId === 'all' ? 'SEMUA' : esc($currentOpd['nama_opd'] ?? '')) ?>,
-              Tahun: <?= esc($tahun) ?>
-            </span></small>
-        </div>
-      </div>
-
-
-      <!-- TABLE -->
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center small">
-          <thead class="table-success">
-            <tr>
-              <th class="border p-2">SATUAN KERJA</th>
-              <th class="border p-2">NO</th>
-              <th class="border p-2">SASARAN</th>
-              <th class="border p-2">INDIKATOR SASARAN</th>
-              <th class="border p-2">SATUAN</th>
-              <th class="border p-2">TARGET</th>
-              <th class="border p-2">PROGRAM</th>
-              <th class="border p-2">KEGIATAN</th>
-              <th class="border p-2">SUB KEGIATAN</th>
-              <th class="border p-2">TARGET ANGGARAN</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <?php helper('format_helper'); ?>
-
-            <?php if ($opdId === 'all'): ?>
-              <tr>
-                <td colspan="10">Tolong pilih filter.</td>
-              </tr>
-
-            <?php else: ?>
-              <!-- MODE SINGLE OPD (fallback to indicator-based structure) -->
-              <?php
-              // Here $rktdata expected as indicators array (as previous getIndicatorsWithRkt returns)
-              if (empty($rktdata)):
-                ?>
-                <tr>
-                  <td colspan="10" class="p-4 text-center text-muted">Tidak ada data RENJA untuk OPD ini.</td>
-                </tr>
-              <?php else: ?>
-                <?php
-                helper('format_helper');
-                $no = 1;
-
-                // Hitung total rowspan untuk kolom OPD
-                $totalRowsAll = 0;
-                foreach ($rktdata as $ind) {
-                  $rowCount = 0;
-                  if (!empty($ind['rkts'])) {
-                    foreach ($ind['rkts'] as $rkt) {
-                      if (!empty($rkt['kegiatan'])) {
-                        foreach ($rkt['kegiatan'] as $keg) {
-                          $subCount = count($keg['subkegiatan'] ?? []);
-                          $rowCount += ($subCount > 0 ? $subCount : 1);
-                        }
-                      } else {
-                        $rowCount += 1;
-                      }
-                    }
-                  } else {
-                    $rowCount = 1;
-                  }
-                  $totalRowsAll += $rowCount;
+                if (!isset($grouped[$opdName][$metaKey])) {
+                    $grouped[$opdName][$metaKey] = [
+                        'meta' => [
+                            'tahun' => $row['tahun'] ?? '',
+                            'sasaran' => $row['sasaran'] ?? '',
+                            'indikator_sasaran' => $row['indikator_sasaran'] ?? '',
+                        ],
+                        'rows' => [],
+                    ];
                 }
 
-                $firstOpdRow = true;
-
-                foreach ($rktdata as $ind):
-                  // hitung rowspan indikator
-                  $totalSub = 0;
-                  if (!empty($ind['rkts'])) {
-                    foreach ($ind['rkts'] as $rkt) {
-                      if (!empty($rkt['kegiatan'])) {
-                        foreach ($rkt['kegiatan'] as $keg) {
-                          $subCount = count($keg['subkegiatan'] ?? []);
-                          $totalSub += ($subCount > 0 ? $subCount : 1);
-                        }
-                      } else {
-                        $totalSub += 1;
-                      }
-                    }
-                  } else {
-                    $totalSub = 1;
-                  }
-
-                  $firstIndicatorRow = true;
-                  $actionRendered = false;
-
-                  // Jika belum ada RKT sama sekali
-                  if (empty($ind['rkts'])):
-                    ?>
-                    <tr>
-                      <?php if ($firstOpdRow): ?>
-                        <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
-                          <?= esc($currentOpd['nama_opd']) ?>
-                        </td>
-                        <?php $firstOpdRow = false; ?>
-                      <?php endif; ?>
-
-                      <td rowspan="<?= $totalSub ?>" class="align-middle"><?= $no++ ?></td>
-                      <td rowspan="<?= $totalSub ?>" class="align-middle text-start">
-                        <?= esc($ind['sasaran']) ?>
-                      </td>
-                      <td rowspan="<?= $totalSub ?>" class="align-middle text-start">
-                        <?= esc($ind['indikator_sasaran']) ?>
-                      </td>
-                      <td rowspan="<?= $totalSub ?>" class="align-middle text-center">
-                        <?= esc($ind['satuan']) ?>
-                      </td>
-                      <td rowspan="<?= $totalSub ?>" class="align-middle text-center">
-                        <?= esc($ind['target']) ?>
-                      </td>
-
-                      <td class="text-start">-</td>
-                      <td class="text-start">-</td>
-                      <td class="text-start">-</td>
-                      <td class="text-end">-</td>
-
-                      
-                    </tr>
-
-                    <?php
-                    // --- RKT ADA ---
-                  else:
-                    foreach ($ind['rkts'] as $rkt):
-                      $firstProgramRow = true;
-                      foreach ($rkt['kegiatan'] as $keg):
-                        $subCount = count($keg['subkegiatan'] ?? []);
-                        $rowspanKeg = ($subCount > 0 ? $subCount : 1);
-                        $firstKegRow = true;
-
-                        if (!empty($keg['subkegiatan'])):
-                          foreach ($keg['subkegiatan'] as $sub):
-                            ?>
-                            <tr>
-                              <?php if ($firstOpdRow): ?>
-                                <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
-                                  <?= esc($currentOpd['nama_opd']) ?>
-                                </td>
-                                <?php $firstOpdRow = false; ?>
-                              <?php endif; ?>
-
-                              <?php if ($firstIndicatorRow): ?>
-                                <td rowspan="<?= $totalSub ?>" class="align-middle"><?= $no++ ?></td>
-                                <td rowspan="<?= $totalSub ?>" class="align-middle text-start">
-                                  <?= esc($ind['sasaran']) ?>
-                                </td>
-                                <td rowspan="<?= $totalSub ?>" class="align-middle text-start">
-                                  <?= esc($ind['indikator_sasaran']) ?>
-                                </td>
-                                <td rowspan="<?= $totalSub ?>" class="align-middle text-center">
-                                  <?= esc($ind['satuan']) ?>
-                                </td>
-                                <td rowspan="<?= $totalSub ?>" class="align-middle text-center">
-                                  <?= esc($ind['target']) ?>
-                                </td>
-                                <?php $firstIndicatorRow = false; ?>
-                              <?php endif; ?>
-
-                              <?php if ($firstProgramRow): ?>
-                                <td rowspan="<?= $rowspanKeg ?>" class="align-middle text-start">
-                                  <?= esc($rkt['program_nama']) ?>
-                                </td>
-                                <?php $firstProgramRow = false; ?>
-                              <?php endif; ?>
-
-                              <?php if ($firstKegRow): ?>
-                                <td rowspan="<?= $rowspanKeg ?>" class="align-middle text-start">
-                                  <?= esc($keg['nama_kegiatan']) ?>
-                                </td>
-                                <?php $firstKegRow = false; ?>
-                              <?php endif; ?>
-
-                              <td class="text-start"><?= esc($sub['nama_subkegiatan']) ?></td>
-                              <td class="text-end"><?= formatRupiah($sub['target_anggaran']) ?></td>
-
-                              
-                            </tr>
-                            <?php
-                          endforeach;
-                        endif;
-                      endforeach;
-                    endforeach;
-                  endif;
-                endforeach;
-                ?>
-              <?php endif; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <?= $this->include('adminKabupaten/templates/footer.php'); ?>
-
-  <script>
-    // filter auto-apply
-    function applyFilter() {
-      const opd = document.getElementById('opdFilter').value;
-      const tahun = document.getElementById('yearFilter').value;
-      const q = new URLSearchParams();
-      if (opd) q.set('opd_id', opd);
-      if (tahun) q.set('tahun', tahun);
-      const url = '?' + q.toString();
-      window.location.href = url;
+                $grouped[$opdName][$metaKey]['rows'][] = $row;
+            }
+        }
     }
 
-    document.getElementById('opdFilter').addEventListener('change', applyFilter);
-    document.getElementById('yearFilter').addEventListener('change', applyFilter);
+    $selectedOpd   = $filter_opd   ?? 'all';
+    $selectedYear  = $filter_tahun ?? date('Y');
+    $totalIndikator = (int)($total_indikator ?? 0);
+    ?>
 
-    document.getElementById('resetFilter').addEventListener('click', function (e) {
-      e.preventDefault();
-      window.location.href = '<?= base_url('adminkabupaten/rkpd') ?>';
-    });
+    <main class="flex-fill p-4 mt-2">
+        <div class="bg-white rounded shadow p-4">
 
-    // small helper to update visible count
-    (function updateSummary() {
-      const rows = document.querySelectorAll('tbody tr').length;
-      document.getElementById('visible-data-count').textContent = rows + ' baris ditampilkan';
-    })();
-  </script>
+            <h2 class="h3 fw-bold text-success text-center mb-4">
+                RENCANA KERJA PEMERINTAH DAERAH (RKPD)
+            </h2>
+
+            <!-- Flash message -->
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= session()->getFlashdata('error') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?= session()->getFlashdata('success') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- FILTER (adaptasi style dari RKT) -->
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                <div class="d-flex gap-2 flex-fill">
+
+                    <!-- Filter OPD -->
+                    <select id="opdFilter" class="form-select w-50" onchange="applyFilter()">
+                        <option value="all" <?= ($selectedOpd === 'all') ? 'selected' : '' ?>>
+                            SEMUA OPD
+                        </option>
+                        <?php if (!empty($allOpd)): ?>
+                            <?php foreach ($allOpd as $opd): ?>
+                                <option value="<?= esc($opd['id']) ?>"
+                                    <?= ((string)$selectedOpd === (string)$opd['id']) ? 'selected' : '' ?>>
+                                    <?= esc($opd['nama_opd']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+
+                    <!-- Filter Tahun -->
+                    <select id="yearFilter" class="form-select w-25" onchange="applyFilter()">
+                        <option value="all" <?= ($selectedYear === 'all') ? 'selected' : '' ?>>
+                            SEMUA TAHUN
+                        </option>
+                        <?php if (!empty($available_years)): ?>
+                            <?php foreach ($available_years as $y): ?>
+                                <option value="<?= esc($y) ?>"
+                                    <?= ((string)$selectedYear === (string)$y) ? 'selected' : '' ?>>
+                                    <?= esc($y) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+
+                    <!-- Tombol reset -->
+                    <button type="button"
+                            onclick="window.location.href='<?= base_url('adminkab/rkpd') ?>'"
+                            class="btn btn-outline-secondary">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Info ringkas -->
+            <div class="row mb-3">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Total indikator: <?= $totalIndikator ?>
+                    </small>
+                    <small class="text-muted">
+                        Filter:
+                        OPD:
+                        <strong>
+                            <?php if ($selectedOpd === 'all'): ?>
+                                SEMUA
+                            <?php else: ?>
+                                <?= esc($currentOpdName ?? '-') ?>
+                            <?php endif; ?>
+                        </strong>
+                        , Tahun:
+                        <strong><?= $selectedYear === 'all' ? 'SEMUA' : esc($selectedYear) ?></strong>
+                    </small>
+                </div>
+            </div>
+
+            <!-- TABEL RKPD -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-center small align-middle">
+                    <thead class="table-success">
+                    <tr>
+                        <th class="border p-2">SATUAN KERJA</th>
+                        <th class="border p-2">NO</th>
+                        <th class="border p-2">TAHUN</th>
+                        <th class="border p-2">SASARAN</th>
+                        <th class="border p-2">INDIKATOR SASARAN</th>
+                        <th class="border p-2">PROGRAM</th>
+                        <th class="border p-2">KEGIATAN</th>
+                        <th class="border p-2">SUB KEGIATAN</th>
+                        <th class="border p-2">TARGET ANGGARAN</th>
+                        <th class="border p-2">STATUS RKT</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($grouped)): ?>
+                        <tr>
+                            <td colspan="10" class="text-center p-4 text-muted">
+                                Tidak ada data RKPD.
+                                <br>
+                                (Hanya RKT dengan status <strong>selesai</strong> yang ditampilkan di RKPD.)
+                            </td>
+                        </tr>
+                    <?php else: ?>
+
+                        <?php
+                        $no = 1;
+
+                        foreach ($grouped as $opdName => $indikatorList):
+
+                            // Hitung total baris untuk rowspan SATUAN KERJA
+                            $opdRowspan = 0;
+                            foreach ($indikatorList as $indVal) {
+                                $opdRowspan += count($indVal['rows']);
+                            }
+                            $firstOpdRow = true;
+
+                            foreach ($indikatorList as $indVal):
+
+                                $meta  = $indVal['meta'];
+                                $rows  = $indVal['rows'];
+                                $rowspanIndikator = count($rows);
+                                $firstIndRow = true;
+
+                                // Kumpulkan status RKT untuk indikator ini
+                                $statusSet = [];
+                                foreach ($rows as $r) {
+                                    if (!empty($r['status'])) {
+                                        $statusSet[] = $r['status'];
+                                    }
+                                }
+                                $statusSet = array_values(array_unique($statusSet));
+                                $statusRendered = false;
+
+                                // Hitung rowspan untuk program & kegiatan
+                                $programSpan  = [];
+                                $kegiatanSpan = [];
+
+                                foreach ($rows as $r) {
+                                    $p = $r['program_kegiatan'] ?? $r['program_nama'] ?? '-';
+                                    $k = $r['nama_kegiatan'] ?? $r['kegiatan'] ?? '-';
+
+                                    $programSpan[$p] = ($programSpan[$p] ?? 0) + 1;
+
+                                    $keyKeg = $p . '|' . $k;
+                                    $kegiatanSpan[$keyKeg] = ($kegiatanSpan[$keyKeg] ?? 0) + 1;
+                                }
+
+                                $printedProgram  = [];
+                                $printedKegiatan = [];
+
+                                foreach ($rows as $row):
+                                    $program = $row['program_kegiatan'] ?? $row['program_nama'] ?? '-';
+                                    $kegKey  = $program . '|' . ($row['nama_kegiatan'] ?? $row['kegiatan'] ?? '-');
+                                    $kegName = $row['nama_kegiatan'] ?? $row['kegiatan'] ?? '-';
+                                    $sub     = $row['nama_subkegiatan'] ?? $row['sub_kegiatan'] ?? '-';
+                                    $anggar  = $row['target_anggaran'] ?? 0;
+                                    ?>
+                                    <tr>
+                                        <?php if ($firstOpdRow): ?>
+                                            <td rowspan="<?= $opdRowspan ?>" class="align-middle text-start">
+                                                <?= esc($opdName) ?>
+                                            </td>
+                                            <?php $firstOpdRow = false; ?>
+                                        <?php endif; ?>
+
+                                        <?php if ($firstIndRow): ?>
+                                            <td rowspan="<?= $rowspanIndikator ?>" class="align-middle">
+                                                <?= $no++ ?>
+                                            </td>
+                                            <td rowspan="<?= $rowspanIndikator ?>" class="align-middle">
+                                                <?= esc($meta['tahun']) ?>
+                                            </td>
+                                            <td rowspan="<?= $rowspanIndikator ?>" class="align-middle text-start">
+                                                <?= esc($meta['sasaran']) ?>
+                                            </td>
+                                            <td rowspan="<?= $rowspanIndikator ?>" class="align-middle text-start">
+                                                <?= esc($meta['indikator_sasaran']) ?>
+                                            </td>
+                                            <?php $firstIndRow = false; ?>
+                                        <?php endif; ?>
+
+                                        <!-- PROGRAM (rowspan jika sama) -->
+                                        <?php if (empty($printedProgram[$program])): ?>
+                                            <td rowspan="<?= $programSpan[$program] ?? 1 ?>" class="align-middle text-start">
+                                                <?= esc($program) ?>
+                                            </td>
+                                            <?php $printedProgram[$program] = true; ?>
+                                        <?php endif; ?>
+
+                                        <!-- KEGIATAN (rowspan jika sama dalam program) -->
+                                        <?php if (empty($printedKegiatan[$kegKey])): ?>
+                                            <td rowspan="<?= $kegiatanSpan[$kegKey] ?? 1 ?>" class="align-middle text-start">
+                                                <?= esc($kegName) ?>
+                                            </td>
+                                            <?php $printedKegiatan[$kegKey] = true; ?>
+                                        <?php endif; ?>
+
+                                        <!-- SUB KEGIATAN -->
+                                        <td class="align-middle text-start">
+                                            <?= esc($sub) ?>
+                                        </td>
+
+                                        <!-- TARGET ANGGARAN -->
+                                        <td class="align-middle text-end">
+                                            <?php
+                                            if (function_exists('formatRupiah')) {
+                                                echo formatRupiah($anggar);
+                                            } else {
+                                                echo 'Rp ' . number_format((float)$anggar, 0, ',', '.');
+                                            }
+                                            ?>
+                                        </td>
+
+                                        <!-- STATUS (rowspan per indikator) -->
+                                        <?php if (!$statusRendered): ?>
+                                            <td rowspan="<?= $rowspanIndikator ?>" class="align-middle">
+                                                <?php if (empty($statusSet)): ?>
+                                                    <span class="badge bg-secondary">-</span>
+                                                <?php else: ?>
+                                                    <?php foreach ($statusSet as $st): ?>
+                                                        <?php if ($st === 'selesai'): ?>
+                                                            <span class="badge bg-success">Selesai</span>
+                                                        <?php elseif ($st === 'draft'): ?>
+                                                            <span class="badge bg-warning text-dark">Draft</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary">
+                                                                <?= esc(ucfirst($st)) ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                <?php endif; ?>
+                                            </td>
+                                            <?php $statusRendered = true; ?>
+                                        <?php endif; ?>
+                                    </tr>
+                                <?php endforeach; // foreach rows ?>
+                            <?php endforeach; // foreach indikator ?>
+                        <?php endforeach; // foreach OPD ?>
+                    <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+    <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+</div>
+
+<script>
+    function applyFilter() {
+        const opd   = document.getElementById('opdFilter')?.value || 'all';
+        const tahun = document.getElementById('yearFilter')?.value || 'all';
+
+        const params = new URLSearchParams();
+
+        if (opd !== 'all') {
+            params.set('opd_id', opd);
+        }
+        if (tahun !== 'all') {
+            params.set('tahun', tahun);
+        }
+
+        const qs = params.toString();
+        window.location.search = qs.length ? '?' + qs : '';
+    }
+</script>
+
 </body>
-
 </html>

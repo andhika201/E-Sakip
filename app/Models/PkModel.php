@@ -182,6 +182,7 @@ class PkModel extends Model
             // ---------------------------------------
             $pkData = [
                 'opd_id'     => $data['opd_id'],
+                'tahun'      => $data['tahun'],
                 'jenis'      => $data['jenis'],
                 'pihak_1'    => $data['pihak_1'],
                 'pihak_2'    => $data['pihak_2'],
@@ -362,6 +363,7 @@ class PkModel extends Model
                 ->update([
                     'pihak_1'    => $data['pihak_1'],
                     'pihak_2'    => $data['pihak_2'],
+                    'tahun'      => $data['tahun'],
                     'tanggal'    => $data['tanggal'],
                     'updated_at' => $now
                 ]);
@@ -654,13 +656,14 @@ class PkModel extends Model
     /**
      * Get summarized PK data by opd + jenis (used by controller)
      */
-    public function getCompletePkByOpdIdAndJenis($opdId, $jenis)
+    public function getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun)
     {
         $builder = $this->db->table('pk');
         $builder->select('pk.*, opd.nama_opd');
         $builder->join('opd', 'opd.id = pk.opd_id', 'left');
         $builder->where('pk.opd_id', $opdId);
         $builder->where('pk.jenis', $jenis);
+        $builder->where('pk.tahun', $tahun);
         $query = $builder->get();
 
         $results = $query->getResultArray();
@@ -842,6 +845,7 @@ class PkModel extends Model
             ->select('
             p.id as pk_id,
             p.jenis,
+            p.tahun,
             p.tanggal,
             o.nama_opd,
             o.singkatan,

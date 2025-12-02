@@ -69,7 +69,7 @@
                                     <div id="selected-indikator-container" class="mt-2"></div>
                                     <script>
                                         // JS untuk menampilkan indikator acuan yang dipilih dari checkbox
-                                        document.addEventListener('DOMContentLoaded', function() {
+                                        document.addEventListener('DOMContentLoaded', function () {
                                             const checkboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
                                             const container = document.getElementById('selected-indikator-container');
                                             checkboxes.forEach(cb => {
@@ -148,6 +148,12 @@
                                     </div>
                                 </div>
                             <?php endif; ?>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Tahun PK</label>
+                                <input type="number" name="tahun" class="form-control border-secondary"
+                                value="<?= isset($pk['tahun']) ? esc($pk['tahun']) : '' ?>"
+                                    placeholder="Contoh: 2025" min="2020" max="2050" required>
+                            </div>
                         </div>
                     </section>
 
@@ -161,7 +167,7 @@
                                 <?php
                                 $sasaranList = isset($pk['sasaran_pk']) && is_array($pk['sasaran_pk']) && count($pk['sasaran_pk']) > 0 ? $pk['sasaran_pk'] : [['sasaran' => '', 'indikator' => [['indikator' => '', 'target' => '']]]];
                                 foreach ($sasaranList as $si => $sasaran) {
-                                ?>
+                                    ?>
                                     <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3"
                                         data-sasaran-index="<?= $si ?>">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -180,7 +186,7 @@
                                                 <?php
                                                 $indikatorList = isset($sasaran['indikator']) && is_array($sasaran['indikator']) && count($sasaran['indikator']) > 0 ? $sasaran['indikator'] : [['indikator' => '', 'target' => '']];
                                                 foreach ($indikatorList as $ii => $indikator) {
-                                                ?>
+                                                    ?>
                                                     <div class="indikator-item border rounded p-3 bg-light mb-3">
                                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                                             <label class="fw-medium">Indikator</label>
@@ -223,11 +229,14 @@
                                                             </div>
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Jenis Indikator</label>
-                                                                <select name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][jenis_indikator]"
+                                                                <select
+                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][jenis_indikator]"
                                                                     class="form-select mb-3 border-secondary" required>
                                                                     <option value="">Pilih Jenis Indikator</option>
-                                                                    <option value="Indikator Positif" <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Positif') ? 'selected' : '' ?>>Indikator Positif</option>
-                                                                    <option value="Indikator Negatif" <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Negatif') ? 'selected' : '' ?>>Indikator Negatif</option>
+                                                                    <option value="Indikator Positif"
+                                                                        <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Positif') ? 'selected' : '' ?>>Indikator Positif</option>
+                                                                    <option value="Indikator Negatif"
+                                                                        <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Negatif') ? 'selected' : '' ?>>Indikator Negatif</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -239,7 +248,7 @@
                                                                 <?php
                                                                 $programList = isset($indikator['program']) && is_array($indikator['program']) && count($indikator['program']) > 0 ? $indikator['program'] : [['program_id' => '', 'anggaran' => '', 'program_kegiatan' => '']];
                                                                 foreach ($programList as $pi => $prog) {
-                                                                ?>
+                                                                    ?>
                                                                     <div class="row program-item">
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Program</label>
@@ -294,7 +303,7 @@
                                                                 <?php
                                                                 $programList = isset($indikator['program']) && is_array($indikator['program']) && count($indikator['program']) > 0 ? $indikator['program'] : [['program_id' => '', 'anggaran' => '', 'program_kegiatan' => '']];
                                                                 foreach ($programList as $pi => $prog) {
-                                                                ?>
+                                                                    ?>
                                                                     <div class="program-item border rounded p-3 bg-white mb-4">
                                                                         <div class="row mb-3">
                                                                             <div class="col-md-6">
@@ -336,7 +345,7 @@
                                                                                 ? $prog['kegiatan']
                                                                                 : [['kegiatan_id' => '', 'anggaran' => '', 'kegiatan' => '']];
                                                                             foreach ($kegiatanList as $ke => $keg) {
-                                                                            ?>
+                                                                                ?>
                                                                                 <div class="kegiatan-item border rounded bg-light p-3">
                                                                                     <div class="row">
                                                                                         <div class="col-md-6">
@@ -460,7 +469,8 @@
                                                                     </div>
 
                                                                     <div class="d-flex justify-content-end mt-2">
-                                                                        <button type="button" class="add-subkeg btn btn-success btn-sm">
+                                                                        <button type="button"
+                                                                            class="add-subkeg btn btn-success btn-sm">
                                                                             <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                                                         </button>
                                                                     </div>
@@ -485,7 +495,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                <?php
+                                    <?php
                                 } // end foreach sasaranList
                                 ?>
 
@@ -518,69 +528,69 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-                                            if (isset($satuan) && !empty($satuan)) {
-                                                foreach ($satuan as $s) {
-                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada satuan</option>';
-                                            }
-                                            ?>`;
+        if (isset($satuan) && !empty($satuan)) {
+            foreach ($satuan as $s) {
+                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada satuan</option>';
+        }
+        ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-                                            if (isset($program) && !empty($program)) {
-                                                foreach ($program as $programItem) {
-                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada program</option>';
-                                            }
-                                            ?>`;
+        if (isset($program) && !empty($program)) {
+            foreach ($program as $programItem) {
+                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-                                                if (isset($jptProgram) && !empty($jptProgram)) {
-                                                    foreach ($jptProgram as $programItem) {
-                                                        echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada program</option>';
-                                                }
-                                                ?>`;
+        if (isset($jptProgram) && !empty($jptProgram)) {
+            foreach ($jptProgram as $programItem) {
+                echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-                                            if (isset($kegiatan) && !empty($kegiatan)) {
-                                                foreach ($kegiatan as $kegiatanItem) {
-                                                    echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                            }
-                                            ?>`;
+        if (isset($kegiatan) && !empty($kegiatan)) {
+            foreach ($kegiatan as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
-                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
-                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+            foreach ($kegiatanAdmin as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
-                                                    foreach ($subkegiatan as $sk) {
-                                                        echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($subkegiatan) && !empty($subkegiatan)) {
+            foreach ($subkegiatan as $sk) {
+                echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+        }
+        ?>`;
     </script>
 
     <?php if ($jenis === 'jpt'): ?>

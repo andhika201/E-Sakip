@@ -25,13 +25,18 @@ class PkController extends BaseController
     {
         $session = session();
         $opdId = $session->get('opd_id');
+        $tahun = $this->request->getGet('tahun'); // menangkap filter tahun
+        $currentYear = date('Y');
+        
 
         if (!$opdId)
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis);
+        $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
         // If multiple, pick the first (or null if none)
 
         $currentOpd = $this->opdModel->find($opdId);
+        $currentYear = date('Y');
+        // dd($currentYear);
 
         if (is_array($pkData) && count($pkData) > 0) {
             $pkData = $pkData[0];
@@ -44,12 +49,15 @@ class PkController extends BaseController
         return view('adminOpd/pk/pk', [
             'pk_data' => $pkData,
             'current_opd' => $currentOpd,
+            'currentYear' => $currentYear,
+            'tahun' => $tahun ?? $currentYear,
             'jenis' => $jenis,
         ]);
     }
 
     public function tambah($jenis)
     {
+        
         $session = session();
         $opdId = $session->get('opd_id');
         if (!$opdId)
@@ -155,6 +163,7 @@ class PkController extends BaseController
 
         $post = $this->request->getPost();
         $now = date('Y-m-d');
+        
 
         // ------------------------------
         // REFERENSI INDIKATOR ATASAN
@@ -178,6 +187,7 @@ class PkController extends BaseController
         $saveData = [
             'opd_id'     => $opdId,
             'jenis'      => $jenis,
+            'tahun'      => $post['tahun'] ?? null,
             'pihak_1'    => $post['pegawai_1_id'] ?? null,
             'pihak_2'    => $post['pegawai_2_id'] ?? null,
             'tanggal'    => $now,
@@ -308,8 +318,8 @@ class PkController extends BaseController
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         }
-        // dd($post['sasaran_pk'][0]['indikator'][0]);
-        // dd($saveData['sasaran_pk'][0]['indikator']);
+        // dd($post['sasaran_pk'][0]['indikator'][0]['program'][0]);
+        // dd($saveData);
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -339,7 +349,7 @@ class PkController extends BaseController
 
             // Jika berhasil
             $redirectBase = (strtolower($jenis) === 'bupati')
-                ? '/adminKab/pk/'
+                ? '/adminkab/pk/'
                 : '/adminopd/pk/';
 
             return redirect()->to($redirectBase . $jenis)
@@ -370,9 +380,10 @@ class PkController extends BaseController
 
         $post = $this->request->getPost();
         log_message('debug', "POST DATA: " . json_encode($post));
-
         $session = session();
         $jenis = $pk['jenis'];
+        $tahun = $pk['tahun'];
+
         $opdId = $session->get('opd_id') ?? $pk['opd_id'];
         $now = date('Y-m-d');
 
@@ -403,6 +414,7 @@ class PkController extends BaseController
         $saveData = [
             'opd_id'            => $opdId,
             'jenis'             => $jenis,
+            'tahun'             => $tahun,
             'pihak_1'           => $post['pegawai_1_id'] ?? null,
             'pihak_2'           => $post['pegawai_2_id'] ?? null,
             'tanggal'           => $now,

@@ -52,7 +52,7 @@
                         <?php endif; ?>
                     </select>
 
-                    <!-- Filter Tahun (ambil dari renstra_target) -->
+                    <!-- Filter Tahun -->
                     <?php $selectedYear = $filter_tahun ?? 'all'; ?>
                     <select id="yearFilter" class="form-select w-25" onchange="applyFilter()">
                         <option value="all" <?= $selectedYear === 'all' ? 'selected' : '' ?>>
@@ -142,6 +142,25 @@
 
                     foreach ($rktdata as $ind):
 
+                        // ======= HITUNG TAHUN YANG DITAMPILKAN UNTUK INDIKATOR INI =======
+                        $displayYear = '-';
+                        if ($selectedYear !== 'all') {
+                            // kalau user pilih tahun tertentu di filter
+                            $displayYear = $selectedYear;
+                        } else {
+                            // ambil dari target_years renstra
+                            $targetYears = $ind['target_years'] ?? [];
+                            $targetYears = array_values(array_unique(array_filter($targetYears)));
+                            sort($targetYears);
+                            if (!empty($targetYears)) {
+                                if (count($targetYears) === 1) {
+                                    $displayYear = $targetYears[0];
+                                } else {
+                                    $displayYear = reset($targetYears) . ' - ' . end($targetYears);
+                                }
+                            }
+                        }
+
                         // Hitung rowspan per indikator
                         $totalSubRows = 0;
                         if (!empty($ind['rkts'])) {
@@ -185,7 +204,7 @@
 
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle"><?= $no++ ?></td>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                    <?= ($selectedYear === 'all') ? '-' : esc($selectedYear) ?>
+                                    <?= esc($displayYear) ?>
                                 </td>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                     <?= esc($ind['sasaran']) ?>
@@ -251,9 +270,7 @@
                                                             <?= $no++ ?>
                                                         </td>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                            <?= ($selectedYear === 'all')
-                                                                ? '-'
-                                                                : esc($selectedYear) ?>
+                                                            <?= esc($displayYear) ?>
                                                         </td>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                             <?= esc($ind['sasaran']) ?>
@@ -321,7 +338,7 @@
                                                                     <input type="hidden" name="indikator_id"
                                                                            value="<?= esc($ind['id']) ?>">
                                                                     <input type="hidden" name="tahun"
-                                                                           value="<?= esc($selectedYear) ?>">
+                                                                           value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
                                                                     <button type="submit"
                                                                             class="btn btn-info btn-sm"
                                                                             title="Ubah Status Draft/Selesai">
@@ -350,9 +367,7 @@
                                                         <?= $no++ ?>
                                                     </td>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                        <?= ($selectedYear === 'all')
-                                                            ? '-'
-                                                            : esc($selectedYear) ?>
+                                                        <?= esc($displayYear) ?>
                                                     </td>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                         <?= esc($ind['sasaran']) ?>
@@ -409,7 +424,7 @@
                                                                 <input type="hidden" name="indikator_id"
                                                                        value="<?= esc($ind['id']) ?>">
                                                                 <input type="hidden" name="tahun"
-                                                                       value="<?= esc($selectedYear) ?>">
+                                                                       value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
                                                                 <button type="submit"
                                                                         class="btn btn-info btn-sm"
                                                                         title="Ubah Status Draft/Selesai">
@@ -439,9 +454,7 @@
                                                 <?= $no++ ?>
                                             </td>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle">
-                                                <?= ($selectedYear === 'all')
-                                                    ? '-'
-                                                    : esc($selectedYear) ?>
+                                                <?= esc($displayYear) ?>
                                             </td>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                 <?= esc($ind['sasaran']) ?>
@@ -491,7 +504,7 @@
                                                         <input type="hidden" name="indikator_id"
                                                                value="<?= esc($ind['id']) ?>">
                                                         <input type="hidden" name="tahun"
-                                                               value="<?= esc($selectedYear) ?>">
+                                                               value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
                                                         <button type="submit"
                                                                 class="btn btn-info btn-sm"
                                                                 title="Ubah Status Draft/Selesai">
@@ -526,7 +539,7 @@
         const params = new URLSearchParams();
 
         if (indikator !== 'all') {
-            params.set('sasaran', indikator); // di controller: $filterSasaran
+            params.set('sasaran', indikator);
         }
         if (tahun !== 'all') {
             params.set('tahun', tahun);

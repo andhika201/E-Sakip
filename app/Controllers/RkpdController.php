@@ -72,7 +72,7 @@ class RkpdController extends BaseController
             }
         }
 
-        return view('adminkabupaten/rkpd/rkpd', [
+        return view('adminKabupaten/rkpd/rkpd', [
             'rows_grouped' => $grouped,
             'total_indikator' => $totalIndikator,
             'allOpd' => $allOpd,
@@ -106,7 +106,7 @@ class RkpdController extends BaseController
         // OPD list so admin_kab can pick target OPD when creating RKPD entries
         $opds = $this->opdModel->findAll();
 
-        return view('adminKab/rkpd/tambah', [
+        return view('adminKabupaten/rkpd/tambah', [
             'title' => 'Tambah RKPD',
             'program' => $programs,
             'indikators' => $indikators,
@@ -245,7 +245,7 @@ class RkpdController extends BaseController
     public function edit($id = null)
     {
         // Simple redirect for now — implement if you want full edit experience.
-        return redirect()->to(base_url('adminkab/rkpd'));
+        return redirect()->to(base_url('adminKabupaten/rkpd'));
     }
 
     public function update($id = null)

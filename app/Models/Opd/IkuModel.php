@@ -23,26 +23,15 @@ class IkuModel extends Model
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
 
-    // =========================================================
-    // CREATE IKU + PROGRAM PENDUKUNG
-    // =========================================================
-    /**
-     * Insert IKU lengkap (definisi + program pendukung)
-     * $data = [
-     *   'rpjmd_id'         => (int|null),
-     *   'renstra_id'       => (int|null),
-     *   'definisi'         => '...',
-     *   'status'           => 'draft'|'selesai' (opsional),
-     *   'program_pendukung'=> ['prog 1', 'prog 2', ...]
-     * ]
-     */
+    /* =========================================================
+     * CREATE IKU + PROGRAM PENDUKUNG
+     * =======================================================*/
     public function createCompleteIku(array $data)
     {
         $db = \Config\Database::connect();
         $db->transStart();
 
         try {
-            // 1. Simpan IKU
             $ikuData = [
                 'rpjmd_id' => $data['rpjmd_id'] ?? null,
                 'renstra_id' => $data['renstra_id'] ?? null,
@@ -53,13 +42,13 @@ class IkuModel extends Model
             $db->table('iku')->insert($ikuData);
             $ikuId = $db->insertID();
 
-            // 2. Simpan Program Pendukung (jika ada)
             if (!empty($data['program_pendukung']) && is_array($data['program_pendukung'])) {
                 foreach ($data['program_pendukung'] as $program) {
                     $program = trim($program);
                     if ($program === '') {
                         continue;
                     }
+
                     $db->table('iku_program_pendukung')->insert([
                         'iku_id' => $ikuId,
                         'program' => $program,
@@ -80,12 +69,11 @@ class IkuModel extends Model
         }
     }
 
-    // =========================================================
-    // LIST IKU UNTUK ADMIN OPD (BERDASARKAN OPD)
-    // =========================================================
+    /* =========================================================
+     * LIST IKU UNTUK ADMIN OPD (BERDASARKAN OPD)
+     * =======================================================*/
     public function getRenstraWithPrograms($opd_id)
     {
-        // Ambil IKU + info indikator / sasaran untuk OPD tertentu
         $ikuList = $this->db->table('iku')
             ->select("
                 iku.*,
@@ -108,19 +96,16 @@ class IkuModel extends Model
             ->get()
             ->getResultArray();
 
-        // Ambil semua program pendukung
         $programs = $this->db->table('iku_program_pendukung')
             ->select('iku_id, program')
             ->get()
             ->getResultArray();
 
-        // Mapping program ke IKU
         $programMap = [];
         foreach ($programs as $p) {
             $programMap[$p['iku_id']][] = $p['program'];
         }
 
-        // Gabungkan ke dalam list IKU
         foreach ($ikuList as &$iku) {
             $iku['program_pendukung'] = $programMap[$iku['id']] ?? [];
         }
@@ -128,9 +113,9 @@ class IkuModel extends Model
         return $ikuList;
     }
 
-    // =========================================================
-    // LIST IKU UNTUK ADMIN KABUPATEN (RPJMD / RENSTRA)
-    // =========================================================
+    /* =========================================================
+     * LIST IKU UNTUK ADMIN KABUPATEN (RPJMD / RENSTRA)
+     * =======================================================*/
     public function getRPJMDWithPrograms()
     {
         $ikuList = $this->db->table('iku')
@@ -154,7 +139,6 @@ class IkuModel extends Model
             ->get()
             ->getResultArray();
 
-        // Ambil program pendukung
         $programs = $this->db->table('iku_program_pendukung')
             ->select('iku_id, program')
             ->get()
@@ -172,12 +156,11 @@ class IkuModel extends Model
         return $ikuList;
     }
 
-    // =========================================================
-    // DETAIL IKU UNTUK HALAMAN EDIT
-    // =========================================================
+    /* =========================================================
+     * DETAIL IKU UNTUK HALAMAN EDIT
+     * =======================================================*/
     public function getIkuDetail($indikatorId, $role = 'admin_opd')
     {
-        // Cari IKU berdasarkan renstra_id / rpjmd_id
         $builder = $this->db->table('iku');
 
         if ($role === 'admin_kab') {
@@ -188,7 +171,6 @@ class IkuModel extends Model
 
         $iku = $builder->get()->getRowArray();
 
-        // Jika belum ada IKU (belum pernah dibuat), kembalikan template kosong
         if (!$iku) {
             return [
                 'id' => null,
@@ -199,7 +181,6 @@ class IkuModel extends Model
             ];
         }
 
-        // Ambil program pendukung
         $programs = $this->db->table('iku_program_pendukung')
             ->select('id, program')
             ->where('iku_id', $iku['id'])
@@ -211,9 +192,9 @@ class IkuModel extends Model
         return $iku;
     }
 
-    // =========================================================
-    // UPDATE IKU (DEFINSI / STATUS)
-    // =========================================================
+    /* =========================================================
+     * UPDATE / DELETE
+     * =======================================================*/
     public function updateIku($id, array $data, string $by = 'id')
     {
         return $this->db->table('iku')
@@ -221,14 +202,10 @@ class IkuModel extends Model
             ->update($data);
     }
 
-    // =========================================================
-    // UPDATE PROGRAM PENDUKUNG (EDIT DETAIL)
-    // =========================================================
     public function updateProgramPendukung($ikuId, $programs, $programIds = [])
     {
         $table = $this->db->table('iku_program_pendukung');
 
-        // Ambil semua ID lama
         $existingIds = $table->select('id')
             ->where('iku_id', $ikuId)
             ->get()
@@ -246,11 +223,9 @@ class IkuModel extends Model
             $programId = $programIds[$index] ?? null;
 
             if ($programId && in_array($programId, $existingIds)) {
-                // Update program lama
                 $table->where('id', $programId)->update(['program' => $program]);
                 $keepIds[] = $programId;
             } else {
-                // Tambah program baru
                 $table->insert([
                     'iku_id' => $ikuId,
                     'program' => $program,
@@ -259,7 +234,6 @@ class IkuModel extends Model
             }
         }
 
-        // Hapus program yang tidak dikirim user
         if (!empty($existingIds)) {
             $toDelete = array_diff($existingIds, $keepIds);
             if (!empty($toDelete)) {
@@ -268,9 +242,6 @@ class IkuModel extends Model
         }
     }
 
-    // =========================================================
-    // HAPUS IKU + PROGRAM PENDUKUNG
-    // =========================================================
     public function deleteIkuComplete($id)
     {
         $db = \Config\Database::connect();
@@ -286,5 +257,257 @@ class IkuModel extends Model
             $db->transRollback();
             throw $e;
         }
+    }
+
+    /* =========================================================
+     * IKU + PROGRAM UNTUK ADMIN KAB (INDEX SEDERHANA)
+     * =======================================================*/
+    public function getAllForAdminKab(): array
+    {
+        $ikuRows = $this->db->table('iku')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($ikuRows)) {
+            return [];
+        }
+
+        $progRows = $this->db->table('iku_program_pendukung')
+            ->select('iku_id, program')
+            ->orderBy('iku_id', 'ASC')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $progMap = [];
+        foreach ($progRows as $p) {
+            $progMap[$p['iku_id']][] = $p['program'];
+        }
+
+        foreach ($ikuRows as &$iku) {
+            $iku['program_pendukung'] = $progMap[$iku['id']] ?? [];
+        }
+
+        return $ikuRows;
+    }
+
+    /**
+     * Periode filter per 5 tahun
+     * - mode 'opd'       => ambil dari renstra_sasaran (tahun_mulai, tahun_akhir)
+     * - mode 'kabupaten' => ambil dari rpjmd_misi (tahun_mulai, tahun_akhir)
+     *
+     * Hasil:
+     * [
+     *   '2025_2029' => [
+     *       'period' => '2025 - 2029',
+     *       'years'  => [2025, 2026, 2027, 2028, 2029],
+     *   ],
+     *   ...
+     * ]
+     */
+    public function getPeriodeOptions(string $mode = 'opd'): array
+    {
+        $periodes = [];
+
+        if ($mode === 'kabupaten') {
+            // ================= RPJMD (mode kabupaten) =================
+            $rows = $this->db->table('rpjmd_misi')
+                ->select('DISTINCT tahun_mulai, tahun_akhir', false)
+                ->orderBy('tahun_mulai', 'ASC')
+                ->get()
+                ->getResultArray();
+        } else {
+            // ================= RENSTRA (mode OPD) =====================
+            $rows = $this->db->table('renstra_sasaran')
+                ->select('DISTINCT tahun_mulai, tahun_akhir', false)
+                ->orderBy('tahun_mulai', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        foreach ($rows as $row) {
+            if (empty($row['tahun_mulai']) || empty($row['tahun_akhir'])) {
+                continue;
+            }
+
+            $start = (int) $row['tahun_mulai'];
+            $end = (int) $row['tahun_akhir'];
+
+            // kalau mau strict 5 tahun, aktifkan ini:
+            // if ($end - $start !== 4) continue;
+
+            $key = $start . '_' . $end;      // contoh: "2025_2029"
+            $years = range($start, $end);      // [2025, 2026, 2027, 2028, 2029]
+
+            $periodes[$key] = [
+                'period' => $start . ' - ' . $end,
+                'years' => $years,
+            ];
+        }
+
+        return $periodes;
+    }
+
+    /** Semua IKU + program pendukung (dipakai di index admin kab) */
+    public function getAllIkuWithPrograms(): array
+    {
+        return $this->getAllForAdminKab();
+    }
+
+    /** Matriks RENSTRA untuk mode OPD */
+    public function getRenstraMatrix(array $yearsFilter = []): array
+    {
+        $builder = $this->db->table('renstra_sasaran rs')
+            ->select('
+                rs.id      AS sasaran_id,
+                rs.sasaran AS sasaran,
+                rs.opd_id  AS opd_id,
+                o.nama_opd AS nama_opd,
+                ris.id     AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rt.tahun,
+                rt.target AS target_tahunan
+            ')
+            ->join('opd o', 'o.id = rs.opd_id', 'left')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->join('renstra_target rt', 'rt.renstra_indikator_id = ris.id', 'left');
+
+        if (!empty($yearsFilter)) {
+            $builder->whereIn('rt.tahun', $yearsFilter);
+        }
+
+        $builder->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('rs.sasaran', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC');
+
+        $rows = $builder->get()->getResultArray();
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($rows as $r) {
+            if (empty($r['indikator_id'])) {
+                continue;
+            }
+
+            $opdId = (int) ($r['opd_id'] ?? 0);
+            $sasaranId = (int) ($r['sasaran_id'] ?? 0);
+            $key = $opdId . '-' . $sasaranId;
+
+            if (!isset($map[$key])) {
+                $map[$key] = [
+                    'opd_id' => $opdId,
+                    'nama_opd' => $r['nama_opd'] ?? '-',
+                    'sasaran' => $r['sasaran'] ?? '-',
+                    'indikator_index' => [],
+                ];
+            }
+
+            $indikatorId = (int) $r['indikator_id'];
+
+            if (!isset($map[$key]['indikator_index'][$indikatorId])) {
+                $map[$key]['indikator_index'][$indikatorId] = [
+                    'id' => $indikatorId,
+                    'indikator_sasaran' => $r['indikator_sasaran'] ?? '-',
+                    'satuan' => $r['satuan'] ?? '-',
+                    'target_tahunan' => [],
+                ];
+            }
+
+            if (!empty($r['tahun'])) {
+                $tahun = (int) $r['tahun'];
+                $target = $r['target_tahunan'] ?? null;
+                $map[$key]['indikator_index'][$indikatorId]['target_tahunan'][$tahun] = $target;
+            }
+        }
+
+        $result = [];
+        foreach ($map as $entry) {
+            $indikatorArr = array_values($entry['indikator_index']);
+            unset($entry['indikator_index']);
+            $entry['indikator_sasaran'] = $indikatorArr;
+            $result[] = $entry;
+        }
+
+        return $result;
+    }
+
+    /** Matriks RPJMD untuk mode kabupaten */
+    public function getRpjmdMatrix(array $yearsFilter = []): array
+    {
+        $builder = $this->db->table('rpjmd_sasaran rs')
+            ->select('
+                rs.id             AS sasaran_id,
+                rs.sasaran_rpjmd  AS sasaran_rpjmd,
+                ris.id            AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan,
+                rt.tahun,
+                rt.target_tahunan AS target_tahunan
+            ')
+            ->join('rpjmd_indikator_sasaran ris', 'ris.sasaran_id = rs.id', 'left')
+            ->join('rpjmd_target rt', 'rt.indikator_sasaran_id = ris.id', 'left');
+
+        if (!empty($yearsFilter)) {
+            $builder->whereIn('rt.tahun', $yearsFilter);
+        }
+
+        $builder->orderBy('rs.sasaran_rpjmd', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC');
+
+        $rows = $builder->get()->getResultArray();
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($rows as $r) {
+            if (empty($r['indikator_id'])) {
+                continue;
+            }
+
+            $sasaranId = (int) ($r['sasaran_id'] ?? 0);
+            $key = $sasaranId;
+
+            if (!isset($map[$key])) {
+                $map[$key] = [
+                    'sasaran_rpjmd' => $r['sasaran_rpjmd'] ?? '-',
+                    'indikator_index' => [],
+                ];
+            }
+
+            $indikatorId = (int) $r['indikator_id'];
+            if (!isset($map[$key]['indikator_index'][$indikatorId])) {
+                $map[$key]['indikator_index'][$indikatorId] = [
+                    'id' => $indikatorId,
+                    'indikator_sasaran' => $r['indikator_sasaran'] ?? '-',
+                    'satuan' => $r['satuan'] ?? '-',
+                    'target_tahunan' => [],
+                ];
+            }
+
+            if (!empty($r['tahun'])) {
+                $tahun = (int) $r['tahun'];
+                $target = $r['target_tahunan'] ?? null;
+                $map[$key]['indikator_index'][$indikatorId]['target_tahunan'][$tahun] = $target;
+            }
+        }
+
+        $result = [];
+        foreach ($map as $entry) {
+            $indikatorArr = array_values($entry['indikator_index']);
+            unset($entry['indikator_index']);
+            $entry['indikator_sasaran'] = $indikatorArr;
+            $result[] = $entry;
+        }
+
+        return $result;
     }
 }

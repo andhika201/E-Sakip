@@ -48,6 +48,8 @@ $routes->group(
         $routes->get('iku/tambah/(:num)', 'AdminKab\IkuController::tambah/$1');
         $routes->post('iku/save', 'AdminKab\IkuController::save');
         $routes->post('iku/update', 'AdminKab\IkuController::update');
+        // route untuk ubah status IKU
+        $routes->get('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
 
         // RPJMD
         $routes->get('rpjmd', 'RpjmdController::index');

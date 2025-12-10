@@ -13371,3 +13371,553 @@ Array
 )
 
 RESULT: SUCCESS
+=== RPJMD UPDATE DEBUG - 2025-12-10 03:20:29 ===
+RAW POST:
+Array
+(
+    [csrf_test_name] => 6e80f8c72d13715e29e016947d23c4db
+    [id] => 2
+    [mode] => edit
+    [misi] => Misi 2
+    [tahun_mulai] => 2025
+    [tahun_akhir] => 2029
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                    [target_tahunan_tujuan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 12
+                                                    [id] => 36
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 12
+                                                    [id] => 58
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 1
+                                                    [id] => 59
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 1
+                                                    [id] => 60
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 1
+                                                    [id] => 61
+                                                )
+
+                                        )
+
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 11
+                                    [indikator_tujuan] => asa
+                                    [target_tahunan_tujuan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 2
+                                                    [id] => 62
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 2
+                                                    [id] => 63
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 2
+                                                    [id] => 64
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 2
+                                                    [id] => 65
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 2
+                                                    [id] => 66
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 3
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [jenis_indikator] => indikator positif
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 116
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 117
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 118
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 119
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 120
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [id] => 5
+                                                    [indikator_sasaran] => asas
+                                                    [satuan] => Unit
+                                                    [jenis_indikator] => indikator negatif
+                                                    [definisi_op] => saa
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 121
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 2
+                                                                    [id] => 122
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 221
+                                                                    [id] => 123
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 11
+                                                                    [id] => 124
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 3
+                                                                    [id] => 125
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [id] => 9
+                                                    [indikator_sasaran] => sssa
+                                                    [satuan] => Nilai
+                                                    [jenis_indikator] => indikator positif
+                                                    [definisi_op] => asas
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 126
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 127
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 128
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 129
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 130
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+FORMATTED FOR MODEL:
+Array
+(
+    [misi] => Array
+        (
+            [misi] => Misi 2
+            [tahun_mulai] => 2025
+            [tahun_akhir] => 2029
+            [status] => selesai
+        )
+
+    [tujuan] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [tujuan_rpjmd] => Tujuan 1
+                    [indikator_tujuan] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [indikator_tujuan] => Indikator tujuan 1
+                                    [target_tahunan_tujuan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 12
+                                                    [id] => 36
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 12
+                                                    [id] => 58
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 1
+                                                    [id] => 59
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 1
+                                                    [id] => 60
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 1
+                                                    [id] => 61
+                                                )
+
+                                        )
+
+                                )
+
+                            [1] => Array
+                                (
+                                    [id] => 11
+                                    [indikator_tujuan] => asa
+                                    [target_tahunan_tujuan] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [tahun] => 2025
+                                                    [target_tahunan] => 2
+                                                    [id] => 62
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [tahun] => 2026
+                                                    [target_tahunan] => 2
+                                                    [id] => 63
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [tahun] => 2027
+                                                    [target_tahunan] => 2
+                                                    [id] => 64
+                                                )
+
+                                            [3] => Array
+                                                (
+                                                    [tahun] => 2028
+                                                    [target_tahunan] => 2
+                                                    [id] => 65
+                                                )
+
+                                            [4] => Array
+                                                (
+                                                    [tahun] => 2029
+                                                    [target_tahunan] => 2
+                                                    [id] => 66
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                    [sasaran] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => 2
+                                    [sasaran_rpjmd] => sasaran 3
+                                    [indikator_sasaran] => Array
+                                        (
+                                            [0] => Array
+                                                (
+                                                    [id] => 2
+                                                    [indikator_sasaran] => indikator sasaran 1
+                                                    [satuan] => Kegiatan
+                                                    [jenis_indikator] => indikator positif
+                                                    [definisi_op] => definisi operasional 2
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 33
+                                                                    [id] => 116
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 44
+                                                                    [id] => 117
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 55
+                                                                    [id] => 118
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 66
+                                                                    [id] => 119
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 77
+                                                                    [id] => 120
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [1] => Array
+                                                (
+                                                    [id] => 5
+                                                    [indikator_sasaran] => asas
+                                                    [satuan] => Unit
+                                                    [jenis_indikator] => indikator negatif
+                                                    [definisi_op] => saa
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 121
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 2
+                                                                    [id] => 122
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 221
+                                                                    [id] => 123
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 11
+                                                                    [id] => 124
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 3
+                                                                    [id] => 125
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                            [2] => Array
+                                                (
+                                                    [id] => 9
+                                                    [indikator_sasaran] => sssa
+                                                    [satuan] => Nilai
+                                                    [jenis_indikator] => indikator positif
+                                                    [definisi_op] => asas
+                                                    [target_tahunan] => Array
+                                                        (
+                                                            [0] => Array
+                                                                (
+                                                                    [tahun] => 2025
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 126
+                                                                )
+
+                                                            [1] => Array
+                                                                (
+                                                                    [tahun] => 2026
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 127
+                                                                )
+
+                                                            [2] => Array
+                                                                (
+                                                                    [tahun] => 2027
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 128
+                                                                )
+
+                                                            [3] => Array
+                                                                (
+                                                                    [tahun] => 2028
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 129
+                                                                )
+
+                                                            [4] => Array
+                                                                (
+                                                                    [tahun] => 2029
+                                                                    [target_tahunan] => 1
+                                                                    [id] => 130
+                                                                )
+
+                                                        )
+
+                                                )
+
+                                        )
+
+                                )
+
+                        )
+
+                )
+
+        )
+
+)
+
+RESULT: SUCCESS

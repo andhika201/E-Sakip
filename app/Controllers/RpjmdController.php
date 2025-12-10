@@ -54,6 +54,7 @@ class RpjmdController extends BaseController
             return (int) $row['tahun'];
         }, $availableYears);
         sort($data['available_years']);
+
         if (empty($data['available_years'])) {
             // fallback 5 tahun umum (bukan patokan header, hanya untuk kompatibilitas lama)
             $data['available_years'] = [2025, 2026, 2027, 2028, 2029];
@@ -83,7 +84,7 @@ class RpjmdController extends BaseController
             file_put_contents($debugFile, "=== RPJMD SAVE DEBUG - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
             file_put_contents($debugFile, "RAW POST:\n" . print_r($post, true) . "\n", FILE_APPEND);
 
-            // Normalisasi minimal
+            // Normalisasi minimal untuk Misi
             $misi = [
                 'misi' => $post['misi'] ?? '',
                 'tahun_mulai' => isset($post['tahun_mulai']) ? (int) $post['tahun_mulai'] : 0,
@@ -91,13 +92,7 @@ class RpjmdController extends BaseController
                 'status' => $post['status'] ?? 'draft',
             ];
 
-            // Pastikan struktur tujuan mengikuti naming view:
-            // tujuan[][tujuan_rpjmd]
-            // tujuan[][indikator_tujuan][][indikator_tujuan]
-            // tujuan[][indikator_tujuan][][target_tahunan_tujuan][][tahun|target_tahunan]
-            // tujuan[][sasaran][][sasaran_rpjmd]
-            // tujuan[][sasaran][][indikator_sasaran][][indikator_sasaran|definisi_op|satuan]
-            // tujuan[][sasaran][][indikator_sasaran][][target_tahunan][][tahun|target_tahunan]
+            // Struktur tujuan (sudah nested sesuai name[] di form)
             $tujuan = is_array($post['tujuan'] ?? null) ? $post['tujuan'] : [];
 
             $formattedData = [
@@ -127,7 +122,7 @@ class RpjmdController extends BaseController
             throw new \CodeIgniter\Exceptions\PageNotFoundException('ID tidak ditemukan');
         }
 
-        // Terima ID apa pun, cari misi parent-nya
+        // Terima ID apa pun (misi/tujuan/sasaran/indikator/target), cari misi parent-nya
         $misiId = $this->rpjmdModel->findMisiIdForAnyEntity((int) $id);
         if (!$misiId) {
             throw new \CodeIgniter\Exceptions\PageNotFoundException('Data RPJMD tidak ditemukan');
@@ -173,10 +168,13 @@ class RpjmdController extends BaseController
                 return redirect()->to(base_url('adminkab/rpjmd'));
             }
 
-            $misiId = (int) $data['id'];
+            // ID dari form bisa saja bukan misi_id (bisa tujuan/sasaran/indikator/target)
+            $rawId = (int) $data['id'];
+            $misiId = $this->rpjmdModel->findMisiIdForAnyEntity($rawId) ?? $rawId;
+
             $existingMisi = $this->rpjmdModel->getMisiById($misiId);
             if (!$existingMisi) {
-                file_put_contents($debugFile, "ERROR: Misi tidak ada\n", FILE_APPEND);
+                file_put_contents($debugFile, "ERROR: Misi tidak ada (ID: {$misiId})\n", FILE_APPEND);
                 session()->setFlashdata('error', 'Data RPJMD tidak ditemukan di database.');
                 return redirect()->to(base_url('adminkab/rpjmd'));
             }
@@ -185,8 +183,12 @@ class RpjmdController extends BaseController
             $formattedData = [
                 'misi' => [
                     'misi' => $data['misi'] ?? $existingMisi['misi'],
-                    'tahun_mulai' => isset($data['tahun_mulai']) ? (int) $data['tahun_mulai'] : (int) $existingMisi['tahun_mulai'],
-                    'tahun_akhir' => isset($data['tahun_akhir']) ? (int) $data['tahun_akhir'] : (int) $existingMisi['tahun_akhir'],
+                    'tahun_mulai' => isset($data['tahun_mulai'])
+                        ? (int) $data['tahun_mulai']
+                        : (int) $existingMisi['tahun_mulai'],
+                    'tahun_akhir' => isset($data['tahun_akhir'])
+                        ? (int) $data['tahun_akhir']
+                        : (int) $existingMisi['tahun_akhir'],
                     'status' => $data['status'] ?? ($existingMisi['status'] ?? 'draft'),
                 ],
                 'tujuan' => is_array($data['tujuan'] ?? null) ? $data['tujuan'] : [],
@@ -205,7 +207,11 @@ class RpjmdController extends BaseController
             }
         } catch (\Throwable $e) {
             $debugFile = WRITEPATH . 'debug_rpjmd_update.txt';
-            file_put_contents($debugFile, "EXCEPTION: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
+            file_put_contents(
+                $debugFile,
+                "EXCEPTION: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n",
+                FILE_APPEND
+            );
 
             session()->setFlashdata('error', 'Error: ' . $e->getMessage());
         }
@@ -217,6 +223,15 @@ class RpjmdController extends BaseController
     {
         try {
             $id = (int) $id;
+
+            // Kalau id yang dikirim bukan misi_id langsung, coba cari dulu misi parent-nya
+            if (!$this->rpjmdModel->misiExists($id)) {
+                $misiId = $this->rpjmdModel->findMisiIdForAnyEntity($id);
+                if ($misiId) {
+                    $id = $misiId;
+                }
+            }
+
             if (!$this->rpjmdModel->misiExists($id)) {
                 session()->setFlashdata('error', 'Data RPJMD tidak ditemukan');
                 return redirect()->to(base_url('adminkab/rpjmd'));
@@ -240,20 +255,29 @@ class RpjmdController extends BaseController
     public function updateStatus()
     {
         if (!$this->request->isAJAX()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Invalid request',
+            ]);
         }
 
         $json = $this->request->getJSON(true);
         $id = isset($json['id']) ? (int) $json['id'] : 0;
 
         if (!$id) {
-            return $this->response->setJSON(['success' => false, 'message' => 'ID harus diisi']);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'ID harus diisi',
+            ]);
         }
 
         try {
             $currentMisi = $this->rpjmdModel->getMisiById($id);
             if (!$currentMisi) {
-                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Data tidak ditemukan',
+                ]);
             }
 
             $currentStatus = $currentMisi['status'] ?? 'draft';
@@ -269,9 +293,15 @@ class RpjmdController extends BaseController
                 ]);
             }
 
-            return $this->response->setJSON(['success' => false, 'message' => 'Gagal mengupdate status']);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Gagal mengupdate status',
+            ]);
         } catch (\Throwable $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 }

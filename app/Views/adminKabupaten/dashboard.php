@@ -17,20 +17,20 @@
 
   <style>
     .card-mini h4 {
-      font-weight: 700
+      font-weight: 700;
     }
 
     .card-mini small {
-      color: #6c757d
+      color: #6c757d;
     }
 
     .chart-box {
-      height: 150px
+      height: 150px;
     }
 
     .btn-loading {
       pointer-events: none;
-      opacity: .75
+      opacity: .75;
     }
   </style>
 </head>
@@ -92,7 +92,7 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Draf</td>
+                  <td>Draft</td>
                   <td id="rpjmdDraft" class="text-end"><?= (int) ($dashboard_data['rpjmd']['draft'] ?? 0) ?></td>
                 </tr>
                 <tr>
@@ -104,7 +104,7 @@
           </div>
         </div>
 
-        <!-- RKPD -->
+        <!-- RKPD (pakai data dari RKT) -->
         <div class="col-12 col-md-6 col-lg-4">
           <div class="bg-white rounded shadow p-4 h-100">
             <p class="fw-semibold text-dark mb-2">RKPD</p>
@@ -144,14 +144,16 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Draft</td>
-                  <td id="lakipKabDraft" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_kabupaten']['draft'] ?? 0) ?></td>
+                  <td>Proses</td>
+                  <td id="lakipKabProses" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_kabupaten']['proses'] ?? 0) ?>
+                  </td>
                 </tr>
                 <tr>
-                  <td>Selesai</td>
-                  <td id="lakipKabSelesai" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_kabupaten']['selesai'] ?? 0) ?></td>
+                  <td>Siap</td>
+                  <td id="lakipKabSiap" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_kabupaten']['siap'] ?? 0) ?>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -182,8 +184,9 @@
                 <button class="btn btn-primary" id="btnTampilkan">Tampilkan</button>
               </div>
             </div>
-            <small class="text-muted">Filter ini mempengaruhi grafik RENSTRA, RKT, IKU, dan LAKIP (Kab/OPD sesuai sumber
-              data).</small>
+            <small class="text-muted">
+              Filter ini mempengaruhi grafik RENSTRA, RKT, IKU, dan LAKIP (Kab/OPD sesuai sumber data).
+            </small>
           </div>
         </div>
 
@@ -201,7 +204,7 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Draf</td>
+                  <td>Draft</td>
                   <td id="renstraDraft" class="text-end"><?= (int) ($dashboard_data['renstra']['draft'] ?? 0) ?></td>
                 </tr>
                 <tr>
@@ -254,12 +257,16 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Draft</td>
-                  <td id="ikuDraft" class="text-end"><?= (int) ($dashboard_data['iku']['draft'] ?? 0) ?></td>
+                  <td>Tercapai</td>
+                  <td id="ikuTercapai" class="text-end">
+                    <?= (int) ($dashboard_data['iku']['tercapai'] ?? 0) ?>
+                  </td>
                 </tr>
                 <tr>
-                  <td>Selesai</td>
-                  <td id="ikuSelesai" class="text-end"><?= (int) ($dashboard_data['iku']['selesai'] ?? 0) ?></td>
+                  <td>Belum</td>
+                  <td id="ikuBelum" class="text-end">
+                    <?= (int) ($dashboard_data['iku']['belum'] ?? 0) ?>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -280,12 +287,15 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Draft</td>
-                  <td id="lakipOpdDraft" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['draft'] ?? 0) ?></td>
+                  <td>Proses</td>
+                  <td id="lakipOpdProses" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_opd']['proses'] ?? 0) ?>
+                  </td>
                 </tr>
                 <tr>
-                  <td>Selesai</td>
-                  <td id="lakipOpdSelesai" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['selesai'] ?? 0) ?>
+                  <td>Siap</td>
+                  <td id="lakipOpdSiap" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_opd']['siap'] ?? 0) ?>
                   </td>
                 </tr>
               </tbody>
@@ -301,46 +311,278 @@
   <script>
     const dataPHP = <?= json_encode($dashboard_data ?? [], JSON_UNESCAPED_UNICODE) ?>;
 
-    const chartOptions = { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } };
-    function makeDataset(key) { const s = dataPHP[key] || { selesai: 0, draft: 0 }; return [parseInt(s.selesai || 0), parseInt(s.draft || 0)]; }
-
-    const charts = {
-      rpjmd: new Chart(document.getElementById('rpjmdChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('rpjmd'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      rkpd: new Chart(document.getElementById('rkpdChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('rkpd'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      lakip_kabupaten: new Chart(document.getElementById('lakipKabChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('lakip_kabupaten'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      renstra: new Chart(document.getElementById('renstraChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('renstra'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      rkt: new Chart(document.getElementById('rktChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('rkt'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      iku: new Chart(document.getElementById('ikuChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('iku'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions }),
-      lakip_opd: new Chart(document.getElementById('lakipOpdChart'), { type: 'doughnut', data: { labels: ['Selesai', 'Draft'], datasets: [{ data: makeDataset('lakip_opd'), backgroundColor: ['#198754', '#ffc107'], borderWidth: 0 }] }, options: chartOptions })
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: { legend: { display: false } }
     };
 
-    function setCounts(prefix, draf, selesai) { const d = document.getElementById(prefix + 'Draft'); const s = document.getElementById(prefix + 'Selesai'); if (d) d.textContent = draf; if (s) s.textContent = selesai; }
-    function updateSection(key, data) {
-      const selesai = parseInt(data[key]?.selesai || 0), draf = parseInt(data[key]?.draft || 0);
-      charts[key].data.datasets[0].data = [selesai, draf]; charts[key].update();
-      const map = { rpjmd: 'rpjmd', rkpd: 'rkpd', renstra: 'renstra', rkt: 'rkt', iku: 'iku', lakip_kabupaten: 'lakipKab', lakip_opd: 'lakipOpd' };
-      if (map[key]) setCounts(map[key], draf, selesai);
+    function getVal(obj, key, def = 0) {
+      if (!obj || typeof obj !== 'object') return def;
+      const v = obj[key];
+      const n = parseInt(v, 10);
+      return isNaN(n) ? def : n;
     }
-    function notify(msg, t = 'info') { const cls = t === 'success' ? 'alert-success' : (t === 'error' ? 'alert-danger' : 'alert-info'); const n = document.createElement('div'); n.className = `alert ${cls} alert-dismissible fade show position-fixed`; n.style.cssText = 'top:20px;right:20px;z-index:9999;min-width:300px;'; n.innerHTML = `${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`; document.body.appendChild(n); setTimeout(() => { n.remove() }, 3500); }
 
-    const selOpd = document.getElementById('filterOpd'), selYr = document.getElementById('filterYear'), btnGo = document.getElementById('btnTampilkan'), btnRs = document.getElementById('btnReset');
+    const charts = {
+      rpjmd: new Chart(document.getElementById('rpjmdChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Selesai', 'Draft'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.rpjmd || {}, 'selesai'),
+              getVal(dataPHP.rpjmd || {}, 'draft')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      rkpd: new Chart(document.getElementById('rkpdChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Selesai', 'Draft'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.rkpd || {}, 'selesai'),
+              getVal(dataPHP.rkpd || {}, 'draft')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      lakip_kabupaten: new Chart(document.getElementById('lakipKabChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Siap', 'Proses'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.lakip_kabupaten || {}, 'siap'),
+              getVal(dataPHP.lakip_kabupaten || {}, 'proses')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      renstra: new Chart(document.getElementById('renstraChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Selesai', 'Draft'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.renstra || {}, 'selesai'),
+              getVal(dataPHP.renstra || {}, 'draft')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      rkt: new Chart(document.getElementById('rktChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Selesai', 'Draft'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.rkt || {}, 'selesai'),
+              getVal(dataPHP.rkt || {}, 'draft')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      iku: new Chart(document.getElementById('ikuChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Tercapai', 'Belum'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.iku || {}, 'tercapai'),
+              getVal(dataPHP.iku || {}, 'belum')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      }),
+      lakip_opd: new Chart(document.getElementById('lakipOpdChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Siap', 'Proses'],
+          datasets: [{
+            data: [
+              getVal(dataPHP.lakip_opd || {}, 'siap'),
+              getVal(dataPHP.lakip_opd || {}, 'proses')
+            ],
+            backgroundColor: ['#198754', '#ffc107'],
+            borderWidth: 0
+          }]
+        },
+        options: chartOptions
+      })
+    };
+
+    function notify(msg, t = 'info') {
+      const cls = t === 'success' ? 'alert-success'
+        : (t === 'error' ? 'alert-danger' : 'alert-info');
+      const n = document.createElement('div');
+      n.className = `alert ${cls} alert-dismissible fade show position-fixed`;
+      n.style.cssText = 'top:20px;right:20px;z-index:9999;min-width:300px;';
+      n.innerHTML = `${msg}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+      document.body.appendChild(n);
+      setTimeout(() => { n.remove(); }, 3500);
+    }
+
+    function updateSection(key, data) {
+      if (!data) return;
+
+      switch (key) {
+        case 'rpjmd':
+        case 'rkpd':
+        case 'renstra':
+        case 'rkt': {
+          const obj = data[key] || {};
+          const selesai = getVal(obj, 'selesai');
+          const draft = getVal(obj, 'draft');
+
+          charts[key].data.datasets[0].data = [selesai, draft];
+          charts[key].update();
+
+          const idMap = {
+            rpjmd: ['rpjmdDraft', 'rpjmdSelesai'],
+            rkpd: ['rkpdDraft', 'rkpdSelesai'],
+            renstra: ['renstraDraft', 'renstraSelesai'],
+            rkt: ['rktDraft', 'rktSelesai']
+          };
+          const ids = idMap[key];
+          if (ids) {
+            const draftEl = document.getElementById(ids[0]);
+            const selesaiEl = document.getElementById(ids[1]);
+            if (draftEl) draftEl.textContent = draft;
+            if (selesaiEl) selesaiEl.textContent = selesai;
+          }
+          break;
+        }
+
+        case 'iku': {
+          const obj = data.iku || {};
+          const tercapai = getVal(obj, 'tercapai');
+          const belum = getVal(obj, 'belum');
+
+          charts.iku.data.datasets[0].data = [tercapai, belum];
+          charts.iku.update();
+
+          const tCell = document.getElementById('ikuTercapai');
+          const bCell = document.getElementById('ikuBelum');
+          if (tCell) tCell.textContent = tercapai;
+          if (bCell) bCell.textContent = belum;
+          break;
+        }
+
+        case 'lakip_kabupaten': {
+          const obj = data.lakip_kabupaten || {};
+          const siap = getVal(obj, 'siap');
+          const proses = getVal(obj, 'proses');
+
+          charts.lakip_kabupaten.data.datasets[0].data = [siap, proses];
+          charts.lakip_kabupaten.update();
+
+          const pCell = document.getElementById('lakipKabProses');
+          const sCell = document.getElementById('lakipKabSiap');
+          if (pCell) pCell.textContent = proses;
+          if (sCell) sCell.textContent = siap;
+          break;
+        }
+
+        case 'lakip_opd': {
+          const obj = data.lakip_opd || {};
+          const siap = getVal(obj, 'siap');
+          const proses = getVal(obj, 'proses');
+
+          charts.lakip_opd.data.datasets[0].data = [siap, proses];
+          charts.lakip_opd.update();
+
+          const pCell = document.getElementById('lakipOpdProses');
+          const sCell = document.getElementById('lakipOpdSiap');
+          if (pCell) pCell.textContent = proses;
+          if (sCell) sCell.textContent = siap;
+          break;
+        }
+      }
+    }
+
+    const selOpd = document.getElementById('filterOpd');
+    const selYr = document.getElementById('filterYear');
+    const btnGo = document.getElementById('btnTampilkan');
+    const btnRs = document.getElementById('btnReset');
 
     btnGo.addEventListener('click', async () => {
-      const opdId = selOpd.value, year = selYr.value;
-      const token = document.querySelector('meta[name="csrf-token"]')?.content, hash = document.querySelector('meta[name="csrf-hash"]')?.content;
-      const parts = []; if (token && hash) parts.push(encodeURIComponent(token) + '=' + encodeURIComponent(hash));
-      parts.push('opd_id=' + encodeURIComponent(opdId || '')); parts.push('year=' + encodeURIComponent(year || '')); const body = parts.join('&');
+      const opdId = selOpd.value;
+      const year = selYr.value;
 
-      btnGo.classList.add('btn-loading'); const old = btnGo.textContent; btnGo.textContent = 'Memuat...';
+      const token = document.querySelector('meta[name="csrf-token"]')?.content;
+      const hash = document.querySelector('meta[name="csrf-hash"]')?.content;
+
+      const parts = [];
+      if (token && hash) {
+        parts.push(encodeURIComponent(token) + '=' + encodeURIComponent(hash));
+      }
+      parts.push('opd_id=' + encodeURIComponent(opdId || ''));
+      parts.push('year=' + encodeURIComponent(year || ''));
+      const body = parts.join('&');
+
+      const oldText = btnGo.textContent;
+      btnGo.classList.add('btn-loading');
+      btnGo.textContent = 'Memuat...';
+
       try {
-        const res = await fetch('<?= base_url('adminkab/getDashboardData') ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' }, body });
+        const res = await fetch('<?= base_url('adminkab/getDashboardData') ?>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body
+        });
+
         const json = await res.json();
-        if (json.status === 'success') { const d = json.data || {}; updateSection('rpjmd', d); updateSection('rkpd', d); updateSection('renstra', d); updateSection('rkt', d); updateSection('iku', d); updateSection('lakip_kabupaten', d); updateSection('lakip_opd', d); notify('Data berhasil difilter.', 'success'); }
-        else notify(json.message || 'Terjadi kesalahan.', 'error');
-      } catch (e) { console.error(e); notify('Gagal memuat data.', 'error'); }
-      finally { btnGo.classList.remove('btn-loading'); btnGo.textContent = old; }
+        if (json.status === 'success') {
+          const d = json.data || {};
+          updateSection('rpjmd', d);
+          updateSection('rkpd', d);
+          updateSection('renstra', d);
+          updateSection('rkt', d);
+          updateSection('iku', d);
+          updateSection('lakip_kabupaten', d);
+          updateSection('lakip_opd', d);
+          notify('Data berhasil difilter.', 'success');
+        } else {
+          notify(json.message || 'Terjadi kesalahan.', 'error');
+        }
+      } catch (e) {
+        console.error(e);
+        notify('Gagal memuat data.', 'error');
+      } finally {
+        btnGo.classList.remove('btn-loading');
+        btnGo.textContent = oldText;
+      }
     });
-    btnRs.addEventListener('click', () => { selOpd.value = ''; selYr.value = ''; });
+
+    btnRs.addEventListener('click', () => {
+      selOpd.value = '';
+      selYr.value = '';
+    });
   </script>
 </body>
 

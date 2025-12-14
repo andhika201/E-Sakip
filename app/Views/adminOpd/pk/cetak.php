@@ -141,51 +141,61 @@
     <?php endif; ?>
 
     <?php if (strtolower($jenis) === 'bupati'): ?>
-      <p>Berjanji akan mewujudkan target kinerja tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target kinerja 
-        jangka menengah seperti yang ditetapkan dalam dokumen perencanaan. Keberhasilan dan kegagalan pencapaian target kinerja 
+      <p>Berjanji akan mewujudkan target kinerja tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target
+        kinerja
+        jangka menengah seperti yang ditetapkan dalam dokumen perencanaan. Keberhasilan dan kegagalan pencapaian target
+        kinerja
         tersebut menjadi tanggungjawab kami.</p>
-      
+
     <?php endif; ?>
 
 
 
-    <table style="width: 85%; margin-top: 80px;" class="table-no-border">
-      <tr>
-        <!-- Tanggal Surat-->
-        <td style="text-align: right; ">
-          <p style="text-align: right;">Pringsewu, <?= esc(formatTanggal($tanggal)) ?></p>
-        </td>
-      </tr>
-    </table>
 
-    <table style="width: 100%; margin-top: 20px;" class="table-no-border">
+
+    <table class="table-no-border signature-block" style="width:100%;">
       <tr>
         <?php if (strtolower($jenis) !== 'bupati'): ?>
-          <!-- PIHAK KEDUA -->
-          <td style="text-align: center; width: 50%; vertical-align: top;">
-            <p class="text-uppercase">PIHAK KEDUA, <br><?= esc($jabatan_pihak_2) ?></p>
+
+          <!-- KOLOM PIHAK KEDUA (KIRI) -->
+          <td style="width:50%; text-align:center; vertical-align:top;">
+            <p class="text-uppercase">PIHAK KEDUA,<br><?= esc($jabatan_pihak_2) ?></p>
             <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_2) ?></p>
-            <p style="margin: 0;"><?= esc($pangkat_pihak_2) ?></p>
-            <p style="margin: 0;"><?= esc($nip_pihak_2) ?></p>
+            <p class="signature-name"><?= esc($nama_pihak_2) ?></p>
+            <p class="signature-meta"><?= esc($pangkat_pihak_2) ?></p>
+            <p class="signature-meta"><?= esc($nip_pihak_2) ?></p>
           </td>
 
-          <!-- PIHAK KESATU -->
-          <td style="text-align: center; width: 50%; vertical-align: top;">
+          <!-- KOLOM PIHAK KESATU (KANAN) + TANGGAL -->
+          <td style="width:50%; text-align:center; vertical-align:top;">
+            <p style="text-align:right; margin-bottom:20px;">
+              Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
+            </p>
+  
             <p class="text-uppercase">PIHAK KESATU,<br><?= esc($jabatan_pihak_1) ?></p>
             <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_1) ?></p>
-            <p style="margin: 0;"><?= esc($pangkat_pihak_1) ?></p>
-            <p style="margin: 0;"><?= esc($nip_pihak_1) ?></p>
-          <?php endif; ?>
+            <p class="signature-name"><?= esc($nama_pihak_1) ?></p>
+            <p class="signature-meta"><?= esc($pangkat_pihak_1) ?></p>
+            <p class="signature-meta"><?= esc($nip_pihak_1) ?></p>
+          </td>
 
-          <?php if (strtolower($jenis) === 'bupati'): ?>
-          <td style="text-align: right; width: 50%; vertical-align: top;">
+        <?php else: ?>
+
+          <!-- KOLOM KOSONG KIRI -->
+          <td style="width:50%;"></td>
+
+          <!-- KOLOM BUPATI (KANAN) + TANGGAL -->
+          <td style="width:50%; text-align:right; vertical-align:top;">
+            <p style="margin-bottom:20px;">
+              Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
+            </p>
+
             <p class="text-uppercase">BUPATI PRINGSEWU</p>
             <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_1) ?></p>
-          <?php endif; ?>
-        </td>
+            <p class="signature-name"><?= esc($nama_pihak_1) ?></p>
+          </td>
+
+        <?php endif; ?>
       </tr>
     </table>
   </page>

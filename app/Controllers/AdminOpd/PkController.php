@@ -614,10 +614,9 @@ class PkController extends BaseController
             return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
         }
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
-        // Fetch all program_pk if jenis=bupati
-        if (strtolower($jenis) === 'bupati') {
-            $data['program_pk'] = $this->pkModel->getAllPrograms();
-        }
+        
+        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+
         $tahun = date('Y', strtotime($data['tanggal']));
         $viewPath = 'adminOpd/pk/cetak';
         $viewPathL = 'adminOpd/pk/cetak-L';
@@ -633,7 +632,7 @@ class PkController extends BaseController
         $css = 'img { width: 70px; height: auto; }';
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html_1);
-        $mpdf->AddPage('L');
+        $mpdf->AddPage('P');
         $mpdf->WriteHTML($html_2);
         $this->response->setHeader('Content-Type', 'application/pdf');
         return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');

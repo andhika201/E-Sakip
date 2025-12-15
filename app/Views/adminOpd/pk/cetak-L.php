@@ -119,11 +119,49 @@
       font-weight: bold;
       text-transform: uppercase;
       margin: 0;
+      text-align: center;
+
     }
 
     .signature-meta {
       margin: 0;
+      text-align: center;
+
       font-size: 11pt;
+    }
+
+    .signature-box {
+      min-height: 160px;
+      /* area jabatan */
+    }
+
+    .signature-space {
+      height: 100px;
+      /* ruang tanda tangan */
+    }
+
+    .signature-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .signature-title {
+      height: 70px;
+      /* area jabatan */
+      vertical-align: top;
+      text-align: center;
+    }
+
+    .signature-space-row {
+      height: 100px;
+      /* ruang tanda tangan */
+    }
+
+    .signature-table p {
+      margin: 0 !important;
+      padding: 0 !important;
+      text-align: center !important;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -189,7 +227,7 @@
       <thead>
         <tr class="center fw-bold">
           <th style="width:5%;">NO</th>
-          <th style="width:65%;">PROGRAM</th>
+          <th style="width:65%;"><?= strtoupper(esc($program)) ?></th>
           <th style="width:30%;">ANGGARAN (Rp)</th>
         </tr>
       </thead>
@@ -200,7 +238,7 @@
           <?php $totalAnggaran += (float) $prog['anggaran']; ?>
           <tr>
             <td class="center"><?= $no_pa++ ?></td>
-            <td><?= esc($prog['program_kegiatan']) ?></td>
+            <td><?= esc($prog[$program]) ?></td>
             <td style="text-align:right;">
               <?= number_format($prog['anggaran'], 0, ',', '.') ?>
             </td>
@@ -218,37 +256,102 @@
     </table>
 
 
-    <table style="width: 100%; margin-top: 70px;" class="table-no-border">
+    <table style="width:100%; margin-top:70px;" class="table-no-border signature-table">
       <tr>
+
         <?php if (strtolower($jenis) !== 'bupati'): ?>
+
           <!-- PIHAK KEDUA -->
-          <td style="text-align: center; width: 50%; vertical-align: top;">
-            <p class="text-uppercase">PIHAK KEDUA, <br><?= esc($jabatan_pihak_2) ?></p>
-            <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_2) ?></p>
-            <p style="margin: 0;"><?= esc($pangkat_pihak_2) ?></p>
-            <p style="margin: 0;"><?= esc($nip_pihak_2) ?></p>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <strong>PIHAK KEDUA,</strong><br>
+                  <?= esc($jabatan_pihak_2) ?>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                </td>
+              </tr>
+              <tr class="signature-space-row">
+                <td></td>
+              </tr>
+              <tr>
+                <td class="signature-name"><?= esc($nama_pihak_2) ?></td>
+              </tr>
+              <tr>
+                <td class="signature-meta"><?= esc($pangkat_pihak_2) ?></td>
+              </tr>
+              <tr>
+                <td class="signature-meta"><?= esc($nip_pihak_2) ?></td>
+              </tr>
+            </table>
           </td>
 
           <!-- PIHAK KESATU -->
-          <td style="text-align: center; width: 50%; vertical-align: top;">
-            <p class="text-uppercase">PIHAK KESATU,<br><?= esc($jabatan_pihak_1) ?></p>
-            <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_1) ?></p>
-            <p style="margin: 0;"><?= esc($pangkat_pihak_1) ?></p>
-            <p style="margin: 0;"><?= esc($nip_pihak_1) ?></p>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <strong>PIHAK KESATU,</strong><br>
+                  <?= esc($jabatan_pihak_1) ?>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                </td>
+              </tr>
+              <tr class="signature-space-row">
+                <td></td>
+              </tr>
+              <tr>
+                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
+              </tr>
+              <tr>
+                <td class="signature-meta"><?= esc($pangkat_pihak_1) ?></td>
+              </tr>
+              <tr>
+                <td class="signature-meta"><?= esc($nip_pihak_1) ?></td>
+              </tr>
+            </table>
           </td>
 
         <?php else: ?>
 
-          <td style="text-align: right; width: 50%; vertical-align: top;">
-            <p class="text-uppercase">BUPATI PRINGSEWU</p>
-            <br><br><br><br><br>
-            <p class="text-uppercase" style="font-weight: bold; margin: 0;"><?= esc($nama_pihak_1) ?></p>
+          <td style="width:50%;"></td>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <strong>BUPATI PRINGSEWU</strong>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                  <br>
+                </td>
+              </tr>
+              <tr class="signature-space-row">
+                <td></td>
+              </tr>
+              <tr>
+                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
+              </tr>
+            </table>
           </td>
+
         <?php endif; ?>
+
       </tr>
     </table>
+
+
     <page />
 </body>
 

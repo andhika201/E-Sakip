@@ -19,6 +19,10 @@ class LakipController extends BaseController
         $this->db = \Config\Database::connect();
         helper(['form', 'url']);
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
 
     public function index()
     {
@@ -131,6 +135,41 @@ class LakipController extends BaseController
         $role = $session->get('role');
         if ($role !== 'admin_kab')
             return redirect()->to('/login')->with('error', 'Akses ditolak');
+
+        $rx = $this->xssRule();
+
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'tahun' => 'permit_empty|string|max_length[10]|' . $rx,
+            'selected_opd_id' => 'permit_empty|string|max_length[20]|' . $rx,
+
+            'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'status' => 'permit_empty|string|max_length[50]|' . $rx,
+
+            // id target sesuai mode (dibuat required dua-duanya, nanti dicek logika mode)
+            'renstra_target_id' => 'permit_empty|integer',
+            'rpjmd_target_id' => 'permit_empty|integer',
+        ];
+        $messages = [
+            'mode' => ['regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.'],
+            'tahun' => ['regex_match' => 'Tahun terdeteksi mengandung script / input berbahaya.'],
+            'selected_opd_id' => ['regex_match' => 'OPD terdeteksi mengandung script / input berbahaya.'],
+
+            'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
+            'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
+            'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+            'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
 
         $mode = $this->request->getPost('mode') ?: 'kabupaten';
         $tahun = $this->request->getPost('tahun') ?: date('Y');
@@ -246,6 +285,38 @@ class LakipController extends BaseController
         $role = $session->get('role');
         if ($role !== 'admin_kab')
             return redirect()->to('/login')->with('error', 'Akses ditolak');
+
+        $rx = $this->xssRule();
+
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'lakip_id' => 'required|integer',
+
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'tahun' => 'permit_empty|string|max_length[10]|' . $rx,
+            'selected_opd_id' => 'permit_empty|string|max_length[20]|' . $rx,
+
+            'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'status' => 'permit_empty|string|max_length[50]|' . $rx,
+        ];
+        $messages = [
+            'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
+            'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
+            'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+            'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
+            'mode' => ['regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.'],
+            'tahun' => ['regex_match' => 'Tahun terdeteksi mengandung script / input berbahaya.'],
+            'selected_opd_id' => ['regex_match' => 'OPD terdeteksi mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
 
         $mode = $this->request->getPost('mode') ?: 'kabupaten';
         $tahun = $this->request->getPost('tahun') ?: date('Y');

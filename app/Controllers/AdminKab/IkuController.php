@@ -24,6 +24,17 @@ class IkuController extends BaseController
         $this->opdModel = new OpdModel();
         $this->ikuModel = new OpdIkuModel();
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    private function isSafeText($val): bool
+    {
+        if ($val === null || $val === '')
+            return true;
+        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+    }
 
     /* =========================================================
      * INDEX – LIST IKU (MODE OPD / KABUPATEN)
@@ -155,6 +166,32 @@ class IkuController extends BaseController
      * =======================================================*/
     public function save()
     {
+        $rx = $this->xssRule();
+
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'definisi' => 'required|string|max_length[10000]|' . $rx,
+            'rpjmd_id' => 'permit_empty|integer',
+            'renstra_id' => 'permit_empty|integer',
+        ];
+
+        $messages = [
+            'definisi' => [
+                'required' => 'Definisi operasional wajib diisi.',
+                'regex_match' => 'Definisi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'mode' => [
+                'regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
         $mode = $this->request->getPost('mode') ?: 'opd';
         $definisi = trim($this->request->getPost('definisi') ?? '');
         $programs = $this->request->getPost('program_pendukung') ?? [];
@@ -237,6 +274,34 @@ class IkuController extends BaseController
     public function update()
     {
         $request = service('request');
+        $rx = $this->xssRule();
+
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'iku_id' => 'required|integer',
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'definisi' => 'required|string|max_length[10000]|' . $rx,
+
+            // id indikator (opsional)
+            'renstra_indikator_sasaran_id' => 'permit_empty|integer',
+            'rpjmd_id' => 'permit_empty|integer',
+        ];
+        $messages = [
+            'definisi' => [
+                'required' => 'Definisi dan ID IKU wajib diisi.',
+                'regex_match' => 'Definisi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'mode' => [
+                'regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
         $ikuId = (int) $request->getPost('iku_id');
         $definisi = trim($request->getPost('definisi') ?? '');
         $renstraId = $request->getPost('renstra_indikator_sasaran_id');

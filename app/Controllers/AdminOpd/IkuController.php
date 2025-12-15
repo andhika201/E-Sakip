@@ -24,6 +24,17 @@ class IkuController extends BaseController
         $this->opdModel = new OpdModel();
         $this->db = \Config\Database::connect();
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    private function isSafeText($val): bool
+    {
+        if ($val === null || $val === '')
+            return true;
+        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+    }
 
     /**
      * INDEX IKU
@@ -175,9 +186,39 @@ class IkuController extends BaseController
                 return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
             }
 
-            if (empty($data['definisi'])) {
-                throw new \Exception('Definisi IKU wajib diisi.');
+            $rx = $this->xssRule();
+
+            // ============================
+            // VALIDASI (ANTI XSS/SCRIPT)
+            // ============================
+            $rules = [
+                'definisi' => 'required|string|max_length[10000]|' . $rx,
+                'rpjmd_id' => 'permit_empty|integer',
+                'renstra_indikator_sasaran_id' => 'permit_empty|integer',
+            ];
+
+            $messages = [
+                'definisi' => [
+                    'required' => 'Definisi IKU wajib diisi.',
+                    'regex_match' => 'Definisi IKU terdeteksi mengandung script / input berbahaya.',
+                ],
+            ];
+            if (!$this->validate($rules, $messages)) {
+                return redirect()->back()->withInput()
+                    ->with('error', implode(' ', $this->validator->getErrors()));
             }
+
+            // validasi manual untuk program_pendukung[] karena array
+            $programs = $data['program_pendukung'] ?? [];
+            if (!empty($programs) && is_array($programs)) {
+                foreach ($programs as $p) {
+                    if (!$this->isSafeText($p)) {
+                        return redirect()->back()->withInput()
+                            ->with('error', 'Program pendukung terdeteksi mengandung script / input berbahaya.');
+                    }
+                }
+            }
+
 
             $this->ikuModel->createCompleteIku([
                 'definisi' => $data['definisi'],
@@ -258,6 +299,37 @@ class IkuController extends BaseController
         }
 
         try {
+            $rx = $this->xssRule();
+
+            // ============================
+            // VALIDASI (ANTI XSS/SCRIPT)
+            // ============================
+            $rules = [
+                'iku_id' => 'required|integer',
+                'definisi' => 'required|string|max_length[10000]|' . $rx,
+            ];
+
+            $messages = [
+                'definisi' => [
+                    'required' => 'Definisi IKU wajib diisi.',
+                    'regex_match' => 'Definisi IKU terdeteksi mengandung script / input berbahaya.',
+                ],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
+                return redirect()->back()->withInput()
+                    ->with('error', implode(' ', $this->validator->getErrors()));
+            }
+            // validasi manual array program_pendukung[] karena array
+            $programs = $data['program_pendukung'] ?? [];
+            if (!empty($programs) && is_array($programs)) {
+                foreach ($programs as $p) {
+                    if (!$this->isSafeText($p)) {
+                        return redirect()->back()->withInput()
+                            ->with('error', 'Program pendukung terdeteksi mengandung script / input berbahaya.');
+                    }
+                }
+            }
             // Update definisi IKU
             $updateData = [
                 'definisi' => $data['definisi'] ?? null,

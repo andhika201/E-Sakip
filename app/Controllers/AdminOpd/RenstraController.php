@@ -20,6 +20,26 @@ class RenstraController extends BaseController
         $this->rpjmdModel = new RpjmdModel();
         $this->opdModel = new OpdModel();
     }
+    /* =========================================================
+     *  HELPERS: Anti XSS / Script
+     * =======================================================*/
+    private function xssPattern(): string
+    {
+        // blok: <script>, javascript:, data:text/html, onerror=, <?php, <?
+        return '/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is';
+    }
+
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    private function isSafeText($val): bool
+    {
+        if ($val === null || $val === '')
+            return true;
+        return (bool) preg_match($this->xssPattern(), (string) $val);
+    }
     // ==================== INDEX RENSTRA ====================
     public function index()
     {
@@ -177,6 +197,90 @@ class RenstraController extends BaseController
         try {
             $opd_id = session()->get('opd_id'); // pastikan ini ada di session
 
+            if (!$opd_id) {
+                $db->transRollback();
+                return redirect()->to('/login')->with('error', 'Session OPD hilang, silakan login ulang');
+            }
+            // ============================
+            // VALIDASI (ANTI XSS/SCRIPT)
+            // ============================
+            $rx = $this->xssRule();
+
+            $rules = [
+                'rpjmd_sasaran_id' => 'required|integer',
+                'tujuan_renstra' => 'required|string|max_length[5000]|' . $rx,
+                'tahun_mulai' => 'required',
+                'tahun_akhir' => 'required',
+            ];
+
+            $messages = [
+                'tujuan_renstra' => [
+                    'regex_match' => 'Tujuan Renstra terdeteksi mengandung script / input berbahaya.',
+                ],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
+                $db->transRollback();
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', implode(' | ', $this->validator->getErrors()));
+            }
+
+            $post = $this->request->getPost();
+
+            // validasi array: indikator_tujuan
+            if (!empty($post['indikator_tujuan']) && is_array($post['indikator_tujuan'])) {
+                foreach ($post['indikator_tujuan'] as $it) {
+                    if (!$this->isSafeText($it['indikator_tujuan'] ?? '')) {
+                        $db->transRollback();
+                        return redirect()->back()->withInput()->with('error', 'Indikator Tujuan mengandung script / input berbahaya.');
+                    }
+                    if (!empty($it['target_tahunan']) && is_array($it['target_tahunan'])) {
+                        foreach ($it['target_tahunan'] as $t) {
+                            if (!$this->isSafeText($t['target'] ?? '')) {
+                                $db->transRollback();
+                                return redirect()->back()->withInput()->with('error', 'Target Tujuan tahunan mengandung script / input berbahaya.');
+                            }
+                        }
+                    }
+                }
+            }
+
+            // validasi array: sasaran_renstra + indikator_sasaran
+            if (!empty($post['sasaran_renstra']) && is_array($post['sasaran_renstra'])) {
+                foreach ($post['sasaran_renstra'] as $sr) {
+                    if (!$this->isSafeText($sr['sasaran'] ?? '')) {
+                        $db->transRollback();
+                        return redirect()->back()->withInput()->with('error', 'Sasaran Renstra mengandung script / input berbahaya.');
+                    }
+
+                    if (!empty($sr['indikator_sasaran']) && is_array($sr['indikator_sasaran'])) {
+                        foreach ($sr['indikator_sasaran'] as $is) {
+                            if (!$this->isSafeText($is['indikator_sasaran'] ?? '')) {
+                                $db->transRollback();
+                                return redirect()->back()->withInput()->with('error', 'Indikator Sasaran mengandung script / input berbahaya.');
+                            }
+                            if (!$this->isSafeText($is['satuan'] ?? '')) {
+                                $db->transRollback();
+                                return redirect()->back()->withInput()->with('error', 'Satuan mengandung script / input berbahaya.');
+                            }
+                            if (!$this->isSafeText($is['jenis_indikator'] ?? '')) {
+                                $db->transRollback();
+                                return redirect()->back()->withInput()->with('error', 'Jenis indikator mengandung script / input berbahaya.');
+                            }
+
+                            if (!empty($is['target_tahunan']) && is_array($is['target_tahunan'])) {
+                                foreach ($is['target_tahunan'] as $t) {
+                                    if (!$this->isSafeText($t['target'] ?? '')) {
+                                        $db->transRollback();
+                                        return redirect()->back()->withInput()->with('error', 'Target Sasaran tahunan mengandung script / input berbahaya.');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             // 1️⃣ Simpan TUJUAN RENSTRA
             $tujuanData = [
                 'rpjmd_sasaran_id' => $this->request->getPost('rpjmd_sasaran_id'),
@@ -292,15 +396,63 @@ class RenstraController extends BaseController
         try {
             $post = $this->request->getPost();
 
-            // Validasi dasar
-            if (
-                empty($post['rpjmd_sasaran_id']) ||
-                empty($post['tujuan_renstra']) ||
-                empty($post['tahun_mulai']) ||
-                empty($post['tahun_akhir'])
-            ) {
-                throw new \Exception('Data umum Renstra belum lengkap');
+            // ============================
+            // VALIDASI (ANTI XSS/SCRIPT)
+            // ============================
+            $rx = $this->xssRule();
+
+            $rules = [
+                'rpjmd_sasaran_id' => 'required|integer',
+                'tujuan_renstra' => 'required|string|max_length[5000]|' . $rx,
+                'tahun_mulai' => 'required',
+                'tahun_akhir' => 'required',
+            ];
+
+            $messages = [
+                'tujuan_renstra' => [
+                    'regex_match' => 'Tujuan Renstra terdeteksi mengandung script / input berbahaya.',
+                ],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', implode(' | ', $this->validator->getErrors()));
             }
+
+            // validasi array: indikator_tujuan
+            if (!empty($post['indikator_tujuan']) && is_array($post['indikator_tujuan'])) {
+                foreach ($post['indikator_tujuan'] as $it) {
+                    if (!$this->isSafeText($it['indikator_tujuan'] ?? '')) {
+                        return redirect()->back()->withInput()->with('error', 'Indikator Tujuan mengandung script / input berbahaya.');
+                    }
+                }
+            }
+
+            // validasi array: sasaran_renstra + indikator_sasaran
+            if (!empty($post['sasaran_renstra']) && is_array($post['sasaran_renstra'])) {
+                foreach ($post['sasaran_renstra'] as $sr) {
+                    $sas = $sr['sasaran'] ?? ($sr['sasaran_renstra'] ?? '');
+                    if (!$this->isSafeText($sas)) {
+                        return redirect()->back()->withInput()->with('error', 'Sasaran Renstra mengandung script / input berbahaya.');
+                    }
+
+                    if (!empty($sr['indikator_sasaran']) && is_array($sr['indikator_sasaran'])) {
+                        foreach ($sr['indikator_sasaran'] as $is) {
+                            if (!$this->isSafeText($is['indikator_sasaran'] ?? '')) {
+                                return redirect()->back()->withInput()->with('error', 'Indikator Sasaran mengandung script / input berbahaya.');
+                            }
+                            if (!$this->isSafeText($is['satuan'] ?? '')) {
+                                return redirect()->back()->withInput()->with('error', 'Satuan mengandung script / input berbahaya.');
+                            }
+                            if (!$this->isSafeText($is['jenis_indikator'] ?? '')) {
+                                return redirect()->back()->withInput()->with('error', 'Jenis indikator mengandung script / input berbahaya.');
+                            }
+                        }
+                    }
+                }
+            }
+
 
             // -------------------------
             // SUSUN DATA SASARAN
@@ -366,7 +518,6 @@ class RenstraController extends BaseController
                 ->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
     }
-
 
     public function delete($id = null)
     {

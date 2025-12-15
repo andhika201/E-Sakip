@@ -39,8 +39,9 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
         $routes->get('pk_bupati/cetak', 'AdminKab\PkBupatiController::view_cetak');
 
-        $routes->get('dashboard', 'AdminKabupatenController::index');
-        $routes->post('getDashboardData', 'AdminKabupatenController::getDashboardData');
+        $routes->get('dashboard', 'AdminKabupatenController::dashboard');
+        $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData');
+
         // Lakip
         $routes->get('lakip', 'AdminKab\LakipController::index');
         $routes->get('lakip/tambah/(:num)', 'AdminKab\LakipController::tambah/$1');

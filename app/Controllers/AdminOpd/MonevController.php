@@ -15,7 +15,11 @@ class MonevController extends BaseController
         $this->db = \Config\Database::connect();
         $this->monev = new MonevModel();
     }
-
+    private function xssRule(): string
+    {
+        // blok: <script>, javascript:, data:text/html, onerror=, <?php, <?
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
     /**
      * INDEX MONEV
      * - Jika role = admin_opd  → tampilkan halaman Monev OPD (adminOpd/monev/monev)
@@ -169,15 +173,23 @@ class MonevController extends BaseController
             return redirect()->to(base_url('adminopd/monev'))->with('error', 'Tidak berhak.');
         }
 
+        $rx = $this->xssRule();
+
         $rules = [
             'target_rencana_id' => 'required|integer',
-            'capaian_triwulan_1' => 'permit_empty|string',
-            'capaian_triwulan_2' => 'permit_empty|string',
-            'capaian_triwulan_3' => 'permit_empty|string',
-            'capaian_triwulan_4' => 'permit_empty|string',
+            'capaian_triwulan_1' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_2' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_3' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_4' => 'permit_empty|string|max_length[5000]|' . $rx,
             'total' => 'permit_empty|integer',
         ];
-        if (!$this->validate($rules)) {
+        $messages = [
+            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 mengandung script / input berbahaya.'],
+            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 mengandung script / input berbahaya.'],
+            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 mengandung script / input berbahaya.'],
+            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 mengandung script / input berbahaya.'],
+        ];
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -271,14 +283,22 @@ class MonevController extends BaseController
                 ->with('error', 'Data tidak ditemukan / bukan milik OPD Anda.');
         }
 
+        $rx = $this->xssRule();
+
         $rules = [
-            'capaian_triwulan_1' => 'permit_empty|string',
-            'capaian_triwulan_2' => 'permit_empty|string',
-            'capaian_triwulan_3' => 'permit_empty|string',
-            'capaian_triwulan_4' => 'permit_empty|string',
+            'capaian_triwulan_1' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_2' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_3' => 'permit_empty|string|max_length[5000]|' . $rx,
+            'capaian_triwulan_4' => 'permit_empty|string|max_length[5000]|' . $rx,
             'total' => 'permit_empty|integer',
         ];
-        if (!$this->validate($rules)) {
+        $messages = [
+            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 mengandung script / input berbahaya.'],
+            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 mengandung script / input berbahaya.'],
+            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 mengandung script / input berbahaya.'],
+            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 mengandung script / input berbahaya.'],
+        ];
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -301,4 +321,6 @@ class MonevController extends BaseController
         return redirect()->to(base_url('adminopd/monev'))
             ->with('success', 'Data capaian berhasil diperbarui.');
     }
+
+
 }

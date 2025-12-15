@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\RktModel;
 use App\Models\ProgramPkModel;
 use App\Models\OpdModel;
-use App\Models\Opd\LakipOpdModel;
+use App\Models\LakipModel;
 
 class RkpdController extends BaseController
 {
@@ -21,7 +21,7 @@ class RkpdController extends BaseController
         $this->rktModel = new RktModel();
         $this->programModel = new ProgramPkModel();
         $this->opdModel = new OpdModel();
-        $this->lakipModel = new LakipOpdModel();
+        $this->lakipModel = new LakipModel();
         $this->db = \Config\Database::connect();
     }
 

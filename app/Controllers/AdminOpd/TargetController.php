@@ -178,19 +178,32 @@ class TargetController extends BaseController
      */
     public function save()
     {
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
         $rules = [
             'renstra_target_id' => 'required|integer',
-            'rencana_aksi' => 'required|string',
-            'capaian' => 'permit_empty|string',
-            'target_triwulan_1' => 'permit_empty|string',
-            'target_triwulan_2' => 'permit_empty|string',
-            'target_triwulan_3' => 'permit_empty|string',
-            'target_triwulan_4' => 'permit_empty|string',
-            'penanggung_jawab' => 'permit_empty|string',
+
+            // FIX: hapus "||" jadi "|"
+            'rencana_aksi' => 'permit_empty|string|max_length[500]|' . $noScript,
+            'capaian' => 'permit_empty|string|max_length[500]|' . $noScript,
+
+            // ini numeric/integer aman dari XSS, jadi tidak perlu regex_match
+            'target_triwulan_1' => 'permit_empty|integer',
+            'target_triwulan_2' => 'permit_empty|integer',
+            'target_triwulan_3' => 'permit_empty|integer',
+            'target_triwulan_4' => 'permit_empty|integer',
+
+            // FIX: hapus "||" jadi "|"
+            'penanggung_jawab' => 'permit_empty|string|max_length[500]|' . $noScript,
+
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
-
-        if (!$this->validate($rules)) {
+        $messages = [
+            'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
+            'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
+            'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+        ];
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -322,6 +335,45 @@ class TargetController extends BaseController
             }
         }
 
+
+        // ============================
+        // VALIDASI ANTI XSS/SCRIPT
+        // ============================
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
+        $rules = [
+            'rencana_aksi' => 'required|string|max_length[5000]|' . $noScript,
+            'capaian' => 'permit_empty|string|max_length[5000]|' . $noScript,
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $noScript,
+
+            'target_triwulan_1' => 'permit_empty|integer',
+            'target_triwulan_2' => 'permit_empty|integer',
+            'target_triwulan_3' => 'permit_empty|integer',
+            'target_triwulan_4' => 'permit_empty|integer',
+        ];
+
+        if ($role === 'admin_kab') {
+            $rules['rpjmd_target_id'] = 'permit_empty|integer';
+        }
+
+        $messages = [
+            'rencana_aksi' => [
+                'regex_match' => 'Rencana aksi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'capaian' => [
+                'regex_match' => 'Capaian terdeteksi mengandung script / input berbahaya.',
+            ],
+            'penanggung_jawab' => [
+                'regex_match' => 'Penanggung jawab terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
         $data = [
             'rencana_aksi' => $this->request->getPost('rencana_aksi'),
             'capaian' => $this->request->getPost('capaian'),
@@ -343,4 +395,5 @@ class TargetController extends BaseController
         return redirect()->to(base_url('adminopd/target'))
             ->with('success', 'Data berhasil diperbarui.');
     }
+
 }

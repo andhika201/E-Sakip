@@ -230,7 +230,7 @@ class MonevModel extends Model
     /* =========================================================
      *  ADMIN OPD – basis RENSTRA (renstra_target_id)
      * =======================================================*/
-    public function getIndexDataAdminOpd(?string $tahun = null, int $opdId): array
+    public function getIndexDataAdminOpd(int $opdId, ?string $tahun = null): array
     {
         $b = $this->db->table('target_rencana AS tr')
             ->select('

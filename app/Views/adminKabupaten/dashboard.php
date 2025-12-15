@@ -258,15 +258,11 @@
               <tbody>
                 <tr>
                   <td>Tercapai</td>
-                  <td id="ikuTercapai" class="text-end">
-                    <?= (int) ($dashboard_data['iku']['tercapai'] ?? 0) ?>
-                  </td>
+                  <td id="ikuTercapai" class="text-end"><?= (int) ($dashboard_data['iku']['tercapai'] ?? 0) ?></td>
                 </tr>
                 <tr>
                   <td>Belum</td>
-                  <td id="ikuBelum" class="text-end">
-                    <?= (int) ($dashboard_data['iku']['belum'] ?? 0) ?>
-                  </td>
+                  <td id="ikuBelum" class="text-end"><?= (int) ($dashboard_data['iku']['belum'] ?? 0) ?></td>
                 </tr>
               </tbody>
             </table>
@@ -288,20 +284,18 @@
               <tbody>
                 <tr>
                   <td>Proses</td>
-                  <td id="lakipOpdProses" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_opd']['proses'] ?? 0) ?>
+                  <td id="lakipOpdProses" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['proses'] ?? 0) ?>
                   </td>
                 </tr>
                 <tr>
                   <td>Siap</td>
-                  <td id="lakipOpdSiap" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_opd']['siap'] ?? 0) ?>
-                  </td>
+                  <td id="lakipOpdSiap" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['siap'] ?? 0) ?></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+
       </div>
     </main>
 
@@ -531,12 +525,13 @@
       const opdId = selOpd.value;
       const year = selYr.value;
 
-      const token = document.querySelector('meta[name="csrf-token"]')?.content;
-      const hash = document.querySelector('meta[name="csrf-hash"]')?.content;
+      // CI4: csrf_token() = nama field, csrf_hash() = nilainya
+      const csrfName = document.querySelector('meta[name="csrf-token"]')?.content;
+      const csrfHash = document.querySelector('meta[name="csrf-hash"]')?.content;
 
       const parts = [];
-      if (token && hash) {
-        parts.push(encodeURIComponent(token) + '=' + encodeURIComponent(hash));
+      if (csrfName && csrfHash) {
+        parts.push(encodeURIComponent(csrfName) + '=' + encodeURIComponent(csrfHash));
       }
       parts.push('opd_id=' + encodeURIComponent(opdId || ''));
       parts.push('year=' + encodeURIComponent(year || ''));
@@ -547,16 +542,27 @@
       btnGo.textContent = 'Memuat...';
 
       try {
-        const res = await fetch('<?= base_url('adminkab/getDashboardData') ?>', {
+        // ✅ route kamu: $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData')
+        const res = await fetch('<?= base_url('adminkab/dashboard/data') ?>', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'X-Requested-With': 'XMLHttpRequest'
           },
           body
         });
 
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) {
+          // biasanya 404 / redirect login / error HTML
+          const txt = await res.text();
+          console.error('Non-JSON response:', txt);
+          notify("Gagal memuat data (response tidak valid).", 'error');
+          return;
+        }
+
         const json = await res.json();
+
         if (json.status === 'success') {
           const d = json.data || {};
           updateSection('rpjmd', d);
@@ -566,6 +572,13 @@
           updateSection('iku', d);
           updateSection('lakip_kabupaten', d);
           updateSection('lakip_opd', d);
+
+          // ✅ update CSRF hash agar request berikutnya aman
+          if (json.csrfHash) {
+            const metaHash = document.querySelector('meta[name="csrf-hash"]');
+            if (metaHash) metaHash.setAttribute('content', json.csrfHash);
+          }
+
           notify('Data berhasil difilter.', 'success');
         } else {
           notify(json.message || 'Terjadi kesalahan.', 'error');

@@ -26,6 +26,10 @@ class LakipOpdController extends BaseController
 
         helper(['form', 'url']);
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
 
     private function buildQs(?string $tahun, ?string $status, ?string $mode = null, ?int $opdId = null): string
     {
@@ -250,7 +254,36 @@ class LakipOpdController extends BaseController
         if ($role === 'admin_opd' && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
+        $rx = $this->xssRule();
 
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'status' => 'permit_empty|string|max_length[50]|' . $rx,
+            'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+        ];
+
+        // target id wajib tergantung role
+        if ($role === 'admin_kab') {
+            $rules['rpjmd_target_id'] = 'required|integer';
+        } else {
+            $rules['renstra_target_id'] = 'required|integer';
+        }
+
+        $messages = [
+            'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
+            'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
+            'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
+            'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
         $targetPrev = $this->request->getPost('target_lalu');
         $capaianPrev = $this->request->getPost('capaian_lalu');
         $capaianNow = $this->request->getPost('capaian_tahun_ini');
@@ -357,7 +390,31 @@ class LakipOpdController extends BaseController
         if ($role === 'admin_opd' && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
+        
+        $rx = $this->xssRule();
 
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'lakip_id' => 'required|integer',
+            'status' => 'permit_empty|string|max_length[50]|' . $rx,
+            'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
+            'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+        ];
+
+        $messages = [
+            'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
+            'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
+            'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
+            'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
+        }
         $data = $this->request->getPost();
         $lakipId = $data['lakip_id'] ?? null;
 

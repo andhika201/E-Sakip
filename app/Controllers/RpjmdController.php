@@ -13,6 +13,46 @@ class RpjmdController extends BaseController
     {
         $this->rpjmdModel = new RpjmdModel();
     }
+    private function xssPattern(): string
+    {
+        return '/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is';
+    }
+
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    /**
+     * Validasi rekursif semua value string di array (tujuan nested) agar tidak ada script.
+     * Return: [bool $ok, string $pathError]
+     */
+    private function validateNestedNoScript($data, string $path = 'tujuan'): array
+    {
+        if (!is_array($data))
+            return [true, ''];
+
+        foreach ($data as $k => $v) {
+            $p = $path . '[' . $k . ']';
+
+            if (is_array($v)) {
+                [$ok, $err] = $this->validateNestedNoScript($v, $p);
+                if (!$ok)
+                    return [$ok, $err];
+                continue;
+            }
+
+            // cek hanya untuk string
+            if (is_string($v) && $v !== '') {
+                if (!preg_match($this->xssPattern(), $v)) {
+                    return [false, $p];
+                }
+            }
+        }
+
+        return [true, ''];
+    }
+
 
     // ==================== MAIN RPJMD VIEWS ====================
 
@@ -84,6 +124,41 @@ class RpjmdController extends BaseController
             file_put_contents($debugFile, "=== RPJMD SAVE DEBUG - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
             file_put_contents($debugFile, "RAW POST:\n" . print_r($post, true) . "\n", FILE_APPEND);
 
+            $rx = $this->xssRule();
+
+            // ============================
+            // VALIDASI DASAR (ANTI XSS)
+            // ============================
+            $rules = [
+                'misi' => 'required|string|max_length[10000]|' . $rx,
+                'tahun_mulai' => 'required|integer',
+                'tahun_akhir' => 'required|integer',
+                'status' => 'permit_empty|string|max_length[20]|' . $rx,
+            ];
+            $messages = [
+                'misi' => [
+                    'required' => 'Misi wajib diisi.',
+                    'regex_match' => 'Misi terdeteksi mengandung script / input berbahaya.',
+                ],
+                'status' => [
+                    'regex_match' => 'Status terdeteksi mengandung script / input berbahaya.',
+                ],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
+                return redirect()->back()->withInput()
+                    ->with('error', implode(' ', $this->validator->getErrors()));
+            }
+
+            // ============================
+            // VALIDASI NESTED TUJUAN (ANTI XSS)
+            // ============================
+            $tujuan = is_array($post['tujuan'] ?? null) ? $post['tujuan'] : [];
+            [$okNested, $errPath] = $this->validateNestedNoScript($tujuan, 'tujuan');
+            if (!$okNested) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'Input tujuan (nested) terdeteksi mengandung script pada: ' . $errPath);
+            }
             // Normalisasi minimal untuk Misi
             $misi = [
                 'misi' => $post['misi'] ?? '',
@@ -93,7 +168,7 @@ class RpjmdController extends BaseController
             ];
 
             // Struktur tujuan (sudah nested sesuai name[] di form)
-            $tujuan = is_array($post['tujuan'] ?? null) ? $post['tujuan'] : [];
+            // $tujuan = is_array($post['tujuan'] ?? null) ? $post['tujuan'] : [];
 
             $formattedData = [
                 'misi' => $misi,
@@ -168,6 +243,27 @@ class RpjmdController extends BaseController
                 return redirect()->to(base_url('adminkab/rpjmd'));
             }
 
+            $rx = $this->xssRule();
+
+            // ============================
+            // VALIDASI DASAR (ANTI XSS)
+            // ============================
+            $rules = [
+                'id' => 'required|integer',
+                'misi' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'tahun_mulai' => 'permit_empty|integer',
+                'tahun_akhir' => 'permit_empty|integer',
+                'status' => 'permit_empty|string|max_length[20]|' . $rx,
+            ];
+            $messages = [
+                'misi' => ['regex_match' => 'Misi terdeteksi mengandung script / input berbahaya.'],
+                'status' => ['regex_match' => 'Status terdeteksi mengandung script / input berbahaya.'],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
+                return redirect()->back()->withInput()
+                    ->with('error', implode(' ', $this->validator->getErrors()));
+            }
             // ID dari form bisa saja bukan misi_id (bisa tujuan/sasaran/indikator/target)
             $rawId = (int) $data['id'];
             $misiId = $this->rpjmdModel->findMisiIdForAnyEntity($rawId) ?? $rawId;
@@ -177,6 +273,15 @@ class RpjmdController extends BaseController
                 file_put_contents($debugFile, "ERROR: Misi tidak ada (ID: {$misiId})\n", FILE_APPEND);
                 session()->setFlashdata('error', 'Data RPJMD tidak ditemukan di database.');
                 return redirect()->to(base_url('adminkab/rpjmd'));
+            }
+            // ============================
+            // VALIDASI NESTED TUJUAN (ANTI XSS)
+            // ============================
+            $tujuan = is_array($data['tujuan'] ?? null) ? $data['tujuan'] : [];
+            [$okNested, $errPath] = $this->validateNestedNoScript($tujuan, 'tujuan');
+            if (!$okNested) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'Input tujuan (nested) terdeteksi mengandung script pada: ' . $errPath);
             }
 
             // Susun formatted data sesuai model

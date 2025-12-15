@@ -27,6 +27,11 @@ class MonevController extends BaseController
         }
         return true;
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
 
     /* =========================================================
      *  INDEX MONEV (ADMIN KAB) – MODE OPD & KAB
@@ -203,16 +208,31 @@ class MonevController extends BaseController
         $tahun = (string) ($this->request->getPost('tahun') ?? 'all');
         $opdFilter = (string) ($this->request->getPost('opd_filter') ?? 'all');
 
+        $rx = $this->xssRule();
+
         $rules = [
             'target_rencana_id' => 'required|integer',
+
+            // angka tetap numeric (aman, tidak bisa <script>)
             'capaian_triwulan_1' => 'permit_empty|numeric',
             'capaian_triwulan_2' => 'permit_empty|numeric',
             'capaian_triwulan_3' => 'permit_empty|numeric',
             'capaian_triwulan_4' => 'permit_empty|numeric',
             'total' => 'permit_empty|numeric',
+
+            // tambahan: amankan input filter dari script
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'tahun' => 'permit_empty|string|max_length[10]|' . $rx,
+            'opd_filter' => 'permit_empty|string|max_length[20]|' . $rx,
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'mode' => ['regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.'],
+            'tahun' => ['regex_match' => 'Tahun terdeteksi mengandung script / input berbahaya.'],
+            'opd_filter' => ['regex_match' => 'Filter OPD terdeteksi mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -397,15 +417,29 @@ class MonevController extends BaseController
                 ->with('error', 'Data monev tidak ditemukan.');
         }
 
+        $rx = $this->xssRule();
+
         $rules = [
+            // angka tetap numeric
             'capaian_triwulan_1' => 'permit_empty|numeric',
             'capaian_triwulan_2' => 'permit_empty|numeric',
             'capaian_triwulan_3' => 'permit_empty|numeric',
             'capaian_triwulan_4' => 'permit_empty|numeric',
             'total' => 'permit_empty|numeric',
+
+            // amankan input filter dari script
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'tahun' => 'permit_empty|string|max_length[10]|' . $rx,
+            'opd_filter' => 'permit_empty|string|max_length[20]|' . $rx,
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'mode' => ['regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.'],
+            'tahun' => ['regex_match' => 'Tahun terdeteksi mengandung script / input berbahaya.'],
+            'opd_filter' => ['regex_match' => 'Filter OPD terdeteksi mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }

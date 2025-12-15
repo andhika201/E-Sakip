@@ -23,6 +23,11 @@ class TargetController extends BaseController
         $this->targets = new TargetModel();
         $this->db = Database::connect();
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
 
     /* =========================================================
      *  INDEX: LIST TARGET & RENCANA (KHUSUS ADMIN_KAB)
@@ -245,22 +250,34 @@ class TargetController extends BaseController
         }
 
         $mode = $this->request->getPost('mode') ?? 'opd';
+        $rx = $this->xssRule();
+
 
         /* ===================== VALIDASI & SIMPAN MODE KABUPATEN ===================== */
         if ($mode === 'kabupaten') {
 
             $rules = [
                 'rpjmd_target_id' => 'required|integer',
-                'rencana_aksi' => 'required|string',
-                'capaian' => 'permit_empty|string',
-                'target_triwulan_1' => 'permit_empty|string',
-                'target_triwulan_2' => 'permit_empty|string',
-                'target_triwulan_3' => 'permit_empty|string',
-                'target_triwulan_4' => 'permit_empty|string',
-                'penanggung_jawab' => 'permit_empty|string',
+                'rencana_aksi' => 'required|string|max_length[10000]|' . $rx,
+                'capaian' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rx,
+                'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rx,
+                'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rx,
+                'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rx,
+                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rx,
             ];
 
-            if (!$this->validate($rules)) {
+            $messages = [
+                'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
+                'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
+                'target_triwulan_1' => ['regex_match' => 'Target TW 1 mengandung script / input berbahaya.'],
+                'target_triwulan_2' => ['regex_match' => 'Target TW 2 mengandung script / input berbahaya.'],
+                'target_triwulan_3' => ['regex_match' => 'Target TW 3 mengandung script / input berbahaya.'],
+                'target_triwulan_4' => ['regex_match' => 'Target TW 4 mengandung script / input berbahaya.'],
+                'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+            ];
+
+            if (!$this->validate($rules, $messages)) {
                 return redirect()->back()->withInput()
                     ->with('error', implode(' ', $this->validator->getErrors()));
             }
@@ -304,17 +321,27 @@ class TargetController extends BaseController
         $rules = [
             'opd_id' => 'required|integer',
             'renstra_target_id' => 'required|integer',
-            'rencana_aksi' => 'required|string',
-            'capaian' => 'permit_empty|string',
-            'target_triwulan_1' => 'permit_empty|string',
-            'target_triwulan_2' => 'permit_empty|string',
-            'target_triwulan_3' => 'permit_empty|string',
-            'target_triwulan_4' => 'permit_empty|string',
-            'penanggung_jawab' => 'permit_empty|string',
+            'rencana_aksi' => 'required|string|max_length[10000]|' . $rx,
+            'capaian' => 'permit_empty|string|max_length[10000]|' . $rx,
+            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rx,
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rx,
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
+            'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
+            'target_triwulan_1' => ['regex_match' => 'Target TW 1 mengandung script / input berbahaya.'],
+            'target_triwulan_2' => ['regex_match' => 'Target TW 2 mengandung script / input berbahaya.'],
+            'target_triwulan_3' => ['regex_match' => 'Target TW 3 mengandung script / input berbahaya.'],
+            'target_triwulan_4' => ['regex_match' => 'Target TW 4 mengandung script / input berbahaya.'],
+            'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -488,7 +515,7 @@ class TargetController extends BaseController
 
         // Mode dari POST (kalau tidak ada, tebak dari data)
         $mode = $this->request->getPost('mode') ??
-        (!empty($row['rpjmd_target_id']) ? 'kabupaten' : 'opd');
+            (!empty($row['rpjmd_target_id']) ? 'kabupaten' : 'opd');
 
         /* ===================== UPDATE MODE KABUPATEN (RPJMD) ===================== */
         if ($mode === 'kabupaten') {

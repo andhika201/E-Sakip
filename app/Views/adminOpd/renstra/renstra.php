@@ -172,7 +172,6 @@
                 <?php else: ?>
 
                     <?php
-                    // Range tahun dari filter periode (mis: 2025-2029)
                     [$start, $end] = explode('-', $filters['periode']);
                     $start = (int) trim($start);
                     $end = (int) trim($end);
@@ -212,7 +211,7 @@
                                 $rowCount = count($renstra_data);
 
                                 // tracker key per level
-                                $curK1 = $curK2 = $curK3 = $curK4 = null;
+                                $curK1 = $curK2 = $curK3 = $curK4 = $curK5 = null;
 
                                 // helper hitung rowspan (data harus sudah berurutan)
                                 $calcRowspan = function (array $data, int $startIndex, callable $key) use ($rowCount) {
@@ -267,7 +266,7 @@
                                         $rs3 = 0;
                                     }
 
-                                    // ====== LEVEL 4: + Sasaran RENSTRA (biar sasaran renstra yg sama merge) ======
+                                    // ====== LEVEL 4: + Sasaran RENSTRA (Status & Aksi ikut ini) ======
                                     $k4 = $k3 . '|' . ($r['sasaran'] ?? '');
                                     if ($k4 !== $curK4) {
                                         $rs4 = $calcRowspan(
@@ -279,6 +278,30 @@
                                         $curK4 = $k4;
                                     } else {
                                         $rs4 = 0;
+                                    }
+
+                                    // ====== LEVEL 5: Merge baris identik di dalam Sasaran RENSTRA ======
+                                    $targetsRow = $r['targets'] ?? [];
+                                    $targetsHash = md5(json_encode($targetsRow));
+
+                                    $k5 = $k4 . '|' . ($r['indikator_sasaran'] ?? '') . '|' . ($r['satuan'] ?? '') . '|' . $targetsHash;
+                                    if ($k5 !== $curK5) {
+                                        $rs5 = $calcRowspan(
+                                            $renstra_data,
+                                            $index,
+                                            fn($x) =>
+                                            (($x['sasaran_rpjmd'] ?? '') . '|' .
+                                                ($x['tujuan_renstra'] ?? '') . '|' .
+                                                ($x['indikator_tujuan'] ?? '') . '|' .
+                                                ($x['sasaran'] ?? '') . '|' .
+                                                ($x['indikator_sasaran'] ?? '') . '|' .
+                                                ($x['satuan'] ?? '') . '|' .
+                                                md5(json_encode($x['targets'] ?? []))
+                                            )
+                                        );
+                                        $curK5 = $k5;
+                                    } else {
+                                        $rs5 = 0;
                                     }
                                     ?>
                                     <tr>
@@ -292,7 +315,6 @@
 
                                         <?php if ($rs3 > 0): ?>
                                             <td rowspan="<?= $rs3 ?>"><?= esc($r['indikator_tujuan'] ?? '-') ?></td>
-
                                             <?php for ($y = $start; $y <= $end; $y++): ?>
                                                 <td rowspan="<?= $rs3 ?>"><?= esc($r['targets_tujuan'][$y] ?? '-') ?></td>
                                             <?php endfor; ?>
@@ -302,24 +324,28 @@
                                             <td rowspan="<?= $rs4 ?>"><?= esc($r['sasaran'] ?? '-') ?></td>
                                         <?php endif; ?>
 
-                                        <td><?= esc($r['indikator_sasaran'] ?? '-') ?></td>
-                                        <td><?= esc($r['satuan'] ?? '-') ?></td>
+                                        <?php if ($rs5 > 0): ?>
+                                            <td rowspan="<?= $rs5 ?>"><?= esc($r['indikator_sasaran'] ?? '-') ?></td>
+                                            <td rowspan="<?= $rs5 ?>"><?= esc($r['satuan'] ?? '-') ?></td>
 
-                                        <?php
-                                        $targets = $r['targets'] ?? [];
-                                        for ($y = $start; $y <= $end; $y++): ?>
-                                            <td><?= esc($targets[$y] ?? '-') ?></td>
-                                        <?php endfor; ?>
+                                            <?php
+                                            $targets = $r['targets'] ?? [];
+                                            for ($y = $start; $y <= $end; $y++): ?>
+                                                <td rowspan="<?= $rs5 ?>"><?= esc($targets[$y] ?? '-') ?></td>
+                                            <?php endfor; ?>
+                                        <?php endif; ?>
 
-                                        <?php if ($rs3 > 0): ?>
-                                            <td rowspan="<?= $rs3 ?>">
+                                        <?php if ($rs4 > 0): ?>
+                                            <!-- Status -->
+                                            <td rowspan="<?= $rs4 ?>">
                                                 <span
                                                     class="badge <?= ($r['status'] ?? 'draft') === 'draft' ? 'bg-secondary' : 'bg-success' ?>">
                                                     <?= ucfirst($r['status'] ?? 'draft') ?>
                                                 </span>
                                             </td>
 
-                                            <td rowspan="<?= $rs3 ?>">
+                                            <!-- Aksi -->
+                                            <td rowspan="<?= $rs4 ?>">
                                                 <div class="d-flex justify-content-center gap-2">
                                                     <a href="<?= base_url('adminopd/renstra/edit/' . $r['sasaran_id']) ?>"
                                                         class="btn btn-warning btn-sm">
@@ -372,7 +398,6 @@
 
             toggleFilters();
 
-            // Auto submit: satu pintu
             [periodeSelect, ...otherFilters].forEach(el => {
                 if (!el) return;
                 el.addEventListener('change', function () {

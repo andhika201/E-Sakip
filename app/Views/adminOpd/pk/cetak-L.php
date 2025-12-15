@@ -82,12 +82,55 @@
     .section {
       margin-top: 50px;
     }
+
+    table {
+      page-break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    td,
+    th {
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    .table-bordered-custom td,
+    .table-bordered-custom th {
+      font-size: 11pt;
+    }
+
+    .signature-block {
+      margin-top: 80px;
+    }
+
+    .signature-right {
+      text-align: right;
+    }
+
+    .signature-center {
+      text-align: center;
+    }
+
+    .signature-name {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .signature-meta {
+      margin: 0;
+      font-size: 11pt;
+    }
   </style>
 </head>
 
 <body>
   <!-- Halaman 2 -->
-  <page orientation="L" size="FOLIO">
+  <page orientation="P" size="FOLIO">
     <h4 style="text-align: center;">
       PERJANJIAN KINERJA TAHUN <?= esc(date('Y', strtotime($tanggal))) ?>
       <br>
@@ -102,9 +145,11 @@
       <thead>
         <tr>
           <th style="width: 5%; text-align: center;">No</th>
-          <th style="width: 45%; text-align: center;">SASARAN STRATEGIS</th>
-          <th style="width: 40%; text-align: center;">INDIKATOR SASARAN</th>
-          <th style="width: 10%; text-align: center;">TARGET</th>
+          <th style="width: 35%; text-align: center;">SASARAN STRATEGIS</th>
+          <th style="width: 35%; text-align: center;">INDIKATOR SASARAN</th>
+          <th style="width: 15%; text-align: center;">TARGET</th>
+          <th style="width: 10%; text-align: center;">SATUAN</th>
+
         </tr>
       </thead>
       <tbody style="border: none; width: 100%; cellpadding: 0; cellspacing: 0;">
@@ -113,6 +158,7 @@
           <td style="text-align: center; font-style: italic;">2</td>
           <td style="text-align: center; font-style: italic;">3</td>
           <td style="text-align: center; font-style: italic;">4</td>
+          <td style="text-align: center; font-style: italic;">5</td>
         </tr>
         <?php $no = 1; ?>
         <?php foreach ($sasaran_pk as $sasaran): ?>
@@ -126,6 +172,7 @@
               <?php endif; ?>
               <td style="text-align: left;"><?= esc($indikator['indikator']) ?></td>
               <td style="text-align: center;"><?= esc($indikator['target']) ?></td>
+              <td style="text-align: center;"><?= esc($indikator['satuan']) ?></td>
             </tr>
           <?php endforeach; ?>
         <?php endforeach; ?>
@@ -138,37 +185,38 @@
       </tbody>
     </table>
 
-    <table class="table-no-border" style="width: 80%; margin-top: 20px;">
+    <table class="table-bordered-custom" style="width:100%; margin-top:30px;">
       <thead>
-        <tr>
-          <th style="text-align: center;">NO</th>
-          <th style="text-align: center;">PROGRAM</th>
-          <th style="text-align: center;">ANGGARAN</th>
+        <tr class="center fw-bold">
+          <th style="width:5%;">NO</th>
+          <th style="width:65%;">PROGRAM</th>
+          <th style="width:30%;">ANGGARAN (Rp)</th>
         </tr>
       </thead>
-      <tbody style="border: none; width: 100%; cellpadding: 0; cellspacing: 0;">
-        <?php $no_pa = 1; ?>
+      <tbody>
+        <?php $no_pa = 1;
+        $totalAnggaran = 0; ?>
         <?php foreach ($program_pk as $prog): ?>
+          <?php $totalAnggaran += (float) $prog['anggaran']; ?>
           <tr>
-            <td style="width: 5%; text-align: center;"><?= $no_pa++ ?></td>
-            <td style="width: 65%; text-align: left;"> <?= esc($prog['program_kegiatan']) ?></td>
-            <td style="width: 30%; text-align: right;"><?= number_format($prog['anggaran'], 0, ',', '.') ?></td>
+            <td class="center"><?= $no_pa++ ?></td>
+            <td><?= esc($prog['program_kegiatan']) ?></td>
+            <td style="text-align:right;">
+              <?= number_format($prog['anggaran'], 0, ',', '.') ?>
+            </td>
           </tr>
         <?php endforeach; ?>
-        <tr>
-          <?php
-          $totalAnggaran = 0;
 
-          foreach ($program_pk as $prog) {
-            $totalAnggaran += (float) $prog['anggaran'];
-          }
-          ?>
-          <td></td> <!-- biar kolom NO tetap ada -->
-          <td style="text-align: right;"><strong>TOTAL</strong></td>
-          <td style="text-align: right;"><strong>Rp. <?= number_format($totalAnggaran, 0, ',', '.') ?></strong></td>
+        <!-- TOTAL -->
+        <tr class="fw-bold">
+          <td colspan="2" style="text-align:right;">TOTAL</td>
+          <td style="text-align:right;">
+            <?= number_format($totalAnggaran, 0, ',', '.') ?>
+          </td>
         </tr>
       </tbody>
     </table>
+
 
     <table style="width: 100%; margin-top: 70px;" class="table-no-border">
       <tr>

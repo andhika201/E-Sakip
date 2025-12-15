@@ -117,7 +117,7 @@
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
             <li><a class="dropdown-item" href="<?= base_url('adminkab/target') ?>">Target & Rencana Aksi</a></li>
             <li><a class="dropdown-item" href="<?= base_url('adminkab/monev') ?>">MONEV</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/lakip') ?>">LAKIP OPD</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP KABUBPATEN</a></li>
           </ul>
         </div>
                 

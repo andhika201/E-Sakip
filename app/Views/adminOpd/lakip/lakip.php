@@ -9,7 +9,7 @@
     <?= $this->include('adminOpd/templates/style.php'); ?>
 
     <style>
-        /* Tombol icon kotak seperti contoh */
+        /* Tombol icon kotak (kalau nanti dipakai lagi) */
         .icon-btn {
             width: 40px;
             height: 40px;
@@ -41,32 +41,50 @@
         .icon-btn i {
             pointer-events: none;
         }
+
+        /* AREA TOMBOL AKSI */
+        .action-buttons .btn {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.55rem;
+        }
+
+        .action-buttons .btn i {
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 576px) {
+            .action-buttons {
+                gap: 0.25rem !important;
+            }
+
+            .action-buttons .btn {
+                padding: 0.15rem 0.35rem;
+            }
+
+            .action-buttons .btn i {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
-    <!-- Content Wrapper -->
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
-        <!-- Navbar/Header -->
-        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
-        <!-- Sidebar -->
-        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
+        <!-- Header + Sidebar -->
+        <?= $this->include('adminOpd/templates/header.php'); ?>
+        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
-        <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
                 <h2 class="h3 fw-bold text-success text-center mb-4">
                     LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAH DAERAH
                 </h2>
 
-                <!-- FILTER -->
                 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                     <?php if ($role === 'admin_kab'): ?>
-                        <!-- ADMIN KABUPATEN -->
                         <div class="d-flex flex-column flex-md-row gap-3 flex-fill">
-                            <!-- Mode: Kabupaten / OPD -->
                             <select id="mode_filter" class="form-select border-secondary" onchange="filterData()">
                                 <option value="kabupaten" <?= ($mode === 'kabupaten') ? 'selected' : '' ?>>
                                     Mode Kabupaten (RPJMD)
@@ -76,21 +94,19 @@
                                 </option>
                             </select>
 
-                            <!-- Filter OPD (hanya saat mode = opd) -->
                             <select id="opd_filter" class="form-select border-secondary" onchange="filterData()"
                                 <?= ($mode === 'opd') ? '' : 'style="display:none;"' ?>>
                                 <option value="">Pilih OPD</option>
-                                <?php foreach ($opdList as $opd): ?>
+                                <?php foreach (($opdList ?? []) as $opd): ?>
                                     <option value="<?= $opd['id'] ?>" <?= (!empty($selectedOpdId) && $selectedOpdId == $opd['id']) ? 'selected' : '' ?>>
                                         <?= esc($opd['nama_opd']) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
 
-                            <!-- Tahun -->
                             <select id="tahun_filter" class="form-select border-secondary" onchange="filterData()">
                                 <option value="">Semua Tahun</option>
-                                <?php foreach ($availableYears as $year): ?>
+                                <?php foreach (($availableYears ?? []) as $year): ?>
                                     <option value="<?= $year ?>" <?= (($filters['tahun'] ?? '') == $year) ? 'selected' : '' ?>>
                                         <?= $year ?>
                                     </option>
@@ -98,32 +114,97 @@
                             </select>
                         </div>
                     <?php else: ?>
-                        <!-- ADMIN OPD -->
                         <div class="d-flex flex-column flex-md-row gap-3 flex-fill">
-                            <!-- Tahun -->
+
                             <select id="tahun_filter" class="form-select border-secondary" onchange="filterData()">
                                 <option value="">Semua Tahun</option>
-                                <?php foreach ($availableYears as $year): ?>
+                                <?php foreach (($availableYears ?? []) as $year): ?>
                                     <option value="<?= $year ?>" <?= (($filters['tahun'] ?? '') == $year) ? 'selected' : '' ?>>
                                         <?= $year ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
 
-                            <!-- Status -->
                             <select id="status_filter" class="form-select border-secondary" onchange="filterData()">
                                 <option value="">Semua Status</option>
                                 <option value="proses" <?= (($filters['status'] ?? '') === 'proses') ? 'selected' : '' ?>>
                                     Proses
                                 </option>
                                 <option value="siap" <?= (($filters['status'] ?? '') === 'siap') ? 'selected' : '' ?>>
-                                    Siap</option>
+                                    Siap
+                                </option>
                             </select>
                         </div>
                     <?php endif; ?>
                 </div>
 
-                <!-- TABEL LAKIP -->
+                <?php
+                // =========================
+                // FUNGSI HITUNG CAPAIAN
+                // =========================
+                if (!function_exists('hitungCapaianLakip')) {
+                    function hitungCapaianLakip($target, $realisasi, $jenisIndikator)
+                    {
+                        $target = floatval($target);
+                        $realisasi = floatval($realisasi);
+
+                        if ($target == 0)
+                            return null;
+
+                        $jenis = strtolower(trim((string) $jenisIndikator));
+
+                        if ($jenis === 'indikator positif' || $jenis === 'positif') {
+                            return ($realisasi / $target) * 100;
+                        }
+
+                        if ($jenis === 'indikator negatif' || $jenis === 'negatif') {
+                            return (($target - ($realisasi - $target)) / $target) * 100;
+                        }
+
+                        return null;
+                    }
+                }
+
+                // Tahun aktif dari filter
+                $tahunAktif = (string) ($filters['tahun'] ?? '');
+
+                // ========= PATCH: dataSource & qsBase & lakipMap =========
+                // dataSource fallback
+                $dataSource = $dataSource ?? null;
+                if ($dataSource === null) {
+                    if (($role ?? '') === 'admin_kab' && ($mode ?? '') === 'kabupaten') {
+                        $dataSource = $rpjmdData ?? [];
+                    } else {
+                        $dataSource = $renstraData ?? [];
+                    }
+                }
+
+                // qsBase untuk link tombol
+                $qsBase = '';
+                if (!empty($filters['tahun'])) {
+                    $qsBase .= (strpos($qsBase, '?') === false ? '?' : '&') . 'tahun=' . urlencode((string) $filters['tahun']);
+                }
+                if (!empty($filters['status'])) {
+                    $qsBase .= (strpos($qsBase, '?') === false ? '?' : '&') . 'status=' . urlencode((string) $filters['status']);
+                }
+                if (!empty($mode)) {
+                    $qsBase .= (strpos($qsBase, '?') === false ? '?' : '&') . 'mode=' . urlencode((string) $mode);
+                }
+                if (!empty($selectedOpdId)) {
+                    $qsBase .= (strpos($qsBase, '?') === false ? '?' : '&') . 'opd_id=' . urlencode((string) $selectedOpdId);
+                }
+
+                // lakipMap fallback dari lakip list
+                $lakipMap = $lakipMap ?? [];
+                if (empty($lakipMap) && !empty($lakip) && is_array($lakip)) {
+                    foreach ($lakip as $l) {
+                        $k = (int) ($l['renstra_indikator_id'] ?? $l['indikator_id'] ?? $l['indikator_sasaran_id'] ?? 0);
+                        if ($k)
+                            $lakipMap[$k] = $l;
+                    }
+                }
+                ?>
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped text-center small align-middle">
                         <thead class="table-success">
@@ -132,40 +213,23 @@
                                 <th class="border p-2">SASARAN</th>
                                 <th class="border p-2">INDIKATOR</th>
                                 <th class="border p-2">SATUAN</th>
+                                <th class="border p-2">JENIS INDIKATOR</th>
+                                <th class="border p-2">TAHUN</th>
                                 <th class="border p-2">TARGET TAHUN SEBELUMNYA</th>
                                 <th class="border p-2">CAPAIAN TAHUN SEBELUMNYA</th>
                                 <th class="border p-2">TARGET</th>
                                 <th class="border p-2">CAPAIAN TAHUN INI</th>
+                                <th class="border p-2">CAPAIAN (%)</th>
                                 <th class="border p-2">STATUS</th>
                                 <th class="border p-2">AKSI</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php
-                            $no = 1;
+                            <?php $no = 1; ?>
 
-                            if ($role === 'admin_kab') {
-                                if ($mode === 'kabupaten') {
-                                    $dataSource = $rpjmdData;
-                                    $isRpjmdMode = true;
-                                } else {
-                                    $dataSource = $renstraData;
-                                    $isRpjmdMode = false;
-                                }
-                            } else {
-                                $dataSource = $renstraData;
-                                $isRpjmdMode = false;
-                            }
-                            ?>
-
-                            <?php foreach ($dataSource as $row): ?>
+                            <?php foreach (($dataSource ?? []) as $row): ?>
                                 <?php
-                                if ($role === 'admin_kab' && $mode === 'kabupaten') {
-                                    $sasaranText = $row['sasaran_rpjmd'] ?? '';
-                                } else {
-                                    $sasaranText = $row['sasaran'] ?? '';
-                                }
-
+                                $sasaranText = $row['sasaran'] ?? ($row['sasaran_rpjmd'] ?? '');
                                 $indikatorList = $row['indikator_sasaran'] ?? [];
                                 $indikatorCount = count($indikatorList);
                                 $firstRow = true;
@@ -173,31 +237,63 @@
 
                                 <?php foreach ($indikatorList as $indikator): ?>
                                     <?php
-                                    // cari data LAKIP untuk indikator ini
-                                    $lakipItem = null;
-                                    foreach ($lakip ?? [] as $item) {
-                                        if ($isRpjmdMode) {
-                                            if (($item['rpjmd_indikator_id'] ?? null) == $indikator['id']) {
-                                                $lakipItem = $item;
-                                                break;
-                                            }
+                                    // indikator id fallback
+                                    $indikatorId = (int) ($indikator['id'] ?? $indikator['indikator_id'] ?? $indikator['renstra_indikator_id'] ?? 0);
+
+                                    // ambil lakip dari map
+                                    $lakipItem = $indikatorId ? ($lakipMap[$indikatorId] ?? null) : null;
+
+                                    // tahun yang benar-benar dipakai untuk tampil & cari target
+                                    $tahunRow = (string) (
+                                        $tahunAktif !== '' ? $tahunAktif :
+                                        ($indikator['tahun'] ?? $row['tahun'] ?? date('Y'))
+                                    );
+
+                                    // target tahun aktif: fleksibel
+                                    $targetTahun = null;
+                                    $targets = $indikator['target_tahunan'] ?? null;
+
+                                    if (is_array($targets)) {
+                                        $isAssoc = array_keys($targets) !== range(0, count($targets) - 1);
+
+                                        if ($isAssoc) {
+                                            $targetTahun = $targets[$tahunRow] ?? $targets[(int) $tahunRow] ?? null;
                                         } else {
-                                            if (($item['renstra_indikator_id'] ?? null) == $indikator['id']) {
-                                                $lakipItem = $item;
-                                                break;
+                                            foreach ($targets as $t) {
+                                                $th = (string) ($t['tahun'] ?? $t['indikator_tahun'] ?? '');
+                                                if ($th === $tahunRow) {
+                                                    $targetTahun =
+                                                        $t['target']
+                                                        ?? $t['target_tahunan']
+                                                        ?? $t['target_tahun_ini']
+                                                        ?? $t['nilai_target']
+                                                        ?? null;
+                                                    break;
+                                                }
                                             }
                                         }
                                     }
 
-                                    // target tahun berjalan
-                                    $keyTarget = $isRpjmdMode ? 'target_tahunan' : 'target';
-                                    $targetTahun = $indikator['target_tahunan'][0][$keyTarget] ?? null;
+                                    // fallback kalau target_tahunan tidak ada
+                                    if ($targetTahun === null) {
+                                        $targetTahun =
+                                            $indikator['target_tahun_ini']
+                                            ?? $indikator['target']
+                                            ?? $row['target_tahun_ini']
+                                            ?? $row['target']
+                                            ?? null;
+                                    }
 
-                                    // Status & badge
+                                    $jenisIndikator = $indikator['jenis_indikator'] ?? ($row['jenis_indikator'] ?? 'indikator positif');
+
+                                    $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
+
+                                    $capaianPersen = null;
+                                    if (is_numeric($realisasiNow) && is_numeric($targetTahun)) {
+                                        $capaianPersen = hitungCapaianLakip($targetTahun, $realisasiNow, $jenisIndikator);
+                                    }
+
                                     $statusText = $lakipItem['status'] ?? null;
-                                    $badgeClass = '';
-                                    $statusLabel = '';
-
                                     if ($statusText === 'siap') {
                                         $badgeClass = 'badge bg-success';
                                         $statusLabel = 'Siap';
@@ -207,18 +303,18 @@
                                     } elseif (!empty($statusText)) {
                                         $badgeClass = 'badge bg-secondary';
                                         $statusLabel = $statusText;
+                                    } else {
+                                        $badgeClass = '';
+                                        $statusLabel = '';
                                     }
 
-                                    // URL ganti status (controller: status($id, $to))
                                     $changeStatusUrl = '';
                                     $nextStatus = '';
                                     if (!empty($lakipItem['id'])) {
                                         if ($statusText === 'siap') {
-                                            // dari siap balik ke proses
                                             $nextStatus = 'proses';
                                             $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/proses');
                                         } else {
-                                            // default: dari kosong / proses jadi siap
                                             $nextStatus = 'siap';
                                             $changeStatusUrl = base_url('adminopd/lakip/status/' . $lakipItem['id'] . '/siap');
                                         }
@@ -235,23 +331,32 @@
                                             <?php $firstRow = false; ?>
                                         <?php endif; ?>
 
-                                        <!-- indikator & satuan -->
                                         <td><?= esc($indikator['indikator_sasaran'] ?? '-') ?></td>
                                         <td><?= esc($indikator['satuan'] ?? '-') ?></td>
 
-                                        <!-- target & capaian tahun lalu -->
+                                        <td><?= esc(ucwords((string) $jenisIndikator)) ?></td>
+
+                                        <td><?= esc($tahunRow) ?></td>
+
                                         <td class="text-center"><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
                                         <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
 
-                                        <!-- target tahun ini -->
                                         <td class="text-center">
-                                            <?= $targetTahun ? esc($targetTahun) : '-' ?>
+                                            <?= (is_numeric($targetTahun) || $targetTahun !== null) ? esc((string) $targetTahun) : '-' ?>
                                         </td>
 
-                                        <!-- capaian tahun ini -->
-                                        <td class="text-center"><?= esc($lakipItem['capaian_tahun_ini'] ?? '-') ?></td>
+                                        <td class="text-center">
+                                            <?= $realisasiNow !== null ? esc((string) $realisasiNow) : '-' ?>
+                                        </td>
 
-                                        <!-- status badge -->
+                                        <td class="text-center">
+                                            <?php if ($capaianPersen === null): ?>
+                                                -
+                                            <?php else: ?>
+                                                <?= round($capaianPersen, 2) ?>%
+                                            <?php endif; ?>
+                                        </td>
+
                                         <td class="text-center">
                                             <?php if (!empty($statusLabel)): ?>
                                                 <span class="<?= $badgeClass ?>"><?= esc($statusLabel) ?></span>
@@ -260,32 +365,31 @@
                                             <?php endif; ?>
                                         </td>
 
-                                        <!-- aksi icon-only -->
                                         <td class="text-center">
-                                            <?php if (!empty($indikator['id'])): ?>
-                                                <?php if (empty($lakipItem['id'])): ?>
-                                                    <!-- belum ada LAKIP -> Tambah -->
-                                                    <a href="<?= base_url('adminopd/lakip/tambah/' . $indikator['id']) ?>"
-                                                        class="btn btn-primary btn-sm" title="Tambah Lakip">
-                                                        <i class="fas fa-plus"></i>
-                                                    </a>
-                                                <?php else: ?>
-                                                    <!-- sudah ada LAKIP -> Edit + Change Status -->
-                                                    <a href="<?= base_url('adminopd/lakip/edit/' . $indikator['id']) ?>"
-                                                        class="btn btn-warning btn-sm" title="Edit Lakip">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-
-                                                    <?php if ($changeStatusUrl && $nextStatus): ?>
-                                                        <a href="<?= $changeStatusUrl ?>" class="btn btn-info btn-sm"
-                                                            title="Ubah status ke <?= esc($nextStatus) ?>">
-                                                            <i class="fas fa-sync-alt"></i>
+                                            <div class="d-flex flex-wrap justify-content-center gap-1 action-buttons">
+                                                <?php if (!empty($indikatorId)): ?>
+                                                    <?php if (empty($lakipItem['id'])): ?>
+                                                        <a href="<?= base_url('adminopd/lakip/tambah/' . $indikatorId) . $qsBase ?>"
+                                                            class="btn btn-sm btn-primary" title="Tambah LAKIP">
+                                                            <i class="fas fa-plus"></i>
                                                         </a>
+                                                    <?php else: ?>
+                                                        <a href="<?= base_url('adminopd/lakip/edit/' . $indikatorId) . $qsBase ?>"
+                                                            class="btn btn-sm btn-warning" title="Edit LAKIP">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+
+                                                        <?php if ($changeStatusUrl && $nextStatus): ?>
+                                                            <a href="<?= $changeStatusUrl . $qsBase ?>" class="btn btn-sm btn-info"
+                                                                title="Ubah status ke <?= esc(ucfirst($nextStatus)) ?>">
+                                                                <i class="fas fa-sync-alt"></i>
+                                                            </a>
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
                                                 <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
-                                            <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -293,7 +397,7 @@
 
                             <?php if (empty($dataSource)): ?>
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">
+                                    <td colspan="13" class="text-center text-muted">
                                         Belum ada data sasaran / indikator pada tahun ini.
                                     </td>
                                 </tr>
@@ -305,13 +409,11 @@
         </main>
 
         <?= $this->include('adminOpd/templates/footer.php'); ?>
-    </div> <!-- End of Content Wrapper -->
+    </div>
 
-    <!-- Script Filter -->
     <script>
         function filterData() {
             const params = new URLSearchParams();
-
             const tahunEl = document.getElementById('tahun_filter');
             const statusEl = document.getElementById('status_filter');
             const modeEl = document.getElementById('mode_filter');
@@ -338,7 +440,6 @@
             window.location.href = query ? ('?' + query) : window.location.pathname;
         }
 
-        // Tampilkan / sembunyikan filter OPD saat mode diganti (admin_kab)
         document.addEventListener('DOMContentLoaded', function () {
             const modeEl = document.getElementById('mode_filter');
             const opdEl = document.getElementById('opd_filter');
@@ -350,6 +451,7 @@
                         opdEl.style.display = 'none';
                     }
                 }
+
                 modeEl.addEventListener('change', toggleOpd);
                 toggleOpd();
             }

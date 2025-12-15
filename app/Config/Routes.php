@@ -41,6 +41,17 @@ $routes->group(
 
         $routes->get('dashboard', 'AdminKabupatenController::index');
         $routes->post('getDashboardData', 'AdminKabupatenController::getDashboardData');
+        // Lakip
+        $routes->get('lakip', 'AdminKab\LakipController::index');
+        $routes->get('lakip/tambah/(:num)', 'AdminKab\LakipController::tambah/$1');
+        $routes->post('lakip/save', 'AdminKab\LakipController::save');
+        $routes->get('lakip/edit/(:num)', 'AdminKab\LakipController::edit/$1');
+        $routes->post('lakip/update/', 'AdminKab\LakipController::update');
+        $routes->get('lakip/download/(:num)', 'AdminKab\LakipController::download/$1');
+        $routes->post('lakip/update-status', 'AdminKab\LakipController::updateStatus');
+        $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
+        // ubah status lakip
+        $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
 
         // iku
         $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');

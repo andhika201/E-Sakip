@@ -225,7 +225,6 @@ class RktModel extends Model
                         'tahun' => $tahun,
                         'indikator_id' => $indikatorId,
                         'program_id' => $p['program_id'] ?? null,
-                        'status' => $payload['status'] ?? 'draft',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);
@@ -237,7 +236,6 @@ class RktModel extends Model
                     'tahun' => $tahun,
                     'indikator_id' => $indikatorId,
                     'program_id' => $p['program_id'] ?? null,
-                    'status' => $payload['status'] ?? 'draft',
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);

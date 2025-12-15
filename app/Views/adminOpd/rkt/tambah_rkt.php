@@ -12,13 +12,14 @@
 
   <?= $this->include(
     $role === 'admin_kab'
-    ? 'adminKabupaten/templates/header.php'
-    : 'adminOpd/templates/header.php'
+      ? 'adminKabupaten/templates/header.php'
+      : 'adminOpd/templates/header.php'
   ); ?>
+
   <?= $this->include(
     $role === 'admin_kab'
-    ? 'adminKabupaten/templates/sidebar.php'
-    : 'adminOpd/templates/sidebar.php'
+      ? 'adminKabupaten/templates/sidebar.php'
+      : 'adminOpd/templates/sidebar.php'
   ); ?>
 
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">
@@ -28,6 +29,7 @@
       <?php if (session()->getFlashdata('error')): ?>
         <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
       <?php endif; ?>
+
       <?php if (session()->getFlashdata('success')): ?>
         <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
       <?php endif; ?>
@@ -45,7 +47,7 @@
                 <i class="fas fa-bullseye"></i>
               </span>
               <input type="text" class="form-control border-0 bg-light"
-                value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
+                     value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
             </div>
           </div>
 
@@ -56,7 +58,7 @@
                 <i class="fas fa-calendar-alt"></i>
               </span>
               <input type="number" name="tahun" class="form-control border-0 bg-light"
-                value="<?= esc($tahun ?? date('Y')) ?>" readonly>
+                     value="<?= esc($tahun ?? date('Y')) ?>" readonly>
             </div>
           </div>
         </div>
@@ -69,7 +71,7 @@
 
           <div id="program-container">
 
-            <!-- PROGRAM PERTAMA -->
+            <!-- PROGRAM PERTAMA (DEFAULT) -->
             <div class="program-item bg-light border rounded p-3 mb-3">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <label class="fw-medium mb-0 program-title">Program 1</label>
@@ -133,7 +135,7 @@
                             <div class="col-md-8">
                               <label class="form-label">Pilih Sub Kegiatan PK</label>
                               <select name="program[0][kegiatan][0][subkegiatan][0][sub_kegiatan_id]"
-                                class="form-select select-subkegiatan" required>
+                                      class="form-select select-subkegiatan" required>
                                 <option value="">-- Pilih Sub Kegiatan --</option>
                               </select>
                             </div>
@@ -272,27 +274,27 @@
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
 
+  <!-- Data master dikirim ke JS -->
   <script>
     const PROGRAMS = <?= json_encode($program) ?>;
     const KEGIATAN = <?= json_encode($kegiatanPk) ?>;
-    const SUBS = <?= json_encode($subKegiatanPk) ?>;
+    const SUBS     = <?= json_encode($subKegiatanPk) ?>;
   </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const programContainer = document.getElementById('program-container');
-      const tplProgram = document.getElementById('tpl-program');
+      const tplProgram  = document.getElementById('tpl-program');
       const tplKegiatan = document.getElementById('tpl-kegiatan');
-      const tplSub = document.getElementById('tpl-subkegiatan');
+      const tplSub      = document.getElementById('tpl-subkegiatan');
 
       const clone = (tpl) => tpl.content.firstElementChild.cloneNode(true);
 
-      // >>> FIX FORMAT RUPIAH (tidak menambah 0 lagi)
+      // ===== Helper Rupiah =====
       function toIntegerString(num) {
         if (num === null || num === undefined || num === '') return '';
         const n = Number(num);
         if (!Number.isFinite(n)) return '';
-        // buang desimal, jadikan string
         return Math.round(n).toString();
       }
 
@@ -301,8 +303,8 @@
         if (!s) return '';
         return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       }
-      // <<<
 
+      // ===== Isi Dropdown Master =====
       function fillProgramOptions(select) {
         select.innerHTML = '<option value="">-- Pilih Program --</option>';
         PROGRAMS.forEach(p => {
@@ -313,11 +315,13 @@
         });
       }
 
+      // KEGIATAN: filter berdasarkan program_id (hasil alias dari model)
       function fillKegiatanOptions(select, programId, currentValue = '') {
         select.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
         if (!programId) return;
 
-        KEGIATAN.filter(k => String(k.program_id) === String(programId))
+        KEGIATAN
+          .filter(k => String(k.program_id) === String(programId))
           .forEach(k => {
             const opt = document.createElement('option');
             opt.value = k.id;
@@ -327,22 +331,24 @@
           });
       }
 
+      // SUB KEGIATAN: filter berdasarkan kegiatan_id (hasil alias dari model)
       function fillSubOptions(select, kegiatanId, currentValue = '') {
         select.innerHTML = '<option value="">-- Pilih Sub Kegiatan --</option>';
         if (!kegiatanId) return;
 
-        SUBS.filter(s => String(s.kegiatan_id) === String(kegiatanId))
+        SUBS
+          .filter(s => String(s.kegiatan_id) === String(kegiatanId))
           .forEach(s => {
             const opt = document.createElement('option');
             opt.value = s.id;
             opt.textContent = s.sub_kegiatan;
-            opt.dataset.anggaran = s.anggaran; // bisa "90000000.00"
+            opt.dataset.anggaran = s.anggaran;
             if (String(currentValue) === String(s.id)) opt.selected = true;
             select.appendChild(opt);
           });
       }
 
-      // Re-index semua nama & label setelah tambah/hapus
+      // ===== Reindex name & label =====
       function reindexAll() {
         const programs = programContainer.querySelectorAll('.program-item');
 
@@ -370,7 +376,8 @@
 
               const selSub = sEl.querySelector('.select-subkegiatan');
               if (selSub) {
-                selSub.name = `program[${pIdx}][kegiatan][${kIdx}][subkegiatan][${sIdx}][sub_kegiatan_id]`;
+                selSub.name =
+                  `program[${pIdx}][kegiatan][${kIdx}][subkegiatan][${sIdx}][sub_kegiatan_id]`;
               }
             });
           });
@@ -382,18 +389,19 @@
             const btn = p.querySelector('.remove-program');
             if (btn) btn.style.display = '';
           });
-        } else {
-          const btn = programs[0]?.querySelector('.remove-program');
+        } else if (programs.length === 1) {
+          const btn = programs[0].querySelector('.remove-program');
           if (btn) btn.style.display = 'none';
         }
       }
 
+      // ===== Tambah Elemen =====
       function addProgram() {
-        const pNode = clone(tplProgram);
+        const pNode  = clone(tplProgram);
         const selProg = pNode.querySelector('.select-program');
         fillProgramOptions(selProg);
 
-        // program baru otomatis punya 1 kegiatan + 1 sub
+        // program baru: 1 kegiatan + 1 sub
         const kc = pNode.querySelector('.kegiatan-container');
         const kNode = clone(tplKegiatan);
         kc.appendChild(kNode);
@@ -403,8 +411,9 @@
         sc.appendChild(sNode);
 
         const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-'; hid.value = '';
+        const hid  = sNode.querySelector('.target-hidden');
+        disp.value = '-';
+        hid.value  = '';
 
         programContainer.appendChild(pNode);
         reindexAll();
@@ -419,14 +428,15 @@
         sc.appendChild(sNode);
 
         const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-'; hid.value = '';
+        const hid  = sNode.querySelector('.target-hidden');
+        disp.value = '-';
+        hid.value  = '';
 
         kc.appendChild(kNode);
         reindexAll();
 
         const selProg = programItem.querySelector('.select-program');
-        const selKeg = kNode.querySelector('.select-kegiatan');
+        const selKeg  = kNode.querySelector('.select-kegiatan');
         fillKegiatanOptions(selKeg, selProg.value);
         const selSub = sNode.querySelector('.select-subkegiatan');
         fillSubOptions(selSub, selKeg.value);
@@ -437,8 +447,9 @@
         const sNode = clone(tplSub);
 
         const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-'; hid.value = '';
+        const hid  = sNode.querySelector('.target-hidden');
+        disp.value = '-';
+        hid.value  = '';
 
         sc.appendChild(sNode);
         reindexAll();
@@ -448,7 +459,7 @@
         fillSubOptions(selSub, selKeg.value);
       }
 
-      // INIT pertama
+      // ===== INIT PERTAMA =====
       (function initFirst() {
         const firstProg = programContainer.querySelector('.program-item');
         if (!firstProg) return;
@@ -456,14 +467,15 @@
         reindexAll();
 
         const selProg = firstProg.querySelector('.select-program');
-        const selKeg = firstProg.querySelector('.select-kegiatan');
-        const selSub = firstProg.querySelector('.select-subkegiatan');
+        const selKeg  = firstProg.querySelector('.select-kegiatan');
+        const selSub  = firstProg.querySelector('.select-subkegiatan');
 
+        // awal: isi kegiatan & sub kalau program/kegiatan sudah dipilih
         fillKegiatanOptions(selKeg, selProg.value);
         fillSubOptions(selSub, selKeg.value);
       })();
 
-      // EVENT CLICK
+      // ===== EVENT CLICK =====
       document.addEventListener('click', function (e) {
         if (e.target.closest('#add-program')) {
           e.preventDefault();
@@ -501,7 +513,7 @@
         if (remK) {
           e.preventDefault();
           const pItem = remK.closest('.program-item');
-          const allK = pItem.querySelectorAll('.kegiatan-item');
+          const allK  = pItem.querySelectorAll('.kegiatan-item');
           if (allK.length <= 1) return;
           remK.closest('.kegiatan-item').remove();
           reindexAll();
@@ -512,7 +524,7 @@
         if (remS) {
           e.preventDefault();
           const kItem = remS.closest('.kegiatan-item');
-          const allS = kItem.querySelectorAll('.subkegiatan-item');
+          const allS  = kItem.querySelectorAll('.subkegiatan-item');
           if (allS.length <= 1) return;
           remS.closest('.subkegiatan-item').remove();
           reindexAll();
@@ -520,12 +532,13 @@
         }
       });
 
-      // EVENT CHANGE (select)
+      // ===== EVENT CHANGE (select) =====
       document.addEventListener('change', function (e) {
         const el = e.target;
 
+        // Program berubah → refresh semua kegiatan & sub
         if (el.classList.contains('select-program')) {
-          const pItem = el.closest('.program-item');
+          const pItem     = el.closest('.program-item');
           const programId = el.value;
 
           pItem.querySelectorAll('.select-kegiatan').forEach(selKeg => {
@@ -538,16 +551,17 @@
               fillSubOptions(selSub, selKeg.value, currentSub);
 
               const sItem = selSub.closest('.subkegiatan-item');
-              const disp = sItem.querySelector('.target-display');
-              const hid = sItem.querySelector('.target-hidden');
-              disp.value = '-';
-              hid.value = '';
+              const disp  = sItem.querySelector('.target-display');
+              const hid   = sItem.querySelector('.target-hidden');
+              disp.value  = '-';
+              hid.value   = '';
             });
           });
         }
 
+        // Kegiatan berubah → refresh semua sub
         if (el.classList.contains('select-kegiatan')) {
-          const kItem = el.closest('.kegiatan-item');
+          const kItem      = el.closest('.kegiatan-item');
           const kegiatanId = el.value;
 
           kItem.querySelectorAll('.select-subkegiatan').forEach(selSub => {
@@ -555,27 +569,28 @@
             fillSubOptions(selSub, kegiatanId, currentSub);
 
             const sItem = selSub.closest('.subkegiatan-item');
-            const disp = sItem.querySelector('.target-display');
-            const hid = sItem.querySelector('.target-hidden');
-            disp.value = '-';
-            hid.value = '';
+            const disp  = sItem.querySelector('.target-display');
+            const hid   = sItem.querySelector('.target-hidden');
+            disp.value  = '-';
+            hid.value   = '';
           });
         }
 
+        // Sub kegiatan berubah → tampilkan anggaran
         if (el.classList.contains('select-subkegiatan')) {
-          const sItem = el.closest('.subkegiatan-item');
-          const opt = el.selectedOptions[0];
+          const sItem      = el.closest('.subkegiatan-item');
+          const opt        = el.selectedOptions[0];
           const anggaranRaw = opt ? opt.dataset.anggaran : '';
-          const disp = sItem.querySelector('.target-display');
-          const hid = sItem.querySelector('.target-hidden');
+          const disp       = sItem.querySelector('.target-display');
+          const hid        = sItem.querySelector('.target-hidden');
 
           if (anggaranRaw) {
-            const intStr = toIntegerString(anggaranRaw); // "90000000.00" -> "90000000"
-            disp.value = 'Rp ' + formatRupiah(intStr);
-            hid.value = intStr; // kalau nanti mau dipakai ke server, sudah bersih
+            const intStr = toIntegerString(anggaranRaw);
+            disp.value   = 'Rp ' + formatRupiah(intStr);
+            hid.value    = intStr;
           } else {
             disp.value = '-';
-            hid.value = '';
+            hid.value  = '';
           }
         }
       });

@@ -6,11 +6,10 @@ use App\Controllers\BaseController;
 
 use App\Models\RpjmdModel;
 use App\Models\RkpdModel; // biarkan walau tidak dipakai dulu
-use App\Models\LakipKabupatenModel;
 use App\Models\Opd\RenstraModel;
 use App\Models\OpdModel;
 use App\Models\Opd\IkuModel;
-use App\Models\Opd\LakipOpdModel;
+use App\Models\LakipModel;
 use App\Models\RktModel;
 
 class AdminKabupatenController extends BaseController
@@ -46,11 +45,10 @@ class AdminKabupatenController extends BaseController
         $this->db = \Config\Database::connect();
         $this->RpjmdModel = class_exists(\App\Models\RpjmdModel::class) ? new RpjmdModel() : null;
         $this->RkpdModel = class_exists(\App\Models\RkpdModel::class) ? new RkpdModel() : null; // opsional
-        $this->LakipKpdModel = class_exists(\App\Models\LakipKabupatenModel::class) ? new LakipKabupatenModel() : null;
         $this->RenstraModel = class_exists(\App\Models\Opd\RenstraModel::class) ? new RenstraModel() : null;
         $this->OpdModel = class_exists(\App\Models\OpdModel::class) ? new OpdModel() : null;
         $this->IkuModel = class_exists(\App\Models\Opd\IkuModel::class) ? new IkuModel() : null;
-        $this->LakipOpdModel = class_exists(\App\Models\Opd\LakipOpdModel::class) ? new LakipOpdModel() : null;
+        $this->LakipOpdModel = class_exists(\App\Models\LakipModel::class) ? new LakipModel() : null;
         $this->RktModel = class_exists(\App\Models\RktModel::class) ? new RktModel() : null;
     }
 

@@ -476,7 +476,6 @@ class RktController extends BaseController
                     'tahun' => $tahun,
                     'indikator_id' => $indikatorId,
                     'program_id' => $programId,
-                    'status' => 'draft',
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);

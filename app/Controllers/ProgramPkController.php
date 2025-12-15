@@ -77,14 +77,14 @@ class ProgramPkController extends BaseController
             }
 
             // --- Opsi dari form ---
-            $sheetName   = trim((string)($this->request->getPost('sheet') ?? ''));
-            $headerRow   = max(1, (int)($this->request->getPost('header_row') ?? 1));
+            $sheetName = trim((string) ($this->request->getPost('sheet') ?? ''));
+            $headerRow = max(1, (int) ($this->request->getPost('header_row') ?? 1));
             $useFilldown = $this->request->getPost('filldown') ? true : false;
-            $dryrun      = $this->request->getPost('dryrun') ? true : false;
+            $dryrun = $this->request->getPost('dryrun') ? true : false;
 
             // --- Load Excel ---
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
-            $sheet       = $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
+            $sheet = $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
 
             if (!$sheet) {
                 session()->setFlashdata('error', 'Sheet tidak ditemukan.');
@@ -95,32 +95,32 @@ class ProgramPkController extends BaseController
             $rows = $sheet->toArray(null, true, true, true);
 
             // --- DB & Builder ---
-            $db         = \Config\Database::connect();
-            $tbProgram  = $db->table('program_pk');
+            $db = \Config\Database::connect();
+            $tbProgram = $db->table('program_pk');
             $tbKegiatan = $db->table('kegiatan_pk');
-            $tbSub      = $db->table('sub_kegiatan_pk');
+            $tbSub = $db->table('sub_kegiatan_pk');
 
             // --- Statistik ---
             $stats = [
-                'program_created'           => 0,
-                'program_found'             => 0,
-                'kegiatan_created'          => 0,
-                'kegiatan_found'            => 0,
-                'sub_created'               => 0,
-                'sub_found'                 => 0,
-                'rows_read'                 => 0,
-                'rows_skipped'              => 0,
-                'pattern_program_rows'      => 0,
-                'pattern_kegiatan_rows'     => 0,
-                'pattern_sub_rows'          => 0,
-                'skipped_no_program_ctx'    => 0,
-                'skipped_no_kegiatan_ctx'   => 0,
-                'skipped_pattern_mismatch'  => 0,
-                'skipped_empty_or_noname'   => 0,
+                'program_created' => 0,
+                'program_found' => 0,
+                'kegiatan_created' => 0,
+                'kegiatan_found' => 0,
+                'sub_created' => 0,
+                'sub_found' => 0,
+                'rows_read' => 0,
+                'rows_skipped' => 0,
+                'pattern_program_rows' => 0,
+                'pattern_kegiatan_rows' => 0,
+                'pattern_sub_rows' => 0,
+                'skipped_no_program_ctx' => 0,
+                'skipped_no_kegiatan_ctx' => 0,
+                'skipped_pattern_mismatch' => 0,
+                'skipped_empty_or_noname' => 0,
             ];
 
             // --- Konteks berjalan (parent) ---
-            $currentProgramId  = null;
+            $currentProgramId = null;
             $currentKegiatanId = null;
 
             // cache untuk fill-down (A–F)
@@ -137,25 +137,25 @@ class ProgramPkController extends BaseController
                 }
 
                 // --- Baca kolom A–F, G (uraian) ---
-                $A = isset($r['A']) ? trim((string)$r['A']) : '';
-                $B = isset($r['B']) ? trim((string)$r['B']) : '';
-                $C = isset($r['C']) ? trim((string)$r['C']) : '';
-                $D = isset($r['D']) ? trim((string)$r['D']) : '';
-                $E = isset($r['E']) ? trim((string)$r['E']) : '';
-                $F = isset($r['F']) ? trim((string)$r['F']) : '';
-                $G = isset($r['G']) ? trim((string)$r['G']) : ''; // uraian/nama
+                $A = isset($r['A']) ? trim((string) $r['A']) : '';
+                $B = isset($r['B']) ? trim((string) $r['B']) : '';
+                $C = isset($r['C']) ? trim((string) $r['C']) : '';
+                $D = isset($r['D']) ? trim((string) $r['D']) : '';
+                $E = isset($r['E']) ? trim((string) $r['E']) : '';
+                $F = isset($r['F']) ? trim((string) $r['F']) : '';
+                $G = isset($r['G']) ? trim((string) $r['G']) : ''; // uraian/nama
 
                 // --- Ambil nilai mentah dari kolom L (Rancangan APBD Rp) ---
                 $anggaran = 0;
-                $cellL    = $sheet->getCell("L{$i}");
-                $rawVal   = $cellL->getValue();           // nilai mentah (bisa float / int)
+                $cellL = $sheet->getCell("L{$i}");
+                $rawVal = $cellL->getValue();           // nilai mentah (bisa float / int)
 
                 if (is_numeric($rawVal)) {
                     // Contoh: 89920779177 atau 8.9920779177E10 → bulatkan ke rupiah
-                    $anggaran = (int)round($rawVal);
+                    $anggaran = (int) round($rawVal);
                 } else {
                     // Cadangan: kalau formatnya string "89,920,779,177.00"
-                    $formatted = (string)$cellL->getFormattedValue();
+                    $formatted = (string) $cellL->getFormattedValue();
                     $s = trim($formatted);
 
                     // buang spasi biasa & non-breaking space
@@ -172,7 +172,7 @@ class ProgramPkController extends BaseController
                     // sisakan digit saja
                     $s = preg_replace('/[^0-9]/', '', $s);
 
-                    $anggaran = ($s === '') ? 0 : (int)$s;
+                    $anggaran = ($s === '') ? 0 : (int) $s;
                 }
 
                 // --- Fill-down A..F (untuk file yang pakai merge) ---
@@ -208,15 +208,18 @@ class ProgramPkController extends BaseController
 
                 // === ROLE PASTI ===
                 // A-D terisi dan E dan F kosong itu program
-                $isProgram  = ($hasA && $hasB && $hasC && $hasD && !$hasE && !$hasF);
+                $isProgram = ($hasA && $hasB && $hasC && $hasD && !$hasE && !$hasF);
                 // A-E terisi dan F kosong itu kegiatan
                 $isKegiatan = ($hasA && $hasB && $hasC && $hasD && $hasE && !$hasF);
                 // A-F terisi itu sub_kegiatan
-                $isSub      = ($hasA && $hasB && $hasC && $hasD && $hasE && $hasF);
+                $isSub = ($hasA && $hasB && $hasC && $hasD && $hasE && $hasF);
 
-                if ($isProgram)  $stats['pattern_program_rows']++;
-                if ($isKegiatan) $stats['pattern_kegiatan_rows']++;
-                if ($isSub)      $stats['pattern_sub_rows']++;
+                if ($isProgram)
+                    $stats['pattern_program_rows']++;
+                if ($isKegiatan)
+                    $stats['pattern_kegiatan_rows']++;
+                if ($isSub)
+                    $stats['pattern_sub_rows']++;
 
                 // 1) SUB KEGIATAN
                 if ($isSub) {
@@ -250,14 +253,14 @@ class ProgramPkController extends BaseController
                         if ($exists) {
                             $stats['sub_found']++;
                             if ($anggaran > 0) {
-                                $tbSub->where('id', (int)$exists->id)
+                                $tbSub->where('id', (int) $exists->id)
                                     ->update(['anggaran' => $anggaran]);
                             }
                         } else {
                             $tbSub->insert([
-                                'kegiatan_id'  => $currentKegiatanId,
+                                'kegiatan_id' => $currentKegiatanId,
                                 'sub_kegiatan' => $subNama,
-                                'anggaran'     => $anggaran,
+                                'anggaran' => $anggaran,
                             ]);
                             $stats['sub_created']++;
                         }
@@ -282,7 +285,7 @@ class ProgramPkController extends BaseController
                                 ->where('kegiatan', $kegiatanNama)
                                 ->get(1)->getRow();
                             if ($exists) {
-                                $currentKegiatanId = (int)$exists->id;
+                                $currentKegiatanId = (int) $exists->id;
                                 $stats['kegiatan_found']++;
                             } else {
                                 $currentKegiatanId = -1;
@@ -298,7 +301,7 @@ class ProgramPkController extends BaseController
                             ->where('kegiatan', $kegiatanNama)
                             ->get(1)->getRow();
                         if ($exists) {
-                            $currentKegiatanId = (int)$exists->id;
+                            $currentKegiatanId = (int) $exists->id;
                             $stats['kegiatan_found']++;
                             if ($anggaran > 0) {
                                 $tbKegiatan->where('id', $currentKegiatanId)
@@ -307,10 +310,10 @@ class ProgramPkController extends BaseController
                         } else {
                             $tbKegiatan->insert([
                                 'program_id' => $currentProgramId,
-                                'kegiatan'   => $kegiatanNama,
-                                'anggaran'   => $anggaran,
+                                'kegiatan' => $kegiatanNama,
+                                'anggaran' => $anggaran,
                             ]);
-                            $currentKegiatanId = (int)$db->insertID();
+                            $currentKegiatanId = (int) $db->insertID();
                             $stats['kegiatan_created']++;
                         }
                     }
@@ -326,7 +329,7 @@ class ProgramPkController extends BaseController
                             ->where('program_kegiatan', $programNama)
                             ->get(1)->getRow();
                         if ($exists) {
-                            $currentProgramId = (int)$exists->id;
+                            $currentProgramId = (int) $exists->id;
                             $stats['program_found']++;
                         } else {
                             $currentProgramId = -1;
@@ -338,7 +341,7 @@ class ProgramPkController extends BaseController
                             ->where('program_kegiatan', $programNama)
                             ->get(1)->getRow();
                         if ($exists) {
-                            $currentProgramId = (int)$exists->id;
+                            $currentProgramId = (int) $exists->id;
                             $stats['program_found']++;
                             if ($anggaran > 0) {
                                 $tbProgram->where('id', $currentProgramId)
@@ -347,9 +350,9 @@ class ProgramPkController extends BaseController
                         } else {
                             $tbProgram->insert([
                                 'program_kegiatan' => $programNama,
-                                'anggaran'         => $anggaran,
+                                'anggaran' => $anggaran,
                             ]);
-                            $currentProgramId = (int)$db->insertID();
+                            $currentProgramId = (int) $db->insertID();
                             $stats['program_created']++;
                         }
                         $currentKegiatanId = null;
@@ -391,13 +394,21 @@ class ProgramPkController extends BaseController
 
     public function save()
     {
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
         // Validation rules
         $rules = [
-            'program_kegiatan' => 'required|min_length[3]',
-            'anggaran'         => 'required|numeric'
+            'program_kegiatan' => 'required|min_length[3]|max_length[500]|' . $noScript,
+            'anggaran' => 'required|numeric'
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'program_kegiatan' => [
+                'regex_match' => 'Program/Kegiatan terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()
                 ->withInput()
                 ->with('validation', $this->validator->getErrors());
@@ -406,7 +417,7 @@ class ProgramPkController extends BaseController
         // Prepare data
         $data = [
             'program_kegiatan' => $this->request->getPost('program_kegiatan'),
-            'anggaran'         => $this->request->getPost('anggaran')
+            'anggaran' => $this->request->getPost('anggaran')
         ];
 
         // Insert data
@@ -452,13 +463,21 @@ class ProgramPkController extends BaseController
             return redirect()->to('/adminkab/program_pk');
         }
 
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
         // Validation rules
         $rules = [
-            'program_kegiatan' => 'required|min_length[3]',
-            'anggaran'         => 'required|numeric'
+            'program_kegiatan' => 'required|min_length[3]|max_length[500]|' . $noScript,
+            'anggaran' => 'required|numeric'
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'program_kegiatan' => [
+                'regex_match' => 'Program/Kegiatan terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()
                 ->withInput()
                 ->with('validation', $this->validator->getErrors());
@@ -467,7 +486,7 @@ class ProgramPkController extends BaseController
         // Prepare data
         $data = [
             'program_kegiatan' => $this->request->getPost('program_kegiatan'),
-            'anggaran'         => $this->request->getPost('anggaran')
+            'anggaran' => $this->request->getPost('anggaran')
         ];
 
         // Update data

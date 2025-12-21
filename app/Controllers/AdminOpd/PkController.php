@@ -319,7 +319,7 @@ class PkController extends BaseController
             }
         }
         // dd($post['sasaran_pk'][0]['indikator'][0]['program'][0]);
-        // dd($saveData);
+        // dd($saveData['sasaran_pk'][0]['indikator'][0]['program']);
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -616,17 +616,15 @@ class PkController extends BaseController
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
 
         $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
-        
+
         if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $program ="program_kegiatan";
+            $program = "program_kegiatan";
         } elseif ($jenis === 'administrator') {
-            $program ="kegiatan";
+            $program = "kegiatan";
         } elseif ($jenis === 'pengawas') {
             $program = "sub_kegiatan";
-        } 
-        
-        
-        
+        }
+
         $tahun = date('Y', strtotime($data['tanggal']));
         $viewPath = 'adminOpd/pk/cetak';
         $viewPathL = 'adminOpd/pk/cetak-L';
@@ -634,7 +632,7 @@ class PkController extends BaseController
         $html_2 = view($viewPathL, [
             'data' => $data,
             'program' => $program,
-            
+
         ]);
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',

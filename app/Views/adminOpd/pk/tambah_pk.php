@@ -511,7 +511,7 @@
         } else {
             echo '<option value="" disabled>Tidak ada satuan</option>';
         }
-        ?>`;
+        ?> `;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
@@ -522,7 +522,7 @@
         } else {
             echo '<option value="" disabled>Tidak ada program</option>';
         }
-        ?>`;
+        ?> `;
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
@@ -533,7 +533,7 @@
         } else {
             echo '<option value="" disabled>Tidak ada program</option>';
         }
-        ?>`;
+        ?> `;
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
@@ -544,7 +544,7 @@
         } else {
             echo '<option value="" disabled>Tidak ada kegiatan</option>';
         }
-        ?>`;
+        ?> `;
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
@@ -555,7 +555,7 @@
         } else {
             echo '<option value="" disabled>Tidak ada kegiatan</option>';
         }
-        ?>`;
+        ?> `;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
@@ -569,76 +569,10 @@
         ?>`;
     </script>
 
-    <!-- Script untuk interaksi form -->
     <script>
-        $(document).on('change', '.kegiatan-dropdown', function () {
-            const programId = $(this).find(":selected").data("program");
-            $(this).closest('.kegiatan-item').find('.program-id-hidden').val(programId);
-        });
-
-
-        document.addEventListener('DOMContentLoaded', function () {
-            // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
-            document.querySelectorAll('.pegawai-select').forEach(select => {
-                select.addEventListener('change', function () {
-                    const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
-                    if (targetField && this.selectedOptions[0]) {
-                        targetField.value = this.selectedOptions[0].dataset.nip || '';
-                    }
-                });
-            });
-
-            // Fungsi untuk program anggaran
-            document.querySelectorAll('.program-select').forEach(select => {
-                select.addEventListener('change', function () {
-                    const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
-                    if (anggaranField && this.selectedOptions[0]) {
-                        anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';
-                    }
-                });
-            });
-
-            // Fungsi untuk misi bupati
-            const misiCheckboxes = document.querySelectorAll('input[name="misi_bupati_id[]"]');
-            const misiContainer = document.getElementById('selected-misi-container');
-
-            misiCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedMisi);
-            });
-
-            function updateSelectedMisi() {
-                const selected = Array.from(misiCheckboxes)
-                    .filter(c => c.checked)
-                    .map(c => c.getAttribute('data-misi'));
-
-                misiContainer.innerHTML = selected.length ?
-                    '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
-                    '';
-            }
-
-            // Fungsi untuk indikator acuan
-            const indikatorCheckboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
-            const indikatorContainer = document.getElementById('selected-indikator-container');
-
-            indikatorCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedIndikator);
-            });
-
-            function updateSelectedIndikator() {
-                const selected = Array.from(indikatorCheckboxes)
-                    .filter(c => c.checked)
-                    .map(c => c.getAttribute('data-indikator'));
-
-                indikatorContainer.innerHTML = selected.length ?
-                    '<strong>Indikator Acuan Terpilih:</strong><br>' + selected.join('<br>') :
-                    '';
-            }
-
-            // Inisialisasi awal
-            updateSelectedMisi();
-            updateSelectedIndikator();
-        });
+        
     </script>
+
 
     <?php if ($jenis === 'jpt'): ?>
         <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>

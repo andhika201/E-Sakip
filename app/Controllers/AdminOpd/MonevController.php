@@ -45,7 +45,7 @@ class MonevController extends BaseController
                 ? null
                 : (string) (int) $tahunParam;
 
-            $monevList = $this->monev->getIndexDataAdminOpd($tahun, $opdId);
+            $monevList = $this->monev->getIndexDataAdminOpd((int) $opdId, $tahun);
             $tahunList = $this->monev->getAvailableYears();
 
             return view('adminOpd/monev/monev', [

@@ -1135,6 +1135,7 @@ class RenstraModel extends Model
                             'renstra_sasaran_id' => $sasaranId,
                             'indikator_sasaran' => trim($indikator['indikator_sasaran']),
                             'satuan' => trim($indikator['satuan'] ?? ''),
+                            'basis_target' => trim($indikator['basis_target'] ?? ''),
                             'jenis_indikator' => trim($indikator['jenis_indikator'] ?? ''),
                         ];
 
@@ -1223,6 +1224,7 @@ class RenstraModel extends Model
                         'renstra_sasaran_id' => $sasaranId,
                         'indikator_sasaran' => $indikator['indikator_sasaran'],
                         'satuan' => $indikator['satuan'],
+                        'baseline' => $indikator['baseline'] ?? '',
                         'jenis_indikator' => $indikator['jenis_indikator'] ?? '',
                     ];
 

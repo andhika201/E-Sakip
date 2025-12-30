@@ -105,12 +105,19 @@
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja/RKT</a>
         <a href="<?= base_url('adminopd/iku') ?>"
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
-        <a href="<?= base_url('adminopd/pk/jpt') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK JPT</a>
-        <a href="<?= base_url('adminopd/pk/administrator') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Administrator</a>
-        <a href="<?= base_url('adminopd/pk/pengawas') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Pengawas</a>
+
+        <div class="dropdown">
+          <button
+            class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
+            type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>Perjanjain Kinerja</span>
+          </button>
+          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas</a></li>
+          </ul>
+        </div>
 
         <div class="dropdown">
           <button

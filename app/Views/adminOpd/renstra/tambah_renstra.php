@@ -116,7 +116,7 @@
               <div class="target-section">
                 <h5 class="fw-medium mb-3">Target Tujuan per Tahun</h5>
                 <div class="target-container">
-                  <?php for ($i = 0; $i < 5; $i++): ?>
+                  <?php for ($i = 0; $i < 6; $i++): ?>
                     <div class="target-item row g-2 align-items-center mb-2">
                       <div class="col-auto">
                         <input type="number" name="indikator_tujuan[0][target_tahunan][<?= $i ?>][tahun]"
@@ -211,7 +211,7 @@
                     <div class="target-section">
                       <h5 class="fw-medium mb-3">Target Sasaran per Tahun</h5>
                       <div class="target-container">
-                        <?php for ($i = 0; $i < 5; $i++): ?>
+                        <?php for ($i = 0; $i < 6; $i++): ?>
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
                               <input type="number"
@@ -316,7 +316,7 @@
         tahunMulaiInput.addEventListener('input', function () {
           const mulai = parseInt(this.value);
           if (!isNaN(mulai)) {
-            tahunAkhirInput.value = mulai + 4;
+            tahunAkhirInput.value = mulai + 5;
           } else {
             tahunAkhirInput.value = '';
           }
@@ -354,7 +354,7 @@
         <div class="target-section">
           <h5 class="fw-medium mb-3">Target Tujuan per Tahun</h5>
           <div class="target-container">
-            ${[0, 1, 2, 3, 4].map(i => `
+            ${[0, 1, 2, 3, 4, 5].map(i => `
               <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
                   <input type="number"
@@ -418,7 +418,7 @@
         <div class="target-section">
           <h5 class="fw-medium mb-3">Target Sasaran per Tahun</h5>
           <div class="target-container">
-            ${[0, 1, 2, 3, 4].map(i => `
+            ${[0, 1, 2, 3, 4, 5].map(i => `
               <div class="target-item row g-2 align-items-center mb-2">
                 <div class="col-auto">
                   <input type="number"

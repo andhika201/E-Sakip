@@ -317,9 +317,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        // dd($post['sasaran_pk'][0]['indikator'][0]['program'][0]);
-        // dd($saveData['sasaran_pk'][0]['indikator'][0]['program']);
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL

@@ -19,8 +19,10 @@
                     <form method="GET" id="filterForm" class="flex-fill">
                         <select name="tahun" class="form-select"
                             onchange="document.getElementById('filterForm').submit()">
-                            <option value="">TAHUN</option>
-
+                            <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
+                                Silahkan pilih tahun
+                            </option>
+                            
                             <?php for ($i = 2020; $i <= 2030; $i++): ?>
                                 <option value="<?= $i ?>" <?= (($tahun ?? $currentYear) == $i) ? 'selected' : '' ?>>
                                     <?= $i ?>
@@ -243,7 +245,7 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
     <!-- Global JS variables for PK page -->
     <script>
-        document.getElementById('tahun').addEventListener('change', function () {
+        document.getElementById('tahun').addEventListener('change', function() {
             const tahun = this.value;
             window.location = '?tahun=' + tahun;
         });

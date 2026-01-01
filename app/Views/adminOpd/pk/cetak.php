@@ -12,13 +12,6 @@
       font-size: 12pt;
     }
 
-    .signature-line {
-      display: inline-block;
-      border-bottom: 1px solid #000;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
-    }
-
     .name-line {
       font-weight: bold;
       text-transform: uppercase;
@@ -38,11 +31,27 @@
     }
 
     /* Table tanpa border */
-    .table-no-border,
+
     .table-no-border th,
     .table-no-border td {
       border: none !important;
       border-collapse: collapse;
+    }
+
+    .table-no-row-border td {
+      border-top: none !important;
+      border-bottom: none !important;
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
+    }
+
+    .table-header th {
+      border: 1px solid #000;
+    }
+
+    .no-border td {
+      border: none;
+      padding: 4px 0;
     }
 
     .center {
@@ -66,6 +75,79 @@
     .section {
       margin-top: 50px;
     }
+
+    table {
+      page-break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    td,
+    th {
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    .table-bordered-custom td,
+    .table-bordered-custom th {
+      font-size: 11pt;
+    }
+
+    .signature-name {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 0;
+      text-align: center;
+    }
+
+    .signature-meta {
+      text-align: center;
+      font-size: 11pt;
+      margin: 2px 0;
+    }
+
+    .signature-meta p {
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .signature-meta .label {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .signature-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+    }
+
+    .signature-bottom {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+    }
+
+    .signature-title {
+      text-align: center;
+      vertical-align: top;
+      height: 185px;
+      padding: 6px 4px;
+    }
+
+    .signature-title p {
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .signature-title .label {
+      font-weight: bold;
+      margin-bottom: 4px;
+      /* jarak = ±1 baris */
+    }
   </style>
 </head>
 
@@ -77,13 +159,13 @@
         <td style="border: none;">
           <img src="<?= $logo_url ?>" alt="Logo">
           <?php if (strtolower($jenis) === 'bupati'): ?>
-            <br>
             <h3 style="font-weight: bold; margin: 0;">BUPATI PRINGSEWU</h3>
             <h3 style="font-weight: bold; margin: 0;">PROVINSI LAMPUNG</h3>
           <?php endif; ?>
         </td>
       </tr>
-      <br>
+      <tr>
+      </tr>
       <tr>
         <!-- Halaman 1 -->
         <td style="border: none;">
@@ -149,50 +231,77 @@
 
     <?php endif; ?>
 
-
-
-
-
-    <table class="table-no-border signature-block" style="width:100%;">
+    <table style="width:100%; margin-top:30px; ">
       <tr>
-        <?php if (strtolower($jenis) !== 'bupati'): ?>
+        <td style="width:50%; text-align:right; vertical-align:top;">
+        </td>
+        <td style="width:50%; text-align:right; vertical-align:top;">
+          <p style="margin-bottom:10px;">
+            Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
+          </p>
+        </td>
+      </tr>
+      <tr>
 
+        <?php if (strtolower($jenis) !== 'bupati'): ?>
           <!-- KOLOM PIHAK KEDUA (KIRI) -->
-          <td style="width:50%; text-align:center; vertical-align:top;">
-            <p class="text-uppercase">PIHAK KEDUA,<br><?= esc($jabatan_pihak_2) ?></p>
-            <br><br><br><br><br>
-            <p class="signature-name"><?= esc($nama_pihak_2) ?></p>
-            <p class="signature-meta"><?= esc($pangkat_pihak_2) ?></p>
-            <p class="signature-meta"><?= esc($nip_pihak_2) ?></p>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <p class="label">PIHAK KEDUA,</p>
+                  <p>Kepala Sub Bagian Umum dan Kepegawaian</p>
+                </td>
+              </tr>
+            </table>
+            <table class="signature-bottom">
+              <tr>
+                <td class="signature-meta">
+                  <p class="label"><strong><?= esc($nama_pihak_2) ?></strong></p>
+                  <p><?= esc($pangkat_pihak_2) ?></p>
+                  <p><?= esc($nip_pihak_2) ?></p>
+                </td>
+              </tr>
+            </table>
           </td>
 
           <!-- KOLOM PIHAK KESATU (KANAN) + TANGGAL -->
-          <td style="width:50%; text-align:center; vertical-align:top;">
-            <p style="text-align:right; margin-bottom:20px;">
-              Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
-            </p>
-  
-            <p class="text-uppercase">PIHAK KESATU,<br><?= esc($jabatan_pihak_1) ?></p>
-            <br><br><br><br><br>
-            <p class="signature-name"><?= esc($nama_pihak_1) ?></p>
-            <p class="signature-meta"><?= esc($pangkat_pihak_1) ?></p>
-            <p class="signature-meta"><?= esc($nip_pihak_1) ?></p>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <p class="label">PIHAK KESATU,</p>
+                  <p>Kepala Dinas Komunikasi dan Informatika</p>
+                </td>
+              </tr>
+            </table>
+            <table class="signature-bottom">
+              <tr>
+                <td class="signature-meta">
+                  <p class="label"><strong><?= esc($nama_pihak_1) ?></strong></p>
+                  <p><?= esc($pangkat_pihak_1) ?></p>
+                  <p><?= esc($nip_pihak_1) ?></p>
+                </td>
+              </tr>
+            </table>
           </td>
 
         <?php else: ?>
 
-          <!-- KOLOM KOSONG KIRI -->
           <td style="width:50%;"></td>
-
-          <!-- KOLOM BUPATI (KANAN) + TANGGAL -->
-          <td style="width:50%; text-align:right; vertical-align:top;">
-            <p style="margin-bottom:20px;">
-              Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
-            </p>
-
-            <p class="text-uppercase">BUPATI PRINGSEWU</p>
-            <br><br><br><br><br>
-            <p class="signature-name"><?= esc($nama_pihak_1) ?></p>
+          <td style="width:50%;">
+            <table class="signature-table">
+              <tr>
+                <td class="signature-title">
+                  <strong>BUPATI PRINGSEWU</strong>
+                </td>
+              </tr>
+            </table>
+            <table class="signature-table">
+              <tr>
+                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
+              </tr>
+            </table>
           </td>
 
         <?php endif; ?>

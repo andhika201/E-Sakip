@@ -110,7 +110,7 @@
           <button
             class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
             type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Perjanjain Kinerja</span>
+            <span>Perjanjian Kinerja</span>
           </button>
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
             <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT</a></li>

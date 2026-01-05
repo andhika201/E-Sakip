@@ -74,6 +74,11 @@
                                 <option value="<?= esc($jenis) ?>" selected>PK <?= ucfirst($jenis) ?></option>
                             </select>
                             <input type="hidden" name="jenis" value="<?= esc($jenis) ?>">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Tahun PK</label>
+                                <input type="number" name="tahun" class="form-control border-secondary"
+                                    placeholder="Contoh: 2025" min="2020" max="2050" required>
+                            </div>
                             <div class="col-md-12">
                                 <div class="row">
                                     <div class="col-md-8">
@@ -445,7 +450,8 @@
                                                             </div>
 
                                                             <div class="d-flex justify-content-end mt-2">
-                                                                <button type="button" class="add-subkeg btn btn-success btn-sm">
+                                                                <button type="button"
+                                                                    class="add-subkeg btn btn-success btn-sm">
                                                                     <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                                                 </button>
                                                             </div>
@@ -498,83 +504,83 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-                                            if (isset($satuan) && !empty($satuan)) {
-                                                foreach ($satuan as $s) {
-                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada satuan</option>';
-                                            }
-                                            ?>`;
+        if (isset($satuan) && !empty($satuan)) {
+            foreach ($satuan as $s) {
+                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada satuan</option>';
+        }
+        ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-                                            if (isset($program) && !empty($program)) {
-                                                foreach ($program as $programItem) {
-                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada program</option>';
-                                            }
-                                            ?>`;
+        if (isset($program) && !empty($program)) {
+            foreach ($program as $programItem) {
+                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-                                                if (isset($jptProgram) && !empty($jptProgram)) {
-                                                    foreach ($jptProgram as $programItem) {
-                                                        echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada program</option>';
-                                                }
-                                                ?>`;
+        if (isset($jptProgram) && !empty($jptProgram)) {
+            foreach ($jptProgram as $programItem) {
+                echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-                                            if (isset($kegiatan) && !empty($kegiatan)) {
-                                                foreach ($kegiatan as $kegiatanItem) {
-                                                    echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                            }
-                                            ?>`;
+        if (isset($kegiatan) && !empty($kegiatan)) {
+            foreach ($kegiatan as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
-                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
-                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+            foreach ($kegiatanAdmin as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
-                                                    foreach ($subkegiatan as $sk) {
-                                                        echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($subkegiatan) && !empty($subkegiatan)) {
+            foreach ($subkegiatan as $sk) {
+                echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+        }
+        ?>`;
     </script>
 
     <!-- Script untuk interaksi form -->
     <script>
-        $(document).on('change', '.kegiatan-dropdown', function() {
+        $(document).on('change', '.kegiatan-dropdown', function () {
             const programId = $(this).find(":selected").data("program");
             $(this).closest('.kegiatan-item').find('.program-id-hidden').val(programId);
         });
 
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
             document.querySelectorAll('.pegawai-select').forEach(select => {
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
                     if (targetField && this.selectedOptions[0]) {
                         targetField.value = this.selectedOptions[0].dataset.nip || '';
@@ -584,7 +590,7 @@
 
             // Fungsi untuk program anggaran
             document.querySelectorAll('.program-select').forEach(select => {
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
                     if (anggaranField && this.selectedOptions[0]) {
                         anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';

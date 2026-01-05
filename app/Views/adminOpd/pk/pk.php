@@ -16,15 +16,19 @@
             <h2 class="h3 fw-bold text-success text-center mb-4">PK <?= strtoupper($jenis) ?></h2>
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div class="d-flex gap-2 flex-fill">
-                    <select class="form-select">
-                        <option value="">TAHUN</option>
-                        <option>2020</option>
-                        <option>2021</option>
-                        <option>2022</option>
-                        <option>2023</option>
-                        <option>2024</option>
-                        <option>2025</option>
-                    </select>
+                    <form method="GET" id="filterForm" class="flex-fill">
+                        <select name="tahun" class="form-select"
+                            onchange="document.getElementById('filterForm').submit()">
+                            <option value="">TAHUN</option>
+
+                            <?php for ($i = 2020; $i <= 2030; $i++): ?>
+                                <option value="<?= $i ?>" <?= (($tahun ?? $currentYear) == $i) ? 'selected' : '' ?>>
+                                    <?= $i ?>
+                                </option>
+                            <?php endfor; ?>
+
+                        </select>
+                    </form>
                 </div>
                 <div>
                     <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
@@ -224,11 +228,11 @@
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
-                        
+
                         <button class="btn btn-danger btn-sm" onclick="deletePk(<?= $pk_data['id'] ?>)">
                             <i class="fas fa-trash me-1"></i> Hapus
                         </button>
-                        
+
                     </div>
                 <?php else: ?>
                     <div class="alert alert-warning text-center">Belum ada data PK</div>
@@ -239,6 +243,10 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
     <!-- Global JS variables for PK page -->
     <script>
+        document.getElementById('tahun').addEventListener('change', function () {
+            const tahun = this.value;
+            window.location = '?tahun=' + tahun;
+        });
         window.base_url = '<?= base_url() ?>';
         window.jenis = '<?= $jenis ?>';
     </script>

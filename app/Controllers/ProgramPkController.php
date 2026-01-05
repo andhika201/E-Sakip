@@ -57,7 +57,7 @@ class ProgramPkController extends BaseController
     public function processImport()
     {
         // Pastikan PhpSpreadsheet tersedia
-        if (!class_exists(\PhpOffice\PhpSpreadsheet\IOFactory::class)) {
+        if (!class_exists(IOFactory::class)) {
             session()->setFlashdata('error', 'PhpSpreadsheet belum terpasang. Jalankan: composer require phpoffice/phpspreadsheet');
             return redirect()->back()->withInput();
         }
@@ -83,7 +83,7 @@ class ProgramPkController extends BaseController
             $dryrun = $this->request->getPost('dryrun') ? true : false;
 
             // --- Load Excel ---
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
+            $spreadsheet = IOFactory::load($file->getTempName());
             $sheet = $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
 
             if (!$sheet) {

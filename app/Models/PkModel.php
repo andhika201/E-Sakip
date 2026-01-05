@@ -525,7 +525,7 @@ class PkModel extends Model
      */
     public function getAllPrograms()
     {
-        return $this->db->table('program_pk')->orderBy('created_at', 'DESC')->get()->getResultArray();
+        return $this->db->table('program_pk')->orderBy('program_kegiatan', 'ASC')->get()->getResultArray();
     }
 
     public function getKegiatan()

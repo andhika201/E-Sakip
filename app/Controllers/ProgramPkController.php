@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\ProgramPkModel;
 use CodeIgniter\HTTP\ResponseInterface;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 
 class ProgramPkController extends BaseController
 {
@@ -247,8 +249,8 @@ class ProgramPkController extends BaseController
 
         if (!$this->validate($rules)) {
             return redirect()->back()
-                           ->withInput()
-                           ->with('validation', $this->validator->getErrors());
+                ->withInput()
+                ->with('validation', $this->validator->getErrors());
         }
 
         // Prepare data
@@ -308,8 +310,8 @@ class ProgramPkController extends BaseController
 
         if (!$this->validate($rules)) {
             return redirect()->back()
-                           ->withInput()
-                           ->with('validation', $this->validator->getErrors());
+                ->withInput()
+                ->with('validation', $this->validator->getErrors());
         }
 
         // Prepare data
@@ -334,7 +336,7 @@ class ProgramPkController extends BaseController
     public function delete($id)
     {
         $program = $this->programPkModel->getProgramById($id);
-        
+
         if (!$program) {
             session()->setFlashdata('error', 'Program PK tidak ditemukan');
             return redirect()->to('/adminkab/program_pk');
@@ -348,5 +350,4 @@ class ProgramPkController extends BaseController
 
         return redirect()->to('/adminkab/program_pk');
     }
-
 }

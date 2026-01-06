@@ -163,6 +163,15 @@ function updateFormNames() {
                                                     ${window.subkegiatanDropdownTemplate || ''}
                                                 </select>
                                             </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Anggaran</label>
+                                                <input type="text"
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                                    class="form-control mb-3 border-secondary" value=""
+                                                    placeholder="Anggaran" readonly>
+                                                <input type="hidden" name="kegiatan[0][id_indikator]"
+                                                value="">
+                                            </div>
 
                                             <div class="col-md-3 d-flex align-items-end">
                                                 <button type="button"
@@ -277,6 +286,15 @@ function updateFormNames() {
                                             ${window.subkegiatanDropdownTemplate || ''}
                                         </select>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Anggaran</label>
+                                        <input type="text"
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                            class="form-control mb-3 border-secondary" value=""
+                                            placeholder="Anggaran" readonly>
+                                        <input type="hidden" name="kegiatan[0][id_indikator]"
+                                        value="">
+                                    </div>
 
                                     <div class="col-md-3 d-flex align-items-end">
                                         <button type="button"
@@ -344,6 +362,15 @@ function updateFormNames() {
                                 ${window.subkegiatanDropdownTemplate || ''}
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anggaran</label>
+                            <input type="text"
+                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                class="form-control mb-3 border-secondary" value=""
+                                placeholder="Anggaran" readonly>
+                            <input type="hidden" name="kegiatan[0][id_indikator]"
+                            value="">
+                        </div>
 
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="button"
@@ -384,6 +411,14 @@ function updateFormNames() {
                     <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
                         ${window.subkegiatanDropdownTemplate || ''}
                     </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Anggaran</label>
+                    <input type="text"
+                        name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                        class="form-control mb-3 border-secondary" value=""
+                        placeholder="Anggaran" readonly>
+                    
                 </div>
 
                 <div class="col-md-3 d-flex align-items-end">
@@ -531,11 +566,11 @@ function updateFormNames() {
          * Auto-fill anggaran saat memilih program (event delegation, per program-item)
          */
         document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('kegiatan-select')) {
+            if (e.target.classList.contains('subkeg-select')) {
                 // Cari program-item terdekat
-                const kegiatanItem = e.target.closest('.kegiatan-item');
-                if (!kegiatanItem) return;
-                const anggaranInput = kegiatanItem.querySelector('input[name*="anggaran"]');
+                const subkegItem = e.target.closest('.subkeg-item');
+                if (!subkegItem) return;
+                const anggaranInput = subkegItem.querySelector('input[name*="anggaran"]');
                 const selectedOption = e.target.options[e.target.selectedIndex];
                 if (selectedOption && selectedOption.value !== '') {
                     const anggaran = selectedOption.getAttribute('data-anggaran');
@@ -547,11 +582,11 @@ function updateFormNames() {
         });
 
     // Inisialisasi auto-fill untuk elemen yang sudah ada
-    document.querySelectorAll('.kegiatan-select').forEach(select => {
+    document.querySelectorAll('.subkeg-select').forEach(select => {
     const selectedOption = select.options[select.selectedIndex];
     if (selectedOption && selectedOption.value !== '') {
         const anggaran = selectedOption.getAttribute('data-anggaran');
-        const parentItem = select.closest('.indikator-item') || select.closest('.kegiatan-item');
+        const parentItem = select.closest('.indikator-item') || select.closest('.subkeg-item');
         const anggaranInput = parentItem.querySelector('input[name*="anggaran"]');
         anggaranInput.value = formatRupiah(anggaran);
     }

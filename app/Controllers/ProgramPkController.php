@@ -56,341 +56,183 @@ class ProgramPkController extends BaseController
 
     public function processImport()
     {
-        // Pastikan PhpSpreadsheet tersedia
-        if (!class_exists(IOFactory::class)) {
-            session()->setFlashdata('error', 'PhpSpreadsheet belum terpasang. Jalankan: composer require phpoffice/phpspreadsheet');
-            return redirect()->back()->withInput();
+        $file = $this->request->getFile('file');
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'File tidak valid');
         }
 
-        try {
-            // --- Validasi File Upload ---
-            $file = $this->request->getFile('file');
-            if (!$file || !$file->isValid()) {
-                session()->setFlashdata('error', 'File tidak valid atau tidak ditemukan.');
-                return redirect()->back()->withInput();
+        $tahun = (int) $this->request->getPost('tahun_anggaran');
+        if ($tahun <= 0) {
+            return redirect()->back()->with('error', 'Tahun anggaran wajib diisi');
+        }
+
+        $spreadsheet = IOFactory::load($file->getTempName());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        $db = \Config\Database::connect();
+        $tbProgram  = $db->table('program_pk');
+        $tbKegiatan = $db->table('kegiatan_pk');
+        $tbSub      = $db->table('sub_kegiatan_pk');
+
+        $currentProgramId  = null;
+        $currentKegiatanId = null;
+
+        $db->transStart();
+
+        foreach ($rows as $i => $r) {
+
+            // Lewati header awal (judul, OPD, urusan)
+            if ($i < 3) {
+                continue;
             }
 
-            $ext = strtolower($file->getExtension());
-            if (!in_array($ext, ['xlsx', 'xls'])) {
-                session()->setFlashdata('error', 'Format file harus .xlsx atau .xls.');
-                return redirect()->back()->withInput();
+            $A = trim((string) ($r['A'] ?? ''));
+            $D = trim((string) ($r['D'] ?? ''));
+            $E = trim((string) ($r['E'] ?? ''));
+            $F = trim((string) ($r['F'] ?? ''));
+            $G = trim((string) ($r['G'] ?? ''));
+
+            if ($G === '') {
+                continue;
             }
 
-            // --- Opsi dari form ---
-            $sheetName = trim((string) ($this->request->getPost('sheet') ?? ''));
-            $headerRow = max(1, (int) ($this->request->getPost('header_row') ?? 1));
-            $useFilldown = $this->request->getPost('filldown') ? true : false;
-            $dryrun = $this->request->getPost('dryrun') ? true : false;
+            // Ambil anggaran dari kolom J
+            $cellJ = $sheet->getCell("J{$i}");
+            $rawVal = $cellJ->getValue();
 
-            // --- Load Excel ---
-            $spreadsheet = IOFactory::load($file->getTempName());
-            $sheet = $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
-
-            if (!$sheet) {
-                session()->setFlashdata('error', 'Sheet tidak ditemukan.');
-                return redirect()->back()->withInput();
+            if (is_numeric($rawVal)) {
+                $anggaran = (int) round($rawVal);
+            } else {
+                $anggaran = (int) preg_replace('/\D/', '', (string) $cellJ->getFormattedValue());
             }
 
-            // Pakai toArray untuk A–G (struktur), L diambil dari cell langsung
-            $rows = $sheet->toArray(null, true, true, true);
-
-            // --- DB & Builder ---
-            $db = \Config\Database::connect();
-            $tbProgram = $db->table('program_pk');
-            $tbKegiatan = $db->table('kegiatan_pk');
-            $tbSub = $db->table('sub_kegiatan_pk');
-
-            // --- Statistik ---
-            $stats = [
-                'program_created' => 0,
-                'program_found' => 0,
-                'kegiatan_created' => 0,
-                'kegiatan_found' => 0,
-                'sub_created' => 0,
-                'sub_found' => 0,
-                'rows_read' => 0,
-                'rows_skipped' => 0,
-                'pattern_program_rows' => 0,
-                'pattern_kegiatan_rows' => 0,
-                'pattern_sub_rows' => 0,
-                'skipped_no_program_ctx' => 0,
-                'skipped_no_kegiatan_ctx' => 0,
-                'skipped_pattern_mismatch' => 0,
-                'skipped_empty_or_noname' => 0,
-            ];
-
-            // --- Konteks berjalan (parent) ---
-            $currentProgramId = null;
-            $currentKegiatanId = null;
-
-            // cache untuk fill-down (A–F)
-            $last = ['A' => null, 'B' => null, 'C' => null, 'D' => null, 'E' => null, 'F' => null];
-
-            if (!$dryrun) {
-                $db->transStart();
+            /**
+             * =========================
+             * SKIP OPD & URUSAN
+             * =========================
+             */
+            if ($D === '' || $D === '0') {
+                continue;
             }
 
-            foreach ($rows as $i => $r) {
-                // Lewati header
-                if ($i < $headerRow + 1) {
-                    continue;
-                }
+            /**
+             * =========================
+             * PROGRAM
+             * =========================
+             */
+            if ($E === '' && $F === '') {
 
-                // --- Baca kolom A–F, G (uraian) ---
-                $A = isset($r['A']) ? trim((string) $r['A']) : '';
-                $B = isset($r['B']) ? trim((string) $r['B']) : '';
-                $C = isset($r['C']) ? trim((string) $r['C']) : '';
-                $D = isset($r['D']) ? trim((string) $r['D']) : '';
-                $E = isset($r['E']) ? trim((string) $r['E']) : '';
-                $F = isset($r['F']) ? trim((string) $r['F']) : '';
-                $G = isset($r['G']) ? trim((string) $r['G']) : ''; // uraian/nama
+                $kodeProgram = $A . '.' . $D;
 
-                // --- Ambil nilai mentah dari kolom L (Rancangan APBD Rp) ---
-                $anggaran = 0;
-                $cellL = $sheet->getCell("L{$i}");
-                $rawVal = $cellL->getValue();           // nilai mentah (bisa float / int)
+                $program = $tbProgram
+                    ->where('kode_program', $kodeProgram)
+                    ->where('tahun_anggaran', $tahun)
+                    ->get()->getRow();
 
-                if (is_numeric($rawVal)) {
-                    // Contoh: 89920779177 atau 8.9920779177E10 → bulatkan ke rupiah
-                    $anggaran = (int) round($rawVal);
+                if ($program) {
+                    $currentProgramId = $program->id;
+
+                    if ($anggaran > 0) {
+                        $tbProgram->where('id', $currentProgramId)
+                            ->update(['anggaran' => $anggaran]);
+                    }
                 } else {
-                    // Cadangan: kalau formatnya string "89,920,779,177.00"
-                    $formatted = (string) $cellL->getFormattedValue();
-                    $s = trim($formatted);
-
-                    // buang spasi biasa & non-breaking space
-                    $s = str_replace([" ", "\xC2\xA0"], '', $s);
-
-                    // kalau akhiran ".00" → buang
-                    if (substr($s, -3) === '.00') {
-                        $s = substr($s, 0, -3);
-                    }
-
-                    // buang pemisah ribuan: koma & titik
-                    $s = str_replace([',', '.'], '', $s);
-
-                    // sisakan digit saja
-                    $s = preg_replace('/[^0-9]/', '', $s);
-
-                    $anggaran = ($s === '') ? 0 : (int) $s;
+                    $tbProgram->insert([
+                        'kode_program'     => $kodeProgram,
+                        'program_kegiatan' => $G,
+                        'tahun_anggaran'   => $tahun,
+                        'anggaran'         => $anggaran
+                    ]);
+                    $currentProgramId = $db->insertID();
                 }
 
-                // --- Fill-down A..F (untuk file yang pakai merge) ---
-                if ($useFilldown) {
-                    foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $k) {
-                        if (${$k} === '' && $last[$k] !== null) {
-                            ${$k} = $last[$k];
-                        }
-                    }
-                }
-                foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $k) {
-                    if (${$k} !== '') {
-                        $last[$k] = ${$k};
-                    }
-                }
-
-                // --- Skip baris kosong / tanpa nama uraian ---
-                if ($A . $B . $C . $D . $E . $F . $G === '' || $G === '') {
-                    $stats['rows_skipped']++;
-                    $stats['skipped_empty_or_noname']++;
-                    continue;
-                }
-
-                // --- Flag terisi per kolom ---
-                $hasA = ($A !== '');
-                $hasB = ($B !== '');
-                $hasC = ($C !== '');
-                $hasD = ($D !== '');
-                $hasE = ($E !== '');
-                $hasF = ($F !== '');
-
-                $stats['rows_read']++;
-
-                // === ROLE PASTI ===
-                // A-D terisi dan E dan F kosong itu program
-                $isProgram = ($hasA && $hasB && $hasC && $hasD && !$hasE && !$hasF);
-                // A-E terisi dan F kosong itu kegiatan
-                $isKegiatan = ($hasA && $hasB && $hasC && $hasD && $hasE && !$hasF);
-                // A-F terisi itu sub_kegiatan
-                $isSub = ($hasA && $hasB && $hasC && $hasD && $hasE && $hasF);
-
-                if ($isProgram)
-                    $stats['pattern_program_rows']++;
-                if ($isKegiatan)
-                    $stats['pattern_kegiatan_rows']++;
-                if ($isSub)
-                    $stats['pattern_sub_rows']++;
-
-                // 1) SUB KEGIATAN
-                if ($isSub) {
-                    if ($currentKegiatanId === null) {
-                        $stats['rows_skipped']++;
-                        $stats['skipped_no_kegiatan_ctx']++;
-                        continue;
-                    }
-
-                    $subNama = $G;
-
-                    if ($dryrun) {
-                        if ($currentKegiatanId > 0) {
-                            $exists = $tbSub->select('id')
-                                ->where('kegiatan_id', $currentKegiatanId)
-                                ->where('sub_kegiatan', $subNama)
-                                ->get(1)->getRow();
-                            if ($exists) {
-                                $stats['sub_found']++;
-                            } else {
-                                $stats['sub_created']++;
-                            }
-                        } else {
-                            $stats['sub_created']++;
-                        }
-                    } else {
-                        $exists = $tbSub->select('id')
-                            ->where('kegiatan_id', $currentKegiatanId)
-                            ->where('sub_kegiatan', $subNama)
-                            ->get(1)->getRow();
-                        if ($exists) {
-                            $stats['sub_found']++;
-                            if ($anggaran > 0) {
-                                $tbSub->where('id', (int) $exists->id)
-                                    ->update(['anggaran' => $anggaran]);
-                            }
-                        } else {
-                            $tbSub->insert([
-                                'kegiatan_id' => $currentKegiatanId,
-                                'sub_kegiatan' => $subNama,
-                                'anggaran' => $anggaran,
-                            ]);
-                            $stats['sub_created']++;
-                        }
-                    }
-                    continue;
-                }
-
-                // 2) KEGIATAN
-                if ($isKegiatan) {
-                    if ($currentProgramId === null) {
-                        $stats['rows_skipped']++;
-                        $stats['skipped_no_program_ctx']++;
-                        continue;
-                    }
-
-                    $kegiatanNama = $G;
-
-                    if ($dryrun) {
-                        if ($currentProgramId > 0) {
-                            $exists = $tbKegiatan->select('id')
-                                ->where('program_id', $currentProgramId)
-                                ->where('kegiatan', $kegiatanNama)
-                                ->get(1)->getRow();
-                            if ($exists) {
-                                $currentKegiatanId = (int) $exists->id;
-                                $stats['kegiatan_found']++;
-                            } else {
-                                $currentKegiatanId = -1;
-                                $stats['kegiatan_created']++;
-                            }
-                        } else {
-                            $currentKegiatanId = -1;
-                            $stats['kegiatan_created']++;
-                        }
-                    } else {
-                        $exists = $tbKegiatan->select('id')
-                            ->where('program_id', $currentProgramId)
-                            ->where('kegiatan', $kegiatanNama)
-                            ->get(1)->getRow();
-                        if ($exists) {
-                            $currentKegiatanId = (int) $exists->id;
-                            $stats['kegiatan_found']++;
-                            if ($anggaran > 0) {
-                                $tbKegiatan->where('id', $currentKegiatanId)
-                                    ->update(['anggaran' => $anggaran]);
-                            }
-                        } else {
-                            $tbKegiatan->insert([
-                                'program_id' => $currentProgramId,
-                                'kegiatan' => $kegiatanNama,
-                                'anggaran' => $anggaran,
-                            ]);
-                            $currentKegiatanId = (int) $db->insertID();
-                            $stats['kegiatan_created']++;
-                        }
-                    }
-                    continue;
-                }
-
-                // 3) PROGRAM
-                if ($isProgram) {
-                    $programNama = $G;
-
-                    if ($dryrun) {
-                        $exists = $tbProgram->select('id')
-                            ->where('program_kegiatan', $programNama)
-                            ->get(1)->getRow();
-                        if ($exists) {
-                            $currentProgramId = (int) $exists->id;
-                            $stats['program_found']++;
-                        } else {
-                            $currentProgramId = -1;
-                            $stats['program_created']++;
-                        }
-                        $currentKegiatanId = null;
-                    } else {
-                        $exists = $tbProgram->select('id')
-                            ->where('program_kegiatan', $programNama)
-                            ->get(1)->getRow();
-                        if ($exists) {
-                            $currentProgramId = (int) $exists->id;
-                            $stats['program_found']++;
-                            if ($anggaran > 0) {
-                                $tbProgram->where('id', $currentProgramId)
-                                    ->update(['anggaran' => $anggaran]);
-                            }
-                        } else {
-                            $tbProgram->insert([
-                                'program_kegiatan' => $programNama,
-                                'anggaran' => $anggaran,
-                            ]);
-                            $currentProgramId = (int) $db->insertID();
-                            $stats['program_created']++;
-                        }
-                        $currentKegiatanId = null;
-                    }
-                    continue;
-                }
-
-                // pola kolom lain → skip
-                $stats['rows_skipped']++;
-                $stats['skipped_pattern_mismatch']++;
+                $currentKegiatanId = null;
+                continue;
             }
 
-            // --- Selesaikan transaksi ---
-            if (!$dryrun) {
-                $db->transComplete();
-                if ($db->transStatus() === false) {
-                    session()->setFlashdata('error', 'Import gagal. Transaksi dibatalkan.');
-                    return redirect()->back()->withInput();
+            /**
+             * =========================
+             * KEGIATAN
+             * =========================
+             */
+            if ($E !== '' && $F === '') {
+
+                if (!$currentProgramId) {
+                    continue;
                 }
+
+                $kodeKegiatan = $A . '.' . $D . '.' . $E;
+
+                $kegiatan = $tbKegiatan
+                    ->where('kode_kegiatan', $kodeKegiatan)
+                    ->where('tahun_anggaran', $tahun)
+                    ->get()->getRow();
+
+                if ($kegiatan) {
+                    $currentKegiatanId = $kegiatan->id;
+
+                    if ($anggaran > 0) {
+                        $tbKegiatan->where('id', $currentKegiatanId)
+                            ->update(['anggaran' => $anggaran]);
+                    }
+                } else {
+                    $tbKegiatan->insert([
+                        'program_id'    => $currentProgramId,
+                        'kode_kegiatan' => $kodeKegiatan,
+                        'kegiatan'      => $G,
+                        'tahun_anggaran' => $tahun,
+                        'anggaran'      => $anggaran
+                    ]);
+                    $currentKegiatanId = $db->insertID();
+                }
+                continue;
             }
 
-            $msg = ($dryrun ? '[SIMULASI] ' : '') .
-                "Baris diproses: {$stats['rows_read']}, dilewati: {$stats['rows_skipped']}. " .
-                "Program (baru: {$stats['program_created']}, ada: {$stats['program_found']}) — pola program: {$stats['pattern_program_rows']}. " .
-                "Kegiatan (baru: {$stats['kegiatan_created']}, ada: {$stats['kegiatan_found']}) — pola kegiatan: {$stats['pattern_kegiatan_rows']}. " .
-                "Subkegiatan (baru: {$stats['sub_created']}, ada: {$stats['sub_found']}) — pola sub: {$stats['pattern_sub_rows']}. " .
-                "Skip: kosong/nama {$stats['skipped_empty_or_noname']}, tanpa program aktif {$stats['skipped_no_program_ctx']}, tanpa kegiatan aktif {$stats['skipped_no_kegiatan_ctx']}, pola kolom lain {$stats['skipped_pattern_mismatch']}.";
+            /**
+             * =========================
+             * SUB KEGIATAN
+             * =========================
+             */
+            if ($E !== '' && $F !== '') {
 
-            session()->setFlashdata('success', $msg);
-            return redirect()->to('/adminkab/program_pk/import');
-        } catch (\Throwable $e) {
-            session()->setFlashdata('error', 'Terjadi kesalahan: ' . $e->getMessage());
-            return redirect()->back()->withInput();
+                if (!$currentKegiatanId) {
+                    continue;
+                }
+
+                $kodeSub = $A . '.' . $D . '.' . $E . '.' . $F;
+
+                $sub = $tbSub
+                    ->where('kode_sub_kegiatan', $kodeSub)
+                    ->where('tahun_anggaran', $tahun)
+                    ->get()->getRow();
+
+                if ($sub) {
+                    if ($anggaran > 0) {
+                        $tbSub->where('id', $sub->id)
+                            ->update(['anggaran' => $anggaran]);
+                    }
+                } else {
+                    $tbSub->insert([
+                        'kegiatan_id'       => $currentKegiatanId,
+                        'kode_sub_kegiatan' => $kodeSub,
+                        'sub_kegiatan'      => $G,
+                        'tahun_anggaran'    => $tahun,
+                        'anggaran'          => $anggaran
+                    ]);
+                }
+            }
         }
-    }
 
+        $db->transComplete();
 
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Import gagal, transaksi dibatalkan');
+        }
 
+        return redirect()->to('/adminkab/program_pk/import')
+            ->with('success', 'Import Program, Kegiatan, dan Sub Kegiatan berhasil');
+    } 
 
     public function save()
     {

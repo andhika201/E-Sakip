@@ -74,13 +74,13 @@
     /* ===============================
      * 2. SET PROGRAM ID FROM KEGIATAN
      * =============================== */
-    $(document).on('change', '.kegiatan-select', function () {
-        const programId = $(this).find(':selected').data('program') || '';
-        $(this).closest('.kegiatan-item')
-            .find('.program-id-hidden')
-            .val(programId);
-    });
-}
+$(document).on('change', '.kegiatan-select', function () {
+    const programId = $(this).find(':selected').data('program') || '';
+    $(this).closest('.kegiatan-item')
+        .find('.program-id-hidden')
+        .val(programId);
+});
+
     /**
      * Tambah Sasaran Baru
      * @event click .add-sasaran
@@ -490,49 +490,40 @@
         updateFormNames();
     });
 
-    // AUTO-FILL NIP (EVENT DELEGATION - WAJIB UNTUK ELEMEN DINAMIS)
-document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('pegawai-select')) {
-
-        /**
-         * Auto-fill anggaran saat memilih program (event delegation, per program-item)
-         */
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('subkeg-select')) {
-                // Cari program-item terdekat
-                const subkegItem = e.target.closest('.subkeg-item');
-                if (!subkegItem) return;
-                const anggaranInput = subkegItem.querySelector('input[name*="anggaran"]');
-                const selectedOption = e.target.options[e.target.selectedIndex];
-                if (selectedOption && selectedOption.value !== '') {
-                    const anggaran = selectedOption.getAttribute('data-anggaran');
-                    anggaranInput.value = formatRupiah(anggaran);
-                } else {
-                    anggaranInput.value = '';
-                }
+    // AUTO-FILL ANGGARAN (EVENT DELEGATION - WAJIB UNTUK ELEMEN DINAMIS)
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('subkeg-select')) {
+            // Cari program-item terdekat
+            const subkegItem = e.target.closest('.subkeg-item');
+            if (!subkegItem) return;
+            const anggaranInput = subkegItem.querySelector('input[name*="anggaran"]');
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            if (selectedOption && selectedOption.value !== '') {
+                const anggaran = selectedOption.getAttribute('data-anggaran');
+                anggaranInput.value = formatRupiah(anggaran);
+            } else {
+                anggaranInput.value = '';
             }
-        });
+        }
+    });
 
     // Inisialisasi auto-fill untuk elemen yang sudah ada
     document.querySelectorAll('.subkeg-select').forEach(select => {
-    const selectedOption = select.options[select.selectedIndex];
-    if (selectedOption && selectedOption.value !== '') {
-        const anggaran = selectedOption.getAttribute('data-anggaran');
-        const parentItem = select.closest('.indikator-item') || select.closest('.subkeg-item');
-        const anggaranInput = parentItem.querySelector('input[name*="anggaran"]');
-        anggaranInput.value = formatRupiah(anggaran);
-    }
-    });
-
-        const nip = selectedOption.getAttribute('data-nip') || '';
-        const targetName = e.target.getAttribute('data-target');
-
-        if (!targetName) return;
-
-        const nipInput = document.querySelector(`input[name="${targetName}"]`);
-        if (nipInput) {
-            nipInput.value = nip;
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption && selectedOption.value !== '') {
+            const anggaran = selectedOption.getAttribute('data-anggaran');
+            const parentItem = select.closest('.kegiatan-item') || select.closest('.subkeg-item');
+            const anggaranInput = parentItem.querySelector('input[name*="anggaran"]');
+            anggaranInput.value = formatRupiah(anggaran);
         }
+    });
+    /**
+     * Helper: Format angka ke Rupiah
+     * @param {string|number} angka
+     * @returns {string}
+     */
+    function formatRupiah(angka) {
+        return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
     }
-});
+
 })();

@@ -80,64 +80,358 @@
             .find('.program-id-hidden')
             .val(programId);
     });
+}
+    /**
+     * Tambah Sasaran Baru
+     * @event click .add-sasaran
+     */
+    document.querySelector('.add-sasaran').addEventListener('click', function() {
+        const sasaranContainer = document.querySelector('.sasaran-container');
+        const sasaranCount = sasaranContainer.querySelectorAll('.sasaran-item').length + 1;
+        const newSasaran = document.createElement('div');
+        newSasaran.className = 'sasaran-item border border-secondary rounded p-3 bg-white mb-3';
+        newSasaran.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="fw-medium h5">Sasaran ${sasaranCount}</label>
+                <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sasaran PK</label>
+                <textarea name="sasaran_pk[0][sasaran]" class="form-control border-secondary" rows="2" placeholder="Contoh: Terwujudnya pelayanan publik yang prima" required></textarea>
+            </div>
+            <div class="indikator-section">
+                <div class="indikator-container">
+                    <div class="indikator-item border rounded p-3 bg-light mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="fw-medium">Indikator</label>
+                            <button type="button" class="remove-indikator btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="form-label">Indikator</label>
+                                <input type="text" name="sasaran_pk[0][indikator][0][indikator]" class="form-control mb-3 border-secondary" placeholder="Contoh: Persentase tingkat kepuasan" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Target</label>
+                                <input type="text" name="sasaran_pk[0][indikator][0][target]" class="form-control mb-3 border-secondary" placeholder="Nilai target" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Satuan</label>
+                                <select name="sasaran_pk[0][indikator][0][id_satuan]" class="form-select mb-3 border-secondary" required>
+                                    ${window.satuanDropdownTemplate}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Jenis Indikator</label>
+                                <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
+                                    class="form-select mb-3 border-secondary" required>
+                                    <option value="">Pilih Jenis Indikator</option>
+                                    <option value="Indikator Positif">Indikator Positif</option>
+                                    <option value="Indikator Negatif">Indikator Negatif</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="kegiatan-container">
+                            <div class="kegiatan-item border rounded p-3 bg-white mb-4">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Kegiatan</label>
 
-    /* ===============================
-     * 3. ADD HANDLERS
-     * =============================== */
+                                        <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
+                                        <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                                            ${window.kegiatanAdminDropdownTemplate}
+                                        </select>
+                                    </div>
 
-    // ADD SASARAN
-    $(document).on('click', '.add-sasaran', function () {
-        const container = $('.sasaran-container');
-        const clone = container.find('.sasaran-item').first().clone(true);
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button"
+                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
 
-        clone.find('input, textarea').val('');
-        clone.find('select').prop('selectedIndex', 0);
+                                <div class="subkeg-container">
+                                    <div class="subkeg-item border rounded bg-light p-3 mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Sub Kegiatan</label>
+                                                <select
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                                    class="form-select subkeg-select border-secondary"
+                                                    required>
+                                                    ${window.subkegiatanDropdownTemplate || ''}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Anggaran</label>
+                                                <input type="text"
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                                    class="form-control mb-3 border-secondary" value=""
+                                                    placeholder="Anggaran" readonly>
+                                                <input type="hidden" name="kegiatan[0][id_indikator]"
+                                                value="">
+                                            </div>
 
-        container.append(clone);
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="button"
+                                                    class="remove-subkeg btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button type="button"
+                                        class="add-subkeg btn btn-success btn-sm">
+                                        <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="add-kegiatan btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-2">
+                    <button type="button" class="add-indikator btn btn-info btn-sm">
+                        <i class="fas fa-plus me-1"></i> Tambah Indikator
+                    </button>
+                </div>
+            </div>
+        `;
+        sasaranContainer.appendChild(newSasaran);
         updateFormNames();
     });
 
-    // ADD INDIKATOR
-    $(document).on('click', '.add-indikator', function () {
-        const indikatorContainer = $(this)
-            .closest('.indikator-section')
-            .find('.indikator-container');
+    /**
+     * Tambah Indikator ke Sasaran
+     * @event click .add-indikator
+     */
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-indikator') || e.target.closest('.add-indikator')) {
+            const indikatorSection = e.target.closest('.indikator-section');
+            if (!indikatorSection) return;
+            const indikatorContainer = indikatorSection.querySelector('.indikator-container');
+            if (!indikatorContainer) return;
+            const indikatorCount = indikatorContainer.querySelectorAll('.indikator-item').length + 1;
+            const newIndikator = document.createElement('div');
+            newIndikator.className = 'indikator-item border rounded p-3 bg-light mb-3';
+            newIndikator.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="fw-medium">Indikator ${indikatorCount}</label>
+                    <button type="button" class="remove-indikator btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="row">
+                    <div class="col-md-5">
+                        <label class="form-label">Indikator</label>
+                        <input type="text" name="sasaran_pk[0][indikator][0][indikator]" class="form-control mb-3 border-secondary" placeholder="Masukkan indikator" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Target</label>
+                        <input type="text" name="sasaran_pk[0][indikator][0][target]" class="form-control mb-3 border-secondary" placeholder="Nilai target" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Satuan</label>
+                        <select name="sasaran_pk[0][indikator][0][id_satuan]" class="form-select mb-3 border-secondary" required>
+                            ${window.satuanDropdownTemplate}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Jenis Indikator</label>
+                        <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
+                            class="form-select mb-3 border-secondary" required>
+                            <option value="">Pilih Jenis Indikator</option>
+                            <option value="Indikator Positif">Indikator Positif</option>
+                            <option value="Indikator Negatif">Indikator Negatif</option>
+                        </select>
+                    </div>
+                </div>
 
-        const clone = indikatorContainer.find('.indikator-item').first().clone(true);
+                <div class="kegiatan-container">
+                    <div class="kegiatan-item border rounded p-3 bg-white mb-3">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Kegiatan</label>
+                                <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
+                                <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                                    ${window.kegiatanAdminDropdownTemplate}
+                                </select>
+                            </div>
 
-        clone.find('input').val('');
-        clone.find('select').prop('selectedIndex', 0);
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button"
+                                    class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
 
-        indikatorContainer.append(clone);
-        updateFormNames();
+                        <div class="subkeg-container">
+                            <div class="subkeg-item border rounded bg-light p-3 mb-3">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Sub Kegiatan</label>
+                                        <select
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
+                                            class="form-select subkeg-select border-secondary"
+                                            required>
+                                            ${window.subkegiatanDropdownTemplate || ''}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Anggaran</label>
+                                        <input type="text"
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                            class="form-control mb-3 border-secondary" value=""
+                                            placeholder="Anggaran" readonly>
+                                        <input type="hidden" name="kegiatan[0][id_indikator]"
+                                        value="">
+                                    </div>
+
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button type="button"
+                                            class="remove-subkeg btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button"
+                                class="add-subkeg btn btn-success btn-sm">
+                                <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-2">
+                    <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                    </button>
+                </div>
+            `;
+            indikatorContainer.appendChild(newIndikator);
+            updateFormNames();
+        }
     });
 
-    // ADD KEGIATAN
-    $(document).on('click', '.add-kegiatan', function () {
-        const indikatorItem = $(this).closest('.indikator-item');
-        const kegiatanContainer = indikatorItem.find('.kegiatan-container');
+    // Tambah Kegiatan pada setiap indikator template baru
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-kegiatan') || e.target.closest('.add-kegiatan')) {
+            const indikatorItem = e.target.closest('.indikator-item');
+            if (!indikatorItem) return;
+            const kegiatanContainer = indikatorItem.querySelector('.kegiatan-container');
+            if (!kegiatanContainer) return;
+            const kegiatanCount = kegiatanContainer.querySelectorAll('.kegiatan-item').length + 1;
+            // Buat template kegiatan-item baru
+            const newKegiatan = document.createElement('div');
+            newKegiatan.className = 'kegiatan-item border rounded p-3 bg-white mb-4';
+            newKegiatan.innerHTML = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Kegiatan</label>
+                    <input type="hidden" name="sasaran_pk[0][indikator][0][program][0][program_id]" class="program-id-hidden">
+                    <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]" class="form-select kegiatan-select border-secondary" required>
+                        ${window.kegiatanAdminDropdownTemplate}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        
+            <div class="subkeg-container">
+                <div class="subkeg-item border rounded bg-light p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Sub Kegiatan</label>
+                            <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                                ${window.subkegiatanDropdownTemplate || ''}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anggaran</label>
+                            <input type="text"
+                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                class="form-control mb-3 border-secondary" value=""
+                                placeholder="Anggaran" readonly>
+                            <input type="hidden" name="kegiatan[0][id_indikator]"
+                            value="">
+                        </div>
 
-        const clone = kegiatanContainer.find('.kegiatan-item').first().clone(true);
-
-        clone.find('input').val('');
-        clone.find('select').prop('selectedIndex', 0);
-
-        kegiatanContainer.append(clone);
-        clone.find('.kegiatan-select').trigger('change');
-
-        updateFormNames();
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button"
+                                class="remove-subkeg btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-2">
+                <button type="button"
+                    class="add-subkeg btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
+                </button>
+            </div>
+            `;
+            kegiatanContainer.appendChild(newKegiatan);
+            updateFormNames();
+        }
     });
 
-    // ADD SUB KEGIATAN
-    $(document).on('click', '.add-subkeg', function () {
-        const kegiatanItem = $(this).closest('.kegiatan-item');
-        const subContainer = kegiatanItem.find('.subkeg-container');
+    // Tambah Subkegiatan pada setiap kegiatan baru
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('add-subkeg') || e.target.closest('.add-subkeg')) {
+            const kegiatanItem = e.target.closest('.kegiatan-item');
+            if (!kegiatanItem) return;
+            const subkegContainer = kegiatanItem.querySelector('.subkeg-container');
+            if (!subkegContainer) return;
+            const kegiatanCount = subkegContainer.querySelectorAll('.subkeg-item').length + 1;
+            
+            const newSubkeg = document.createElement('div');
+            newSubkeg.className = 'subkeg-item border rounded bg-light p-3';
+            newSubkeg.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Sub Kegiatan</label>
+                    <select name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]" class="form-select subkeg-select border-secondary" required>
+                        ${window.subkegiatanDropdownTemplate || ''}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Anggaran</label>
+                    <input type="text"
+                        name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                        class="form-control mb-3 border-secondary" value=""
+                        placeholder="Anggaran" readonly>
+                    
+                </div>
 
-        const clone = subContainer.find('.subkeg-item').first().clone(true);
-        clone.find('select').prop('selectedIndex', 0);
-
-        subContainer.append(clone);
-        updateFormNames();
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button"
+                        class="remove-subkeg btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            `;
+            subkegContainer.appendChild(newSubkeg);
+            updateFormNames();
+        }
     });
 
     $(document).on(
@@ -200,8 +494,35 @@
 document.addEventListener('change', function (e) {
     if (e.target.classList.contains('pegawai-select')) {
 
-        const selectedOption = e.target.options[e.target.selectedIndex];
-        if (!selectedOption) return;
+        /**
+         * Auto-fill anggaran saat memilih program (event delegation, per program-item)
+         */
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('subkeg-select')) {
+                // Cari program-item terdekat
+                const subkegItem = e.target.closest('.subkeg-item');
+                if (!subkegItem) return;
+                const anggaranInput = subkegItem.querySelector('input[name*="anggaran"]');
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                if (selectedOption && selectedOption.value !== '') {
+                    const anggaran = selectedOption.getAttribute('data-anggaran');
+                    anggaranInput.value = formatRupiah(anggaran);
+                } else {
+                    anggaranInput.value = '';
+                }
+            }
+        });
+
+    // Inisialisasi auto-fill untuk elemen yang sudah ada
+    document.querySelectorAll('.subkeg-select').forEach(select => {
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption && selectedOption.value !== '') {
+        const anggaran = selectedOption.getAttribute('data-anggaran');
+        const parentItem = select.closest('.indikator-item') || select.closest('.subkeg-item');
+        const anggaranInput = parentItem.querySelector('input[name*="anggaran"]');
+        anggaranInput.value = formatRupiah(anggaran);
+    }
+    });
 
         const nip = selectedOption.getAttribute('data-nip') || '';
         const targetName = e.target.getAttribute('data-target');

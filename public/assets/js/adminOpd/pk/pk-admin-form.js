@@ -155,6 +155,15 @@ function updateFormNames() {
                                                     ${window.kegiatanDropdownTemplate || ''}
                                                 </select>
                                             </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Anggaran</label>
+                                                <input type="text"
+                                                    name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
+                                                    class="form-control mb-3 border-secondary" value=""
+                                                    placeholder="Anggaran" readonly>
+                                                <input type="hidden" name="kegiatan[0][id_indikator]"
+                                                value="">
+                                            </div>
 
                                             <div class="col-md-3 d-flex align-items-end">
                                                 <button type="button"
@@ -263,6 +272,15 @@ function updateFormNames() {
                                             ${window.kegiatanDropdownTemplate || ''}
                                         </select>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Anggaran</label>
+                                        <input type="text"
+                                            name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
+                                            class="form-control mb-3 border-secondary" value=""
+                                            placeholder="Anggaran" readonly>
+                                        <input type="hidden" name="kegiatan[0][id_indikator]"
+                                        value="">
+                                    </div>
 
                                     <div class="col-md-3 d-flex align-items-end">
                                         <button type="button"
@@ -330,6 +348,15 @@ function updateFormNames() {
                                 ${window.kegiatanDropdownTemplate || ''}
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anggaran</label>
+                            <input type="text"
+                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
+                                class="form-control mb-3 border-secondary" value=""
+                                placeholder="Anggaran" readonly>
+                            <input type="hidden" name="kegiatan[0][id_indikator]"
+                            value="">
+                        </div>
 
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="button"
@@ -373,6 +400,15 @@ function updateFormNames() {
                                 required>
                                 ${window.kegiatanDropdownTemplate || ''}
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Anggaran</label>
+                            <input type="text"
+                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
+                                class="form-control mb-3 border-secondary" value=""
+                                placeholder="Anggaran" readonly>
+                            <input type="hidden" name="kegiatan[0][id_indikator]"
+                            value="">
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="button"

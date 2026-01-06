@@ -96,6 +96,7 @@
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
                                 <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
+                                <th rowspan="2" class="border p-2 align-middle">JENIS INDIKATOR</th>
                                 <th colspan="5" class="border p-2" id="year-header-span-sasaran">TARGET CAPAIAN PER
                                     TAHUN</th>
                                 <th rowspan="2" class="border p-2 align-middle">ACTION</th>
@@ -150,6 +151,7 @@
                                                                 'indikator' => $is['indikator_sasaran'] ?? '-',
                                                                 'definisi' => $is['definisi_op'] ?? '-',
                                                                 'satuan' => $is['satuan'] ?? '-',
+                                                                'jenis_indikator' => $is['jenis_indikator'] ?? '-',
                                                                 'targets' => $targets2
                                                             ];
                                                         }
@@ -160,6 +162,7 @@
                                                             'indikator' => '-',
                                                             'definisi' => '-',
                                                             'satuan' => '-',
+                                                            'jenis_indikator' => '-',
                                                             'targets' => []
                                                         ];
                                                     }
@@ -171,6 +174,7 @@
                                                     'indikator' => '-',
                                                     'definisi' => '-',
                                                     'satuan' => '-',
+                                                    'jenis_indikator' => '-',
                                                     'targets' => []
                                                 ];
                                             }
@@ -197,7 +201,7 @@
 
                                             for ($r = 0; $r < $rowCount; $r++):
                                                 $left = $leftRows[$r] ?? ['indikator' => '-', 'targets' => []];
-                                                $right = $rightRows[$r] ?? ['sasaran' => null, 'indikator' => '-', 'definisi' => '-', 'satuan' => '-', 'targets' => []];
+                                                $right = $rightRows[$r] ?? ['sasaran' => null, 'indikator' => '-', 'definisi' => '-', 'satuan' => '-', 'jenis_indikator' => '-', 'targets' => []];
                                                 ?>
                                                 <tr class="periode-row" data-periode="<?= esc($periodIndex) ?>"
                                                     data-status="<?= esc($misi['status'] ?? 'draft') ?>">
@@ -251,6 +255,21 @@
                                                     <td class="border p-2 align-top text-start"><?= esc($right['indikator']) ?></td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['definisi']) ?></td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['satuan']) ?></td>
+                                                    <?php
+                                                    $rawJenis = strtolower(trim($right['jenis_indikator'] ?? ''));
+                                                    if ($rawJenis === 'indikator positif') {
+                                                        $jenisLabel = 'Indikator Positif';
+                                                    } elseif ($rawJenis === 'indikator negatif') {
+                                                        $jenisLabel = 'Indikator Negatif';
+                                                    } else {
+                                                        // fallback kalau ada nilai lain / kosong
+                                                        $jenisLabel = $right['jenis_indikator'] !== '' ? $right['jenis_indikator'] : '-';
+                                                    }
+                                                    ?>
+                                                    <td class="border p-2 align-top text-start">
+                                                        <?= esc($jenisLabel) ?>
+                                                    </td>
+
 
                                                     <!-- TARGET CAPAIAN PER TAHUN -->
                                                     <span class="year-cells-sasaran" data-periode="<?= esc($periodIndex) ?>">

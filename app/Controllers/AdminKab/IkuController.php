@@ -3,274 +3,411 @@
 namespace App\Controllers\AdminKab;
 
 use App\Controllers\BaseController;
-use App\Models\Opd\RenstraModel;
-use App\Models\Opd\IkuModel;
-use App\Models\RpjmdModel;
 use App\Models\OpdModel;
+use App\Models\Opd\IkuModel as OpdIkuModel;
+use Config\Database;
 
 class IkuController extends BaseController
 {
-    protected $renstraModel;
-    protected $rpjmdModel;
-    protected $ikuModel;
+    /** @var \CodeIgniter\Database\BaseConnection */
+    protected $db;
+
+    /** @var OpdModel */
     protected $opdModel;
 
-    protected $db;
+    /** @var OpdIkuModel */
+    protected $ikuModel;
 
     public function __construct()
     {
-        $this->renstraModel = new RenstraModel();
-        $this->rpjmdModel = new RpjmdModel();
-        $this->ikuModel = new IkuModel();
+        $this->db = Database::connect();
         $this->opdModel = new OpdModel();
-        $this->db = \Config\Database::connect();
-
+        $this->ikuModel = new OpdIkuModel();
     }
+    private function xssRule(): string
+    {
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    private function isSafeText($val): bool
+    {
+        if ($val === null || $val === '')
+            return true;
+        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+    }
+
+    /* =========================================================
+     * INDEX – LIST IKU (MODE OPD / KABUPATEN)
+     * =======================================================*/
     public function index()
     {
-        $session = session();
-        $opdId = $session->get('opd_id');
-        $role = $session->get('role');
+        $request = service('request');
 
-        // 🔒 Cek login (hanya non-admin_kab yang wajib punya OPD ID)
-        if (!$opdId && $role !== 'admin_kab') {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
+        // mode tampilan: opd | kabupaten
+        $mode = $request->getGet('mode') ?: 'opd';
+        $opdFilter = $request->getGet('opd_id');
+        $opdFilter = ($opdFilter === '') ? null : $opdFilter;
+
+        // key periode (sekarang cuma 'all', tapi sudah ready kalau nanti dipecah)
+        $periodeKey = $request->getGet('periode') ?? null;
+
+        // 1. Periode & Tahun
+// DULU: $grouped_data = $this->buildPeriodeOptions();
+        $grouped_data = $this->ikuModel->getPeriodeOptions($mode);
+
+        // tahun sekarang
+        $currentYear = (int) date('Y');
+
+        // ambil dari GET kalau ada
+        $selected_periode = $request->getGet('periode') ?? null;
+
+        // kalau kosong, otomatis pilih periode yang mengandung tahun berjalan
+        if (empty($selected_periode) && !empty($grouped_data)) {
+
+            // cari periode yang memuat tahun sekarang
+            foreach ($grouped_data as $key => $periode) {
+                $years = $periode['years'] ?? [];
+                if (in_array($currentYear, $years, true)) {
+                    $selected_periode = $key;
+                    break;
+                }
+            }
+
+            // kalau tidak ada yang mengandung tahun sekarang,
+            // fallback ke periode pertama
+            if (empty($selected_periode)) {
+                $keys = array_keys($grouped_data);
+                $selected_periode = $keys[0] ?? null;
+            }
         }
 
-        // 🧭 Ambil parameter GET
-        $periode = $this->request->getGet('periode');
-
-        // 🗓️ Ambil daftar periode unik
-        $periodeList = $this->db->table('renstra_sasaran')
-            ->select('tahun_mulai, tahun_akhir')
-            ->groupBy('tahun_mulai, tahun_akhir')
-            ->orderBy('tahun_mulai', 'ASC')
-            ->get()
-            ->getResultArray();
-
-        // Susun array periode
-        $grouped_data = [];
-        foreach ($periodeList as $p) {
-            $years = range((int) $p['tahun_mulai'], (int) $p['tahun_akhir']);
-            $key = "{$p['tahun_mulai']}-{$p['tahun_akhir']}";
-            $grouped_data[$key] = [
-                'period' => $key,
-                'years' => $years
-            ];
+        // ambil daftar tahun dari periode terpilih
+        $yearsForSelected = [];
+        if (!empty($selected_periode) && isset($grouped_data[$selected_periode])) {
+            $yearsForSelected = $grouped_data[$selected_periode]['years'] ?? [];
         }
 
-        // 📊 Ambil data Renstra sesuai role
-        if ($role === 'admin_kab') {
-            // admin_kab bisa lihat semua OPD
-            $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget();
-        } else {
-            // role opd dibatasi oleh opd_id
-            $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId);
+
+        // 2. semua IKU + program pendukung
+        $iku_data = $this->ikuModel->getAllIkuWithPrograms();
+
+        // 3. data RENSTRA (mode OPD) dan RPJMD (mode kabupaten)
+        $renstra_data = $this->ikuModel->getRenstraMatrix($yearsForSelected);
+        $rpjmd_data = $this->ikuModel->getRpjmdMatrix($yearsForSelected);
+
+        // jika mode opd & ada filter OPD
+        if ($mode === 'opd' && $opdFilter !== null) {
+            $renstra_data = array_values(array_filter(
+                $renstra_data,
+                static function ($row) use ($opdFilter) {
+                    return (int) ($row['opd_id'] ?? 0) === (int) $opdFilter;
+                }
+            ));
         }
 
-        // 🎯 Filter berdasarkan periode (jika dipilih)
-        if (!empty($periode) && preg_match('/^\d{4}-\d{4}$/', $periode)) {
-            [$tahunMulai, $tahunAkhir] = explode('-', $periode);
+        // 4. daftar OPD untuk dropdown filter
+        $opdList = $this->opdModel
+            ->orderBy('nama_opd', 'ASC')
+            ->findAll();
 
-            $renstraData = array_filter($renstraData, function ($sasaran) use ($tahunMulai, $tahunAkhir) {
-                return (
-                    (int) $sasaran['tahun_mulai'] === (int) $tahunMulai &&
-                    (int) $sasaran['tahun_akhir'] === (int) $tahunAkhir
-                );
-            });
-
-            // Sesuaikan header tabel hanya untuk periode ini
-            $grouped_data = [
-                $periode => [
-                    'period' => $periode,
-                    'years' => range((int) $tahunMulai, (int) $tahunAkhir)
-                ]
-            ];
-        }
-
-        // 🧩 Ambil data IKU berdasarkan role
-        $ikuData = ($role === 'admin_kab')
-            ? $this->ikuModel->getRPJMDWithPrograms() // semua OPD
-            : $this->ikuModel->getRenstraWithPrograms($opdId); // hanya opd aktif
-
-        // 📤 Kirim ke view
+        // 5. kirim ke view
         return view('adminKabupaten/iku/iku', [
-            'title' => 'Indikator Kinerja Utama (IKU)',
-            'renstra_data' => $renstraData,
-            'iku_data' => $ikuData,
+            'title' => 'IKU - e-SAKIP',
+            'mode' => $mode,
+            'opdFilter' => $opdFilter,
+            'opdList' => $opdList,
             'grouped_data' => $grouped_data,
-            'selected_periode' => $periode,
-            'role' => $role,
+            'selected_periode' => $selected_periode,
+            'renstra_data' => $renstra_data,
+            'rpjmd_data' => $rpjmd_data,
+            'iku_data' => $iku_data,
         ]);
     }
-    public function tambah($indikatorId = null)
+
+    /* =========================================================
+     * TAMBAH IKU
+     * route contoh:
+     *  GET  adminkab/iku/tambah/(:num)?mode=opd|kabupaten
+     * =======================================================*/
+    public function tambah($indikatorId)
     {
-        $session = session();
-        $role = $session->get('role');
-        $opdId = $session->get('opd_id');
+        $mode = $this->request->getGet('mode') ?: 'opd'; // opd | kabupaten
+        $indikatorId = (int) $indikatorId;
 
-        // ✅ Cek login — hanya admin_opd wajib punya opd_id
-        if (empty($opdId) && $role !== 'admin_kab') {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
+        if ($mode === 'kabupaten') {
+            // indikator RPJMD
+            $indikator = $this->db->table('rpjmd_indikator_sasaran')
+                ->where('id', $indikatorId)
+                ->get()
+                ->getRowArray();
+        } else {
+            // indikator RENSTRA
+            $indikator = $this->db->table('renstra_indikator_sasaran')
+                ->where('id', $indikatorId)
+                ->get()
+                ->getRowArray();
         }
-
-        // ✅ Hanya admin_kab yang boleh akses tambah IKU kabupaten
-        if ($role !== 'admin_kab') {
-            return redirect()->back()->with('error', 'Akses ditolak. Hanya Admin Kabupaten yang dapat menambah IKU.');
-        }
-
-        // ✅ Validasi ID indikator
-        if (empty($indikatorId)) {
-            return redirect()->back()->with('error', 'ID indikator tidak valid.');
-        }
-
-        // ✅ Ambil data indikator dari tabel RPJMD
-        $indikator = $this->db->table('rpjmd_indikator_sasaran')
-            ->where('id', $indikatorId)
-            ->get()
-            ->getRowArray();
 
         if (!$indikator) {
             return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
         }
 
-        // ✅ Kirim data ke view
         return view('adminKabupaten/iku/tambah_iku', [
             'title' => 'Tambah IKU',
+            'mode' => $mode,
             'indikator' => $indikator,
-            'role' => $role,
-            'validation' => \Config\Services::validation(),
         ]);
     }
+
+
+    /* =========================================================
+     * SIMPAN IKU BARU
+     * POST adminkab/iku/save
+     * =======================================================*/
     public function save()
     {
-        try {
-            // Ambil data POST
-            $data = $this->request->getPost();
-            $session = session();
-            $opdId = $session->get('opd_id');
-            $role = $session->get('role');
+        $rx = $this->xssRule();
 
-            // Cek autentikasi
-            if (!$opdId) {
-                return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-            }
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'definisi' => 'required|string|max_length[10000]|' . $rx,
+            'rpjmd_id' => 'permit_empty|integer',
+            'renstra_id' => 'permit_empty|integer',
+        ];
 
-            // Validasi minimal field wajib
-            if (empty($data['definisi'])) {
-                throw new \Exception('Definisi IKU wajib diisi.');
-            }
+        $messages = [
+            'definisi' => [
+                'required' => 'Definisi operasional wajib diisi.',
+                'regex_match' => 'Definisi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'mode' => [
+                'regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
 
-            // Kirim data langsung ke model
-            $this->ikuModel->createCompleteIku([
-                'definisi' => $data['definisi'],
-                'rpjmd_id' => $data['rpjmd_id'] ?? null,   // isi jika admin kabupaten
-                'renstra_id' => $data['renstra_indikator_sasaran_id'] ?? null, // isi jika admin opd
-                'program_pendukung' => $data['program_pendukung'] ?? [] // array
-            ]);
-
-            // Sukses
-            session()->setFlashdata('success', 'IKU berhasil ditambahkan.');
-            // 🔁 Redirect berdasarkan role
-            return redirect()->to(base_url('adminkab/iku'));
-        } catch (\Exception $e) {
-            // Gagal
-            log_message('error', '[IKU SAVE ERROR] ' . $e->getMessage() . ' | Trace: ' . $e->getTraceAsString());
-            session()->setFlashdata('error', 'Gagal menambahkan data IKU: ' . $e->getMessage());
-            return redirect()->back()->withInput();
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
         }
-    }
-    public function edit($indikatorId = null)
-    {
-        $session = session();
-        $role = $session->get('role');
-        $opdId = $session->get('opd_id');
-        $db = \Config\Database::connect();
+        $mode = $this->request->getPost('mode') ?: 'opd';
+        $definisi = trim($this->request->getPost('definisi') ?? '');
+        $programs = $this->request->getPost('program_pendukung') ?? [];
 
-        if (empty($opdId) && $role !== 'admin_kab') {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu.');
+        if ($definisi === '') {
+            return redirect()->back()->withInput()->with('error', 'Definisi operasional wajib diisi.');
         }
 
-        if (empty($indikatorId)) {
-            return redirect()->back()->with('error', 'ID indikator tidak valid.');
-        }
+        if ($mode === 'kabupaten') {
+            $indikatorId = (int) $this->request->getPost('rpjmd_id');
 
-        // ✅ Ambil data indikator sesuai role
-        if ($role === 'admin_kab') {
-            // Coba ambil dari renstra jika rpjmd kosong
-            $indikator = $db->table('rpjmd_indikator_sasaran')->where('id', $indikatorId)->get()->getRowArray();
-
-            // Jika tidak ditemukan di RPJMD, fallback ke Renstra
-            if (!$indikator) {
-                $indikator = $db->table('renstra_indikator_sasaran')->where('id', $indikatorId)->get()->getRowArray();
+            if (!$indikatorId) {
+                return redirect()->back()->with('error', 'Indikator RPJMD tidak valid.');
             }
+
+            $data = [
+                'rpjmd_id' => $indikatorId,
+                'renstra_id' => null,
+                'definisi' => $definisi,
+                'status' => 'belum',
+                'program_pendukung' => $programs,
+            ];
         } else {
-            $indikator = $db->table('renstra_indikator_sasaran')->where('id', $indikatorId)->get()->getRowArray();
+            $indikatorId = (int) $this->request->getPost('renstra_id');
+
+            if (!$indikatorId) {
+                return redirect()->back()->with('error', 'Indikator RENSTRA tidak valid.');
+            }
+
+            $data = [
+                'renstra_id' => $indikatorId,
+                'rpjmd_id' => null,
+                'definisi' => $definisi,
+                'status' => 'belum',
+                'program_pendukung' => $programs,
+            ];
         }
 
+        $this->ikuModel->createCompleteIku($data);
+
+        return redirect()->to(base_url('adminkab/iku?mode=' . $mode))
+            ->with('success', 'IKU berhasil disimpan.');
+    }
+
+
+    /* =========================================================
+     * EDIT IKU
+     * route:
+     *  GET adminkab/iku/edit/(:num)?mode=opd|kabupaten
+     * $indikatorId = id indikator renstra / rpjmd
+     * =======================================================*/
+    public function edit($indikatorId)
+    {
+        $request = service('request');
+        $mode = $request->getGet('mode') ?: 'opd';
+
+        $indikator = $this->getIndikatorById((int) $indikatorId, $mode);
         if (!$indikator) {
-            return redirect()->back()->with('error', 'Indikator tidak ditemukan di data RPJMD maupun Renstra.');
+            session()->setFlashdata('error', 'Indikator tidak ditemukan.');
+            return redirect()->to(base_url('adminkab/iku'));
         }
-        // dd($indikator);
-        // Ambil data IKU
-        $ikuData = $this->ikuModel->getIkuDetail($indikatorId, $role);
-        // dd($ikuData);
+
+        // ambil data IKU terkait indikator ini
+        $role = ($mode === 'kabupaten') ? 'admin_kab' : 'admin_opd';
+        $iku_data = $this->ikuModel->getIkuDetail((int) $indikatorId, $role);
+
         return view('adminKabupaten/iku/edit_iku', [
             'title' => 'Edit IKU',
             'indikator' => $indikator,
-            'iku_data' => $ikuData,
+            'iku_data' => $iku_data,
+            'mode' => $mode,
             'role' => $role,
-            'validation' => \Config\Services::validation(),
         ]);
     }
-    /**
-     * 📝 Update IKU
-     */
+
+    /* =========================================================
+     * UPDATE IKU
+     * POST adminkab/iku/update
+     * =======================================================*/
     public function update()
     {
-        $session = session();
-        $role = $session->get('role');
-        $opdId = $session->get('opd_id');
+        $request = service('request');
+        $rx = $this->xssRule();
 
-        if (empty($opdId) && $role !== 'admin_kab') {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        // ============================
+        // VALIDASI (ANTI XSS/SCRIPT)
+        // ============================
+        $rules = [
+            'iku_id' => 'required|integer',
+            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
+            'definisi' => 'required|string|max_length[10000]|' . $rx,
+
+            // id indikator (opsional)
+            'renstra_indikator_sasaran_id' => 'permit_empty|integer',
+            'rpjmd_id' => 'permit_empty|integer',
+        ];
+        $messages = [
+            'definisi' => [
+                'required' => 'Definisi dan ID IKU wajib diisi.',
+                'regex_match' => 'Definisi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'mode' => [
+                'regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' ', $this->validator->getErrors()));
         }
+        $ikuId = (int) $request->getPost('iku_id');
+        $definisi = trim($request->getPost('definisi') ?? '');
+        $renstraId = $request->getPost('renstra_indikator_sasaran_id');
+        $rpjmdId = $request->getPost('rpjmd_id');   // kalau nanti kamu tambahkan hidden ini di edit Kab
+        $mode = $request->getPost('mode') ?? 'opd';
 
-        $data = $this->request->getPost();
-        $ikuId = $data['iku_id'] ?? null;
-
-        if (!$ikuId) {
-            session()->setFlashdata('error', 'ID IKU tidak ditemukan');
+        if ($definisi === '' || !$ikuId) {
+            session()->setFlashdata('error', 'Definisi dan ID IKU wajib diisi.');
             return redirect()->back()->withInput();
         }
 
-        $this->db->transStart();
+        $dataUpdate = [
+            'definisi' => $definisi,
+        ];
+        if (!empty($renstraId)) {
+            $dataUpdate['renstra_id'] = $renstraId;
+        }
+        if (!empty($rpjmdId)) {
+            $dataUpdate['rpjmd_id'] = $rpjmdId;
+        }
 
         try {
-            // Update definisi
-            $updateData = [
-                'definisi' => trim($data['definisi'] ?? ''),
-                // 'updated_at' => date('Y-m-d H:i:s'),
-            ];
-            $this->ikuModel->updateIku($ikuId, $updateData);
+            // update data utama IKU
+            $this->ikuModel->updateIku($ikuId, $dataUpdate);
 
-            // Update program pendukung
-            $programs = $data['program_pendukung'] ?? [];
-            $programIds = $data['program_id'] ?? [];
+            // update program pendukung
+            $programs = $request->getPost('program_pendukung') ?? [];
+            $programIds = $request->getPost('program_id') ?? [];
             $this->ikuModel->updateProgramPendukung($ikuId, $programs, $programIds);
 
-            $this->db->transComplete();
-
-            if ($this->db->transStatus() === false) {
-                throw new \Exception('Transaksi gagal.');
-            }
-
-            session()->setFlashdata('success', 'Data IKU berhasil diperbarui.');
+            session()->setFlashdata('success', 'IKU berhasil diperbarui.');
         } catch (\Throwable $e) {
-            $this->db->transRollback();
-            session()->setFlashdata('error', 'Gagal menyimpan data: ' . $e->getMessage());
+            session()->setFlashdata('error', 'Gagal mengupdate IKU: ' . $e->getMessage());
+        }
+
+        return redirect()->to(base_url('adminkab/iku?mode=' . $mode));
+    }
+
+    /* =========================================================
+     * UBAH STATUS IKU (BELUM <-> TERCAPAI)
+     * route: GET adminkab/iku/change_status/(:num)
+     * $id = ID IKU
+     * =======================================================*/
+    public function change_status($indikatorId)
+    {
+        $mode = $this->request->getGet('mode') ?: 'opd';
+        $indikatorId = (int) $indikatorId;
+
+        $builder = $this->db->table('iku');
+
+        if ($mode === 'kabupaten') {
+            $builder->where('rpjmd_id', $indikatorId);
+        } else {
+            $builder->where('renstra_id', $indikatorId);
+        }
+
+        $iku = $builder->get()->getRowArray();
+
+        if (!$iku) {
+            return redirect()->back()->with('error', 'IKU belum dibuat untuk indikator ini.');
+        }
+
+        $currentStatus = strtolower($iku['status'] ?? 'belum');
+        $newStatus = ($currentStatus === 'tercapai') ? 'belum' : 'tercapai';
+
+        // pakai helper updateIku yang sudah ada di model
+        $this->ikuModel->updateIku($iku['id'], ['status' => $newStatus]);
+
+        return redirect()->to(base_url('adminkab/iku?mode=' . $mode))
+            ->with('success', 'Status IKU berhasil diubah.');
+    }
+
+
+    /* =========================================================
+     * HAPUS IKU
+     * route: POST /adminkab/iku/delete/(:num)
+     * =======================================================*/
+    public function delete($id)
+    {
+        try {
+            $this->ikuModel->deleteIkuComplete((int) $id);
+            session()->setFlashdata('success', 'IKU berhasil dihapus.');
+        } catch (\Throwable $e) {
+            session()->setFlashdata('error', 'Gagal menghapus IKU: ' . $e->getMessage());
         }
 
         return redirect()->to(base_url('adminkab/iku'));
+    }
+
+    /* =========================================================
+     * HELPER PRIVATE – AMBIL DATA INDIKATOR
+     * =======================================================*/
+    protected function getIndikatorById(int $indikatorId, string $mode = 'opd'): ?array
+    {
+        if ($mode === 'kabupaten') {
+            // indikator RPJMD
+            return $this->db->table('rpjmd_indikator_sasaran')
+                ->where('id', $indikatorId)
+                ->get()
+                ->getRowArray() ?: null;
+        }
+
+        // indikator RENSTRA (default mode opd)
+        return $this->db->table('renstra_indikator_sasaran')
+            ->where('id', $indikatorId)
+            ->get()
+            ->getRowArray() ?: null;
     }
 }

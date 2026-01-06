@@ -1,84 +1,84 @@
 /**
- * PK Form Handler
- * Script untuk mengelola form dinamis PK (Sasaran, Indikator, Program) pada halaman input/edit PK.
- * - Penambahan dan penghapusan field dinamis
- * - Auto-fill NIP dan Anggaran
- * - Update nama input agar sesuai struktur array PHP
- * - Format Rupiah
+ * PK PENGAWAS FORM HANDLER
+ * Compatible with current HTML structure
+ * SAFE for dynamic add/remove
  */
-document.addEventListener('DOMContentLoaded', function() {
-    // Pastikan updateFormNames dijalankan sebelum submit form
-    const pkForm = document.getElementById('pk-form');
-    if (pkForm) {
-        pkForm.addEventListener('submit', function(e) {
-            updateFormNames();
-        });
-    }
-    /**
- * Helper: Update semua nama input agar sesuai struktur array PHP
- */
-function updateFormNames() {
-    // Sasaran dan Indikator
-    document.querySelectorAll('.sasaran-container .sasaran-item').forEach((sasaranItem, sasaranIndex) => {
-        const sasaranTextarea = sasaranItem.querySelector('textarea[name*="[sasaran]"]');
-        if (sasaranTextarea) {
-            sasaranTextarea.name = `sasaran_pk[${sasaranIndex}][sasaran]`;
-        }
-        
-        const indikatorItems = sasaranItem.querySelectorAll('.indikator-item');
-        indikatorItems.forEach((indikator, indikatorIndex) => {
-            // Update input indikator
-            const indikatorInput = indikator.querySelector('input[name*="[indikator]"]');
-            const targetInput = indikator.querySelector('input[name*="[target]"]');
-            const satuanSelect = indikator.querySelector('select[name*="[id_satuan]"]');
-            const jenisSelect = indikator.querySelector('select[name*="[jenis_indikator]"]');
-            
-            if (indikatorInput) {
-                indikatorInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][indikator]`;
-            }
-            if (targetInput) {
-                targetInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][target]`;
-            }
-            if (satuanSelect) {
-                satuanSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][id_satuan]`;
-            }
-            if (jenisSelect) {
-                jenisSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][jenis_indikator]`;
-            }
-            
-            // Update program untuk setiap indikator
-            const programItems = indikator.querySelectorAll('.program-item');
-            programItems.forEach((program, programIndex) => {
-                const programSelect = program.querySelector('select[name*="[program_id]"]');
-                const anggaranInput = program.querySelector('input[name*="[anggaran]"]');
-                
-                if (programSelect) {
-                    programSelect.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][program][${programIndex}][program_id]`;
-                }
-                if (anggaranInput) {
-                    anggaranInput.name = `sasaran_pk[${sasaranIndex}][indikator][${indikatorIndex}][program][${programIndex}][anggaran]`;
-                }
-            });
 
-            // Update subkegiatan untuk setiap kegiatan
-            programItems.forEach((program, programIndex) => {
-                const kegiatanItems = program.querySelectorAll('.kegiatan-item');
-                kegiatanItems.forEach((kegiatan, kegiatanIndex) => {
-                    const subItems = kegiatan.querySelectorAll('.subkeg-item');
-                    subItems.forEach((sub, subIndex) => {
-                        const subSelect = sub.querySelector('select[name*="[subkegiatan_id]"]');
-                        if (subSelect) {
-                            subSelect.name =
-                                `sasaran_pk[${sasaranIndex}]`
-                                + `[indikator][${indikatorIndex}]`
-                                + `[program][${programIndex}]`
-                                + `[kegiatan][${kegiatanIndex}]`
-                                + `[subkegiatan][${subIndex}][subkegiatan_id]`;
-                        }
+(function () {
+
+    /* ===============================
+     * 1. UPDATE NAME ATTRIBUTES
+     * =============================== */
+    function updateFormNames() {
+
+        document.querySelectorAll('.sasaran-container .sasaran-item')
+            .forEach((sasaranItem, sIdx) => {
+
+                const sasaranTextarea = sasaranItem.querySelector('textarea');
+                if (sasaranTextarea) {
+                    sasaranTextarea.name = `sasaran_pk[${sIdx}][sasaran]`;
+                }
+
+                sasaranItem.querySelectorAll('.indikator-item')
+                    .forEach((indikatorItem, iIdx) => {
+
+                        indikatorItem.querySelectorAll('input, select')
+                            .forEach(el => {
+
+                                if (el.classList.contains('indikator-input')) {
+                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][indikator]`;
+                                }
+
+                                if (el.classList.contains('target-input')) {
+                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][target]`;
+                                }
+
+                                if (el.classList.contains('satuan-select')) {
+                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][id_satuan]`;
+                                }
+
+                                if (el.classList.contains('jenis-indikator-select')) {
+                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][jenis_indikator]`;
+                                }
+                            });
+
+                        indikatorItem.querySelectorAll('.kegiatan-item')
+                            .forEach((kegiatanItem, kIdx) => {
+
+                                const programHidden = kegiatanItem.querySelector('.program-id-hidden');
+                                if (programHidden) {
+                                    programHidden.name =
+                                        `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][program_id]`;
+                                }
+
+                                const kegiatanSelect = kegiatanItem.querySelector('.kegiatan-select');
+                                if (kegiatanSelect) {
+                                    kegiatanSelect.name =
+                                        `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][0][kegiatan_id]`;
+                                }
+
+                                kegiatanItem.querySelectorAll('.subkeg-item')
+                                    .forEach((subItem, subIdx) => {
+
+                                        const subSelect = subItem.querySelector('.subkeg-select');
+                                        if (subSelect) {
+                                            subSelect.name =
+                                                `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][0][subkegiatan][${subIdx}][subkegiatan_id]`;
+                                        }
+                                    });
+                            });
                     });
-                });
             });
-        });
+    }
+
+    /* ===============================
+     * 2. SET PROGRAM ID FROM KEGIATAN
+     * =============================== */
+    $(document).on('change', '.kegiatan-select', function () {
+        const programId = $(this).find(':selected').data('program') || '';
+        $(this).closest('.kegiatan-item')
+            .find('.program-id-hidden')
+            .val(programId);
     });
 }
     /**
@@ -434,133 +434,65 @@ function updateFormNames() {
         }
     });
 
-    /**
-     * Event Delegation: Hapus Sasaran, Indikator, Program, kegiatan
-     * @event click .remove-sasaran, .remove-indikator, .remove-program, .remove-kegiatan
-     */
-    document.addEventListener('click', function(e) {
-        // Hapus Sasaran
-        if (e.target.classList.contains('remove-sasaran') || e.target.closest('.remove-sasaran')) {
-            const sasaranContainer = document.querySelector('.sasaran-container');
-            if (sasaranContainer.children.length > 1) {
-                if (confirm('Yakin ingin menghapus sasaran ini?')) {
-                    e.target.closest('.sasaran-item').remove();
-                    updateFormNames();
-                }
-            } else {
-                alert('Minimal harus ada 1 sasaran!');
-            }
-        }
-        // Hapus Indikator
-        if (e.target.classList.contains('remove-indikator') || e.target.closest('.remove-indikator')) {
-            const indikatorContainer = e.target.closest('.indikator-container');
-            if (indikatorContainer.children.length > 1) {
-                if (confirm('Yakin ingin menghapus indikator ini?')) {
-                    e.target.closest('.indikator-item').remove();
-                    updateFormNames();
-                }
-            } else {
-                alert('Minimal harus ada 1 indikator!');
-            }
-        }
-        
-        // Hapus Kegiatan pada setiap indikator
-        if (e.target.classList.contains('remove-kegiatan') || e.target.closest('.remove-kegiatan')) {
-            const indikatorItem = e.target.closest('.indikator-item');
-            if (!indikatorItem) return;
-            const programContainer = indikatorItem.querySelector('.kegiatan-container');
-            if (!programContainer) return;
-            const programItems = programContainer.querySelectorAll('.kegiatan-item');
-            if (programItems.length > 1) {
-                if (confirm('Yakin ingin menghapus kegiatan ini?')) {
-                    e.target.closest('.kegiatan-item').remove();
-                    updateFormNames();
-                }
-            } else {
-                // Jika hanya satu, kosongkan saja
-                const firstProgram = programContainer.querySelector('.kegiatan-item');
-                if (firstProgram) {
-                    firstProgram.querySelectorAll('input, select').forEach(el => {
-                        if (el.tagName === 'INPUT') el.value = '';
-                        if (el.tagName === 'SELECT') el.selectedIndex = 0;
-                    });
-                }
-            }
-        }
+    $(document).on(
+        'click',
+        '.remove-sasaran, .remove-indikator, .remove-kegiatan, .remove-subkeg',
+        function () {
 
-        // Hapus subkegiatan
-        if (e.target.classList.contains('remove-subkeg') || e.target.closest('.remove-subkeg')) {
-            const subContainer = e.target.closest('.subkeg-container');
-            const subItem = e.target.closest('.subkeg-item');
+            const btn = $(this);
 
-            if (subContainer.querySelectorAll('.subkeg-item').length > 1) {
-                subItem.remove();
+            let item = null;
+            let selector = null;
+
+            if (btn.hasClass('remove-sasaran')) {
+                item = btn.closest('.sasaran-item');
+                selector = '.sasaran-item';
+            }
+
+            if (btn.hasClass('remove-indikator')) {
+                item = btn.closest('.indikator-item');
+                selector = '.indikator-item';
+            }
+
+            if (btn.hasClass('remove-kegiatan')) {
+                item = btn.closest('.kegiatan-item');
+                selector = '.kegiatan-item';
+            }
+
+            if (btn.hasClass('remove-subkeg')) {
+                item = btn.closest('.subkeg-item');
+                selector = '.subkeg-item';
+            }
+
+            if (!item || !selector) return;
+
+            const siblings = item.siblings(selector);
+
+            // jika tinggal satu → reset saja
+            if (siblings.length === 0) {
+                item.find('input, textarea').val('');
+                item.find('select').prop('selectedIndex', 0);
+                return;
+            }
+
+            if (confirm('Yakin ingin menghapus data ini?')) {
+                item.remove();
                 updateFormNames();
-            } else {
-                // Jika hanya satu subkegiatan, kosongkan nilai
-                subItem.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
             }
         }
+    );
 
 
-    });
-    // Tambah dan hapus program pada setiap indikator
-    document.addEventListener('DOMContentLoaded', function () {
-    // Handler tambah program
-    document.body.addEventListener('click', function (e) {
-        if (e.target.classList.contains('add-kegiatan') || e.target.closest('.add-kegiatan')) {
-        const indikatorItem = e.target.closest('.indikator-item');
-        if (!indikatorItem) return;
-        
-        const kegiatanContainer = indikatorItem.querySelector('.kegiatan-container');
-        if (!kegiatanContainer) return;
-        
-        // Clone program item pertama sebagai template
-        const template = kegiatanContainer.querySelector('.kegiatan-item').cloneNode(true);
-        
-        // Kosongkan nilai
-        template.querySelector('select').selectedIndex = 0;
-        template.querySelector('input').value = '';
-        
-        // Tambahkan program baru
-        kegiatanContainer.appendChild(template);
-        
-        // Update nama form
+    /* ===============================
+     * 5. SUBMIT SAFETY
+     * =============================== */
+    $('#pk-form').on('submit', function () {
         updateFormNames();
-    }
-        // Handler hapus kegiatan
-        if (e.target.classList.contains('remove-kegiatan') || e.target.closest('.remove-kegiatan')) {
-        const kegiatanItem = e.target.closest('.kegiatan-item');
-        const kegiatanContainer = kegiatanItem.closest('.kegiatan-container');
-        
-        if (kegiatanContainer.querySelectorAll('.kegiatan-item').length > 1) {
-            kegiatanItem.remove();
-            updateFormNames();
-        } else {
-            // Jika hanya satu kegiatan, kosongkan nilai
-            kegiatanItem.querySelector('select').selectedIndex = 0;
-            kegiatanItem.querySelector('input').value = '';
-        }
-    }
     });
-});
 
-    /**
-     * Auto-fill NIP saat memilih pegawai
-     * @event change .pegawai-select
-     */
-    const pegawaiSelects = document.querySelectorAll('.pegawai-select');
-    pegawaiSelects.forEach(function(select) {
-        select.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const nip = selectedOption.getAttribute('data-nip');
-            const targetName = this.getAttribute('data-target');
-            const nipInput = document.querySelector(`input[name="${targetName}"]`);
-            if (nipInput) {
-                nipInput.value = nip || '';
-            }
-        });
-    });
+    // AUTO-FILL NIP (EVENT DELEGATION - WAJIB UNTUK ELEMEN DINAMIS)
+document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('pegawai-select')) {
 
         /**
          * Auto-fill anggaran saat memilih program (event delegation, per program-item)
@@ -592,14 +524,15 @@ function updateFormNames() {
     }
     });
 
+        const nip = selectedOption.getAttribute('data-nip') || '';
+        const targetName = e.target.getAttribute('data-target');
 
+        if (!targetName) return;
 
-    /**
-     * Helper: Format angka ke Rupiah
-     * @param {string|number} angka
-     * @returns {string}
-     */
-    function formatRupiah(angka) {
-        return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+        const nipInput = document.querySelector(`input[name="${targetName}"]`);
+        if (nipInput) {
+            nipInput.value = nip;
+        }
     }
-    });
+});
+})();

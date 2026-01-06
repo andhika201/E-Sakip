@@ -317,9 +317,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        // dd($post['sasaran_pk'][0]['indikator'][0]['program'][0]);
-        // dd($saveData);
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -616,17 +614,15 @@ class PkController extends BaseController
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
 
         $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
-        
+
         if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $program ="program_kegiatan";
+            $program = "program_kegiatan";
         } elseif ($jenis === 'administrator') {
-            $program ="kegiatan";
+            $program = "kegiatan";
         } elseif ($jenis === 'pengawas') {
             $program = "sub_kegiatan";
-        } 
-        
-        
-        
+        }
+
         $tahun = date('Y', strtotime($data['tanggal']));
         $viewPath = 'adminOpd/pk/cetak';
         $viewPathL = 'adminOpd/pk/cetak-L';
@@ -634,7 +630,7 @@ class PkController extends BaseController
         $html_2 = view($viewPathL, [
             'data' => $data,
             'program' => $program,
-            
+
         ]);
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
@@ -652,75 +648,3 @@ class PkController extends BaseController
         return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
     }
 }
-
-// public function capaian_pk($jenis)
-// {
-//     $session = session();
-//     $opdId = $session->get('opd_id');
-
-//     if (!$opdId)
-//         return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-//     $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis);
-//     // If multiple, pick the first (or null if none)
-
-//     $currentOpd = $this->opdModel->find($opdId);
-
-//     if (is_array($pkData) && count($pkData) > 0) {
-//         $pkData = $pkData[0];
-//     } else {
-//         $pkData = null;
-//     }
-
-//     return view('adminOpd/pk/capaian_pk', [
-//         'pk_data' => $pkData,
-//         'current_opd' => $currentOpd,
-//         'jenis' => $jenis,
-//     ]);
-
-// }
-
-// public function edit_capaian($jenis, $id)
-// {
-//     $session = session();
-//     $opdId = $session->get('opd_id');
-
-//     if (!$opdId)
-//         return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-//     $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis);
-
-//     $pk = $this->pkModel->getPkById($id);
-//     // If multiple, pick the first (or null if none)
-
-//     $currentOpd = $this->opdModel->find($opdId);
-
-//     if (is_array($pkData) && count($pkData) > 0) {
-//         $pkData = $pkData[0];
-//     } else {
-//         $pkData = null;
-//     }
-
-//     return view('adminopd/pk/edit_capaian', [
-//         'pk' => $pk,
-//         'pk_data' => $pkData,
-//         'current_opd' => $currentOpd,
-//         'jenis' => $jenis,
-//     ]);
-// }
-
-/**
- * Update capaian indikator dari form edit_capaian
- */
-// public function update_capaian($jenis, $pk_id)
-// {
-//     $capaianArr = $this->request->getPost('capaian'); // array: [id_indikator => nilai_capaian]
-//     if (!$capaianArr || !is_array($capaianArr)) {
-//         return redirect()->back()->with('error', 'Data capaian tidak valid');
-//     }
-//     $db = \Config\Database::connect();
-//     foreach ($capaianArr as $indikatorId => $nilaiCapaian) {
-//         $db->table('pk_indikator')->where('id', $indikatorId)->update([
-//             'capaian' => $nilaiCapaian
-//         ]);
-//     }
-//     return redirect()->to('adminkab/capaian_pk/' . $jenis)->with('success', 'Capaian berhasil disimpan');
-// }

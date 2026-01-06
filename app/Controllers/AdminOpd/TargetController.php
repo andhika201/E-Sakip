@@ -17,38 +17,78 @@ class TargetController extends BaseController
         $this->db = Database::connect();
     }
 
+    /**
+     * INDEX: list target rencana
+     * - admin_opd: data RENSTRA untuk OPD sendiri
+     * - admin_kab:
+     *    - mode=opd       -> RENSTRA per OPD (filter OPD)
+     *    - mode=kabupaten -> RPJMD (rpjmd_target_id)
+     */
     public function index()
     {
-        $tahun = $this->request->getGet('tahun');
         $session = session();
         $role = (string) ($session->get('role') ?? '');
-        $myOpdId = (int) ($session->get('opd_id') ?? 0);
 
-        // Filter OPD hanya untuk admin_kab
-        $opdFilter = null;
+        $tahun = $this->request->getGet('tahun');
+
+        // kalau belum ada di query string => pakai tahun sekarang
+        if ($tahun === null || $tahun === '') {
+            $tahun = date('Y');
+        }
+
+        $mode = $this->request->getGet('mode') ?? 'opd';
+
+
         $opdList = [];
+        $opdFilter = null;
+        $grouped = [];
 
+        // ===================== ADMIN KABUPATEN =====================
         if ($role === 'admin_kab') {
-            $opdFilter = $this->request->getGet('opd_id');
-            $opdFilter = $opdFilter !== null ? (int) $opdFilter : null;
 
+            // Ambil daftar OPD untuk filter (mode opd)
             $opdList = $this->db->table('opd')
                 ->select('id, nama_opd')
                 ->orderBy('nama_opd', 'ASC')
                 ->get()->getResultArray();
-        } else {
-            $opdFilter = $myOpdId ?: null;
+
+            if ($mode === 'kabupaten') {
+                // MODE KABUPATEN: pakai data RPJMD (rpjmd_target_id)
+                $raw = $this->targets->getTargetListByRpjmdKabupaten($tahun);
+            } else {
+                // MODE OPD: pakai data RENSTRA + target_rencana
+                $opdFilter = (int) ($this->request->getGet('opd_id') ?? 0);
+                if ($opdFilter <= 0) {
+                    $opdFilter = null;
+                }
+
+                $raw = $this->targets->getTargetListByRenstraAdminKab($tahun, $opdFilter);
+            }
+
+            // Group per sasaran
+            foreach ($raw as $row) {
+                $sasaran = $row['sasaran_renstra'] ?? '-';
+                $grouped[$sasaran][] = $row;
+            }
+
+            return view('adminOpd/target/index', [
+                'grouped' => $grouped,
+                'tahun' => $tahun,
+                'tahunList' => $this->targets->getAvailableYears(),
+                'role' => $role,
+                'mode' => $mode,
+                'opdList' => $opdList,
+                'opdFilter' => $opdFilter,
+            ]);
         }
 
-        // Ambil data daftar (TR di-join spesifik ke OPD terpilih)
-        $raw = $this->targets->getTargetListByRenstra($tahun, $opdFilter);
+        // ===================== ADMIN OPD ===========================
+        $myOpdId = (int) ($session->get('opd_id') ?? 0);
+        $raw = $this->targets->getTargetListByRenstra($tahun, $myOpdId);
 
-        // Grouping: Tujuan → Sasaran → (baris indikator per tahun)
-        $grouped = [];
         foreach ($raw as $row) {
-            $tujuan = $row['tujuan_rpjmd'] ?? '—';
-            $sasaran = $row['sasaran_renstra'] ?? '—';
-            $grouped[$tujuan][$sasaran][] = $row;
+            $sasaran = $row['sasaran_renstra'] ?? '-';
+            $grouped[$sasaran][] = $row;
         }
 
         return view('adminOpd/target/target', [
@@ -56,13 +96,14 @@ class TargetController extends BaseController
             'tahun' => $tahun,
             'tahunList' => $this->targets->getAvailableYears(),
             'role' => $role,
-            'opdList' => $opdList,
-            'opdFilter' => $opdFilter,
+            'mode' => 'opd',
+            'opdList' => [],
+            'opdFilter' => null,
         ]);
     }
 
     /**
-     * Tambah: gunakan ?rt={renstra_target_id} (&opd_id=... jika admin_kab)
+     * Form Tambah target RENSTRA (param ?rt=renstra_target_id)
      */
     public function tambah()
     {
@@ -97,7 +138,6 @@ class TargetController extends BaseController
         // Tentukan OPD yang dipakai untuk simpan
         $opdToUse = $sessOpd;
         if ($role === 'admin_kab' && !$opdToUse) {
-            // admin_kab tanpa opd di sesi → pakai dari filter/link
             $opdToUse = $passOpd;
         }
 
@@ -106,23 +146,30 @@ class TargetController extends BaseController
                 ->with('error', 'OPD belum dipilih.');
         }
 
-        // (opsional) Pastikan indikator memang milik OPD tersebut
+        // Pastikan indikator memang milik OPD tersebut
         if ((int) $rt['opd_id'] !== (int) $opdToUse) {
             return redirect()->to(base_url('adminopd/target'))
                 ->with('error', 'Indikator bukan milik OPD yang dipilih.');
         }
 
-        // Anti duplikat: jika (opd_id, renstra_target_id) sudah ada → arahkan ke edit
+        // Anti duplikat
         $existing = $this->targets->existsFor($opdToUse, $rtId);
         if ($existing) {
             return redirect()->to(base_url('adminopd/target/edit/' . (int) $existing['id']))
                 ->with('success', 'Data sudah ada. Silakan edit.');
         }
 
+        // (Opsional) list RPJMD target untuk admin_kab jika ingin di-link
+        $rpjmdTargets = $this->db->table('rpjmd_target')
+            ->select('id, tahun, target_tahunan')
+            ->orderBy('tahun', 'ASC')
+            ->get()->getResultArray();
+
         return view('adminOpd/target/tambah_target', [
             'role' => $role,
             'opdIdToUse' => $opdToUse,
-            'rt' => $rt, // info indikator, satuan, tahun, target
+            'rt' => $rt,
+            'rpjmdTargets' => $rpjmdTargets,
         ]);
     }
 
@@ -131,17 +178,32 @@ class TargetController extends BaseController
      */
     public function save()
     {
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
         $rules = [
             'renstra_target_id' => 'required|integer',
-            'rencana_aksi' => 'required|string',
-            'capaian' => 'permit_empty|string',
-            'target_triwulan_1' => 'permit_empty|string',
-            'target_triwulan_2' => 'permit_empty|string',
-            'target_triwulan_3' => 'permit_empty|string',
-            'target_triwulan_4' => 'permit_empty|string',
-            'penanggung_jawab' => 'permit_empty|string',
+
+            // FIX: hapus "||" jadi "|"
+            'rencana_aksi' => 'permit_empty|string|max_length[500]|' . $noScript,
+            'capaian' => 'permit_empty|string|max_length[500]|' . $noScript,
+
+            // ini numeric/integer aman dari XSS, jadi tidak perlu regex_match
+            'target_triwulan_1' => 'permit_empty|integer',
+            'target_triwulan_2' => 'permit_empty|integer',
+            'target_triwulan_3' => 'permit_empty|integer',
+            'target_triwulan_4' => 'permit_empty|integer',
+
+            // FIX: hapus "||" jadi "|"
+            'penanggung_jawab' => 'permit_empty|string|max_length[500]|' . $noScript,
+
+            'rpjmd_target_id' => 'permit_empty|integer',
         ];
-        if (!$this->validate($rules)) {
+        $messages = [
+            'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
+            'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
+            'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+        ];
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -156,6 +218,8 @@ class TargetController extends BaseController
         }
 
         $rtId = (int) $this->request->getPost('renstra_target_id');
+        $rpjmdTargetId = (int) ($this->request->getPost('rpjmd_target_id') ?? 0);
+
         if ($opdId <= 0 || $rtId <= 0) {
             return redirect()->to(base_url('adminopd/target'))
                 ->with('error', 'OPD/Target Renstra tidak valid.');
@@ -174,7 +238,7 @@ class TargetController extends BaseController
                 ->with('error', 'Target Renstra/OPD tidak cocok.');
         }
 
-        // Anti duplikat
+        // Anti duplikat RENSTRA
         if ($this->targets->existsFor($opdId, $rtId)) {
             return redirect()->to(base_url('adminopd/target'))
                 ->with('error', 'Data sudah ada untuk OPD & tahun ini.');
@@ -192,66 +256,64 @@ class TargetController extends BaseController
             'penanggung_jawab' => $this->request->getPost('penanggung_jawab'),
         ];
 
+        // Jika admin_kab mengisi rpjmd_target_id → simpan juga
+        if ($rpjmdTargetId > 0) {
+            $data['rpjmd_target_id'] = $rpjmdTargetId;
+        }
+
         $this->targets->insert($data);
 
         return redirect()->to(base_url('adminopd/target'))
             ->with('success', 'Target rencana berhasil ditambahkan.');
     }
 
+    /**
+     * Form Edit target_rencana
+     */
     public function edit($id)
     {
         $id = (int) $id;
 
-        // Ambil target_rencana + JOIN ke renstra_target → indikator renstra → sasaran (untuk info & validasi OPD)
-        $detail = $this->db->table('target_rencana tr')
-            ->select('
-            tr.*,
-            rt.id   AS renstra_target_id,
-            rt.tahun,
-            rt.target AS indikator_target,
-
-            ris.indikator_sasaran,
-            ris.satuan,
-
-            rs.sasaran AS sasaran_renstra,
-            rs.opd_id  AS pemilik_opd
-        ')
-            ->join('renstra_target rt', 'rt.id = tr.renstra_target_id', 'left')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
-            ->where('tr.id', $id)
-            ->get()
-            ->getRowArray();
+        // Ambil target_rencana + info indikator
+        $detail = $this->targets->getTargetDetail($id);
 
         if (!$detail) {
             return redirect()->to(base_url('adminopd/target'))
                 ->with('error', 'Data tidak ditemukan.');
         }
 
-        // (Opsional) validasi akses OPD: selain admin_kab hanya boleh edit milik OPD sendiri
         $session = session();
         $role = (string) ($session->get('role') ?? '');
         $myOpdId = (int) ($session->get('opd_id') ?? 0);
 
+        // Validasi akses OPD (selain admin_kab)
         if ($role !== 'admin_kab' && $myOpdId > 0) {
-            if ((int) $detail['opd_id'] !== $myOpdId) {    // kolom tr.opd_id
+            if ((int) $detail['opd_id'] !== $myOpdId) {
                 return redirect()->to(base_url('adminopd/target'))
                     ->with('error', 'Anda tidak berhak mengubah data ini.');
             }
         }
 
-        // Kirim ke view edit (gunakan $detail untuk semua informasi yang dibutuhkan)
+        // List RPJMD target (opsional untuk admin_kab)
+        $rpjmdTargets = $this->db->table('rpjmd_target')
+            ->select('id, tahun, target_tahunan')
+            ->orderBy('tahun', 'ASC')
+            ->get()->getResultArray();
+
         return view('adminOpd/target/edit_target', [
-            'detail' => $detail,   // berisi kolom tr.* + info indikator (tahun/target/satuan/nama indikator)
+            'detail' => $detail,
+            'role' => $role,
+            'rpjmdTargets' => $rpjmdTargets,
         ]);
     }
 
-
+    /**
+     * Update target_rencana
+     */
     public function update($id)
     {
         $id = (int) $id;
 
-        // Ambil dulu untuk validasi kepemilikan/eksistensi
         $row = $this->db->table('target_rencana')
             ->where('id', $id)
             ->get()
@@ -262,7 +324,6 @@ class TargetController extends BaseController
                 ->with('error', 'Data tidak ditemukan.');
         }
 
-        // (Opsional) validasi akses OPD
         $session = session();
         $role = (string) ($session->get('role') ?? '');
         $myOpdId = (int) ($session->get('opd_id') ?? 0);
@@ -274,7 +335,45 @@ class TargetController extends BaseController
             }
         }
 
-        // Validasi & ambil input
+
+        // ============================
+        // VALIDASI ANTI XSS/SCRIPT
+        // ============================
+        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+
+        $rules = [
+            'rencana_aksi' => 'required|string|max_length[5000]|' . $noScript,
+            'capaian' => 'permit_empty|string|max_length[5000]|' . $noScript,
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $noScript,
+
+            'target_triwulan_1' => 'permit_empty|integer',
+            'target_triwulan_2' => 'permit_empty|integer',
+            'target_triwulan_3' => 'permit_empty|integer',
+            'target_triwulan_4' => 'permit_empty|integer',
+        ];
+
+        if ($role === 'admin_kab') {
+            $rules['rpjmd_target_id'] = 'permit_empty|integer';
+        }
+
+        $messages = [
+            'rencana_aksi' => [
+                'regex_match' => 'Rencana aksi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'capaian' => [
+                'regex_match' => 'Capaian terdeteksi mengandung script / input berbahaya.',
+            ],
+            'penanggung_jawab' => [
+                'regex_match' => 'Penanggung jawab terdeteksi mengandung script / input berbahaya.',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
         $data = [
             'rencana_aksi' => $this->request->getPost('rencana_aksi'),
             'capaian' => $this->request->getPost('capaian'),
@@ -284,6 +383,12 @@ class TargetController extends BaseController
             'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
             'penanggung_jawab' => $this->request->getPost('penanggung_jawab'),
         ];
+
+        // Jika admin_kab boleh ubah link RPJMD
+        if ($role === 'admin_kab') {
+            $rpjmdTargetId = (int) ($this->request->getPost('rpjmd_target_id') ?? 0);
+            $data['rpjmd_target_id'] = $rpjmdTargetId > 0 ? $rpjmdTargetId : null;
+        }
 
         $this->targets->update($id, $data);
 

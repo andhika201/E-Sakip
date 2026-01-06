@@ -614,7 +614,6 @@
                                                 ?>`;
     </script>
 
-    <!-- Script untuk interaksi form -->
     <script>
         $(document).on('change', '.kegiatan-dropdown', function() {
             const programId = $(this).find(":selected").data("program");
@@ -684,6 +683,7 @@
             updateSelectedIndikator();
         });
     </script>
+
 
     <?php if ($jenis === 'jpt'): ?>
         <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>

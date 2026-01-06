@@ -39,8 +39,20 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
         $routes->get('pk_bupati/cetak', 'AdminKab\PkBupatiController::view_cetak');
 
-        $routes->get('dashboard', 'AdminKabupatenController::index');
-        $routes->post('getDashboardData', 'AdminKabupatenController::getDashboardData');
+        $routes->get('dashboard', 'AdminKabupatenController::dashboard');
+        $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData');
+
+        // Lakip
+        $routes->get('lakip', 'AdminKab\LakipController::index');
+        $routes->get('lakip/tambah/(:num)', 'AdminKab\LakipController::tambah/$1');
+        $routes->post('lakip/save', 'AdminKab\LakipController::save');
+        $routes->get('lakip/edit/(:num)', 'AdminKab\LakipController::edit/$1');
+        $routes->post('lakip/update/', 'AdminKab\LakipController::update');
+        $routes->get('lakip/download/(:num)', 'AdminKab\LakipController::download/$1');
+        $routes->post('lakip/update-status', 'AdminKab\LakipController::updateStatus');
+        $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
+        // ubah status lakip
+        $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
 
         // iku
         $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');
@@ -48,6 +60,8 @@ $routes->group(
         $routes->get('iku/tambah/(:num)', 'AdminKab\IkuController::tambah/$1');
         $routes->post('iku/save', 'AdminKab\IkuController::save');
         $routes->post('iku/update', 'AdminKab\IkuController::update');
+        // route untuk ubah status IKU
+        $routes->get('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
 
         // RPJMD
         $routes->get('rpjmd', 'RpjmdController::index');
@@ -67,19 +81,28 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
-        // target
-        $routes->get('target', 'TargetController::index');
-        $routes->get('target/tambah', 'TargetController::tambah');
-        $routes->post('target/save', 'TargetController::save');
-        $routes->get('target/edit/(:num)', 'TargetController::edit/$1');
-        $routes->post('target/update/(:num)', 'TargetController::update/$1');
+        // rkt
+        $routes->get('rkt', 'AdminKab\RktController::index');
+        $routes->get('rkt/tambah/(:num)', 'AdminKab\RktController::tambah/$1');
+        $routes->get('rkt/edit/(:num)', 'AdminKab\RktController::edit/$1');
+        $routes->post('rkt/save', 'AdminKab\RktController::save');
+        $routes->post('rkt/update', 'AdminKab\RktController::update');
+        $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminKab\RktController::delete/$1');
+        $routes->post('rkt/update-status', 'AdminKab\RktController::updateStatus');
 
         //MONEV
-        $routes->get('monev', 'MonevController::index');
-        $routes->get('monev/tambah', 'MonevController::tambah');
-        $routes->post('monev/save', 'MonevController::save');
-        $routes->get('monev/edit/(:num)', 'MonevController::edit/$1');
-        $routes->post('monev/update/(:num)', 'MonevController::update/$1');
+        $routes->get('monev', 'AdminKab\MonevController::index');
+        $routes->get('monev/tambah', 'AdminKab\MonevController::tambah');
+        $routes->post('monev/save', 'AdminKab\MonevController::save');
+        $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
+        $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
+
+        // target
+        $routes->get('target', 'AdminKab\TargetController::index');
+        $routes->get('target/tambah', 'AdminKab\TargetController::tambah');
+        $routes->post('target/save', 'AdminKab\TargetController::save');
+        $routes->get('target/edit/(:num)', 'AdminKab\TargetController::edit/$1');
+        $routes->post('target/update/(:num)', 'AdminKab\TargetController::update/$1');
 
         // Lakip Kabupaten
         $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');
@@ -94,11 +117,12 @@ $routes->group(
         // Program PK
         $routes->get('program_pk', 'ProgramPkController::index');
         $routes->get('program_pk/tambah', 'ProgramPkController::tambah');
+        $routes->get('program_pk/import', 'ProgramPkController::import');
+        $routes->post('program_pk/import/process', 'ProgramPkController::processImport');
         $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
         $routes->post('program_pk/save', 'ProgramPkController::save');
         $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
         $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
-
         // Tentang Kami
         $routes->get('tentang_kami', 'AdminKabupatenController::tentang_kami');
         $routes->get('tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
@@ -130,13 +154,13 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
 
     // RKT
-    $routes->get('rkt', 'AdminOpd\RenjaController::index');
-    $routes->get('rkt/tambah/(:num)', 'AdminOpd\RenjaController::tambah/$1');
-    $routes->get('rkt/edit/(:num)', 'AdminOpd\RenjaController::edit/$1');
-    $routes->post('rkt/save', 'AdminOpd\RenjaController::save');
-    $routes->post('rkt/update', 'AdminOpd\RenjaController::update');
-    $routes->match(['get', 'post', 'delete'], 'renja/delete/(:num)', 'AdminOpd\RenjaController::delete/$1');
-    $routes->post('rkt/update-status', 'AdminOpd\RenjaController::updateStatus');
+    $routes->get('rkt', 'AdminOpd\RktController::index');
+    $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
+    $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
+    $routes->post('rkt/save', 'AdminOpd\RktController::save');
+    $routes->post('rkt/update', 'AdminOpd\RktController::update');
+    $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
+    $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 
     // IKU
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
@@ -145,6 +169,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
+    $routes->get('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
+
 
     // target
     $routes->get('target', 'AdminOpd\TargetController::index');
@@ -169,6 +195,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
     $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
     $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+    // ubah status lakip
+    $routes->get('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');

@@ -10,15 +10,16 @@ class MonevModel extends Model
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
+    protected $protectFields = true;
 
     protected $allowedFields = [
         'opd_id',
-        'target_rencana_id',
+        'target_rencana_id',      // SELALU mengarah ke target_rencana.id
         'capaian_triwulan_1',
         'capaian_triwulan_2',
         'capaian_triwulan_3',
         'capaian_triwulan_4',
-        'total', // DIISI MANUAL
+        'total',
     ];
 
     protected $useTimestamps = true;
@@ -26,119 +27,276 @@ class MonevModel extends Model
     protected $updatedField = 'updated_at';
 
     /**
-     * (Asal) Ambil monev + relasi, basis monev RIGHT JOIN target_rencana agar target tanpa monev tetap muncul.
-     * Tetap dipertahankan untuk kompatibilitas; gunakan yang AdminKab/AdminOpd di bawah untuk listing terbaru.
+     * Versi lama (kompatibilitas) – basis RENSTRA, semua target_rencana
+     * yang punya renstra_target_id.
      */
     public function getMonevWithRelasi(?string $tahun = null, ?int $opdId = null): array
     {
         $b = $this->db->table($this->table . ' AS m')
-            ->select('rpt.tujuan_rpjmd, rps.sasaran_rpjmd, rs.sasaran AS sasaran_renstra')
+            ->select('rs.sasaran AS sasaran_renstra')
             ->select('ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan')
-            ->select('rt.target AS indikator_target, rt.tahun AS indikator_tahun')
-            ->select('tr.id AS target_id, tr.rencana_aksi, tr.capaian, tr.target_triwulan_1, tr.target_triwulan_2, tr.target_triwulan_3, tr.target_triwulan_4, tr.penanggung_jawab')
-            ->select('m.id AS monev_id, m.opd_id AS monev_opd_id, m.capaian_triwulan_1, m.capaian_triwulan_2, m.capaian_triwulan_3, m.capaian_triwulan_4, m.total')
-            // jaga konsistensi OPD pada ON
-            ->join('target_rencana AS tr', 'tr.id = m.target_rencana_id AND (m.opd_id IS NULL OR m.opd_id = tr.opd_id)', 'right')
+            ->select('rt.id AS renstra_target_id, rt.target AS indikator_target, rt.tahun AS indikator_tahun')
+            ->select('
+                tr.id AS target_id,
+                tr.rencana_aksi,
+                tr.capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab,
+                tr.rpjmd_target_id
+            ')
+            ->select('
+                m.id AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total
+            ')
+            ->join(
+                'target_rencana AS tr',
+                'tr.id = m.target_rencana_id AND (m.opd_id IS NULL OR m.opd_id = tr.opd_id)',
+                'right'
+            )
             ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
             ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
-            ->join('rpjmd_sasaran AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
-            ->join('rpjmd_tujuan AS rpt', 'rpt.id = rps.tujuan_id', 'left');
+            ->join('opd AS o', 'o.id = tr.opd_id', 'left')
+            ->select('o.nama_opd')
+            ->where('tr.renstra_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
             $b->where('rt.tahun', $tahun);
         }
+
         if (!empty($opdId)) {
-            $b->where('rs.opd_id', (int) $opdId);
+            $b->where('tr.opd_id', (int) $opdId);
             $b->groupStart()
                 ->where('m.opd_id', (int) $opdId)
                 ->orWhere('m.opd_id IS NULL', null, false)
                 ->groupEnd();
         }
 
-        return $b->orderBy('rs.id', 'ASC')->get()->getResultArray();
-    }
-
-    /**
-     * ADMIN KAB: basis RENSTRA → LEFT JOIN Target (dikunci OPD) → LEFT JOIN Monev (dikunci OPD).
-     * Menampilkan semua RENSTRA milik OPD terpilih, meski Target/Monev belum ada.
-     */
-    public function getIndexDataAdminKab(?string $tahun = null, ?int $opdId = null): array
-    {
-        $trJoin = 'tr.renstra_target_id = rt.id';
-        if (!empty($opdId)) {
-            $trJoin .= ' AND tr.opd_id = ' . (int) $opdId;
-        }
-
-        $mJoin = 'm.target_rencana_id = tr.id';
-        if (!empty($opdId)) {
-            $mJoin .= ' AND m.opd_id = ' . (int) $opdId;
-        }
-
-        $b = $this->db->table('renstra_target AS rt')
-            ->select('rt.id AS renstra_target_id, rt.tahun AS indikator_tahun, rt.target AS indikator_target')
-            ->select('ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan')
-            ->select('rs.id AS renstra_sasaran_id, rs.sasaran AS sasaran_renstra, rs.opd_id AS opd_id')
-            ->select('rps.sasaran_rpjmd, rpt.tujuan_rpjmd')
-            ->select('tr.id AS target_id, tr.rencana_aksi, tr.capaian AS target_capaian, tr.target_triwulan_1, tr.target_triwulan_2, tr.target_triwulan_3, tr.target_triwulan_4, tr.penanggung_jawab')
-            ->select('m.id AS monev_id, m.opd_id AS monev_opd_id, m.capaian_triwulan_1, m.capaian_triwulan_2, m.capaian_triwulan_3, m.capaian_triwulan_4, m.total AS monev_total')
-            ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
-            ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
-            ->join('rpjmd_sasaran AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
-            ->join('rpjmd_tujuan AS rpt', 'rpt.id = rps.tujuan_id', 'left')
-            ->join('target_rencana AS tr', $trJoin, 'left')
-            ->join($this->table . ' AS m', $mJoin, 'left');
-
-        if (!empty($tahun)) {
-            $b->where('rt.tahun', $tahun);
-        }
-        if (!empty($opdId)) {
-            $b->where('rs.opd_id', (int) $opdId);
-        }
-
-        return $b->orderBy('rpt.id', 'ASC')
-            ->orderBy('rps.id', 'ASC')
-            ->orderBy('rs.id', 'ASC')
+        return $b->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->orderBy('rt.tahun', 'ASC')
-            ->get()->getResultArray();
+            ->get()
+            ->getResultArray();
     }
 
-    /**
-     * ADMIN OPD: basis Target Rencana OPD → LEFT JOIN Monev (opd terkunci).
-     * Menampilkan semua Target OPD meski Monev belum ada.
-     */
-    public function getIndexDataAdminOpd(?string $tahun = null, int $opdId): array
+    /* =========================================================
+     *  ADMIN KAB – MODE "OPD"  (RENSTRA)
+     * =======================================================*/
+    public function getIndexDataAdminKabModeOpd(?string $tahun = null, ?int $opdId = null): array
     {
         $b = $this->db->table('target_rencana AS tr')
-            ->select('tr.id AS target_id, tr.opd_id, tr.rencana_aksi, tr.capaian AS target_capaian, tr.target_triwulan_1, tr.target_triwulan_2, tr.target_triwulan_3, tr.target_triwulan_4, tr.penanggung_jawab')
-            ->select('rt.id AS renstra_target_id, rt.tahun AS indikator_tahun, rt.target AS indikator_target')
-            ->select('ris.id AS indikator_id, ris.indikator_sasaran, ris.satuan')
-            ->select('rs.id AS renstra_sasaran_id, rs.sasaran AS sasaran_renstra, rs.opd_id')
-            ->select('rps.sasaran_rpjmd, rpt.tujuan_rpjmd')
-            ->select('m.id AS monev_id, m.opd_id AS monev_opd_id, m.capaian_triwulan_1, m.capaian_triwulan_2, m.capaian_triwulan_3, m.capaian_triwulan_4, m.total AS monev_total')
+            ->select('
+                tr.id  AS target_id,
+                tr.opd_id,
+                tr.rencana_aksi,
+                tr.capaian AS target_capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab,
+                tr.rpjmd_target_id
+            ')
+            ->select('
+                rt.id    AS renstra_target_id,
+                rt.tahun AS indikator_tahun,
+                rt.target AS indikator_target
+            ')
+            ->select('
+                ris.id AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan
+            ')
+            ->select('
+                rs.id      AS renstra_sasaran_id,
+                rs.sasaran AS sasaran_renstra,
+                rs.opd_id
+            ')
+            ->select('
+                m.id  AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total AS monev_total
+            ')
             ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
             ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
-            ->join('rpjmd_sasaran AS rps', 'rps.id = rs.rpjmd_sasaran_id', 'left')
-            ->join('rpjmd_tujuan AS rpt', 'rpt.id = rps.tujuan_id', 'left')
-            // kunci monev pada target & OPD
-            ->join($this->table . ' AS m', 'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id', 'left')
-            ->where('tr.opd_id', (int) $opdId);
+            ->join('opd AS o', 'o.id = tr.opd_id', 'left')
+            ->select('o.nama_opd')
+            ->join(
+                $this->table . ' AS m',
+                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
+                'left'
+            )
+            ->where('tr.renstra_target_id IS NOT NULL', null, false);
 
         if (!empty($tahun)) {
             $b->where('rt.tahun', $tahun);
         }
 
-        return $b->orderBy('rpt.id', 'ASC')
-            ->orderBy('rps.id', 'ASC')
-            ->orderBy('rs.id', 'ASC')
+        if (!empty($opdId)) {
+            $b->where('tr.opd_id', (int) $opdId);
+        }
+
+        return $b->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->orderBy('rt.tahun', 'ASC')
-            ->get()->getResultArray();
+            ->orderBy('tr.id', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
-    /** Daftar tahun (dari renstra_target) */
+    /* =========================================================
+     *  ADMIN KAB – MODE "KABUPATEN" (RPJMD)
+     *  opd_id di monev = NULL
+     * =======================================================*/
+    public function getIndexDataAdminKabModeKab(?string $tahun = null): array
+    {
+        $b = $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.id  AS target_id,
+                tr.opd_id,
+                tr.rencana_aksi,
+                tr.capaian AS target_capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab,
+                tr.rpjmd_target_id
+            ')
+            // RPJMD target (tahun + target tahunan)
+            ->select('
+                rpt.id    AS rpjmd_target_id,
+                rpt.tahun AS indikator_tahun,
+                rpt.target_tahunan AS indikator_target
+            ')
+            // indikator & satuan RPJMD
+            ->select('
+                rpis.id AS indikator_id,
+                rpis.indikator_sasaran,
+                rpis.satuan
+            ')
+            // sasaran RPJMD
+            ->select('
+                rps.id      AS rpjmd_sasaran_id,
+                rps.sasaran_rpjmd AS sasaran_renstra
+            ')
+            ->select('
+                m.id  AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total AS monev_total
+            ')
+            ->join('rpjmd_target AS rpt', 'rpt.id = tr.rpjmd_target_id', 'left')
+            ->join('rpjmd_indikator_sasaran AS rpis', 'rpis.id = rpt.indikator_sasaran_id', 'left')
+            ->join('rpjmd_sasaran AS rps', 'rps.id = rpis.sasaran_id', 'left')
+            ->join('opd AS o', 'o.id = tr.opd_id', 'left')
+            ->select('o.nama_opd')
+            // >>> di mode KAB, monev.opd_id = NULL <<<
+            ->join(
+                $this->table . ' AS m',
+                'm.target_rencana_id = tr.id AND m.opd_id IS NULL',
+                'left'
+            )
+            ->where('tr.rpjmd_target_id IS NOT NULL', null, false);
+
+        if (!empty($tahun)) {
+            $b->where('rpt.tahun', $tahun);
+        }
+
+        return $b->orderBy('rps.id', 'ASC')
+            ->orderBy('rpis.id', 'ASC')
+            ->orderBy('rpt.tahun', 'ASC')
+            ->orderBy('tr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /* =========================================================
+     *  ADMIN OPD – basis RENSTRA (renstra_target_id)
+     * =======================================================*/
+    public function getIndexDataAdminOpd(int $opdId, ?string $tahun = null): array
+    {
+        $b = $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.id  AS target_id,
+                tr.opd_id,
+                tr.rencana_aksi,
+                tr.capaian AS target_capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab,
+                tr.rpjmd_target_id
+            ')
+            ->select('
+                rt.id    AS renstra_target_id,
+                rt.tahun AS indikator_tahun,
+                rt.target AS indikator_target
+            ')
+            ->select('
+                ris.id AS indikator_id,
+                ris.indikator_sasaran,
+                ris.satuan
+            ')
+            ->select('
+                rs.id      AS renstra_sasaran_id,
+                rs.sasaran AS sasaran_renstra,
+                rs.opd_id
+            ')
+            ->select('
+                m.id  AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total AS monev_total
+            ')
+            ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
+            ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
+            ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('opd AS o', 'o.id = tr.opd_id', 'left')
+            ->select('o.nama_opd')
+            ->join(
+                $this->table . ' AS m',
+                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
+                'left'
+            )
+            ->where('tr.opd_id', (int) $opdId)
+            ->where('tr.renstra_target_id IS NOT NULL', null, false);
+
+        if (!empty($tahun)) {
+            $b->where('rt.tahun', $tahun);
+        }
+
+        return $b->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->orderBy('rt.tahun', 'ASC')
+            ->orderBy('tr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Daftar tahun RENSTRA (untuk dropdown).
+     */
     public function getAvailableYears(): array
     {
         return $this->db->table('renstra_target')
@@ -149,21 +307,29 @@ class MonevModel extends Model
             ->getResultArray();
     }
 
-    /** Ambil 1 baris monev per pasangan (opd_id, target_rencana_id) */
-    public function findByTargetAndOpd(int $targetRencanaId, int $opdId): ?array
+    /**
+     * Ambil satu baris monev berdasarkan (target_rencana_id, opd_id).
+     * Untuk mode KAB: $opdId = null (cari m.opd_id IS NULL).
+     */
+    public function findByTargetAndOpd(int $targetRencanaId, ?int $opdId): ?array
     {
-        return $this->where([
-            'target_rencana_id' => $targetRencanaId,
-            'opd_id' => $opdId,
-        ])->first();
+        $builder = $this->where('target_rencana_id', $targetRencanaId);
+
+        if ($opdId === null) {
+            $builder->where('opd_id IS NULL', null, false);
+        } else {
+            $builder->where('opd_id', $opdId);
+        }
+
+        return $builder->first();
     }
 
     /**
-     * Upsert monev per (opd_id, target_rencana_id) TANPA kalkulasi total otomatis.
-     * - Controller bertugas memvalidasi & mewajibkan 'total'.
-     * - Jika 'total' tidak dikirim, disimpan NULL (boleh kamu ubah jadi wajib via DB constraint).
+     * Upsert per (target_rencana_id, opd_id).
+     * - Mode OPD:  $opdId = id OPD
+     * - Mode KAB:  $opdId = null
      */
-    public function upsertForTarget(int $targetRencanaId, int $opdId, array $payload): array
+    public function upsertForTarget(int $targetRencanaId, ?int $opdId, array $payload): array
     {
         $row = $this->findByTargetAndOpd($targetRencanaId, $opdId);
 
@@ -174,7 +340,6 @@ class MonevModel extends Model
             'capaian_triwulan_2' => $payload['capaian_triwulan_2'] ?? null,
             'capaian_triwulan_3' => $payload['capaian_triwulan_3'] ?? null,
             'capaian_triwulan_4' => $payload['capaian_triwulan_4'] ?? null,
-            // total: MANUAL, tidak dihitung otomatis
             'total' => array_key_exists('total', $payload) ? $payload['total'] : null,
         ];
 

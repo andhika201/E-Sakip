@@ -14,6 +14,25 @@ class RpjmdModel extends Model
         $this->db = \Config\Database::connect();
     }
 
+    // ==================== HELPER JENIS INDIKATOR ====================
+
+    /**
+     * Normalisasi nilai jenis_indikator supaya konsisten:
+     * - 'indikator negatif' atau 'negatif' => 'indikator negatif'
+     * - selain itu => 'indikator positif'
+     */
+    private function normalizeJenisIndikator(?string $raw): string
+    {
+        $raw = strtolower(trim($raw ?? ''));
+
+        if ($raw === 'indikator negatif' || $raw === 'negatif') {
+            return 'indikator negatif';
+        }
+
+        // default ke positif
+        return 'indikator positif';
+    }
+
     // ==================== RPJMD MISI ====================
 
     public function getAllMisi()
@@ -68,7 +87,7 @@ class RpjmdModel extends Model
             ->where('id', $id)
             ->update([
                 'status' => $status,
-                'updated_at' => date('Y-m-d H:i:s'), // FIX: gunakan updated_at
+                'updated_at' => date('Y-m-d H:i:s'),
             ]);
     }
 
@@ -133,7 +152,7 @@ class RpjmdModel extends Model
             'tahun' => (int) $data['tahun'],
             'target_tahunan' => (string) ($data['target_tahunan'] ?? ''),
             'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'), // FIX: ganti update_at -> updated_at
+            'updated_at' => date('Y-m-d H:i:s'),
         ];
         $ok = $this->db->table('rpjmd_target_tujuan')->insert($insert);
         if (!$ok) {
@@ -150,7 +169,7 @@ class RpjmdModel extends Model
             ->update([
                 'tahun' => isset($data['tahun']) ? (int) $data['tahun'] : null,
                 'target_tahunan' => $data['target_tahunan'] ?? null,
-                'updated_at' => date('Y-m-d H:i:s'), // FIX: ganti update_at -> updated_at
+                'updated_at' => date('Y-m-d H:i:s'),
             ]);
     }
 
@@ -348,12 +367,30 @@ class RpjmdModel extends Model
 
     public function getRpjmdSummary()
     {
-        $years = $this->db->table('rpjmd_target')
+        // ambil tahun dari target sasaran
+        $yearsSasaran = $this->db->table('rpjmd_target')
             ->distinct()
             ->select('tahun')
             ->orderBy('tahun', 'ASC')
             ->get()
             ->getResultArray();
+
+        // ambil tahun dari target tujuan
+        $yearsTujuan = $this->db->table('rpjmd_target_tujuan')
+            ->distinct()
+            ->select('tahun')
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $years = [];
+        foreach ($yearsSasaran as $y) {
+            $years[$y['tahun']] = ['tahun' => $y['tahun']];
+        }
+        foreach ($yearsTujuan as $y) {
+            $years[$y['tahun']] = ['tahun' => $y['tahun']];
+        }
+        ksort($years);
 
         return [
             'total_misi' => $this->db->table('rpjmd_misi')->countAllResults(),
@@ -363,7 +400,7 @@ class RpjmdModel extends Model
             'total_indikator_tujuan' => $this->db->table('rpjmd_indikator_tujuan')->countAllResults(),
             'total_target_tahunan' => $this->db->table('rpjmd_target')->countAllResults(),
             'total_target_tahunan_tujuan' => $this->db->table('rpjmd_target_tujuan')->countAllResults(),
-            'years_available' => $years,
+            'years_available' => array_values($years),
         ];
     }
 
@@ -397,26 +434,129 @@ class RpjmdModel extends Model
         return $this->db->table('rpjmd_misi')->where('id', (int) $id)->update($data);
     }
 
-    public function deleteMisi($id, $internal = false)
+   /* =====================================================
+     |  AMBIL MISI ID DARI SEMUA LEVEL
+     ===================================================== */
+    public function findMisiIdForAnyEntity(int $id): ?int
     {
-        if (!$internal)
-            $this->db->transStart();
+        $checks = [
+            ['rpjmd_misi', 'id', 'id'],
+            ['rpjmd_tujuan', 'id', 'misi_id'],
+        ];
+
+        foreach ($checks as [$table, $col, $ret]) {
+            $q = $this->db->table($table)->where($col, $id)->get();
+            if ($q !== false && $q->getNumRows() > 0) {
+                return (int) ($ret === 'id' ? $id : $q->getRow()->$ret);
+            }
+        }
+
+        // sasaran
+        $q = $this->db->query(
+            "SELECT t.misi_id FROM rpjmd_sasaran s
+             JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
+             WHERE s.id = ?", [$id]
+        );
+        if ($q && ($r = $q->getRowArray())) {
+            return (int) $r['misi_id'];
+        }
+
+        // indikator sasaran
+        $q = $this->db->query(
+            "SELECT t.misi_id FROM rpjmd_indikator_sasaran i
+             JOIN rpjmd_sasaran s ON s.id = i.sasaran_id
+             JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
+             WHERE i.id = ?", [$id]
+        );
+        if ($q && ($r = $q->getRowArray())) {
+            return (int) $r['misi_id'];
+        }
+
+        return null;
+    }
+
+    /* =====================================================
+     |  DELETE RPJMD - SUPER AMAN
+     ===================================================== */
+    public function deleteMisi(int $misiId): bool
+    {
+        $this->db->transBegin();
 
         try {
-            $tujuanList = $this->getTujuanByMisiId($id);
+            // ================= TUJUAN =================
+            $tujuanList = $this->db->table('rpjmd_tujuan')
+                ->where('misi_id', $misiId)
+                ->get()->getResultArray();
+
             foreach ($tujuanList as $tujuan) {
-                $this->deleteTujuan($tujuan['id'], true);
+                $tujuanId = (int) $tujuan['id'];
+
+                // ========== SASARAN ==========
+                $sasaranList = $this->db->table('rpjmd_sasaran')
+                    ->where('tujuan_id', $tujuanId)
+                    ->get()->getResultArray();
+
+                foreach ($sasaranList as $sasaran) {
+                    $sasaranId = (int) $sasaran['id'];
+
+                    // ---- INDIKATOR SASARAN ----
+                    $indikatorSasaran = $this->db->table('rpjmd_indikator_sasaran')
+                        ->where('sasaran_id', $sasaranId)
+                        ->get()->getResultArray();
+
+                    foreach ($indikatorSasaran as $is) {
+                        // target indikator sasaran
+                        $this->db->table('rpjmd_target')
+                            ->where('indikator_sasaran_id', $is['id'])
+                            ->delete();
+                    }
+
+                    $this->db->table('rpjmd_indikator_sasaran')
+                        ->where('sasaran_id', $sasaranId)
+                        ->delete();
+                }
+
+                $this->db->table('rpjmd_sasaran')
+                    ->where('tujuan_id', $tujuanId)
+                    ->delete();
+
+                // ---- INDIKATOR TUJUAN ----
+                $indikatorTujuan = $this->db->table('rpjmd_indikator_tujuan')
+                    ->where('tujuan_id', $tujuanId)
+                    ->get()->getResultArray();
+
+                foreach ($indikatorTujuan as $it) {
+                    $this->db->table('rpjmd_target_tujuan')
+                        ->where('indikator_tujuan_id', $it['id'])
+                        ->delete();
+                }
+
+                $this->db->table('rpjmd_indikator_tujuan')
+                    ->where('tujuan_id', $tujuanId)
+                    ->delete();
             }
-            $res = $this->db->table('rpjmd_misi')->delete(['id' => (int) $id]);
 
-            if (!$internal)
-                $this->db->transComplete();
-            return $res;
+            $this->db->table('rpjmd_tujuan')
+                ->where('misi_id', $misiId)
+                ->delete();
 
-        } catch (\Exception $e) {
-            if (!$internal)
+            // ================= MISI =================
+            $this->db->table('rpjmd_misi')
+                ->where('id', $misiId)
+                ->delete();
+
+            if ($this->db->transStatus() === false) {
                 $this->db->transRollback();
-            throw $e;
+                return false;
+            }
+
+            $this->db->transCommit();
+            return true;
+
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', 'DELETE RPJMD FAILED: ' . $e->getMessage());
+            return false;
         }
     }
 
@@ -448,8 +588,9 @@ class RpjmdModel extends Model
 
     public function deleteTujuan($id, $internal = false)
     {
-        if (!$internal)
+        if (!$internal) {
             $this->db->transStart();
+        }
 
         try {
             // hapus indikator tujuan dan targetnya
@@ -476,8 +617,9 @@ class RpjmdModel extends Model
             return $res;
 
         } catch (\Exception $e) {
-            if (!$internal)
+            if (!$internal) {
                 $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -543,8 +685,9 @@ class RpjmdModel extends Model
 
     public function deleteSasaran($id, $internal = false)
     {
-        if (!$internal)
+        if (!$internal) {
             $this->db->transStart();
+        }
 
         try {
             // hapus indikator_sasaran + target
@@ -553,7 +696,7 @@ class RpjmdModel extends Model
                 $this->deleteIndikatorSasaran($ind['id'], true);
             }
 
-            // Hapus RENSTRA & RENJA & RKPD (jika ada pada skema kamu)
+            // Hapus RENSTRA & RENJA & RKPD (jika ada pada skema)
             $renstraSasaran = $this->db->table('renstra_sasaran')->where('rpjmd_sasaran_id', $id)->get()->getResultArray();
             foreach ($renstraSasaran as $rs) {
                 $renstraSasaranId = $rs['id'];
@@ -590,8 +733,9 @@ class RpjmdModel extends Model
             return $res;
 
         } catch (\Exception $e) {
-            if (!$internal)
+            if (!$internal) {
                 $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -611,11 +755,15 @@ class RpjmdModel extends Model
             }
         }
 
+        // normalisasi jenis_indikator
+        $jenis = $this->normalizeJenisIndikator($data['jenis_indikator'] ?? '');
+
         $insert = [
             'sasaran_id' => (int) $data['sasaran_id'],
             'indikator_sasaran' => $data['indikator_sasaran'],
             'definisi_op' => $data['definisi_op'],
             'satuan' => $data['satuan'],
+            'jenis_indikator' => $jenis,
         ];
 
         $ok = $this->db->table('rpjmd_indikator_sasaran')->insert($insert);
@@ -635,15 +783,28 @@ class RpjmdModel extends Model
         $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
         file_put_contents($debugFile, "=== UPDATE INDIKATOR SASARAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
-        $ok = $this->db->table('rpjmd_indikator_sasaran')->where('id', (int) $id)->update($data);
-        file_put_contents($debugFile, "Update result: " . ($ok ? 'TRUE' : 'FALSE') . " | Affected: " . $this->db->affectedRows() . "\n", FILE_APPEND);
+        // normalisasi jenis_indikator jika ada di data
+        if (array_key_exists('jenis_indikator', $data)) {
+            $data['jenis_indikator'] = $this->normalizeJenisIndikator($data['jenis_indikator']);
+        }
+
+        $ok = $this->db->table('rpjmd_indikator_sasaran')
+            ->where('id', (int) $id)
+            ->update($data);
+
+        file_put_contents(
+            $debugFile,
+            "Update result: " . ($ok ? 'TRUE' : 'FALSE') . " | Affected: " . $this->db->affectedRows() . "\n",
+            FILE_APPEND
+        );
         return $ok;
     }
 
     public function deleteIndikatorSasaran($id, $internal = false)
     {
-        if (!$internal)
+        if (!$internal) {
             $this->db->transStart();
+        }
 
         try {
             $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => (int) $id]);
@@ -658,8 +819,9 @@ class RpjmdModel extends Model
             return $res;
 
         } catch (\Exception $e) {
-            if (!$internal)
+            if (!$internal) {
                 $this->db->transRollback();
+            }
             throw $e;
         }
     }
@@ -719,85 +881,108 @@ class RpjmdModel extends Model
 
     // ==================== BATCH OPERATIONS ====================
 
-    public function createCompleteRpjmdTransaction($data)
+    public function createCompleteRpjmdTransaction(array $data): ?int
     {
-        try {
-            $this->db->transStart();
+        $db = $this->db;
+        $db->transStart();
 
-            // MISI
-            $misiId = $this->createMisi($data['misi']);
-            // TUJUAN
-            if (!empty($data['tujuan']) && is_array($data['tujuan'])) {
-                foreach ($data['tujuan'] as $tujuanData) {
-                    $tujuanData['misi_id'] = $misiId;
-                    $tujuanId = $this->createTujuan($tujuanData);
+        // ================== INSERT MISI ==================
+        $builderMisi = $db->table('rpjmd_misi');
+        $builderMisi->insert([
+            'misi' => $data['misi']['misi'] ?? '',
+            'tahun_mulai' => $data['misi']['tahun_mulai'] ?? null,
+            'tahun_akhir' => $data['misi']['tahun_akhir'] ?? null,
+            'status' => $data['misi']['status'] ?? 'draft',
+        ]);
+        $misiId = $db->insertID();
 
-                    // INDIKATOR TUJUAN
-                    if (!empty($tujuanData['indikator_tujuan']) && is_array($tujuanData['indikator_tujuan'])) {
-                        foreach ($tujuanData['indikator_tujuan'] as $it) {
-                            $indikatorId = $this->createIndikatorTujuan([
-                                'tujuan_id' => $tujuanId,
-                                'indikator_tujuan' => $it['indikator_tujuan'] ?? '',
-                            ]);
+        // ================== LOOP TUJUAN ==================
+        $builderTujuan = $db->table('rpjmd_tujuan');
+        $builderIndTujuan = $db->table('rpjmd_indikator_tujuan');
+        $builderTargetTujuan = $db->table('rpjmd_target_tujuan');
 
-                            // TARGET TUJUAN
-                            if (!empty($it['target_tahunan_tujuan']) && is_array($it['target_tahunan_tujuan'])) {
-                                foreach ($it['target_tahunan_tujuan'] as $tt) {
-                                    $this->createTargetTahunanTujuan([
-                                        'indikator_tujuan_id' => $indikatorId,
-                                        'tahun' => (int) ($tt['tahun'] ?? 0),
-                                        'target_tahunan' => (string) ($tt['target_tahunan'] ?? ''),
-                                    ]);
-                                }
-                            }
-                        }
-                    }
+        $builderSasaran = $db->table('rpjmd_sasaran');
+        $builderIndSasaran = $db->table('rpjmd_indikator_sasaran');
+        $builderTargetSas = $db->table('rpjmd_target');
 
-                    // SASARAN
-                    if (!empty($tujuanData['sasaran']) && is_array($tujuanData['sasaran'])) {
-                        foreach ($tujuanData['sasaran'] as $sasaranData) {
-                            $sasaranData['tujuan_id'] = $tujuanId;
-                            $sasaranId = $this->createSasaran($sasaranData);
+        foreach ($data['tujuan'] ?? [] as $tujuan) {
 
-                            // INDIKATOR SASARAN
-                            if (!empty($sasaranData['indikator_sasaran']) && is_array($sasaranData['indikator_sasaran'])) {
-                                foreach ($sasaranData['indikator_sasaran'] as $indSas) {
-                                    $indikatorId = $this->createIndikatorSasaran([
-                                        'sasaran_id' => $sasaranId,
-                                        'indikator_sasaran' => $indSas['indikator_sasaran'] ?? '',
-                                        'definisi_op' => $indSas['definisi_op'] ?? '',
-                                        'satuan' => $indSas['satuan'] ?? '',
-                                    ]);
+            // ---------- TUJUAN ----------
+            $builderTujuan->insert([
+                'misi_id' => $misiId,
+                'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'] ?? '',
+            ]);
+            $tujuanId = $db->insertID();
 
-                                    // TARGET (SASARAN)
-                                    if (!empty($indSas['target_tahunan']) && is_array($indSas['target_tahunan'])) {
-                                        foreach ($indSas['target_tahunan'] as $t) {
-                                            $this->createTargetTahunan([
-                                                'indikator_sasaran_id' => $indikatorId,
-                                                'tahun' => (int) ($t['tahun'] ?? 0),
-                                                'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
-                                            ]);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+            // ---------- INDIKATOR TUJUAN ----------
+            foreach ($tujuan['indikator_tujuan'] ?? [] as $indikatorTujuan) {
+                $builderIndTujuan->insert([
+                    'tujuan_id' => $tujuanId,
+                    'indikator_tujuan' => $indikatorTujuan['indikator_tujuan'] ?? '',
+                ]);
+                $indTujuanId = $db->insertID();
+
+                foreach ($indikatorTujuan['target_tahunan_tujuan'] ?? [] as $t) {
+                    $builderTargetTujuan->insert([
+                        'indikator_tujuan_id' => $indTujuanId,
+                        'tahun' => $t['tahun'] ?? null,
+                        'target_tahunan' => $t['target_tahunan'] ?? null,
+                        'baseline' => $t['baseline'] ?? null,
+                    ]);
                 }
             }
 
-            $this->db->transComplete();
-            if ($this->db->transStatus() === false) {
-                throw new \Exception("Database transaction failed. All changes have been rolled back.");
+            // ---------- SASARAN ----------
+            foreach ($tujuan['sasaran'] ?? [] as $sasaran) {
+                $builderSasaran->insert([
+                    'tujuan_id' => $tujuanId,
+                    'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'] ?? '',
+                ]);
+                // ✅ ID sasaran hasil insert
+                $sasaranId = $db->insertID();
+
+                // ---------- INDIKATOR SASARAN ----------
+                foreach ($sasaran['indikator_sasaran'] ?? [] as $indikatorSasaran) {
+
+                    // normalisasi jenis indikator (opsional)
+                    $jenisRaw = strtolower(trim($indikatorSasaran['jenis_indikator'] ?? ''));
+                    $jenis = ($jenisRaw === 'indikator negatif' || $jenisRaw === 'negatif')
+                        ? 'indikator negatif'
+                        : 'indikator positif';
+
+                    $builderIndSasaran->insert([
+                        // ✅ PAKAI $sasaranId, BUKAN dari POST
+                        'sasaran_id' => $sasaranId,
+                        'indikator_sasaran' => $indikatorSasaran['indikator_sasaran'] ?? '',
+                        'satuan' => $indikatorSasaran['satuan'] ?? '',
+                        'jenis_indikator' => $jenis,
+                        'baseline' => $indikatorSasaran['baseline'] ?? null,
+                        'definisi_op' => $indikatorSasaran['definisi_op'] ?? '',
+                    ]);
+                    $indSasaranId = $db->insertID();
+
+                    // ---------- TARGET TAHUNAN INDIKATOR SASARAN ----------
+                    foreach ($indikatorSasaran['target_tahunan'] ?? [] as $t) {
+                        $builderTargetSas->insert([
+                            // ✅ selalu pakai $indSasaranId
+                            'indikator_sasaran_id' => $indSasaranId,
+                            'tahun' => $t['tahun'] ?? null,
+                            'target_tahunan' => $t['target_tahunan'] ?? null,
+                        ]);
+                    }
+                }
             }
-
-            return $misiId;
-
-        } catch (\Exception $e) {
-            $this->db->transRollback();
-            throw $e;
         }
+
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            return null;
+        }
+
+        return $misiId;
     }
+
 
     // helper untuk sinkronisasi target_tujuan saat UPDATE
     private function syncTargetTujuanForIndikator(int $indikatorId, array $targets): void
@@ -825,7 +1010,7 @@ class RpjmdModel extends Model
                 $tbl->where('id', $id)->update([
                     'tahun' => $tahun,
                     'target_tahunan' => $target,
-                    'updated_at' => date('Y-m-d H:i:s'), // FIX
+                    'updated_at' => date('Y-m-d H:i:s'),
                 ]);
                 $seenIds[] = $id;
 
@@ -833,7 +1018,7 @@ class RpjmdModel extends Model
                 if (isset($byYear[$tahun])) {
                     $tbl->where('id', (int) $byYear[$tahun]['id'])->update([
                         'target_tahunan' => $target,
-                        'updated_at' => date('Y-m-d H:i:s'), // FIX
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                     $seenIds[] = (int) $byYear[$tahun]['id'];
                 } else {
@@ -842,7 +1027,7 @@ class RpjmdModel extends Model
                         'tahun' => $tahun,
                         'target_tahunan' => $target,
                         'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'), // FIX
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                     $seenIds[] = (int) $this->db->insertID();
                 }
@@ -902,19 +1087,22 @@ class RpjmdModel extends Model
 
                     if (!empty($tujuanData['indikator_tujuan']) && is_array($tujuanData['indikator_tujuan'])) {
                         foreach ($tujuanData['indikator_tujuan'] as $it) {
-                            if (empty($it['indikator_tujuan']))
+                            if (empty($it['indikator_tujuan'])) {
                                 continue;
+                            }
 
                             if (!empty($it['id'])) {
                                 $indikatorId = (int) $it['id'];
                                 $this->updateIndikatorTujuan($indikatorId, [
                                     'tujuan_id' => $tujuanId,
                                     'indikator_tujuan' => $it['indikator_tujuan'],
+                                    'baseline' => $it['baseline'] ?? null,
                                 ]);
                             } else {
                                 $indikatorId = $this->createIndikatorTujuan([
                                     'tujuan_id' => $tujuanId,
                                     'indikator_tujuan' => $it['indikator_tujuan'],
+                                    'baseline' => $it['baseline'] ?? null,
                                 ]);
                             }
                             $processedIndTujuan[] = $indikatorId;
@@ -937,8 +1125,9 @@ class RpjmdModel extends Model
 
                     if (!empty($tujuanData['sasaran']) && is_array($tujuanData['sasaran'])) {
                         foreach ($tujuanData['sasaran'] as $sasData) {
-                            if (empty($sasData['sasaran_rpjmd']))
+                            if (empty($sasData['sasaran_rpjmd'])) {
                                 continue;
+                            }
 
                             if (!empty($sasData['id'])) {
                                 $sasaranId = (int) $sasData['id'];
@@ -959,8 +1148,9 @@ class RpjmdModel extends Model
 
                             if (!empty($sasData['indikator_sasaran']) && is_array($sasData['indikator_sasaran'])) {
                                 foreach ($sasData['indikator_sasaran'] as $is) {
-                                    if (empty($is['indikator_sasaran']))
+                                    if (empty($is['indikator_sasaran'])) {
                                         continue;
+                                    }
 
                                     if (!empty($is['id'])) {
                                         $indId = (int) $is['id'];
@@ -969,6 +1159,8 @@ class RpjmdModel extends Model
                                             'indikator_sasaran' => $is['indikator_sasaran'],
                                             'definisi_op' => $is['definisi_op'] ?? '',
                                             'satuan' => $is['satuan'] ?? '',
+                                            'baseline' => $is['baseline'] ?? null,
+                                            'jenis_indikator' => $is['jenis_indikator'] ?? '',
                                         ]);
                                     } else {
                                         $indId = $this->createIndikatorSasaran([
@@ -976,6 +1168,8 @@ class RpjmdModel extends Model
                                             'indikator_sasaran' => $is['indikator_sasaran'],
                                             'definisi_op' => $is['definisi_op'] ?? '',
                                             'satuan' => $is['satuan'] ?? '',
+                                            'baseline' => $is['baseline'] ?? null,
+                                            'jenis_indikator' => $is['jenis_indikator'] ?? '',
                                         ]);
                                     }
                                     $processedIndSasIds[] = $indId;
@@ -1039,9 +1233,12 @@ class RpjmdModel extends Model
 
     // ==================== HELPER METHODS ====================
 
-    public function misiExists($id)
+    public function misiExists(int $id): bool
     {
-        return $this->db->table('rpjmd_misi')->where('id', (int) $id)->countAllResults() > 0;
+        return $this->db
+            ->table('rpjmd_misi')
+            ->where('id', $id)
+            ->countAllResults() > 0;
     }
 
     public function tujuanExists($id)
@@ -1145,54 +1342,57 @@ class RpjmdModel extends Model
         return $row['misi_id'] ?? null;
     }
 
-    public function findMisiIdForAnyEntity($id)
-    {
-        // misi?
-        $misi = $this->getMisiById($id);
-        if ($misi)
-            return (int) $id;
+    // public function findMisiIdForAnyEntity(int $id): ?int
+    // {
+    //     // 1. Cek langsung misi
+    //     $m = $this->db->table('rpjmd_misi')->where('id', $id)->get();
+    //     if ($m !== false && $m->getNumRows() > 0) {
+    //         return (int) $id;
+    //     }
 
-        // tujuan?
-        $mid = $this->findMisiIdByTujuanId($id);
-        if ($mid)
-            return (int) $mid;
+    //     // 2. Dari tujuan
+    //     $q = $this->db->query(
+    //         "SELECT misi_id FROM rpjmd_tujuan WHERE id = ? LIMIT 1",
+    //         [$id]
+    //     );
+    //     if ($q !== false) {
+    //         $r = $q->getRowArray();
+    //         if (!empty($r['misi_id']))
+    //             return (int) $r['misi_id'];
+    //     }
 
-        // sasaran?
-        $mid = $this->findMisiIdBySasaranId($id);
-        if ($mid)
-            return (int) $mid;
+    //     // 3. Dari sasaran
+    //     $q = $this->db->query(
+    //         "SELECT t.misi_id
+    //      FROM rpjmd_sasaran s
+    //      JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
+    //      WHERE s.id = ? LIMIT 1",
+    //         [$id]
+    //     );
+    //     if ($q !== false) {
+    //         $r = $q->getRowArray();
+    //         if (!empty($r['misi_id']))
+    //             return (int) $r['misi_id'];
+    //     }
 
-        // indikator sasaran?
-        $mid = $this->findMisiIdByIndikatorSasaranId($id);
-        if ($mid)
-            return (int) $mid;
+    //     // 4. Dari indikator sasaran
+    //     $q = $this->db->query(
+    //         "SELECT t.misi_id
+    //      FROM rpjmd_indikator_sasaran i
+    //      JOIN rpjmd_sasaran s ON s.id = i.sasaran_id
+    //      JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
+    //      WHERE i.id = ? LIMIT 1",
+    //         [$id]
+    //     );
+    //     if ($q !== false) {
+    //         $r = $q->getRowArray();
+    //         if (!empty($r['misi_id']))
+    //             return (int) $r['misi_id'];
+    //     }
 
-        // target (sasaran)?
-        $mid = $this->findMisiIdByTargetId($id);
-        if ($mid)
-            return (int) $mid;
+    //     return null;
+    // }
 
-        // indikator tujuan?
-        $row = $this->db->table('rpjmd_indikator_tujuan it')
-            ->join('rpjmd_tujuan t', 't.id = it.tujuan_id')
-            ->select('t.misi_id')
-            ->where('it.id', (int) $id)
-            ->get()->getRowArray();
-        if ($row && !empty($row['misi_id']))
-            return (int) $row['misi_id'];
-
-        // target_tujuan?
-        $row = $this->db->table('rpjmd_target_tujuan ttt')
-            ->join('rpjmd_indikator_tujuan it', 'it.id = ttt.indikator_tujuan_id')
-            ->join('rpjmd_tujuan t', 't.id = it.tujuan_id')
-            ->select('t.misi_id')
-            ->where('ttt.id', (int) $id)
-            ->get()->getRowArray();
-        if ($row && !empty($row['misi_id']))
-            return (int) $row['misi_id'];
-
-        return null;
-    }
 
     public function getCompletedRpjmdStructure()
     {

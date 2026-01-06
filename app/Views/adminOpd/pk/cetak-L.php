@@ -5,165 +5,145 @@
   <meta charset="UTF-8">
   <title>Perjanjian Kinerja <?= esc(date('Y', strtotime($tanggal))) ?></title>
   <style>
+    /* =========================
+     GLOBAL
+  ========================== */
     body {
-      font-family: 'Times New Roman', Times, serif;
+      font-family: "Times New Roman", Times, serif;
       margin: 40px;
-      color: #000;
       font-size: 12pt;
+      color: #000;
+      line-height: 1.5;
     }
 
-    .signature-line {
-      display: inline-block;
-      border-bottom: 1px solid #000;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
-    }
-
-    .name-line {
-      font-weight: bold;
-      text-transform: uppercase;
+    h4 {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     p {
       text-align: justify;
-      margin-bottom: 15px;
+      margin: 0 0 14px 0;
     }
 
-    /* Table dengan border */
-    .table-bordered-custom,
-    .table-bordered-custom th,
-    .table-bordered-custom td {
-      border: 1px solid #000;
-      border-collapse: collapse;
-    }
-
-    /* Table tanpa border */
-    .table-no-border,
-    .table-no-border th,
-    .table-no-border td {
-      border: none !important;
-      border-collapse: collapse;
-    }
-
-    .table-no-row-border td {
-      border-top: none !important;
-      border-bottom: none !important;
-      border-left: 1px solid #000;
-      border-right: 1px solid #000;
-    }
-
-    .table-header th {
-      border: 1px solid #000;
-    }
-
-    .no-border td {
-      border: none;
-      padding: 4px 0;
-    }
-
+    /* =========================
+     TEXT UTILITIES
+  ========================== */
     .center {
       text-align: center;
-    }
-
-    .text-uppercase {
-      text-transform: uppercase;
     }
 
     .fw-bold {
       font-weight: bold;
     }
 
-    .signature {
-      margin-top: 60px;
-      margin-bottom: 60px;
-      text-align: center;
+    .text-uppercase {
+      text-transform: uppercase;
     }
 
-    .section {
-      margin-top: 50px;
-    }
-
+    /* =========================
+     TABLE GENERAL
+  ========================== */
     table {
+      width: 100%;
+      border-collapse: collapse;
       page-break-inside: auto;
+    }
+
+    th,
+    td {
+      padding: 6px 8px;
+      vertical-align: top;
+      font-size: 11pt;
     }
 
     tr {
       page-break-inside: avoid;
-      page-break-after: auto;
     }
 
-    td,
-    th {
-      padding: 6px;
-      vertical-align: top;
+    /* =========================
+     TABLE BORDERED
+  ========================== */
+    .table-bordered-custom th,
+    .table-bordered-custom td {
+      border: 1px solid #000;
     }
 
-    .table-bordered-custom td,
-    .table-bordered-custom th {
-      font-size: 11pt;
-    }
-
-    .signature-block {
-      margin-top: 80px;
-    }
-
-    .signature-right {
-      text-align: right;
-    }
-
-    .signature-center {
+    .table-header th {
       text-align: center;
-    }
-
-    .signature-name {
       font-weight: bold;
-      text-transform: uppercase;
-      margin: 0;
-      text-align: center;
-
     }
 
-    .signature-meta {
-      margin: 0;
-      text-align: center;
-
-      font-size: 11pt;
+    /* Baris indikator tanpa border horizontal */
+    .table-no-row-border td {
+      border-top: none;
+      border-bottom: none;
+      border-left: 1px solid #000;
+      border-right: 1px solid #000;
     }
 
-    .signature-box {
-      min-height: 160px;
-      /* area jabatan */
-    }
 
-    .signature-space {
-      height: 100px;
-      /* ruang tanda tangan */
-    }
-
+    /* =========================
+     SIGNATURE
+  ========================== */
     .signature-table {
       width: 100%;
       border-collapse: collapse;
+      border: none;
     }
 
-    .signature-title {
-      height: 70px;
-      /* area jabatan */
-      vertical-align: top;
+    .signature-bottom {
+      width: 100%;
+      border-collapse: collapse;
+      border: none;
+    }
+
+   .signature-title {
       text-align: center;
+      vertical-align: top;
+      height: 185px;
+      padding: 6px 4px;
     }
 
-    .signature-space-row {
-      height: 100px;
-      /* ruang tanda tangan */
+    .signature-title p {
+      margin: 0;
+      line-height: 1.3;
     }
 
-    .signature-table p {
-      margin: 0 !important;
-      padding: 0 !important;
-      text-align: center !important;
-      line-height: 1.4;
+    .signature-title .label {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .signature-name {
+      margin: 0;
+      text-align: center;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .signature-meta {
+      text-align: center;
+      font-size: 11pt;
+      margin: 2px 0;
+    }
+
+    .signature-meta p{
+      margin: 0;
+      line-height: 1.3;
+    }
+
+    .signature-meta .label {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    /* ========================= SECTION SPACING ========================== */
+    .section {
+      margin-top: 40px;
     }
   </style>
+
 </head>
 
 <body>
@@ -256,37 +236,26 @@
     </table>
 
 
-    <table style="width:100%; margin-top:70px;" class="table-no-border signature-table">
+    <table style="width:100%; margin-top:30px;" >
       <tr>
-
         <?php if (strtolower($jenis) !== 'bupati'): ?>
-
           <!-- PIHAK KEDUA -->
           <td style="width:50%;">
             <table class="signature-table">
               <tr>
                 <td class="signature-title">
-                  <strong>PIHAK KEDUA,</strong><br>
-                  <?= esc($jabatan_pihak_2) ?>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
+                  <p class="label">PIHAK KEDUA,</p>
+                  <p><?= esc($jabatan_pihak_2) ?></p>
                 </td>
               </tr>
-              <tr class="signature-space-row">
-                <td></td>
-              </tr>
+            </table>
+            <table class="signature-bottom">
               <tr>
-                <td class="signature-name"><?= esc($nama_pihak_2) ?></td>
-              </tr>
-              <tr>
-                <td class="signature-meta"><?= esc($pangkat_pihak_2) ?></td>
-              </tr>
-              <tr>
-                <td class="signature-meta"><?= esc($nip_pihak_2) ?></td>
+                <td class="signature-meta">
+                  <p class="label"><strong><?= esc($nama_pihak_2) ?></strong></p>
+                  <p><?= esc($pangkat_pihak_2) ?></p>
+                  <p><?= esc($nip_pihak_2) ?></p>
+                </td>
               </tr>
             </table>
           </td>
@@ -296,27 +265,18 @@
             <table class="signature-table">
               <tr>
                 <td class="signature-title">
-                  <strong>PIHAK KESATU,</strong><br>
-                  <?= esc($jabatan_pihak_1) ?>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
+                  <p class="label">PIHAK KESATU,</p>
+                  <p><?= esc($jabatan_pihak_1) ?></p>
                 </td>
               </tr>
-              <tr class="signature-space-row">
-                <td></td>
-              </tr>
+            </table>
+            <table class="signature-bottom">
               <tr>
-                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
-              </tr>
-              <tr>
-                <td class="signature-meta"><?= esc($pangkat_pihak_1) ?></td>
-              </tr>
-              <tr>
-                <td class="signature-meta"><?= esc($nip_pihak_1) ?></td>
+                <td class="signature-meta">
+                  <p class="label"><strong><?= esc($nama_pihak_1) ?></strong></p>
+                  <p><?= esc($pangkat_pihak_1) ?></p>
+                  <p><?= esc($nip_pihak_1) ?></p>
+                </td>
               </tr>
             </table>
           </td>
@@ -329,17 +289,10 @@
               <tr>
                 <td class="signature-title">
                   <strong>BUPATI PRINGSEWU</strong>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
-                  <br>
                 </td>
               </tr>
-              <tr class="signature-space-row">
-                <td></td>
-              </tr>
+            </table>
+            <table class="signature-table">
               <tr>
                 <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
               </tr>

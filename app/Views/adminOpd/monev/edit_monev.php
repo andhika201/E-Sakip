@@ -9,7 +9,7 @@
     <style>
         .btn:disabled {
             opacity: .6;
-            cursor: not-allowed
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -30,8 +30,11 @@
             <form action="<?= base_url('adminopd/monev/update/' . (int) ($monev['id'] ?? 0)) ?>" method="post"
                 id="formMonevEdit" novalidate>
                 <?= csrf_field() ?>
+
+                <!-- Hidden -->
                 <input type="hidden" name="target_rencana_id" value="<?= (int) ($monev['target_rencana_id'] ?? 0) ?>">
 
+                <!-- Info sasaran & indikator -->
                 <div class="row mb-3">
                     <div class="col-md-6 mb-3 mb-md-0">
                         <label class="form-label">Sasaran RENSTRA</label>
@@ -45,6 +48,7 @@
                     </div>
                 </div>
 
+                <!-- Info indikator & PJ -->
                 <div class="row mb-3">
                     <div class="col-md-3 mb-3 mb-md-0">
                         <label class="form-label">Satuan</label>
@@ -67,38 +71,47 @@
                     </div>
                 </div>
 
+                <!-- Rencana Aksi -->
                 <div class="mb-3">
                     <label class="form-label">Rencana Aksi</label>
                     <input type="text" class="form-control" value="<?= esc($monev['rencana_aksi'] ?? '-') ?>" readonly>
                 </div>
 
+                <!-- Input capaian -->
                 <div class="mb-3">
                     <label class="form-label">Capaian Triwulan</label>
                     <div class="row g-2 mb-2">
                         <div class="col">
                             <input type="number" step="any" min="0" name="capaian_triwulan_1" class="form-control"
-                                value="<?= esc($monev['capaian_triwulan_1'] ?? '') ?>" placeholder="Triwulan I">
+                                value="<?= esc(old('capaian_triwulan_1', $monev['capaian_triwulan_1'] ?? '')) ?>"
+                                placeholder="Triwulan I" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
                             <input type="number" step="any" min="0" name="capaian_triwulan_2" class="form-control"
-                                value="<?= esc($monev['capaian_triwulan_2'] ?? '') ?>" placeholder="Triwulan II">
+                                value="<?= esc(old('capaian_triwulan_2', $monev['capaian_triwulan_2'] ?? '')) ?>"
+                                placeholder="Triwulan II" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
                             <input type="number" step="any" min="0" name="capaian_triwulan_3" class="form-control"
-                                value="<?= esc($monev['capaian_triwulan_3'] ?? '') ?>" placeholder="Triwulan III">
+                                value="<?= esc(old('capaian_triwulan_3', $monev['capaian_triwulan_3'] ?? '')) ?>"
+                                placeholder="Triwulan III" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
                             <input type="number" step="any" min="0" name="capaian_triwulan_4" class="form-control"
-                                value="<?= esc($monev['capaian_triwulan_4'] ?? '') ?>" placeholder="Triwulan IV">
+                                value="<?= esc(old('capaian_triwulan_4', $monev['capaian_triwulan_4'] ?? '')) ?>"
+                                placeholder="Triwulan IV" oninput="hitungTotalEdit()">
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-4">
-                            <label class="form-label">Total Capaian <span class="text-danger">*</span></label>
+                            <label class="form-label">Total Capaian</label>
                             <input type="number" step="any" name="total" id="totalCapaianEdit" class="form-control"
-                                value="<?= esc($monev['total'] ?? '') ?>" required>
-                            <small class="text-muted">Isi manual (tidak dihitung otomatis).</small>
+                                value="<?= esc(old('total', $monev['total'] ?? '')) ?>">
+                            <small class="text-muted d-block mt-1">
+                                Nilai total dapat dihitung otomatis sebagai rata-rata dari capaian triwulan yang diisi,
+                                namun tetap bisa Anda ubah manual jika diperlukan.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -118,9 +131,44 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
     <script>
-        (function () { // cegah double submit
-            const f = document.getElementById('formMonevEdit'), b = document.getElementById('btnSubmit');
-            if (f && b) { f.addEventListener('submit', () => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...'; }); }
+        // Hitung total sebagai rata-rata nilai triwulan yang terisi (edit)
+        function hitungTotalEdit() {
+            const get = (n) => {
+                const el = document.getElementsByName(n)[0];
+                if (!el) return null;
+                const v = el.value ?? '';
+                return v === '' ? null : parseFloat(v);
+            };
+
+            const vals = [
+                get('capaian_triwulan_1'),
+                get('capaian_triwulan_2'),
+                get('capaian_triwulan_3'),
+                get('capaian_triwulan_4'),
+            ].filter(v => v !== null && !isNaN(v));
+
+            const total = (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : '');
+            const elTotal = document.getElementById('totalCapaianEdit');
+            if (elTotal) {
+                elTotal.value = (total === '' ? '' : Math.round(total));
+            }
+        }
+
+        // Panggil sekali saat halaman load (untuk data awal / old input)
+        window.addEventListener('DOMContentLoaded', function () {
+            hitungTotalEdit();
+        });
+
+        // Cegah double submit
+        (function () {
+            const f = document.getElementById('formMonevEdit');
+            const b = document.getElementById('btnSubmit');
+            if (f && b) {
+                f.addEventListener('submit', function () {
+                    b.disabled = true;
+                    b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+                });
+            }
         })();
     </script>
 </body>

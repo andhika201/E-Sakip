@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Target Rencana</title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <style>
+        .alert {
+            transition: all .3s ease;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -15,64 +20,93 @@
 
     <main class="flex-fill d-flex justify-content-center p-4 mt-4">
         <div class="bg-white rounded shadow-sm p-4" style="width:100%; max-width:900px;">
-
             <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;">Edit Target Rencana</h2>
 
             <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger mb-3"><?= esc(session()->getFlashdata('error')) ?></div>
+                <div class="alert alert-danger mb-3"><?= session()->getFlashdata('error') ?></div>
             <?php endif; ?>
+
+            <?php
+            $mode = $mode ?? 'opd';
+            ?>
 
             <?php if (empty($detail)): ?>
                 <div class="alert alert-danger">Data tidak ditemukan. Silakan kembali ke daftar.</div>
                 <div class="text-end">
-                    <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-1"></i> Kembali
-                    </a>
+                    <?php if ($mode === 'kabupaten'): ?>
+                        <a href="<?= base_url('adminkab/target?mode=kabupaten') ?>" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Kembali
+                        </a>
+                    <?php else: ?>
+                        <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Kembali
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
+
                 <form action="<?= base_url('adminkab/target/update/' . (int) $detail['id']) ?>" method="post" novalidate>
                     <?= csrf_field() ?>
+                    <input type="hidden" name="mode" value="<?= esc($mode) ?>">
 
-                    <!-- Info kontekstual (read-only) -->
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <label class="form-label">Indikator</label>
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <label class="form-label">
+                                Indikator (<?= $mode === 'kabupaten' ? 'RPJMD' : 'RENSTRA' ?>)
+                            </label>
                             <input type="text" class="form-control" value="<?= esc($detail['indikator_sasaran'] ?? '-') ?>"
                                 readonly>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Sasaran Renstra</label>
-                            <input type="text" class="form-control" value="<?= esc($detail['sasaran_renstra'] ?? '-') ?>"
-                                readonly>
+                        <div class="col-md-4">
+                            <label class="form-label">Satuan</label>
+                            <input type="text" class="form-control" value="<?= esc($detail['satuan'] ?? '-') ?>" readonly>
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-3 mb-3 mb-md-0">
-                            <label class="form-label">Satuan</label>
-                            <input type="text" class="form-control" value="<?= esc($detail['satuan'] ?? '-') ?>" readonly>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label class="form-label">
+                                Tahun (<?= $mode === 'kabupaten' ? 'RPJMD' : 'Renstra' ?>)
+                            </label>
+                            <input type="text" class="form-control" value="<?= esc($detail['indikator_tahun'] ?? '-') ?>"
+                                readonly>
                         </div>
-                        <div class="col-md-3 mb-3 mb-md-0">
-                            <label class="form-label">Target (Renstra)</label>
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label class="form-label">
+                                Target <?= $mode === 'kabupaten' ? 'Tahunan (RPJMD)' : '(Renstra)' ?>
+                            </label>
                             <input type="text" class="form-control" value="<?= esc($detail['indikator_target'] ?? '-') ?>"
                                 readonly>
                         </div>
-                        <div class="col-md-3 mb-3 mb-md-0">
-                            <label class="form-label">Tahun (Renstra)</label>
-                            <input type="text" class="form-control" value="<?= esc($detail['tahun'] ?? '-') ?>" readonly>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label" for="capaian">Baseline (Capaian)</label>
                             <input type="text" class="form-control" id="capaian" name="capaian"
-                                value="<?= esc($detail['capaian'] ?? '') ?>">
+                                value="<?= old('capaian', $detail['capaian'] ?? '') ?>">
                         </div>
                     </div>
 
-                    <!-- Field yang bisa diubah -->
+                    <?php if (($role ?? '') === 'admin_kab' && $mode === 'opd'): ?>
+                        <!-- Link ke RPJMD (opsional) hanya di mode RENSTRA -->
+                        <div class="mb-3">
+                            <label class="form-label" for="rpjmd_target_id">Target RPJMD (Opsional)</label>
+                            <select name="rpjmd_target_id" id="rpjmd_target_id" class="form-select">
+                                <option value="">-- Pilih Target RPJMD (jika relevan) --</option>
+                                <?php foreach (($rpjmdTargets ?? []) as $r): ?>
+                                    <option value="<?= (int) $r['id'] ?>" <?= (string) old('rpjmd_target_id', $detail['rpjmd_target_id'] ?? '') === (string) $r['id'] ? 'selected' : '' ?>>
+                                        Tahun <?= esc($r['tahun']) ?> - <?= esc($r['target_tahunan']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted" style="font-size: 0.8rem;">
+                                Opsional: gunakan jika indikator ini terkait langsung dengan target RPJMD.
+                            </small>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="mb-3">
-                        <label for="rencana_aksi" class="form-label">Rencana Aksi</label>
-                        <input type="text" name="rencana_aksi" id="rencana_aksi" class="form-control"
-                            value="<?= esc($detail['rencana_aksi'] ?? '') ?>" required>
+                        <label class="form-label" for="rencana_aksi">Rencana Aksi</label>
+                        <input type="text" class="form-control" id="rencana_aksi" name="rencana_aksi"
+                            value="<?= old('rencana_aksi', $detail['rencana_aksi'] ?? '') ?>">
                     </div>
 
                     <div class="mb-3">
@@ -80,38 +114,46 @@
                         <div class="row g-2">
                             <div class="col">
                                 <input type="text" name="target_triwulan_1" class="form-control" placeholder="Triwulan I"
-                                    value="<?= esc($detail['target_triwulan_1'] ?? '') ?>">
+                                    value="<?= old('target_triwulan_1', $detail['target_triwulan_1'] ?? '') ?>">
                             </div>
                             <div class="col">
                                 <input type="text" name="target_triwulan_2" class="form-control" placeholder="Triwulan II"
-                                    value="<?= esc($detail['target_triwulan_2'] ?? '') ?>">
+                                    value="<?= old('target_triwulan_2', $detail['target_triwulan_2'] ?? '') ?>">
                             </div>
                             <div class="col">
                                 <input type="text" name="target_triwulan_3" class="form-control" placeholder="Triwulan III"
-                                    value="<?= esc($detail['target_triwulan_3'] ?? '') ?>">
+                                    value="<?= old('target_triwulan_3', $detail['target_triwulan_3'] ?? '') ?>">
                             </div>
                             <div class="col">
                                 <input type="text" name="target_triwulan_4" class="form-control" placeholder="Triwulan IV"
-                                    value="<?= esc($detail['target_triwulan_4'] ?? '') ?>">
+                                    value="<?= old('target_triwulan_4', $detail['target_triwulan_4'] ?? '') ?>">
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
-                        <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
-                            value="<?= esc($detail['penanggung_jawab'] ?? '') ?>">
+                        <label class="form-label" for="penanggung_jawab">Penanggung Jawab</label>
+                        <input type="text" class="form-control" id="penanggung_jawab" name="penanggung_jawab"
+                            value="<?= old('penanggung_jawab', $detail['penanggung_jawab'] ?? '') ?>">
                     </div>
 
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Kembali
-                        </a>
+                        <?php if ($mode === 'kabupaten'): ?>
+                            <a href="<?= base_url('adminkab/target?mode=kabupaten') ?>" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Kembali
+                            </a>
+                        <?php else: ?>
+                            <a href="<?= base_url('adminkab/target') ?>" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Kembali
+                            </a>
+                        <?php endif; ?>
+
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save me-1"></i> Simpan Perubahan
+                            <i class="fas fa-save me-1"></i> Update
                         </button>
                     </div>
                 </form>
+
             <?php endif; ?>
         </div>
     </main>

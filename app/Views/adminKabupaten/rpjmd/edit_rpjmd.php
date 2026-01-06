@@ -78,8 +78,9 @@
                 <div class="tujuan-item bg-light border rounded p-3 mb-3">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <label class="h6 fw-medium tujuan-label">Tujuan <?= $ti + 1 ?></label>
-                    <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm"><i
-                        class="fas fa-trash"></i></button>
+                    <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm">
+                      <i class="fas fa-trash"></i>
+                    </button>
                   </div>
 
                   <div class="mb-3">
@@ -106,10 +107,12 @@
                           ?>
                           <div class="indikator-tujuan-item border rounded p-3 bg-white mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                              <label class="fw-medium indikator-tujuan-label">Indikator Tujuan
-                                <?= ($ti + 1) . '.' . ($ij + 1) ?></label>
-                              <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm"><i
-                                  class="fas fa-trash"></i></button>
+                              <label class="fw-medium indikator-tujuan-label">
+                                Indikator Tujuan <?= ($ti + 1) . '.' . ($ij + 1) ?>
+                              </label>
+                              <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                              </button>
                             </div>
                             <div class="mb-3">
                               <label class="form-label">Indikator</label>
@@ -147,9 +150,12 @@
                         <!-- default satu indikator tujuan -->
                         <div class="indikator-tujuan-item border rounded p-3 bg-white mb-3">
                           <div class="d-flex justify-content-between align-items-center mb-3">
-                            <label class="fw-medium indikator-tujuan-label">Indikator Tujuan <?= ($ti + 1) ?>.1</label>
-                            <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm"><i
-                                class="fas fa-trash"></i></button>
+                            <label class="fw-medium indikator-tujuan-label">
+                              Indikator Tujuan <?= ($ti + 1) ?>.1
+                            </label>
+                            <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm">
+                              <i class="fas fa-trash"></i>
+                            </button>
                           </div>
                           <div class="mb-3">
                             <label class="form-label">Indikator</label>
@@ -200,9 +206,12 @@
                         <?php foreach ($tu['sasaran'] as $si => $sa): ?>
                           <div class="sasaran-item border rounded p-3 bg-white mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                              <label class="fw-medium sasaran-label">Sasaran <?= ($ti + 1) . '.' . ($si + 1) ?></label>
-                              <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i
-                                  class="fas fa-trash"></i></button>
+                              <label class="fw-medium sasaran-label">
+                                Sasaran <?= ($ti + 1) . '.' . ($si + 1) ?>
+                              </label>
+                              <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                              </button>
                             </div>
 
                             <div class="mb-3">
@@ -227,17 +236,20 @@
                                       $imap[(int) $r['tahun']] = $r;
                                     }
                                     $years = range($tmulai, $takhir);
+                                    $jenis = strtolower(trim($is['jenis_indikator'] ?? ''));
                                     ?>
                                     <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
                                       <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <label class="fw-medium indikator-sasaran-label">Indikator Sasaran
-                                          <?= ($ti + 1) . '.' . ($si + 1) . '.' . ($ii + 1) ?></label>
-                                        <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i
-                                            class="fas fa-trash"></i></button>
+                                        <label class="fw-medium indikator-sasaran-label">
+                                          Indikator Sasaran <?= ($ti + 1) . '.' . ($si + 1) . '.' . ($ii + 1) ?>
+                                        </label>
+                                        <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm">
+                                          <i class="fas fa-trash"></i>
+                                        </button>
                                       </div>
 
                                       <div class="row">
-                                        <div class="col-md-8">
+                                        <div class="col-md-4">
                                           <label class="form-label">Indikator</label>
                                           <input type="hidden"
                                             name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][<?= $ii ?>][id]"
@@ -252,6 +264,20 @@
                                             name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][<?= $ii ?>][satuan]"
                                             data-selected="<?= esc($is['satuan'] ?? '') ?>" required>
                                             <option value="">Pilih Satuan</option>
+                                          </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                          <label class="form-label">Jenis Indikator</label>
+                                          <select class="form-select mb-3"
+                                            name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][<?= $ii ?>][jenis_indikator]"
+                                            required>
+                                            <option value="">Pilih Jenis Indikator</option>
+                                            <option value="indikator positif" <?= $jenis === 'indikator positif' || $jenis === 'positif' ? 'selected' : '' ?>>
+                                              Indikator Positif
+                                            </option>
+                                            <option value="indikator negatif" <?= $jenis === 'indikator negatif' || $jenis === 'negatif' ? 'selected' : '' ?>>
+                                              Indikator Negatif
+                                            </option>
                                           </select>
                                         </div>
                                       </div>
@@ -293,14 +319,16 @@
                                   <!-- default satu indikator sasaran -->
                                   <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                      <label class="fw-medium indikator-sasaran-label">Indikator Sasaran
-                                        <?= ($ti + 1) . '.' . ($si + 1) ?>.1</label>
-                                      <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i
-                                          class="fas fa-trash"></i></button>
+                                      <label class="fw-medium indikator-sasaran-label">
+                                        Indikator Sasaran <?= ($ti + 1) . '.' . ($si + 1) ?>.1
+                                      </label>
+                                      <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                      </button>
                                     </div>
 
                                     <div class="row">
-                                      <div class="col-md-8">
+                                      <div class="col-md-4">
                                         <label class="form-label">Indikator</label>
                                         <input type="text" class="form-control mb-3"
                                           name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][0][indikator_sasaran]"
@@ -311,6 +339,16 @@
                                         <select class="form-select satuan-select mb-3"
                                           name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][0][satuan]" required>
                                           <option value="">Pilih Satuan</option>
+                                        </select>
+                                      </div>
+                                      <div class="col-md-4">
+                                        <label class="form-label">Jenis Indikator</label>
+                                        <select class="form-select mb-3"
+                                          name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][0][jenis_indikator]"
+                                          required>
+                                          <option value="">Pilih Jenis Indikator</option>
+                                          <option value="indikator positif">Indikator Positif</option>
+                                          <option value="indikator negatif">Indikator Negatif</option>
                                         </select>
                                       </div>
                                     </div>
@@ -361,8 +399,9 @@
                         <div class="sasaran-item border rounded p-3 bg-white mb-3">
                           <div class="d-flex justify-content-between align-items-center mb-3">
                             <label class="fw-medium sasaran-label">Sasaran <?= ($ti + 1) ?>.1</label>
-                            <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i
-                                class="fas fa-trash"></i></button>
+                            <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm">
+                              <i class="fas fa-trash"></i>
+                            </button>
                           </div>
                           <div class="mb-3">
                             <label class="form-label">Sasaran RPJMD</label>
@@ -378,14 +417,16 @@
                             <div class="indikator-sasaran-container">
                               <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                  <label class="fw-medium indikator-sasaran-label">Indikator Sasaran
-                                    <?= ($ti + 1) ?>.1.1</label>
-                                  <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i
-                                      class="fas fa-trash"></i></button>
+                                  <label class="fw-medium indikator-sasaran-label">
+                                    Indikator Sasaran <?= ($ti + 1) ?>.1.1
+                                  </label>
+                                  <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                  </button>
                                 </div>
 
                                 <div class="row">
-                                  <div class="col-md-8">
+                                  <div class="col-md-4">
                                     <label class="form-label">Indikator</label>
                                     <input type="text" class="form-control mb-3"
                                       name="tujuan[<?= $ti ?>][sasaran][0][indikator_sasaran][0][indikator_sasaran]" required>
@@ -395,6 +436,15 @@
                                     <select class="form-select satuan-select mb-3"
                                       name="tujuan[<?= $ti ?>][sasaran][0][indikator_sasaran][0][satuan]" required>
                                       <option value="">Pilih Satuan</option>
+                                    </select>
+                                  </div>
+                                  <div class="col-md-4">
+                                    <label class="form-label">Jenis Indikator</label>
+                                    <select class="form-select mb-3"
+                                      name="tujuan[<?= $ti ?>][sasaran][0][indikator_sasaran][0][jenis_indikator]" required>
+                                      <option value="">Pilih Jenis Indikator</option>
+                                      <option value="indikator positif">Indikator Positif</option>
+                                      <option value="indikator negatif">Indikator Negatif</option>
                                     </select>
                                   </div>
                                 </div>
@@ -461,9 +511,12 @@
         </section>
 
         <div class="d-flex justify-content-between mt-4">
-          <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-secondary"><i class="fas fa-arrow-left me-1"></i>
-            Kembali</a>
-          <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Simpan Perubahan</button>
+          <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Kembali
+          </a>
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i> Simpan Perubahan
+          </button>
         </div>
       </form>
     </div>
@@ -479,13 +532,17 @@
         return window.generateSatuanOptions();
       }
       const items = ['', '%', 'Orang', 'Unit', 'Kegiatan', 'Dokumen', 'Nilai', 'Indeks'];
-      return items.map(v => v ? `<option value="${v}">${v}</option>` : '<option value="">Pilih Satuan</option>').join('');
+      return items.map(v =>
+        v ? `<option value="${v}">${v}</option>` : '<option value="">Pilih Satuan</option>'
+      ).join('');
     }
 
     function getYears() {
       const s = parseInt(document.getElementById('periode_start').value || '2025', 10);
       const e = parseInt(document.getElementById('periode_end').value || (s + 4), 10);
-      const out = []; for (let y = s; y <= e; y++) out.push(y); return out;
+      const out = [];
+      for (let y = s; y <= e; y++) out.push(y);
+      return out;
     }
 
     function templateTarget(namePrefix, years, isTujuan = false) {
@@ -493,7 +550,8 @@
       return years.map((y, k) => `
         <div class="target-item row g-2 align-items-center mb-2">
           <div class="col-auto">
-            <input type="number" class="form-control form-control-sm ${isTujuan ? 'tahun-target-tujuan' : 'tahun-target'}"
+            <input type="number"
+                   class="form-control form-control-sm ${isTujuan ? 'tahun-target-tujuan' : 'tahun-target'}"
                    name="${namePrefix}[${key}][${k}][tahun]" value="${y}" readonly>
           </div>
           <div class="col">
@@ -511,8 +569,12 @@
       return `
         <div class="indikator-tujuan-item border rounded p-3 bg-white mb-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <label class="fw-medium indikator-tujuan-label">Indikator Tujuan ${ti + 1}.${ij + 1}</label>
-            <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            <label class="fw-medium indikator-tujuan-label">
+              Indikator Tujuan ${ti + 1}.${ij + 1}
+            </label>
+            <button type="button" class="remove-indikator-tujuan btn btn-outline-danger btn-sm">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
           <div class="mb-3">
             <label class="form-label">Indikator</label>
@@ -533,11 +595,15 @@
       return `
         <div class="indikator-sasaran-item border rounded p-3 bg-light mb-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <label class="fw-medium indikator-sasaran-label">Indikator Sasaran ${ti + 1}.${si + 1}.${ii + 1}</label>
-            <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            <label class="fw-medium indikator-sasaran-label">
+              Indikator Sasaran ${ti + 1}.${si + 1}.${ii + 1}
+            </label>
+            <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
           <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-4">
               <label class="form-label">Indikator</label>
               <input type="text" name="${p}[indikator_sasaran]" class="form-control mb-3" required>
             </div>
@@ -545,6 +611,14 @@
               <label class="form-label">Satuan</label>
               <select name="${p}[satuan]" class="form-select satuan-select mb-3" required>
                 ${generateSatuanOptions()}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Jenis Indikator</label>
+              <select name="${p}[jenis_indikator]" class="form-select mb-3" required>
+                <option value="">Pilih Jenis Indikator</option>
+                <option value="indikator positif">Indikator Positif</option>
+                <option value="indikator negatif">Indikator Negatif</option>
               </select>
             </div>
           </div>
@@ -566,8 +640,12 @@
       return `
         <div class="sasaran-item border rounded p-3 bg-white mb-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <label class="fw-medium sasaran-label">Sasaran ${ti + 1}.${si + 1}</label>
-            <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            <label class="fw-medium sasaran-label">
+              Sasaran ${ti + 1}.${si + 1}
+            </label>
+            <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
           <div class="mb-3">
             <label class="form-label">Sasaran RPJMD</label>
@@ -597,7 +675,9 @@
         <div class="tujuan-item bg-light border rounded p-3 mb-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <label class="h6 fw-medium tujuan-label">Tujuan ${ti + 1}</label>
-            <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
+            <button type="button" class="remove-tujuan btn btn-outline-danger btn-sm">
+              <i class="fas fa-trash"></i>
+            </button>
           </div>
           <div class="mb-3">
             <label class="form-label">Tujuan RPJMD</label>
@@ -645,15 +725,22 @@
       // sinkron periode
       const s = document.getElementById('periode_start');
       const e = document.getElementById('periode_end');
-      s.addEventListener('input', () => { e.value = (parseInt(s.value || '2025', 10) + 4); refreshYears(); });
+      s.addEventListener('input', () => {
+        e.value = (parseInt(s.value || '2025', 10) + 4);
+        refreshYears();
+      });
 
       function refreshYears() {
         const years = getYears();
         document.querySelectorAll('.target-tujuan-container').forEach(cont => {
-          cont.querySelectorAll('.tahun-target-tujuan').forEach((inp, k) => { if (years[k] != null) inp.value = years[k]; });
+          cont.querySelectorAll('.tahun-target-tujuan').forEach((inp, k) => {
+            if (years[k] != null) inp.value = years[k];
+          });
         });
         document.querySelectorAll('.target-container').forEach(cont => {
-          cont.querySelectorAll('.tahun-target').forEach((inp, k) => { if (years[k] != null) inp.value = years[k]; });
+          cont.querySelectorAll('.tahun-target').forEach((inp, k) => {
+            if (years[k] != null) inp.value = years[k];
+          });
         });
       }
     });
@@ -680,7 +767,9 @@
       if (ev.target.closest('.add-indikator-tujuan')) {
         ev.preventDefault(); ev.stopImmediatePropagation();
         const tujuan = ev.target.closest('.tujuan-item');
-        const ti = Array.from(document.querySelectorAll('#tujuan-container .tujuan-item')).indexOf(tujuan);
+        const ti = Array.from(
+          document.querySelectorAll('#tujuan-container .tujuan-item')
+        ).indexOf(tujuan);
         const cont = tujuan.querySelector('.indikator-tujuan-container');
         const ij = cont.querySelectorAll('.indikator-tujuan-item').length;
         cont.insertAdjacentHTML('beforeend', newIndikatorTujuanHTML(ti, ij));
@@ -698,7 +787,9 @@
       if (ev.target.closest('.add-sasaran')) {
         ev.preventDefault(); ev.stopImmediatePropagation();
         const tujuan = ev.target.closest('.tujuan-item');
-        const ti = Array.from(document.querySelectorAll('#tujuan-container .tujuan-item')).indexOf(tujuan);
+        const ti = Array.from(
+          document.querySelectorAll('#tujuan-container .tujuan-item')
+        ).indexOf(tujuan);
         const cont = tujuan.querySelector('.sasaran-container');
         const si = cont.querySelectorAll('.sasaran-item').length;
         cont.insertAdjacentHTML('beforeend', newSasaranHTML(ti, si));
@@ -717,8 +808,12 @@
         ev.preventDefault(); ev.stopImmediatePropagation();
         const sasaran = ev.target.closest('.sasaran-item');
         const tujuan = ev.target.closest('.tujuan-item');
-        const ti = Array.from(document.querySelectorAll('#tujuan-container .tujuan-item')).indexOf(tujuan);
-        const si = Array.from(tujuan.querySelectorAll('.sasaran-item')).indexOf(sasaran);
+        const ti = Array.from(
+          document.querySelectorAll('#tujuan-container .tujuan-item')
+        ).indexOf(tujuan);
+        const si = Array.from(
+          tujuan.querySelectorAll('.sasaran-item')
+        ).indexOf(sasaran);
         const cont = sasaran.querySelector('.indikator-sasaran-container');
         const ii = cont.querySelectorAll('.indikator-sasaran-item').length;
         cont.insertAdjacentHTML('beforeend', newIndikatorSasaranHTML(ti, si, ii));

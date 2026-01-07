@@ -57,7 +57,7 @@ class ProgramPkController extends BaseController
     public function processImport()
     {
         // Pastikan PhpSpreadsheet tersedia
-        if (!class_exists(IOFactory::class)) {
+        if (!class_exists(\PhpOffice\PhpSpreadsheet\IOFactory::class)) {
             session()->setFlashdata('error', 'PhpSpreadsheet belum terpasang. Jalankan: composer require phpoffice/phpspreadsheet');
             return redirect()->back()->withInput();
         }
@@ -83,7 +83,7 @@ class ProgramPkController extends BaseController
             $dryrun = $this->request->getPost('dryrun') ? true : false;
 
             // --- Load Excel ---
-            $spreadsheet = IOFactory::load($file->getTempName());
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getTempName());
             $sheet = $sheetName !== '' ? $spreadsheet->getSheetByName($sheetName) : $spreadsheet->getActiveSheet();
 
             if (!$sheet) {
@@ -145,17 +145,17 @@ class ProgramPkController extends BaseController
                 $F = isset($r['F']) ? trim((string) $r['F']) : '';
                 $G = isset($r['G']) ? trim((string) $r['G']) : ''; // uraian/nama
 
-                // --- Ambil nilai mentah dari kolom L (Rancangan APBD Rp) ---
+                // --- Ambil nilai mentah dari kolom J (Rancangan APBD Rp) ---
                 $anggaran = 0;
-                $cellL = $sheet->getCell("L{$i}");
-                $rawVal = $cellL->getValue();           // nilai mentah (bisa float / int)
+                $cellJ = $sheet->getCell("J{$i}");
+                $rawVal = $cellJ->getValue();           // nilai mentah (bisa float / int)
 
                 if (is_numeric($rawVal)) {
                     // Contoh: 89920779177 atau 8.9920779177E10 → bulatkan ke rupiah
                     $anggaran = (int) round($rawVal);
                 } else {
                     // Cadangan: kalau formatnya string "89,920,779,177.00"
-                    $formatted = (string) $cellL->getFormattedValue();
+                    $formatted = (string) $cellJ->getFormattedValue();
                     $s = trim($formatted);
 
                     // buang spasi biasa & non-breaking space

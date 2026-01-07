@@ -38,7 +38,7 @@
             <div class="col-md-2">
               <label class="form-label">Periode Akhir</label>
               <input type="number" name="tahun_akhir" id="periode_end"
-                     class="form-control mb-3" value="2029" readonly>
+                     class="form-control mb-3" value="2030" readonly>
             </div>
           </div>
         </section>
@@ -95,7 +95,7 @@
                       <h5 class="fw-medium mb-3">Target 5 Tahunan (Indikator Tujuan)</h5>
                       <div class="target-tujuan-container">
                         <!-- terisi 5 baris tahun sesuai periode -->
-                        <?php for ($i = 0; $i < 5; $i++): ?>
+                        <?php for ($i = 0; $i < 6; $i++): ?>
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
                               <input type="number"
@@ -200,7 +200,7 @@
                           <div class="target-section">
                             <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                             <div class="target-container">
-                              <?php for ($i = 0; $i < 5; $i++): ?>
+                              <?php for ($i = 0; $i < 6; $i++): ?>
                                 <div class="target-item row g-2 align-items-center mb-2">
                                   <div class="col-auto">
                                     <input type="number"
@@ -271,7 +271,7 @@
     // ===== Helpers =====
     function getYears() {
       const start = parseInt(document.getElementById('periode_start').value || '2025', 10);
-      const end = parseInt(document.getElementById('periode_end').value || (start + 4), 10);
+      const end = parseInt(document.getElementById('periode_end').value || (start + 5), 10);
       const arr = [];
       for (let y = start; y <= end; y++) arr.push(y);
       return arr;
@@ -281,7 +281,7 @@
       const startEl = document.getElementById('periode_start');
       const endEl = document.getElementById('periode_end');
       const start = parseInt(startEl.value || '2025', 10);
-      endEl.value = start + 4;
+      endEl.value = start + 5;
     }
 
     function generateSatuanOptions() {

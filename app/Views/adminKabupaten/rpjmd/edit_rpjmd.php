@@ -36,7 +36,7 @@
 
       <?php
       $tmulai = isset($misi['tahun_mulai']) ? (int) $misi['tahun_mulai'] : 2025;
-      $takhir = isset($misi['tahun_akhir']) ? (int) $misi['tahun_akhir'] : ($tmulai + 4);
+      $takhir = isset($misi['tahun_akhir']) ? (int) $misi['tahun_akhir'] : ($tmulai + 5);
       ?>
 
       <form id="rpjmd-form" method="POST" action="<?= base_url('adminkab/rpjmd/update') ?>">
@@ -536,14 +536,17 @@
         v ? `<option value="${v}">${v}</option>` : '<option value="">Pilih Satuan</option>'
       ).join('');
     }
+    const PERIODE_TAHUN = 6;
 
     function getYears() {
-      const s = parseInt(document.getElementById('periode_start').value || '2025', 10);
-      const e = parseInt(document.getElementById('periode_end').value || (s + 4), 10);
-      const out = [];
-      for (let y = s; y <= e; y++) out.push(y);
-      return out;
+      const start = parseInt(document.getElementById('periode_start').value || '2025', 10);
+      const years = [];
+      for (let i = 0; i < PERIODE_TAHUN; i++) {
+        years.push(start + i);
+      }
+      return years;
     }
+
 
     function templateTarget(namePrefix, years, isTujuan = false) {
       const key = isTujuan ? 'target_tahunan_tujuan' : 'target_tahunan';
@@ -562,6 +565,39 @@
         </div>
       `).join('');
     }
+    function extendTargetContainer(container, namePrefix, isTujuan) {
+      const key = isTujuan ? 'target_tahunan_tujuan' : 'target_tahunan';
+      const years = getYears();
+
+      const existingYears = Array.from(
+        container.querySelectorAll('input[name$="[tahun]"]')
+      ).map(i => parseInt(i.value, 10));
+
+      years.forEach((y, k) => {
+        if (existingYears.includes(y)) return;
+
+        container.insertAdjacentHTML('beforeend', `
+      <div class="target-item row g-2 align-items-center mb-2">
+        <div class="col-auto">
+          <input type="number"
+            class="form-control form-control-sm ${isTujuan ? 'tahun-target-tujuan' : 'tahun-target'}"
+            name="${namePrefix}[${key}][${existingYears.length}][tahun]"
+            value="${y}" readonly>
+        </div>
+        <div class="col">
+          <input type="text"
+            class="form-control form-control-sm"
+            name="${namePrefix}[${key}][${existingYears.length}][target_tahunan]"
+            placeholder="Target ${y}">
+        </div>
+        <input type="hidden"
+          name="${namePrefix}[${key}][${existingYears.length}][id]"
+          value="">
+      </div>
+    `);
+      });
+    }
+
 
     function newIndikatorTujuanHTML(ti, ij) {
       const years = getYears();
@@ -726,21 +762,29 @@
       const s = document.getElementById('periode_start');
       const e = document.getElementById('periode_end');
       s.addEventListener('input', () => {
-        e.value = (parseInt(s.value || '2025', 10) + 4);
+        e.value = parseInt(s.value || '2025', 10) + (PERIODE_TAHUN - 1);
         refreshYears();
       });
 
       function refreshYears() {
-        const years = getYears();
-        document.querySelectorAll('.target-tujuan-container').forEach(cont => {
-          cont.querySelectorAll('.tahun-target-tujuan').forEach((inp, k) => {
-            if (years[k] != null) inp.value = years[k];
-          });
+        // indikator tujuan
+        document.querySelectorAll('.indikator-tujuan-item').forEach(item => {
+          const input = item.querySelector('input[name*="[indikator_tujuan]"]');
+          if (!input) return;
+
+          const prefix = input.name.replace(/\[indikator_tujuan\].*$/, '');
+          const cont = item.querySelector('.target-tujuan-container');
+          if (cont) extendTargetContainer(cont, prefix, true);
         });
-        document.querySelectorAll('.target-container').forEach(cont => {
-          cont.querySelectorAll('.tahun-target').forEach((inp, k) => {
-            if (years[k] != null) inp.value = years[k];
-          });
+
+        // indikator sasaran
+        document.querySelectorAll('.indikator-sasaran-item').forEach(item => {
+          const input = item.querySelector('input[name*="[indikator_sasaran]"]');
+          if (!input) return;
+
+          const prefix = input.name.replace(/\[indikator_sasaran\].*$/, '');
+          const cont = item.querySelector('.target-container');
+          if (cont) extendTargetContainer(cont, prefix, false);
         });
       }
     });

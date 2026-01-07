@@ -350,11 +350,21 @@
                                                                                 required>
                                                                                 <option value="">Pilih Kegiatan</option>
                                                                                 <?php foreach ($kegiatan as $kegiatanItem): ?>
-                                                                                    <option value="<?= $kegiatanItem['id'] ?>">
+                                                                                    <option value="<?= $kegiatanItem['id'] ?>"
+                                                                                        data-anggaran="<?= $kegiatanItem['anggaran'] ?>">
                                                                                         <?= esc($kegiatanItem['kegiatan']) ?>
                                                                                     </option>
                                                                                 <?php endforeach; ?>
                                                                             </select>
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <label class="form-label">Anggaran</label>
+                                                                            <input type="text"
+                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
+                                                                                class="form-control mb-3 border-secondary" value=""
+                                                                                placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
+                                                                            <input type="hidden" name="kegiatan[0][id_indikator]"
+                                                                                value="">
                                                                         </div>
 
                                                                         <div class="col-md-3 d-flex align-items-end">
@@ -432,11 +442,21 @@
                                                                                 required>
                                                                                 <option value="">Pilih Sub Kegiatan</option>
                                                                                 <?php foreach ($subkegiatan as $sk): ?>
-                                                                                    <option value="<?= $sk['id'] ?>">
+                                                                                    <option value="<?= $sk['id'] ?>"
+                                                                                        data-anggaran="<?= $sk['anggaran'] ?>">
                                                                                         <?= esc($sk['sub_kegiatan']) ?>
                                                                                     </option>
                                                                                 <?php endforeach; ?>
                                                                             </select>
+                                                                        </div>
+                                                                        <div class="col-md-3">
+                                                                            <label class="form-label">Anggaran</label>
+                                                                            <input type="text"
+                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
+                                                                                class="form-control mb-3 border-secondary" value=""
+                                                                                placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
+                                                                            <input type="hidden" name="subkegiatan[0][id_indikator]"
+                                                                                value="">
                                                                         </div>
 
                                                                         <div class="col-md-3 d-flex align-items-end">
@@ -458,6 +478,7 @@
 
                                                         </div>
                                                     </div>
+
 
                                                     <div class="d-flex justify-content-end mt-2">
                                                         <button type="button" class="add-kegiatan btn btn-primary btn-sm">
@@ -504,73 +525,163 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-        if (isset($satuan) && !empty($satuan)) {
-            foreach ($satuan as $s) {
-                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada satuan</option>';
-        }
-        ?> `;
+                                            if (isset($satuan) && !empty($satuan)) {
+                                                foreach ($satuan as $s) {
+                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada satuan</option>';
+                                            }
+                                            ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-        if (isset($program) && !empty($program)) {
-            foreach ($program as $programItem) {
-                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?> `;
+                                            if (isset($program) && !empty($program)) {
+                                                foreach ($program as $programItem) {
+
+                                                    $anggaran = isset($programItem['anggaran'])
+                                                        ? (int) $programItem['anggaran']
+                                                        : 0;
+
+                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
+                                                        . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
+                                                        . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada program</option>';
+                                            }
+                                            ?>`;
+
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-        if (isset($jptProgram) && !empty($jptProgram)) {
-            foreach ($jptProgram as $programItem) {
-                echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?> `;
+                                                if (isset($jptProgram) && !empty($jptProgram)) {
+                                                    foreach ($jptProgram as $programItem) {
+
+                                                        $anggaran = isset($programItem['anggaran'])
+                                                            ? number_format($programItem['anggaran'], 0, ',', '.')
+                                                            : '0';
+
+                                                        echo '<option value="' . $programItem['id'] . '">'
+                                                            . esc($programItem['program_kegiatan'])
+                                                            . ' - Rp ' . $anggaran
+                                                            . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada program</option>';
+                                                }
+                                                ?>`;
+
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-        if (isset($kegiatan) && !empty($kegiatan)) {
-            foreach ($kegiatan as $kegiatanItem) {
-                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada kegiatan</option>';
-        }
-        ?> `;
+                                            if (isset($kegiatan) && !empty($kegiatan)) {
+                                                foreach ($kegiatan as $kegiatanItem) {
+                                                    echo '<option value="' . $kegiatanItem['id'] . '" '
+                                                        . 'data-anggaran="' . $kegiatanItem['anggaran'] . '">'
+                                                        . esc($kegiatanItem['kegiatan'])
+                                                        . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                            }
+                                            ?>`;
+
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
-            foreach ($kegiatanAdmin as $kegiatanItem) {
-                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada kegiatan</option>';
-        }
-        ?> `;
+                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
+                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                                }
+                                                ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-        if (isset($subkegiatan) && !empty($subkegiatan)) {
-            foreach ($subkegiatan as $sk) {
-                echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-        }
-        ?>`;
+                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
+                                                    foreach ($subkegiatan as $sk) {
+                                                        echo '<option value="' . $sk['id'] . '" '
+                                                        . 'data-anggaran="' . $sk['anggaran'] . '">'
+                                                        . esc($sk['sub_kegiatan']) 
+                                                        . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+                                                }
+                                                ?>`;
     </script>
 
     <script>
-        
+        $(document).on('change', '.kegiatan-dropdown', function() {
+            const programId = $(this).find(":selected").data("program");
+            $(this).closest('.kegiatan-item').find('.program-id-hidden').val(programId);
+        });
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
+            document.querySelectorAll('.pegawai-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
+                    if (targetField && this.selectedOptions[0]) {
+                        targetField.value = this.selectedOptions[0].dataset.nip || '';
+                    }
+                });
+            });
+
+            // Fungsi untuk program anggaran
+            document.querySelectorAll('.program-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
+                    if (anggaranField && this.selectedOptions[0]) {
+                        anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';
+                    }
+                });
+            });
+
+            // Fungsi untuk misi bupati
+            const misiCheckboxes = document.querySelectorAll('input[name="misi_bupati_id[]"]');
+            const misiContainer = document.getElementById('selected-misi-container');
+
+            misiCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedMisi);
+            });
+
+            function updateSelectedMisi() {
+                const selected = Array.from(misiCheckboxes)
+                    .filter(c => c.checked)
+                    .map(c => c.getAttribute('data-misi'));
+
+                misiContainer.innerHTML = selected.length ?
+                    '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
+                    '';
+            }
+
+            // Fungsi untuk indikator acuan
+            const indikatorCheckboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
+            const indikatorContainer = document.getElementById('selected-indikator-container');
+
+            indikatorCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedIndikator);
+            });
+
+            function updateSelectedIndikator() {
+                const selected = Array.from(indikatorCheckboxes)
+                    .filter(c => c.checked)
+                    .map(c => c.getAttribute('data-indikator'));
+
+                indikatorContainer.innerHTML = selected.length ?
+                    '<strong>Indikator Acuan Terpilih:</strong><br>' + selected.join('<br>') :
+                    '';
+            }
+
+            // Inisialisasi awal
+            updateSelectedMisi();
+            updateSelectedIndikator();
+        });
     </script>
 
 

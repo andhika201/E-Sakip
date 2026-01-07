@@ -60,8 +60,7 @@
             </div>
             <div class="col-md-2">
               <label class="form-label">Periode Akhir</label>
-              <input type="number" id="periode_end" name="tahun_akhir" class="form-control mb-3" value="<?= $takhir ?>"
-                readonly>
+              <input type="number" id="periode_end" name="tahun_akhir" class="form-control mb-3" value="<?= $takhir ?>">
             </div>
           </div>
         </section>
@@ -536,17 +535,16 @@
         v ? `<option value="${v}">${v}</option>` : '<option value="">Pilih Satuan</option>'
       ).join('');
     }
-    const PERIODE_TAHUN = 6;
 
     function getYears() {
       const start = parseInt(document.getElementById('periode_start').value || '2025', 10);
+      const end = parseInt(document.getElementById('periode_end').value || start, 10);
       const years = [];
-      for (let i = 0; i < PERIODE_TAHUN; i++) {
-        years.push(start + i);
+      for (let y = start; y <= end; y++) {
+        years.push(y);
       }
       return years;
     }
-
 
     function templateTarget(namePrefix, years, isTujuan = false) {
       const key = isTujuan ? 'target_tahunan_tujuan' : 'target_tahunan';
@@ -762,9 +760,12 @@
       const s = document.getElementById('periode_start');
       const e = document.getElementById('periode_end');
       s.addEventListener('input', () => {
-        e.value = parseInt(s.value || '2025', 10) + (PERIODE_TAHUN - 1);
+        if (!e.value || parseInt(e.value, 10) < parseInt(s.value, 10)) {
+          e.value = parseInt(s.value, 10) + 5; // default awal 5 tahun
+        }
         refreshYears();
       });
+
 
       function refreshYears() {
         // indikator tujuan

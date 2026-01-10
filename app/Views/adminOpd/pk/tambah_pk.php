@@ -520,6 +520,7 @@
     </div>
 
     <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -604,9 +605,9 @@
                                                 if (isset($subkegiatan) && !empty($subkegiatan)) {
                                                     foreach ($subkegiatan as $sk) {
                                                         echo '<option value="' . $sk['id'] . '" '
-                                                        . 'data-anggaran="' . $sk['anggaran'] . '">'
-                                                        . esc($sk['sub_kegiatan']) 
-                                                        . '</option>';
+                                                            . 'data-anggaran="' . $sk['anggaran'] . '">'
+                                                            . esc($sk['sub_kegiatan'])
+                                                            . '</option>';
                                                     }
                                                 } else {
                                                     echo '<option value="" disabled>Tidak ada sub kegiatan</option>';

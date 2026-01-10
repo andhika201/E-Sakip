@@ -616,9 +616,16 @@
     </script>
 
     <script>
-        $(document).on('change', '.kegiatan-dropdown', function() {
-            const programId = $(this).find(":selected").data("program");
-            $(this).closest('.kegiatan-item').find('.program-id-hidden').val(programId);
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('kegiatan-dropdown')) {
+                const selected = e.target.options[e.target.selectedIndex];
+                const programId = selected?.dataset.program || '';
+                const wrapper = e.target.closest('.kegiatan-item');
+                if (!wrapper) return;
+
+                const hidden = wrapper.querySelector('.program-id-hidden');
+                if (hidden) hidden.value = programId;
+            }
         });
 
 

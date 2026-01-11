@@ -206,9 +206,9 @@
     <table class="table-bordered-custom" style="width:100%; margin-top:30px;">
       <thead>
         <tr class="center fw-bold">
-          <th style="width:5%;">NO</th>
+          <th style="width:7%;">No</th>
           <th style="width:65%;"><?= strtoupper(esc($program)) ?></th>
-          <th style="width:30%;">ANGGARAN (Rp)</th>
+          <th style="width:28%;">ANGGARAN (Rp)</th>
         </tr>
       </thead>
       <tbody>

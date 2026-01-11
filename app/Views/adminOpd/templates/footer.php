@@ -1,3 +1,4 @@
+  <!-- app/views/adminOpd/templates/footer.php -->
   <!-- Footer -->
   <footer class="bg-success text-white py-3 mt-auto text-center">
     <p class="small mb-0">&copy; 2025 Pemerintah Kabupaten Pringsewu. All rights reserved.</p>

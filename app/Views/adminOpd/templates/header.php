@@ -1,3 +1,4 @@
+<!-- app/views/adminOpd/templates/header.php -->
 <!-- Navbar/Header -->
 <header class="bg-success px-4 py-3 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
   <meta name="csrf-token" content="<?= csrf_hash(); ?>">

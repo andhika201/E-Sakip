@@ -173,8 +173,10 @@
                             <?php if ($showOpdCol): ?>
                                 <th rowspan="2" class="align-middle">OPD</th>
                             <?php endif; ?>
+                            <th rowspan="2" class="align-middle">Status</th>
                             <th rowspan="2" class="align-middle">Sasaran</th>
                             <th rowspan="2" class="align-middle">Indikator Sasaran</th>
+                            <th rowspan="2" class="align-middle">Definisi Operasional</th>
                             <th rowspan="2" class="align-middle">Satuan</th>
 
                             <?php if (!empty($grouped_data) && isset($grouped_data[$selected_periode])): ?>
@@ -184,11 +186,8 @@
                                 </th>
                             <?php else: ?>
                                 <th colspan="5" class="align-middle">Target Capaian per Tahun</th>
-                            <?php endif; ?>
-
-                            <th rowspan="2" class="align-middle">Definisi Operasional</th>
-                            <th rowspan="2" class="align-middle">Status</th>
-                            <th rowspan="2" class="align-middle">Program Pendukung</th>
+                            <?php endif; ?>     
+                                                <th rowspan="2" class="align-middle">Program Pendukung</th>
                             <th rowspan="2" class="align-middle">Aksi</th>
                         </tr>
                         <tr>
@@ -265,6 +264,24 @@
                                                 <?php endif; ?>
                                             <?php endif; ?>
 
+                                            <!-- Status -->
+                                                <td rowspan="<?= $programCount ?>" class="align-middle">
+                                                    <?php
+                                                    $rawStatus   = $iku['status'] ?? null;
+                                                    $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+
+                                                    if ($statusLower === 'tercapai') {
+                                                        $badgeClass  = 'bg-success';
+                                                        $statusLabel = 'Tercapai';
+                                                    } else {
+                                                        $badgeClass  = 'bg-secondary';
+                                                        $statusLabel = 'Belum';
+                                                    }
+                                                    ?>
+                                                    <span class="badge <?= $badgeClass ?>">
+                                                        <?= esc($statusLabel) ?>
+                                                    </span>
+                                                </td>
                                             <!-- Sasaran (rowspan untuk semua indikator + program di sasaran tsb) -->
                                             <?php if (!isset($printedSasaran[$sasKey])): ?>
                                                 <td rowspan="<?= $sasaranRowspan[$sasKey] ?? 1 ?>" class="align-middle text-start">
@@ -278,7 +295,10 @@
                                                 <td rowspan="<?= $programCount ?>" class="text-start">
                                                     <?= esc($indikator['indikator_sasaran'] ?? '-') ?>
                                                 </td>
-
+ <!-- Definisi -->
+                                                <td rowspan="<?= $programCount ?>" class="text-start">
+                                                    <?= esc($iku['definisi'] ?? '-') ?>
+                                                </td>
                                                 <!-- Satuan -->
                                                 <td rowspan="<?= $programCount ?>">
                                                     <?= esc($indikator['satuan'] ?? '-') ?>
@@ -297,31 +317,7 @@
                                                         <td rowspan="<?= $programCount ?>"><?= esc($value) ?></td>
                                                     <?php endforeach; ?>
                                                 <?php endif; ?>
-
-                                                <!-- Definisi -->
-                                                <td rowspan="<?= $programCount ?>" class="text-start">
-                                                    <?= esc($iku['definisi'] ?? '-') ?>
-                                                </td>
-
-                                                <!-- Status -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle">
-                                                    <?php
-                                                    $rawStatus   = $iku['status'] ?? null;
-                                                    $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
-
-                                                    if ($statusLower === 'tercapai') {
-                                                        $badgeClass  = 'bg-success';
-                                                        $statusLabel = 'Tercapai';
-                                                    } else {
-                                                        $badgeClass  = 'bg-secondary';
-                                                        $statusLabel = 'Belum';
-                                                    }
-                                                    ?>
-                                                    <span class="badge <?= $badgeClass ?>">
-                                                        <?= esc($statusLabel) ?>
-                                                    </span>
-                                                </td>
-                                            <?php endif; ?>
+                                                                                                                                           <?php endif; ?>
 
                                             <!-- Program pendukung -->
                                             <td class="text-start">

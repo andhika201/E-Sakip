@@ -434,9 +434,9 @@ class RpjmdModel extends Model
         return $this->db->table('rpjmd_misi')->where('id', (int) $id)->update($data);
     }
 
-   /* =====================================================
-     |  AMBIL MISI ID DARI SEMUA LEVEL
-     ===================================================== */
+    /* =====================================================
+      |  AMBIL MISI ID DARI SEMUA LEVEL
+      ===================================================== */
     public function findMisiIdForAnyEntity(int $id): ?int
     {
         $checks = [
@@ -455,7 +455,8 @@ class RpjmdModel extends Model
         $q = $this->db->query(
             "SELECT t.misi_id FROM rpjmd_sasaran s
              JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
-             WHERE s.id = ?", [$id]
+             WHERE s.id = ?",
+            [$id]
         );
         if ($q && ($r = $q->getRowArray())) {
             return (int) $r['misi_id'];
@@ -466,7 +467,8 @@ class RpjmdModel extends Model
             "SELECT t.misi_id FROM rpjmd_indikator_sasaran i
              JOIN rpjmd_sasaran s ON s.id = i.sasaran_id
              JOIN rpjmd_tujuan t ON t.id = s.tujuan_id
-             WHERE i.id = ?", [$id]
+             WHERE i.id = ?",
+            [$id]
         );
         if ($q && ($r = $q->getRowArray())) {
             return (int) $r['misi_id'];
@@ -1051,164 +1053,209 @@ class RpjmdModel extends Model
         try {
             $this->db->transStart();
 
-            // Update misi
+            /* ======================================================
+             |  🔥 FIX 1: NORMALISASI INDEX ARRAY (WAJIB)
+             ====================================================== */
+            $data['tujuan'] = array_values($data['tujuan'] ?? []);
+            foreach ($data['tujuan'] as &$t) {
+
+                if (isset($t['indikator_tujuan'])) {
+                    $t['indikator_tujuan'] = array_values($t['indikator_tujuan']);
+                }
+
+                if (isset($t['sasaran'])) {
+                    $t['sasaran'] = array_values($t['sasaran']);
+
+                    foreach ($t['sasaran'] as &$s) {
+                        if (isset($s['indikator_sasaran'])) {
+                            $s['indikator_sasaran'] = array_values($s['indikator_sasaran']);
+                        }
+                    }
+                    unset($s);
+                }
+            }
+            unset($t);
+
+            /* =======================
+             |  UPDATE MISI
+             ======================= */
             if (!empty($data['misi'])) {
                 $this->updateMisi($misiId, $data['misi']);
             }
 
-            // Track tujuan existing vs processed
+            /* =======================
+             |  TUJUAN
+             ======================= */
             $existingTujuanIds = array_column($this->getTujuanByMisiId($misiId), 'id');
             $processedTujuanIds = [];
 
-            if (!empty($data['tujuan']) && is_array($data['tujuan'])) {
-                foreach ($data['tujuan'] as $tujuanData) {
-                    if (empty($tujuanData['tujuan_rpjmd'])) {
+            foreach ($data['tujuan'] as $tujuanData) {
+
+                if (empty($tujuanData['tujuan_rpjmd'])) {
+                    continue;
+                }
+
+                // upsert tujuan
+                if (!empty($tujuanData['id'])) {
+                    $tujuanId = (int) $tujuanData['id'];
+                    $this->updateTujuan($tujuanId, [
+                        'misi_id' => $misiId,
+                        'tujuan_rpjmd' => $tujuanData['tujuan_rpjmd'],
+                    ]);
+                } else {
+                    $tujuanId = $this->createTujuan([
+                        'misi_id' => $misiId,
+                        'tujuan_rpjmd' => $tujuanData['tujuan_rpjmd'],
+                    ]);
+                }
+                $processedTujuanIds[] = $tujuanId;
+
+                /* =======================
+                 |  INDIKATOR TUJUAN
+                 ======================= */
+                $existingIndTujuan = array_column(
+                    $this->getIndikatorTujuanByTujuanId($tujuanId),
+                    'id'
+                );
+                $processedIndTujuan = [];
+
+                foreach (($tujuanData['indikator_tujuan'] ?? []) as $it) {
+
+                    if (empty($it['indikator_tujuan'])) {
                         continue;
                     }
 
-                    // upsert tujuan
-                    if (!empty($tujuanData['id'])) {
-                        $tujuanId = (int) $tujuanData['id'];
-                        $this->updateTujuan($tujuanId, [
-                            'misi_id' => $misiId,
-                            'tujuan_rpjmd' => $tujuanData['tujuan_rpjmd'],
+                    if (!empty($it['id'])) {
+                        $indikatorId = (int) $it['id'];
+                        $this->updateIndikatorTujuan($indikatorId, [
+                            'tujuan_id' => $tujuanId,
+                            'indikator_tujuan' => $it['indikator_tujuan'],
+                            'baseline' => $it['baseline'] ?? null,
                         ]);
                     } else {
-                        $tujuanId = $this->createTujuan([
-                            'misi_id' => $misiId,
-                            'tujuan_rpjmd' => $tujuanData['tujuan_rpjmd'],
+                        $indikatorId = $this->createIndikatorTujuan([
+                            'tujuan_id' => $tujuanId,
+                            'indikator_tujuan' => $it['indikator_tujuan'],
+                            'baseline' => $it['baseline'] ?? null,
                         ]);
                     }
-                    $processedTujuanIds[] = $tujuanId;
+                    $processedIndTujuan[] = $indikatorId;
 
-                    // ============ INDIKATOR TUJUAN + TARGET TUJUAN ============
-                    $existingIndTujuan = array_column($this->getIndikatorTujuanByTujuanId($tujuanId), 'id');
-                    $processedIndTujuan = [];
-
-                    if (!empty($tujuanData['indikator_tujuan']) && is_array($tujuanData['indikator_tujuan'])) {
-                        foreach ($tujuanData['indikator_tujuan'] as $it) {
-                            if (empty($it['indikator_tujuan'])) {
-                                continue;
-                            }
-
-                            if (!empty($it['id'])) {
-                                $indikatorId = (int) $it['id'];
-                                $this->updateIndikatorTujuan($indikatorId, [
-                                    'tujuan_id' => $tujuanId,
-                                    'indikator_tujuan' => $it['indikator_tujuan'],
-                                    'baseline' => $it['baseline'] ?? null,
-                                ]);
-                            } else {
-                                $indikatorId = $this->createIndikatorTujuan([
-                                    'tujuan_id' => $tujuanId,
-                                    'indikator_tujuan' => $it['indikator_tujuan'],
-                                    'baseline' => $it['baseline'] ?? null,
-                                ]);
-                            }
-                            $processedIndTujuan[] = $indikatorId;
-
-                            // sinkronisasi target_tahunan_tujuan
-                            $targets = $it['target_tahunan_tujuan'] ?? [];
-                            $this->syncTargetTujuanForIndikator($indikatorId, is_array($targets) ? $targets : []);
+                    /* ---- TARGET TUJUAN (CEGAH DOBEL TAHUN) ---- */
+                    $targets = [];
+                    foreach (($it['target_tahunan_tujuan'] ?? []) as $tt) {
+                        if (isset($tt['tahun'])) {
+                            $targets[(int) $tt['tahun']] = $tt;
                         }
                     }
 
-                    // hapus indikator_tujuan yang tidak diproses lagi
-                    $toDeleteIndTujuan = array_diff($existingIndTujuan, $processedIndTujuan);
-                    foreach ($toDeleteIndTujuan as $delId) {
-                        $this->deleteIndikatorTujuan((int) $delId);
+                    $this->syncTargetTujuanForIndikator($indikatorId, array_values($targets));
+                }
+
+                // hapus indikator tujuan yang tidak dipakai
+                foreach (array_diff($existingIndTujuan, $processedIndTujuan) as $delId) {
+                    $this->deleteIndikatorTujuan((int) $delId);
+                }
+
+                /* =======================
+                 |  SASARAN
+                 ======================= */
+                $existingSasaranIds = array_column(
+                    $this->getSasaranByTujuanId($tujuanId),
+                    'id'
+                );
+                $processedSasaranIds = [];
+
+                foreach (($tujuanData['sasaran'] ?? []) as $sasData) {
+
+                    if (empty($sasData['sasaran_rpjmd'])) {
+                        continue;
                     }
 
-                    // ============ SASARAN + INDIKATOR SASARAN + TARGET ============
-                    $existingSasaranIds = array_column($this->getSasaranByTujuanId($tujuanId), 'id');
-                    $processedSasaranIds = [];
+                    if (!empty($sasData['id'])) {
+                        $sasaranId = (int) $sasData['id'];
+                        $this->updateSasaran($sasaranId, [
+                            'tujuan_id' => $tujuanId,
+                            'sasaran_rpjmd' => $sasData['sasaran_rpjmd'],
+                        ]);
+                    } else {
+                        $sasaranId = $this->createSasaran([
+                            'tujuan_id' => $tujuanId,
+                            'sasaran_rpjmd' => $sasData['sasaran_rpjmd'],
+                        ]);
+                    }
+                    $processedSasaranIds[] = $sasaranId;
 
-                    if (!empty($tujuanData['sasaran']) && is_array($tujuanData['sasaran'])) {
-                        foreach ($tujuanData['sasaran'] as $sasData) {
-                            if (empty($sasData['sasaran_rpjmd'])) {
-                                continue;
+                    /* =======================
+                     |  INDIKATOR SASARAN
+                     ======================= */
+                    $existingIndSasIds = array_column(
+                        $this->getIndikatorSasaranBySasaranId($sasaranId),
+                        'id'
+                    );
+                    $processedIndSasIds = [];
+
+                    foreach (($sasData['indikator_sasaran'] ?? []) as $is) {
+
+                        if (empty($is['indikator_sasaran'])) {
+                            continue;
+                        }
+
+                        if (!empty($is['id'])) {
+                            $indId = (int) $is['id'];
+                            $this->updateIndikatorSasaran($indId, [
+                                'sasaran_id' => $sasaranId,
+                                'indikator_sasaran' => $is['indikator_sasaran'],
+                                'definisi_op' => $is['definisi_op'] ?? '',
+                                'satuan' => $is['satuan'] ?? '',
+                                'baseline' => $is['baseline'] ?? null,
+                                'jenis_indikator' => $is['jenis_indikator'] ?? '',
+                            ]);
+                        } else {
+                            $indId = $this->createIndikatorSasaran([
+                                'sasaran_id' => $sasaranId,
+                                'indikator_sasaran' => $is['indikator_sasaran'],
+                                'definisi_op' => $is['definisi_op'] ?? '',
+                                'satuan' => $is['satuan'] ?? '',
+                                'baseline' => $is['baseline'] ?? null,
+                                'jenis_indikator' => $is['jenis_indikator'] ?? '',
+                            ]);
+                        }
+                        $processedIndSasIds[] = $indId;
+
+                        /* ---- TARGET SASARAN (CEGAH DOBEL TAHUN) ---- */
+                        $this->deleteTargetTahunanByIndikatorId($indId);
+
+                        $targets = [];
+                        foreach (($is['target_tahunan'] ?? []) as $t) {
+                            if (isset($t['tahun'])) {
+                                $targets[(int) $t['tahun']] = $t;
                             }
+                        }
 
-                            if (!empty($sasData['id'])) {
-                                $sasaranId = (int) $sasData['id'];
-                                $this->updateSasaran($sasaranId, [
-                                    'tujuan_id' => $tujuanId,
-                                    'sasaran_rpjmd' => $sasData['sasaran_rpjmd'],
-                                ]);
-                            } else {
-                                $sasaranId = $this->createSasaran([
-                                    'tujuan_id' => $tujuanId,
-                                    'sasaran_rpjmd' => $sasData['sasaran_rpjmd'],
-                                ]);
-                            }
-                            $processedSasaranIds[] = $sasaranId;
-
-                            $existingIndSasIds = array_column($this->getIndikatorSasaranBySasaranId($sasaranId), 'id');
-                            $processedIndSasIds = [];
-
-                            if (!empty($sasData['indikator_sasaran']) && is_array($sasData['indikator_sasaran'])) {
-                                foreach ($sasData['indikator_sasaran'] as $is) {
-                                    if (empty($is['indikator_sasaran'])) {
-                                        continue;
-                                    }
-
-                                    if (!empty($is['id'])) {
-                                        $indId = (int) $is['id'];
-                                        $this->updateIndikatorSasaran($indId, [
-                                            'sasaran_id' => $sasaranId,
-                                            'indikator_sasaran' => $is['indikator_sasaran'],
-                                            'definisi_op' => $is['definisi_op'] ?? '',
-                                            'satuan' => $is['satuan'] ?? '',
-                                            'baseline' => $is['baseline'] ?? null,
-                                            'jenis_indikator' => $is['jenis_indikator'] ?? '',
-                                        ]);
-                                    } else {
-                                        $indId = $this->createIndikatorSasaran([
-                                            'sasaran_id' => $sasaranId,
-                                            'indikator_sasaran' => $is['indikator_sasaran'],
-                                            'definisi_op' => $is['definisi_op'] ?? '',
-                                            'satuan' => $is['satuan'] ?? '',
-                                            'baseline' => $is['baseline'] ?? null,
-                                            'jenis_indikator' => $is['jenis_indikator'] ?? '',
-                                        ]);
-                                    }
-                                    $processedIndSasIds[] = $indId;
-
-                                    // refresh target (hapus dulu biar tidak duplikat)
-                                    $this->deleteTargetTahunanByIndikatorId($indId);
-                                    if (!empty($is['target_tahunan']) && is_array($is['target_tahunan'])) {
-                                        foreach ($is['target_tahunan'] as $t) {
-                                            if (!empty($t['tahun'])) {
-                                                $this->createTargetTahunan([
-                                                    'indikator_sasaran_id' => $indId,
-                                                    'tahun' => (int) $t['tahun'],
-                                                    'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
-                                                ]);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // hapus indikator_sasaran yang tidak dipakai lagi
-                            $toDeleteIndSas = array_diff($existingIndSasIds, $processedIndSasIds);
-                            foreach ($toDeleteIndSas as $delId) {
-                                $this->deleteIndikatorSasaran((int) $delId, true);
-                            }
+                        foreach ($targets as $t) {
+                            $this->createTargetTahunan([
+                                'indikator_sasaran_id' => $indId,
+                                'tahun' => (int) $t['tahun'],
+                                'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
+                            ]);
                         }
                     }
 
-                    // hapus sasaran yang tidak dipakai lagi
-                    $toDeleteSasaran = array_diff($existingSasaranIds, $processedSasaranIds);
-                    foreach ($toDeleteSasaran as $delId) {
-                        $this->deleteSasaran((int) $delId, true);
+                    // hapus indikator sasaran tidak terpakai
+                    foreach (array_diff($existingIndSasIds, $processedIndSasIds) as $delId) {
+                        $this->deleteIndikatorSasaran((int) $delId, true);
                     }
+                }
+
+                // hapus sasaran tidak terpakai
+                foreach (array_diff($existingSasaranIds, $processedSasaranIds) as $delId) {
+                    $this->deleteSasaran((int) $delId, true);
                 }
             }
 
-            // hapus tujuan yang tidak dipakai lagi
-            $toDeleteTujuan = array_diff($existingTujuanIds, $processedTujuanIds);
-            foreach ($toDeleteTujuan as $delId) {
+            // hapus tujuan tidak terpakai
+            foreach (array_diff($existingTujuanIds, $processedTujuanIds) as $delId) {
                 $this->deleteTujuan((int) $delId, true);
             }
 
@@ -1218,7 +1265,7 @@ class RpjmdModel extends Model
             $this->db->transComplete();
             if ($this->db->transStatus() === false) {
                 file_put_contents($debugFile, "ERROR: DB transaction failed\n", FILE_APPEND);
-                throw new \Exception("Database transaction failed. All changes have been rolled back.");
+                throw new \Exception("Database transaction failed");
             }
 
             file_put_contents($debugFile, "SUCCESS: Update completed\n", FILE_APPEND);
@@ -1230,6 +1277,7 @@ class RpjmdModel extends Model
             throw $e;
         }
     }
+
 
     // ==================== HELPER METHODS ====================
 

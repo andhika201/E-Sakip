@@ -284,6 +284,19 @@ class RpjmdController extends BaseController
                 throw new \Exception('ID RPJMD tidak valid');
             }
 
+            if (empty($post['tujuan']) || !is_array($post['tujuan'])) {
+                throw new \Exception('Data tujuan tidak valid');
+            }
+
+            /* =======================
+             |  HITUNG PERIODE DI SERVER
+             ======================= */
+            $tahunMulai = (int) ($post['tahun_mulai'] ?? 0);
+            if ($tahunMulai <= 0) {
+                throw new \Exception('Tahun mulai tidak valid');
+            }
+            $tahunAkhir = $tahunMulai + 5;
+
             /* =======================
              |  UPDATE MISI
              ======================= */
@@ -291,29 +304,28 @@ class RpjmdController extends BaseController
                 ->where('id', $misiId)
                 ->update([
                     'misi' => $post['misi'],
-                    'tahun_mulai' => (int) $post['tahun_mulai'],
-                    'tahun_akhir' => (int) $post['tahun_akhir'],
+                    'tahun_mulai' => $tahunMulai,
+                    'tahun_akhir' => $tahunAkhir,
                 ]);
 
             /* ======================================================
              |  HAPUS TOTAL DATA LAMA (URUTAN ANAK → INDUK)
              ====================================================== */
 
-            // TUJUAN
             $tujuanList = $db->table('rpjmd_tujuan')
                 ->where('misi_id', $misiId)
                 ->get()->getResultArray();
 
             foreach ($tujuanList as $tujuan) {
-                $tujuanId = $tujuan['id'];
+                $tujuanId = (int) $tujuan['id'];
 
-                // SASARAN
+                // ===== SASARAN =====
                 $sasaranList = $db->table('rpjmd_sasaran')
                     ->where('tujuan_id', $tujuanId)
                     ->get()->getResultArray();
 
                 foreach ($sasaranList as $sas) {
-                    $sasaranId = $sas['id'];
+                    $sasaranId = (int) $sas['id'];
 
                     // INDIKATOR SASARAN
                     $indikatorSasaran = $db->table('rpjmd_indikator_sasaran')
@@ -321,7 +333,6 @@ class RpjmdController extends BaseController
                         ->get()->getResultArray();
 
                     foreach ($indikatorSasaran as $is) {
-                        // TARGET SASARAN
                         $db->table('rpjmd_target')
                             ->where('indikator_sasaran_id', $is['id'])
                             ->delete();
@@ -336,7 +347,7 @@ class RpjmdController extends BaseController
                     ->where('tujuan_id', $tujuanId)
                     ->delete();
 
-                // INDIKATOR TUJUAN
+                // ===== INDIKATOR TUJUAN =====
                 $indikatorTujuan = $db->table('rpjmd_indikator_tujuan')
                     ->where('tujuan_id', $tujuanId)
                     ->get()->getResultArray();
@@ -360,7 +371,10 @@ class RpjmdController extends BaseController
              |  INSERT DATA BARU
              ====================================================== */
 
-            foreach (($post['tujuan'] ?? []) as $tujuan) {
+            // 🔥 NORMALISASI INDEX TUJUAN
+            $post['tujuan'] = array_values($post['tujuan']);
+
+            foreach ($post['tujuan'] as $tujuan) {
 
                 $db->table('rpjmd_tujuan')->insert([
                     'misi_id' => $misiId,
@@ -368,8 +382,9 @@ class RpjmdController extends BaseController
                 ]);
                 $tujuanId = $db->insertID();
 
-                // INDIKATOR TUJUAN
-                foreach (($tujuan['indikator_tujuan'] ?? []) as $it) {
+                /* ===== INDIKATOR TUJUAN ===== */
+                $indikatorTujuan = array_values($tujuan['indikator_tujuan'] ?? []);
+                foreach ($indikatorTujuan as $it) {
 
                     $db->table('rpjmd_indikator_tujuan')->insert([
                         'tujuan_id' => $tujuanId,
@@ -377,7 +392,15 @@ class RpjmdController extends BaseController
                     ]);
                     $itId = $db->insertID();
 
+                    // cegah target dobel tahun
+                    $targets = [];
                     foreach (($it['target_tahunan_tujuan'] ?? []) as $tt) {
+                        if (isset($tt['tahun'])) {
+                            $targets[(int) $tt['tahun']] = $tt;
+                        }
+                    }
+
+                    foreach ($targets as $tt) {
                         $db->table('rpjmd_target_tujuan')->insert([
                             'indikator_tujuan_id' => $itId,
                             'tahun' => (int) $tt['tahun'],
@@ -386,8 +409,9 @@ class RpjmdController extends BaseController
                     }
                 }
 
-                // SASARAN
-                foreach (($tujuan['sasaran'] ?? []) as $sas) {
+                /* ===== SASARAN ===== */
+                $sasaranList = array_values($tujuan['sasaran'] ?? []);
+                foreach ($sasaranList as $sas) {
 
                     $db->table('rpjmd_sasaran')->insert([
                         'tujuan_id' => $tujuanId,
@@ -395,7 +419,8 @@ class RpjmdController extends BaseController
                     ]);
                     $sasaranId = $db->insertID();
 
-                    foreach (($sas['indikator_sasaran'] ?? []) as $is) {
+                    $indikatorSasaran = array_values($sas['indikator_sasaran'] ?? []);
+                    foreach ($indikatorSasaran as $is) {
 
                         $db->table('rpjmd_indikator_sasaran')->insert([
                             'sasaran_id' => $sasaranId,
@@ -406,7 +431,15 @@ class RpjmdController extends BaseController
                         ]);
                         $isId = $db->insertID();
 
+                        // cegah target dobel tahun
+                        $targets = [];
                         foreach (($is['target_tahunan'] ?? []) as $tt) {
+                            if (isset($tt['tahun'])) {
+                                $targets[(int) $tt['tahun']] = $tt;
+                            }
+                        }
+
+                        foreach ($targets as $tt) {
                             $db->table('rpjmd_target')->insert([
                                 'indikator_sasaran_id' => $isId,
                                 'tahun' => (int) $tt['tahun'],
@@ -436,7 +469,6 @@ class RpjmdController extends BaseController
                 ->with('error', 'Gagal memperbarui RPJMD');
         }
     }
-
 
     public function delete($id)
     {

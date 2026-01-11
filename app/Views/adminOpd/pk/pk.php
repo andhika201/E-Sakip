@@ -8,7 +8,7 @@
     <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
 
-<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<body class="bg-light min-vh-100 d-flex flex-column position-relative" data-jenis="<?= $jenis ?>">
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
     <main class="flex-fill p-4 mt-2">
@@ -17,12 +17,12 @@
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div class="d-flex gap-2 flex-fill">
                     <form method="GET" id="filterForm" class="flex-fill">
-                        <select name="tahun" class="form-select"
+                        <select id="tahun" name="tahun" class="form-select"
                             onchange="document.getElementById('filterForm').submit()">
                             <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
                                 Silahkan pilih tahun
                             </option>
-                            
+
                             <?php for ($i = 2020; $i <= 2030; $i++): ?>
                                 <option value="<?= $i ?>" <?= (($tahun ?? $currentYear) == $i) ? 'selected' : '' ?>>
                                     <?= $i ?>
@@ -245,10 +245,12 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
     <!-- Global JS variables for PK page -->
     <script>
-        document.getElementById('tahun').addEventListener('change', function() {
-            const tahun = this.value;
-            window.location = '?tahun=' + tahun;
-        });
+        const tahunSelect = document.getElementById('tahun');
+        if (tahunSelect) {
+            tahunSelect.addEventListener('change', function() {
+                window.location = '?tahun=' + this.value;
+            });
+        }
         window.base_url = '<?= base_url() ?>';
         window.jenis = '<?= $jenis ?>';
     </script>

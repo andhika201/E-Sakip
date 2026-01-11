@@ -1,6 +1,6 @@
 // Pastikan base_url dan jenis tersedia
 const baseUrl = window.base_url || '';
-const jenisPk = window.jenis ;
+const jenisPk = window.jenis || document.body.dataset.jenis || '';
 
 // Delete PK function
 function deletePk(pkId) {

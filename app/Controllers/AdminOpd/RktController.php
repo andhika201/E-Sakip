@@ -270,7 +270,8 @@ class RktController extends BaseController
         // DATA MASTER
         $programPk = $this->programPkModel->findAll();          // tabel program_pk
         $kegiatanPk = $this->programPkModel->getAllKegiatan();   // tabel kegiatan_pk
-        $subKegiatanPk = $this->programPkModel->getAllSubKegiatan();// tabel sub_kegiatan_pk
+        // $subKegiatanPk = $this->programPkModel->getAllSubKegiatan();// tabel sub_kegiatan_pk
+        $subKegiatanPk = $this->programPkModel->getSubKegiatanByTahun($tahun); // tabel sub_kegiatan_pk filtered by tahun
 
         $data = [
             'title' => 'Tambah RENJA (RKT)',

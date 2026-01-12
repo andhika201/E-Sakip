@@ -11,65 +11,77 @@
      * =============================== */
     function updateFormNames() {
 
-        document.querySelectorAll('.sasaran-container .sasaran-item')
-            .forEach((sasaranItem, sIdx) => {
+    document.querySelectorAll('.sasaran-container .sasaran-item')
+        .forEach((sasaranItem, sIdx) => {
 
-                const sasaranTextarea = sasaranItem.querySelector('textarea');
-                if (sasaranTextarea) {
-                    sasaranTextarea.name = `sasaran_pk[${sIdx}][sasaran]`;
-                }
+            // sasaran
+            const sasaranTextarea = sasaranItem.querySelector('textarea');
+            if (sasaranTextarea) {
+                sasaranTextarea.name = `sasaran_pk[${sIdx}][sasaran]`;
+            }
 
-                sasaranItem.querySelectorAll('.indikator-item')
-                    .forEach((indikatorItem, iIdx) => {
+            sasaranItem.querySelectorAll('.indikator-item')
+                .forEach((indikatorItem, iIdx) => {
 
-                        indikatorItem.querySelectorAll('input, select')
-                            .forEach(el => {
+                    // indikator, target, satuan, jenis
+                    indikatorItem.querySelectorAll('input, select').forEach(el => {
 
-                                if (el.classList.contains('indikator-input')) {
-                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][indikator]`;
-                                }
+                        if (el.name.includes('[indikator]') && el.type === 'text') {
+                            el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][indikator]`;
+                        }
 
-                                if (el.classList.contains('target-input')) {
-                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][target]`;
-                                }
+                        if (el.name.includes('[target]')) {
+                            el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][target]`;
+                        }
 
-                                if (el.classList.contains('satuan-select')) {
-                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][id_satuan]`;
-                                }
+                        if (el.name.includes('[id_satuan]')) {
+                            el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][id_satuan]`;
+                        }
 
-                                if (el.classList.contains('jenis-indikator-select')) {
-                                    el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][jenis_indikator]`;
-                                }
-                            });
-
-                        indikatorItem.querySelectorAll('.kegiatan-item')
-                            .forEach((kegiatanItem, kIdx) => {
-
-                                const programHidden = kegiatanItem.querySelector('.program-id-hidden');
-                                if (programHidden) {
-                                    programHidden.name =
-                                        `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][program_id]`;
-                                }
-
-                                const kegiatanSelect = kegiatanItem.querySelector('.kegiatan-select');
-                                if (kegiatanSelect) {
-                                    kegiatanSelect.name =
-                                        `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][0][kegiatan_id]`;
-                                }
-
-                                kegiatanItem.querySelectorAll('.subkeg-item')
-                                    .forEach((subItem, subIdx) => {
-
-                                        const subSelect = subItem.querySelector('.subkeg-select');
-                                        if (subSelect) {
-                                            subSelect.name =
-                                                `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][0][subkegiatan][${subIdx}][subkegiatan_id]`;
-                                        }
-                                    });
-                            });
+                        if (el.name.includes('[jenis_indikator]')) {
+                            el.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][jenis_indikator]`;
+                        }
                     });
-            });
-    }
+
+                    // kegiatan
+                    indikatorItem.querySelectorAll('.kegiatan-item')
+                        .forEach((kegiatanItem, kIdx) => {
+
+                            const programHidden = kegiatanItem.querySelector('.program-id-hidden');
+                            if (programHidden) {
+                                programHidden.name =
+                                    `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][program_id]`;
+                            }
+
+                            const kegiatanSelect = kegiatanItem.querySelector('.kegiatan-select');
+                            if (kegiatanSelect) {
+                                kegiatanSelect.name =
+                                    `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][${kIdx}][kegiatan_id]`;
+                            }
+
+                            // subkegiatan
+                            kegiatanItem.querySelectorAll('.subkeg-item')
+                                .forEach((subItem, subIdx) => {
+
+                                    const subSelect = subItem.querySelector('.subkeg-select');
+                                    if (subSelect) {
+                                        subSelect.name =
+                                            `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][${kIdx}][subkegiatan][${subIdx}][subkegiatan_id]`;
+                                    }
+
+                                    // 🔥 FIX anggaran agar ikut di-reindex
+                                    const anggaranInput = subItem.querySelector('input[name*="anggaran"]');
+                                    if (anggaranInput) {
+                                        anggaranInput.name =
+                                            `sasaran_pk[${sIdx}][indikator][${iIdx}][program][${kIdx}][kegiatan][${kIdx}][subkegiatan][${subIdx}][anggaran]`;
+                                    }
+                                });
+                        });
+                });
+        });
+}
+
+
 
     /* ===============================
      * 2. SET PROGRAM ID FROM KEGIATAN
@@ -493,10 +505,12 @@
     // AUTO-FILL ANGGARAN (EVENT DELEGATION - WAJIB UNTUK ELEMEN DINAMIS)
     document.addEventListener('change', function (e) {
         if (e.target.classList.contains('subkeg-select')) {
-            // Cari program-item terdekat
             const subkegItem = e.target.closest('.subkeg-item');
             if (!subkegItem) return;
-            const anggaranInput = subkegItem.querySelector('input[name*="anggaran"]');
+
+            const anggaranInput = subkegItem.querySelector('input[type="text"]');
+            if (!anggaranInput) return;
+
             const selectedOption = e.target.options[e.target.selectedIndex];
             if (selectedOption && selectedOption.value !== '') {
                 const anggaran = selectedOption.getAttribute('data-anggaran');

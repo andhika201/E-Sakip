@@ -91,7 +91,7 @@
                                                 <?php foreach ($pegawaiOpd as $pegawai): ?>
                                                     <option value="<?= $pegawai['id'] ?>"
                                                         data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                        <?= esc($pegawai['nama_pegawai']) ?>
+                                                        <?= esc(strtoupper($pegawai['nama_pegawai'])) ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
@@ -121,7 +121,7 @@
                                                     <?php foreach ($pegawaiOpd as $pegawai): ?>
                                                         <option value="<?= $pegawai['id'] ?>"
                                                             data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                            <?= esc($pegawai['nama_pegawai']) ?>
+                                                            <?= esc(strtoupper($pegawai['nama_pegawai'])) ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
@@ -230,22 +230,22 @@
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <label class="form-label">Indikator</label>
-                                                        <!-- <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>"> -->
+                                                        <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>">
                                                         <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
-                                                            class="form-control mb-3 border-secondary" value=""
+                                                            class="form-control mb-3 border-secondary indikator-input" value=""
                                                             placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
                                                             required>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Target</label>
                                                         <input type="text" name="sasaran_pk[0][indikator][0][target]"
-                                                            class="form-control mb-3 border-secondary" value=""
+                                                            class="form-control mb-3 border-secondary indikator-target" value=""
                                                             placeholder="Nilai target" required>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Satuan</label>
                                                         <select name="sasaran_pk[0][indikator][0][id_satuan]"
-                                                            class="form-select mb-3 border-secondary" required>
+                                                            class="form-select mb-3 border-secondary satuan-select" required>
                                                             <option value="">Pilih Satuan</option>
                                                             <?php if (isset($satuan) && !empty($satuan)): ?>
                                                                 <?php foreach ($satuan as $s): ?>
@@ -258,7 +258,7 @@
                                                     <div class="col-md-4">
                                                         <label class="form-label">Jenis Indikator</label>
                                                         <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
-                                                            class="form-select mb-3 border-secondary" required>
+                                                            class="form-select mb-3 border-secondary jenis-indikator-select" required>
                                                             <option value="">Pilih Jenis Indikator</option>
                                                             <option value="Indikator Positif">Indikator Positif</option>
                                                             <option value="Indikator Negatif">Indikator Negatif</option>

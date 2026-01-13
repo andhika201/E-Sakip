@@ -188,6 +188,7 @@ class PkController extends BaseController
         }
 
         $post = $this->request->getPost();
+        log_message('debug', 'POST RAW: ' . json_encode($post));
         $now = date('Y-m-d');
 
 
@@ -242,7 +243,7 @@ class PkController extends BaseController
                 if (!empty($s['indikator'])) {
 
                     foreach ($s['indikator'] as $indikator) {
-
+                        
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
                             'target' => $indikator['target'] ?? '',

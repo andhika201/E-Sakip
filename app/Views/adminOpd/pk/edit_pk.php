@@ -101,7 +101,7 @@
                                             if (!empty($pegawaiOpd)) {
                                                 foreach ($pegawaiOpd as $pegawai) {
                                                     $selected = (isset($pk['pihak_1']) && $pk['pihak_1'] == $pegawai['id']) ? ' selected' : '';
-                                                    echo "<option value=\"{$pegawai['id']}\" data-nip=\"{$pegawai['nip_pegawai']}\"$selected>" . esc($pegawai['nama_pegawai']) . "</option>";
+                                                    echo "<option value=\"{$pegawai['id']}\" data-nip=\"{$pegawai['nip_pegawai']}\"$selected>" . esc(strtoupper($pegawai['nama_pegawai'])) . "</option>";
                                                 }
                                             } else {
                                                 echo '<option value="" disabled>Tidak Pegawai yang tersedia</option>';
@@ -131,7 +131,7 @@
                                                 if (!empty($pegawaiOpd)) {
                                                     foreach ($pegawaiOpd as $pegawai) {
                                                         $selected = (isset($pk['pihak_2']) && $pk['pihak_2'] == $pegawai['id']) ? ' selected' : '';
-                                                        echo "<option value=\"{$pegawai['id']}\" data-nip=\"{$pegawai['nip_pegawai']}\"$selected>" . esc($pegawai['nama_pegawai']) . "</option>";
+                                                        echo "<option value=\"{$pegawai['id']}\" data-nip=\"{$pegawai['nip_pegawai']}\"$selected>" . esc(strtoupper($pegawai['nama_pegawai'])) . "</option>";
                                                     }
                                                 } else {
                                                     echo '<option value="" disabled>Tidak Pegawai yang tersedia</option>';

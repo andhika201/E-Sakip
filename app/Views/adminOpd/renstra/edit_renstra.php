@@ -6,7 +6,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= esc($title ?? 'Edit Renstra e-SAKIP') ?></title>
   <?= $this->include('adminOpd/templates/style.php'); ?>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+  <!-- Override SETELAH Select2 -->
+
   <style>
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+    }
+
+    .select2-selection__rendered {
+      padding-left: 0 !important;
+      color: #495057;
+    }
+
+    .select2-selection__arrow {
+      height: 100% !important;
+    }
+
+    .select2-dropdown {
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    }
+
+    .select2-results__option--highlighted {
+      background-color: #00743e !important;
+      color: #fff;
+    }
+
     .alert {
       transition: all 0.3s ease;
     }

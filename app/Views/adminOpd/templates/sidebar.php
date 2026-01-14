@@ -113,7 +113,7 @@
             <span>Perjanjian Kinerja</span>
           </button>
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT & Kecamatan</a></li>
             <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator</a></li>
             <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas</a></li>
           </ul>

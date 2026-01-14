@@ -6,20 +6,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= esc($title) ?></title>
   <?= $this->include('adminOpd/templates/style.php'); ?>
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+  <!-- Override SETELAH Select2 -->
+  <style>
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+    }
+
+    .select2-selection__rendered {
+      padding-left: 0 !important;
+      color: #495057;
+    }
+
+    .select2-selection__arrow {
+      height: 100% !important;
+    }
+
+    .select2-dropdown {
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    }
+
+    .select2-results__option--highlighted {
+      background-color: #00743e !important;
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
 
   <?= $this->include(
     $role === 'admin_kab'
-      ? 'adminKabupaten/templates/header.php'
-      : 'adminOpd/templates/header.php'
+    ? 'adminKabupaten/templates/header.php'
+    : 'adminOpd/templates/header.php'
   ); ?>
 
   <?= $this->include(
     $role === 'admin_kab'
-      ? 'adminKabupaten/templates/sidebar.php'
-      : 'adminOpd/templates/sidebar.php'
+    ? 'adminKabupaten/templates/sidebar.php'
+    : 'adminOpd/templates/sidebar.php'
   ); ?>
 
   <main class="flex-fill d-flex justify-content-center p-4 mt-4">
@@ -47,7 +85,7 @@
                 <i class="fas fa-bullseye"></i>
               </span>
               <input type="text" class="form-control border-0 bg-light"
-                     value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
+                value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
             </div>
           </div>
 
@@ -58,7 +96,7 @@
                 <i class="fas fa-calendar-alt"></i>
               </span>
               <input type="number" name="tahun" class="form-control border-0 bg-light"
-                     value="<?= esc($tahun ?? date('Y')) ?>" readonly>
+                value="<?= esc($tahun ?? date('Y')) ?>" readonly>
             </div>
           </div>
         </div>
@@ -82,10 +120,12 @@
 
               <div class="mb-3">
                 <label class="form-label">Pilih Program PK</label>
-                <select name="program[0][program_id]" class="form-select select-program" required>
+                <select name="program[0][program_id]" class="form-select select2 select-program" required>
                   <option value="">-- Pilih Program --</option>
                   <?php foreach ($program as $prog): ?>
-                    <option value="<?= esc($prog['id']) ?>"><?= esc($prog['program_kegiatan']) ?></option>
+                    <option value="<?= esc($prog['id']) ?>">
+                      <?= esc($prog['program_kegiatan']) ?>— Rp <?= number_format($prog['anggaran'], 0, ',', '.') ?>
+                    </option>
                   <?php endforeach; ?>
                 </select>
               </div>
@@ -109,7 +149,8 @@
 
                     <div class="mb-3">
                       <label class="form-label">Pilih Kegiatan PK</label>
-                      <select name="program[0][kegiatan][0][kegiatan_id]" class="form-select select-kegiatan" required>
+                      <select name="program[0][kegiatan][0][kegiatan_id]" class="form-select select2 select-kegiatan"
+                        required>
                         <option value="">-- Pilih Kegiatan --</option>
                       </select>
                     </div>
@@ -135,7 +176,7 @@
                             <div class="col-md-8">
                               <label class="form-label">Pilih Sub Kegiatan PK</label>
                               <select name="program[0][kegiatan][0][subkegiatan][0][sub_kegiatan_id]"
-                                      class="form-select select-subkegiatan" required>
+                                class="form-select select2 select-subkegiatan" required>
                                 <option value="">-- Pilih Sub Kegiatan --</option>
                               </select>
                             </div>
@@ -273,20 +314,40 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    function initSelect2(context = document) {
+      $(context).find('.select2').each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+          $(this).select2('destroy');
+        }
 
+        $(this).select2({
+          width: '100%',
+          minimumResultsForSearch: 0, // search tetap aktif
+          dropdownParent: $('body')
+        });
+      });
+    }
+
+    $(document).ready(function () {
+      initSelect2();
+    });
+  </script>
   <!-- Data master dikirim ke JS -->
   <script>
     const PROGRAMS = <?= json_encode($program) ?>;
     const KEGIATAN = <?= json_encode($kegiatanPk) ?>;
-    const SUBS     = <?= json_encode($subKegiatanPk) ?>;
+    const SUBS = <?= json_encode($subKegiatanPk) ?>;
   </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const programContainer = document.getElementById('program-container');
-      const tplProgram  = document.getElementById('tpl-program');
+      const tplProgram = document.getElementById('tpl-program');
       const tplKegiatan = document.getElementById('tpl-kegiatan');
-      const tplSub      = document.getElementById('tpl-subkegiatan');
+      const tplSub = document.getElementById('tpl-subkegiatan');
 
       const clone = (tpl) => tpl.content.firstElementChild.cloneNode(true);
 
@@ -307,13 +368,21 @@
       // ===== Isi Dropdown Master =====
       function fillProgramOptions(select) {
         select.innerHTML = '<option value="">-- Pilih Program --</option>';
+
         PROGRAMS.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = p.program_kegiatan;
+
+          const anggaran = p.anggaran ? formatRupiah(p.anggaran) : '-';
+          opt.textContent = `${p.program_kegiatan} — Rp ${anggaran}`;
+
+          // simpan nilai mentah kalau nanti mau dipakai
+          opt.dataset.anggaran = p.anggaran ?? '';
+
           select.appendChild(opt);
         });
       }
+
 
       // KEGIATAN: filter berdasarkan program_id (hasil alias dari model)
       function fillKegiatanOptions(select, programId, currentValue = '') {
@@ -397,7 +466,7 @@
 
       // ===== Tambah Elemen =====
       function addProgram() {
-        const pNode  = clone(tplProgram);
+        const pNode = clone(tplProgram);
         const selProg = pNode.querySelector('.select-program');
         fillProgramOptions(selProg);
 
@@ -411,9 +480,9 @@
         sc.appendChild(sNode);
 
         const disp = sNode.querySelector('.target-display');
-        const hid  = sNode.querySelector('.target-hidden');
+        const hid = sNode.querySelector('.target-hidden');
         disp.value = '-';
-        hid.value  = '';
+        hid.value = '';
 
         programContainer.appendChild(pNode);
         reindexAll();
@@ -428,15 +497,15 @@
         sc.appendChild(sNode);
 
         const disp = sNode.querySelector('.target-display');
-        const hid  = sNode.querySelector('.target-hidden');
+        const hid = sNode.querySelector('.target-hidden');
         disp.value = '-';
-        hid.value  = '';
+        hid.value = '';
 
         kc.appendChild(kNode);
         reindexAll();
 
         const selProg = programItem.querySelector('.select-program');
-        const selKeg  = kNode.querySelector('.select-kegiatan');
+        const selKeg = kNode.querySelector('.select-kegiatan');
         fillKegiatanOptions(selKeg, selProg.value);
         const selSub = sNode.querySelector('.select-subkegiatan');
         fillSubOptions(selSub, selKeg.value);
@@ -447,9 +516,9 @@
         const sNode = clone(tplSub);
 
         const disp = sNode.querySelector('.target-display');
-        const hid  = sNode.querySelector('.target-hidden');
+        const hid = sNode.querySelector('.target-hidden');
         disp.value = '-';
-        hid.value  = '';
+        hid.value = '';
 
         sc.appendChild(sNode);
         reindexAll();
@@ -467,8 +536,8 @@
         reindexAll();
 
         const selProg = firstProg.querySelector('.select-program');
-        const selKeg  = firstProg.querySelector('.select-kegiatan');
-        const selSub  = firstProg.querySelector('.select-subkegiatan');
+        const selKeg = firstProg.querySelector('.select-kegiatan');
+        const selSub = firstProg.querySelector('.select-subkegiatan');
 
         // awal: isi kegiatan & sub kalau program/kegiatan sudah dipilih
         fillKegiatanOptions(selKeg, selProg.value);
@@ -513,7 +582,7 @@
         if (remK) {
           e.preventDefault();
           const pItem = remK.closest('.program-item');
-          const allK  = pItem.querySelectorAll('.kegiatan-item');
+          const allK = pItem.querySelectorAll('.kegiatan-item');
           if (allK.length <= 1) return;
           remK.closest('.kegiatan-item').remove();
           reindexAll();
@@ -524,7 +593,7 @@
         if (remS) {
           e.preventDefault();
           const kItem = remS.closest('.kegiatan-item');
-          const allS  = kItem.querySelectorAll('.subkegiatan-item');
+          const allS = kItem.querySelectorAll('.subkegiatan-item');
           if (allS.length <= 1) return;
           remS.closest('.subkegiatan-item').remove();
           reindexAll();
@@ -538,7 +607,7 @@
 
         // Program berubah → refresh semua kegiatan & sub
         if (el.classList.contains('select-program')) {
-          const pItem     = el.closest('.program-item');
+          const pItem = el.closest('.program-item');
           const programId = el.value;
 
           pItem.querySelectorAll('.select-kegiatan').forEach(selKeg => {
@@ -551,17 +620,17 @@
               fillSubOptions(selSub, selKeg.value, currentSub);
 
               const sItem = selSub.closest('.subkegiatan-item');
-              const disp  = sItem.querySelector('.target-display');
-              const hid   = sItem.querySelector('.target-hidden');
-              disp.value  = '-';
-              hid.value   = '';
+              const disp = sItem.querySelector('.target-display');
+              const hid = sItem.querySelector('.target-hidden');
+              disp.value = '-';
+              hid.value = '';
             });
           });
         }
 
         // Kegiatan berubah → refresh semua sub
         if (el.classList.contains('select-kegiatan')) {
-          const kItem      = el.closest('.kegiatan-item');
+          const kItem = el.closest('.kegiatan-item');
           const kegiatanId = el.value;
 
           kItem.querySelectorAll('.select-subkegiatan').forEach(selSub => {
@@ -569,28 +638,28 @@
             fillSubOptions(selSub, kegiatanId, currentSub);
 
             const sItem = selSub.closest('.subkegiatan-item');
-            const disp  = sItem.querySelector('.target-display');
-            const hid   = sItem.querySelector('.target-hidden');
-            disp.value  = '-';
-            hid.value   = '';
+            const disp = sItem.querySelector('.target-display');
+            const hid = sItem.querySelector('.target-hidden');
+            disp.value = '-';
+            hid.value = '';
           });
         }
 
         // Sub kegiatan berubah → tampilkan anggaran
         if (el.classList.contains('select-subkegiatan')) {
-          const sItem      = el.closest('.subkegiatan-item');
-          const opt        = el.selectedOptions[0];
+          const sItem = el.closest('.subkegiatan-item');
+          const opt = el.selectedOptions[0];
           const anggaranRaw = opt ? opt.dataset.anggaran : '';
-          const disp       = sItem.querySelector('.target-display');
-          const hid        = sItem.querySelector('.target-hidden');
+          const disp = sItem.querySelector('.target-display');
+          const hid = sItem.querySelector('.target-hidden');
 
           if (anggaranRaw) {
             const intStr = toIntegerString(anggaranRaw);
-            disp.value   = 'Rp ' + formatRupiah(intStr);
-            hid.value    = intStr;
+            disp.value = 'Rp ' + formatRupiah(intStr);
+            hid.value = intStr;
           } else {
             disp.value = '-';
-            hid.value  = '';
+            hid.value = '';
           }
         }
       });

@@ -1040,7 +1040,9 @@ class RpjmdModel extends Model
         if (!empty($byId)) {
             $idsToDelete = array_diff(array_keys($byId), $seenIds);
             if (!empty($idsToDelete)) {
-                $tbl->whereIn('id', $idsToDelete)->delete();
+                // 🔥 DIUBAH: NONAKTIFKAN target lama, BUKAN delete
+                $tbl->whereIn('id', $idsToDelete)
+                    ->update(['is_active' => 0]);
             }
         }
     }
@@ -1507,4 +1509,36 @@ class RpjmdModel extends Model
 
         return $sasaranList;
     }
+    // =====================================================
+// 🔥 TAMBAHAN BARU: NONAKTIFKAN TARGET SASARAN (AMAN)
+// =====================================================
+    private function syncTargetSasaranSafe(int $indikatorId, array $targets): void
+    {
+        $tbl = $this->db->table('rpjmd_target');
+
+        // 🔥 NONAKTIFKAN semua target lama (mis. tahun 2030)
+        $tbl->where('indikator_sasaran_id', $indikatorId)
+            ->update(['is_active' => 0]);
+
+        foreach ($targets as $t) {
+
+            if (!empty($t['id'])) {
+                // 🔥 UPDATE target lama → AKTIF
+                $tbl->where('id', (int) $t['id'])->update([
+                    'tahun' => (int) $t['tahun'],
+                    'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
+                    'is_active' => 1,
+                ]);
+            } else {
+                // 🔥 INSERT target baru
+                $tbl->insert([
+                    'indikator_sasaran_id' => $indikatorId,
+                    'tahun' => (int) $t['tahun'],
+                    'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
+                    'is_active' => 1,
+                ]);
+            }
+        }
+    }
+
 }

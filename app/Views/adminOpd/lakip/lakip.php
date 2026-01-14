@@ -143,25 +143,47 @@
                 // FUNGSI HITUNG CAPAIAN
                 // =========================
                 if (!function_exists('hitungCapaianLakip')) {
+                    /**
+                     * Hitung capaian LAKIP (%) 
+                     * Mendukung indikator positif & negatif
+                     * Mendukung input koma (2,2)
+                     */
                     function hitungCapaianLakip($target, $realisasi, $jenisIndikator)
                     {
-                        $target = floatval($target);
-                        $realisasi = floatval($realisasi);
+                        $target = toFloatComma($target);
+                        $realisasi = toFloatComma($realisasi);
 
-                        if ($target == 0)
+                        // validasi dasar
+                        if ($target === null || $target == 0 || $realisasi === null) {
                             return null;
+                        }
 
                         $jenis = strtolower(trim((string) $jenisIndikator));
 
+                        // indikator positif (naik = baik)
                         if ($jenis === 'indikator positif' || $jenis === 'positif') {
-                            return ($realisasi / $target) * 100;
+                            $hasil = ($realisasi / $target) * 100;
                         }
 
-                        if ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                            return (($target - ($realisasi - $target)) / $target) * 100;
+                        // indikator negatif (turun = baik)
+                        elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
+                            $hasil = (($target - ($realisasi - $target)) / $target) * 100;
+                        } else {
+                            return null;
                         }
 
-                        return null;
+                        // pengaman hasil
+                        if (!is_numeric($hasil)) {
+                            return null;
+                        }
+
+                        // batasi nilai ekstrem (opsional tapi disarankan)
+                        if ($hasil < 0)
+                            $hasil = 0;
+                        if ($hasil > 200)
+                            $hasil = 200;
+
+                        return $hasil;
                     }
                 }
 

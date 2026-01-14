@@ -6,6 +6,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= esc($title ?? 'Edit RENJA (RKT)') ?></title>
   <?= $this->include('adminOpd/templates/style.php'); ?>
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+  <!-- Override SETELAH Select2 -->
+  <style>
+    .select2-container {
+      width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+    }
+
+    .select2-selection__rendered {
+      padding-left: 0 !important;
+      color: #495057;
+    }
+
+    .select2-selection__arrow {
+      height: 100% !important;
+    }
+
+    .select2-dropdown {
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    }
+
+    .select2-results__option--highlighted {
+      background-color: #00743e !important;
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -94,7 +132,7 @@
 
               <div class="mb-3">
                 <label class="form-label">Pilih Program PK</label>
-                <select class="form-select select-program">
+                <select class="form-select select2 select-program">
                   <option value="">-- Pilih Program --</option>
                 </select>
               </div>
@@ -127,7 +165,7 @@
 
               <div class="mb-3">
                 <label class="form-label">Pilih Kegiatan PK</label>
-                <select class="form-select select-kegiatan">
+                <select class="form-select select2 select-kegiatan">
                   <option value="">-- Pilih Kegiatan --</option>
                 </select>
               </div>
@@ -161,7 +199,7 @@
               <div class="row mb-3">
                 <div class="col-md-8">
                   <label class="form-label">Pilih Sub Kegiatan PK</label>
-                  <select class="form-select select-subkegiatan">
+                  <select class="form-select select2 select-subkegiatan">
                     <option value="">-- Pilih Sub Kegiatan --</option>
                   </select>
                 </div>
@@ -188,6 +226,27 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    function initSelect2(context = document) {
+      $(context).find('.select2').each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+          $(this).select2('destroy');
+        }
+
+        $(this).select2({
+          width: '100%',
+          minimumResultsForSearch: 0, // search tetap aktif
+          dropdownParent: $('body')
+        });
+      });
+    }
+
+    $(document).ready(function () {
+      initSelect2();
+    });
+  </script>
 
   <script>
     // data master & data existing dari PHP
@@ -207,14 +266,23 @@
 
       function fillProgramOptions(selectEl) {
         if (!selectEl) return;
+
         selectEl.innerHTML = '<option value="">-- Pilih Program --</option>';
+
         daftarProgram.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
-          opt.textContent = p.program_kegiatan;
+
+          const anggaran = p.anggaran ? formatRupiah(p.anggaran) : '-';
+          opt.textContent = `${p.program_kegiatan} — ${anggaran}`;
+
+          // simpan nilai mentah (kalau nanti perlu validasi total)
+          opt.dataset.anggaran = p.anggaran ?? '';
+
           selectEl.appendChild(opt);
         });
       }
+
 
       function fillKegiatanOptions(selectEl, programId) {
         if (!selectEl) return;

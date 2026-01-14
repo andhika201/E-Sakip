@@ -20,44 +20,44 @@
       margin-bottom: 10px;
     }
   </style>
-    <!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
-<!-- Override SETELAH Select2 -->
-<style>
-.select2-container {
-  width: 100% !important;
-}
+  <!-- Override SETELAH Select2 -->
+  <style>
+    .select2-container {
+      width: 100% !important;
+    }
 
-.select2-container--default .select2-selection--single {
-  height: 38px;
-  padding: 6px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 0.375rem;
-  display: flex;
-  align-items: center;
-  background-color: #fff;
-}
+    .select2-container--default .select2-selection--single {
+      height: 38px;
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      background-color: #fff;
+    }
 
-.select2-selection__rendered {
-  padding-left: 0 !important;
-  color: #495057;
-}
+    .select2-selection__rendered {
+      padding-left: 0 !important;
+      color: #495057;
+    }
 
-.select2-selection__arrow {
-  height: 100% !important;
-}
+    .select2-selection__arrow {
+      height: 100% !important;
+    }
 
-.select2-dropdown {
-  border-radius: 0.375rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,.1);
-}
+    .select2-dropdown {
+      border-radius: 0.375rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    }
 
-.select2-results__option--highlighted {
-  background-color: #00743e !important;
-  color: #fff;
-}
-</style>
+    .select2-results__option--highlighted {
+      background-color: #00743e !important;
+      color: #fff;
+    }
+  </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -192,7 +192,7 @@
                                 class="form-control form-control-sm" placeholder="Target">
                             </div>
                           </div>
-                        <?php endfor;
+                      <?php endfor;
                       endif;
                       ?>
                     </div>
@@ -315,15 +315,13 @@
                             <select
                               name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
                               class="form-select select2 satuan-select"
-                              required
-                            >
+                              required>
                               <option value="">Pilih Satuan</option>
                               <?php if (!empty($satuan_options)): ?>
                                 <?php foreach ($satuan_options as $key => $label): ?>
                                   <option
                                     value="<?= esc($key) ?>"
-                                    <?= (isset($ind['satuan']) && $ind['satuan'] == $key) ? 'selected' : '' ?>
-                                  >
+                                    <?= (isset($ind['satuan']) && $ind['satuan'] == $key) ? 'selected' : '' ?>>
                                     <?= esc($label) ?>
                                   </option>
                                 <?php endforeach; ?>
@@ -335,8 +333,7 @@
                             <select
                               name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
                               class="form-select select2"
-                              required
-                            >
+                              required>
                               <option value="">Pilih Jenis Indikator</option>
                               <option value="positif"
                                 <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'positif') ? 'selected' : '' ?>>
@@ -387,7 +384,7 @@
                                       class="form-control form-control-sm" placeholder="Target" required>
                                   </div>
                                 </div>
-                              <?php endfor;
+                            <?php endfor;
                             endif;
                             ?>
                           </div>
@@ -416,8 +413,7 @@
                           <select
                             name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][satuan]"
                             class="form-select"
-                            required
-                          >
+                            required>
                             <option value="">Pilih Satuan</option>
                             <?php if (!empty($satuan_options)): ?>
                               <?php foreach ($satuan_options as $key => $label): ?>
@@ -431,8 +427,7 @@
                           <select
                             name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][jenis_indikator]"
                             class="form-select"
-                            required
-                          >
+                            required>
                             <option value="">Pilih Jenis Indikator</option>
                             <option value="positif">Indikator Positif (naik = baik)</option>
                             <option value="negatif">Indikator Negatif (turun = baik)</option>
@@ -499,7 +494,7 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
     function initSelect2(context = document) {
-      $(context).find('.select2').each(function () {
+      $(context).find('.select2').each(function() {
         if ($(this).hasClass('select2-hidden-accessible')) {
           $(this).select2('destroy');
         }
@@ -512,13 +507,13 @@
       });
     }
 
-    $(document).ready(function () {
+    $(document).ready(function() {
       initSelect2();
     });
   </script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
       const tahunMulaiInput = document.getElementById('tahun_mulai');
       const tahunAkhirInput = document.getElementById('tahun_akhir');
 
@@ -566,7 +561,7 @@
       // OTOMATIS TAHUN AKHIR
       // ============================
       if (tahunMulaiInput && tahunAkhirInput) {
-        tahunMulaiInput.addEventListener('input', function () {
+        tahunMulaiInput.addEventListener('input', function() {
           const mulai = parseInt(this.value);
           if (!isNaN(mulai)) {
             tahunAkhirInput.value = mulai + 4;
@@ -747,7 +742,7 @@
       // LOGIKA: TAMBAH INDIKATOR TUJUAN
       // ============================
       if (addIndikatorTujuanBtn && indikatorTujuanContainer) {
-        addIndikatorTujuanBtn.addEventListener('click', function () {
+        addIndikatorTujuanBtn.addEventListener('click', function() {
           // Hitung index berikut
           let nextIndex = 0;
           indikatorTujuanContainer.querySelectorAll('.indikator-tujuan-item').forEach(item => {
@@ -759,7 +754,7 @@
           updateTahunTarget();
         });
 
-        indikatorTujuanContainer.addEventListener('click', function (e) {
+        indikatorTujuanContainer.addEventListener('click', function(e) {
           if (e.target.closest('.remove-indikator-tujuan')) {
             const item = e.target.closest('.indikator-tujuan-item');
             if (!item) return;
@@ -778,7 +773,7 @@
       // LOGIKA: TAMBAH / HAPUS SASARAN + INDIKATOR SASARAN
       // ============================
       if (addSasaranBtn && sasaranContainer) {
-        addSasaranBtn.addEventListener('click', function () {
+        addSasaranBtn.addEventListener('click', function() {
           let nextSIndex = 0;
           sasaranContainer.querySelectorAll('.sasaran-renstra-item').forEach(item => {
             const sIdx = parseInt(item.getAttribute('data-sasaran-index'));
@@ -789,7 +784,7 @@
           updateTahunTarget();
         });
 
-        sasaranContainer.addEventListener('click', function (e) {
+        sasaranContainer.addEventListener('click', function(e) {
           // Hapus sasaran
           if (e.target.closest('.remove-sasaran-renstra')) {
             const item = e.target.closest('.sasaran-renstra-item');

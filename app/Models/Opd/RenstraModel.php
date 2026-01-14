@@ -568,7 +568,6 @@ class RenstraModel extends Model
 
             $this->db->transComplete();
             return $this->db->transStatus() !== false;
-
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -1316,7 +1315,6 @@ class RenstraModel extends Model
 
             $this->db->transComplete();
             return $this->db->transStatus() !== false;
-
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;

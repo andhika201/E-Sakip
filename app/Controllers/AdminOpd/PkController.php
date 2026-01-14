@@ -24,36 +24,43 @@ class PkController extends BaseController
     public function index($jenis)
     {
         $session = session();
-        $opdId = $session->get('opd_id');
-        $tahun = $this->request->getGet('tahun'); // menangkap filter tahun
-        $currentYear = date('Y');
+        $opdId   = $session->get('opd_id');
 
-
-        if (!$opdId)
+        if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // 1. Ambil tahun dari URL
+        $tahun = $this->request->getGet('tahun');
+
+        // 2. Kalau tidak ada, pakai tahun berjalan
+        if (empty($tahun)) {
+            $tahun = date('Y');
+        }
+
+        // 3. Ambil data PK berdasarkan OPD, jenis, dan tahun
         $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
-        // If multiple, pick the first (or null if none)
 
+        // 4. Ambil data OPD
         $currentOpd = $this->opdModel->find($opdId);
-        $currentYear = date('Y');
-        // dd($currentYear);
 
+        // 5. Kalau hasil array banyak, ambil satu
         if (is_array($pkData) && count($pkData) > 0) {
             $pkData = $pkData[0];
         } else {
             $pkData = null;
         }
 
-        // dd($pkData);
-
+        // 6. Kirim ke view
         return view('adminOpd/pk/pk', [
-            'pk_data' => $pkData,
+            'pk_data'     => $pkData,
             'current_opd' => $currentOpd,
-            'currentYear' => $currentYear,
-            'tahun' => $tahun ?? $currentYear,
-            'jenis' => $jenis,
+            'currentYear' => date('Y'),
+            'tahun'       => $tahun,
+            'jenis'       => $jenis,
         ]);
     }
+
 
     public function tambah($jenis)
     {
@@ -243,7 +250,7 @@ class PkController extends BaseController
                 if (!empty($s['indikator'])) {
 
                     foreach ($s['indikator'] as $indikator) {
-                        
+
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
                             'target' => $indikator['target'] ?? '',
@@ -344,8 +351,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        ;
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL

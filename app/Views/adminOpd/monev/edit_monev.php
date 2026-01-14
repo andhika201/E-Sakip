@@ -82,22 +82,22 @@
                     <label class="form-label">Capaian Triwulan</label>
                     <div class="row g-2 mb-2">
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_1" class="form-control"
+                            <input type="text" name="capaian_triwulan_1" class="form-control"
                                 value="<?= esc(old('capaian_triwulan_1', $monev['capaian_triwulan_1'] ?? '')) ?>"
                                 placeholder="Triwulan I" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_2" class="form-control"
+                            <input type="text" name="capaian_triwulan_2" class="form-control"
                                 value="<?= esc(old('capaian_triwulan_2', $monev['capaian_triwulan_2'] ?? '')) ?>"
                                 placeholder="Triwulan II" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_3" class="form-control"
+                            <input type="text" name="capaian_triwulan_3" class="form-control"
                                 value="<?= esc(old('capaian_triwulan_3', $monev['capaian_triwulan_3'] ?? '')) ?>"
                                 placeholder="Triwulan III" oninput="hitungTotalEdit()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_4" class="form-control"
+                            <input type="text" name="capaian_triwulan_4" class="form-control"
                                 value="<?= esc(old('capaian_triwulan_4', $monev['capaian_triwulan_4'] ?? '')) ?>"
                                 placeholder="Triwulan IV" oninput="hitungTotalEdit()">
                         </div>
@@ -106,7 +106,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             <label class="form-label">Total Capaian</label>
-                            <input type="number" step="any" name="total" id="totalCapaianEdit" class="form-control"
+                            <input type="text" name="total" id="totalCapaianEdit" class="form-control" W
                                 value="<?= esc(old('total', $monev['total'] ?? '')) ?>">
                             <small class="text-muted d-block mt-1">
                                 Nilai total dapat dihitung otomatis sebagai rata-rata dari capaian triwulan yang diisi,
@@ -131,13 +131,17 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
     <script>
-        // Hitung total sebagai rata-rata nilai triwulan yang terisi (edit)
+        function parseAngkaID(val) {
+            if (val === null || val === '') return null;
+            const n = parseFloat(val.replace(',', '.'));
+            return isNaN(n) ? null : n;
+        }
+
         function hitungTotalEdit() {
             const get = (n) => {
                 const el = document.getElementsByName(n)[0];
                 if (!el) return null;
-                const v = el.value ?? '';
-                return v === '' ? null : parseFloat(v);
+                return parseAngkaID(el.value);
             };
 
             const vals = [
@@ -145,32 +149,23 @@
                 get('capaian_triwulan_2'),
                 get('capaian_triwulan_3'),
                 get('capaian_triwulan_4'),
-            ].filter(v => v !== null && !isNaN(v));
+            ].filter(v => v !== null);
 
-            const total = (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : '');
+            const total = vals.length
+                ? vals.reduce((a, b) => a + b, 0) / vals.length
+                : '';
+
             const elTotal = document.getElementById('totalCapaianEdit');
             if (elTotal) {
-                elTotal.value = (total === '' ? '' : Math.round(total));
+                elTotal.value = total === ''
+                    ? ''
+                    : total.toFixed(2).replace('.', ','); // tampilkan koma
             }
         }
 
-        // Panggil sekali saat halaman load (untuk data awal / old input)
-        window.addEventListener('DOMContentLoaded', function () {
-            hitungTotalEdit();
-        });
-
-        // Cegah double submit
-        (function () {
-            const f = document.getElementById('formMonevEdit');
-            const b = document.getElementById('btnSubmit');
-            if (f && b) {
-                f.addEventListener('submit', function () {
-                    b.disabled = true;
-                    b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-                });
-            }
-        })();
+        window.addEventListener('DOMContentLoaded', hitungTotalEdit);
     </script>
+
 </body>
 
 </html>

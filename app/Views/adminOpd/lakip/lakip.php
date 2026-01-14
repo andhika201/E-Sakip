@@ -310,10 +310,11 @@
 
                                     $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
 
-                                    $capaianPersen = null;
-                                    if (is_numeric($realisasiNow) && is_numeric($targetTahun)) {
-                                        $capaianPersen = hitungCapaianLakip($targetTahun, $realisasiNow, $jenisIndikator);
-                                    }
+                                    $capaianPersen = hitungCapaianLakip(
+                                        $targetTahun,
+                                        $realisasiNow,
+                                        $jenisIndikator
+                                    );
 
                                     $statusText = $lakipItem['status'] ?? null;
                                     if ($statusText === 'siap') {
@@ -375,7 +376,7 @@
                                             <?php if ($capaianPersen === null): ?>
                                                 -
                                             <?php else: ?>
-                                                <?= round($capaianPersen, 2) ?>%
+                                                <?= formatAngkaID($capaianPersen, 2) ?>%
                                             <?php endif; ?>
                                         </td>
 

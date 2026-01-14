@@ -25,7 +25,7 @@ class TargetController extends BaseController
     }
     private function xssRule(): string
     {
-        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+        return 'regex_match[/^[^<>]*$/]';
     }
 
 
@@ -250,32 +250,59 @@ class TargetController extends BaseController
         }
 
         $mode = $this->request->getPost('mode') ?? 'opd';
-        $rx = $this->xssRule();
+        // Teks aman (blok < dan > saja, stabil di CI4)
+        $rxText = 'regex_match[/^[^<>]*$/]';
+
+        // Angka Indonesia (1 atau 1,2)
+        $rxNumber = 'regex_match[/^\d+(,\d+)?$/]';
+
 
 
         /* ===================== VALIDASI & SIMPAN MODE KABUPATEN ===================== */
         if ($mode === 'kabupaten') {
-
             $rules = [
                 'rpjmd_target_id' => 'required|integer',
-                'rencana_aksi' => 'required|string|max_length[10000]|' . $rx,
-                'capaian' => 'permit_empty|string|max_length[10000]|' . $rx,
-                'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rx,
-                'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rx,
-                'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rx,
-                'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rx,
-                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rx,
+
+                // TEKS
+                'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
+                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+
+                // ANGKA (PAKAI KOMA)
+                'capaian' => 'permit_empty|' . $rxNumber,
+
+                'target_triwulan_1' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_2' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_3' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_4' => 'permit_empty|' . $rxNumber,
             ];
 
+
             $messages = [
-                'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
-                'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
-                'target_triwulan_1' => ['regex_match' => 'Target TW 1 mengandung script / input berbahaya.'],
-                'target_triwulan_2' => ['regex_match' => 'Target TW 2 mengandung script / input berbahaya.'],
-                'target_triwulan_3' => ['regex_match' => 'Target TW 3 mengandung script / input berbahaya.'],
-                'target_triwulan_4' => ['regex_match' => 'Target TW 4 mengandung script / input berbahaya.'],
-                'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+                'rencana_aksi' => [
+                    'regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.',
+                ],
+                'penanggung_jawab' => [
+                    'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
+                ],
+
+                'capaian' => [
+                    'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+
+                'target_triwulan_1' => [
+                    'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_2' => [
+                    'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_3' => [
+                    'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_4' => [
+                    'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                ],
             ];
+
 
             if (!$this->validate($rules, $messages)) {
                 return redirect()->back()->withInput()
@@ -321,24 +348,47 @@ class TargetController extends BaseController
         $rules = [
             'opd_id' => 'required|integer',
             'renstra_target_id' => 'required|integer',
-            'rencana_aksi' => 'required|string|max_length[10000]|' . $rx,
-            'capaian' => 'permit_empty|string|max_length[10000]|' . $rx,
-            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rx,
-            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rx,
-            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rx,
-            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rx,
-            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rx,
+
+            // TEKS
+            'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+
+            // ANGKA (PAKAI KOMA)
+            'capaian' => 'permit_empty|' . $rxNumber,
+
+            'target_triwulan_1' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_2' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_3' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
 
+
         $messages = [
-            'rencana_aksi' => ['regex_match' => 'Rencana aksi mengandung script / input berbahaya.'],
-            'capaian' => ['regex_match' => 'Capaian mengandung script / input berbahaya.'],
-            'target_triwulan_1' => ['regex_match' => 'Target TW 1 mengandung script / input berbahaya.'],
-            'target_triwulan_2' => ['regex_match' => 'Target TW 2 mengandung script / input berbahaya.'],
-            'target_triwulan_3' => ['regex_match' => 'Target TW 3 mengandung script / input berbahaya.'],
-            'target_triwulan_4' => ['regex_match' => 'Target TW 4 mengandung script / input berbahaya.'],
-            'penanggung_jawab' => ['regex_match' => 'Penanggung jawab mengandung script / input berbahaya.'],
+            'rencana_aksi' => [
+                'regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.',
+            ],
+            'penanggung_jawab' => [
+                'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
+            ],
+
+            'capaian' => [
+                'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+
+            'target_triwulan_1' => [
+                'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_2' => [
+                'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_3' => [
+                'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_4' => [
+                'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+            ],
         ];
 
         if (!$this->validate($rules, $messages)) {
@@ -517,21 +567,53 @@ class TargetController extends BaseController
         $mode = $this->request->getPost('mode') ??
             (!empty($row['rpjmd_target_id']) ? 'kabupaten' : 'opd');
 
+        // Teks aman (blok < dan > saja, stabil)
+        $rxText = 'regex_match[/^[^<>]*$/]';
+
+        // Angka Indonesia (1 atau 1,2)
+        $rxNumber = 'regex_match[/^\d+(,\d+)?$/]';
+
         /* ===================== UPDATE MODE KABUPATEN (RPJMD) ===================== */
         if ($mode === 'kabupaten') {
             $rules = [
-                'rencana_aksi' => 'required|string',
-                'capaian' => 'permit_empty|string',
-                'target_triwulan_1' => 'permit_empty|string',
-                'target_triwulan_2' => 'permit_empty|string',
-                'target_triwulan_3' => 'permit_empty|string',
-                'target_triwulan_4' => 'permit_empty|string',
-                'penanggung_jawab' => 'permit_empty|string',
-                // kalau mau izinkan ganti link RPJMD, aktifkan ini:
+                'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
+                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+
+                // ANGKA
+                'capaian' => 'permit_empty|' . $rxNumber,
+
+                'target_triwulan_1' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_2' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_3' => 'permit_empty|' . $rxNumber,
+                'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+
                 'rpjmd_target_id' => 'permit_empty|integer',
             ];
 
-            if (!$this->validate($rules)) {
+            $messages = [
+                'rencana_aksi' => [
+                    'regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.',
+                ],
+                'penanggung_jawab' => [
+                    'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
+                ],
+                'capaian' => [
+                    'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_1' => [
+                    'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_2' => [
+                    'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_3' => [
+                    'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+                'target_triwulan_4' => [
+                    'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                ],
+            ];
+            if (!$this->validate($rules, $messages)) {
                 return redirect()->back()->withInput()
                     ->with('error', implode(' ', $this->validator->getErrors()));
             }
@@ -560,20 +642,49 @@ class TargetController extends BaseController
 
         /* ===================== UPDATE MODE OPD (RENSTRA) ===================== */
         $rules = [
-            'rencana_aksi' => 'required|string',
-            'capaian' => 'permit_empty|string',
-            'target_triwulan_1' => 'permit_empty|string',
-            'target_triwulan_2' => 'permit_empty|string',
-            'target_triwulan_3' => 'permit_empty|string',
-            'target_triwulan_4' => 'permit_empty|string',
-            'penanggung_jawab' => 'permit_empty|string',
+            'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+
+            // ANGKA
+            'capaian' => 'permit_empty|' . $rxNumber,
+
+            'target_triwulan_1' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_2' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_3' => 'permit_empty|' . $rxNumber,
+            'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
 
-        if (!$this->validate($rules)) {
+        $messages = [
+            'rencana_aksi' => [
+                'regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.',
+            ],
+            'penanggung_jawab' => [
+                'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
+            ],
+            'capaian' => [
+                'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_1' => [
+                'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_2' => [
+                'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_3' => [
+                'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+            'target_triwulan_4' => [
+                'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+            ],
+        ];
+
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
+
 
         $data = [
             'rencana_aksi' => $this->request->getPost('rencana_aksi'),

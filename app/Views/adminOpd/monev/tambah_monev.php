@@ -75,30 +75,26 @@
                     <label class="form-label">Capaian Triwulan</label>
                     <div class="row g-2">
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_1" class="form-control"
-                                placeholder="Triwulan I" value="<?= esc(old('capaian_triwulan_1')) ?>"
-                                oninput="hitungTotal()">
+                            <input type="text" name="capaian_triwulan_1" class="form-control" placeholder="Triwulan I"
+                                value="<?= esc(old('capaian_triwulan_1')) ?>" oninput="hitungTotal()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_2" class="form-control"
-                                placeholder="Triwulan II" value="<?= esc(old('capaian_triwulan_2')) ?>"
-                                oninput="hitungTotal()">
+                            <input type="text" name="capaian_triwulan_2" class="form-control" placeholder="Triwulan II"
+                                value="<?= esc(old('capaian_triwulan_2')) ?>" oninput="hitungTotal()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_3" class="form-control"
-                                placeholder="Triwulan III" value="<?= esc(old('capaian_triwulan_3')) ?>"
-                                oninput="hitungTotal()">
+                            <input type="text" name="capaian_triwulan_3" class="form-control" placeholder="Triwulan III"
+                                value="<?= esc(old('capaian_triwulan_3')) ?>" oninput="hitungTotal()">
                         </div>
                         <div class="col">
-                            <input type="number" step="any" min="0" name="capaian_triwulan_4" class="form-control"
-                                placeholder="Triwulan IV" value="<?= esc(old('capaian_triwulan_4')) ?>"
-                                oninput="hitungTotal()">
+                            <input type="text" name="capaian_triwulan_4" class="form-control" placeholder="Triwulan IV"
+                                value="<?= esc(old('capaian_triwulan_4')) ?>" oninput="hitungTotal()">
                         </div>
                     </div>
                     <div class="row mt-3">
                         <div class="col-md-4">
                             <label class="form-label">Total Capaian (otomatis)</label>
-                            <input type="number" step="any" name="total" id="totalCapaian" class="form-control"
+                            <input type="text" name="total" id="totalCapaian" class="form-control"
                                 value="<?= esc(old('total')) ?>">
                             <small class="text-muted d-block mt-1">
                                 Nilai total akan terisi otomatis sebagai rata-rata dari capaian triwulan yang diisi,
@@ -123,30 +119,46 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
     <script>
-        // Hitung total sebagai rata-rata nilai triwulan yang terisi
+        // Parse angka format Indonesia (koma → titik)
+        function parseAngkaID(val) {
+            if (val === null || val === '') return null;
+            const n = parseFloat(val.replace(',', '.'));
+            return isNaN(n) ? null : n;
+        }
+
+        // Format angka ke Indonesia (titik → koma)
+        function formatAngkaID(val, digit = 2) {
+            if (val === null || val === '') return '';
+            return val.toFixed(digit).replace('.', ',');
+        }
+
+        // Hitung total sebagai rata-rata capaian triwulan
         function hitungTotal() {
             const get = n => {
                 const el = document.getElementsByName(n)[0];
                 if (!el) return null;
-                const v = el.value ?? '';
-                return v === '' ? null : parseFloat(v);
+                return parseAngkaID(el.value);
             };
+
             const vals = [
                 get('capaian_triwulan_1'),
                 get('capaian_triwulan_2'),
                 get('capaian_triwulan_3'),
                 get('capaian_triwulan_4')
-            ].filter(v => v !== null && !isNaN(v));
+            ].filter(v => v !== null);
 
-            const total = (vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : '');
+            const total = vals.length
+                ? vals.reduce((a, b) => a + b, 0) / vals.length
+                : null;
+
             const el = document.getElementById('totalCapaian');
-            if (el) el.value = (total === '' ? '' : Math.round(total));
+            if (el) {
+                el.value = total === null ? '' : formatAngkaID(total);
+            }
         }
 
-        // Panggil saat halaman selesai load (untuk old input)
-        window.addEventListener('DOMContentLoaded', function () {
-            hitungTotal();
-        });
+        // Hitung saat load (old input)
+        window.addEventListener('DOMContentLoaded', hitungTotal);
 
         // Cegah double submit
         (function () {
@@ -155,11 +167,13 @@
             if (form && btn) {
                 form.addEventListener('submit', function () {
                     btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+                    btn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
                 });
             }
         })();
     </script>
+
 </body>
 
 </html>

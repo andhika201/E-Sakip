@@ -250,16 +250,18 @@
               <tr>
                 <td class="signature-title">
                   <p class="label">PIHAK KEDUA,</p>
-                  <p>Kepala Sub Bagian Umum dan Kepegawaian</p>
+                  <p><?= esc($jabatan_pihak_2) ?></p>
                 </td>
               </tr>
             </table>
             <table class="signature-bottom">
               <tr>
                 <td class="signature-meta">
-                  <p class="label"><strong><?= esc($nama_pihak_2) ?></strong></p>
-                  <p><?= esc($pangkat_pihak_2) ?></p>
-                  <p><?= esc($nip_pihak_2) ?></p>
+                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
+                  <?php if (strtolower($jenis) !== 'jpt'): ?>
+                    <p><?= esc($pangkat_pihak_2) ?></p>
+                    <p><?= esc($nip_pihak_2) ?></p>
+                  <?php endif; ?>
                 </td>
               </tr>
             </table>
@@ -271,14 +273,14 @@
               <tr>
                 <td class="signature-title">
                   <p class="label">PIHAK KESATU,</p>
-                  <p>Kepala Dinas Komunikasi dan Informatika</p>
+                  <p><?= esc($jabatan_pihak_1) ?></p>
                 </td>
               </tr>
             </table>
             <table class="signature-bottom">
               <tr>
                 <td class="signature-meta">
-                  <p class="label"><strong><?= esc($nama_pihak_1) ?></strong></p>
+                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
                   <p><?= esc($pangkat_pihak_1) ?></p>
                   <p><?= esc($nip_pihak_1) ?></p>
                 </td>
@@ -299,7 +301,7 @@
             </table>
             <table class="signature-table">
               <tr>
-                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
+                <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
               </tr>
             </table>
           </td>

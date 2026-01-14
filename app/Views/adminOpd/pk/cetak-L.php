@@ -98,7 +98,7 @@
       border: none;
     }
 
-   .signature-title {
+    .signature-title {
       text-align: center;
       vertical-align: top;
       height: 185px;
@@ -128,7 +128,7 @@
       margin: 2px 0;
     }
 
-    .signature-meta p{
+    .signature-meta p {
       margin: 0;
       line-height: 1.3;
     }
@@ -236,7 +236,7 @@
     </table>
 
 
-    <table style="width:100%; margin-top:30px;" >
+    <table style="width:100%; margin-top:30px;">
       <tr>
         <?php if (strtolower($jenis) !== 'bupati'): ?>
           <!-- PIHAK KEDUA -->
@@ -252,9 +252,11 @@
             <table class="signature-bottom">
               <tr>
                 <td class="signature-meta">
-                  <p class="label"><strong><?= esc($nama_pihak_2) ?></strong></p>
-                  <p><?= esc($pangkat_pihak_2) ?></p>
-                  <p><?= esc($nip_pihak_2) ?></p>
+                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
+                  <?php if (strtolower($jenis) !== 'jpt'): ?>
+                    <p><?= esc($pangkat_pihak_2) ?></p>
+                    <p><?= esc($nip_pihak_2) ?></p>
+                  <?php endif; ?>
                 </td>
               </tr>
             </table>
@@ -273,14 +275,13 @@
             <table class="signature-bottom">
               <tr>
                 <td class="signature-meta">
-                  <p class="label"><strong><?= esc($nama_pihak_1) ?></strong></p>
+                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
                   <p><?= esc($pangkat_pihak_1) ?></p>
                   <p><?= esc($nip_pihak_1) ?></p>
                 </td>
               </tr>
             </table>
           </td>
-
         <?php else: ?>
 
           <td style="width:50%;"></td>
@@ -294,7 +295,7 @@
             </table>
             <table class="signature-table">
               <tr>
-                <td class="signature-name"><?= esc($nama_pihak_1) ?></td>
+                <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
               </tr>
             </table>
           </td>

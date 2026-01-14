@@ -62,7 +62,20 @@ class PkController extends BaseController
         $opdId = $session->get('opd_id');
         if (!$opdId)
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
+        if ($jenis === 'jpt') {
+            // JPT boleh memilih pegawai dari OPD sendiri + OPD 46
+            $pegawaiOpd = $this->pegawaiModel
+                ->groupStart()
+                ->where('opd_id', $opdId)
+                ->orWhere('opd_id', 46)
+                ->groupEnd()
+                ->findAll();
+        } else {
+            // Administrator & Pengawas tetap hanya OPD sendiri
+            $pegawaiOpd = $this->pegawaiModel
+                ->where('opd_id', $opdId)
+                ->findAll();
+        }
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
         $kegiatan = $this->pkModel->getKegiatan();
@@ -107,7 +120,20 @@ class PkController extends BaseController
         if (!$pk)
             return redirect()->to('/adminopd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
 
-        $pegawaiOpd = $this->pegawaiModel->where('opd_id', $opdId)->findAll();
+        if ($jenis === 'jpt') {
+            // JPT boleh memilih pegawai dari OPD sendiri + OPD 46
+            $pegawaiOpd = $this->pegawaiModel
+                ->groupStart()
+                ->where('opd_id', $opdId)
+                ->orWhere('opd_id', 46)
+                ->groupEnd()
+                ->findAll();
+        } else {
+            // Administrator & Pengawas tetap hanya OPD sendiri
+            $pegawaiOpd = $this->pegawaiModel
+                ->where('opd_id', $opdId)
+                ->findAll();
+        }
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
         $kegiatan = $this->pkModel->getKegiatan();
@@ -162,6 +188,7 @@ class PkController extends BaseController
         }
 
         $post = $this->request->getPost();
+        log_message('debug', 'POST RAW: ' . json_encode($post));
         $now = date('Y-m-d');
 
 
@@ -216,7 +243,7 @@ class PkController extends BaseController
                 if (!empty($s['indikator'])) {
 
                     foreach ($s['indikator'] as $indikator) {
-
+                        
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
                             'target' => $indikator['target'] ?? '',
@@ -317,7 +344,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        };
+        }
+        ;
 
         // ------------------------------
         // SIMPAN KE MODEL

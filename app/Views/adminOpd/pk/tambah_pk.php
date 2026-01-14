@@ -91,7 +91,7 @@
                                                 <?php foreach ($pegawaiOpd as $pegawai): ?>
                                                     <option value="<?= $pegawai['id'] ?>"
                                                         data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                        <?= esc($pegawai['nama_pegawai']) ?>
+                                                        <?= esc(strtoupper($pegawai['nama_pegawai'])) ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
@@ -121,7 +121,7 @@
                                                     <?php foreach ($pegawaiOpd as $pegawai): ?>
                                                         <option value="<?= $pegawai['id'] ?>"
                                                             data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                            <?= esc($pegawai['nama_pegawai']) ?>
+                                                            <?= esc(strtoupper($pegawai['nama_pegawai'])) ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 <?php else: ?>
@@ -230,22 +230,22 @@
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <label class="form-label">Indikator</label>
-                                                        <!-- <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>"> -->
+                                                        <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>">
                                                         <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
-                                                            class="form-control mb-3 border-secondary" value=""
+                                                            class="form-control mb-3 border-secondary indikator-input" value=""
                                                             placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
                                                             required>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Target</label>
                                                         <input type="text" name="sasaran_pk[0][indikator][0][target]"
-                                                            class="form-control mb-3 border-secondary" value=""
+                                                            class="form-control mb-3 border-secondary indikator-target" value=""
                                                             placeholder="Nilai target" required>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Satuan</label>
                                                         <select name="sasaran_pk[0][indikator][0][id_satuan]"
-                                                            class="form-select mb-3 border-secondary" required>
+                                                            class="form-select mb-3 border-secondary satuan-select" required>
                                                             <option value="">Pilih Satuan</option>
                                                             <?php if (isset($satuan) && !empty($satuan)): ?>
                                                                 <?php foreach ($satuan as $s): ?>
@@ -258,7 +258,7 @@
                                                     <div class="col-md-4">
                                                         <label class="form-label">Jenis Indikator</label>
                                                         <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
-                                                            class="form-select mb-3 border-secondary" required>
+                                                            class="form-select mb-3 border-secondary jenis-indikator-select" required>
                                                             <option value="">Pilih Jenis Indikator</option>
                                                             <option value="Indikator Positif">Indikator Positif</option>
                                                             <option value="Indikator Negatif">Indikator Negatif</option>
@@ -283,7 +283,8 @@
                                                                         <?php foreach ($program as $programItem): ?>
                                                                             <option value="<?= $programItem['id'] ?>"
                                                                                 data-anggaran="<?= $programItem['anggaran'] ?>">
-                                                                                <?= esc($programItem['program_kegiatan']) ?>
+                                                                                <?= esc($programItem['program_kegiatan']) ?> — Rp
+                                                                                <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
                                                                             </option>
                                                                         <?php endforeach; ?>
                                                                     <?php endif; ?>
@@ -352,7 +353,8 @@
                                                                                 <?php foreach ($kegiatan as $kegiatanItem): ?>
                                                                                     <option value="<?= $kegiatanItem['id'] ?>"
                                                                                         data-anggaran="<?= $kegiatanItem['anggaran'] ?>">
-                                                                                        <?= esc($kegiatanItem['kegiatan']) ?>
+                                                                                        <?= esc($kegiatanItem['kegiatan']) ?> —
+                                                                                        Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
                                                                                     </option>
                                                                                 <?php endforeach; ?>
                                                                             </select>
@@ -361,10 +363,11 @@
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
-                                                                                class="form-control mb-3 border-secondary" value=""
-                                                                                placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
-                                                                            <input type="hidden" name="kegiatan[0][id_indikator]"
-                                                                                value="">
+                                                                                class="form-control mb-3 border-secondary"
+                                                                                value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
+                                                                                readonly />
+                                                                            <input type="hidden"
+                                                                                name="kegiatan[0][id_indikator]" value="">
                                                                         </div>
 
                                                                         <div class="col-md-3 d-flex align-items-end">
@@ -444,7 +447,8 @@
                                                                                 <?php foreach ($subkegiatan as $sk): ?>
                                                                                     <option value="<?= $sk['id'] ?>"
                                                                                         data-anggaran="<?= $sk['anggaran'] ?>">
-                                                                                        <?= esc($sk['sub_kegiatan']) ?>
+                                                                                        <?= esc($sk['sub_kegiatan']) ?> — Rp
+                                                                                        <?= number_format($sk['anggaran'], 0, ',', '.') ?>
                                                                                     </option>
                                                                                 <?php endforeach; ?>
                                                                             </select>
@@ -453,9 +457,11 @@
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
-                                                                                class="form-control mb-3 border-secondary" value=""
-                                                                                placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
-                                                                            <input type="hidden" name="subkegiatan[0][id_indikator]"
+                                                                                class="form-control mb-3 border-secondary"
+                                                                                value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
+                                                                                readonly />
+                                                                            <input type="hidden"
+                                                                                name="subkegiatan[0][id_indikator]"
                                                                                 value="">
                                                                         </div>
 
@@ -525,97 +531,109 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-                                            if (isset($satuan) && !empty($satuan)) {
-                                                foreach ($satuan as $s) {
-                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada satuan</option>';
-                                            }
-                                            ?>`;
+        if (isset($satuan) && !empty($satuan)) {
+            foreach ($satuan as $s) {
+                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada satuan</option>';
+        }
+        ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-                                            if (isset($program) && !empty($program)) {
-                                                foreach ($program as $programItem) {
+        if (isset($program) && !empty($program)) {
+            foreach ($program as $programItem) {
 
-                                                    $anggaran = isset($programItem['anggaran'])
-                                                        ? (int) $programItem['anggaran']
-                                                        : 0;
+                $anggaran = isset($programItem['anggaran'])
+                    ? (int) $programItem['anggaran']
+                    : 0;
 
-                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
-                                                        . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
-                                                        . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada program</option>';
-                                            }
-                                            ?>`;
+                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
+                    . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
+                    . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-                                                if (isset($jptProgram) && !empty($jptProgram)) {
-                                                    foreach ($jptProgram as $programItem) {
+        if (isset($jptProgram) && !empty($jptProgram)) {
+            foreach ($jptProgram as $programItem) {
 
-                                                        $anggaran = isset($programItem['anggaran'])
-                                                            ? number_format($programItem['anggaran'], 0, ',', '.')
-                                                            : '0';
+                $anggaran = isset($programItem['anggaran'])
+                    ? number_format($programItem['anggaran'], 0, ',', '.')
+                    : '0';
 
-                                                        echo '<option value="' . $programItem['id'] . '">'
-                                                            . esc($programItem['program_kegiatan'])
-                                                            . ' - Rp ' . $anggaran
-                                                            . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada program</option>';
-                                                }
-                                                ?>`;
+                echo '<option value="' . $programItem['id'] . '">'
+                    . esc($programItem['program_kegiatan'])
+                    . ' - Rp ' . $anggaran
+                    . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada program</option>';
+        }
+        ?>`;
 
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-                                            if (isset($kegiatan) && !empty($kegiatan)) {
-                                                foreach ($kegiatan as $kegiatanItem) {
-                                                    echo '<option value="' . $kegiatanItem['id'] . '" '
-                                                        . 'data-anggaran="' . $kegiatanItem['anggaran'] . '">'
-                                                        . esc($kegiatanItem['kegiatan'])
-                                                        . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                            }
-                                            ?>`;
+        if (isset($kegiatan) && !empty($kegiatan)) {
+            foreach ($kegiatan as $kegiatanItem) {
+
+                $anggaran = isset($kegiatanItem['anggaran'])
+                    ? (int) $kegiatanItem['anggaran']
+                    : 0;
+
+                echo '<option value="' . $kegiatanItem['id'] . '" '
+                    . 'data-anggaran="' . $anggaran . '">'
+                    . esc($kegiatanItem['kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
+                    . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
+
 
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
-                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
-                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+            foreach ($kegiatanAdmin as $kegiatanItem) {
+                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada kegiatan</option>';
+        }
+        ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
-                                                    foreach ($subkegiatan as $sk) {
-                                                        echo '<option value="' . $sk['id'] . '" '
-                                                            . 'data-anggaran="' . $sk['anggaran'] . '">'
-                                                            . esc($sk['sub_kegiatan'])
-                                                            . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-                                                }
-                                                ?>`;
+        if (isset($subkegiatan) && !empty($subkegiatan)) {
+            foreach ($subkegiatan as $sk) {
+
+                $anggaran = isset($sk['anggaran'])
+                    ? (int) $sk['anggaran']
+                    : 0;
+
+                echo '<option value="' . $sk['id'] . '" '
+                    . 'data-anggaran="' . $anggaran . '">'
+                    . esc($sk['sub_kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
+                    . '</option>';
+            }
+        } else {
+            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+        }
+        ?>`;
+
     </script>
 
     <script>
-        document.addEventListener('change', function(e) {
+        document.addEventListener('change', function (e) {
             if (e.target.classList.contains('kegiatan-dropdown')) {
                 const selected = e.target.options[e.target.selectedIndex];
                 const programId = selected?.dataset.program || '';
@@ -628,10 +646,10 @@
         });
 
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
             document.querySelectorAll('.pegawai-select').forEach(select => {
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
                     if (targetField && this.selectedOptions[0]) {
                         targetField.value = this.selectedOptions[0].dataset.nip || '';
@@ -641,7 +659,7 @@
 
             // Fungsi untuk program anggaran
             document.querySelectorAll('.program-select').forEach(select => {
-                select.addEventListener('change', function() {
+                select.addEventListener('change', function () {
                     const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
                     if (anggaranField && this.selectedOptions[0]) {
                         anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';

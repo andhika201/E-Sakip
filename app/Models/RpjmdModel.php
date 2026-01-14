@@ -147,6 +147,10 @@ class RpjmdModel extends Model
         if (empty($data['indikator_tujuan_id']) || empty($data['tahun'])) {
             throw new \InvalidArgumentException("indikator_tujuan_id dan tahun harus diisi");
         }
+
+        if (!isset($data['target_tahunan']) || trim((string)$data['target_tahunan']) === '') {
+            throw new \InvalidArgumentException("Target tahunan tujuan kosong untuk tahun {$data['tahun']}");
+        }
         $insert = [
             'indikator_tujuan_id' => (int) $data['indikator_tujuan_id'],
             'tahun' => (int) $data['tahun'],
@@ -554,7 +558,6 @@ class RpjmdModel extends Model
 
             $this->db->transCommit();
             return true;
-
         } catch (\Throwable $e) {
             $this->db->transRollback();
             log_message('error', 'DELETE RPJMD FAILED: ' . $e->getMessage());
@@ -617,7 +620,6 @@ class RpjmdModel extends Model
                 }
             }
             return $res;
-
         } catch (\Exception $e) {
             if (!$internal) {
                 $this->db->transRollback();
@@ -733,7 +735,6 @@ class RpjmdModel extends Model
                 }
             }
             return $res;
-
         } catch (\Exception $e) {
             if (!$internal) {
                 $this->db->transRollback();
@@ -819,7 +820,6 @@ class RpjmdModel extends Model
                 }
             }
             return $res;
-
         } catch (\Exception $e) {
             if (!$internal) {
                 $this->db->transRollback();
@@ -841,6 +841,9 @@ class RpjmdModel extends Model
                 file_put_contents($debugFile, "VALIDATION ERROR: {$err}\n", FILE_APPEND);
                 throw new \InvalidArgumentException($err);
             }
+        }
+        if (!isset($data['target_tahunan']) || trim((string)$data['target_tahunan']) === '') {
+            throw new \InvalidArgumentException("Target tahunan kosong untuk tahun {$data['tahun']}");
         }
 
         $insert = [
@@ -1004,6 +1007,10 @@ class RpjmdModel extends Model
         $seenIds = [];
 
         foreach ($targets as $tt) {
+            if (!isset($tt['target_tahunan']) || trim($tt['target_tahunan']) === '') {
+                continue;
+            }
+
             $id = isset($tt['id']) && $tt['id'] !== '' ? (int) $tt['id'] : null;
             $tahun = (int) ($tt['tahun'] ?? 0);
             $target = (string) ($tt['target_tahunan'] ?? '');
@@ -1015,7 +1022,6 @@ class RpjmdModel extends Model
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
                 $seenIds[] = $id;
-
             } elseif ($tahun) {
                 if (isset($byYear[$tahun])) {
                     $tbl->where('id', (int) $byYear[$tahun]['id'])->update([
@@ -1236,10 +1242,16 @@ class RpjmdModel extends Model
                         }
 
                         foreach ($targets as $t) {
+
+                            // ⛔ jangan simpan tahun yang belum diisi
+                            if (!isset($t['target_tahunan']) || trim($t['target_tahunan']) === '') {
+                                continue;
+                            }
+
                             $this->createTargetTahunan([
                                 'indikator_sasaran_id' => $indId,
                                 'tahun' => (int) $t['tahun'],
-                                'target_tahunan' => (string) ($t['target_tahunan'] ?? ''),
+                                'target_tahunan' => (string) $t['target_tahunan'],
                             ]);
                         }
                     }
@@ -1272,7 +1284,6 @@ class RpjmdModel extends Model
 
             file_put_contents($debugFile, "SUCCESS: Update completed\n", FILE_APPEND);
             return true;
-
         } catch (\Exception $e) {
             file_put_contents($debugFile, "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
             $this->db->transRollback();

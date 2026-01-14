@@ -160,7 +160,7 @@ class RpjmdController extends BaseController
                         $db->table('rpjmd_target_tujuan')->insert([
                             'indikator_tujuan_id' => $itId,
                             'tahun' => (int) $tt['tahun'],
-                            'target_tahunan' => $this->normalizeNumber($tt['target_tahunan'] ?? null),
+                            'target_tahunan' => trim((string) $tt['target_tahunan']),
                         ]);
                     }
                 }
@@ -191,7 +191,7 @@ class RpjmdController extends BaseController
                             $db->table('rpjmd_target')->insert([
                                 'indikator_sasaran_id' => $isId,
                                 'tahun' => (int) $tt['tahun'],
-                                'target_tahunan' => $this->normalizeNumber($tt['target_tahunan'] ?? null),
+                                'target_tahunan' => trim((string) $tt['target_tahunan']),
                             ]);
                         }
                     }
@@ -209,7 +209,6 @@ class RpjmdController extends BaseController
 
             return redirect()->to(base_url('adminkab/rpjmd'))
                 ->with('success', 'RPJMD berhasil ditambahkan');
-
         } catch (\Throwable $e) {
             $db->transRollback();
             log_message('error', 'SAVE RPJMD ERROR: ' . $e->getMessage());
@@ -295,7 +294,11 @@ class RpjmdController extends BaseController
             if ($tahunMulai <= 0) {
                 throw new \Exception('Tahun mulai tidak valid');
             }
-            $tahunAkhir = $tahunMulai + 5;
+            $tahunAkhir = (int) ($post['tahun_akhir'] ?? 0);
+
+            if ($tahunAkhir <= $tahunMulai) {
+                throw new \Exception('Tahun akhir tidak valid');
+            }
 
             /* =======================
              |  UPDATE MISI
@@ -401,10 +404,15 @@ class RpjmdController extends BaseController
                     }
 
                     foreach ($targets as $tt) {
+                        log_message('debug', 'TARGET TUJUAN: ' . json_encode($tt));
+                        if (!isset($tt['target_tahunan']) || trim((string)$tt['target_tahunan']) === '') {
+                            continue;
+                        }
+
                         $db->table('rpjmd_target_tujuan')->insert([
                             'indikator_tujuan_id' => $itId,
                             'tahun' => (int) $tt['tahun'],
-                            'target_tahunan' => $this->normalizeNumber($tt['target_tahunan'] ?? null),
+                            'target_tahunan' => trim((string) $tt['target_tahunan']),
                         ]);
                     }
                 }
@@ -440,15 +448,21 @@ class RpjmdController extends BaseController
                         }
 
                         foreach ($targets as $tt) {
+                            log_message('debug', 'TARGET TUJUAN: ' . json_encode($tt));
+                            if (!isset($tt['target_tahunan']) || trim((string)$tt['target_tahunan']) === '') {
+                                continue;
+                            }
+
                             $db->table('rpjmd_target')->insert([
                                 'indikator_sasaran_id' => $isId,
                                 'tahun' => (int) $tt['tahun'],
-                                'target_tahunan' => $this->normalizeNumber($tt['target_tahunan'] ?? null),
+                                'target_tahunan' => trim((string) $tt['target_tahunan']),
                             ]);
                         }
                     }
                 }
             }
+
 
             if ($db->transStatus() === false) {
                 $db->transRollback();
@@ -459,7 +473,6 @@ class RpjmdController extends BaseController
 
             return redirect()->to(base_url('adminkab/rpjmd'))
                 ->with('success', 'RPJMD berhasil diperbarui');
-
         } catch (\Throwable $e) {
             $db->transRollback();
             log_message('error', 'UPDATE RPJMD ERROR: ' . $e->getMessage());

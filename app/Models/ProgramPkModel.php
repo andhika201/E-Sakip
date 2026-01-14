@@ -127,4 +127,20 @@ class ProgramPkModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    public function getSubKegiatanByTahun($tahun)
+    {
+        $subQuery = $this->db->table('sub_kegiatan_pk')
+            ->select('MAX(id) as id')
+            ->where('tahun_anggaran', $tahun)
+            ->groupBy('kegiatan_id, sub_kegiatan')
+            ->getCompiledSelect();
+
+        return $this->db->table('sub_kegiatan_pk sk')
+            ->select('sk.id, sk.kegiatan_id, sk.sub_kegiatan, sk.anggaran')
+            ->join("($subQuery) latest", 'latest.id = sk.id')
+            ->orderBy('sk.sub_kegiatan', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
 }

@@ -130,6 +130,7 @@
                 </select>
               </div>
 
+
               <!-- KEGIATAN -->
               <div class="kegiatan-section">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -316,25 +317,7 @@
   <?= $this->include('adminOpd/templates/footer.php'); ?>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script>
-    function initSelect2(context = document) {
-      $(context).find('.select2').each(function () {
-        if ($(this).hasClass('select2-hidden-accessible')) {
-          $(this).select2('destroy');
-        }
 
-        $(this).select2({
-          width: '100%',
-          minimumResultsForSearch: 0, // search tetap aktif
-          dropdownParent: $('body')
-        });
-      });
-    }
-
-    $(document).ready(function () {
-      initSelect2();
-    });
-  </script>
   <!-- Data master dikirim ke JS -->
   <script>
     const PROGRAMS = <?= json_encode($program) ?>;
@@ -344,14 +327,29 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const programContainer = document.getElementById('program-container');
-      const tplProgram = document.getElementById('tpl-program');
-      const tplKegiatan = document.getElementById('tpl-kegiatan');
-      const tplSub = document.getElementById('tpl-subkegiatan');
 
-      const clone = (tpl) => tpl.content.firstElementChild.cloneNode(true);
+      /* =====================================================
+       * INIT SELECT2
+       * ===================================================== */
+      function initSelect2(context = document) {
+        $(context).find('.select2').each(function () {
+          if ($(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2('destroy');
+          }
 
-      // ===== Helper Rupiah =====
+          $(this).select2({
+            width: '100%',
+            dropdownParent: $('body')
+          });
+        });
+      }
+
+      initSelect2();
+
+
+      /* =====================================================
+       * HELPER RUPIAH
+       * ===================================================== */
       function toIntegerString(num) {
         if (num === null || num === undefined || num === '') return '';
         const n = Number(num);
@@ -365,26 +363,22 @@
         return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
       }
 
-      // ===== Isi Dropdown Master =====
+
+      /* =====================================================
+       * FILL DROPDOWN
+       * ===================================================== */
       function fillProgramOptions(select) {
         select.innerHTML = '<option value="">-- Pilih Program --</option>';
 
         PROGRAMS.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p.id;
-
           const anggaran = p.anggaran ? formatRupiah(p.anggaran) : '-';
           opt.textContent = `${p.program_kegiatan} — Rp ${anggaran}`;
-
-          // simpan nilai mentah kalau nanti mau dipakai
-          opt.dataset.anggaran = p.anggaran ?? '';
-
           select.appendChild(opt);
         });
       }
 
-
-      // KEGIATAN: filter berdasarkan program_id (hasil alias dari model)
       function fillKegiatanOptions(select, programId, currentValue = '') {
         select.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
         if (!programId) return;
@@ -400,7 +394,6 @@
           });
       }
 
-      // SUB KEGIATAN: filter berdasarkan kegiatan_id (hasil alias dari model)
       function fillSubOptions(select, kegiatanId, currentValue = '') {
         select.innerHTML = '<option value="">-- Pilih Sub Kegiatan --</option>';
         if (!kegiatanId) return;
@@ -417,254 +410,67 @@
           });
       }
 
-      // ===== Reindex name & label =====
-      function reindexAll() {
-        const programs = programContainer.querySelectorAll('.program-item');
 
-        programs.forEach((pEl, pIdx) => {
-          const pTitle = pEl.querySelector('.program-title');
-          if (pTitle) pTitle.textContent = `Program ${pIdx + 1}`;
+      /* =====================================================
+       * EVENT SELECT (KHUSUS SELECT2)
+       * ===================================================== */
+      $(document).on('change', '.select-program', function () {
+        const programId = $(this).val();
+        const programItem = this.closest('.program-item');
 
-          const selProg = pEl.querySelector('.select-program');
-          if (selProg) selProg.name = `program[${pIdx}][program_id]`;
-
-          const kegiatanItems = pEl.querySelectorAll('.kegiatan-item');
-          kegiatanItems.forEach((kEl, kIdx) => {
-            const kTitle = kEl.querySelector('.kegiatan-title');
-            if (kTitle) kTitle.textContent = `Kegiatan ${pIdx + 1}.${kIdx + 1}`;
-
-            const selKeg = kEl.querySelector('.select-kegiatan');
-            if (selKeg) {
-              selKeg.name = `program[${pIdx}][kegiatan][${kIdx}][kegiatan_id]`;
-            }
-
-            const subItems = kEl.querySelectorAll('.subkegiatan-item');
-            subItems.forEach((sEl, sIdx) => {
-              const sTitle = sEl.querySelector('.sub-title');
-              if (sTitle) sTitle.textContent = `Sub ${pIdx + 1}.${kIdx + 1}.${sIdx + 1}`;
-
-              const selSub = sEl.querySelector('.select-subkegiatan');
-              if (selSub) {
-                selSub.name =
-                  `program[${pIdx}][kegiatan][${kIdx}][subkegiatan][${sIdx}][sub_kegiatan_id]`;
-              }
-            });
-          });
+        $(programItem).find('.select-kegiatan').each(function () {
+          fillKegiatanOptions(this, programId);
+          $(this).trigger('change.select2');
         });
+      });
 
-        // tombol hapus program hanya muncul kalau > 1
-        if (programs.length > 1) {
-          programs.forEach(p => {
-            const btn = p.querySelector('.remove-program');
-            if (btn) btn.style.display = '';
-          });
-        } else if (programs.length === 1) {
-          const btn = programs[0].querySelector('.remove-program');
-          if (btn) btn.style.display = 'none';
+      $(document).on('change', '.select-kegiatan', function () {
+        const kegiatanId = $(this).val();
+        const kegiatanItem = this.closest('.kegiatan-item');
+
+        $(kegiatanItem).find('.select-subkegiatan').each(function () {
+          fillSubOptions(this, kegiatanId);
+          $(this).trigger('change.select2');
+        });
+      });
+
+      $(document).on('change', '.select-subkegiatan', function () {
+        const opt = this.selectedOptions[0];
+        const anggaranRaw = opt ? opt.dataset.anggaran : '';
+
+        const sItem = this.closest('.subkegiatan-item');
+        const disp = sItem.querySelector('.target-display');
+        const hid = sItem.querySelector('.target-hidden');
+
+        if (anggaranRaw) {
+          const intStr = toIntegerString(anggaranRaw);
+          disp.value = 'Rp ' + formatRupiah(intStr);
+          hid.value = intStr;
+        } else {
+          disp.value = '-';
+          hid.value = '';
         }
-      }
+      });
 
-      // ===== Tambah Elemen =====
-      function addProgram() {
-        const pNode = clone(tplProgram);
-        const selProg = pNode.querySelector('.select-program');
-        fillProgramOptions(selProg);
 
-        // program baru: 1 kegiatan + 1 sub
-        const kc = pNode.querySelector('.kegiatan-container');
-        const kNode = clone(tplKegiatan);
-        kc.appendChild(kNode);
-
-        const sc = kNode.querySelector('.subkegiatan-container');
-        const sNode = clone(tplSub);
-        sc.appendChild(sNode);
-
-        const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-';
-        hid.value = '';
-
-        programContainer.appendChild(pNode);
-        reindexAll();
-      }
-
-      function addKegiatanTo(programItem) {
-        const kc = programItem.querySelector('.kegiatan-container');
-        const kNode = clone(tplKegiatan);
-
-        const sc = kNode.querySelector('.subkegiatan-container');
-        const sNode = clone(tplSub);
-        sc.appendChild(sNode);
-
-        const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-';
-        hid.value = '';
-
-        kc.appendChild(kNode);
-        reindexAll();
-
-        const selProg = programItem.querySelector('.select-program');
-        const selKeg = kNode.querySelector('.select-kegiatan');
-        fillKegiatanOptions(selKeg, selProg.value);
-        const selSub = sNode.querySelector('.select-subkegiatan');
-        fillSubOptions(selSub, selKeg.value);
-      }
-
-      function addSubTo(kegiatanItem) {
-        const sc = kegiatanItem.querySelector('.subkegiatan-container');
-        const sNode = clone(tplSub);
-
-        const disp = sNode.querySelector('.target-display');
-        const hid = sNode.querySelector('.target-hidden');
-        disp.value = '-';
-        hid.value = '';
-
-        sc.appendChild(sNode);
-        reindexAll();
-
-        const selKeg = kegiatanItem.querySelector('.select-kegiatan');
-        const selSub = sNode.querySelector('.select-subkegiatan');
-        fillSubOptions(selSub, selKeg.value);
-      }
-
-      // ===== INIT PERTAMA =====
+      /* =====================================================
+       * INIT DEFAULT (PROGRAM PERTAMA)
+       * ===================================================== */
       (function initFirst() {
-        const firstProg = programContainer.querySelector('.program-item');
+        const firstProg = document.querySelector('.program-item');
         if (!firstProg) return;
-
-        reindexAll();
 
         const selProg = firstProg.querySelector('.select-program');
         const selKeg = firstProg.querySelector('.select-kegiatan');
         const selSub = firstProg.querySelector('.select-subkegiatan');
 
-        // awal: isi kegiatan & sub kalau program/kegiatan sudah dipilih
         fillKegiatanOptions(selKeg, selProg.value);
         fillSubOptions(selSub, selKeg.value);
       })();
 
-      // ===== EVENT CLICK =====
-      document.addEventListener('click', function (e) {
-        if (e.target.closest('#add-program')) {
-          e.preventDefault();
-          addProgram();
-          return;
-        }
-
-        const addK = e.target.closest('.add-kegiatan');
-        if (addK) {
-          e.preventDefault();
-          const pItem = addK.closest('.program-item');
-          addKegiatanTo(pItem);
-          return;
-        }
-
-        const addS = e.target.closest('.add-subkegiatan');
-        if (addS) {
-          e.preventDefault();
-          const kItem = addS.closest('.kegiatan-item');
-          addSubTo(kItem);
-          return;
-        }
-
-        const remP = e.target.closest('.remove-program');
-        if (remP) {
-          e.preventDefault();
-          const allProg = programContainer.querySelectorAll('.program-item');
-          if (allProg.length <= 1) return;
-          remP.closest('.program-item').remove();
-          reindexAll();
-          return;
-        }
-
-        const remK = e.target.closest('.remove-kegiatan');
-        if (remK) {
-          e.preventDefault();
-          const pItem = remK.closest('.program-item');
-          const allK = pItem.querySelectorAll('.kegiatan-item');
-          if (allK.length <= 1) return;
-          remK.closest('.kegiatan-item').remove();
-          reindexAll();
-          return;
-        }
-
-        const remS = e.target.closest('.remove-subkegiatan');
-        if (remS) {
-          e.preventDefault();
-          const kItem = remS.closest('.kegiatan-item');
-          const allS = kItem.querySelectorAll('.subkegiatan-item');
-          if (allS.length <= 1) return;
-          remS.closest('.subkegiatan-item').remove();
-          reindexAll();
-          return;
-        }
-      });
-
-      // ===== EVENT CHANGE (select) =====
-      document.addEventListener('change', function (e) {
-        const el = e.target;
-
-        // Program berubah → refresh semua kegiatan & sub
-        if (el.classList.contains('select-program')) {
-          const pItem = el.closest('.program-item');
-          const programId = el.value;
-
-          pItem.querySelectorAll('.select-kegiatan').forEach(selKeg => {
-            const current = selKeg.value;
-            fillKegiatanOptions(selKeg, programId, current);
-
-            const kItem = selKeg.closest('.kegiatan-item');
-            kItem.querySelectorAll('.select-subkegiatan').forEach(selSub => {
-              const currentSub = selSub.value;
-              fillSubOptions(selSub, selKeg.value, currentSub);
-
-              const sItem = selSub.closest('.subkegiatan-item');
-              const disp = sItem.querySelector('.target-display');
-              const hid = sItem.querySelector('.target-hidden');
-              disp.value = '-';
-              hid.value = '';
-            });
-          });
-        }
-
-        // Kegiatan berubah → refresh semua sub
-        if (el.classList.contains('select-kegiatan')) {
-          const kItem = el.closest('.kegiatan-item');
-          const kegiatanId = el.value;
-
-          kItem.querySelectorAll('.select-subkegiatan').forEach(selSub => {
-            const currentSub = selSub.value;
-            fillSubOptions(selSub, kegiatanId, currentSub);
-
-            const sItem = selSub.closest('.subkegiatan-item');
-            const disp = sItem.querySelector('.target-display');
-            const hid = sItem.querySelector('.target-hidden');
-            disp.value = '-';
-            hid.value = '';
-          });
-        }
-
-        // Sub kegiatan berubah → tampilkan anggaran
-        if (el.classList.contains('select-subkegiatan')) {
-          const sItem = el.closest('.subkegiatan-item');
-          const opt = el.selectedOptions[0];
-          const anggaranRaw = opt ? opt.dataset.anggaran : '';
-          const disp = sItem.querySelector('.target-display');
-          const hid = sItem.querySelector('.target-hidden');
-
-          if (anggaranRaw) {
-            const intStr = toIntegerString(anggaranRaw);
-            disp.value = 'Rp ' + formatRupiah(intStr);
-            hid.value = intStr;
-          } else {
-            disp.value = '-';
-            hid.value = '';
-          }
-        }
-      });
     });
   </script>
+
 </body>
 
 </html>

@@ -13,7 +13,17 @@
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
     <main class="flex-fill p-4 mt-2">
         <div class="bg-white rounded shadow p-4">
-            <h2 class="h3 fw-bold text-success text-center mb-4">PK <?= strtoupper($jenis) ?></h2>
+            <?php
+            if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
+                $judulPk = 'CAMAT';
+            } else {
+                $judulPk = strtoupper($jenis);
+            }
+            ?>
+
+            <h2 class="h3 fw-bold text-success text-center mb-4">
+                PK <?= $judulPk ?>
+            </h2>
             <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
                 <div class="d-flex gap-2 flex-fill">
                     <form method="GET" id="filterForm" class="flex-fill">
@@ -167,7 +177,14 @@
                                         <td class="border p-2"><?= $no_program++ ?></td>
                                         <td class="border p-2"><?= esc($program['program_kegiatan']) ?></td>
                                         <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
-                                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+                                        <?php
+                                        if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
+                                            $judulPk = 'CAMAT';
+                                        } else {
+                                            $judulPk = strtoupper($jenis);
+                                        }
+                                        ?>
+                                        <td class="border p-2"><?= esc(ucwords($judulPk)) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -247,7 +264,7 @@
     <script>
         const tahunSelect = document.getElementById('tahun');
         if (tahunSelect) {
-            tahunSelect.addEventListener('change', function() {
+            tahunSelect.addEventListener('change', function () {
                 window.location = '?tahun=' + this.value;
             });
         }

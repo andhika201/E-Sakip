@@ -51,7 +51,8 @@ class PkController extends BaseController
             $pkData = null;
         }
 
-        // 6. Kirim ke view
+        // dd($currentOpd['nama_opd']);
+
         return view('adminOpd/pk/pk', [
             'pk_data'     => $pkData,
             'current_opd' => $currentOpd,
@@ -83,6 +84,7 @@ class PkController extends BaseController
                 ->where('opd_id', $opdId)
                 ->findAll();
         }
+        $currentOpd = $this->opdModel->find($opdId);
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
         $kegiatan = $this->pkModel->getKegiatan();
@@ -105,6 +107,7 @@ class PkController extends BaseController
         }
         return view('adminOpd/pk/tambah_pk', [
             'pegawaiOpd' => $pegawaiOpd,
+            'current_opd' => $currentOpd,
             'program' => $program,
             'kegiatan' => $kegiatan,
             'subkegiatan' => $subkegiatan,
@@ -197,6 +200,7 @@ class PkController extends BaseController
         $post = $this->request->getPost();
         log_message('debug', 'POST RAW: ' . json_encode($post));
         $now = date('Y-m-d');
+        $tanggal = $post['tanggal_pk'] ?? $now;
 
 
         // ------------------------------
@@ -224,7 +228,7 @@ class PkController extends BaseController
             'tahun' => $post['tahun'] ?? null,
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
-            'tanggal' => $now,
+            'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []
@@ -250,6 +254,7 @@ class PkController extends BaseController
                 if (!empty($s['indikator'])) {
 
                     foreach ($s['indikator'] as $indikator) {
+
 
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
@@ -418,6 +423,8 @@ class PkController extends BaseController
 
         $opdId = $session->get('opd_id') ?? $pk['opd_id'];
         $now = date('Y-m-d');
+        $tanggal = $post['tanggal_pk'] ?? $now;
+
 
         // --------------------------
         // LOG: Info dasar
@@ -449,7 +456,7 @@ class PkController extends BaseController
             'tahun' => $tahun,
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
-            'tanggal' => $now,
+            'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []

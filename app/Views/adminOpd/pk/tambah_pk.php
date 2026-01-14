@@ -4,12 +4,21 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tambah PK <?= ucfirst($jenis) ?> - e-SAKIP</title>
+    <?php
+    if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
+        $judulPk = 'CAMAT';
+    } else {
+        $judulPk = strtoupper($jenis);
+    }
+    ?>
+    <title>Tambah PK <?= ucfirst($judulPk) ?> - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
@@ -98,7 +107,8 @@
 
         <main class="flex-fill d-flex justify-content-center p-4 mt-4">
             <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
-                <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah PK <?= strtoupper($jenis) ?></h2>
+                <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah PK <?= strtoupper($judulPk) ?>
+                </h2>
                 <form id="pk-form" method="POST"
                     action="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/save') ?>">
                     <?= csrf_field() ?>
@@ -107,13 +117,22 @@
                         <div class="col">
                             <label class="form-label fw-bold">Jenis PK</label>
                             <select name="jenis" id="jenis-pk" class="form-select mb-3 border-secondary" disabled>
-                                <option value="<?= esc($jenis) ?>" selected>PK <?= ucfirst($jenis) ?></option>
+                                <option value="<?= esc($jenis) ?>" selected>PK <?= ucfirst($judulPk) ?></option>
                             </select>
                             <input type="hidden" name="jenis" value="<?= esc($jenis) ?>">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Tahun PK</label>
                                 <input type="number" name="tahun" class="form-control border-secondary"
                                     placeholder="Contoh: 2025" min="2020" max="2050" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Tanggal Penandatanganan PK</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-secondary">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </span>
+                                    <input type="date" name="tanggal_pk" class="form-control border-secondary" required>
+                                </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="row">
@@ -266,22 +285,25 @@
                                                 <div class="row">
                                                     <div class="col-md-5">
                                                         <label class="form-label">Indikator</label>
-                                                        <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]" value="<?= $jenis ?>">
+                                                        <input type="hidden" name="sasaran_pk[0][indikator][0][jenis]"
+                                                            value="<?= $jenis ?>">
                                                         <input type="text" name="sasaran_pk[0][indikator][0][indikator]"
-                                                            class="form-control mb-3 border-secondary indikator-input" value=""
+                                                            class="form-control mb-3 border-secondary indikator-input"
+                                                            value=""
                                                             placeholder="Contoh: Persentase tingkat kepuasan masyarakat terhadap pelayanan"
                                                             required>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label">Target</label>
                                                         <input type="text" name="sasaran_pk[0][indikator][0][target]"
-                                                            class="form-control mb-3 border-secondary indikator-target" value=""
-                                                            placeholder="Nilai target" required>
+                                                            class="form-control mb-3 border-secondary indikator-target"
+                                                            value="" placeholder="Nilai target" required>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <label class="form-label">Satuan</label>
                                                         <select name="sasaran_pk[0][indikator][0][id_satuan]"
-                                                            class="form-select mb-3 border-secondary satuan-select" required>
+                                                            class="form-select mb-3 border-secondary satuan-select"
+                                                            required>
                                                             <option value="">Pilih Satuan</option>
                                                             <?php if (isset($satuan) && !empty($satuan)): ?>
                                                                 <?php foreach ($satuan as $s): ?>
@@ -294,7 +316,8 @@
                                                     <div class="col-md-4">
                                                         <label class="form-label">Jenis Indikator</label>
                                                         <select name="sasaran_pk[0][indikator][0][jenis_indikator]"
-                                                            class="form-select mb-3 border-secondary jenis-indikator-select" required>
+                                                            class="form-select mb-3 border-secondary jenis-indikator-select"
+                                                            required>
                                                             <option value="">Pilih Jenis Indikator</option>
                                                             <option value="Indikator Positif">Indikator Positif</option>
                                                             <option value="Indikator Negatif">Indikator Negatif</option>

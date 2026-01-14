@@ -97,8 +97,8 @@ class ProgramPkController extends BaseController
                 continue;
             }
 
-            // Ambil anggaran dari kolom J
-            $cellJ = $sheet->getCell("J{$i}");
+            // Ambil anggaran dari kolom K
+            $cellJ = $sheet->getCell("K{$i}");
             $rawVal = $cellJ->getValue();
 
             if (is_numeric($rawVal)) {

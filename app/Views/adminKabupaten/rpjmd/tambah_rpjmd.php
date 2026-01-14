@@ -6,6 +6,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tambah RPJMD e-SAKIP</title>
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
+  <!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+<!-- Override SETELAH Select2 -->
+<style>
+.select2-container {
+  width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+  height: 38px;
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+}
+
+.select2-selection__rendered {
+  padding-left: 0 !important;
+  color: #495057;
+}
+
+.select2-selection__arrow {
+  height: 100% !important;
+}
+
+.select2-dropdown {
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+.select2-results__option--highlighted {
+  background-color: #00743e !important;
+  color: #fff;
+}
+</style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -95,7 +133,7 @@
                       <h5 class="fw-medium mb-3">Target 5 Tahunan (Indikator Tujuan)</h5>
                       <div class="target-tujuan-container">
                         <!-- terisi 5 baris tahun sesuai periode -->
-                        <?php for ($i = 0; $i < 6; $i++): ?>
+                        <?php for ($i = 0; $i < 5; $i++): ?>
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
                               <input type="number"
@@ -176,12 +214,12 @@
                             <div class="col-md-4">
                               <label class="form-label">Satuan</label>
                               <select name="tujuan[0][sasaran][0][indikator_sasaran][0][satuan]"
-                                      class="form-select satuan-select mb-3" required></select>
+                                      class="form-select select2 satuan-select mb-3" required></select>
                             </div>
                             <div class="col-md-4">
                               <label class="form-label">Jenis Indikator</label>
                               <select name="tujuan[0][sasaran][0][indikator_sasaran][0][jenis_indikator]"
-                                      class="form-select mb-3" required>
+                                      class="form-select select2 mb-3" required>
                                 <option value="indikator positif">Indikator Positif</option>
                                 <option value="indikator negatif">Indikator Negatif</option>
                               </select>
@@ -200,7 +238,7 @@
                           <div class="target-section">
                             <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                             <div class="target-container">
-                              <?php for ($i = 0; $i < 6; $i++): ?>
+                              <?php for ($i = 0; $i < 5; $i++): ?>
                                 <div class="target-item row g-2 align-items-center mb-2">
                                   <div class="col-auto">
                                     <input type="number"
@@ -265,13 +303,36 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+<!-- sebelum </body> -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+  function initSelect2(context = document) {
+    $(context).find('.select2').each(function () {
+      if ($(this).hasClass('select2-hidden-accessible')) {
+        $(this).select2('destroy');
+      }
+
+      $(this).select2({
+        width: '100%',
+        minimumResultsForSearch: 0, // search tetap aktif
+        dropdownParent: $('body')
+      });
+    });
+  }
+
+  $(document).ready(function () {
+    initSelect2();
+  });
+</script>
+
 
   <!-- JS untuk form -->
   <script>
     // ===== Helpers =====
     function getYears() {
       const start = parseInt(document.getElementById('periode_start').value || '2025', 10);
-      const end = parseInt(document.getElementById('periode_end').value || (start + 5), 10);
+      const end = parseInt(document.getElementById('periode_end').value || (start + 4), 10);
       const arr = [];
       for (let y = start; y <= end; y++) arr.push(y);
       return arr;
@@ -281,7 +342,7 @@
       const startEl = document.getElementById('periode_start');
       const endEl = document.getElementById('periode_end');
       const start = parseInt(startEl.value || '2025', 10);
-      endEl.value = start + 5;
+      endEl.value = start + 4;
     }
 
     function generateSatuanOptions() {

@@ -20,6 +20,44 @@
       margin-bottom: 10px;
     }
   </style>
+    <!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+<!-- Override SETELAH Select2 -->
+<style>
+.select2-container {
+  width: 100% !important;
+}
+
+.select2-container--default .select2-selection--single {
+  height: 38px;
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+}
+
+.select2-selection__rendered {
+  padding-left: 0 !important;
+  color: #495057;
+}
+
+.select2-selection__arrow {
+  height: 100% !important;
+}
+
+.select2-dropdown {
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+.select2-results__option--highlighted {
+  background-color: #00743e !important;
+  color: #fff;
+}
+</style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -49,7 +87,7 @@
             <!-- Sasaran RPJMD yang dituju -->
             <div class="col-md-8">
               <label class="form-label">Sasaran RPJMD yang Dituju</label>
-              <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select mb-3" required>
+              <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select select23" required>
                 <option value="">Pilih Sasaran RPJMD</option>
                 <?php if (!empty($rpjmd_sasaran)): ?>
                   <?php foreach ($rpjmd_sasaran as $s): ?>
@@ -276,7 +314,7 @@
                             <label class="form-label">Satuan</label>
                             <select
                               name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
-                              class="form-select satuan-select"
+                              class="form-select select2 satuan-select"
                               required
                             >
                               <option value="">Pilih Satuan</option>
@@ -296,7 +334,7 @@
                             <label class="form-label">Jenis Indikator</label>
                             <select
                               name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
-                              class="form-select"
+                              class="form-select select2"
                               required
                             >
                               <option value="">Pilih Jenis Indikator</option>
@@ -457,6 +495,27 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    function initSelect2(context = document) {
+      $(context).find('.select2').each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+          $(this).select2('destroy');
+        }
+
+        $(this).select2({
+          width: '100%',
+          minimumResultsForSearch: 0, // search tetap aktif
+          dropdownParent: $('body')
+        });
+      });
+    }
+
+    $(document).ready(function () {
+      initSelect2();
+    });
+  </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {

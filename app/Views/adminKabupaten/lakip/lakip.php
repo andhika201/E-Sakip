@@ -283,12 +283,18 @@
                                     <td><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
                                     <td><?= formatAngkaID(toFloatComma($lakipItem['capaian_tahun_ini'] ?? null), 2) ?></td>
 
-                                    <td><?= ($capaianPersen === null) ? '-' : (round($capaianPersen, 2) . '%') ?></td>
-
                                     <td>
                                         <?= ($capaianPersen === null)
                                             ? '-'
                                             : formatAngkaID($capaianPersen, 2) . '%' ?>
+                                    </td>
+
+                                    <td>
+                                        <?php if (!empty($statusText)): ?>
+                                            <span class="<?= $badge ?>"><?= esc(ucfirst($statusText)) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
                                     </td>
 
                                     <td class="col-aksi">

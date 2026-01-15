@@ -24,36 +24,44 @@ class PkController extends BaseController
     public function index($jenis)
     {
         $session = session();
-        $opdId = $session->get('opd_id');
-        $tahun = $this->request->getGet('tahun'); // menangkap filter tahun
-        $currentYear = date('Y');
+        $opdId   = $session->get('opd_id');
 
-
-        if (!$opdId)
+        if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        // 1. Ambil tahun dari URL
+        $tahun = $this->request->getGet('tahun');
+
+        // 2. Kalau tidak ada, pakai tahun berjalan
+        if (empty($tahun)) {
+            $tahun = date('Y');
+        }
+
+        // 3. Ambil data PK berdasarkan OPD, jenis, dan tahun
         $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
-        // If multiple, pick the first (or null if none)
 
+        // 4. Ambil data OPD
         $currentOpd = $this->opdModel->find($opdId);
-        $currentYear = date('Y');
-        // dd($currentYear);
 
+        // 5. Kalau hasil array banyak, ambil satu
         if (is_array($pkData) && count($pkData) > 0) {
             $pkData = $pkData[0];
         } else {
             $pkData = null;
         }
 
-        // dd($pkData);
+        // dd($currentOpd['nama_opd']);
 
         return view('adminOpd/pk/pk', [
-            'pk_data' => $pkData,
+            'pk_data'     => $pkData,
             'current_opd' => $currentOpd,
-            'currentYear' => $currentYear,
-            'tahun' => $tahun ?? $currentYear,
-            'jenis' => $jenis,
+            'currentYear' => date('Y'),
+            'tahun'       => $tahun,
+            'jenis'       => $jenis,
         ]);
     }
+
 
     public function tambah($jenis)
     {
@@ -76,6 +84,7 @@ class PkController extends BaseController
                 ->where('opd_id', $opdId)
                 ->findAll();
         }
+        $currentOpd = $this->opdModel->find($opdId);
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
         $kegiatan = $this->pkModel->getKegiatan();
@@ -98,6 +107,7 @@ class PkController extends BaseController
         }
         return view('adminOpd/pk/tambah_pk', [
             'pegawaiOpd' => $pegawaiOpd,
+            'current_opd' => $currentOpd,
             'program' => $program,
             'kegiatan' => $kegiatan,
             'subkegiatan' => $subkegiatan,
@@ -190,6 +200,7 @@ class PkController extends BaseController
         $post = $this->request->getPost();
         log_message('debug', 'POST RAW: ' . json_encode($post));
         $now = date('Y-m-d');
+        $tanggal = $post['tanggal_pk'] ?? $now;
 
 
         // ------------------------------
@@ -217,7 +228,7 @@ class PkController extends BaseController
             'tahun' => $post['tahun'] ?? null,
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
-            'tanggal' => $now,
+            'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []
@@ -243,7 +254,8 @@ class PkController extends BaseController
                 if (!empty($s['indikator'])) {
 
                     foreach ($s['indikator'] as $indikator) {
-                        
+
+
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
                             'target' => $indikator['target'] ?? '',
@@ -344,8 +356,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        ;
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -412,6 +423,8 @@ class PkController extends BaseController
 
         $opdId = $session->get('opd_id') ?? $pk['opd_id'];
         $now = date('Y-m-d');
+        $tanggal = $post['tanggal_pk'] ?? $now;
+
 
         // --------------------------
         // LOG: Info dasar
@@ -443,7 +456,7 @@ class PkController extends BaseController
             'tahun' => $tahun,
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
-            'tanggal' => $now,
+            'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []

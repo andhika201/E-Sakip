@@ -19,6 +19,7 @@ class RktController extends BaseController
     protected $opdModel;
     protected $rktModel;
     protected $programPkModel;
+    protected $pkModel;
     protected $db;
 
     public function __construct()
@@ -27,6 +28,7 @@ class RktController extends BaseController
         $this->opdModel = new OpdModel();
         $this->rktModel = new RktModel();
         $this->programPkModel = new ProgramPkModel();
+        $this->pkModel = new PkModel();
         $this->db = \Config\Database::connect();
     }
 
@@ -268,7 +270,7 @@ class RktController extends BaseController
         $tahun = $this->request->getGet('tahun') ?? date('Y');
 
         // DATA MASTER
-        $programPk = $this->programPkModel->findAll();          // tabel program_pk
+        $programPk = $this->pkModel->getAllPrograms();          // tabel program_pk
         $kegiatanPk = $this->programPkModel->getAllKegiatan();   // tabel kegiatan_pk
         // $subKegiatanPk = $this->programPkModel->getAllSubKegiatan();// tabel sub_kegiatan_pk
         $subKegiatanPk = $this->programPkModel->getSubKegiatanByTahun($tahun); // tabel sub_kegiatan_pk filtered by tahun

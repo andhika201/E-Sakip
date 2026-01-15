@@ -18,7 +18,7 @@ class MonevController extends BaseController
     private function xssRule(): string
     {
         // blok: <script>, javascript:, data:text/html, onerror=, <?php, <?
-        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+        return 'regex_match[/^\d+(,\d+)?$/]';
     }
     /**
      * INDEX MONEV
@@ -109,6 +109,13 @@ class MonevController extends BaseController
         // Role lain: tolak
         return redirect()->to(base_url('/'))->with('error', 'Tidak berhak mengakses halaman Monev.');
     }
+    private function normalizeNumber(?string $val): ?float
+    {
+        if ($val === null || $val === '') {
+            return null;
+        }
+        return (float) str_replace(',', '.', $val);
+    }
 
     /**
      * FORM TAMBAH MONEV
@@ -181,14 +188,16 @@ class MonevController extends BaseController
             'capaian_triwulan_2' => 'permit_empty|string|max_length[5000]|' . $rx,
             'capaian_triwulan_3' => 'permit_empty|string|max_length[5000]|' . $rx,
             'capaian_triwulan_4' => 'permit_empty|string|max_length[5000]|' . $rx,
-            'total' => 'permit_empty|integer',
+            'total' => 'permit_empty|string|max_length[5000]|' . $rx,
         ];
         $messages = [
-            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 mengandung script / input berbahaya.'],
-            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 mengandung script / input berbahaya.'],
-            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 mengandung script / input berbahaya.'],
-            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 mengandung script / input berbahaya.'],
+            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 harus berupa angka (gunakan koma untuk desimal).'],
+            'total' => ['regex_match' => 'Total harus berupa angka (gunakan koma untuk desimal).'],
         ];
+
         if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
@@ -209,14 +218,15 @@ class MonevController extends BaseController
         }
 
         $payload = [
-            'capaian_triwulan_1' => (string) $this->request->getPost('capaian_triwulan_1'),
-            'capaian_triwulan_2' => (string) $this->request->getPost('capaian_triwulan_2'),
-            'capaian_triwulan_3' => (string) $this->request->getPost('capaian_triwulan_3'),
-            'capaian_triwulan_4' => (string) $this->request->getPost('capaian_triwulan_4'),
+            'capaian_triwulan_1' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_1')),
+            'capaian_triwulan_2' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_2')),
+            'capaian_triwulan_3' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_3')),
+            'capaian_triwulan_4' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_4')),
         ];
-        if ($this->request->getPost('total') !== null && $this->request->getPost('total') !== '') {
-            $payload['total'] = (int) $this->request->getPost('total');
-        }
+
+        $payload['total'] = $this->normalizeNumber(
+            $this->request->getPost('total')
+        );
 
         $this->monev->upsertForTarget($targetId, $opdId, $payload);
 
@@ -290,31 +300,33 @@ class MonevController extends BaseController
             'capaian_triwulan_2' => 'permit_empty|string|max_length[5000]|' . $rx,
             'capaian_triwulan_3' => 'permit_empty|string|max_length[5000]|' . $rx,
             'capaian_triwulan_4' => 'permit_empty|string|max_length[5000]|' . $rx,
-            'total' => 'permit_empty|integer',
+            'total' => 'permit_empty|string|max_length[5000]|' . $rx
         ];
         $messages = [
-            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 mengandung script / input berbahaya.'],
-            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 mengandung script / input berbahaya.'],
-            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 mengandung script / input berbahaya.'],
-            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 mengandung script / input berbahaya.'],
+            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan 1 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan 2 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan 3 harus berupa angka (gunakan koma untuk desimal).'],
+            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan 4 harus berupa angka (gunakan koma untuk desimal).'],
+            'total' => ['regex_match' => 'Total harus berupa angka (gunakan koma untuk desimal).'],
         ];
+
         if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
         $payload = [
-            'capaian_triwulan_1' => (string) $this->request->getPost('capaian_triwulan_1'),
-            'capaian_triwulan_2' => (string) $this->request->getPost('capaian_triwulan_2'),
-            'capaian_triwulan_3' => (string) $this->request->getPost('capaian_triwulan_3'),
-            'capaian_triwulan_4' => (string) $this->request->getPost('capaian_triwulan_4'),
+            'capaian_triwulan_1' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_1')),
+            'capaian_triwulan_2' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_2')),
+            'capaian_triwulan_3' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_3')),
+            'capaian_triwulan_4' => $this->normalizeNumber($this->request->getPost('capaian_triwulan_4')),
         ];
 
-        if ($this->request->getPost('total') !== null && $this->request->getPost('total') !== '') {
-            $payload['total'] = (int) $this->request->getPost('total');
-        } else {
-            $payload['total'] = null;
-        }
+
+        $payload['total'] = $this->normalizeNumber(
+            $this->request->getPost('total')
+        );
+
 
         $this->monev->update((int) $id, $payload);
 

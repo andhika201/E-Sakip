@@ -558,50 +558,34 @@
       });
 
       // ------------------ Change handler select ------------------
-      document.addEventListener('change', function (e) {
-        const selProg = e.target.closest('.select-program');
-        if (selProg) {
-          const pItem = selProg.closest('.program-item');
-          const kegItems = pItem.querySelectorAll('.kegiatan-item');
-          kegItems.forEach(kEl => {
-            const selK = kEl.querySelector('.select-kegiatan');
-            fillKegiatanOptions(selK, selProg.value);
+      $(document).on('change', '.select-program', function () {
+        const programId = $(this).val();
+        const pItem = this.closest('.program-item');
 
-            const subItems = kEl.querySelectorAll('.subkegiatan-item');
-            subItems.forEach(sEl => {
-              const selS = sEl.querySelector('.select-subkegiatan');
-              fillSubOptions(selS, selK.value);
-              const disp = sEl.querySelector('.target-display');
-              if (disp) disp.value = '-';
-            });
-          });
-          return;
-        }
-
-        const selK = e.target.closest('.select-kegiatan');
-        if (selK) {
-          const kItem = selK.closest('.kegiatan-item');
-          const subItems = kItem.querySelectorAll('.subkegiatan-item');
-          subItems.forEach(sEl => {
-            const selS = sEl.querySelector('.select-subkegiatan');
-            fillSubOptions(selS, selK.value);
-            const disp = sEl.querySelector('.target-display');
-            if (disp) disp.value = '-';
-          });
-          return;
-        }
-
-        const selS = e.target.closest('.select-subkegiatan');
-        if (selS) {
-          setTargetFromSubSelect(selS);
-          return;
-        }
+        $(pItem).find('.select-kegiatan').each(function () {
+          fillKegiatanOptions(this, programId);
+          $(this).val('').trigger('change.select2');
+        });
       });
 
-      // sebelum submit, pastikan name sudah konsisten
-      form.addEventListener('submit', function () {
-        updateNamesAndLabels();
-      });
+      $(document).on('change', '.select-kegiatan', function () {
+  const kegiatanId = $(this).val();
+  const kItem = this.closest('.kegiatan-item');
+
+  $(kItem).find('.select-subkegiatan').each(function () {
+    fillSubOptions(this, kegiatanId);
+    $(this).val('').trigger('change.select2');
+  });
+});
+
+      $(document).on('change', '.select-subkegiatan', function () {
+  setTargetFromSubSelect(this);
+});
+
+    // sebelum submit, pastikan name sudah konsisten
+    form.addEventListener('submit', function () {
+      updateNamesAndLabels();
+    });
     });
   </script>
 

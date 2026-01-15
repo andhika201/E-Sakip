@@ -397,120 +397,87 @@ class RenstraController extends BaseController
             $post = $this->request->getPost();
 
             // ============================
-            // VALIDASI (ANTI XSS/SCRIPT)
+            // VALIDASI UTAMA
             // ============================
-            $rx = $this->xssRule();
-
             $rules = [
                 'rpjmd_sasaran_id' => 'required|integer',
-                'tujuan_renstra' => 'required|string|max_length[5000]|' . $rx,
-                'tahun_mulai' => 'required',
-                'tahun_akhir' => 'required',
+                'tujuan_renstra'   => 'required|string|max_length[5000]',
+                'tahun_mulai'      => 'required|integer',
+                'tahun_akhir'      => 'required|integer',
             ];
 
-            $messages = [
-                'tujuan_renstra' => [
-                    'regex_match' => 'Tujuan Renstra terdeteksi mengandung script / input berbahaya.',
-                ],
-            ];
-
-            if (!$this->validate($rules, $messages)) {
+            if (!$this->validate($rules)) {
                 return redirect()->back()
                     ->withInput()
                     ->with('error', implode(' | ', $this->validator->getErrors()));
             }
 
-            // validasi array: indikator_tujuan
-            if (!empty($post['indikator_tujuan']) && is_array($post['indikator_tujuan'])) {
-                foreach ($post['indikator_tujuan'] as $it) {
-                    if (!$this->isSafeText($it['indikator_tujuan'] ?? '')) {
-                        return redirect()->back()->withInput()->with('error', 'Indikator Tujuan mengandung script / input berbahaya.');
-                    }
+            if (empty($post['sasaran_renstra']) || !is_array($post['sasaran_renstra'])) {
+                throw new \Exception('Data sasaran Renstra tidak valid');
+            }
+
+            // Ambil tujuan renstra lama (buat insert sasaran baru)
+            $sasaranLama = $this->renstraModel->getRenstraById($id);
+            if (!$sasaranLama) {
+                throw new \Exception('Data sasaran lama tidak ditemukan');
+            }
+
+            $renstraTujuanId = (int) $sasaranLama['renstra_tujuan_id'];
+
+            // ============================
+            // PROSES UPDATE + INSERT
+            // ============================
+            foreach ($post['sasaran_renstra'] as $index => $sr) {
+
+                $sasaranText = $sr['sasaran'] ?? '';
+                if (trim($sasaranText) === '') {
+                    continue;
                 }
-            }
 
-            // validasi array: sasaran_renstra + indikator_sasaran
-            if (!empty($post['sasaran_renstra']) && is_array($post['sasaran_renstra'])) {
-                foreach ($post['sasaran_renstra'] as $sr) {
-                    $sas = $sr['sasaran'] ?? ($sr['sasaran_renstra'] ?? '');
-                    if (!$this->isSafeText($sas)) {
-                        return redirect()->back()->withInput()->with('error', 'Sasaran Renstra mengandung script / input berbahaya.');
-                    }
+                $payload = [
+                    'rpjmd_sasaran_id'   => $post['rpjmd_sasaran_id'],
+                    'tujuan_renstra'    => $post['tujuan_renstra'],
+                    'tahun_mulai'       => $post['tahun_mulai'],
+                    'tahun_akhir'       => $post['tahun_akhir'],
+                    'status'            => $post['status'] ?? 'selesai',
+                    'sasaran'           => $sasaranText,
+                    'indikator_tujuan'  => $post['indikator_tujuan'] ?? [],
+                    'indikator_sasaran' => $sr['indikator_sasaran'] ?? [],
+                ];
 
-                    if (!empty($sr['indikator_sasaran']) && is_array($sr['indikator_sasaran'])) {
-                        foreach ($sr['indikator_sasaran'] as $is) {
-                            if (!$this->isSafeText($is['indikator_sasaran'] ?? '')) {
-                                return redirect()->back()->withInput()->with('error', 'Indikator Sasaran mengandung script / input berbahaya.');
-                            }
-                            if (!$this->isSafeText($is['satuan'] ?? '')) {
-                                return redirect()->back()->withInput()->with('error', 'Satuan mengandung script / input berbahaya.');
-                            }
-                            if (!$this->isSafeText($is['jenis_indikator'] ?? '')) {
-                                return redirect()->back()->withInput()->with('error', 'Jenis indikator mengandung script / input berbahaya.');
-                            }
-                        }
-                    }
+                if ($index === 0) {
+                    // ======================
+                    // UPDATE sasaran lama
+                    // ======================
+                    $success = $this->renstraModel
+                        ->updateRenstraFull((int) $id, $opdId, $payload);
+                } else {
+                    // ======================
+                    // INSERT sasaran baru
+                    // ======================
+                    $success = $this->renstraModel
+                        ->createCompleteRenstra([
+                            'opd_id' => $opdId,
+                            'renstra_tujuan_id' => $renstraTujuanId,
+                            'tahun_mulai' => $post['tahun_mulai'],
+                            'tahun_akhir' => $post['tahun_akhir'],
+                            'status' => $post['status'] ?? 'draft',
+                            'sasaran_renstra' => [
+                                [
+                                    'sasaran' => $sasaranText,
+                                    'indikator_sasaran' => $sr['indikator_sasaran'] ?? []
+                                ]
+                            ]
+                        ]);
                 }
-            }
 
-
-            // -------------------------
-            // SUSUN DATA SASARAN
-            // -------------------------
-            $sasaranText = '';
-            $indikatorSasaranArr = [];
-
-            if (!empty($post['sasaran_renstra']) && is_array($post['sasaran_renstra'])) {
-                // ambil sasaran pertama (karena $id adalah 1 sasaran)
-                $firstSasaran = reset($post['sasaran_renstra']);
-
-                // antisipasi nama key berbeda
-                $sasaranText = $firstSasaran['sasaran']
-                    ?? ($firstSasaran['sasaran_renstra'] ?? '');
-
-                // seluruh indikator_sasaran untuk sasaran ini
-                if (!empty($firstSasaran['indikator_sasaran']) && is_array($firstSasaran['indikator_sasaran'])) {
-                    foreach ($firstSasaran['indikator_sasaran'] as $indikator) {
-                        // jangan diubah strukturnya, kirim apa adanya ke model
-                        $indikatorSasaranArr[] = $indikator;
-                    }
+                if (!$success) {
+                    throw new \Exception('Gagal menyimpan salah satu Sasaran Renstra');
                 }
-            }
-
-            if (trim($sasaranText) === '') {
-                throw new \Exception('Sasaran Renstra tidak boleh kosong');
-            }
-
-            // -------------------------
-            // SUSUN PAYLOAD UNTUK MODEL
-            // -------------------------
-            $payload = [
-                'rpjmd_sasaran_id' => $post['rpjmd_sasaran_id'],
-                'tujuan_renstra' => $post['tujuan_renstra'],
-                'tahun_mulai' => $post['tahun_mulai'],
-                'tahun_akhir' => $post['tahun_akhir'],
-                'status' => $post['status'] ?? 'selesai',
-
-                'sasaran' => $sasaranText,
-
-                // indikator tujuan langsung pakai array dari form
-                'indikator_tujuan' => $post['indikator_tujuan'] ?? [],
-
-                // indikator sasaran hasil ekstrak di atas
-                'indikator_sasaran' => $indikatorSasaranArr,
-            ];
-
-            // -------------------------
-            // EKSEKUSI UPDATE LENGKAP
-            // -------------------------
-            $success = $this->renstraModel->updateRenstraFull((int) $id, $opdId, $payload);
-
-            if (!$success) {
-                throw new \Exception('Transaksi gagal, perubahan tidak tersimpan');
             }
 
             return redirect()->to(base_url('adminopd/renstra'))
-                ->with('success', 'Data Renstra berhasil diperbarui');
+                ->with('success', 'Data Renstra berhasil diperbarui dan sasaran baru berhasil ditambahkan');
         } catch (\Exception $e) {
             log_message('error', 'RENSTRA Update Error: ' . $e->getMessage());
             return redirect()->back()
@@ -518,6 +485,7 @@ class RenstraController extends BaseController
                 ->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
         }
     }
+
 
     public function delete($id = null)
     {
@@ -553,7 +521,6 @@ class RenstraController extends BaseController
             } else {
                 return redirect()->back()->with('error', 'Gagal menghapus data');
             }
-
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }

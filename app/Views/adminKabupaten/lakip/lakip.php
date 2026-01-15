@@ -128,19 +128,29 @@
             if (!function_exists('hitungCapaianLakip')) {
                 function hitungCapaianLakip($target, $realisasi, $jenisIndikator)
                 {
-                    if ($target === null || $realisasi === null)
+                    $target = toFloatComma($target);
+                    $realisasi = toFloatComma($realisasi);
+
+                    if ($target === null || $target <= 0 || $realisasi === null) {
                         return null;
-                    $target = floatval($target);
-                    $realisasi = floatval($realisasi);
-                    if ($target == 0)
-                        return null;
+                    }
 
                     $jenis = strtolower(trim((string) $jenisIndikator));
-                    if ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                        return ((2 * $target - $realisasi) / $target) * 100;
+
+                    // indikator positif (semakin besar semakin baik)
+                    if ($jenis === 'indikator positif' || $jenis === 'positif') {
+                        $hasil = ($realisasi / $target) * 100;
                     }
-                    return ($realisasi / $target) * 100;
+                    // indikator negatif (semakin kecil semakin baik)
+                    elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
+                        $hasil = (($target - ($realisasi - $target)) / $target) * 100;
+                    } else {
+                        return null;
+                    }
+
+                    return max(0, min($hasil, 200)); // clamp 0–200%
                 }
+
             }
 
             $rows = $rows ?? [];
@@ -267,13 +277,17 @@
                                     <td><?= esc($r['satuan'] ?? '-') ?></td>
                                     <td><?= esc(ucwords(str_replace('indikator ', '', strtolower((string) $jenis)))) ?></td>
                                     <td><?= esc($r['tahun'] ?? '-') ?></td>
-                                    <td><?= esc($targetNow ?? '-') ?></td>
+                                    <td><?= formatAngkaID(toFloatComma($targetNow), 2) ?></td>
 
                                     <td><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
                                     <td><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
-                                    <td><?= esc($lakipItem['capaian_tahun_ini'] ?? '-') ?></td>
+                                    <td><?= formatAngkaID(toFloatComma($lakipItem['capaian_tahun_ini'] ?? null), 2) ?></td>
 
-                                    <td><?= ($capaianPersen === null) ? '-' : (round($capaianPersen, 2) . '%') ?></td>
+                                    <td>
+                                        <?= ($capaianPersen === null)
+                                            ? '-'
+                                            : formatAngkaID($capaianPersen, 2) . '%' ?>
+                                    </td>
 
                                     <td>
                                         <?php if (!empty($statusText)): ?>

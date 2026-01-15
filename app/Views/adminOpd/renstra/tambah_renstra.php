@@ -228,8 +228,9 @@
                           class="form-control satuan-select select2" required>
                           <option value="">Pilih Satuan</option>
                           <?php if (!empty($satuan_options)): ?>
-                            <?php foreach ($satuan_options as $key => $label): ?>
-                              <option value="<?= esc($key) ?>"><?= esc($label) ?></option>
+                            <?php foreach ($satuan_options as $s): ?>
+                              <option value="<?= $s['id'] ?>"><?= esc($s['satuan']) ?>
+                              </option>
                             <?php endforeach; ?>
                           <?php endif; ?>
                         </select>
@@ -461,8 +462,8 @@
         class="form-select select2"
         required>
   <option value="">Pilih Satuan</option>
-  <?php foreach ($satuan_options as $key => $label): ?>
-    <option value="<?= esc($key) ?>"><?= esc($label) ?></option>
+  <?php foreach ($satuan_options as $s): ?>
+    <option value="<?= $s['id'] ?>"><?= esc($s['satuan']) ?></option>
   <?php endforeach; ?>
 </select>
 

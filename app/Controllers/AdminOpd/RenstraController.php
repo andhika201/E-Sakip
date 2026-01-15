@@ -13,12 +13,14 @@ class RenstraController extends BaseController
     protected $renstraModel;
     protected $rpjmdModel;
     protected $opdModel;
+    protected $pkModel;
 
     public function __construct()
     {
         $this->renstraModel = new RenstraModel();
         $this->rpjmdModel = new RpjmdModel();
         $this->opdModel = new OpdModel();
+        $this->pkModel = new \App\Models\PkModel();
     }
     /* =========================================================
      *  HELPERS: Anti XSS / Script
@@ -106,21 +108,12 @@ class RenstraController extends BaseController
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaranFromCompletedMisi();
 
         // Get satuan options
-        $satuanOptions = [
-            'Persen' => 'Persen (%)',
-            'Orang' => 'Orang',
-            'Unit' => 'Unit',
-            'Dokumen' => 'Dokumen',
-            'Kegiatan' => 'Kegiatan',
-            'Rupiah' => 'Rupiah',
-            'Index' => 'Index',
-            'Nilai' => 'Nilai',
-            'Predikat' => 'Predikat'
-        ];
+        $satuan = $this->pkModel->getAllSatuan();
+
 
         $data = [
             'rpjmd_sasaran' => $rpjmdSasaran,
-            'satuan_options' => $satuanOptions,
+            'satuan_options' => $satuan,
             'current_opd' => $currentOpd,
             'title' => 'Tambah Rencana Strategis - ' . $currentOpd['nama_opd']
         ];
@@ -162,17 +155,8 @@ class RenstraController extends BaseController
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaran();
 
         // ⭐ Tambahkan ini: daftar satuan
-        $satuanOptions = [
-            'Persen' => 'Persen (%)',
-            'Orang' => 'Orang',
-            'Unit' => 'Unit',
-            'Dokumen' => 'Dokumen',
-            'Kegiatan' => 'Kegiatan',
-            'Rupiah' => 'Rupiah',
-            'Index' => 'Index',
-            'Nilai' => 'Nilai',
-            'Predikat' => 'Predikat',
-        ];
+        $satuan = $this->pkModel->getAllSatuan();
+
 
         $data = [
             'title' => 'Edit Renstra',
@@ -181,7 +165,7 @@ class RenstraController extends BaseController
             'indikator_tujuan' => $indikatorTujuan,
             'rpjmd_sasaran' => $rpjmdSasaran,
             // ⭐ kirim ke view
-            'satuan_options' => $satuanOptions,
+            'satuan_options' => $satuan,
         ];
 
         return view('adminOpd/renstra/edit_renstra', $data);
@@ -401,9 +385,9 @@ class RenstraController extends BaseController
             // ============================
             $rules = [
                 'rpjmd_sasaran_id' => 'required|integer',
-                'tujuan_renstra'   => 'required|string|max_length[5000]',
-                'tahun_mulai'      => 'required|integer',
-                'tahun_akhir'      => 'required|integer',
+                'tujuan_renstra' => 'required|string|max_length[5000]',
+                'tahun_mulai' => 'required|integer',
+                'tahun_akhir' => 'required|integer',
             ];
 
             if (!$this->validate($rules)) {
@@ -435,13 +419,13 @@ class RenstraController extends BaseController
                 }
 
                 $payload = [
-                    'rpjmd_sasaran_id'   => $post['rpjmd_sasaran_id'],
-                    'tujuan_renstra'    => $post['tujuan_renstra'],
-                    'tahun_mulai'       => $post['tahun_mulai'],
-                    'tahun_akhir'       => $post['tahun_akhir'],
-                    'status'            => $post['status'] ?? 'selesai',
-                    'sasaran'           => $sasaranText,
-                    'indikator_tujuan'  => $post['indikator_tujuan'] ?? [],
+                    'rpjmd_sasaran_id' => $post['rpjmd_sasaran_id'],
+                    'tujuan_renstra' => $post['tujuan_renstra'],
+                    'tahun_mulai' => $post['tahun_mulai'],
+                    'tahun_akhir' => $post['tahun_akhir'],
+                    'status' => $post['status'] ?? 'selesai',
+                    'sasaran' => $sasaranText,
+                    'indikator_tujuan' => $post['indikator_tujuan'] ?? [],
                     'indikator_sasaran' => $sr['indikator_sasaran'] ?? [],
                 ];
 
@@ -457,18 +441,18 @@ class RenstraController extends BaseController
                     // ======================
                     $success = $this->renstraModel
                         ->createCompleteRenstra([
-                            'opd_id' => $opdId,
-                            'renstra_tujuan_id' => $renstraTujuanId,
-                            'tahun_mulai' => $post['tahun_mulai'],
-                            'tahun_akhir' => $post['tahun_akhir'],
-                            'status' => $post['status'] ?? 'draft',
-                            'sasaran_renstra' => [
-                                [
-                                    'sasaran' => $sasaranText,
-                                    'indikator_sasaran' => $sr['indikator_sasaran'] ?? []
+                                'opd_id' => $opdId,
+                                'renstra_tujuan_id' => $renstraTujuanId,
+                                'tahun_mulai' => $post['tahun_mulai'],
+                                'tahun_akhir' => $post['tahun_akhir'],
+                                'status' => $post['status'] ?? 'draft',
+                                'sasaran_renstra' => [
+                                    [
+                                        'sasaran' => $sasaranText,
+                                        'indikator_sasaran' => $sr['indikator_sasaran'] ?? []
+                                    ]
                                 ]
-                            ]
-                        ]);
+                            ]);
                 }
 
                 if (!$success) {

@@ -335,7 +335,7 @@
                                                                 <label class="form-label">Program</label>
                                                                 <select
                                                                     name="sasaran_pk[0][indikator][0][program][0][program_id]"
-                                                                    class="form-select select2 mb-3 border-secondary"
+                                                                    class="form-select select2 program-select mb-3 border-secondary"
                                                                     required>
                                                                     <option value="">Pilih Program</option>
                                                                     <?php if (isset($program) && !empty($program)): ?>

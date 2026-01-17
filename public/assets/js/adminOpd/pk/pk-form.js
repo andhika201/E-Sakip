@@ -8,12 +8,28 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!sasaranContainer) return; // tidak ada form, hentikan
 
   // --------- Utilities ----------
-  const $ = (sel, ctx = document) => ctx.querySelector(sel);
-  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+  const qs = (sel, ctx = document) => ctx.querySelector(sel);
+  const qsa = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+  function initSelect2(context = document) {
+    if (!window.jQuery || !jQuery.fn.select2) return;
+
+    jQuery(context).find('select.select2').each(function () {
+      if (jQuery(this).hasClass('select2-hidden-accessible')) {
+        jQuery(this).select2('destroy');
+      }
+
+      jQuery(this).select2({
+        width: '100%',
+        dropdownParent: jQuery('body')
+      });
+    });
+  }
+
 
   function clearFormControls(root) {
     // kosongkan input/textareas/select (kecuali hidden id fields jika perlu)
-    $$( 'input, textarea, select', root).forEach(el => {
+    qsa( 'input, textarea, select', root).forEach(el => {
       const t = el.tagName.toLowerCase();
       if (t === 'select') {
         el.selectedIndex = 0;
@@ -34,6 +50,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return 'Rp ' + n.toLocaleString('id-ID');
 }
+// === JPT + Select2 handler (TAMBAHAN, BUKAN PENGGANTI) ===
+$(document).on(
+  'select2:select',
+  'select[name*="[program_id]"]',
+  function (e) {
+    const select = this;
+    const selected = select.options[select.selectedIndex];
+    if (!selected) return;
+
+    const programItem = select.closest('.program-item');
+    if (!programItem) return;
+
+    const anggaranInput = programItem.querySelector(
+      'input[name*="[anggaran]"]'
+    );
+    if (!anggaranInput) return;
+
+    const anggaran = selected.getAttribute('data-anggaran') || '';
+    anggaranInput.value = anggaran
+      ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
+      : '';
+  }
+);
+
 
 
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
@@ -44,21 +84,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const templateSubkegItem = document.querySelector('.subkeg-item')?.cloneNode(true);
 
   // Jika templates ada, bersihkan nilainya supaya jadi "kosong"
+  if (templateProgramItem && window.jQuery) {
+    qsa('select.select2', templateProgramItem).forEach(sel => {
+      if (jQuery(sel).hasClass('select2-hidden-accessible')) {
+        jQuery(sel).select2('destroy');
+      }
+    });
+  }
+
+  if (templateIndikator) {
+  const programs = qsa('.program-item', templateIndikator);
+  programs.forEach((el, idx) => {
+    if (idx > 0) el.remove(); // sisakan 1 program saja
+  });
+}
   if (templateSasaran) clearFormControls(templateSasaran);
   if (templateIndikator) clearFormControls(templateIndikator);
-  if (templateProgramItem) clearFormControls(templateProgramItem);
   if (templateKegiatanItem) clearFormControls(templateKegiatanItem);
   if (templateSubkegItem) clearFormControls(templateSubkegItem);
 
   // --------- Naming helper ----------
   function updateFormNames() {
     // untuk tiap sasaran
-    $$('.sasaran-item', sasaranContainer).forEach((sasaranItem, si) => {
-      const textarea = $('textarea', sasaranItem);
+    qsa('.sasaran-item', sasaranContainer).forEach((sasaranItem, si) => {
+      const textarea = qs('textarea', sasaranItem);
       if (textarea) textarea.name = `sasaran_pk[${si}][sasaran]`;
 
       // indikator
-      $$('.indikator-item', sasaranItem).forEach((indikatorItem, ii) => {
+      qsa('.indikator-item', sasaranItem).forEach((indikatorItem, ii) => {
         const inputInd = indikatorItem.querySelector('input[type="text"][name*="[indikator]"], input[name*="[indikator]"]');
         const inputTarget = indikatorItem.querySelector('input[name*="[target]"]');
         const selectSatuan = indikatorItem.querySelector('select[name*="[id_satuan]"]');
@@ -70,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectJenis) selectJenis.name = `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
 
         // program (could be program container or kegiatan depending jenis)
-        const programItems = $$('.program-item', indikatorItem);
+        const programItems = qsa('.program-item', indikatorItem);
         programItems.forEach((prog, pi) => {
           // program select (if exists)
           const progSelect = prog.querySelector('select.program-select, select[name*="[program]"], select[name*="[program_id]"]');
@@ -84,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           // kegiatan under this program (administrator) or for pengawas structure
-          const kegiatanItems = $$('.kegiatan-item', prog);
+          const kegiatanItems = qsa('.kegiatan-item', prog);
           kegiatanItems.forEach((keg, ki) => {
             const kegSelect = keg.querySelector('select.kegiatan-select, select[name*="[kegiatan_id]"]');
             if (kegSelect) {
@@ -92,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // subkeg under this kegiatan
-            const subkegs = $$('.subkeg-item', keg);
+            const subkegs = qsa('.subkeg-item', keg);
             subkegs.forEach((sub, sk) => {
               const subSel = sub.querySelector('select.subkeg-select, select[name*="[subkegiatan_id]"]');
               if (subSel) {
@@ -102,14 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           // handle case pengawas where kegiatan are on indikator level (some HTML uses program->kegiatan placeholder)
-          const kegiatanItemsOnIndicator = $$('.kegiatan-item', indikatorItem).filter(node => node.closest('.program-item') === null);
+          const kegiatanItemsOnIndicator = qsa('.kegiatan-item', indikatorItem).filter(node => node.closest('.program-item') === null);
           kegiatanItemsOnIndicator.forEach((keg, ki) => {
             const kegSelect = keg.querySelector('select.kegiatan-select, select[name*="[kegiatan_id]"]');
             if (kegSelect) {
               // For pengawas, use program index 0
               kegSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][0][kegiatan][${ki}][kegiatan_id]`;
             }
-            $$('.subkeg-item', keg).forEach((sub, sk) => {
+            qsa('.subkeg-item', keg).forEach((sub, sk) => {
               const subSel = sub.querySelector('select.subkeg-select, select[name*="[subkegiatan_id]"]');
               if (subSel) {
                 subSel.name = `sasaran_pk[${si}][indikator][${ii}][program][0][kegiatan][${ki}][subkegiatan][${sk}][subkegiatan_id]`;
@@ -138,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // append and update names
       sasaranContainer.appendChild(clone);
       updateFormNames();
+      initSelect2(clone);
       return;
     }
 
@@ -146,26 +200,33 @@ document.addEventListener('DOMContentLoaded', () => {
       ev.preventDefault();
       const indikatorSection = target.closest('.indikator-section');
       if (!indikatorSection) return;
-      const indikatorContainer = $('.indikator-container', indikatorSection);
+      const indikatorContainer = qs('.indikator-container', indikatorSection);
       if (!indikatorContainer) return;
       // choose template: if there's at least one existing indikator, clone that first; else fallback to global template
-      const prototype = indikatorContainer.querySelector('.indikator-item') ? indikatorContainer.querySelector('.indikator-item').cloneNode(true) : (templateIndikator ? templateIndikator.cloneNode(true) : null);
+      const prototype = templateIndikator
+        ? templateIndikator.cloneNode(true)
+        : null;
       if (!prototype) return;
       clearFormControls(prototype);
       // ensure program/kegiatan/subkeg inside prototype reduced to single item
       // remove extra program-items
-      $$('.program-item', prototype).forEach((el, idx) => {
+      const programItems = qsa('.program-item', prototype);
+        programItems.forEach((el, idx) => {
+          if (idx > 0) el.remove();
+        });
+      qsa('.program-item', prototype).forEach((el, idx) => {
         if (idx > 0) el.remove();
       });
-      $$('.kegiatan-item', prototype).forEach((el, idx) => {
+      qsa('.kegiatan-item', prototype).forEach((el, idx) => {
         if (idx > 0) el.remove();
       });
-      $$('.subkeg-item', prototype).forEach((el, idx) => {
+      qsa('.subkeg-item', prototype).forEach((el, idx) => {
         if (idx > 0) el.remove();
       });
 
       indikatorContainer.appendChild(prototype);
       updateFormNames();
+      initSelect2(prototype);
       return;
     }
 
@@ -174,20 +235,22 @@ document.addEventListener('DOMContentLoaded', () => {
       ev.preventDefault();
       const indikatorItem = target.closest('.indikator-item');
       if (!indikatorItem) return;
-      const programContainer = $('.program-container', indikatorItem) || $('.program-container', indikatorItem.parentElement);
+      const programContainer = qs('.program-container', indikatorItem) || qs('.program-container', indikatorItem.parentElement);
       if (!programContainer) return;
       // choose first existing program-item as prototype or global templateProgramItem
-      const proto = programContainer.querySelector('.program-item') ? programContainer.querySelector('.program-item').cloneNode(true) : (templateProgramItem ? templateProgramItem.cloneNode(true) : null);
-      if (!proto) return;
+      const proto = templateProgramItem
+        ? templateProgramItem.cloneNode(true)
+        : null;      if (!proto) return;
       clearFormControls(proto);
 
       // If program contains nested kelompok kegiatan, ensure one kegiatan-item present
       // remove extra kegiatan/subkeg inside prototype
-      $$('.kegiatan-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
-      $$('.subkeg-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
+      qsa('.kegiatan-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
+      qsa('.subkeg-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
 
       programContainer.appendChild(proto);
       updateFormNames();
+      initSelect2(proto); 
       return;
     }
 
@@ -208,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!proto) return;
       clearFormControls(proto);
       // remove extra subkeg beyond one
-      $$('.subkeg-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
+      qsa('.subkeg-item', proto).forEach((el, idx) => { if (idx > 0) el.remove(); });
 
       kegiatanContainer.appendChild(proto);
       updateFormNames();
@@ -235,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ev.preventDefault();
       const item = target.closest('.sasaran-item');
       if (!item) return;
-      const total = $$('.sasaran-item', sasaranContainer).length;
+      const total = qsa('.sasaran-item', sasaranContainer).length;
       if (total <= 1) { alert('Minimal harus ada 1 sasaran!'); return; }
       if (!confirm('Yakin ingin menghapus sasaran ini?')) return;
       item.remove();
@@ -249,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const container = target.closest('.indikator-container');
       const item = target.closest('.indikator-item');
       if (!container || !item) return;
-      const total = $$('.indikator-item', container).length;
+      const total = qsa('.indikator-item', container).length;
       if (total <= 1) { alert('Minimal harus ada 1 indikator!'); return; }
       if (!confirm('Yakin ingin menghapus indikator ini?')) return;
       item.remove();
@@ -264,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!programItem) return;
       const container = programItem.closest('.program-container');
       if (!container) return;
-      const total = $$('.program-item', container).length;
+      const total = qsa('.program-item', container).length;
       if (total > 1) {
         if (!confirm('Yakin ingin menghapus program ini?')) return;
         programItem.remove();
@@ -283,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!keg) return;
       const container = keg.closest('.kegiatan-container');
       if (!container) return;
-      const total = $$('.kegiatan-item', container).length;
+      const total = qsa('.kegiatan-item', container).length;
       if (total > 1) {
         if (!confirm('Yakin ingin menghapus kegiatan ini?')) return;
         keg.remove();
@@ -301,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!sub) return;
       const container = sub.closest('.subkeg-container') || sub.parentElement;
       if (!container) return;
-      const total = $$('.subkeg-item', container).length;
+      const total = qsa('.subkeg-item', container).length;
       if (total > 1) {
         if (!confirm('Yakin ingin menghapus sub kegiatan ini?')) return;
         sub.remove();
@@ -347,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // initialize anggaran values for existing selects on load
-  $$('.program-select').forEach((sel) => {
+  qsa('.program-select').forEach((sel) => {
     const selected = sel.options[sel.selectedIndex];
     if (selected && selected.dataset && selected.dataset.anggaran) {
       const angInput = sel.closest('.program-item')?.querySelector('input[name*="[anggaran]"]');

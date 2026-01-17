@@ -355,11 +355,11 @@
                               required>
                               <option value="">Pilih Satuan</option>
                               <?php if (!empty($satuan_options)): ?>
-                                <?php foreach ($satuan_options as $key => $label): ?>
+                                <?php foreach ($satuan_options as $s): ?>
                                   <option
-                                    value="<?= esc($key) ?>"
-                                    <?= (isset($ind['satuan']) && $ind['satuan'] == $key) ? 'selected' : '' ?>>
-                                    <?= esc($label) ?>
+                                    value="<?= esc($s['id']) ?>"
+                                    <?= (isset($ind['satuan']) && $ind['satuan'] == $s['id']) ? 'selected' : '' ?>>
+                                    <?= esc($s['satuan']) ?>
                                   </option>
                                 <?php endforeach; ?>
                               <?php endif; ?>

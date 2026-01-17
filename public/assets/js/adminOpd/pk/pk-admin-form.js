@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if ($(this).hasClass("select2-hidden-accessible")) return;
         $(this).select2({
           width: "100%",
-          dropdownParent: $("body"),
+          dropdownParent: jQuery(this).parent(),
         });
       });
   }
@@ -365,6 +365,10 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFormNames();
   initSelect2();
   bindAnggaranSelect2();
+
+  window.addEventListener("load", () => {
+    initSelect2(document);
+  });
 
   if (form) {
     form.addEventListener("submit", updateFormNames);

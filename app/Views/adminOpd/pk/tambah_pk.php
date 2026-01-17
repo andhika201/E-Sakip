@@ -597,7 +597,7 @@
                 $(this).select2({
                     width: '100%',
                     minimumResultsForSearch: 0, // search tetap aktif
-                    dropdownParent: $('body')
+                    dropdownParent: jQuery(this).parent()
                 });
             });
         }

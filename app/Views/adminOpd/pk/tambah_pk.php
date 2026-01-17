@@ -745,45 +745,58 @@
                 });
             });
 
-            // Fungsi untuk misi bupati
-            const misiCheckboxes = document.querySelectorAll('input[name="misi_bupati_id[]"]');
+            const misiCheckboxes = document.querySelectorAll(
+                'input[name="misi_bupati_id[]"]'
+            );
             const misiContainer = document.getElementById('selected-misi-container');
 
-            misiCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedMisi);
-            });
+            if (misiCheckboxes.length && misiContainer) {
+                misiCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateSelectedMisi);
+                });
 
-            function updateSelectedMisi() {
-                const selected = Array.from(misiCheckboxes)
-                    .filter(c => c.checked)
-                    .map(c => c.getAttribute('data-misi'));
+                function updateSelectedMisi() {
+                    const selected = Array.from(misiCheckboxes)
+                        .filter(c => c.checked)
+                        .map(c => c.getAttribute('data-misi'));
 
-                misiContainer.innerHTML = selected.length ?
-                    '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
-                    '';
+                    misiContainer.innerHTML = selected.length ?
+                        '<strong>Misi Bupati Terpilih:</strong><br>' + selected.join('<br>') :
+                        '';
+                }
+
+                // ✅ aman dipanggil
+                updateSelectedMisi();
             }
 
-            // Fungsi untuk indikator acuan
-            const indikatorCheckboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
-            const indikatorContainer = document.getElementById('selected-indikator-container');
+            // ============================
+            // I N D I K A T O R   A C U A N
+            // ============================
+            const indikatorCheckboxes = document.querySelectorAll(
+                'input[name="referensi_indikator_id[]"]'
+            );
+            const indikatorContainer = document.getElementById(
+                'selected-indikator-container'
+            );
 
-            indikatorCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedIndikator);
-            });
+            if (indikatorCheckboxes.length && indikatorContainer) {
+                indikatorCheckboxes.forEach(cb => {
+                    cb.addEventListener('change', updateSelectedIndikator);
+                });
 
-            function updateSelectedIndikator() {
-                const selected = Array.from(indikatorCheckboxes)
-                    .filter(c => c.checked)
-                    .map(c => c.getAttribute('data-indikator'));
+                function updateSelectedIndikator() {
+                    const selected = Array.from(indikatorCheckboxes)
+                        .filter(c => c.checked)
+                        .map(c => c.getAttribute('data-indikator'));
 
-                indikatorContainer.innerHTML = selected.length ?
-                    '<strong>Indikator Acuan Terpilih:</strong><br>' + selected.join('<br>') :
-                    '';
+                    indikatorContainer.innerHTML = selected.length ?
+                        '<strong>Indikator Acuan Terpilih:</strong><br>' + selected.join('<br>') :
+                        '';
+                }
+
+                // ✅ aman dipanggil
+                updateSelectedIndikator();
             }
-
-            // Inisialisasi awal
-            updateSelectedMisi();
-            updateSelectedIndikator();
         });
     </script>
 

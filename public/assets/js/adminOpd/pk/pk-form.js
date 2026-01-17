@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         jQuery(this).select2({
           width: "100%",
-          dropdownParent: jQuery("body"),
+          dropdownParent: jQuery(this).parent(),
         });
       });
   }
@@ -492,6 +492,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  window.addEventListener("load", () => {
+    initSelect2(document);
+  });
   // Ensure names are updated before submit
   if (form) {
     form.addEventListener("submit", (e) => {

@@ -353,7 +353,7 @@
                                                                 <label class="form-label">Anggaran</label>
                                                                 <input type="text"
                                                                     name="sasaran_pk[0][indikator][0][program][0][anggaran]"
-                                                                    class="form-control mb-3 border-secondary" value=""
+                                                                    class="form-control mb-3 border-secondary anggaran-input" value=""
                                                                     placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
                                                                 <input type="hidden" name="program[0][id_indikator]"
                                                                     value="">
@@ -380,7 +380,7 @@
                                                                     <label class="form-label">Program</label>
                                                                     <select
                                                                         name="sasaran_pk[0][indikator][0][program][0][program_id]"
-                                                                        class="form-select program-select border-secondary"
+                                                                        class="form-select select2 program-select border-secondary"
                                                                         required>
                                                                         <option value="">Pilih Program</option>
                                                                         <?php foreach ($jptProgram as $programItem): ?>
@@ -406,7 +406,7 @@
                                                                             <label class="form-label">Kegiatan</label>
                                                                             <select
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                                                                class="form-select kegiatan-select border-secondary"
+                                                                                class="form-select select2 kegiatan-select border-secondary"
                                                                                 required>
                                                                                 <option value="">Pilih Kegiatan</option>
                                                                                 <?php foreach ($kegiatan as $kegiatanItem): ?>
@@ -422,7 +422,7 @@
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
-                                                                                class="form-control mb-3 border-secondary"
+                                                                                class="form-control mb-3 border-secondary anggaran-input"
                                                                                 value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
                                                                                 readonly />
                                                                             <input type="hidden"
@@ -470,7 +470,7 @@
 
                                                                     <select
                                                                         name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
-                                                                        class="form-select kegiatan-select border-secondary kegiatan-dropdown"
+                                                                        class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown"
                                                                         required>
                                                                         <option value="">Pilih Kegiatan</option>
 
@@ -500,7 +500,7 @@
                                                                             <label class="form-label">Sub Kegiatan</label>
                                                                             <select
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
-                                                                                class="form-select subkeg-select border-secondary"
+                                                                                class="form-select select2 subkeg-select border-secondary"
                                                                                 required>
                                                                                 <option value="">Pilih Sub Kegiatan</option>
                                                                                 <?php foreach ($subkegiatan as $sk): ?>
@@ -516,7 +516,7 @@
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
                                                                                 name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
-                                                                                class="form-control mb-3 border-secondary"
+                                                                                class="form-control mb-3 border-secondary anggaran-input"
                                                                                 value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
                                                                                 readonly />
                                                                             <input type="hidden"

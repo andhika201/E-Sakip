@@ -29,19 +29,20 @@
                     <form method="GET" id="filterForm" class="flex-fill">
                         <select id="tahun" name="tahun" class="form-select"
                             onchange="document.getElementById('filterForm').submit()">
-                            <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
+                            <option value="" <?= empty($tahun) ? 'selected' : '' ?> disabled>
                                 Silahkan pilih tahun
                             </option>
 
                             <?php for ($i = 2020; $i <= 2030; $i++): ?>
-                                <option value="<?= $i ?>" <?= (($tahun ?? $currentYear) == $i) ? 'selected' : '' ?>>
+                                <option value="<?= $i ?>" <?= ($tahun == $i) ? 'selected' : '' ?>>
                                     <?= $i ?>
                                 </option>
                             <?php endfor; ?>
-
                         </select>
                     </form>
                 </div>
+                
+
                 <div>
                     <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
                         class="btn btn-success d-flex align-items-center">

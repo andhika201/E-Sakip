@@ -24,7 +24,7 @@ class PkController extends BaseController
     public function index($jenis)
     {
         $session = session();
-        $opdId   = $session->get('opd_id');
+        $opdId = $session->get('opd_id');
 
         if (!$opdId) {
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
@@ -33,10 +33,6 @@ class PkController extends BaseController
         // 1. Ambil tahun dari URL
         $tahun = $this->request->getGet('tahun');
 
-        // 2. Kalau tidak ada, pakai tahun berjalan
-        if (empty($tahun)) {
-            $tahun = date('Y');
-        }
 
         // 3. Ambil data PK berdasarkan OPD, jenis, dan tahun
         $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
@@ -54,11 +50,11 @@ class PkController extends BaseController
         // dd($currentOpd['nama_opd']);
 
         return view('adminOpd/pk/pk', [
-            'pk_data'     => $pkData,
+            'pk_data' => $pkData,
             'current_opd' => $currentOpd,
             'currentYear' => date('Y'),
-            'tahun'       => $tahun,
-            'jenis'       => $jenis,
+            'tahun' => $tahun,
+            'jenis' => $jenis,
         ]);
     }
 
@@ -77,11 +73,13 @@ class PkController extends BaseController
                 ->where('opd_id', $opdId)
                 ->orWhere('opd_id', 46)
                 ->groupEnd()
+                ->orderBy('nama_pegawai', 'ASC')
                 ->findAll();
         } else {
             // Administrator & Pengawas tetap hanya OPD sendiri
             $pegawaiOpd = $this->pegawaiModel
                 ->where('opd_id', $opdId)
+                ->orderBy('nama_pegawai', 'ASC')
                 ->findAll();
         }
         $currentOpd = $this->opdModel->find($opdId);
@@ -137,11 +135,13 @@ class PkController extends BaseController
                 ->where('opd_id', $opdId)
                 ->orWhere('opd_id', 46)
                 ->groupEnd()
+                ->orderBy('nama_pegawai', 'ASC')
                 ->findAll();
         } else {
             // Administrator & Pengawas tetap hanya OPD sendiri
             $pegawaiOpd = $this->pegawaiModel
                 ->where('opd_id', $opdId)
+                ->orderBy('nama_pegawai', 'ASC')
                 ->findAll();
         }
         $program = $this->pkModel->getAllPrograms();
@@ -356,7 +356,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        };
+        }
+        ;
 
         // ------------------------------
         // SIMPAN KE MODEL

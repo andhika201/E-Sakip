@@ -1,0 +1,12 @@
+.program-item {
+  box-shadow: 0 6px 16px rgba(0,0,0,.06);
+}
+
+.kegiatan-item {
+  margin-left: 12px;
+}
+
+.sub-item {
+  border-style: dashed;
+  background-color: #f8f9fa;
+}

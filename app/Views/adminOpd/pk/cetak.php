@@ -134,7 +134,7 @@
     .signature-title {
       text-align: center;
       vertical-align: top;
-      height: 185px;
+      height: 160px;
       padding: 6px 4px;
     }
 
@@ -259,7 +259,7 @@
                 <td class="signature-meta">
                   <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
                   <?php if (strtolower($jenis) !== 'jpt'): ?>
-                    <p><?= esc($nip_pihak_2) ?></p>
+                    <p>NIP. <?= esc($nip_pihak_2) ?></p>
                   <?php endif; ?>
                 </td>
               </tr>
@@ -280,7 +280,7 @@
               <tr>
                 <td class="signature-meta">
                   <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
-                  <p><?= esc($nip_pihak_1) ?></p>
+                  <p>NIP. <?= esc($nip_pihak_1) ?></p>
                 </td>
               </tr>
             </table>

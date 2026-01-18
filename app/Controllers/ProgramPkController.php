@@ -236,41 +236,56 @@ class ProgramPkController extends BaseController
 
     public function save()
     {
-        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+        $db = \Config\Database::connect();
+        $db->transStart();
 
-        // Validation rules
-        $rules = [
-            'program_kegiatan' => 'required|min_length[3]|max_length[500]|' . $noScript,
-            'anggaran' => 'required|numeric'
-        ];
+        $tahun = $this->request->getPost('tahun_anggaran');
+        $programs = $this->request->getPost('program');
 
-        $messages = [
-            'program_kegiatan' => [
-                'regex_match' => 'Program/Kegiatan terdeteksi mengandung script / input berbahaya.',
-            ],
-        ];
+        foreach ($programs as $p) {
 
-        if (!$this->validate($rules, $messages)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('validation', $this->validator->getErrors());
+            $db->table('program_pk')->insert([
+                'kode_program' => time(), // auto sementara
+                'program_kegiatan' => $p['nama'],
+                'tahun_anggaran' => $tahun,
+                'anggaran' => $p['anggaran'],
+            ]);
+
+            $programId = $db->insertID();
+
+            foreach ($p['kegiatan'] ?? [] as $k) {
+
+                $db->table('kegiatan_pk')->insert([
+                    'program_id' => $programId,
+                    'kode_kegiatan' => time(),
+                    'kegiatan' => $k['nama'],
+                    'tahun_anggaran' => $tahun,
+                    'anggaran' => $k['anggaran'],
+                ]);
+
+                $kegiatanId = $db->insertID();
+
+                foreach ($k['sub'] ?? [] as $s) {
+                    $db->table('sub_kegiatan_pk')->insert([
+                        'kegiatan_id' => $kegiatanId,
+                        'kode_sub_kegiatan' => time(),
+                        'sub_kegiatan' => $s['nama'],
+                        'tahun_anggaran' => $tahun,
+                        'anggaran' => $s['anggaran'],
+                    ]);
+                }
+            }
         }
 
-        // Prepare data
-        $data = [
-            'program_kegiatan' => $this->request->getPost('program_kegiatan'),
-            'anggaran' => $this->request->getPost('anggaran')
-        ];
+        $db->transComplete();
 
-        // Insert data
-        if ($this->programPkModel->insert($data)) {
-            session()->setFlashdata('success', 'Program PK berhasil ditambahkan');
-            return redirect()->to('/adminkab/program_pk');
-        } else {
-            session()->setFlashdata('error', 'Gagal menambahkan program PK');
-            return redirect()->back()->withInput();
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Gagal menyimpan data');
         }
+
+        return redirect()->to('/adminkab/program_pk')->with('success', 'Data berhasil disimpan');
     }
+
 
     /**
      * Show form for editing program

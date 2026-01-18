@@ -1,222 +1,283 @@
 /**
- * PK PENGAWAS FORM HANDLER (CLEAN)
- * Struktur: Sasaran → Indikator → Program(hidden) → Kegiatan → Subkegiatan
- * 100% Vanilla JS, aman untuk dynamic add/remove
+ * pk-pengawas-form.js
+ * FINAL – ARSITEKTUR IDENTIK DENGAN pk-form.js
+ * Struktur:
+ * Sasaran → Indikator → Program(hidden) → Kegiatan → Subkegiatan
+ * Anggaran diambil dari SUBKEGIATAN
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("pk-form");
+  const sasaranContainer = document.querySelector(".sasaran-container");
+  if (!sasaranContainer) return;
 
-    const form = document.getElementById('pk-form');
-    if (form) {
-        form.addEventListener('submit', () => {
-            updateFormNames();
+  /* =========================================================
+     UTILITIES (IDENTIK pk-form.js)
+  ========================================================= */
+  const qs = (s, c = document) => c.querySelector(s);
+  const qsa = (s, c = document) => Array.from(c.querySelectorAll(s));
+
+  function initSelect2(ctx = document) {
+    if (!window.jQuery || !jQuery.fn.select2) return;
+
+    jQuery(ctx)
+      .find("select.select2")
+      .each(function () {
+        if (jQuery(this).hasClass("select2-hidden-accessible")) {
+          jQuery(this).select2("destroy");
+        }
+        jQuery(this).select2({
+          width: "100%",
+          dropdownParent: jQuery(this).parent(),
         });
-    }
+      });
+  }
 
-});
-
-/* =========================================================
-   ALIAS supaya script lain tidak error
-========================================================= */
-function updateFormNames() {
-    updateFormNamesPengawas();
-}
-
-/* =========================================================
-   RENAME FIELD sesuai struktur controller
-========================================================= */
-function updateFormNamesPengawas() {
-
-    document.querySelectorAll('.sasaran-container .sasaran-item').forEach((sasaranItem, sIndex) => {
-
-        const sasaran = sasaranItem.querySelector('textarea');
-        if (sasaran) sasaran.name = `sasaran_pk[${sIndex}][sasaran]`;
-
-        sasaranItem.querySelectorAll('.indikator-item').forEach((indikatorItem, iIndex) => {
-
-            setName(indikatorItem, 'indikator-input', `sasaran_pk[${sIndex}][indikator][${iIndex}][indikator]`);
-            setName(indikatorItem, 'indikator-target', `sasaran_pk[${sIndex}][indikator][${iIndex}][target]`);
-            setName(indikatorItem, 'satuan-select', `sasaran_pk[${sIndex}][indikator][${iIndex}][id_satuan]`);
-            setName(indikatorItem, 'jenis-indikator-select', `sasaran_pk[${sIndex}][indikator][${iIndex}][jenis_indikator]`);
-
-            indikatorItem.querySelectorAll('.kegiatan-item').forEach((kegiatanItem, pIndex) => {
-
-                const hidden = kegiatanItem.querySelector('.program-id-hidden');
-                if (hidden) {
-                    hidden.name = `sasaran_pk[${sIndex}][indikator][${iIndex}][program][${pIndex}][program_id]`;
-                }
-
-                const kegiatan = kegiatanItem.querySelector('.kegiatan-select');
-                if (kegiatan) {
-                    kegiatan.name = `sasaran_pk[${sIndex}][indikator][${iIndex}][program][${pIndex}][kegiatan][0][kegiatan_id]`;
-                }
-
-                kegiatanItem.querySelectorAll('.subkeg-item').forEach((subItem, skIndex) => {
-
-                    const sub = subItem.querySelector('.subkeg-select');
-                    if (sub) {
-                        sub.name = `sasaran_pk[${sIndex}][indikator][${iIndex}][program][${pIndex}][kegiatan][0][subkegiatan][${skIndex}][subkegiatan_id]`;
-                    }
-
-                    const anggaran = subItem.querySelector('input[type="text"]');
-                    if (anggaran) {
-                        anggaran.name = `sasaran_pk[${sIndex}][indikator][${iIndex}][program][${pIndex}][kegiatan][0][subkegiatan][${skIndex}][anggaran]`;
-                    }
-
-                });
-
-            });
-
-        });
-
+  function clearFormControls(root) {
+    qsa("input, textarea, select", root).forEach((el) => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else if (el.type !== "hidden") el.value = "";
     });
+  }
 
-}
+  function formatRupiahNumber(val) {
+    if (!val) return "";
 
-function setName(scope, cls, name) {
-    const el = scope.querySelector('.' + cls);
+    let n = parseInt(val, 10);
+    if (isNaN(n)) return '';
+
+    return 'Rp ' + n.toLocaleString('id-ID');
+  }
+
+  $(document).on(
+    'select2:select',
+    'select[name*="[subkeg_id]"]',
+    function (e) {
+      const select = this;
+      const selected = select.options[select.selectedIndex];
+      if (!selected) return;
+
+      const subkegItem = select.closest('.subkeg-item');
+      if (!subkegItem) return;
+
+      const anggaranInput = subkegItem.querySelector(
+        'input[name*="[anggaran]"]'
+      );
+      if (!anggaranInput) return;
+
+      const anggaran = selected.getAttribute('data-anggaran') || '';
+      anggaranInput.value = anggaran
+        ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
+        : '';
+    }
+  );
+
+
+
+  /* =========================================================
+     TEMPLATE (SAMA DENGAN pk-form.js)
+  ========================================================= */
+  const tplSasaran = qs(".sasaran-item")?.cloneNode(true);
+  const tplIndikator = qs(".indikator-item")?.cloneNode(true);
+  const tplKegiatan = qs(".kegiatan-item")?.cloneNode(true);
+  const tplSubkeg = qs(".subkeg-item")?.cloneNode(true);
+
+  if (tplSasaran) clearFormControls(tplSasaran);
+  if (tplIndikator) clearFormControls(tplIndikator);
+  if (tplKegiatan) clearFormControls(tplKegiatan);
+  if (tplSubkeg) clearFormControls(tplSubkeg);
+
+  /* =========================================================
+     UPDATE NAME (PENGAWAS)
+  ========================================================= */
+  function updateFormNames() {
+    qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
+      const sasaranTxt = qs("textarea", sasaran);
+      if (sasaranTxt) sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
+
+      qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
+        setName(
+          indikator,
+          ".indikator-input",
+          `sasaran_pk[${si}][indikator][${ii}][indikator]`
+        );
+        setName(
+          indikator,
+          ".indikator-target",
+          `sasaran_pk[${si}][indikator][${ii}][target]`
+        );
+        setName(
+          indikator,
+          ".satuan-select",
+          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`
+        );
+        setName(
+          indikator,
+          ".jenis-indikator-select",
+          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`
+        );
+
+        qsa(".kegiatan-item", indikator).forEach((keg, ki) => {
+          const progHidden = qs(".program-id-hidden", keg);
+          if (progHidden) {
+            progHidden.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][program_id]`;
+          }
+
+          const kegSelect = qs(".kegiatan-select", keg);
+          if (kegSelect) {
+            kegSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][kegiatan_id]`;
+          }
+
+          qsa(".subkeg-item", keg).forEach((sub, sk) => {
+            const subSel = qs(".subkeg-select", sub);
+            const subAng = qs(".anggaran-input", sub);
+
+            if (subSel) {
+              subSel.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][subkegiatan][${sk}][subkegiatan_id]`;
+            }
+            if (subAng) {
+              subAng.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][subkegiatan][${sk}][anggaran]`;
+            }
+          });
+        });
+      });
+    });
+  }
+
+  function setName(scope, sel, name) {
+    const el = qs(sel, scope);
     if (el) el.name = name;
-}
+  }
 
-/* =========================================================
-   AUTOFILL PROGRAM_ID dari kegiatan
-========================================================= */
-document.addEventListener('change', e => {
-    if (e.target.classList.contains('kegiatan-select')) {
-        const opt = e.target.options[e.target.selectedIndex];
-        const pid = opt?.dataset.program || '';
-        const wrapper = e.target.closest('.kegiatan-item');
-        const hidden = wrapper.querySelector('.program-id-hidden');
-        if (hidden) hidden.value = pid;
-    }
-});
+  updateFormNames();
+  /* =========================================================
+     ADD / REMOVE (IDENTIK POLA pk-form.js)
+  ========================================================= */
+  document.body.addEventListener("click", (ev) => {
+    const t = ev.target;
 
-/* =========================================================
-   AUTOFILL ANGGARAN dari subkegiatan
-========================================================= */
-document.addEventListener('change', e => {
-    if (e.target.classList.contains('subkeg-select')) {
-        const opt = e.target.options[e.target.selectedIndex];
-        const val = opt?.dataset.anggaran || '';
-        const input = e.target.closest('.subkeg-item').querySelector('input[type="text"]');
-        if (input) input.value = val ? formatRupiah(val) : '';
-    }
-});
-
-/* =========================================================
-   ADD & REMOVE BUTTONS
-========================================================= */
-document.addEventListener('click', e => {
-
-    // Tambah Subkegiatan
-    if (e.target.closest('.add-subkeg')) {
-        const kegiatan = e.target.closest('.kegiatan-item');
-        const container = kegiatan.querySelector('.subkeg-container');
-        const tpl = container.querySelector('.subkeg-item').cloneNode(true);
-        tpl.querySelector('select').selectedIndex = 0;
-        tpl.querySelector('input').value = '';
-        container.appendChild(tpl);
+    // ADD SASARAN
+    if (t.closest(".add-sasaran")) {
+      ev.preventDefault();
+      const clone = tplSasaran.cloneNode(true);
+      clearFormControls(clone);
+      sasaranContainer.appendChild(clone);
+      updateFormNames();
+      initSelect2(clone);
+      return;
     }
 
-    // Hapus Subkegiatan
-    if (e.target.closest('.remove-subkeg')) {
-        const item = e.target.closest('.subkeg-item');
-        const parent = item.parentElement;
+    // ADD INDIKATOR
+    if (t.closest(".add-indikator")) {
+      ev.preventDefault();
+      const container = t
+        .closest(".indikator-section")
+        ?.querySelector(".indikator-container");
+      if (!container) return;
+      const clone = tplIndikator.cloneNode(true);
+      clearFormControls(clone);
+      container.appendChild(clone);
+      updateFormNames();
+      initSelect2(clone);
+      return;
+    }
+
+    // ADD KEGIATAN
+    if (t.closest(".add-kegiatan")) {
+      ev.preventDefault();
+      const indikator = t.closest(".indikator-item");
+      const container = indikator?.querySelector(".kegiatan-container");
+      if (!container) return;
+      const clone = tplKegiatan.cloneNode(true);
+      clearFormControls(clone);
+      container.appendChild(clone);
+      updateFormNames();
+      initSelect2(clone);
+      return;
+    }
+
+    // ADD SUBKEG
+    if (t.closest(".add-subkeg")) {
+      ev.preventDefault();
+      const keg = t.closest(".kegiatan-item");
+      const container = keg?.querySelector(".subkeg-container");
+      if (!container) return;
+      const clone = tplSubkeg.cloneNode(true);
+      clearFormControls(clone);
+      container.appendChild(clone);
+      updateFormNames();
+      initSelect2(clone);
+      return;
+    }
+
+    // REMOVE GENERIC
+    ["sasaran", "indikator", "kegiatan", "subkeg"].forEach((type) => {
+      if (t.closest(`.remove-${type}`)) {
+        ev.preventDefault();
+        const item = t.closest(`.${type}-item`);
+        const parent = item?.parentElement;
+        if (!item || !parent) return;
         if (parent.children.length > 1) item.remove();
-    }
-
-    // Hapus Kegiatan
-    if (e.target.closest('.remove-kegiatan')) {
-        const item = e.target.closest('.kegiatan-item');
-        const parent = item.parentElement;
-        if (parent.children.length > 1) item.remove();
-    }
-
-    // Hapus Indikator
-    if (e.target.closest('.remove-indikator')) {
-        const item = e.target.closest('.indikator-item');
-        const parent = item.parentElement;
-        if (parent.children.length > 1) item.remove();
-    }
-
-    // Hapus Sasaran
-    if (e.target.closest('.remove-sasaran')) {
-        const item = e.target.closest('.sasaran-item');
-        const parent = item.parentElement;
-        if (parent.children.length > 1) item.remove();
-    }
-
-});
-
-/* =====================================================
-   ADD SASARAN
-===================================================== */
-document.addEventListener('click', function (e) {
-    if (e.target.closest('.add-sasaran')) {
-        const container = document.querySelector('.sasaran-container');
-        const tpl = container.querySelector('.sasaran-item').cloneNode(true);
-
-        tpl.querySelectorAll('input, textarea').forEach(el => el.value = '');
-        tpl.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-
-        // reset nested: hanya 1 indikator
-        tpl.querySelectorAll('.indikator-item').forEach((el, i) => {
-            if (i > 0) el.remove();
-        });
-
-        container.appendChild(tpl);
+        else clearFormControls(item);
         updateFormNames();
+      }
+    });
+  });
+
+  /* =========================================================
+     AUTOFILL (SUBKEGIATAN → ANGGARAN)
+  ========================================================= */
+
+  updateFormNames();
+  initSelect2();
+
+  document.body.addEventListener("change", (ev) => {
+    const tgt = ev.target;
+    if (tgt.matches('select.subkeg-select, select[name*="[subkeg_id]"]')) {
+      const subkegItem = tgt.closest(".subkeg-item") || tgt.closest(".row");
+      if (!subkegItem) return;
+      const anggaranField = subkegItem.querySelector(
+        'input[name*="[anggaran]"]'
+      );
+      const selected = tgt.options[tgt.selectedIndex];
+      if (anggaranField) {
+        const ang = selected
+          ? selected.getAttribute("data-anggaran") || ""
+          : "";
+        anggaranField.value = ang ? formatRupiahNumber(ang) : "";
+      }
+      updateFormNames();
+      return;
     }
-});
 
-/* =====================================================
-   ADD INDIKATOR
-===================================================== */
-document.addEventListener('click', function (e) {
-    if (e.target.closest('.add-indikator')) {
-        const sasaran = e.target.closest('.sasaran-item');
-        const container = sasaran.querySelector('.indikator-container');
-        const tpl = container.querySelector('.indikator-item').cloneNode(true);
-
-        tpl.querySelectorAll('input').forEach(el => el.value = '');
-        tpl.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-
-        // reset kegiatan
-        tpl.querySelectorAll('.kegiatan-item').forEach((el, i) => {
-            if (i > 0) el.remove();
-        });
-
-        container.appendChild(tpl);
-        updateFormNames();
+    // pegawai select -> fill nip
+    if (tgt.matches(".pegawai-select")) {
+      const targetName = tgt.dataset.target;
+      if (!targetName) return;
+      const nipInput = document.querySelector(`input[name="${targetName}"]`);
+      if (!nipInput) return;
+      const selected = tgt.options[tgt.selectedIndex];
+      nipInput.value = selected ? selected.dataset.nip || "" : "";
     }
-});
+  });
 
-/* =====================================================
-   ADD KEGIATAN
-===================================================== */
-document.addEventListener('click', function (e) {
-    if (e.target.closest('.add-kegiatan')) {
-        const indikator = e.target.closest('.indikator-item');
-        const container = indikator.querySelector('.kegiatan-container');
-        const tpl = container.querySelector('.kegiatan-item').cloneNode(true);
-
-        tpl.querySelectorAll('input').forEach(el => el.value = '');
-        tpl.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
-
-        // reset subkegiatan
-        tpl.querySelectorAll('.subkeg-item').forEach((el, i) => {
-            if (i > 0) el.remove();
-        });
-
-        container.appendChild(tpl);
-        updateFormNames();
+  // initialize anggaran values for existing selects on load
+  qsa('.subkeg-select').forEach((sel) => {
+    const selected = sel.options[sel.selectedIndex];
+    if (selected && selected.dataset && selected.dataset.anggaran) {
+      const angInput = sel
+        .closest(".subkeg-item")
+        ?.querySelector('input[name*="[anggaran]"]');
+      if (angInput)
+        angInput.value = formatRupiahNumber(selected.dataset.anggaran);
     }
+  });
+
+  window.addEventListener("load", () => {
+    initSelect2(document);
+  });
+
+  if (form) {
+    form.addEventListener("submit", updateFormNames);
+  }
 });
-
-
-/* =========================================================
-   FORMAT
-========================================================= */
-function formatRupiah(n) {
-    return 'Rp ' + parseInt(n || 0).toLocaleString('id-ID');
-}

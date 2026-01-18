@@ -154,7 +154,6 @@ class RenstraController extends BaseController
         // Ambil daftar SASARAN RPJMD untuk dropdown
         $rpjmdSasaran = $this->rpjmdModel->getAllSasaran();
 
-        // ⭐ Tambahkan ini: daftar satuan
         $satuan = $this->pkModel->getAllSatuan();
 
 
@@ -164,7 +163,6 @@ class RenstraController extends BaseController
             'renstra_tujuan' => $tujuanRow,
             'indikator_tujuan' => $indikatorTujuan,
             'rpjmd_sasaran' => $rpjmdSasaran,
-            // ⭐ kirim ke view
             'satuan_options' => $satuan,
         ];
 

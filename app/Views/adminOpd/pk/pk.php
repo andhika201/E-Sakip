@@ -24,32 +24,65 @@
             <h2 class="h3 fw-bold text-success text-center mb-4">
                 PK <?= $judulPk ?>
             </h2>
-            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-                <div class="d-flex gap-2 flex-fill">
-                    <form method="GET" id="filterForm" class="flex-fill">
-                        <select id="tahun" name="tahun" class="form-select"
-                            onchange="document.getElementById('filterForm').submit()">
-                            <option value="" <?= empty($tahun) ? 'selected' : '' ?> disabled>
-                                Silahkan pilih tahun
-                            </option>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3 align-items-end">
 
-                            <?php for ($i = 2020; $i <= 2030; $i++): ?>
-                                <option value="<?= $i ?>" <?= ($tahun == $i) ? 'selected' : '' ?>>
-                                    <?= $i ?>
+                        <!-- Tahun -->
+                        <div class="col-lg-3 col-md-4">
+                            <label class="form-label fw-semibold text-muted">
+                                Tahun PK
+                            </label>
+                            <select name="tahun" class="form-select"
+                                onchange="this.form.submit()">
+                                <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
+                                    Pilih Tahun
                                 </option>
-                            <?php endfor; ?>
-                        </select>
+                                <?php for ($i = 2020; $i <= 2030; $i++): ?>
+                                    <option value="<?= $i ?>" <?= ($tahun == $i) ? 'selected' : '' ?>>
+                                        <?= $i ?>
+                                    </option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <!-- Relasi PK -->
+                        <div class="col-lg-5 col-md-8">
+                            <label class="form-label fw-semibold text-muted">
+                                Pihak 1 ↔ Pihak 2
+                            </label>
+                            <select name="pk_id" class="form-select" <?= empty($tahun) ? 'disabled' : '' ?>>
+                                <option value="">-- Pilih Relasi PK --</option>
+                                <?php foreach ($pkRelasiList as $pk): ?>
+                                    <option value="<?= $pk['id'] ?>"
+                                        <?= ($pk_id == $pk['id']) ? 'selected' : '' ?>>
+                                        <?= esc($pk['relasi']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Tombol Tampilkan -->
+                        <div class="col-lg-2 col-md-6">
+                            <button class="btn btn-success w-100">
+                                <i class="fas fa-search me-1"></i>
+                                Tampilkan
+                            </button>
+                        </div>
+
+                        <!-- Tombol Tambah -->
+                        <div class="col-lg-2 col-md-6 text-lg-end">
+                            <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
+                                class="btn btn-outline-success w-100">
+                                <i class="fas fa-plus me-1"></i>
+                                Tambah
+                            </a>
+                        </div>
+
                     </form>
                 </div>
-                
-
-                <div>
-                    <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
-                        class="btn btn-success d-flex align-items-center">
-                        <i class="fas fa-plus me-1"></i> TAMBAH
-                    </a>
-                </div>
             </div>
+
             <div class="table-responsive">
                 <?php if (isset($pk_data['jenis']) && $pk_data['jenis'] === $jenis): ?>
                     <!-- Tabel Misi Bupati untuk jenis JPT -->
@@ -265,7 +298,7 @@
     <script>
         const tahunSelect = document.getElementById('tahun');
         if (tahunSelect) {
-            tahunSelect.addEventListener('change', function () {
+            tahunSelect.addEventListener('change', function() {
                 window.location = '?tahun=' + this.value;
             });
         }

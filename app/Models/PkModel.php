@@ -856,6 +856,30 @@ class PkModel extends Model
 
         return $result;
     }
+    
+    public function getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun)
+    {
+        return $this->db->table('pk p')
+            ->select("
+            p.id,
+            CONCAT(
+                peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')',
+                ' ↔ ',
+                peg2.nama_pegawai, ' (', jab2.nama_jabatan, ')'
+            ) AS relasi
+        ")
+            ->join('pegawai peg1', 'peg1.id = p.pihak_1', 'left')
+            ->join('jabatan jab1', 'jab1.id = peg1.jabatan_id', 'left')
+            ->join('pegawai peg2', 'peg2.id = p.pihak_2', 'left')
+            ->join('jabatan jab2', 'jab2.id = peg2.jabatan_id', 'left')
+            ->where('p.opd_id', $opdId)
+            ->where('p.jenis', $jenis)
+            ->where('p.tahun', $tahun)
+            ->orderBy('peg1.nama_pegawai', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
 
     /**
      * Get PK by id (detailed)

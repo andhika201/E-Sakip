@@ -22,41 +22,49 @@ class PkController extends BaseController
     }
 
     public function index($jenis)
-    {
-        $session = session();
-        $opdId = $session->get('opd_id');
+{
+    $session = session();
+    $opdId = $session->get('opd_id');
 
-        if (!$opdId) {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        }
-
-        // 1. Ambil tahun dari URL
-        $tahun = $this->request->getGet('tahun');
-
-
-        // 3. Ambil data PK berdasarkan OPD, jenis, dan tahun
-        $pkData = $this->pkModel->getCompletePkByOpdIdAndJenis($opdId, $jenis, $tahun);
-
-        // 4. Ambil data OPD
-        $currentOpd = $this->opdModel->find($opdId);
-
-        // 5. Kalau hasil array banyak, ambil satu
-        if (is_array($pkData) && count($pkData) > 0) {
-            $pkData = $pkData[0];
-        } else {
-            $pkData = null;
-        }
-
-        // dd($currentOpd['nama_opd']);
-
-        return view('adminOpd/pk/pk', [
-            'pk_data' => $pkData,
-            'current_opd' => $currentOpd,
-            'currentYear' => date('Y'),
-            'tahun' => $tahun,
-            'jenis' => $jenis,
-        ]);
+    if (!$opdId) {
+        return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
     }
+
+    $tahun = $this->request->getGet('tahun');
+    $pkId  = $this->request->getGet('pk_id');
+
+    $pkData = null;
+    $pkRelasiList = [];
+
+    // 1️⃣ Jika tahun dipilih → ambil daftar relasi
+    if ($tahun) {
+        $pkRelasiList = $this->pkModel
+            ->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
+    }
+
+    // 2️⃣ Jika relasi dipilih → ambil PK
+    if ($pkId) {
+        $pkData = $this->pkModel->getCompletePkById($pkId);
+
+        // 🔥 NORMALISASI WAJIB (INI KUNCI)
+        if (is_array($pkData) && isset($pkData[0])) {
+            $pkData = $pkData[0];
+        }
+    }
+
+    $currentOpd = $this->opdModel->find($opdId);
+
+    return view('adminOpd/pk/pk', [
+        'pk_data' => $pkData,
+        'pkRelasiList' => $pkRelasiList,
+        'current_opd' => $currentOpd,
+        'currentYear' => date('Y'),
+        'pk_id' => $pkId,
+        'tahun' => $tahun,
+        'jenis' => $jenis,
+    ]);
+}
+
 
 
     public function tambah($jenis)
@@ -356,8 +364,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        ;
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL

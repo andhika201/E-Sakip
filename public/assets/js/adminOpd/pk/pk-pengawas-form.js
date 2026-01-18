@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   $(document).on(
     'select2:select',
-    'select[name*="[subkeg_id]"]',
+    'select[name*="[subkegiatan_id]"]',
     function (e) {
       const select = this;
       const selected = select.options[select.selectedIndex];
@@ -233,7 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.body.addEventListener("change", (ev) => {
     const tgt = ev.target;
-    if (tgt.matches('select.subkeg-select, select[name*="[subkeg_id]"]')) {
+    if (tgt.matches('select.subkeg-select, select[name*="[subkegiatan_id]"]')) {
       const subkegItem = tgt.closest(".subkeg-item") || tgt.closest(".row");
       if (!subkegItem) return;
       const anggaranField = subkegItem.querySelector(

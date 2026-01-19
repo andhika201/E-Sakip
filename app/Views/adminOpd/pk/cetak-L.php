@@ -180,20 +180,47 @@
         </tr>
         <?php $no = 1; ?>
         <?php foreach ($sasaran_pk as $sasaran): ?>
+
+          <?php
+          $label = strtoupper(trim($sasaran['sasaran']));
+
+          // 👉 JIKA SASARAN "-" atau "N/A" → SKIP TOTAL (TIDAK TERCETAK)
+          if (in_array($label, ['-', 'N/A'])) {
+            continue;
+          }
+
+          if (empty($sasaran['indikator'])) {
+            continue;
+          }
+
+          $rowspan = count($sasaran['indikator']);
+          ?>
+
           <?php foreach ($sasaran['indikator'] as $i => $indikator): ?>
             <tr class="table-no-row-border">
               <?php if ($i === 0): ?>
-                <td rowspan="<?= count($sasaran['indikator']) ?>" style="text-align: center;"><?= $no++ ?>.</td>
-                <td rowspan="<?= count($sasaran['indikator']) ?>" style="text-align: left;">
+                <td rowspan="<?= $rowspan ?>" style="text-align:center;">
+                  <?= $no++ ?>.
+                </td>
+                <td rowspan="<?= $rowspan ?>" style="text-align:left;">
                   <?= esc(ucwords($sasaran['sasaran'])) ?>
                 </td>
               <?php endif; ?>
-              <td style="text-align: left;"><?= esc($indikator['indikator']) ?></td>
-              <td style="text-align: center;"><?= esc($indikator['target']) ?></td>
-              <td style="text-align: center;"><?= esc($indikator['satuan']) ?></td>
+
+              <td style="text-align:left;">
+                <?= esc($indikator['indikator']) ?>
+              </td>
+              <td style="text-align:center;">
+                <?= esc($indikator['target']) ?>
+              </td>
+              <td style="text-align:center;">
+                <?= esc($indikator['satuan']) ?>
+              </td>
             </tr>
           <?php endforeach; ?>
+
         <?php endforeach; ?>
+
         <tr class="table-no-row-border">
           <td style="height: 20px;"></td>
           <td style="height: 20px;"></td>

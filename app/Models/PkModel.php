@@ -81,15 +81,22 @@ class PkModel extends Model
     public function getProgramByPkId($pkId)
     {
         return $this->db->table('pk_program pp')
-            ->select('pp.id as pk_program_id, pr.program_kegiatan, pr.anggaran, pp.program_id, pp.pk_indikator_id')
+            ->select('
+            MIN(pp.id) as pk_program_id,
+            pr.program_kegiatan,
+            pr.anggaran,
+            pp.program_id
+        ')
             ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->where('ps.pk_id', $pkId)
-            ->orderBy('pp.id', 'ASC')
+            ->groupBy('pp.program_id, pr.anggaran')
+            ->orderBy('pk_program_id', 'ASC')
             ->get()
             ->getResultArray();
     }
+
 
     public function getKegiatanByPkId($pkId)
     {
@@ -696,7 +703,6 @@ class PkModel extends Model
 
         foreach ($results as &$pk) {
             $pk['sasaran'] = $this->getSasaranByPkId($pk['id']);
-
             $pk['program'] = $this->getProgramByPkId($pk['id']);
             $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
             $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
@@ -856,7 +862,7 @@ class PkModel extends Model
 
         return $result;
     }
-    
+
     public function getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun)
     {
         return $this->db->table('pk p')

@@ -33,8 +33,7 @@
                             <label class="form-label fw-semibold text-muted">
                                 Tahun PK
                             </label>
-                            <select name="tahun" class="form-select"
-                                onchange="this.form.submit()">
+                            <select name="tahun" class="form-select" onchange="this.form.submit()">
                                 <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
                                     Pilih Tahun
                                 </option>
@@ -54,8 +53,7 @@
                             <select name="pk_id" class="form-select" <?= empty($tahun) ? 'disabled' : '' ?>>
                                 <option value="">-- Pilih Relasi PK --</option>
                                 <?php foreach ($pkRelasiList as $pk): ?>
-                                    <option value="<?= $pk['id'] ?>"
-                                        <?= ($pk_id == $pk['id']) ? 'selected' : '' ?>>
+                                    <option value="<?= $pk['id'] ?>" <?= ($pk_id == $pk['id']) ? 'selected' : '' ?>>
                                         <?= esc($pk['relasi']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -154,20 +152,39 @@
                         <tbody>
                             <?php $no = 1; ?>
                             <?php foreach ($pk_data['sasaran'] as $sasaran): ?>
-                                <?php $rowspan = count($sasaran['indikator']); ?>
-                                <?php foreach ($sasaran['indikator'] as $index => $indikator): ?>
+
+                                <?php
+                                $label = strtoupper(trim($sasaran['sasaran']));
+
+                                // 👉 JIKA SASARAN "-" atau "N/A" → JANGAN TAMPIL SAMA SEKALI
+                                if (in_array($label, ['-', 'N/A'])) {
+                                    continue;
+                                }
+
+                                if (empty($sasaran['indikator'])) {
+                                    continue;
+                                }
+
+                                $rowspan = count($sasaran['indikator']);
+                                ?>
+
+                                <?php foreach ($sasaran['indikator'] as $i => $indikator): ?>
                                     <tr>
-                                        <?php if ($index === 0): ?>
-                                            <td class="border p-2" rowspan="<?= $rowspan ?>"><?= $no++ ?></td>
-                                            <td class="border p-2" rowspan="<?= $rowspan ?>"><?= esc($sasaran['sasaran']) ?></td>
+                                        <?php if ($i === 0): ?>
+                                            <td class="border p-2"><?= $no++ ?></td>
+                                            <td class="border p-2"><?= esc($sasaran['sasaran']) ?></td>
                                         <?php endif; ?>
+
                                         <td class="border p-2"><?= esc($indikator['indikator']) ?></td>
                                         <td class="border p-2"><?= esc($indikator['target']) ?></td>
                                         <td class="border p-2"><?= esc($indikator['satuan']) ?></td>
                                     </tr>
                                 <?php endforeach; ?>
+
                             <?php endforeach; ?>
                         </tbody>
+
+
                     </table>
                     <?php if (strtolower($jenis) === 'bupati'): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
@@ -298,7 +315,7 @@
     <script>
         const tahunSelect = document.getElementById('tahun');
         if (tahunSelect) {
-            tahunSelect.addEventListener('change', function() {
+            tahunSelect.addEventListener('change', function () {
                 window.location = '?tahun=' + this.value;
             });
         }

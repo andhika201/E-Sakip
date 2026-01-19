@@ -54,6 +54,8 @@ class PkController extends BaseController
 
     $currentOpd = $this->opdModel->find($opdId);
 
+    // dd($pkData);
+
     return view('adminOpd/pk/pk', [
         'pk_data' => $pkData,
         'pkRelasiList' => $pkRelasiList,

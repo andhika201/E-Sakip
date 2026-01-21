@@ -202,14 +202,12 @@
                         foreach ($targetsT as $tIndex => $t): ?>
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
-                              <input type="number"
-                                name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $tIndex ?>][tahun]"
+                              <input type="number" name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $tIndex ?>][tahun]"
                                 class="form-control form-control-sm tahun-target-tujuan" style="width: 80px;"
                                 value="<?= esc($t['tahun'] ?? '') ?>" readonly>
                             </div>
                             <div class="col">
-                              <input type="text"
-                                name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $tIndex ?>][target]"
+                              <input type="text" name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $tIndex ?>][target]"
                                 class="form-control form-control-sm" value="<?= esc($t['target_tahunan'] ?? '') ?>"
                                 placeholder="Target">
                             </div>
@@ -219,17 +217,15 @@
                         for ($i = 0; $i < 5; $i++): ?>
                           <div class="target-item row g-2 align-items-center mb-2">
                             <div class="col-auto">
-                              <input type="number"
-                                name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $i ?>][tahun]"
+                              <input type="number" name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $i ?>][tahun]"
                                 class="form-control form-control-sm tahun-target-tujuan" style="width: 80px;" readonly>
                             </div>
                             <div class="col">
-                              <input type="text"
-                                name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $i ?>][target]"
+                              <input type="text" name="indikator_tujuan[<?= $idx ?>][target_tahunan][<?= $i ?>][target]"
                                 class="form-control form-control-sm" placeholder="Target">
                             </div>
                           </div>
-                      <?php endfor;
+                        <?php endfor;
                       endif;
                       ?>
                     </div>
@@ -349,16 +345,12 @@
                         <div class="row mb-3">
                           <div class="col-md-6">
                             <label class="form-label">Satuan</label>
-                            <select
-                              name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
-                              class="form-select select2 satuan-select"
-                              required>
+                            <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
+                              class="form-select select2 satuan-select" required>
                               <option value="">Pilih Satuan</option>
                               <?php if (!empty($satuan_options)): ?>
                                 <?php foreach ($satuan_options as $s): ?>
-                                  <option
-                                    value="<?= esc($s['id']) ?>"
-                                    <?= (isset($ind['satuan']) && $ind['satuan'] == $s['id']) ? 'selected' : '' ?>>
+                                  <option value="<?= esc($s['id']) ?>" <?= (isset($ind['satuan']) && $ind['satuan'] == $s['id']) ? 'selected' : '' ?>>
                                     <?= esc($s['satuan']) ?>
                                   </option>
                                 <?php endforeach; ?>
@@ -367,17 +359,13 @@
                           </div>
                           <div class="col-md-6">
                             <label class="form-label">Jenis Indikator</label>
-                            <select
-                              name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
-                              class="form-select select2"
-                              required>
+                            <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
+                              class="form-select select2" required>
                               <option value="">Pilih Jenis Indikator</option>
-                              <option value="positif"
-                                <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'positif') ? 'selected' : '' ?>>
+                              <option value="positif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'positif') ? 'selected' : '' ?>>
                                 Indikator Positif (naik = baik)
                               </option>
-                              <option value="negatif"
-                                <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'negatif') ? 'selected' : '' ?>>
+                              <option value="negatif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'negatif') ? 'selected' : '' ?>>
                                 Indikator Negatif (turun = baik)
                               </option>
                             </select>
@@ -421,7 +409,7 @@
                                       class="form-control form-control-sm" placeholder="Target" required>
                                   </div>
                                 </div>
-                            <?php endfor;
+                              <?php endfor;
                             endif;
                             ?>
                           </div>
@@ -447,10 +435,8 @@
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Satuan</label>
-                          <select
-                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][satuan]"
-                            class="form-select"
-                            required>
+                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][satuan]"
+                            class="form-select" required>
                             <option value="">Pilih Satuan</option>
                             <?php if (!empty($satuan_options)): ?>
                               <?php foreach ($satuan_options as $key => $label): ?>
@@ -461,10 +447,8 @@
                         </div>
                         <div class="col-md-6">
                           <label class="form-label">Jenis Indikator</label>
-                          <select
-                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][jenis_indikator]"
-                            class="form-select"
-                            required>
+                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][jenis_indikator]"
+                            class="form-select" required>
                             <option value="">Pilih Jenis Indikator</option>
                             <option value="positif">Indikator Positif (naik = baik)</option>
                             <option value="negatif">Indikator Negatif (turun = baik)</option>
@@ -531,7 +515,7 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   <script>
     function initSelect2(context = document) {
-      $(context).find('.select2').each(function() {
+      $(context).find('.select2').each(function () {
         if ($(this).hasClass('select2-hidden-accessible')) {
           $(this).select2('destroy');
         }
@@ -544,13 +528,13 @@
       });
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
       initSelect2();
     });
   </script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const tahunMulaiInput = document.getElementById('tahun_mulai');
       const tahunAkhirInput = document.getElementById('tahun_akhir');
 
@@ -598,7 +582,7 @@
       // OTOMATIS TAHUN AKHIR
       // ============================
       if (tahunMulaiInput && tahunAkhirInput) {
-        tahunMulaiInput.addEventListener('input', function() {
+        tahunMulaiInput.addEventListener('input', function () {
           const mulai = parseInt(this.value);
           if (!isNaN(mulai)) {
             tahunAkhirInput.value = mulai + 4;
@@ -689,11 +673,17 @@
               required
             >
               <option value="">Pilih Satuan</option>
-              <?php if (!empty($satuan_options)): ?>
-                <?php foreach ($satuan_options as $key => $label): ?>
-                  <option value="<?= esc($key) ?>"><?= esc($label) ?></option>
-                <?php endforeach; ?>
-              <?php endif; ?>
+             <?php if (!empty($satuan_options)): ?>
+  <?php foreach ($satuan_options as $s): ?>
+    <option
+      value="<?= esc($s['id']) ?>"
+      <?= (isset($ind['satuan']) && $ind['satuan'] == $s['id']) ? 'selected' : '' ?>
+    >
+      <?= esc($s['satuan']) ?>
+    </option>
+  <?php endforeach; ?>
+<?php endif; ?>
+
             </select>
           </div>
           <div class="col-md-6">
@@ -779,7 +769,7 @@
       // LOGIKA: TAMBAH INDIKATOR TUJUAN
       // ============================
       if (addIndikatorTujuanBtn && indikatorTujuanContainer) {
-        addIndikatorTujuanBtn.addEventListener('click', function() {
+        addIndikatorTujuanBtn.addEventListener('click', function () {
           // Hitung index berikut
           let nextIndex = 0;
           indikatorTujuanContainer.querySelectorAll('.indikator-tujuan-item').forEach(item => {
@@ -791,7 +781,7 @@
           updateTahunTarget();
         });
 
-        indikatorTujuanContainer.addEventListener('click', function(e) {
+        indikatorTujuanContainer.addEventListener('click', function (e) {
           if (e.target.closest('.remove-indikator-tujuan')) {
             const item = e.target.closest('.indikator-tujuan-item');
             if (!item) return;
@@ -810,7 +800,7 @@
       // LOGIKA: TAMBAH / HAPUS SASARAN + INDIKATOR SASARAN
       // ============================
       if (addSasaranBtn && sasaranContainer) {
-        addSasaranBtn.addEventListener('click', function() {
+        addSasaranBtn.addEventListener('click', function () {
           let nextSIndex = 0;
           sasaranContainer.querySelectorAll('.sasaran-renstra-item').forEach(item => {
             const sIdx = parseInt(item.getAttribute('data-sasaran-index'));
@@ -821,7 +811,7 @@
           updateTahunTarget();
         });
 
-        sasaranContainer.addEventListener('click', function(e) {
+        sasaranContainer.addEventListener('click', function (e) {
           // Hapus sasaran
           if (e.target.closest('.remove-sasaran-renstra')) {
             const item = e.target.closest('.sasaran-renstra-item');

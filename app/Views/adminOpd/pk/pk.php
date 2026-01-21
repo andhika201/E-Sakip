@@ -210,7 +210,7 @@
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
-                    <?php elseif ($jenis === 'jpt'): ?>
+                    <?php elseif ($jenis === 'jpt' && $tampilkanProgram): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
                         <table class="table table-bordered table-striped text-center small">
                             <thead class="table-info">

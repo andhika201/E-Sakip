@@ -162,11 +162,11 @@
     <table class="table-bordered-custom table-header" style="width: 100%; margin-top: 10px;">
       <thead>
         <tr>
-          <th style="width: 5%; text-align: center;">No</th>
-          <th style="width: 35%; text-align: center;">SASARAN STRATEGIS</th>
-          <th style="width: 35%; text-align: center;">INDIKATOR SASARAN</th>
+          <th style="width: 10%; text-align: center;">No</th>
+          <th style="width: 30%; text-align: center;">SASARAN STRATEGIS</th>
+          <th style="width: 30%; text-align: center;">INDIKATOR SASARAN</th>
           <th style="width: 15%; text-align: center;">TARGET</th>
-          <th style="width: 10%; text-align: center;">SATUAN</th>
+          <th style="width: 15%; text-align: center;">SATUAN</th>
 
         </tr>
       </thead>

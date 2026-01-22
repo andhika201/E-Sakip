@@ -151,40 +151,58 @@
                         </thead>
                         <tbody>
                             <?php $no = 1; ?>
-                            <?php foreach ($pk_data['sasaran'] as $sasaran): ?>
 
-                                <?php
-                                $label = strtoupper(trim($sasaran['sasaran']));
+                            <?php if (!empty($pk_data['sasaran'])): ?>
+                                <?php foreach ($pk_data['sasaran'] as $sasaran): ?>
 
-                                // 👉 JIKA SASARAN "-" atau "N/A" → JANGAN TAMPIL SAMA SEKALI
-                                if (in_array($label, ['-', 'N/A'])) {
-                                    continue;
-                                }
+                                    <?php
+                                    // Skip sasaran tidak valid
+                                    $label = strtoupper(trim($sasaran['sasaran']));
+                                    if (in_array($label, ['-', 'N/A'])) {
+                                        continue;
+                                    }
 
-                                if (empty($sasaran['indikator'])) {
-                                    continue;
-                                }
+                                    if (empty($sasaran['indikator'])) {
+                                        continue;
+                                    }
 
-                                $rowspan = count($sasaran['indikator']);
-                                ?>
+                                    $rowspan = count($sasaran['indikator']);
+                                    ?>
 
-                                <?php foreach ($sasaran['indikator'] as $i => $indikator): ?>
-                                    <tr>
-                                        <?php if ($i === 0): ?>
-                                            <td class="border p-2"><?= $no++ ?></td>
-                                            <td class="border p-2"><?= esc($sasaran['sasaran']) ?></td>
-                                        <?php endif; ?>
+                                    <?php foreach ($sasaran['indikator'] as $i => $indikator): ?>
+                                        <tr>
+                                            <?php if ($i === 0): ?>
+                                                <!-- NO -->
+                                                <td class="border p-2 align-middle" rowspan="<?= $rowspan ?>">
+                                                    <?= $no++ ?>
+                                                </td>
 
-                                        <td class="border p-2"><?= esc($indikator['indikator']) ?></td>
-                                        <td class="border p-2"><?= esc($indikator['target']) ?></td>
-                                        <td class="border p-2"><?= esc($indikator['satuan']) ?></td>
-                                    </tr>
+                                                <!-- SASARAN -->
+                                                <td class="border p-2 align-middle" rowspan="<?= $rowspan ?>">
+                                                    <?= esc($sasaran['sasaran']) ?>
+                                                </td>
+                                            <?php endif; ?>
+
+                                            <!-- INDIKATOR -->
+                                            <td class="border p-2">
+                                                <?= esc($indikator['indikator']) ?>
+                                            </td>
+
+                                            <!-- TARGET -->
+                                            <td class="border p-2">
+                                                <?= esc($indikator['target']) ?>
+                                            </td>
+
+                                            <!-- SATUAN -->
+                                            <td class="border p-2">
+                                                <?= esc($indikator['satuan']) ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+
                                 <?php endforeach; ?>
-
-                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
-
-
                     </table>
                     <?php if (strtolower($jenis) === 'bupati'): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>

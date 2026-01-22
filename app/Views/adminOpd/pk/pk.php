@@ -241,29 +241,69 @@
                             </tbody>
                         </table>
                     <?php elseif ($jenis === 'administrator'): ?>
-                        <h4 class="h3 fw-bold text-success text-left mb-4">KEGIATAN DAN ANGGARAN</h4>
-                        <table class="table table-bordered table-striped text-center small">
-                            <thead class="table-info">
+                        <h4 class="h3 fw-bold text-success text-left mb-4">
+                            KEGIATAN DAN ANGGARAN
+                        </h4>
+
+                        <table class="table table-bordered table-striped small">
+                            <thead class="table-info text-center">
                                 <tr>
-                                    <th class="border p-2">NO</th>
+                                    <th class="border p-2" style="width:50px">NO</th>
                                     <th class="border p-2">KEGIATAN</th>
-                                    <th class="border p-2">ANGGARAN</th>
-                                    <th class="border p-2">Tingkat PK</th>
+                                    <th class="border p-2" style="width:180px">ANGGARAN</th>
+                                    <th class="border p-2" style="width:140px">Tingkat PK</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $no_kegiatan = 1; ?>
-                                <?php foreach ($pk_data['kegiatan'] as $kegiatan): ?>
-                                    <tr>
-                                        <td class="border p-2"><?= $no_kegiatan++ ?></td>
-                                        <td class="border p-2"><?= esc($kegiatan['kegiatan']) ?></td>
-                                        <td class="border p-2">Rp <?= number_format($kegiatan['anggaran'], 0, ',', '.') ?></td>
-                                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+                                <?php
+                                $indikator = $pk_data['sasaran'][0]['indikator'][0];
+                                $programs = $pk_data['program'];
+                                $kegiatans = $pk_data['kegiatan'];
+                                ?>
+
+                                <?php foreach ($programs as $program): ?>
+                                    <!-- HEADER PROGRAM -->
+                                    <tr class="table-secondary">
+                                        <td colspan="4" class="border p-2 fw-bold text-start">
+                                            PROGRAM : <?= esc($program['program_kegiatan']) ?>
+                                        </td>
                                     </tr>
+
+                                    <?php
+                                    $no = 1;
+                                    $found = false;
+                                    ?>
+
+                                    <?php foreach ($kegiatans as $kegiatan): ?>
+                                        <?php if ($kegiatan['pk_program_id'] == $program['pk_program_id']): ?>
+                                            <?php $found = true; ?>
+                                            <tr>
+                                                <td class="border p-2 text-center"><?= $no++ ?></td>
+                                                <td class="border p-2 text-start">
+                                                    <?= esc($kegiatan['kegiatan']) ?>
+                                                </td>
+                                                <td class="border p-2 text-end">
+                                                    Rp <?= number_format($kegiatan['anggaran'], 0, ',', '.') ?>
+                                                </td>
+                                                <td class="border p-2 text-center">
+                                                    <?= esc(ucwords($pk_data['jenis'])) ?>
+                                                </td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+
+                                    <?php if (!$found): ?>
+                                        <tr>
+                                            <td colspan="4" class="border p-2 text-center text-muted fst-italic">
+                                                Belum ada kegiatan pada program ini
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
+
                                 <?php endforeach; ?>
+
                             </tbody>
                         </table>
-
                     <?php elseif ($jenis === 'pengawas'): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">SUBKEGIATAN DAN ANGGARAN</h4>
                         <table class="table table-bordered table-striped text-center small">

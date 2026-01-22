@@ -57,13 +57,14 @@ class PkController extends BaseController
             $pegawai = $this->pegawaiModel->getLevelByPegawaiId($pkData['pihak_1']);
             $pihak1Level = $pegawai['level'] ?? null;
 
+
             $tampilkanProgram = !($opdId == 2 && $pihak1Level === 'VERIFIKATOR');
         }
 
 
         $currentOpd = $this->opdModel->find($opdId);
 
-        // dd($pihak1Level);
+        dd($pkData);
 
         return view('adminOpd/pk/pk', [
             'pk_data' => $pkData,
@@ -123,6 +124,7 @@ class PkController extends BaseController
                 ->where('jenis', $referensiJenis)
                 ->findAll();
         }
+        // dd($kegiatanAdmin);
         return view('adminOpd/pk/tambah_pk', [
             'pegawaiOpd' => $pegawaiOpd,
             'current_opd' => $currentOpd,
@@ -672,6 +674,7 @@ class PkController extends BaseController
         if (!$data) {
             return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
         }
+        dd($data);
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
 
         $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);

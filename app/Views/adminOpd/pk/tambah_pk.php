@@ -385,7 +385,8 @@
                                                                         <option value="">Pilih Program</option>
                                                                         <?php foreach ($jptProgram as $programItem): ?>
                                                                             <option value="<?= $programItem['id'] ?>">
-                                                                                <?= esc($programItem['program_kegiatan']) ?>
+                                                                                <?= esc($programItem['program_kegiatan']) ?> — Rp
+                                                                                <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
                                                                             </option>
                                                                         <?php endforeach; ?>
                                                                     </select>
@@ -477,7 +478,8 @@
                                                                         <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
                                                                             <option value="<?= $kegiatanItem['id'] ?>"
                                                                                 data-program="<?= $kegiatanItem['pk_program_id'] ?>">
-                                                                                <?= esc($kegiatanItem['kegiatan']) ?>
+                                                                                <?= esc($kegiatanItem['kegiatan']) ?> —
+                                                                                        Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
                                                                             </option>
                                                                         <?php endforeach; ?>
 

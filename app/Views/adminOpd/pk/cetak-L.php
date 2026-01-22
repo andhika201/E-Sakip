@@ -230,7 +230,14 @@
       </tbody>
     </table>
 
+    <!-- TABEL PROGRAM, KEGIATAN, dan SUBKEGIATAN -->
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
+      <?php
+      $indikator = $pk_data['sasaran'][0]['indikator'][0];
+      
+      $programs = $pk_data['program'];
+      $kegiatans = $pk_data['kegiatan'];
+      ?>
       <table class="table-bordered-custom" style="width:100%; margin-top:30px;">
         <thead>
           <tr class="center fw-bold">
@@ -240,8 +247,11 @@
           </tr>
         </thead>
         <tbody>
-          <?php $no_pa = 1;
-          $totalAnggaran = 0; ?>
+          <?php
+          $no_pa = 1;
+          $totalAnggaran = 0;
+
+          ?>
           <?php foreach ($program_pk as $prog): ?>
             <?php $totalAnggaran += (float) $prog['anggaran']; ?>
             <tr>
@@ -263,9 +273,10 @@
         </tbody>
       </table>
     <?php endif; ?>
+    <!-- END TABEL PROGRAM, KEGIATAN, dan SUBKEGIATAN -->
 
 
-
+    <!-- Tanda Tangan -->
     <table style="width:100%; margin-top:30px;">
       <tr>
         <?php if (strtolower($jenis) !== 'bupati'): ?>

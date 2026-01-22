@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isNaN(n)) return '';
 
     return 'Rp ' + n.toLocaleString('id-ID');
-}
+  }
 
   function initSelect2(context = document) {
     if (!window.jQuery || !jQuery.fn.select2) return;
@@ -58,44 +58,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   $(document).on(
-  'select2:select',
-  'select[name*="[kegiatan_id]"]',
-  function (e) {
-    const select = this;
-    const selected = select.options[select.selectedIndex];
-    if (!selected) return;
+    'select2:select',
+    'select[name*="[kegiatan_id]"]',
+    function (e) {
+      const select = this;
+      const selected = select.options[select.selectedIndex];
+      if (!selected) return;
 
-    const kegiatanItem = select.closest('.kegiatan-item');
-    if (!kegiatanItem) return;
+      const kegiatanItem = select.closest('.kegiatan-item');
+      if (!kegiatanItem) return;
 
-    const anggaranInput = kegiatanItem.querySelector(
-      'input[name*="[anggaran]"]'
-    );
-    if (!anggaranInput) return;
+      const anggaranInput = kegiatanItem.querySelector(
+        'input[name*="[anggaran]"]'
+      );
+      if (!anggaranInput) return;
 
-    const anggaran = selected.getAttribute('data-anggaran') || '';
-    anggaranInput.value = anggaran
-      ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
-      : '';
-  }
-);
+      const anggaran = selected.getAttribute('data-anggaran') || '';
+      anggaranInput.value = anggaran
+        ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
+        : '';
+    }
+  );
 
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
-  const templateSasaran = document
-    .querySelector(".sasaran-item")
-    ?.cloneNode(true);
-  const templateIndikator = document
-    .querySelector(".indikator-item")
-    ?.cloneNode(true);
-  const templateProgramItem = document
-    .querySelector(".program-item")
-    ?.cloneNode(true);
-  const templateKegiatanItem = document
-    .querySelector(".kegiatan-item")
-    ?.cloneNode(true);
-  const templateSubkegItem = document
-    .querySelector(".subkeg-item")
-    ?.cloneNode(true);
+  const templateSasaran = qs(".sasaran-item")?.cloneNode(true);
+  const templateIndikator = qs(".indikator-item")?.cloneNode(true);
+  const templateProgramItem = qs(".program-item")?.cloneNode(true);
+  const templateKegiatanItem = qs(".kegiatan-item")?.cloneNode(true);
+  const templateSubkegItem = qs(".subkeg-item")?.cloneNode(true);
 
   // Jika templates ada, bersihkan nilainya supaya jadi "kosong"
   if (templateProgramItem && window.jQuery) {
@@ -118,66 +108,67 @@ document.addEventListener("DOMContentLoaded", () => {
   if (templateSubkegItem) clearFormControls(templateSubkegItem);
 
 
-  
-  
+
+
 
   /* =========================================================
      UPDATE FORM NAMES (ADMIN)
   ========================================================= */
   function updateFormNames() {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
+
       const sasaranText = qs("textarea", sasaran);
       if (sasaranText) {
         sasaranText.name = `sasaran_pk[${si}][sasaran]`;
       }
 
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
-        setName(
-          indikator,
-          ".indikator-input",
-          `sasaran_pk[${si}][indikator][${ii}][indikator]`
-        );
-        setName(
-          indikator,
-          ".indikator-target",
-          `sasaran_pk[${si}][indikator][${ii}][target]`
-        );
-        setName(
-          indikator,
-          ".satuan-select",
-          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`
-        );
-        setName(
-          indikator,
-          ".jenis-indikator-select",
-          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`
-        );
+
+        const indikatorInput = indikator.querySelector('input[name*="[indikator]"]');
+        if (indikatorInput) {
+          indikatorInput.name = `sasaran_pk[${si}][indikator][${ii}][indikator]`;
+        }
+
+        const targetInput = indikator.querySelector('input[name*="[target]"]');
+        if (targetInput) {
+          targetInput.name = `sasaran_pk[${si}][indikator][${ii}][target]`;
+        }
+
+        const satuanSelect = indikator.querySelector('select[name*="[id_satuan]"]');
+        if (satuanSelect) {
+          satuanSelect.name = `sasaran_pk[${si}][indikator][${ii}][id_satuan]`;
+        }
+
+        const jenisSelect = indikator.querySelector('select[name*="[jenis_indikator]"]');
+        if (jenisSelect) {
+          jenisSelect.name = `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
+        }
 
         qsa(".program-item", indikator).forEach((program, pi) => {
-          const progSel = qs(".program-select", program);
-          if (progSel) {
-            progSel.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
+
+          const programSelect = program.querySelector(".program-select");
+          if (programSelect) {
+            programSelect.name =
+              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
           }
 
           qsa(".kegiatan-item", program).forEach((kegiatan, ki) => {
-            const kegSel = qs(".kegiatan-select", kegiatan);
-            const kegAng = qs(".anggaran-input", kegiatan);
 
-            if (kegSel) {
-              kegSel.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
+            const kegiatanSelect = kegiatan.querySelector(".kegiatan-select");
+            if (kegiatanSelect) {
+              kegiatanSelect.name =
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
             }
-            if (kegAng) {
-              kegAng.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`;
+
+            const anggaranInput = kegiatan.querySelector(".anggaran-input");
+            if (anggaranInput) {
+              anggaranInput.name =
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`;
             }
           });
         });
       });
     });
-  }
-
-  function setName(scope, sel, name) {
-    const el = qs(sel, scope);
-    if (el) el.name = name;
   }
 
   /* =========================================================
@@ -411,6 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     initSelect2(document);
+    updateFormNames();
   });
 
   if (form) {

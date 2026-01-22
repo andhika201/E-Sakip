@@ -101,13 +101,20 @@ class PkModel extends Model
     public function getKegiatanByPkId($pkId)
     {
         return $this->db->table('pk_kegiatan kk')
-            ->select('kk.id as pk_kegiatan_id, kp.kegiatan, kp.anggaran, kk.kegiatan_id, kk.pk_program_id')
+            ->select('
+            MIN(kk.id) AS pk_kegiatan_id,
+            kp.kegiatan,
+            kp.anggaran,
+            MIN(kk.kegiatan_id) AS kegiatan_id,
+            MIN(kk.pk_program_id) AS pk_program_id
+        ')
             ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
             ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->where('ps.pk_id', $pkId)
-            ->orderBy('kk.id', 'ASC')
+            ->groupBy('kp.kegiatan, kp.anggaran')
+            ->orderBy('kp.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
@@ -562,7 +569,7 @@ class PkModel extends Model
     public function getJptPrograms($opdId)
     {
         return $this->db->table('pk_program')
-            ->select('program_pk.program_kegiatan, program_pk.id')
+            ->select('program_pk.program_kegiatan, program_pk.id, program_pk.anggaran')
             ->join('program_pk', 'program_pk.id = pk_program.program_id')
             ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
             ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
@@ -577,7 +584,7 @@ class PkModel extends Model
     public function getKegiatanAdmin($opdId)
     {
         return $this->db->table('pk_kegiatan')
-            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id, pk_program_id')
+            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id, kegiatan_pk.anggaran, pk_program_id')
             ->join('kegiatan_pk', 'kegiatan_pk.id = pk_kegiatan.kegiatan_id')
             ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
             ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')

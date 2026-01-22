@@ -22,50 +22,60 @@ class PkController extends BaseController
     }
 
     public function index($jenis)
-{
-    $session = session();
-    $opdId = $session->get('opd_id');
+    {
+        $session = session();
+        $opdId = $session->get('opd_id');
 
-    if (!$opdId) {
-        return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-    }
-
-    $tahun = $this->request->getGet('tahun');
-    $pkId  = $this->request->getGet('pk_id');
-
-    $pkData = null;
-    $pkRelasiList = [];
-
-    // 1️⃣ Jika tahun dipilih → ambil daftar relasi
-    if ($tahun) {
-        $pkRelasiList = $this->pkModel
-            ->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
-    }
-
-    // 2️⃣ Jika relasi dipilih → ambil PK
-    if ($pkId) {
-        $pkData = $this->pkModel->getCompletePkById($pkId);
-
-        // 🔥 NORMALISASI WAJIB (INI KUNCI)
-        if (is_array($pkData) && isset($pkData[0])) {
-            $pkData = $pkData[0];
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        $tahun = $this->request->getGet('tahun');
+        $pkId = $this->request->getGet('pk_id');
+
+        $pkData = null;
+        $pkRelasiList = [];
+        $pihak1Level = null;
+        $tampilkanProgram = true;
+
+        // 1️⃣ Jika tahun dipilih → ambil daftar relasi
+        if ($tahun) {
+            $pkRelasiList = $this->pkModel->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
+        }
+
+        // 2️⃣ Jika relasi dipilih → ambil PK
+        if ($pkId) {
+            $pkData = $this->pkModel->getCompletePkById($pkId);
+
+            // 🔥 NORMALISASI WAJIB (INI KUNCI)
+            if (is_array($pkData) && isset($pkData[0])) {
+                $pkData = $pkData[0];
+            }
+        }
+
+        if ($pkData && isset($pkData['pihak_1'])) {
+            $pegawai = $this->pegawaiModel->getLevelByPegawaiId($pkData['pihak_1']);
+            $pihak1Level = $pegawai['level'] ?? null;
+
+            $tampilkanProgram = !($opdId == 2 && $pihak1Level === 'VERIFIKATOR');
+        }
+
+
+        $currentOpd = $this->opdModel->find($opdId);
+
+        // dd($pihak1Level);
+
+        return view('adminOpd/pk/pk', [
+            'pk_data' => $pkData,
+            'pkRelasiList' => $pkRelasiList,
+            'tampilkanProgram' => $tampilkanProgram,
+            'current_opd' => $currentOpd,
+            'currentYear' => date('Y'),
+            'pk_id' => $pkId,
+            'tahun' => $tahun,
+            'jenis' => $jenis,
+        ]);
     }
-
-    $currentOpd = $this->opdModel->find($opdId);
-
-    // dd($pkData);
-
-    return view('adminOpd/pk/pk', [
-        'pk_data' => $pkData,
-        'pkRelasiList' => $pkRelasiList,
-        'current_opd' => $currentOpd,
-        'currentYear' => date('Y'),
-        'pk_id' => $pkId,
-        'tahun' => $tahun,
-        'jenis' => $jenis,
-    ]);
-}
 
 
 
@@ -366,7 +376,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        };
+        }
+        ;
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -429,8 +440,7 @@ class PkController extends BaseController
         log_message('debug', "POST DATA: " . json_encode($post));
         $session = session();
         $jenis = $pk['jenis'];
-        $tahun = $pk['tahun'];
-
+        $tahun = $post['tahun'] ?? $pk['tahun'];
         $opdId = $session->get('opd_id') ?? $pk['opd_id'];
         $now = date('Y-m-d');
         $tanggal = $post['tanggal_pk'] ?? $now;
@@ -674,12 +684,19 @@ class PkController extends BaseController
             $program = "sub_kegiatan";
         }
 
+
+        $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
+        $pihak1Level = $pegawai1['level'] ?? null;
+
+        $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
+
         $tahun = date('Y', strtotime($data['tanggal']));
         $viewPath = 'adminOpd/pk/cetak';
         $viewPathL = 'adminOpd/pk/cetak-L';
         $html_1 = view($viewPath, $data);
         $html_2 = view($viewPathL, [
             'data' => $data,
+            'tampilkanProgram' => $tampilkanProgram,
             'program' => $program,
 
         ]);

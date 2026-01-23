@@ -343,7 +343,8 @@
                                                                                     <?php foreach ($jptProgram as $programItem): ?>
                                                                                         <option value="<?= $programItem['id'] ?>"
                                                                                             <?= (!empty($prog['program_id']) && $prog['program_id'] == $programItem['id']) ? 'selected' : '' ?>>
-                                                                                            <?= esc($programItem['program_kegiatan']) ?>
+                                                                                            <?= esc($programItem['program_kegiatan']) ?> - Rp
+                                                                                            <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
                                                                                         </option>
                                                                                     <?php endforeach; ?>
 

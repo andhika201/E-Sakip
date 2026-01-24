@@ -477,9 +477,9 @@
 
                                                                         <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
                                                                             <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                data-program="<?= $kegiatanItem['pk_program_id'] ?>">
+                                                                                data-program="<?= $kegiatanItem['program_id'] ?>">
                                                                                 <?= esc($kegiatanItem['kegiatan']) ?> —
-                                                                                        Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
+                                                                                Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
                                                                             </option>
                                                                         <?php endforeach; ?>
 
@@ -683,12 +683,13 @@
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+                                                if (!empty($kegiatanAdmin)) {
                                                     foreach ($kegiatanAdmin as $kegiatanItem) {
-                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                        echo '<option value="' . $kegiatanItem['id'] . '" '
+                                                            . 'data-program="' . $kegiatanItem['program_id'] . '">'
+                                                            . esc($kegiatanItem['kegiatan'])
+                                                            . '</option>';
                                                     }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
                                                 }
                                                 ?>`;
 

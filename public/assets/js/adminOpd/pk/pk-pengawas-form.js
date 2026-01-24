@@ -44,35 +44,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!val) return "";
 
     let n = parseInt(val, 10);
-    if (isNaN(n)) return '';
+    if (isNaN(n)) return "";
 
-    return 'Rp ' + n.toLocaleString('id-ID');
+    return "Rp " + n.toLocaleString("id-ID");
   }
 
   $(document).on(
-    'select2:select',
+    "select2:select",
     'select[name*="[subkegiatan_id]"]',
     function (e) {
       const select = this;
       const selected = select.options[select.selectedIndex];
       if (!selected) return;
 
-      const subkegItem = select.closest('.subkeg-item');
+      const subkegItem = select.closest(".subkeg-item");
       if (!subkegItem) return;
 
       const anggaranInput = subkegItem.querySelector(
-        'input[name*="[anggaran]"]'
+        'input[name*="[anggaran]"]',
       );
       if (!anggaranInput) return;
 
-      const anggaran = selected.getAttribute('data-anggaran') || '';
+      const anggaran = selected.getAttribute("data-anggaran") || "";
       anggaranInput.value = anggaran
-        ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
-        : '';
-    }
+        ? "Rp " + parseInt(anggaran, 10).toLocaleString("id-ID")
+        : "";
+    },
   );
-
-
 
   /* =========================================================
      TEMPLATE (SAMA DENGAN pk-form.js)
@@ -99,22 +97,22 @@ document.addEventListener("DOMContentLoaded", () => {
         setName(
           indikator,
           ".indikator-input",
-          `sasaran_pk[${si}][indikator][${ii}][indikator]`
+          `sasaran_pk[${si}][indikator][${ii}][indikator]`,
         );
         setName(
           indikator,
           ".indikator-target",
-          `sasaran_pk[${si}][indikator][${ii}][target]`
+          `sasaran_pk[${si}][indikator][${ii}][target]`,
         );
         setName(
           indikator,
           ".satuan-select",
-          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`
+          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`,
         );
         setName(
           indikator,
           ".jenis-indikator-select",
-          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`
+          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`,
         );
 
         qsa(".kegiatan-item", indikator).forEach((keg, ki) => {
@@ -231,13 +229,48 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFormNames();
   initSelect2();
 
+  qsa(".kegiatan-select").forEach((select) => {
+    const selected = select.options[select.selectedIndex];
+    if (!selected) return;
+
+    const programId = selected.dataset.program || "";
+    const wrapper = select.closest(".kegiatan-item");
+    const hidden = wrapper?.querySelector(".program-id-hidden");
+
+    if (hidden && programId) {
+      hidden.value = programId;
+      console.debug("[PK] program_id init:", {
+        kegiatan_id: select.value,
+        program_id: programId,
+      });
+    }
+  });
+
   document.body.addEventListener("change", (ev) => {
     const tgt = ev.target;
+
+    if (tgt.matches(".kegiatan-select")) {
+      const selected = tgt.options[tgt.selectedIndex];
+      const programId = selected?.dataset.program || "";
+
+      const wrapper = tgt.closest(".kegiatan-item");
+      const hidden = wrapper?.querySelector(".program-id-hidden");
+
+      if (hidden) {
+        hidden.value = programId;
+        console.debug("[PK] program_id di-set (change):", {
+          kegiatan_id: tgt.value,
+          program_id: programId,
+        });
+      }
+      return;
+    }
+
     if (tgt.matches('select.subkeg-select, select[name*="[subkegiatan_id]"]')) {
       const subkegItem = tgt.closest(".subkeg-item") || tgt.closest(".row");
       if (!subkegItem) return;
       const anggaranField = subkegItem.querySelector(
-        'input[name*="[anggaran]"]'
+        'input[name*="[anggaran]"]',
       );
       const selected = tgt.options[tgt.selectedIndex];
       if (anggaranField) {
@@ -262,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // initialize anggaran values for existing selects on load
-  qsa('.subkeg-select').forEach((sel) => {
+  qsa(".subkeg-select").forEach((sel) => {
     const selected = sel.options[sel.selectedIndex];
     if (selected && selected.dataset && selected.dataset.anggaran) {
       const angInput = sel
@@ -278,6 +311,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if (form) {
-    form.addEventListener("submit", updateFormNames);
+    form.addEventListener("submit", (e) => {
+      updateFormNames();
+
+      let invalid = false;
+
+      qsa(".kegiatan-item").forEach((item, idx) => {
+        const keg = item.querySelector(".kegiatan-select");
+        const hidden = item.querySelector(".program-id-hidden");
+        const selected = keg?.options[keg.selectedIndex];
+
+        const programId = selected?.dataset?.program || "";
+
+        // 🔥 PAKSA SET DI SINI
+        if (hidden) hidden.value = programId;
+
+        console.debug("[PK SUBMIT CHECK]", idx, {
+          kegiatan: keg?.value,
+          program_from_option: programId,
+          hidden_value: hidden?.value,
+        });
+
+        if (!programId) invalid = true;
+      });
+
+      if (invalid) {
+        e.preventDefault();
+        alert("Masih ada kegiatan tanpa program.");
+      }
+    });
   }
 });

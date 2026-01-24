@@ -562,7 +562,7 @@ class PkModel extends Model
     public function getJptPrograms($opdId)
     {
         return $this->db->table('pk_program')
-            ->select('program_pk.program_kegiatan, program_pk.id')
+            ->select('program_pk.program_kegiatan, program_pk.id, program_pk.anggaran')
             ->join('program_pk', 'program_pk.id = pk_program.program_id')
             ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
             ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
@@ -576,19 +576,26 @@ class PkModel extends Model
 
     public function getKegiatanAdmin($opdId)
     {
-        return $this->db->table('pk_kegiatan')
-            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id, pk_program_id')
-            ->join('kegiatan_pk', 'kegiatan_pk.id = pk_kegiatan.kegiatan_id')
-            ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
-            ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
-            ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
-            ->join('pk', 'pk.id = pk_sasaran.pk_id')
-            ->where('pk_indikator.jenis', 'administrator')
+        return $this->db->table('pk_kegiatan pkeg')
+            ->select([
+                'keg.id',
+                'keg.kegiatan',
+                'keg.anggaran',
+                'pp.program_id AS program_id'
+            ])
+            ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id')
+            ->join('pk_program pp', 'pp.id = pkeg.pk_program_id')
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id')
+            ->join('pk', 'pk.id = ps.pk_id')
+            ->where('pi.jenis', 'administrator')
             ->where('pk.opd_id', $opdId)
-            ->orderBy('pk.created_at', 'DESC')
+            ->groupBy('keg.id, pp.program_id') 
+            ->orderBy('keg.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
+
 
     /**
      * Get program by id (wrapper)

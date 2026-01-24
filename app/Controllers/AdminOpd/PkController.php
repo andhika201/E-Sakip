@@ -376,8 +376,7 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        ;
+        };
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -538,20 +537,38 @@ class PkController extends BaseController
                     }
 
                     if ($jenis === 'pengawas') {
-                        foreach ($ind['kegiatan'] ?? [] as $k) {
-                            $kg = [
-                                'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                'subkegiatan' => []
+                        foreach ($ind['program'] ?? [] as $p) {
+                            $programData = [
+                                'program_id' => $p['program_id'] ?? null,
+                                'kegiatan' => []
                             ];
-                            foreach ($k['subkegiatan'] ?? [] as $sk) {
-                                $kg['subkegiatan'][] = [
-                                    'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
-                                    'anggaran' => $sk['anggaran'] ?? 0
+
+                            foreach ($p['kegiatan'] ?? [] as $k) {
+                                $kegiatanData = [
+                                    'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                    'subkegiatan' => []
                                 ];
+
+                                foreach ($k['subkegiatan'] ?? [] as $sk) {
+                                    $kegiatanData['subkegiatan'][] = [
+                                        'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
+                                        'anggaran' => $sk['anggaran'] ?? 0
+                                    ];
+                                }
+
+                                $programData['kegiatan'][] = $kegiatanData;
                             }
-                            $indikatorData['kegiatan'][] = $kg;
+
+                            $indikatorData['program'][] = $programData;
                         }
                     }
+                    
+                    log_message(
+                        'debug',
+                        "PROGRAM RESULT [{$sIndex}][{$iIndex}]: " .
+                            json_encode($indikatorData['program'])
+                    );
+
 
                     $sasaranData['indikator'][] = $indikatorData;
                 }

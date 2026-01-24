@@ -481,7 +481,7 @@
 
                                                                             <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
                                                                                 <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                    data-program="<?= $kegiatanItem['pk_program_id'] ?>"
+                                                                                    data-program="<?= $kegiatanItem['program_id'] ?>"
                                                                                     <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
                                                                                     <?= esc($kegiatanItem['kegiatan']) ?>
                                                                                 </option>

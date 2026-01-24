@@ -89,58 +89,109 @@ document.addEventListener("DOMContentLoaded", () => {
      UPDATE NAME (PENGAWAS)
   ========================================================= */
   function updateFormNames() {
-    qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
-      const sasaranTxt = qs("textarea", sasaran);
-      if (sasaranTxt) sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
+  qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
 
-      qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
-        setName(
-          indikator,
-          ".indikator-input",
-          `sasaran_pk[${si}][indikator][${ii}][indikator]`,
-        );
-        setName(
-          indikator,
-          ".indikator-target",
-          `sasaran_pk[${si}][indikator][${ii}][target]`,
-        );
-        setName(
-          indikator,
-          ".satuan-select",
-          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`,
-        );
-        setName(
-          indikator,
-          ".jenis-indikator-select",
-          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`,
-        );
+    // ===== SASARAN =====
+    const sasaranTxt = sasaran.querySelector("textarea, input[type='text']");
+    if (sasaranTxt) {
+      sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
+    }
 
-        qsa(".kegiatan-item", indikator).forEach((keg, ki) => {
-          const progHidden = qs(".program-id-hidden", keg);
-          if (progHidden) {
-            progHidden.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][program_id]`;
-          }
+    // ===== INDIKATOR =====
+    qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
 
-          const kegSelect = qs(".kegiatan-select", keg);
+      // indikator text
+      const inputIndikator = indikator.querySelector(
+        "input[type='text'], textarea"
+      );
+      if (inputIndikator) {
+        inputIndikator.name =
+          `sasaran_pk[${si}][indikator][${ii}][indikator]`;
+      }
+
+      // target
+      const inputTarget = indikator.querySelector(
+        "input[type='number'], input[name*='target']"
+      );
+      if (inputTarget) {
+        inputTarget.name =
+          `sasaran_pk[${si}][indikator][${ii}][target]`;
+      }
+
+      // satuan
+      const selectSatuan = indikator.querySelector(
+        "select[name*='satuan'], select.satuan-select"
+      );
+      if (selectSatuan) {
+        selectSatuan.name =
+          `sasaran_pk[${si}][indikator][${ii}][id_satuan]`;
+      }
+
+      // jenis indikator
+      const selectJenis = indikator.querySelector(
+        "select[name*='jenis'], select.jenis-indikator-select"
+      );
+      if (selectJenis) {
+        selectJenis.name =
+          `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
+      }
+
+      // ===== PROGRAM =====
+      qsa(".program-item", indikator).forEach((program, pi) => {
+
+        const programHidden = program.querySelector(
+          "input[type='hidden'], select[name*='program']"
+        );
+        if (programHidden) {
+          programHidden.name =
+            `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
+        }
+
+        // ===== KEGIATAN =====
+        qsa(".kegiatan-item", program).forEach((keg, ki) => {
+
+          const kegSelect = keg.querySelector(
+            "select[name*='kegiatan'], select.kegiatan-select"
+          );
           if (kegSelect) {
-            kegSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][kegiatan_id]`;
+            kegSelect.name =
+              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
           }
 
+          // ===== SUBKEGIATAN =====
           qsa(".subkeg-item", keg).forEach((sub, sk) => {
-            const subSel = qs(".subkeg-select", sub);
-            const subAng = qs(".anggaran-input", sub);
 
-            if (subSel) {
-              subSel.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][subkegiatan][${sk}][subkegiatan_id]`;
+            const subSelect = sub.querySelector(
+              "select[name*='subkegiatan'], select.subkeg-select"
+            );
+            if (subSelect) {
+              subSelect.name =
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][subkegiatan][${sk}][subkegiatan_id]`;
             }
-            if (subAng) {
-              subAng.name = `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][subkegiatan][${sk}][anggaran]`;
+
+            const anggaranInput = sub.querySelector(
+              "input[name*='anggaran']"
+            );
+            if (anggaranInput) {
+              anggaranInput.name =
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][subkegiatan][${sk}][anggaran]`;
             }
           });
         });
       });
     });
-  }
+  });
+
+  // === DEBUG OPSIONAL (hapus jika sudah yakin) ===
+  qsa(".indikator-item").forEach((item, i) => {
+    const inp = item.querySelector("input[type='text'], textarea");
+    console.debug("[CHECK INDIKATOR]", i, {
+      value: inp?.value,
+      name: inp?.name,
+    });
+  });
+}
+
 
   function setName(scope, sel, name) {
     const el = qs(sel, scope);

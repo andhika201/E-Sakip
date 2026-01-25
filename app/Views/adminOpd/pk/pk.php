@@ -327,6 +327,7 @@
                                     <?php endforeach; ?>
 
                                 <?php endforeach; ?>
+
                             </tbody>
 
                         </table>

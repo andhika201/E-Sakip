@@ -83,21 +83,11 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
-  const templateSasaran = document
-    .querySelector(".sasaran-item")
-    ?.cloneNode(true);
-  const templateIndikator = document
-    .querySelector(".indikator-item")
-    ?.cloneNode(true);
-  const templateProgramItem = document
-    .querySelector(".program-item")
-    ?.cloneNode(true);
-  const templateKegiatanItem = document
-    .querySelector(".kegiatan-item")
-    ?.cloneNode(true);
-  const templateSubkegItem = document
-    .querySelector(".subkeg-item")
-    ?.cloneNode(true);
+  const templateSasaran = qs(".sasaran-item")?.cloneNode(true);
+  const templateIndikator = qs(".indikator-item")?.cloneNode(true);
+  const templateProgramItem = qs(".program-item")?.cloneNode(true);
+  const templateKegiatanItem = qs(".kegiatan-item")?.cloneNode(true);
+  const templateSubkegItem = qs(".subkeg-item")?.cloneNode(true);
 
   // Jika templates ada, bersihkan nilainya supaya jadi "kosong"
   if (templateProgramItem && window.jQuery) {
@@ -186,11 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
     });
-  }
-
-  function setName(scope, sel, name) {
-    const el = qs(sel, scope);
-    if (el) el.name = name;
   }
 
   /* =========================================================
@@ -424,6 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("load", () => {
     initSelect2(document);
+    updateFormNames();
   });
 
  if (form) {

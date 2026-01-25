@@ -91,6 +91,7 @@ class PkController extends BaseController
 
             $pihak1Level = $pegawai['level'] ?? null;
 
+
             $tampilkanProgram = !($opdId == 2 && $pihak1Level === 'VERIFIKATOR');
         }
 
@@ -210,6 +211,7 @@ class PkController extends BaseController
                 ->where('jenis', $referensiJenis)
                 ->findAll();
         }
+        // dd($kegiatanAdmin);
         return view('adminOpd/pk/tambah_pk', [
             'pegawaiOpd' => $pegawaiOpd,
             'current_opd' => $currentOpd,

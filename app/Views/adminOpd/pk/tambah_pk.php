@@ -348,7 +348,7 @@
                                                                 <label class="form-label">Anggaran</label>
                                                                 <input type="text"
                                                                     class="form-control mb-3 border-secondary anggaran-input" value=""
-                                                                    placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
+                                                                    placeholder="Anggaran" readonly />
                                                                 <input type="hidden" name="program[0][id_indikator]"
                                                                     value="">
                                                             </div>
@@ -713,16 +713,6 @@
                     const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
                     if (targetField && this.selectedOptions[0]) {
                         targetField.value = this.selectedOptions[0].dataset.nip || '';
-                    }
-                });
-            });
-
-            // Fungsi untuk program anggaran
-            document.querySelectorAll('.program-select').forEach(select => {
-                select.addEventListener('change', function() {
-                    const anggaranField = this.closest('.row').querySelector('input[name$="[anggaran]"]');
-                    if (anggaranField && this.selectedOptions[0]) {
-                        anggaranField.value = this.selectedOptions[0].dataset.anggaran || '';
                     }
                 });
             });

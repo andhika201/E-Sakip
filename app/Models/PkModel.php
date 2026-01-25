@@ -102,37 +102,52 @@ class PkModel extends Model
     {
         return $this->db->table('pk_kegiatan kk')
             ->select('
-            MIN(kk.id) AS pk_kegiatan_id,
+            kk.id as pk_kegiatan_id,
             kp.kegiatan,
             kp.anggaran,
-            MIN(kk.kegiatan_id) AS kegiatan_id,
-            MIN(kk.pk_program_id) AS pk_program_id
+            kk.kegiatan_id,
+            kk.pk_program_id,
+            pr.program_kegiatan
         ')
+            ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
+            ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
+            ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->where('ps.pk_id', $pkId)
+            ->orderBy('pr.program_kegiatan', 'ASC')
+            ->orderBy('kk.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+
+    public function getSubKegiatanByPkId($pkId)
+    {
+        return $this->db->table('pk_subkegiatan psk')
+            ->select('
+            kp.kegiatan,
+            skp.sub_kegiatan,
+            skp.anggaran
+        ')
+            ->join('sub_kegiatan_pk skp', 'skp.id = psk.subkegiatan_id', 'left')
+            ->join('pk_kegiatan kk', 'kk.id = psk.pk_kegiatan_id', 'left')
             ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
             ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->where('ps.pk_id', $pkId)
-            ->groupBy('kp.kegiatan, kp.anggaran')
+            ->groupBy([
+                'kp.kegiatan',
+                'skp.sub_kegiatan',
+                'skp.anggaran'
+            ])
             ->orderBy('kp.kegiatan', 'ASC')
+            ->orderBy('skp.sub_kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-    public function getSubKegiatanByPkId($pkId)
-    {
-        return $this->db->table('pk_subkegiatan psk')
-            ->select('psk.id as pk_subkegiatan_id, skp.sub_kegiatan, skp.anggaran, psk.subkegiatan_id, psk.pk_kegiatan_id')
-            ->join('sub_kegiatan_pk skp', 'skp.id = psk.subkegiatan_id', 'left')
-            ->join('pk_kegiatan kk', 'kk.id = psk.pk_kegiatan_id', 'left')
-            ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
-            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
-            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
-            ->where('ps.pk_id', $pkId)
-            ->orderBy('psk.id', 'ASC')
-            ->get()
-            ->getResultArray();
-    }
 
     /**
      * Get all sasaran and their indikator for a given PK id
@@ -146,24 +161,92 @@ class PkModel extends Model
             ->getResultArray();
 
         foreach ($sasaranList as &$sasaran) {
-            $indikatorList = $this->db->table('pk_indikator')
-                ->select('pk_indikator.*, satuan.satuan as satuan_nama')
-                ->join('satuan', 'satuan.id = pk_indikator.id_satuan', 'left')
-                ->where('pk_sasaran_id', $sasaran['id'])
-                ->orderBy('id', 'ASC')
+
+            // ======================
+            // INDIKATOR
+            // ======================
+            $indikatorList = $this->db->table('pk_indikator pi')
+                ->select('pi.*, satuan.satuan as satuan_nama')
+                ->join('satuan', 'satuan.id = pi.id_satuan', 'left')
+                ->where('pi.pk_sasaran_id', $sasaran['id'])
+                ->orderBy('pi.id', 'ASC')
                 ->get()
                 ->getResultArray();
 
             foreach ($indikatorList as &$indikator) {
-                // Normalisasi key agar view tetap pakai $indikator['satuan']
-                $indikator['satuan'] = $indikator['satuan_nama'] ?? ($indikator['id_satuan'] ?? '-');
+
+                // ======================
+                // PROGRAM (PER INDIKATOR)
+                // ======================
+                $programList = $this->db->table('pk_program pp')
+                    ->select('
+                    pp.id as pk_program_id,
+                    pr.program_kegiatan,
+                    pr.anggaran,
+                    pp.program_id
+                ')
+                    ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
+                    ->where('pp.pk_indikator_id', $indikator['id'])
+                    ->orderBy('pp.id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($programList as &$program) {
+
+                    // ======================
+                    // KEGIATAN (PER PROGRAM)
+                    // ======================
+                    $kegiatanList = $this->db->table('pk_kegiatan pkeg')
+                        ->select('
+                        pkeg.id as pk_kegiatan_id,
+                        keg.kegiatan,
+                        keg.anggaran,
+                        pkeg.kegiatan_id
+                    ')
+                        ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
+                        ->where('pkeg.pk_program_id', $program['pk_program_id'])
+                        ->orderBy('pkeg.id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    // ======================
+                    // SUBKEGIATAN (PER KEGIATAN)
+                    // ======================
+                    foreach ($kegiatanList as &$kegiatan) {
+
+                        $subkegiatanList = $this->db->table('pk_subkegiatan pksub')
+                            ->select('
+                            pksub.id as pk_subkegiatan_id,
+                            sub.sub_kegiatan,
+                            sub.anggaran,
+                            pksub.subkegiatan_id
+                        ')
+                            ->join('sub_kegiatan_pk sub', 'sub.id = pksub.subkegiatan_id', 'left')
+                            ->where('pksub.pk_kegiatan_id', $kegiatan['pk_kegiatan_id'])
+                            ->orderBy('pksub.id', 'ASC')
+                            ->get()
+                            ->getResultArray();
+
+                        // 🔑 masukkan subkegiatan ke kegiatan
+                        $kegiatan['subkegiatan'] = $subkegiatanList;
+                    }
+
+                    // masukkan kegiatan (lengkap dengan subkegiatan) ke program
+                    $program['kegiatan'] = $kegiatanList;
+                }
+
+                // masukkan program ke indikator
+                $indikator['program'] = $programList;
             }
 
+            // masukkan indikator ke sasaran
             $sasaran['indikator'] = $indikatorList;
         }
 
         return $sasaranList;
     }
+
+
 
     /**
      * Get indikator acuan (referensi) for a given PK
@@ -363,141 +446,191 @@ class PkModel extends Model
     {
         $db = \Config\Database::connect();
         $db->transStart();
+        $now = date('Y-m-d H:i:s');
 
         try {
-            $now = date('Y-m-d H:i:s');
 
-            log_message('info', "UPDATE PK START pk_id={$pkId}");
-
-            // =====================================================================
+            // =====================================================
             // 1. UPDATE PK
-            // =====================================================================
-            $db->table('pk')
-                ->where('id', $pkId)
-                ->update([
-                    'pihak_1' => $data['pihak_1'],
-                    'pihak_2' => $data['pihak_2'],
-                    'tahun' => $data['tahun'],
-                    'tanggal' => $data['tanggal'],
-                    'updated_at' => $now
-                ]);
+            // =====================================================
+            $db->table('pk')->where('id', $pkId)->update([
+                'pihak_1'   => $data['pihak_1'],
+                'pihak_2'   => $data['pihak_2'],
+                'tahun'     => $data['tahun'],
+                'tanggal'   => $data['tanggal'],
+                'updated_at' => $now
+            ]);
 
-            // =====================================================================
-            // 2. Ambil seluruh ID relasi yang terkait PK
-            // =====================================================================
-            $sasaranIds = $db->table('pk_sasaran')->select('id')->where('pk_id', $pkId)->get()->getResultArray();
-            $sasaranIds = array_column($sasaranIds, 'id');
+            // =====================================================
+            // 2. SYNC SASARAN
+            // =====================================================
+            $existingSasaran = $db->table('pk_sasaran')
+                ->where('pk_id', $pkId)->get()->getResultArray();
+            $existingSasaranIds = array_column($existingSasaran, 'id');
+            $usedSasaranIds = [];
 
-            $indikatorIds = [];
-            $programIds = [];
-            $kegiatanIds = [];
+            foreach ($data['sasaran_pk'] as $s) {
 
-            if (!empty($sasaranIds)) {
-                $indikData = $db->table('pk_indikator')->select('id')->whereIn('pk_sasaran_id', $sasaranIds)->get()->getResultArray();
-                $indikatorIds = array_column($indikData, 'id');
-
-                if (!empty($indikatorIds)) {
-                    $programData = $db->table('pk_program')->select('id')->whereIn('pk_indikator_id', $indikatorIds)->get()->getResultArray();
-                    $programIds = array_column($programData, 'id');
-                }
-
-                if (!empty($programIds)) {
-                    $kegData = $db->table('pk_kegiatan')->select('id')->whereIn('pk_program_id', $programIds)->get()->getResultArray();
-                    $kegiatanIds = array_column($kegData, 'id');
-                }
-            }
-
-            // =====================================================================
-            // 3. DELETE sesuai urutan relasi
-            // =====================================================================
-
-            log_message('info', "DELETE SUBKEGIATAN: kegiatan_ids=" . json_encode($kegiatanIds));
-            if (!empty($kegiatanIds)) {
-                $db->table('pk_subkegiatan')->whereIn('pk_kegiatan_id', $kegiatanIds)->delete();
-            }
-
-            log_message('info', "DELETE KEGIATAN: program_ids=" . json_encode($programIds));
-            if (!empty($programIds)) {
-                $db->table('pk_kegiatan')->whereIn('pk_program_id', $programIds)->delete();
-            }
-
-            log_message('info', "DELETE PROGRAM: indikator_ids=" . json_encode($indikatorIds));
-            if (!empty($indikatorIds)) {
-                $db->table('pk_program')->whereIn('pk_indikator_id', $indikatorIds)->delete();
-            }
-
-            log_message('info', "DELETE INDIKATOR: sasaran_ids=" . json_encode($sasaranIds));
-            if (!empty($sasaranIds)) {
-                $db->table('pk_indikator')->whereIn('pk_sasaran_id', $sasaranIds)->delete();
-            }
-
-            log_message('info', "DELETE SASARAN");
-            $db->table('pk_sasaran')->where('pk_id', $pkId)->delete();
-
-            log_message('info', "DELETE REFERENSI + MISI");
-            $db->table('pk_referensi')->where('pk_id', $pkId)->delete();
-            $db->table('pk_misi')->where('pk_id', $pkId)->delete();
-
-            // =====================================================================
-            // 4. INSERT ULANG SEMUA RELASI
-            // =====================================================================
-            foreach ($data['sasaran_pk'] as $sasaran) {
-
-                $db->table('pk_sasaran')->insert([
-                    'pk_id' => $pkId,
-                    'jenis' => $data['jenis'],
-                    'sasaran' => $sasaran['sasaran'],
-                    'created_at' => $now,
-                    'updated_at' => $now
-                ]);
-                $pkSasaranId = $db->insertID();
-
-                foreach ($sasaran['indikator'] as $indikator) {
-
-                    $db->table('pk_indikator')->insert([
-                        'pk_sasaran_id' => $pkSasaranId,
+                // ---------- SASARAN ----------
+                if (!empty($s['pk_sasaran_id'])) {
+                    $db->table('pk_sasaran')
+                        ->where('id', $s['pk_sasaran_id'])
+                        ->update([
+                            'sasaran' => $s['sasaran'],
+                            'updated_at' => $now
+                        ]);
+                    $pkSasaranId = $s['pk_sasaran_id'];
+                } else {
+                    $db->table('pk_sasaran')->insert([
+                        'pk_id' => $pkId,
                         'jenis' => $data['jenis'],
-                        'indikator' => $indikator['indikator'],
-                        'target' => $indikator['target'],
-                        'id_satuan' => $indikator['id_satuan'],
-                        'jenis_indikator' => $indikator['jenis_indikator'],
+                        'sasaran' => $s['sasaran'],
                         'created_at' => $now,
                         'updated_at' => $now
                     ]);
-                    $pkIndikatorId = $db->insertID();
+                    $pkSasaranId = $db->insertID();
+                }
+                $usedSasaranIds[] = $pkSasaranId;
 
-                    if (!empty($indikator['program'])) {
-                        foreach ($indikator['program'] as $p) {
+                // =====================================================
+                // 3. SYNC INDIKATOR
+                // =====================================================
+                $existingInd = $db->table('pk_indikator')
+                    ->where('pk_sasaran_id', $pkSasaranId)->get()->getResultArray();
+                $existingIndIds = array_column($existingInd, 'id');
+                $usedIndIds = [];
 
-                            $db->table('pk_program')->insert([
+                foreach ($s['indikator'] as $ind) {
+
+                    if (!empty($ind['pk_indikator_id'])) {
+                        $db->table('pk_indikator')->where('id', $ind['pk_indikator_id'])->update([
+                            'indikator' => $ind['indikator'],
+                            'target' => $ind['target'],
+                            'id_satuan' => $ind['id_satuan'],
+                            'jenis_indikator' => $ind['jenis_indikator'],
+                            'updated_at' => $now
+                        ]);
+                        $pkIndId = $ind['pk_indikator_id'];
+                    } else {
+                        $db->table('pk_indikator')->insert([
+                            'pk_sasaran_id' => $pkSasaranId,
+                            'jenis' => $data['jenis'],
+                            'indikator' => $ind['indikator'],
+                            'target' => $ind['target'],
+                            'id_satuan' => $ind['id_satuan'],
+                            'jenis_indikator' => $ind['jenis_indikator'],
+                            'created_at' => $now,
+                            'updated_at' => $now
+                        ]);
+                        $pkIndId = $db->insertID();
+                    }
+                    $usedIndIds[] = $pkIndId;
+
+                    // =====================================================
+                    // 4. SYNC PROGRAM
+                    // =====================================================
+                    if (empty($ind['program']) || !is_array($ind['program'])) {
+                        continue;
+                    }
+
+                    foreach ($ind['program'] as $p) {
+
+                        if (!empty($p['pk_program_id'])) {
+                            $db->table('pk_program')->where('id', $p['pk_program_id'])->update([
                                 'program_id' => $p['program_id'],
-                                'pk_indikator_id' => $pkIndikatorId,
+                                'updated_at' => $now
+                            ]);
+                            $pkProgramId = $p['pk_program_id'];
+                        } else {
+                            $db->table('pk_program')->insert([
+                                'pk_indikator_id' => $pkIndId,
+                                'program_id' => $p['program_id'],
                                 'created_at' => $now,
                                 'updated_at' => $now
                             ]);
                             $pkProgramId = $db->insertID();
+                        }
 
-                            if (!empty($p['kegiatan'])) {
-                                foreach ($p['kegiatan'] as $k) {
+                        // 🔥 JPT STOP DI PROGRAM
+                        if ($data['jenis'] === 'jpt') {
+                            continue;
+                        }
 
-                                    $db->table('pk_kegiatan')->insert([
-                                        'pk_program_id' => $pkProgramId,
-                                        'kegiatan_id' => $k['kegiatan_id'],
-                                        'created_at' => $now,
-                                        'updated_at' => $now
-                                    ]);
-                                    $pkKegiatanId = $db->insertID();
+                        if (empty($p['kegiatan']) || !is_array($p['kegiatan'])) {
+                            continue;
+                        }
 
-                                    if (!empty($k['subkegiatan'])) {
-                                        foreach ($k['subkegiatan'] as $sk) {
-                                            $db->table('pk_subkegiatan')->insert([
-                                                'pk_kegiatan_id' => $pkKegiatanId,
+                        // =====================================================
+                        // 5. SYNC KEGIATAN
+                        // =====================================================
+                        foreach ($p['kegiatan'] as $k) {
+
+                            if (!empty($k['pk_kegiatan_id'])) {
+                                $db->table('pk_kegiatan')->where('id', $k['pk_kegiatan_id'])->update([
+                                    'kegiatan_id' => $k['kegiatan_id'],
+                                    'updated_at' => $now
+                                ]);
+                                $pkKegId = $k['pk_kegiatan_id'];
+                            } else {
+                                $db->table('pk_kegiatan')->insert([
+                                    'pk_program_id' => $pkProgramId,
+                                    'kegiatan_id' => $k['kegiatan_id'],
+                                    'created_at' => $now,
+                                    'updated_at' => $now
+                                ]);
+                                $pkKegId = $db->insertID();
+                            }
+
+                            // =====================================================
+                            // 6. SYNC SUBKEGIATAN
+                            // =====================================================
+                            if (
+                                $data['jenis'] === 'pengawas' &&
+                                !empty($k['subkegiatan']) &&
+                                is_array($k['subkegiatan'])
+                            ) {
+
+                                $existingSub = $db->table('pk_subkegiatan')
+                                    ->where('pk_kegiatan_id', $pkKegId)
+                                    ->get()
+                                    ->getResultArray();
+
+                                $existingSubIds = array_column($existingSub, 'id');
+                                $usedSubIds = [];
+
+                                foreach ($k['subkegiatan'] as $sk) {
+
+                                    if (!empty($sk['pk_subkegiatan_id'])) {
+
+                                        // UPDATE
+                                        $db->table('pk_subkegiatan')
+                                            ->where('id', $sk['pk_subkegiatan_id'])
+                                            ->update([
                                                 'subkegiatan_id' => $sk['subkegiatan_id'],
-                                                'created_at' => $now,
                                                 'updated_at' => $now
                                             ]);
-                                        }
+
+                                        $pkSubId = $sk['pk_subkegiatan_id'];
+                                    } else {
+
+                                        // INSERT
+                                        $db->table('pk_subkegiatan')->insert([
+                                            'pk_kegiatan_id' => $pkKegId,
+                                            'subkegiatan_id' => $sk['subkegiatan_id'],
+                                            'created_at' => $now,
+                                            'updated_at' => $now
+                                        ]);
+
+                                        $pkSubId = $db->insertID();
                                     }
+
+                                    $usedSubIds[] = $pkSubId;
+                                }
+
+                                // DELETE subkegiatan yang dihapus user
+                                $deleteSub = array_diff($existingSubIds, $usedSubIds);
+                                if (!empty($deleteSub)) {
+                                    $db->table('pk_subkegiatan')->whereIn('id', $deleteSub)->delete();
                                 }
                             }
                         }
@@ -505,28 +638,20 @@ class PkModel extends Model
                 }
             }
 
-            // =====================================================================
-            // 5. INSERT MISI
-            // =====================================================================
-            if (!empty($data['misi_bupati_id'])) {
-                foreach ($data['misi_bupati_id'] as $misiId) {
-                    $db->table('pk_misi')->insert([
-                        'pk_id' => $pkId,
-                        'rpjmd_misi_id' => $misiId,
-                    ]);
-                }
+            // DELETE sasaran yang dihapus
+            $deleteSasaran = array_diff($existingSasaranIds, $usedSasaranIds);
+            if ($deleteSasaran) {
+                $db->table('pk_sasaran')->whereIn('id', $deleteSasaran)->delete();
             }
-
-            log_message('info', "UPDATE PK FINISHED pk_id={$pkId}");
 
             $db->transComplete();
             return true;
         } catch (\Exception $e) {
             $db->transRollback();
-            log_message('error', "UPDATE PK ERROR pk_id={$pkId}: " . $e->getMessage());
             throw $e;
         }
     }
+
 
     /**
      * Get all satuan
@@ -583,19 +708,26 @@ class PkModel extends Model
 
     public function getKegiatanAdmin($opdId)
     {
-        return $this->db->table('pk_kegiatan')
-            ->select('kegiatan_pk.kegiatan, kegiatan_pk.id, kegiatan_pk.anggaran, pk_program_id')
-            ->join('kegiatan_pk', 'kegiatan_pk.id = pk_kegiatan.kegiatan_id')
-            ->join('pk_program', 'pk_program.id = pk_kegiatan.pk_program_id')
-            ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
-            ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
-            ->join('pk', 'pk.id = pk_sasaran.pk_id')
-            ->where('pk_indikator.jenis', 'administrator')
+        return $this->db->table('pk_kegiatan pkeg')
+            ->select([
+                'keg.id',
+                'keg.kegiatan',
+                'keg.anggaran',
+                'pp.program_id AS program_id'
+            ])
+            ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id')
+            ->join('pk_program pp', 'pp.id = pkeg.pk_program_id')
+            ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id')
+            ->join('pk', 'pk.id = ps.pk_id')
+            ->where('pi.jenis', 'administrator')
             ->where('pk.opd_id', $opdId)
-            ->orderBy('pk.created_at', 'DESC')
+            ->groupBy('keg.id, pp.program_id')
+            ->orderBy('keg.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
+
 
     /**
      * Get program by id (wrapper)
@@ -710,9 +842,9 @@ class PkModel extends Model
 
         foreach ($results as &$pk) {
             $pk['sasaran'] = $this->getSasaranByPkId($pk['id']);
-            $pk['program'] = $this->getProgramByPkId($pk['id']);
-            $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
-            $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
+            // $pk['program'] = $this->getProgramByPkId($pk['id']);
+            // $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
+            // $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
         }
 
         return $results;
@@ -989,11 +1121,9 @@ class PkModel extends Model
 
                     // 🔥 ambil kegiatan berdasarkan program
                     $kegiatanList = $this->db->table('pk_kegiatan pkeg')
-                        ->select('
-                                    pkeg.id as kegiatan_id,
-                                    keg.kegiatan,
-                                    pkeg.pk_program_id,
-                                    pkeg.kegiatan_id
+                        ->select('pkeg.id AS pk_kegiatan_id,
+                                pkeg.kegiatan_id AS kegiatan_id,
+                                keg.kegiatan
                                 ')
                         ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
                         ->where('pkeg.pk_program_id', $program['pk_program_id'])
@@ -1011,7 +1141,7 @@ class PkModel extends Model
                                     psub.subkegiatan_id
                                 ')
                             ->join('sub_kegiatan_pk sub', 'sub.id = psub.subkegiatan_id', 'left')
-                            ->where('psub.pk_kegiatan_id', $keg['kegiatan_id'])
+                            ->where('psub.pk_kegiatan_id', $keg['pk_kegiatan_id'])
                             ->orderBy('psub.id', 'ASC')
                             ->get()
                             ->getResultArray();

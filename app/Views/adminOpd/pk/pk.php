@@ -195,7 +195,7 @@
 
                                             <!-- SATUAN -->
                                             <td class="border p-2">
-                                                <?= esc($indikator['satuan']) ?>
+                                                <?= esc($indikator['satuan_nama']) ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -230,6 +230,7 @@
                         </table>
                     <?php elseif ($jenis === 'jpt' && $tampilkanProgram): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
+
                         <table class="table table-bordered table-striped text-center small">
                             <thead class="table-info">
                                 <tr>
@@ -240,112 +241,187 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $no_program = 1; ?>
-                                <?php foreach ($pk_data['program'] as $program): ?>
+                                <?php $no = 1; ?>
+
+                                <?php if (!empty($pk_data['program'])): ?>
+                                    <?php foreach ($pk_data['program'] as $program): ?>
+                                        <tr>
+                                            <td><?= $no++ ?></td>
+                                            <td><?= esc($program['program_kegiatan']) ?></td>
+                                            <td>Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
+                                            <td>JPT</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
                                     <tr>
-                                        <td class="border p-2"><?= $no_program++ ?></td>
-                                        <td class="border p-2"><?= esc($program['program_kegiatan']) ?></td>
-                                        <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
-                                        <?php
-                                        if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
-                                            $judulPk = 'CAMAT';
-                                        } else {
-                                            $judulPk = strtoupper($jenis);
-                                        }
-                                        ?>
-                                        <td class="border p-2"><?= esc(ucwords($judulPk)) ?></td>
+                                        <td colspan="4">Tidak ada data program</td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
+
                     <?php elseif ($jenis === 'administrator'): ?>
-                        <h4 class="h3 fw-bold text-success text-left mb-4">
-                            KEGIATAN DAN ANGGARAN
-                        </h4>
+                        <h4 class="h3 fw-bold text-success mb-4">KEGIATAN DAN ANGGARAN</h4>
 
                         <table class="table table-bordered table-striped small">
                             <thead class="table-info text-center">
                                 <tr>
-                                    <th class="border p-2" style="width:50px">NO</th>
-                                    <th class="border p-2">KEGIATAN</th>
-                                    <th class="border p-2" style="width:180px">ANGGARAN</th>
-                                    <th class="border p-2" style="width:140px">Tingkat PK</th>
+                                    <th style="width:40px">NO</th>
+                                    <th>URAIAN</th>
+                                    <th style="width:180px">ANGGARAN</th>
+                                    <th style="width:120px">TINGKAT PK</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                $indikator = $pk_data['sasaran'][0]['indikator'][0];
-                                $programs = $pk_data['program'];
-                                $kegiatans = $pk_data['kegiatan'];
+                                $programMap = [];
+                                foreach ($pk_data['sasaran'] as $sasaran) {
+                                    foreach ($sasaran['indikator'] as $indikator) {
+                                        foreach ($indikator['program'] as $program) {
+
+                                            $programKey = $program['program_id']; // kunci bisnis
+
+                                            if (!isset($programMap[$programKey])) {
+                                                $programMap[$programKey] = [
+                                                    'program_kegiatan' => $program['program_kegiatan'],
+                                                    'kegiatan' => []
+                                                ];
+                                            }
+
+                                            foreach ($program['kegiatan'] as $keg) {
+                                                // kunci unik kegiatan = nama + anggaran
+                                                $kegKey = md5($keg['kegiatan'] . '|' . $keg['anggaran']);
+
+                                                if (!isset($programMap[$programKey]['kegiatan'][$kegKey])) {
+                                                    $programMap[$programKey]['kegiatan'][$kegKey] = $keg;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 ?>
 
-                                <?php foreach ($programs as $program): ?>
-                                    <!-- HEADER PROGRAM -->
-                                    <tr class="table-secondary">
-                                        <td colspan="4" class="border p-2 fw-bold text-start">
-                                            PROGRAM : <?= esc($program['program_kegiatan']) ?>
+                                <?php $no = 1; ?>
+
+                                <?php foreach ($programMap as $program): ?>
+
+                                    <!-- PROGRAM -->
+                                    <tr class="table-light fw-bold">
+                                        <td colspan="4">
+                                            PROGRAM: <?= esc($program['program_kegiatan']) ?>
                                         </td>
                                     </tr>
 
-                                    <?php
-                                    $no = 1;
-                                    $found = false;
-                                    ?>
-
-                                    <?php foreach ($kegiatans as $kegiatan): ?>
-                                        <?php if ($kegiatan['pk_program_id'] == $program['pk_program_id']): ?>
-                                            <?php $found = true; ?>
-                                            <tr>
-                                                <td class="border p-2 text-center"><?= $no++ ?></td>
-                                                <td class="border p-2 text-start">
-                                                    <?= esc($kegiatan['kegiatan']) ?>
-                                                </td>
-                                                <td class="border p-2 text-end">
-                                                    Rp <?= number_format($kegiatan['anggaran'], 0, ',', '.') ?>
-                                                </td>
-                                                <td class="border p-2 text-center">
-                                                    <?= esc(ucwords($pk_data['jenis'])) ?>
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    <?php endforeach; ?>
-
-                                    <?php if (!$found): ?>
+                                    <!-- KEGIATAN -->
+                                    <?php foreach ($program['kegiatan'] as $keg): ?>
                                         <tr>
-                                            <td colspan="4" class="border p-2 text-center text-muted fst-italic">
-                                                Belum ada kegiatan pada program ini
+                                            <td class="text-center"><?= $no++ ?></td>
+                                            <td><?= esc($keg['kegiatan']) ?></td>
+                                            <td class="text-end">
+                                                Rp <?= number_format($keg['anggaran'], 0, ',', '.') ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?= esc(ucwords($pk_data['jenis'])) ?>
                                             </td>
                                         </tr>
-                                    <?php endif; ?>
+                                    <?php endforeach; ?>
 
                                 <?php endforeach; ?>
 
                             </tbody>
+
                         </table>
+
+
                     <?php elseif ($jenis === 'pengawas'): ?>
-                        <h4 class="h3 fw-bold text-success text-left mb-4">SUBKEGIATAN DAN ANGGARAN</h4>
-                        <table class="table table-bordered table-striped text-center small">
-                            <thead class="table-info">
+
+                        <h4 class="h3 fw-bold text-success mb-4">
+                            KEGIATAN DAN SUBKEGIATAN
+                        </h4>
+
+                        <?php
+                        /**
+                         * STEP 1: KUMPULKAN DATA
+                         */
+                        $grouped = [];
+
+                        foreach ($pk_data['sasaran'] as $sasaran) {
+                            foreach ($sasaran['indikator'] as $indikator) {
+                                foreach ($indikator['program'] as $program) {
+                                    foreach ($program['kegiatan'] as $kegiatan) {
+
+                                        $kegId = $kegiatan['kegiatan_id'];
+
+                                        // init kegiatan
+                                        if (!isset($grouped[$kegId])) {
+                                            $grouped[$kegId] = [
+                                                'kegiatan' => $kegiatan['kegiatan'],
+                                                'subkegiatan' => []
+                                            ];
+                                        }
+
+                                        foreach ($kegiatan['subkegiatan'] as $sub) {
+                                            $subKey = $sub['subkegiatan_id'];
+
+                                            // cegah duplikat subkegiatan
+                                            if (!isset($grouped[$kegId]['subkegiatan'][$subKey])) {
+                                                $grouped[$kegId]['subkegiatan'][$subKey] = [
+                                                    'nama' => $sub['sub_kegiatan'],
+                                                    'anggaran' => $sub['anggaran']
+                                                ];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ?>
+
+                        <table class="table table-bordered table-striped small">
+                            <thead class="table-info text-center">
                                 <tr>
-                                    <th class="border p-2">NO</th>
-                                    <th class="border p-2">SUBKEGIATAN</th>
-                                    <th class="border p-2">ANGGARAN</th>
-                                    <th class="border p-2">Tingkat PK</th>
+                                    <th style="width:40px">NO</th>
+                                    <th>KEGIATAN / SUBKEGIATAN</th>
+                                    <th style="width:180px">ANGGARAN</th>
+                                    <th style="width:120px">TINGKAT PK</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $no_subkegiatan = 1; ?>
-                                <?php foreach ($pk_data['subkegiatan'] as $subkegiatan): ?>
-                                    <tr>
-                                        <td class="border p-2"><?= $no_subkegiatan++ ?></td>
-                                        <td class="border p-2"><?= esc($subkegiatan['sub_kegiatan']) ?></td>
-                                        <td class="border p-2">Rp <?= number_format($subkegiatan['anggaran'], 0, ',', '.') ?></td>
-                                        <td class="border p-2"><?= esc(ucwords($pk_data['jenis'])) ?></td>
+
+                                <?php
+                                $no = 1;
+
+                                foreach ($grouped as $kegiatan):
+                                ?>
+
+                                    <!-- HEADER KEGIATAN (HANYA SEKALI) -->
+                                    <tr class="table-secondary fw-bold">
+                                        <td colspan="4">
+                                            KEGIATAN: <?= esc($kegiatan['kegiatan']) ?>
+                                        </td>
                                     </tr>
+
+                                    <?php foreach ($kegiatan['subkegiatan'] as $sub): ?>
+                                        <tr>
+                                            <td class="text-center"><?= $no++ ?></td>
+                                            <td><?= esc($sub['nama']) ?></td>
+                                            <td class="text-end">
+                                                Rp <?= number_format($sub['anggaran'], 0, ',', '.') ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?= esc(ucwords($pk_data['jenis'])) ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+
                                 <?php endforeach; ?>
+
                             </tbody>
                         </table>
+
                     <?php endif; ?>
+
+
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
                             class="btn btn-primary btn-sm text-white" target="_blank">
@@ -373,7 +449,7 @@
     <script>
         const tahunSelect = document.getElementById('tahun');
         if (tahunSelect) {
-            tahunSelect.addEventListener('change', function () {
+            tahunSelect.addEventListener('change', function() {
                 window.location = '?tahun=' + this.value;
             });
         }

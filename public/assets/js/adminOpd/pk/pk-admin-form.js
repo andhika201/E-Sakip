@@ -22,24 +22,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!val) return "";
 
     let n = parseInt(val, 10);
-    if (isNaN(n)) return '';
+    if (isNaN(n)) return "";
 
-    return 'Rp ' + n.toLocaleString('id-ID');
+    return "Rp " + n.toLocaleString("id-ID");
   }
 
   function initSelect2(context = document) {
     if (!window.jQuery || !jQuery.fn.select2) return;
 
-    jQuery(context).find('select.select2').each(function () {
-      if (jQuery(this).hasClass('select2-hidden-accessible')) {
-        jQuery(this).select2('destroy');
-      }
+    jQuery(context)
+      .find("select.select2")
+      .each(function () {
+        if (jQuery(this).hasClass("select2-hidden-accessible")) {
+          jQuery(this).select2("destroy");
+        }
 
-      jQuery(this).select2({
-        width: '100%',
-        dropdownParent: jQuery(this).parent()
+        jQuery(this).select2({
+          width: "100%",
+          dropdownParent: jQuery(this).parent(),
+        });
       });
-    });
   }
 
   function clearFormControls(root) {
@@ -58,26 +60,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   $(document).on(
-    'select2:select',
+    "select2:select",
     'select[name*="[kegiatan_id]"]',
     function (e) {
       const select = this;
       const selected = select.options[select.selectedIndex];
       if (!selected) return;
 
-      const kegiatanItem = select.closest('.kegiatan-item');
+      const kegiatanItem = select.closest(".kegiatan-item");
       if (!kegiatanItem) return;
 
       const anggaranInput = kegiatanItem.querySelector(
-        'input[name*="[anggaran]"]'
+        'input[name*="[anggaran]"]',
       );
       if (!anggaranInput) return;
 
-      const anggaran = selected.getAttribute('data-anggaran') || '';
+      const anggaran = selected.getAttribute("data-anggaran") || "";
       anggaranInput.value = anggaran
-        ? 'Rp ' + parseInt(anggaran, 10).toLocaleString('id-ID')
-        : '';
-    }
+        ? "Rp " + parseInt(anggaran, 10).toLocaleString("id-ID")
+        : "";
+    },
   );
 
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
@@ -107,63 +109,68 @@ document.addEventListener("DOMContentLoaded", () => {
   if (templateKegiatanItem) clearFormControls(templateKegiatanItem);
   if (templateSubkegItem) clearFormControls(templateSubkegItem);
 
-
-
-
-
   /* =========================================================
      UPDATE FORM NAMES (ADMIN)
   ========================================================= */
   function updateFormNames() {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
-
-      const sasaranText = qs("textarea", sasaran);
-      if (sasaranText) {
-        sasaranText.name = `sasaran_pk[${si}][sasaran]`;
+      // ===== SASARAN =====
+      const sasaranTxt = sasaran.querySelector("textarea");
+      if (sasaranTxt) {
+        sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
       }
 
+      // ===== INDIKATOR =====
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
-
-        const indikatorInput = indikator.querySelector('input[name*="[indikator]"]');
-        if (indikatorInput) {
-          indikatorInput.name = `sasaran_pk[${si}][indikator][${ii}][indikator]`;
+        const inputIndikator = indikator.querySelector(
+          'input[type="text"]:not([name*="target"])',
+        );
+        if (inputIndikator) {
+          inputIndikator.name = `sasaran_pk[${si}][indikator][${ii}][indikator]`;
         }
 
-        const targetInput = indikator.querySelector('input[name*="[target]"]');
-        if (targetInput) {
-          targetInput.name = `sasaran_pk[${si}][indikator][${ii}][target]`;
+        const inputTarget = indikator.querySelector('input[name*="[target]"]');
+        if (inputTarget) {
+          inputTarget.name = `sasaran_pk[${si}][indikator][${ii}][target]`;
         }
 
-        const satuanSelect = indikator.querySelector('select[name*="[id_satuan]"]');
-        if (satuanSelect) {
-          satuanSelect.name = `sasaran_pk[${si}][indikator][${ii}][id_satuan]`;
+        const selectSatuan = indikator.querySelector(
+          'select[name*="[id_satuan]"]',
+        );
+        if (selectSatuan) {
+          selectSatuan.name = `sasaran_pk[${si}][indikator][${ii}][id_satuan]`;
         }
 
-        const jenisSelect = indikator.querySelector('select[name*="[jenis_indikator]"]');
-        if (jenisSelect) {
-          jenisSelect.name = `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
+        const selectJenis = indikator.querySelector(
+          'select[name*="[jenis_indikator]"]',
+        );
+        if (selectJenis) {
+          selectJenis.name = `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
         }
 
+        // ===== PROGRAM =====
         qsa(".program-item", indikator).forEach((program, pi) => {
-
-          const programSelect = program.querySelector(".program-select");
+          const programSelect = program.querySelector(
+            'select[name*="[program_id]"]',
+          );
           if (programSelect) {
-            programSelect.name =
-              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
+            programSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
           }
 
-          qsa(".kegiatan-item", program).forEach((kegiatan, ki) => {
-
-            const kegiatanSelect = kegiatan.querySelector(".kegiatan-select");
-            if (kegiatanSelect) {
-              kegiatanSelect.name =
-                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
+          // ===== KEGIATAN =====
+          qsa(".kegiatan-item", program).forEach((keg, ki) => {
+            const kegSelect = keg.querySelector(
+              'select[name*="[kegiatan_id]"]',
+            );
+            if (kegSelect) {
+              kegSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
             }
 
-            const anggaranInput = kegiatan.querySelector(".anggaran-input");
+            const anggaranInput = keg.querySelector(
+              'input[name*="[anggaran]"]',
+            );
             if (anggaranInput) {
-              anggaranInput.name =
-                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`;
+              anggaranInput.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`;
             }
           });
         });
@@ -359,7 +366,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const kegiatanItem = tgt.closest(".kegiatan-item") || tgt.closest(".row");
       if (!kegiatanItem) return;
       const anggaranField = kegiatanItem.querySelector(
-        'input[name*="[anggaran]"]'
+        'input[name*="[anggaran]"]',
       );
       const selected = tgt.options[tgt.selectedIndex];
       if (anggaranField) {
@@ -389,7 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // initialize anggaran values for existing selects on load
-  qsa('.kegiatan-select').forEach((sel) => {
+  qsa(".kegiatan-select").forEach((sel) => {
     const selected = sel.options[sel.selectedIndex];
     if (selected && selected.dataset && selected.dataset.anggaran) {
       const angInput = sel
@@ -405,7 +412,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateFormNames();
   });
 
-  if (form) {
-    form.addEventListener("submit", updateFormNames);
-  }
+ if (form) {
+  form.addEventListener("submit", (e) => {
+    updateFormNames();
+  });
+}
 });

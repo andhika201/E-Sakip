@@ -170,7 +170,7 @@
 
         </tr>
       </thead>
-      <tbody style="border: none; width: 100%; cellpadding: 0; cellspacing: 0;">
+      <tbody style="border: none; width: 100%;">
         <tr>
           <td style="text-align: center; font-style: italic;">1</td>
           <td style="text-align: center; font-style: italic;">2</td>
@@ -184,7 +184,6 @@
           <?php
           $label = strtoupper(trim($sasaran['sasaran']));
 
-          // 👉 JIKA SASARAN "-" atau "N/A" → SKIP TOTAL (TIDAK TERCETAK)
           if (in_array($label, ['-', 'N/A'])) {
             continue;
           }
@@ -248,27 +247,99 @@
         </thead>
         <tbody>
           <?php
-          $no_pa = 1;
-          $totalAnggaran = 0;
+          /**
+           * ==============================
+           * SETTING STRUKTUR BERDASARKAN JENIS PK
+           * ==============================
+           */
+          if ($jenis === 'bupati' || $jenis === 'jpt') {
+            $groupField = null;                 // tidak ada header
+            $itemField  = 'program_kegiatan';   // item = program
+          } elseif ($jenis === 'administrator') {
+            $groupField = 'program_kegiatan';   // header = program
+            $itemField  = 'kegiatan';            // item = kegiatan
+          } elseif ($jenis === 'pengawas') {
+            $groupField = 'kegiatan';            // header = kegiatan
+            $itemField  = 'sub_kegiatan';        // item = sub kegiatan
+          }
 
+          /**
+           * ==============================
+           * GROUPING DATA (UNIVERSAL)
+           * ==============================
+           */
+          $groupedData = [];
+
+          foreach ($program_pk as $row) {
+
+            $groupName = $groupField ? ($row[$groupField] ?? '-') : null;
+
+            // key unik item + anggaran
+            $itemKey = md5(
+              ($row[$itemField] ?? '') . '|' . ($row['anggaran'] ?? 0)
+            );
+
+            if ($groupField) {
+              // ADA HEADER (Administrator, Pengawas)
+              if (!isset($groupedData[$groupName])) {
+                $groupedData[$groupName] = [
+                  'nama'  => $groupName,
+                  'items' => []
+                ];
+              }
+
+              if (!isset($groupedData[$groupName]['items'][$itemKey])) {
+                $groupedData[$groupName]['items'][$itemKey] = [
+                  'nama'     => $row[$itemField],
+                  'anggaran' => $row['anggaran']
+                ];
+              }
+            } else {
+              // TANPA HEADER (JPT)
+              if (!isset($groupedData['_flat'])) {
+                $groupedData['_flat'] = [
+                  'nama'  => null,
+                  'items' => []
+                ];
+              }
+
+              if (!isset($groupedData['_flat']['items'][$itemKey])) {
+                $groupedData['_flat']['items'][$itemKey] = [
+                  'nama'     => $row[$itemField],
+                  'anggaran' => $row['anggaran']
+                ];
+              }
+            }
+          }
           ?>
-          <?php foreach ($program_pk as $prog): ?>
-            <?php $totalAnggaran += (float) $prog['anggaran']; ?>
-            <tr>
-              <td class="center"><?= $no_pa++ ?></td>
-              <td><?= esc($prog[$program]) ?></td>
-              <td style="text-align:right;">
-                <?= number_format($prog['anggaran'], 0, ',', '.') ?>
-              </td>
-            </tr>
+
+          <?php $grandTotal = 0; ?>
+
+          <?php foreach ($groupedData as $group): ?>
+
+            <?php if ($group['nama']): ?>
+              <tr class="fw-bold">
+                <td colspan="3">
+                  <?= esc($group['nama']) ?>
+                </td>
+              </tr>
+            <?php endif; ?>
+
+            <?php $no = 1; ?>
+            <?php foreach ($group['items'] as $item): ?>
+              <?php $grandTotal += (float) $item['anggaran']; ?>
+              <tr>
+                <td class="center"><?= $no++ ?></td>
+                <td><?= esc($item['nama']) ?></td>
+                <td class="right"><?= number_format($item['anggaran'], 0, ',', '.') ?></td>
+              </tr>
+            <?php endforeach; ?>
+
           <?php endforeach; ?>
 
-          <!-- TOTAL -->
           <tr class="fw-bold">
-            <td colspan="2" style="text-align:right;">TOTAL</td>
-            <td style="text-align:right;">
-              <?= number_format($totalAnggaran, 0, ',', '.') ?>
-            </td>
+            <td colspan="2" class="right">TOTAL</td>
+            <td class="right"><?= number_format($grandTotal, 0, ',', '.') ?></td>
           </tr>
         </tbody>
       </table>

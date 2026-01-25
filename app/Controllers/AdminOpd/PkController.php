@@ -31,7 +31,7 @@ class PkController extends BaseController
         }
 
         $tahun = $this->request->getGet('tahun');
-        $pkId = $this->request->getGet('pk_id');
+        $pkId  = $this->request->getGet('pk_id');
 
         $pkData = null;
         $pkRelasiList = [];
@@ -40,42 +40,129 @@ class PkController extends BaseController
 
         // 1️⃣ Jika tahun dipilih → ambil daftar relasi
         if ($tahun) {
-            $pkRelasiList = $this->pkModel->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
+            $pkRelasiList = $this->pkModel
+                ->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
         }
 
-        // 2️⃣ Jika relasi dipilih → ambil PK
+        // 2️⃣ Jika PK dipilih → ambil data lengkap
         if ($pkId) {
             $pkData = $this->pkModel->getCompletePkById($pkId);
 
-            // 🔥 NORMALISASI WAJIB (INI KUNCI)
+            // 🔥 NORMALISASI (kadang return array[0])
             if (is_array($pkData) && isset($pkData[0])) {
                 $pkData = $pkData[0];
             }
+
+            // ==================================================
+            // 🔥 DEDUP PROGRAM KHUSUS JPT
+            // ==================================================
+            if (
+                $jenis === 'jpt' &&
+                !empty($pkData['sasaran']) &&
+                is_array($pkData['sasaran'])
+            ) {
+                $uniquePrograms = [];
+
+                foreach ($pkData['sasaran'] as $sasaran) {
+                    foreach ($sasaran['indikator'] ?? [] as $indikator) {
+                        foreach ($indikator['program'] ?? [] as $program) {
+
+                            // key unik: program_id + anggaran
+                            $key = $program['program_id'] . '|' . $program['anggaran'];
+
+                            $uniquePrograms[$key] = [
+                                'program_id'        => $program['program_id'],
+                                'program_kegiatan'  => $program['program_kegiatan'],
+                                'anggaran'          => $program['anggaran'],
+                            ];
+                        }
+                    }
+                }
+
+                // hasil final utk view
+                $pkData['program'] = array_values($uniquePrograms);
+            }
         }
 
+        // 3️⃣ Cek level pihak 1 (untuk hak tampil)
         if ($pkData && isset($pkData['pihak_1'])) {
-            $pegawai = $this->pegawaiModel->getLevelByPegawaiId($pkData['pihak_1']);
+            $pegawai = $this->pegawaiModel
+                ->getLevelByPegawaiId($pkData['pihak_1']);
+
             $pihak1Level = $pegawai['level'] ?? null;
 
 
             $tampilkanProgram = !($opdId == 2 && $pihak1Level === 'VERIFIKATOR');
         }
 
-
         $currentOpd = $this->opdModel->find($opdId);
 
-        dd($pkData);
-
         return view('adminOpd/pk/pk', [
-            'pk_data' => $pkData,
-            'pkRelasiList' => $pkRelasiList,
+            'pk_data'          => $pkData,
+            'pkRelasiList'     => $pkRelasiList,
             'tampilkanProgram' => $tampilkanProgram,
-            'current_opd' => $currentOpd,
-            'currentYear' => date('Y'),
-            'pk_id' => $pkId,
-            'tahun' => $tahun,
-            'jenis' => $jenis,
+            'current_opd'      => $currentOpd,
+            'currentYear'      => date('Y'),
+            'pk_id'            => $pkId,
+            'tahun'            => $tahun,
+            'jenis'            => $jenis,
         ]);
+    }
+
+    public function cetak($jenis, $id = null)
+    {
+        helper('format');
+        if (!$id) {
+            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
+        }
+        $data = $this->pkModel->getPkById($id);
+        if (!$data) {
+            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+        }
+        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+
+        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+
+        if ($jenis === 'bupati' || $jenis === 'jpt') {
+            $program = "program_kegiatan";
+        } elseif ($jenis === 'administrator') {
+            $program = "kegiatan";
+        } elseif ($jenis === 'pengawas') {
+            $program = "sub_kegiatan";
+        }
+
+        
+
+
+        $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
+        $pihak1Level = $pegawai1['level'] ?? null;
+
+        $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
+
+        $tahun = date('Y', strtotime($data['tanggal']));
+        $viewPath = 'adminOpd/pk/cetak';
+        $viewPathL = 'adminOpd/pk/cetak-L';
+        $html_1 = view($viewPath, $data);
+        $html_2 = view($viewPathL, [
+            'data' => $data,
+            'tampilkanProgram' => $tampilkanProgram,
+            'program' => $program,
+
+        ]);
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'FOLIO',
+            'default_font_size' => 12,
+            'mirrorMargins' => true,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+        $css = 'img { width: 70px; height: auto; }';
+        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML($html_1);
+        $mpdf->AddPage('P');
+        $mpdf->WriteHTML($html_2);
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
     }
 
 
@@ -240,7 +327,7 @@ class PkController extends BaseController
                 }
             }
         }
-
+        // dd($post['sasaran_pk']);
         // ------------------------------
         // STRUKTUR DATA FINAL
         // ------------------------------
@@ -378,8 +465,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        }
-        ;
+        };
+        // dd($this->request->getPost('sasaran_pk'));
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -540,20 +627,38 @@ class PkController extends BaseController
                     }
 
                     if ($jenis === 'pengawas') {
-                        foreach ($ind['kegiatan'] ?? [] as $k) {
-                            $kg = [
-                                'kegiatan_id' => $k['kegiatan_id'] ?? null,
-                                'subkegiatan' => []
+                        foreach ($ind['program'] ?? [] as $p) {
+                            $programData = [
+                                'program_id' => $p['program_id'] ?? null,
+                                'kegiatan' => []
                             ];
-                            foreach ($k['subkegiatan'] ?? [] as $sk) {
-                                $kg['subkegiatan'][] = [
-                                    'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
-                                    'anggaran' => $sk['anggaran'] ?? 0
+
+                            foreach ($p['kegiatan'] ?? [] as $k) {
+                                $kegiatanData = [
+                                    'kegiatan_id' => $k['kegiatan_id'] ?? null,
+                                    'subkegiatan' => []
                                 ];
+
+                                foreach ($k['subkegiatan'] ?? [] as $sk) {
+                                    $kegiatanData['subkegiatan'][] = [
+                                        'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
+                                        'anggaran' => $sk['anggaran'] ?? 0
+                                    ];
+                                }
+
+                                $programData['kegiatan'][] = $kegiatanData;
                             }
-                            $indikatorData['kegiatan'][] = $kg;
+
+                            $indikatorData['program'][] = $programData;
                         }
                     }
+
+                    log_message(
+                        'debug',
+                        "PROGRAM RESULT [{$sIndex}][{$iIndex}]: " .
+                            json_encode($indikatorData['program'])
+                    );
+
 
                     $sasaranData['indikator'][] = $indikatorData;
                 }
@@ -664,58 +769,5 @@ class PkController extends BaseController
 
 
 
-    public function cetak($jenis, $id = null)
-    {
-        helper('format');
-        if (!$id) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
-        }
-        $data = $this->pkModel->getPkById($id);
-        if (!$data) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
-        }
-        dd($data);
-        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
-
-        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
-
-        if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $program = "program_kegiatan";
-        } elseif ($jenis === 'administrator') {
-            $program = "kegiatan";
-        } elseif ($jenis === 'pengawas') {
-            $program = "sub_kegiatan";
-        }
-
-
-        $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
-        $pihak1Level = $pegawai1['level'] ?? null;
-
-        $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
-
-        $tahun = date('Y', strtotime($data['tanggal']));
-        $viewPath = 'adminOpd/pk/cetak';
-        $viewPathL = 'adminOpd/pk/cetak-L';
-        $html_1 = view($viewPath, $data);
-        $html_2 = view($viewPathL, [
-            'data' => $data,
-            'tampilkanProgram' => $tampilkanProgram,
-            'program' => $program,
-
-        ]);
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'FOLIO',
-            'default_font_size' => 12,
-            'mirrorMargins' => true,
-            'tempDir' => sys_get_temp_dir(),
-        ]);
-        $css = 'img { width: 70px; height: auto; }';
-        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($html_1);
-        $mpdf->AddPage('P');
-        $mpdf->WriteHTML($html_2);
-        $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
-    }
+    
 }

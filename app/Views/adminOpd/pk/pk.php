@@ -230,6 +230,7 @@
                         </table>
                     <?php elseif ($jenis === 'jpt' && $tampilkanProgram): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
+
                         <table class="table table-bordered table-striped text-center small">
                             <thead class="table-info">
                                 <tr>
@@ -240,24 +241,25 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php $no_program = 1; ?>
-                                <?php foreach ($pk_data['program'] as $program): ?>
+                                <?php $no = 1; ?>
+
+                                <?php if (!empty($pk_data['program'])): ?>
+                                    <?php foreach ($pk_data['program'] as $program): ?>
+                                        <tr>
+                                            <td><?= $no++ ?></td>
+                                            <td><?= esc($program['program_kegiatan']) ?></td>
+                                            <td>Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
+                                            <td>JPT</td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
                                     <tr>
-                                        <td class="border p-2"><?= $no_program++ ?></td>
-                                        <td class="border p-2"><?= esc($program['program_kegiatan']) ?></td>
-                                        <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
-                                        <?php
-                                        if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
-                                            $judulPk = 'CAMAT';
-                                        } else {
-                                            $judulPk = strtoupper($jenis);
-                                        }
-                                        ?>
-                                        <td class="border p-2"><?= esc(ucwords($judulPk)) ?></td>
+                                        <td colspan="4">Tidak ada data program</td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
+
                     <?php elseif ($jenis === 'administrator'): ?>
                         <h4 class="h3 fw-bold text-success mb-4">KEGIATAN DAN ANGGARAN</h4>
 

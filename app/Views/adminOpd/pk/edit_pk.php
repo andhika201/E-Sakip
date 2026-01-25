@@ -483,7 +483,8 @@
                                                                                 <option value="<?= $kegiatanItem['id'] ?>"
                                                                                     data-program="<?= $kegiatanItem['program_id'] ?>"
                                                                                     <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
-                                                                                    <?= esc($kegiatanItem['kegiatan']) ?>
+                                                                                    <?= esc($kegiatanItem['kegiatan']) ?> — Rp
+                                                                                    <?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
                                                                                 </option>
                                                                             <?php endforeach; ?>
 
@@ -619,7 +620,6 @@
         <?= $this->include('adminOpd/templates/footer.php'); ?>
     </div>
 
-    <!-- JavaScript Function For Handling RPJMD Form-->
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php

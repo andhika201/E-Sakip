@@ -31,7 +31,7 @@ class PkController extends BaseController
         }
 
         $tahun = $this->request->getGet('tahun');
-        $pkId = $this->request->getGet('pk_id');
+        $pkId  = $this->request->getGet('pk_id');
 
         $pkData = null;
         $pkRelasiList = [];
@@ -40,40 +40,71 @@ class PkController extends BaseController
 
         // 1️⃣ Jika tahun dipilih → ambil daftar relasi
         if ($tahun) {
-            $pkRelasiList = $this->pkModel->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
+            $pkRelasiList = $this->pkModel
+                ->getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun);
         }
 
-        // 2️⃣ Jika relasi dipilih → ambil PK
+        // 2️⃣ Jika PK dipilih → ambil data lengkap
         if ($pkId) {
             $pkData = $this->pkModel->getCompletePkById($pkId);
 
-            // 🔥 NORMALISASI WAJIB (INI KUNCI)
+            // 🔥 NORMALISASI (kadang return array[0])
             if (is_array($pkData) && isset($pkData[0])) {
                 $pkData = $pkData[0];
             }
+
+            // ==================================================
+            // 🔥 DEDUP PROGRAM KHUSUS JPT
+            // ==================================================
+            if (
+                $jenis === 'jpt' &&
+                !empty($pkData['sasaran']) &&
+                is_array($pkData['sasaran'])
+            ) {
+                $uniquePrograms = [];
+
+                foreach ($pkData['sasaran'] as $sasaran) {
+                    foreach ($sasaran['indikator'] ?? [] as $indikator) {
+                        foreach ($indikator['program'] ?? [] as $program) {
+
+                            // key unik: program_id + anggaran
+                            $key = $program['program_id'] . '|' . $program['anggaran'];
+
+                            $uniquePrograms[$key] = [
+                                'program_id'        => $program['program_id'],
+                                'program_kegiatan'  => $program['program_kegiatan'],
+                                'anggaran'          => $program['anggaran'],
+                            ];
+                        }
+                    }
+                }
+
+                // hasil final utk view
+                $pkData['program'] = array_values($uniquePrograms);
+            }
         }
 
+        // 3️⃣ Cek level pihak 1 (untuk hak tampil)
         if ($pkData && isset($pkData['pihak_1'])) {
-            $pegawai = $this->pegawaiModel->getLevelByPegawaiId($pkData['pihak_1']);
+            $pegawai = $this->pegawaiModel
+                ->getLevelByPegawaiId($pkData['pihak_1']);
+
             $pihak1Level = $pegawai['level'] ?? null;
 
             $tampilkanProgram = !($opdId == 2 && $pihak1Level === 'VERIFIKATOR');
         }
 
-
         $currentOpd = $this->opdModel->find($opdId);
 
-        // dd($pkData['sasaran'][1]['indikator'][0]);
-
         return view('adminOpd/pk/pk', [
-            'pk_data' => $pkData,
-            'pkRelasiList' => $pkRelasiList,
+            'pk_data'          => $pkData,
+            'pkRelasiList'     => $pkRelasiList,
             'tampilkanProgram' => $tampilkanProgram,
-            'current_opd' => $currentOpd,
-            'currentYear' => date('Y'),
-            'pk_id' => $pkId,
-            'tahun' => $tahun,
-            'jenis' => $jenis,
+            'current_opd'      => $currentOpd,
+            'currentYear'      => date('Y'),
+            'pk_id'            => $pkId,
+            'tahun'            => $tahun,
+            'jenis'            => $jenis,
         ]);
     }
 
@@ -377,7 +408,7 @@ class PkController extends BaseController
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         };
-        dd($this->request->getPost('sasaran_pk'));
+        // dd($this->request->getPost('sasaran_pk'));
 
         // ------------------------------
         // SIMPAN KE MODEL

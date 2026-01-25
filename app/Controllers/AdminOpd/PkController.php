@@ -63,7 +63,7 @@ class PkController extends BaseController
 
         $currentOpd = $this->opdModel->find($opdId);
 
-        // dd($pihak1Level);
+        // dd($pkData['sasaran'][1]['indikator'][0]);
 
         return view('adminOpd/pk/pk', [
             'pk_data' => $pkData,
@@ -238,7 +238,7 @@ class PkController extends BaseController
                 }
             }
         }
-        // dd($post['sasaran_pk'][0]['indikator'][0]);
+        // dd($post['sasaran_pk']);
         // ------------------------------
         // STRUKTUR DATA FINAL
         // ------------------------------
@@ -377,6 +377,7 @@ class PkController extends BaseController
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         };
+        dd($this->request->getPost('sasaran_pk'));
 
         // ------------------------------
         // SIMPAN KE MODEL
@@ -562,7 +563,7 @@ class PkController extends BaseController
                             $indikatorData['program'][] = $programData;
                         }
                     }
-                    
+
                     log_message(
                         'debug',
                         "PROGRAM RESULT [{$sIndex}][{$iIndex}]: " .

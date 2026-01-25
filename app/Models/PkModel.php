@@ -139,24 +139,92 @@ class PkModel extends Model
             ->getResultArray();
 
         foreach ($sasaranList as &$sasaran) {
-            $indikatorList = $this->db->table('pk_indikator')
-                ->select('pk_indikator.*, satuan.satuan as satuan_nama')
-                ->join('satuan', 'satuan.id = pk_indikator.id_satuan', 'left')
-                ->where('pk_sasaran_id', $sasaran['id'])
-                ->orderBy('id', 'ASC')
+
+            // ======================
+            // INDIKATOR
+            // ======================
+            $indikatorList = $this->db->table('pk_indikator pi')
+                ->select('pi.*, satuan.satuan as satuan_nama')
+                ->join('satuan', 'satuan.id = pi.id_satuan', 'left')
+                ->where('pi.pk_sasaran_id', $sasaran['id'])
+                ->orderBy('pi.id', 'ASC')
                 ->get()
                 ->getResultArray();
 
             foreach ($indikatorList as &$indikator) {
-                // Normalisasi key agar view tetap pakai $indikator['satuan']
-                $indikator['satuan'] = $indikator['satuan_nama'] ?? ($indikator['id_satuan'] ?? '-');
+
+                // ======================
+                // PROGRAM (PER INDIKATOR)
+                // ======================
+                $programList = $this->db->table('pk_program pp')
+                    ->select('
+                    pp.id as pk_program_id,
+                    pr.program_kegiatan,
+                    pr.anggaran,
+                    pp.program_id
+                ')
+                    ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
+                    ->where('pp.pk_indikator_id', $indikator['id'])
+                    ->orderBy('pp.id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($programList as &$program) {
+
+                    // ======================
+                    // KEGIATAN (PER PROGRAM)
+                    // ======================
+                    $kegiatanList = $this->db->table('pk_kegiatan pkeg')
+                        ->select('
+                        pkeg.id as pk_kegiatan_id,
+                        keg.kegiatan,
+                        keg.anggaran,
+                        pkeg.kegiatan_id
+                    ')
+                        ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
+                        ->where('pkeg.pk_program_id', $program['pk_program_id'])
+                        ->orderBy('pkeg.id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    // ======================
+                    // SUBKEGIATAN (PER KEGIATAN)
+                    // ======================
+                    foreach ($kegiatanList as &$kegiatan) {
+
+                        $subkegiatanList = $this->db->table('pk_subkegiatan pksub')
+                            ->select('
+                            pksub.id as pk_subkegiatan_id,
+                            sub.sub_kegiatan,
+                            sub.anggaran,
+                            pksub.subkegiatan_id
+                        ')
+                            ->join('sub_kegiatan_pk sub', 'sub.id = pksub.subkegiatan_id', 'left')
+                            ->where('pksub.pk_kegiatan_id', $kegiatan['pk_kegiatan_id'])
+                            ->orderBy('pksub.id', 'ASC')
+                            ->get()
+                            ->getResultArray();
+
+                        // 🔑 masukkan subkegiatan ke kegiatan
+                        $kegiatan['subkegiatan'] = $subkegiatanList;
+                    }
+
+                    // masukkan kegiatan (lengkap dengan subkegiatan) ke program
+                    $program['kegiatan'] = $kegiatanList;
+                }
+
+                // masukkan program ke indikator
+                $indikator['program'] = $programList;
             }
 
+            // masukkan indikator ke sasaran
             $sasaran['indikator'] = $indikatorList;
         }
 
         return $sasaranList;
     }
+
+
 
     /**
      * Get indikator acuan (referensi) for a given PK
@@ -590,7 +658,7 @@ class PkModel extends Model
             ->join('pk', 'pk.id = ps.pk_id')
             ->where('pi.jenis', 'administrator')
             ->where('pk.opd_id', $opdId)
-            ->groupBy('keg.id, pp.program_id') 
+            ->groupBy('keg.id, pp.program_id')
             ->orderBy('keg.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
@@ -710,9 +778,9 @@ class PkModel extends Model
 
         foreach ($results as &$pk) {
             $pk['sasaran'] = $this->getSasaranByPkId($pk['id']);
-            $pk['program'] = $this->getProgramByPkId($pk['id']);
-            $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
-            $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
+            // $pk['program'] = $this->getProgramByPkId($pk['id']);
+            // $pk['kegiatan'] = $this->getKegiatanByPkId($pk['id']);
+            // $pk['subkegiatan'] = $this->getSubKegiatanByPkId($pk['id']);
         }
 
         return $results;

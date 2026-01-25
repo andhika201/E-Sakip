@@ -429,12 +429,6 @@ document.addEventListener("DOMContentLoaded", () => {
  if (form) {
   form.addEventListener("submit", (e) => {
     updateFormNames();
-
-    // ===== DEBUG (sementara) =====
-    console.log(
-      [...document.querySelectorAll('input[name*="[indikator]"]')]
-        .map(i => i.name + " = " + i.value)
-    );
   });
 }
 });

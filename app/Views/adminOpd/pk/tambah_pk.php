@@ -460,17 +460,13 @@
                                                         <div class="kegiatan-item border rounded p-3 bg-white mb-4">
 
                                                             <div class="row mb-3">
-
                                                                 <div class="col-md-6">
                                                                     <label class="form-label">Kegiatan</label>
 
-                                                                    <!-- PROGRAM_ID yg BENAR: kosong dulu, diisi saat user pilih kegiatan -->
-                                                                    <input type="hidden"
-                                                                        name="sasaran_pk[0][indikator][0][program][0][program_id]"
-                                                                        class="program-id-hidden">
+                                                                    <!-- program_id akan di-set JS -->
+                                                                    <input type="hidden" class="program-id-hidden">
 
                                                                     <select
-                                                                        name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
                                                                         class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown"
                                                                         required>
                                                                         <option value="">Pilih Kegiatan</option>
@@ -487,8 +483,7 @@
                                                                 </div>
 
                                                                 <div class="col-md-3 d-flex align-items-end">
-                                                                    <button type="button"
-                                                                        class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                                    <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
                                                                         <i class="fas fa-trash"></i>
                                                                     </button>
                                                                 </div>
@@ -500,35 +495,28 @@
                                                                     <div class="row">
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Sub Kegiatan</label>
-                                                                            <select
-                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][subkegiatan_id]"
-                                                                                class="form-select select2 subkeg-select border-secondary"
-                                                                                required>
+
+                                                                            <select class="form-select select2 subkeg-select border-secondary" required>
                                                                                 <option value="">Pilih Sub Kegiatan</option>
                                                                                 <?php foreach ($subkegiatan as $sk): ?>
                                                                                     <option value="<?= $sk['id'] ?>"
                                                                                         data-anggaran="<?= $sk['anggaran'] ?>">
-                                                                                        <?= esc($sk['sub_kegiatan']) ?> — Rp
-                                                                                        <?= number_format($sk['anggaran'], 0, ',', '.') ?>
+                                                                                        <?= esc($sk['sub_kegiatan']) ?> —
+                                                                                        Rp<?= number_format($sk['anggaran'], 0, ',', '.') ?>
                                                                                     </option>
                                                                                 <?php endforeach; ?>
                                                                             </select>
                                                                         </div>
+
                                                                         <div class="col-md-3">
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
-                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][subkegiatan][0][anggaran]"
                                                                                 class="form-control mb-3 border-secondary anggaran-input"
-                                                                                value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
-                                                                                readonly />
-                                                                            <input type="hidden"
-                                                                                name="subkegiatan[0][id_indikator]"
-                                                                                value="">
+                                                                                readonly>
                                                                         </div>
 
                                                                         <div class="col-md-3 d-flex align-items-end">
-                                                                            <button type="button"
-                                                                                class="remove-subkeg btn btn-outline-danger btn-sm">
+                                                                            <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm">
                                                                                 <i class="fas fa-trash"></i>
                                                                             </button>
                                                                         </div>
@@ -537,16 +525,13 @@
                                                             </div>
 
                                                             <div class="d-flex justify-content-end mt-2">
-                                                                <button type="button"
-                                                                    class="add-subkeg btn btn-success btn-sm">
+                                                                <button type="button" class="add-subkeg btn btn-success btn-sm">
                                                                     <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                                                 </button>
                                                             </div>
 
                                                         </div>
                                                     </div>
-
-
                                                     <div class="d-flex justify-content-end mt-2">
                                                         <button type="button" class="add-kegiatan btn btn-primary btn-sm">
                                                             <i class="fas fa-plus me-1"></i> Tambah Kegiatan

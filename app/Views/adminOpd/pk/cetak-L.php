@@ -170,7 +170,7 @@
 
         </tr>
       </thead>
-      <tbody style="border: none; width: 100%; cellpadding: 0; cellspacing: 0;">
+      <tbody style="border: none; width: 100%;">
         <tr>
           <td style="text-align: center; font-style: italic;">1</td>
           <td style="text-align: center; font-style: italic;">2</td>

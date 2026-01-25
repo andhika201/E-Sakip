@@ -108,6 +108,62 @@ class PkController extends BaseController
         ]);
     }
 
+    public function cetak($jenis, $id = null)
+    {
+        helper('format');
+        if (!$id) {
+            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
+        }
+        $data = $this->pkModel->getPkById($id);
+        if (!$data) {
+            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+        }
+        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+
+        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+
+        if ($jenis === 'bupati' || $jenis === 'jpt') {
+            $program = "program_kegiatan";
+        } elseif ($jenis === 'administrator') {
+            $program = "kegiatan";
+        } elseif ($jenis === 'pengawas') {
+            $program = "sub_kegiatan";
+        }
+
+        
+
+
+        $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
+        $pihak1Level = $pegawai1['level'] ?? null;
+
+        $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
+
+        $tahun = date('Y', strtotime($data['tanggal']));
+        $viewPath = 'adminOpd/pk/cetak';
+        $viewPathL = 'adminOpd/pk/cetak-L';
+        $html_1 = view($viewPath, $data);
+        $html_2 = view($viewPathL, [
+            'data' => $data,
+            'tampilkanProgram' => $tampilkanProgram,
+            'program' => $program,
+
+        ]);
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'FOLIO',
+            'default_font_size' => 12,
+            'mirrorMargins' => true,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+        $css = 'img { width: 70px; height: auto; }';
+        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML($html_1);
+        $mpdf->AddPage('P');
+        $mpdf->WriteHTML($html_2);
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
+    }
+
 
 
     public function tambah($jenis)
@@ -711,57 +767,5 @@ class PkController extends BaseController
 
 
 
-    public function cetak($jenis, $id = null)
-    {
-        helper('format');
-        if (!$id) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
-        }
-        $data = $this->pkModel->getPkById($id);
-        if (!$data) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
-        }
-        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
-
-        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
-
-        if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $program = "program_kegiatan";
-        } elseif ($jenis === 'administrator') {
-            $program = "kegiatan";
-        } elseif ($jenis === 'pengawas') {
-            $program = "sub_kegiatan";
-        }
-
-
-        $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
-        $pihak1Level = $pegawai1['level'] ?? null;
-
-        $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
-
-        $tahun = date('Y', strtotime($data['tanggal']));
-        $viewPath = 'adminOpd/pk/cetak';
-        $viewPathL = 'adminOpd/pk/cetak-L';
-        $html_1 = view($viewPath, $data);
-        $html_2 = view($viewPathL, [
-            'data' => $data,
-            'tampilkanProgram' => $tampilkanProgram,
-            'program' => $program,
-
-        ]);
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'FOLIO',
-            'default_font_size' => 12,
-            'mirrorMargins' => true,
-            'tempDir' => sys_get_temp_dir(),
-        ]);
-        $css = 'img { width: 70px; height: auto; }';
-        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($html_1);
-        $mpdf->AddPage('P');
-        $mpdf->WriteHTML($html_2);
-        $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
-    }
+    
 }

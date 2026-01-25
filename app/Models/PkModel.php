@@ -101,31 +101,53 @@ class PkModel extends Model
     public function getKegiatanByPkId($pkId)
     {
         return $this->db->table('pk_kegiatan kk')
-            ->select('kk.id as pk_kegiatan_id, kp.kegiatan, kp.anggaran, kk.kegiatan_id, kk.pk_program_id')
+            ->select('
+            kk.id as pk_kegiatan_id,
+            kp.kegiatan,
+            kp.anggaran,
+            kk.kegiatan_id,
+            kk.pk_program_id,
+            pr.program_kegiatan
+        ')
             ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
             ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
+            ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->where('ps.pk_id', $pkId)
+            ->orderBy('pr.program_kegiatan', 'ASC')
             ->orderBy('kk.id', 'ASC')
             ->get()
             ->getResultArray();
     }
 
+
     public function getSubKegiatanByPkId($pkId)
     {
         return $this->db->table('pk_subkegiatan psk')
-            ->select('psk.id as pk_subkegiatan_id, skp.sub_kegiatan, skp.anggaran, psk.subkegiatan_id, psk.pk_kegiatan_id')
+            ->select('
+            kp.kegiatan,
+            skp.sub_kegiatan,
+            skp.anggaran
+        ')
             ->join('sub_kegiatan_pk skp', 'skp.id = psk.subkegiatan_id', 'left')
             ->join('pk_kegiatan kk', 'kk.id = psk.pk_kegiatan_id', 'left')
+            ->join('kegiatan_pk kp', 'kp.id = kk.kegiatan_id', 'left')
             ->join('pk_program pp', 'pp.id = kk.pk_program_id', 'left')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->where('ps.pk_id', $pkId)
-            ->orderBy('psk.id', 'ASC')
+            ->groupBy([
+                'kp.kegiatan',
+                'skp.sub_kegiatan',
+                'skp.anggaran'
+            ])
+            ->orderBy('kp.kegiatan', 'ASC')
+            ->orderBy('skp.sub_kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
+
 
     /**
      * Get all sasaran and their indikator for a given PK id

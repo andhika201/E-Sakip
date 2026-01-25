@@ -92,10 +92,6 @@
             background-color: #00743e;
         }
 
-        /* small visual tweaks for nested boxes */
-        .program-item,
-        .kegiatan-item,
-        .subkeg-item {}
     </style>
 </head>
 
@@ -334,7 +330,6 @@
                                                             <div class="col-md-6">
                                                                 <label class="form-label">Program</label>
                                                                 <select
-                                                                    name="sasaran_pk[0][indikator][0][program][0][program_id]"
                                                                     class="form-select select2 program-select mb-3 border-secondary"
                                                                     required>
                                                                     <option value="">Pilih Program</option>
@@ -352,7 +347,6 @@
                                                             <div class="col-md-3">
                                                                 <label class="form-label">Anggaran</label>
                                                                 <input type="text"
-                                                                    name="sasaran_pk[0][indikator][0][program][0][anggaran]"
                                                                     class="form-control mb-3 border-secondary anggaran-input" value=""
                                                                     placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?> readonly />
                                                                 <input type="hidden" name="program[0][id_indikator]"

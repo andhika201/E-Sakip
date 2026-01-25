@@ -157,11 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function setName(scope, sel, name) {
-    const el = qs(sel, scope);
-    if (el) el.name = name;
-  }
-
   updateFormNames();
   /* =========================================================
      ADD / REMOVE (IDENTIK POLA pk-form.js)

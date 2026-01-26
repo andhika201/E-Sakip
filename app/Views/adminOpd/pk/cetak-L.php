@@ -1,3 +1,5 @@
+
+text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminators )
 <!DOCTYPE html>
 <html lang="id">
 
@@ -159,15 +161,16 @@
       <?php endif; ?>
     </h4>
 
+    <?php $head_table = ($jenis === 'pengawas') ? 'KEGIATAN' : 'PROGRAM';?>
+
     <table class="table-bordered-custom table-header" style="width: 100%; margin-top: 10px;">
       <thead>
         <tr>
           <th style="width: 10%; text-align: center;">No</th>
-          <th style="width: 30%; text-align: center;">SASARAN STRATEGIS</th>
+          <th style="width: 30%; text-align: center;">SASARAN <?= strtoupper($head_table) ?></th>
           <th style="width: 30%; text-align: center;">INDIKATOR SASARAN</th>
           <th style="width: 15%; text-align: center;">TARGET</th>
           <th style="width: 15%; text-align: center;">SATUAN</th>
-
         </tr>
       </thead>
       <tbody style="border: none; width: 100%;">
@@ -229,19 +232,15 @@
       </tbody>
     </table>
 
-    <!-- TABEL PROGRAM, KEGIATAN, dan SUBKEGIATAN -->
+    
+
+
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
-      <?php
-      $indikator = $pk_data['sasaran'][0]['indikator'][0];
-      
-      $programs = $pk_data['program'];
-      $kegiatans = $pk_data['kegiatan'];
-      ?>
       <table class="table-bordered-custom" style="width:100%; margin-top:30px;">
         <thead>
           <tr class="center fw-bold">
             <th style="width:7%;">No</th>
-            <th style="width:65%;"><?= strtoupper(esc($program)) ?></th>
+            <th style="width:65%;"><?= strtoupper(esc($head_table)) ?></th>
             <th style="width:28%;">ANGGARAN (Rp)</th>
           </tr>
         </thead>
@@ -344,10 +343,9 @@
         </tbody>
       </table>
     <?php endif; ?>
-    <!-- END TABEL PROGRAM, KEGIATAN, dan SUBKEGIATAN -->
 
 
-    <!-- Tanda Tangan -->
+
     <table style="width:100%; margin-top:30px;">
       <tr>
         <?php if (strtolower($jenis) !== 'bupati'): ?>

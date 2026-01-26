@@ -1,12 +1,3 @@
-/**
- * pk-admin-form.js (FINAL)
- * Role : ADMIN
- * Struktur:
- * Sasaran → Indikator → Program → Kegiatan
- * Anggaran diambil dari KEGIATAN (data-anggaran)
- * Select2 SAFE + dynamic clone
- */
-
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("pk-form");
   const sasaranContainer = document.querySelector(".sasaran-container");
@@ -45,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function clearFormControls(root) {
-    // kosongkan input/textareas/select (kecuali hidden id fields jika perlu)
     qsa("input, textarea, select", root).forEach((el) => {
       const t = el.tagName.toLowerCase();
       if (t === "select") {
@@ -178,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  updateFormNames();
   /* =========================================================
      ADD / REMOVE HANDLER
   ========================================================= */
@@ -187,17 +178,34 @@ document.addEventListener("DOMContentLoaded", () => {
     //   ------- ADD SASARAN ---------- */
     if (target.closest(".add-sasaran")) {
       e.preventDefault();
+
       if (!templateSasaran) return;
       const clone = templateSasaran.cloneNode(true);
-      // clean inner lists: keep exactly 1 indikator, each indikator keep 1 program/kegiatan/subkeg
-      // remove extra indikator/program if any (template should already be simple)
       clearFormControls(clone);
-      // append and update names
+      
+      // paksa hanya 1 indikator awal
+      const indikatorContainer = clone.querySelector(".indikator-container");
+      indikatorContainer.innerHTML = "";
+
+      const indikatorClone = templateIndikator.cloneNode(true);
+      clearFormControls(indikatorClone);
+
+      // paksa 1 program awal
+      const programContainer =
+        indikatorClone.querySelector(".program-container");
+      programContainer.innerHTML = "";
+
+      const programClone = templateProgramItem.cloneNode(true);
+      clearFormControls(programClone);
+      programContainer.appendChild(programClone);
+
+      indikatorContainer.appendChild(indikatorClone);
       sasaranContainer.appendChild(clone);
       updateFormNames();
       initSelect2(clone);
-
       return;
+
+      
     }
 
     // add-indikator
@@ -357,6 +365,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  updateFormNames();
+  initSelect2();
   /* =========================================================
      INIT
   ========================================================= */
@@ -412,9 +422,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateFormNames();
   });
 
- if (form) {
-  form.addEventListener("submit", (e) => {
-    updateFormNames();
-  });
-}
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      updateFormNames();
+    });
+  }
 });

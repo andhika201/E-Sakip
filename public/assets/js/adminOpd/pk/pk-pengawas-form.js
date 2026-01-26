@@ -1,15 +1,14 @@
-/**
- * pk-pengawas-form.js
- * FINAL – ARSITEKTUR IDENTIK DENGAN pk-form.js
- * Struktur:
- * Sasaran → Indikator → Program(hidden) → Kegiatan → Subkegiatan
- * Anggaran diambil dari SUBKEGIATAN
- */
 
 document.addEventListener("DOMContentLoaded", () => {
+
   const form = document.getElementById("pk-form");
+
   const sasaranContainer = document.querySelector(".sasaran-container");
   if (!sasaranContainer) return;
+
+  const isEdit =
+    sasaranContainer.querySelectorAll(".sasaran-item").length > 0 &&
+    sasaranContainer.querySelector("textarea")?.value?.trim() !== "";
 
   /* =========================================================
      UTILITIES (IDENTIK pk-form.js)
@@ -80,10 +79,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const tplKegiatan = qs(".kegiatan-item")?.cloneNode(true);
   const tplSubkeg = qs(".subkeg-item")?.cloneNode(true);
 
-  if (tplSasaran) clearFormControls(tplSasaran);
-  if (tplIndikator) clearFormControls(tplIndikator);
-  if (tplKegiatan) clearFormControls(tplKegiatan);
-  if (tplSubkeg) clearFormControls(tplSubkeg);
+  // 🔥 PENTING: template harus BERSIH
+  if (tplSasaran) {
+    tplSasaran.querySelectorAll("textarea, input").forEach(el => el.value = "");
+  }
+  if (tplIndikator) {
+    tplIndikator.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+  }
+  if (tplKegiatan) {
+    tplKegiatan.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+  }
+  if (tplSubkeg) {
+    tplSubkeg.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+  }
+
+
+  if (!isEdit) {
+    if (tplSasaran) clearFormControls(tplSasaran);
+    if (tplIndikator) clearFormControls(tplIndikator);
+    if (tplKegiatan) clearFormControls(tplKegiatan);
+    if (tplSubkeg) clearFormControls(tplSubkeg);
+  }
 
   /* =========================================================
      UPDATE NAME (PENGAWAS)
@@ -98,6 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
         // INDIKATOR
+        
         indikator
           .querySelector(".indikator-input")
           ?.setAttribute(
@@ -122,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "name",
             `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`,
           );
+          
 
         // PROGRAM (IMPLICIT, DARI KEGIATAN)
         qsa(".kegiatan-item", indikator).forEach((kegiatan, ki) => {
@@ -169,16 +196,13 @@ document.addEventListener("DOMContentLoaded", () => {
       ev.preventDefault();
 
       const sasaranClone = tplSasaran.cloneNode(true);
-      clearFormControls(sasaranClone);
 
-      const indikatorContainer = sasaranClone.querySelector(
-        ".indikator-container",
-      );
+
+      const indikatorContainer = sasaranClone.querySelector(".indikator-container");
       if (indikatorContainer && tplIndikator) {
         indikatorContainer.innerHTML = "";
 
         const indikatorClone = tplIndikator.cloneNode(true);
-        clearFormControls(indikatorClone);
 
         const kegiatanContainer = indikatorClone.querySelector(
           ".kegiatan-container",
@@ -187,13 +211,11 @@ document.addEventListener("DOMContentLoaded", () => {
           kegiatanContainer.innerHTML = "";
 
           const kegClone = tplKegiatan.cloneNode(true);
-          clearFormControls(kegClone);
 
           const subContainer = kegClone.querySelector(".subkeg-container");
           if (subContainer && tplSubkeg) {
             subContainer.innerHTML = "";
             const subClone = tplSubkeg.cloneNode(true);
-            clearFormControls(subClone);
             subContainer.appendChild(subClone);
           }
 
@@ -206,7 +228,6 @@ document.addEventListener("DOMContentLoaded", () => {
       sasaranContainer.appendChild(sasaranClone);
       updateFormNames();
       initSelect2(sasaranClone);
-      return;
     }
 
     // ADD INDIKATOR
@@ -220,7 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // ===== CLONE INDIKATOR =====
       const indikatorClone = tplIndikator.cloneNode(true);
-      clearFormControls(indikatorClone);
 
       // ===== PAKSA ADA 1 KEGIATAN =====
       const kegiatanContainer = indikatorClone.querySelector(
@@ -230,14 +250,12 @@ document.addEventListener("DOMContentLoaded", () => {
         kegiatanContainer.innerHTML = "";
 
         const kegClone = tplKegiatan.cloneNode(true);
-        clearFormControls(kegClone);
 
         // ===== PAKSA ADA 1 SUBKEGIATAN =====
         const subContainer = kegClone.querySelector(".subkeg-container");
         if (subContainer && tplSubkeg) {
           subContainer.innerHTML = "";
           const subClone = tplSubkeg.cloneNode(true);
-          clearFormControls(subClone);
           subContainer.appendChild(subClone);
         }
 
@@ -247,7 +265,6 @@ document.addEventListener("DOMContentLoaded", () => {
       indikatorContainer.appendChild(indikatorClone);
       updateFormNames();
       initSelect2(indikatorClone);
-      return;
     }
 
     // ADD KEGIATAN
@@ -257,11 +274,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const container = indikator?.querySelector(".kegiatan-container");
       if (!container) return;
       const clone = tplKegiatan.cloneNode(true);
-      clearFormControls(clone);
       container.appendChild(clone);
       updateFormNames();
       initSelect2(clone);
-      return;
     }
 
     // ADD SUBKEG
@@ -271,11 +286,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const container = keg?.querySelector(".subkeg-container");
       if (!container) return;
       const clone = tplSubkeg.cloneNode(true);
-      clearFormControls(clone);
       container.appendChild(clone);
       updateFormNames();
       initSelect2(clone);
-      return;
     }
 
     // REMOVE GENERIC

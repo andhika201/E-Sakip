@@ -209,21 +209,21 @@
                                                                 <label class="form-label">Indikator</label>
                                                                 <input type="text"
                                                                     name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][indikator]"
-                                                                    class="form-control mb-3 border-secondary"
+                                                                    class="form-control mb-3 border-secondary indikator-input"
                                                                     value="<?= esc($indikator['indikator']) ?>" required>
                                                             </div>
                                                             <div class="col-md-3">
                                                                 <label class="form-label">Target</label>
                                                                 <input type="text"
                                                                     name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][target]"
-                                                                    class="form-control mb-3 border-secondary"
+                                                                    class="form-control mb-3 border-secondary indikator-target"
                                                                     value="<?= esc($indikator['target']) ?>" required>
                                                             </div>
                                                             <div class="col-md-4">
                                                                 <label class="form-label">Satuan</label>
                                                                 <select
                                                                     name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][id_satuan]"
-                                                                    class="form-select mb-3 border-secondary" required>
+                                                                    class="form-select mb-3 border-secondary satuan-select" required>
                                                                     <option value="">Pilih Satuan</option>
                                                                     <?php if (isset($satuan) && !empty($satuan)): ?>
                                                                         <?php foreach ($satuan as $s): ?>
@@ -241,7 +241,7 @@
                                                                 <label class="form-label">Jenis Indikator</label>
                                                                 <select
                                                                     name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][jenis_indikator]"
-                                                                    class="form-select mb-3 border-secondary" required>
+                                                                    class="form-select mb-3 border-secondary jenis-indikator-select" required>
                                                                     <option value="">Pilih Jenis Indikator</option>
                                                                     <option value="Indikator Positif"
                                                                         <?= (isset($indikator['jenis_indikator']) && $indikator['jenis_indikator'] == 'Indikator Positif') ? 'selected' : '' ?>>Indikator Positif</option>

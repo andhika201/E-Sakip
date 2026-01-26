@@ -330,7 +330,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
               <tr>
                 <td class="center"><?= $no++ ?></td>
                 <td><?= esc($item['nama']) ?></td>
-                <td class="right"><?= number_format($item['anggaran'], 0, ',', '.') ?></td>
+                <td align="right"><?= number_format($item['anggaran'], 0, ',', '.') ?></td>
               </tr>
             <?php endforeach; ?>
 
@@ -338,7 +338,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
 
           <tr class="fw-bold">
             <td colspan="2" class="right">TOTAL</td>
-            <td class="right"><?= number_format($grandTotal, 0, ',', '.') ?></td>
+            <td align="right"><?= number_format($grandTotal, 0, ',', '.') ?></td>
           </tr>
         </tbody>
       </table>

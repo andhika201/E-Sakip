@@ -131,9 +131,6 @@ class PkController extends BaseController
             $program = "sub_kegiatan";
         }
 
-        
-
-
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;
 
@@ -666,6 +663,7 @@ class PkController extends BaseController
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
         }
+        // dd($saveData);
 
         // --------------------------
         // LOG: Final SAVE DATA

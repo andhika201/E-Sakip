@@ -373,7 +373,6 @@
                                                                 <div class="col-md-6">
                                                                     <label class="form-label">Program</label>
                                                                     <select
-                                                                        name="sasaran_pk[0][indikator][0][program][0][program_id]"
                                                                         class="form-select select2 program-select border-secondary"
                                                                         required>
                                                                         <option value="">Pilih Program</option>
@@ -400,7 +399,6 @@
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Kegiatan</label>
                                                                             <select
-                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][kegiatan_id]"
                                                                                 class="form-select select2 kegiatan-select border-secondary"
                                                                                 required>
                                                                                 <option value="">Pilih Kegiatan</option>
@@ -416,12 +414,10 @@
                                                                         <div class="col-md-3">
                                                                             <label class="form-label">Anggaran</label>
                                                                             <input type="text"
-                                                                                name="sasaran_pk[0][indikator][0][program][0][kegiatan][0][anggaran]"
                                                                                 class="form-control mb-3 border-secondary anggaran-input"
                                                                                 value="" placeholder="Anggaran" <?= ($jenis !== 'bupati') ? 'required' : '' ?>
                                                                                 readonly />
-                                                                            <input type="hidden"
-                                                                                name="kegiatan[0][id_indikator]" value="">
+                                                                
                                                                         </div>
 
                                                                         <div class="col-md-3 d-flex align-items-end">

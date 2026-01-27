@@ -1,4 +1,3 @@
-
 text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminators )
 <!DOCTYPE html>
 <html lang="id">
@@ -161,13 +160,20 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
       <?php endif; ?>
     </h4>
 
-    <?php $head_table = ($jenis === 'pengawas') ? 'KEGIATAN' : 'PROGRAM';?>
+    <?php $head_table = ($jenis === 'pengawas') ? 'KEGIATAN' : 'PROGRAM';
+    ?>
+
+    <?php
+    $head_table_sasaran = ($jenis === 'pengawas')
+      ? 'KEGIATAN'
+      : (in_array($jenis, ['jpt', 'bupati']) ? 'STRATEGIS' : 'PROGRAM');
+    ?>
 
     <table class="table-bordered-custom table-header" style="width: 100%; margin-top: 10px;">
       <thead>
         <tr>
           <th style="width: 10%; text-align: center;">No</th>
-          <th style="width: 30%; text-align: center;">SASARAN <?= strtoupper($head_table) ?></th>
+          <th style="width: 30%; text-align: center;">SASARAN <?= strtoupper($head_table_sasaran) ?></th>
           <th style="width: 30%; text-align: center;">INDIKATOR SASARAN</th>
           <th style="width: 15%; text-align: center;">TARGET</th>
           <th style="width: 15%; text-align: center;">SATUAN</th>
@@ -220,7 +226,6 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
               </td>
             </tr>
           <?php endforeach; ?>
-
         <?php endforeach; ?>
 
         <tr class="table-no-row-border">
@@ -232,7 +237,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
       </tbody>
     </table>
 
-    
+
 
 
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
@@ -253,13 +258,13 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
            */
           if ($jenis === 'bupati' || $jenis === 'jpt') {
             $groupField = null;                 // tidak ada header
-            $itemField  = 'program_kegiatan';   // item = program
+            $itemField = 'program_kegiatan';   // item = program
           } elseif ($jenis === 'administrator') {
             $groupField = 'program_kegiatan';   // header = program
-            $itemField  = 'kegiatan';            // item = kegiatan
+            $itemField = 'kegiatan';            // item = kegiatan
           } elseif ($jenis === 'pengawas') {
             $groupField = 'kegiatan';            // header = kegiatan
-            $itemField  = 'sub_kegiatan';        // item = sub kegiatan
+            $itemField = 'sub_kegiatan';        // item = sub kegiatan
           }
 
           /**
@@ -282,14 +287,14 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
               // ADA HEADER (Administrator, Pengawas)
               if (!isset($groupedData[$groupName])) {
                 $groupedData[$groupName] = [
-                  'nama'  => $groupName,
+                  'nama' => $groupName,
                   'items' => []
                 ];
               }
 
               if (!isset($groupedData[$groupName]['items'][$itemKey])) {
                 $groupedData[$groupName]['items'][$itemKey] = [
-                  'nama'     => $row[$itemField],
+                  'nama' => $row[$itemField],
                   'anggaran' => $row['anggaran']
                 ];
               }
@@ -297,14 +302,14 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
               // TANPA HEADER (JPT)
               if (!isset($groupedData['_flat'])) {
                 $groupedData['_flat'] = [
-                  'nama'  => null,
+                  'nama' => null,
                   'items' => []
                 ];
               }
 
               if (!isset($groupedData['_flat']['items'][$itemKey])) {
                 $groupedData['_flat']['items'][$itemKey] = [
-                  'nama'     => $row[$itemField],
+                  'nama' => $row[$itemField],
                   'anggaran' => $row['anggaran']
                 ];
               }

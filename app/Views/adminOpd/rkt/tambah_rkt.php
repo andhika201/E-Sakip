@@ -43,6 +43,53 @@
       background-color: #00743e !important;
       color: #fff;
     }
+
+    .program-item {
+      background-color: #f3faf7;
+      border: 1px solid #d9eee6;
+      border-left: 4px solid #2e8b6f;
+
+    }
+
+    .kegiatan-item {
+      background-color: #f6f9fc;
+      border: 1px solid #dde7f0;
+      border-left: 4px solid #4c7fb8;
+
+    }
+
+    .subkeg-item {
+      background-color: #fafafa;
+      border: 1px dashed #e0e0e0;
+      border-left: 4px solid #b0b0b0;
+
+    }
+
+    .program-item,
+    .kegiatan-item,
+    .subkeg-item {
+      border-radius: 8px;
+    }
+
+    /* Judul section lebih tegas */
+    .program-item>.row>.col-md-6>label,
+    .kegiatan-item label,
+    .subkeg-item label {
+      font-weight: 600;
+    }
+
+    /* Hover effect halus (optional tapi cakep) */
+    .program-item:hover {
+      background-color: #eef8f4;
+    }
+
+    .kegiatan-item:hover {
+      background-color: #f2f7fb;
+    }
+
+    .subkeg-item:hover {
+      background-color: #f5f5f5;
+    }
   </style>
 </head>
 
@@ -107,199 +154,103 @@
             <h2 class="h5 fw-semibold mb-0">Daftar Program</h2>
           </div>
 
-          <div id="program-container">
-
-            <!-- PROGRAM PERTAMA (DEFAULT) -->
-            <div class="program-item bg-light border rounded p-3 mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="fw-medium mb-0 program-title">Program 1</label>
-                <button type="button" class="remove-program btn btn-outline-danger btn-sm" style="display:none;">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Pilih Program PK</label>
-                <select name="program[0][program_id]" class="form-select select2 select-program" required>
-                  <option value="">-- Pilih Program --</option>
-                  <?php foreach ($program as $prog): ?>
-                    <option value="<?= esc($prog['id']) ?>">
-                      <?= esc($prog['program_kegiatan']) ?>— Rp <?= number_format($prog['anggaran'], 0, ',', '.') ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-
-
-              <!-- KEGIATAN -->
-              <div class="kegiatan-section">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h4 class="h6 fw-medium mb-0">Kegiatan</h4>
+          <div class="program-container">
+            <div class="program-item border rounded p-3 mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Program</label>
+                  <select class="form-select select2 program-select border-secondary" required>
+                    <option value="">Pilih Program</option>
+                    <?php foreach ($program as $programItem): ?>
+                      <option value="<?= $programItem['id'] ?>">
+                        <?= esc($programItem['program_kegiatan']) ?> — Rp
+                        <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
                 </div>
 
-                <div class="kegiatan-container">
+                <div class="col-md-3 d-flex align-items-end">
+                  <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
 
-                  <!-- KEGIATAN 1 -->
-                  <div class="kegiatan-item border rounded p-3 bg-white mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                      <label class="fw-medium mb-0 kegiatan-title">Kegiatan 1</label>
+              <div class="kegiatan-container">
+                <div class="kegiatan-item border rounded  p-3">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="form-label">Kegiatan</label>
+                      <select class="form-select select2 kegiatan-select border-secondary" required>
+                        <option value="">Pilih Kegiatan</option>
+                        <?php foreach ($kegiatanPk as $kegiatanItem): ?>
+                          <option value="<?= $kegiatanItem['id'] ?>" data-anggaran="<?= $kegiatanItem['anggaran'] ?>">
+                            <?= esc($kegiatanItem['kegiatan']) ?> —
+                            Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end">
                       <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
+                  </div>
 
-                    <div class="mb-3">
-                      <label class="form-label">Pilih Kegiatan PK</label>
-                      <select name="program[0][kegiatan][0][kegiatan_id]" class="form-select select2 select-kegiatan"
-                        required>
-                        <option value="">-- Pilih Kegiatan --</option>
-                      </select>
-                    </div>
+                  <div class="subkeg-container">
+                    <div class="subkeg-item border rounded p-3 mb-3">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <label class="form-label">Sub Kegiatan</label>
 
-                    <!-- SUB KEGIATAN -->
-                    <div class="subkegiatan-section">
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="h6 fw-medium mb-0">Sub Kegiatan</h5>
-                      </div>
+                          <select class="form-select select2 subkeg-select border-secondary" required>
+                            <option value="">Pilih Sub Kegiatan</option>
+                            <?php foreach ($subKegiatanPk as $sk): ?>
+                              <option value="<?= $sk['id'] ?>" data-anggaran="<?= $sk['anggaran'] ?>">
+                                <?= esc($sk['sub_kegiatan']) ?> —
+                                Rp
+                                <?= number_format($sk['anggaran'], 0, ',', '.') ?>
+                              </option>`
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
 
-                      <div class="subkegiatan-container">
+                        <div class="col-md-3">
+                          <label class="form-label">Anggaran</label>
+                          <input type="text" class="form-control mb-3 border-secondary anggaran-input" readonly>
+                        </div>
 
-                        <!-- SUB KEGIATAN 1 -->
-                        <div class="subkegiatan-item border rounded p-3 bg-light mb-3">
-                          <div class="d-flex justify-content-between align-items-center mb-3">
-                            <label class="fw-medium mb-0 sub-title">Sub Kegiatan 1</label>
-                            <button type="button" class="remove-subkegiatan btn btn-outline-danger btn-sm">
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          </div>
-
-                          <div class="row mb-3">
-                            <div class="col-md-8">
-                              <label class="form-label">Pilih Sub Kegiatan PK</label>
-                              <select name="program[0][kegiatan][0][subkegiatan][0][sub_kegiatan_id]"
-                                class="form-select select2 select-subkegiatan" required>
-                                <option value="">-- Pilih Sub Kegiatan --</option>
-                              </select>
-                            </div>
-                            <div class="col-md-4">
-                              <label class="form-label">Target Anggaran</label>
-                              <input type="text" class="form-control target-display" placeholder="-" readonly>
-                              <!-- tidak dikirim ke server, hanya tampilan -->
-                              <input type="hidden" class="target-hidden" value="">
-                            </div>
-                          </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                          <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash"></i>
+                          </button>
                         </div>
                       </div>
-
-                      <div class="d-flex justify-content-end">
-                        <button type="button" class="add-subkegiatan btn btn-info btn-sm">
-                          <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
-                        </button>
-                      </div>
-                    </div> <!-- /subkegiatan-section -->
-                  </div> <!-- /kegiatan-item -->
-                </div> <!-- /kegiatan-container -->
-
-                <div class="d-flex justify-content-end">
-                  <button type="button" class="add-kegiatan btn btn-success btn-sm">
-                    <i class="fas fa-plus me-1"></i> Tambah Kegiatan
-                  </button>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-end mt-2">
+                    <button type="button" class="add-subkeg btn btn-success btn-sm">
+                      <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
+                    </button>
+                  </div>
                 </div>
-              </div> <!-- /kegiatan-section -->
-            </div> <!-- /program-item -->
-          </div> <!-- /program-container -->
+              </div>
+              <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                  <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                </button>
+              </div>
+            </div>
+          </div>
 
-          <div class="d-flex justify-content-end">
-            <button type="button" id="add-program" class="btn btn-primary btn-sm">
+          <div class="d-flex justify-content-end mt-2">
+            <button type="button" class="add-program btn btn-primary btn-sm">
               <i class="fas fa-plus me-1"></i> Tambah Program
             </button>
           </div>
-
-          <!-- =================== TEMPLATES =================== -->
-          <template id="tpl-program">
-            <div class="program-item bg-light border rounded p-3 mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="fw-medium mb-0 program-title">Program X</label>
-                <button type="button" class="remove-program btn btn-outline-danger btn-sm">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Pilih Program PK</label>
-                <select class="form-select select-program">
-                  <option value="">-- Pilih Program --</option>
-                </select>
-              </div>
-
-              <div class="kegiatan-section">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h4 class="h6 fw-medium mb-0">Kegiatan</h4>
-                </div>
-                <div class="kegiatan-container"></div>
-                <div class="d-flex justify-content-end">
-                  <button type="button" class="add-kegiatan btn btn-success btn-sm">
-                    <i class="fas fa-plus me-1"></i> Tambah Kegiatan
-                  </button>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template id="tpl-kegiatan">
-            <div class="kegiatan-item border rounded p-3 bg-white mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="fw-medium mb-0 kegiatan-title">Kegiatan X</label>
-                <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Pilih Kegiatan PK</label>
-                <select class="form-select select-kegiatan">
-                  <option value="">-- Pilih Kegiatan --</option>
-                </select>
-              </div>
-
-              <div class="subkegiatan-section">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="h6 fw-medium mb-0">Sub Kegiatan</h5>
-                </div>
-                <div class="subkegiatan-container"></div>
-                <div class="d-flex justify-content-end">
-                  <button type="button" class="add-subkegiatan btn btn-info btn-sm">
-                    <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
-                  </button>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template id="tpl-subkegiatan">
-            <div class="subkegiatan-item border rounded p-3 bg-light mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="fw-medium mb-0 sub-title">Sub Kegiatan X</label>
-                <button type="button" class="remove-subkegiatan btn btn-outline-danger btn-sm">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-
-              <div class="row mb-3">
-                <div class="col-md-8">
-                  <label class="form-label">Pilih Sub Kegiatan PK</label>
-                  <select class="form-select select-subkegiatan">
-                    <option value="">-- Pilih Sub Kegiatan --</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Target Anggaran</label>
-                  <input type="text" class="form-control target-display" placeholder="-" readonly>
-                  <input type="hidden" class="target-hidden" value="">
-                </div>
-              </div>
-            </div>
-          </template>
         </section>
 
         <div class="d-flex justify-content-between mt-4">
@@ -317,6 +268,25 @@
   <?= $this->include('adminOpd/templates/footer.php'); ?>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    function initSelect2(context = document) {
+      $(context).find('.select2').each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+          $(this).select2('destroy');
+        }
+
+        $(this).select2({
+          width: '100%',
+          minimumResultsForSearch: 0, // search tetap aktif
+          dropdownParent: jQuery(this).parent()
+        });
+      });
+    }
+
+    $(document).ready(function () {
+      initSelect2();
+    });
+  </script>
 
   <!-- Data master dikirim ke JS -->
   <script>
@@ -325,151 +295,8 @@
     const SUBS = <?= json_encode($subKegiatanPk) ?>;
   </script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
+  <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js') ?>"></script>
 
-      /* =====================================================
-       * INIT SELECT2
-       * ===================================================== */
-      function initSelect2(context = document) {
-        $(context).find('.select2').each(function () {
-          if ($(this).hasClass('select2-hidden-accessible')) {
-            $(this).select2('destroy');
-          }
-
-          $(this).select2({
-            width: '100%',
-            dropdownParent: $('body')
-          });
-        });
-      }
-
-      initSelect2();
-
-
-      /* =====================================================
-       * HELPER RUPIAH
-       * ===================================================== */
-      function toIntegerString(num) {
-        if (num === null || num === undefined || num === '') return '';
-        const n = Number(num);
-        if (!Number.isFinite(n)) return '';
-        return Math.round(n).toString();
-      }
-
-      function formatRupiah(num) {
-        const s = toIntegerString(num);
-        if (!s) return '';
-        return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-      }
-
-
-      /* =====================================================
-       * FILL DROPDOWN
-       * ===================================================== */
-      function fillProgramOptions(select) {
-        select.innerHTML = '<option value="">-- Pilih Program --</option>';
-
-        PROGRAMS.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          const anggaran = p.anggaran ? formatRupiah(p.anggaran) : '-';
-          opt.textContent = `${p.program_kegiatan} — Rp ${anggaran}`;
-          select.appendChild(opt);
-        });
-      }
-
-      function fillKegiatanOptions(select, programId, currentValue = '') {
-        select.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
-        if (!programId) return;
-
-        KEGIATAN
-          .filter(k => String(k.program_id) === String(programId))
-          .forEach(k => {
-            const opt = document.createElement('option');
-            opt.value = k.id;
-            opt.textContent = k.kegiatan;
-            if (String(currentValue) === String(k.id)) opt.selected = true;
-            select.appendChild(opt);
-          });
-      }
-
-      function fillSubOptions(select, kegiatanId, currentValue = '') {
-        select.innerHTML = '<option value="">-- Pilih Sub Kegiatan --</option>';
-        if (!kegiatanId) return;
-
-        SUBS
-          .filter(s => String(s.kegiatan_id) === String(kegiatanId))
-          .forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.sub_kegiatan;
-            opt.dataset.anggaran = s.anggaran;
-            if (String(currentValue) === String(s.id)) opt.selected = true;
-            select.appendChild(opt);
-          });
-      }
-
-
-      /* =====================================================
-       * EVENT SELECT (KHUSUS SELECT2)
-       * ===================================================== */
-      $(document).on('change', '.select-program', function () {
-        const programId = $(this).val();
-        const programItem = this.closest('.program-item');
-
-        $(programItem).find('.select-kegiatan').each(function () {
-          fillKegiatanOptions(this, programId);
-          $(this).trigger('change.select2');
-        });
-      });
-
-      $(document).on('change', '.select-kegiatan', function () {
-        const kegiatanId = $(this).val();
-        const kegiatanItem = this.closest('.kegiatan-item');
-
-        $(kegiatanItem).find('.select-subkegiatan').each(function () {
-          fillSubOptions(this, kegiatanId);
-          $(this).trigger('change.select2');
-        });
-      });
-
-      $(document).on('change', '.select-subkegiatan', function () {
-        const opt = this.selectedOptions[0];
-        const anggaranRaw = opt ? opt.dataset.anggaran : '';
-
-        const sItem = this.closest('.subkegiatan-item');
-        const disp = sItem.querySelector('.target-display');
-        const hid = sItem.querySelector('.target-hidden');
-
-        if (anggaranRaw) {
-          const intStr = toIntegerString(anggaranRaw);
-          disp.value = 'Rp ' + formatRupiah(intStr);
-          hid.value = intStr;
-        } else {
-          disp.value = '-';
-          hid.value = '';
-        }
-      });
-
-
-      /* =====================================================
-       * INIT DEFAULT (PROGRAM PERTAMA)
-       * ===================================================== */
-      (function initFirst() {
-        const firstProg = document.querySelector('.program-item');
-        if (!firstProg) return;
-
-        const selProg = firstProg.querySelector('.select-program');
-        const selKeg = firstProg.querySelector('.select-kegiatan');
-        const selSub = firstProg.querySelector('.select-subkegiatan');
-
-        fillKegiatanOptions(selKeg, selProg.value);
-        fillSubOptions(selSub, selKeg.value);
-      })();
-
-    });
-  </script>
 
 </body>
 

@@ -653,9 +653,7 @@
                                                 echo '<option value="" disabled>Tidak ada kegiatan</option>';
                                             }
                                             ?>`;
-
-
-
+                                            
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
                                                 if (!empty($kegiatanAdmin)) {

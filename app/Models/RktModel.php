@@ -130,12 +130,12 @@ class RktModel extends Model
                 // mapping subkegiatan
                 $subs = $keg['subkegiatan'] ?? [];
                 foreach ($subs as $sub) {
-                    if (empty($sub['sub_kegiatan_id'])) {
+                    if (empty($sub['subkegiatan_id'])) {
                         continue;
                     }
                     $tblRktSub->insert([
                         'rkt_kegiatan_id' => $rktKegId,
-                        'sub_kegiatan_id' => $sub['sub_kegiatan_id'],
+                        'sub_kegiatan_id' => $sub['subkegiatan_id'],
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);
@@ -269,13 +269,13 @@ class RktModel extends Model
                     if ($rktSubId) {
                         $tblRktSub->where('id', $rktSubId)->update([
                             'rkt_kegiatan_id' => $rktKegId,
-                            'sub_kegiatan_id' => $s['sub_kegiatan_id'] ?? null,
+                            'sub_kegiatan_id' => $s['subkegiatan_id'] ?? null,
                             'updated_at' => date('Y-m-d H:i:s'),
                         ]);
                     } else {
                         $tblRktSub->insert([
                             'rkt_kegiatan_id' => $rktKegId,
-                            'sub_kegiatan_id' => $s['sub_kegiatan_id'] ?? null,
+                            'sub_kegiatan_id' => $s['subkegiatan_id'] ?? null,
                             'created_at' => date('Y-m-d H:i:s'),
                             'updated_at' => date('Y-m-d H:i:s'),
                         ]);

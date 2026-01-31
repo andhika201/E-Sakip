@@ -271,9 +271,8 @@ class RktController extends BaseController
 
         // DATA MASTER
         $programPk = $this->pkModel->getAllPrograms();          // tabel program_pk
-        $kegiatanPk = $this->programPkModel->getAllKegiatan();   // tabel kegiatan_pk
-        // $subKegiatanPk = $this->programPkModel->getAllSubKegiatan();// tabel sub_kegiatan_pk
-        $subKegiatanPk = $this->programPkModel->getSubKegiatanByTahun($tahun); // tabel sub_kegiatan_pk filtered by tahun
+        $kegiatanPk = $this->pkModel->getKegiatan();  // tabel kegiatan_pk
+        $subKegiatanPk = $this->pkModel->getSubKegiatan(); // tabel sub_kegiatan_pk filtered by tahun
 
         $data = [
             'title' => 'Tambah RENJA (RKT)',
@@ -292,7 +291,7 @@ class RktController extends BaseController
     {
         $data = $this->request->getPost();
 
-        // dd($data);
+        // dd($data['program'][0]);
         $data['opd_id'] = session()->get('opd_id'); // atau sesuai field sesi kamu
         $rktModel = new \App\Models\RktModel();
         try {
@@ -317,8 +316,6 @@ class RktController extends BaseController
     {
         $db = \Config\Database::connect();
         $role = session()->get('role');
-
-        $programModel = new \App\Models\ProgramPkModel();
 
         // ---------- Ambil indikator + sasaran ----------
         $indikator = $db->table('renstra_indikator_sasaran i')
@@ -365,16 +362,24 @@ class RktController extends BaseController
 
                 // subkegiatan utk rkt_kegiatan ini
                 $subs = $db->table('rkt_subkegiatan rs')
-                    ->select('rs.id, rs.sub_kegiatan_id')
+                    ->select('rs.sub_kegiatan_id, sk.anggaran')
+                    ->join(
+                        'sub_kegiatan_pk sk',
+                        'sk.id = rs.sub_kegiatan_id',
+                        'left'
+                    )
                     ->where('rs.rkt_kegiatan_id', $rkKegId)
                     ->orderBy('rs.id', 'ASC')
                     ->get()
                     ->getResultArray();
 
+
                 $subNested = [];
                 foreach ($subs as $sRow) {
                     $subNested[] = [
                         'sub_kegiatan_id' => $sRow['sub_kegiatan_id'],
+                        'anggaran' => $sRow['anggaran'],
+
                     ];
                 }
 
@@ -390,10 +395,12 @@ class RktController extends BaseController
             ];
         }
 
+        // dd($rktPrograms);
+
         // ---------- master program / kegiatan / sub ----------
-        $programs = $programModel->findAll();              // table program_pk
-        $kegiatanPk = $programModel->getAllKegiatan();       // table kegiatan_pk
-        $subKegiatanPk = $programModel->getAllSubKegiatan();    // table sub_kegiatan_pk
+        $programPk = $this->pkModel->getAllPrograms();          // tabel program_pk
+        $kegiatanPk = $this->pkModel->getKegiatan();  // tabel kegiatan_pk
+        $subKegiatanPk = $this->pkModel->getSubKegiatan(); // tabel sub_kegiatan_pk filtered by tahun
 
         // ---------- kirim ke view ----------
         return view('adminOpd/rkt/edit_rkt', [
@@ -401,7 +408,7 @@ class RktController extends BaseController
             'role' => $role,
             'indikator' => $indikator,
             'tahun' => $tahun,
-            'program' => $programs,
+            'program' => $programPk,
             'kegiatanPk' => $kegiatanPk,
             'subKegiatanPk' => $subKegiatanPk,
             'rktPrograms' => $rktPrograms,   // <- prefill
@@ -424,6 +431,7 @@ class RktController extends BaseController
 
         $postPrograms = $this->request->getPost('program') ?? [];
 
+        // dd($postPrograms);
         $db->transStart();
 
         try {
@@ -504,7 +512,7 @@ class RktController extends BaseController
                     // subkegiatan di dalam kegiatan ini
                     $subs = $k['subkegiatan'] ?? [];
                     foreach ($subs as $s) {
-                        $subId = isset($s['sub_kegiatan_id']) ? (int) $s['sub_kegiatan_id'] : 0;
+                        $subId = isset($s['subkegiatan_id']) ? (int) $s['subkegiatan_id'] : 0;
                         if (!$subId) {
                             continue;
                         }

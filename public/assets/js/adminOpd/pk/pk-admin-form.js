@@ -203,9 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
       sasaranContainer.appendChild(clone);
       updateFormNames();
       initSelect2(clone);
-      return;
-
-      
+      return;      
     }
 
     // add-indikator

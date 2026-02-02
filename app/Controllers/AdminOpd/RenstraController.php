@@ -7,6 +7,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\Opd\RenstraModel;
 use App\Models\RpjmdModel;
 use App\Models\OpdModel;
+use App\Models\PkModel;
+
 
 class RenstraController extends BaseController
 {
@@ -20,7 +22,7 @@ class RenstraController extends BaseController
         $this->renstraModel = new RenstraModel();
         $this->rpjmdModel = new RpjmdModel();
         $this->opdModel = new OpdModel();
-        $this->pkModel = new \App\Models\PkModel();
+        $this->pkModel = new PkModel();
     }
     /* =========================================================
      *  HELPERS: Anti XSS / Script

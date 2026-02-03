@@ -143,6 +143,11 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
     .section {
       margin-top: 40px;
     }
+
+    .program-table tbody tr:nth-last-child(-n+2),
+    .signature-block {
+      page-break-inside: avoid;
+    }
   </style>
 
 </head>
@@ -237,11 +242,8 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
       </tbody>
     </table>
 
-
-
-
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
-      <table class="table-bordered-custom" style="width:100%; margin-top:30px;">
+      <table class="table-bordered-custom program-table" style="width:100%; margin-top:30px;">
         <thead>
           <tr class="center fw-bold">
             <th style="width:7%;">No</th>
@@ -350,73 +352,75 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
     <?php endif; ?>
 
 
+    <div class="signature-block">
 
-    <table style="width:100%; margin-top:30px;">
-      <tr>
-        <?php if (strtolower($jenis) !== 'bupati'): ?>
-          <!-- PIHAK KEDUA -->
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <p class="label">PIHAK KEDUA,</p>
-                  <p><?= esc($jabatan_pihak_2) ?></p>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-bottom">
-              <tr>
-                <td class="signature-meta">
-                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
-                  <?php if (strtolower($jenis) !== 'jpt'): ?>
-                    <p>NIP. <?= esc($nip_pihak_2) ?></p>
-                  <?php endif; ?>
-                </td>
-              </tr>
-            </table>
-          </td>
+      <table style="width:100%; margin-top:30px;">
+        <tr>
+          <?php if (strtolower($jenis) !== 'bupati'): ?>
+            <!-- PIHAK KEDUA -->
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <p class="label">PIHAK KEDUA,</p>
+                    <p><?= esc($jabatan_pihak_2) ?></p>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-bottom">
+                <tr>
+                  <td class="signature-meta">
+                    <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
+                    <?php if (strtolower($jenis) !== 'jpt'): ?>
+                      <p>NIP. <?= esc($nip_pihak_2) ?></p>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              </table>
+            </td>
 
-          <!-- PIHAK KESATU -->
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <p class="label">PIHAK KESATU,</p>
-                  <p><?= esc($jabatan_pihak_1) ?></p>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-bottom">
-              <tr>
-                <td class="signature-meta">
-                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
-                  <p>NIP. <?= esc($nip_pihak_1) ?></p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        <?php else: ?>
+            <!-- PIHAK KESATU -->
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <p class="label">PIHAK KESATU,</p>
+                    <p><?= esc($jabatan_pihak_1) ?></p>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-bottom">
+                <tr>
+                  <td class="signature-meta">
+                    <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
+                    <p>NIP. <?= esc($nip_pihak_1) ?></p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          <?php else: ?>
 
-          <td style="width:50%;"></td>
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <strong>BUPATI PRINGSEWU</strong>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-table">
-              <tr>
-                <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
-              </tr>
-            </table>
-          </td>
+            <td style="width:50%;"></td>
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <strong>BUPATI PRINGSEWU</strong>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
+                </tr>
+              </table>
+            </td>
 
-        <?php endif; ?>
+          <?php endif; ?>
 
-      </tr>
-    </table>
+        </tr>
+      </table>
+    </div>
 
 
     <page />

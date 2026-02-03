@@ -14,7 +14,10 @@
     <main class="flex-fill p-4 mt-2">
         <div class="bg-white rounded shadow p-4">
             <?php
-            if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
+            if (
+                stripos($current_opd['nama_opd'], 'kecamatan') !== false
+                && strtoupper($jenis) === 'JPT'
+            ) {
                 $judulPk = 'CAMAT';
             } else {
                 $judulPk = strtoupper($jenis);

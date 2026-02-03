@@ -148,6 +148,25 @@
       margin-bottom: 4px;
       /* jarak = ±1 baris */
     }
+
+    .footer {
+      position: fixed;
+      bottom: 15px;
+      left: 0;
+      right: 0;
+      font-size: 9pt;
+      color: #444;
+    }
+
+    .footer-left {
+      position: absolute;
+      left: 40px;
+    }
+
+    .footer-right {
+      position: absolute;
+      right: 40px;
+    }
   </style>
 </head>
 
@@ -307,6 +326,7 @@
         <?php endif; ?>
       </tr>
     </table>
+    
   </page>
 </body>
 

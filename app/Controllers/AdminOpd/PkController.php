@@ -133,6 +133,7 @@ class PkController extends BaseController
 
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;
+        $opd = strtoupper($data['nama_opd']);
 
         $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
 
@@ -153,8 +154,29 @@ class PkController extends BaseController
             'mirrorMargins' => true,
             'tempDir' => sys_get_temp_dir(),
         ]);
+
+        $footerHtml = '
+        <table width="100%" style="font-size:9pt; color:#444;">
+            <tr>
+                <td align="left">
+                    © Kabupaten Pringsewu
+                </td>
+                <td align="right">
+                    {PAGENO}/{nbpg}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" style="font-size:8.5pt;">
+                    ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
+                </td>
+            </tr>
+        </table>
+        ';
+
         $css = 'img { width: 70px; height: auto; }';
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+        $mpdf->SetHTMLFooter($footerHtml, 'O');
+        $mpdf->SetHTMLFooter($footerHtml, 'E');
         $mpdf->WriteHTML($html_1);
         $mpdf->AddPage('P');
         $mpdf->WriteHTML($html_2);
@@ -764,8 +786,4 @@ class PkController extends BaseController
             return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
-
-
-
-    
 }

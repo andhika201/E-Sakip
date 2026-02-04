@@ -346,7 +346,6 @@ class PkModel extends Model
                             $this->logDbError($db, 'INSERT PK INDIKATOR');
                             $pkIndikatorId = $db->insertID();
 
-
                             // ================================
                             // 🔥 INSERT PROGRAM (JPT / ADMIN / PENGAWAS)
                             // ================================
@@ -361,6 +360,7 @@ class PkModel extends Model
                                         'created_at' => $now,
                                         'updated_at' => $now
                                     ]);
+
                                     $this->logDbError($db, 'INSERT PK PROGRAM');
                                     $pkProgramId = $db->insertID();
 
@@ -454,10 +454,10 @@ class PkModel extends Model
             // 1. UPDATE PK
             // =====================================================
             $db->table('pk')->where('id', $pkId)->update([
-                'pihak_1'   => $data['pihak_1'],
-                'pihak_2'   => $data['pihak_2'],
-                'tahun'     => $data['tahun'],
-                'tanggal'   => $data['tanggal'],
+                'pihak_1' => $data['pihak_1'],
+                'pihak_2' => $data['pihak_2'],
+                'tahun' => $data['tahun'],
+                'tanggal' => $data['tanggal'],
                 'updated_at' => $now
             ]);
 
@@ -668,6 +668,22 @@ class PkModel extends Model
     {
         return $this->db->table('program_pk')->orderBy('program_kegiatan', 'ASC')->get()->getResultArray();
     }
+    public function getProgramsFromPkJpt()
+    {
+        return $this->db->table('pk_indikator pi')
+            ->select('
+            pr.id AS program_id,
+            pr.program_kegiatan,
+            pr.anggaran,
+            pi.id AS pk_indikator_id
+        ')
+            ->join('pk_program pp', 'pp.pk_indikator_id = pi.id', 'inner')
+            ->join('program_pk pr', 'pr.id = pp.program_id', 'inner')
+            ->where('pi.jenis', 'jpt')
+            ->orderBy('pr.program_kegiatan', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
 
     public function getKegiatan()
     {
@@ -854,7 +870,7 @@ class PkModel extends Model
     {
         switch (strtolower($jenis)) {
             case 'bupati':
-                return $this->getAllPrograms();
+                return $this->getProgramsFromPkJpt();
 
             case 'jpt':
                 return $this->getProgramByPkId($pkId);

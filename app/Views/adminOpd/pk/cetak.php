@@ -76,14 +76,7 @@
       margin-top: 50px;
     }
 
-    table {
-      page-break-inside: auto;
-    }
 
-    tr {
-      page-break-inside: avoid;
-      page-break-after: auto;
-    }
 
     td,
     th {
@@ -150,7 +143,6 @@
     }
 
     .footer {
-      position: fixed;
       bottom: 15px;
       left: 0;
       right: 0;
@@ -172,162 +164,120 @@
 
 <body>
   <!-- Halaman 1 -->
-  <page orientation="P" size="FOLIO">
-    <table width="100%" style="border: none; text-align: center;">
-      <tr>
-        <td style="border: none;">
-          <img src="<?= $logo_url ?>" alt="Logo">
-          <?php if (strtolower($jenis) === 'bupati'): ?>
-            <h3 style="font-weight: bold; margin: 0;">BUPATI PRINGSEWU</h3>
-            <h3 style="font-weight: bold; margin: 0;">PROVINSI LAMPUNG</h3>
-          <?php endif; ?>
-        </td>
-      </tr>
-      <tr>
-      </tr>
-      <tr>
-        <!-- Halaman 1 -->
-        <td style="border: none;">
-          <h4 style="font-weight: bold; margin: 0;">PERJANJIAN KINERJA TAHUN <?= esc(date('Y', strtotime($tanggal))) ?>
-          </h4>
-          <?php if (strtolower($jenis) === 'bupati'): ?>
-            <h4 style="font-weight: bold; margin: 0;">PEMERINTAH KABUPATEN PRINGSEWU</h4>
-          <?php endif; ?>
-        </td>
-      </tr>
-    </table>
+  <table width="100%" style="border: none; text-align: center;">
+    <tr>
+      <td style="border: none;">
+        <img src="<?= $logo_url ?>" alt="Logo">
+        <?php if (strtolower($jenis) === 'bupati'): ?>
+          <h3 style="font-weight: bold; margin: 0;">BUPATI PRINGSEWU</h3>
+          <h3 style="font-weight: bold; margin: 0;">PROVINSI LAMPUNG</h3>
+        <?php endif; ?>
+      </td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+      <!-- Halaman 1 -->
+      <td style="border: none;">
+        <h4 style="font-weight: bold; margin: 0;">PERJANJIAN KINERJA TAHUN <?= esc(date('Y', strtotime($tanggal))) ?>
+        </h4>
+        <?php if (strtolower($jenis) === 'bupati'): ?>
+          <h4 style="font-weight: bold; margin: 0;">PEMERINTAH KABUPATEN PRINGSEWU</h4>
+        <?php endif; ?>
+      </td>
+    </tr>
+  </table>
 
-    <p>Dalam rangka mewujudkan manajemen pemerintahan yang efektif, transparan dan akuntabel serta berorientasi pada
-      hasil, kami yang bertanda tangan di bawah ini :</p>
+  <p>Dalam rangka mewujudkan manajemen pemerintahan yang efektif, transparan dan akuntabel serta berorientasi pada
+    hasil, kami yang bertanda tangan di bawah ini :</p>
 
-    <table class="table-no-border" syle="width: 100%; border-collapse: collapse;">
+  <table class="table-no-border" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="width: 80px;">Nama</td>
+      <td style="width: 10px;">:</td>
+      <td class="fw-bold text-uppercase"><?= esc($nama_pihak_1) ?></td>
+    </tr>
+    <tr>
+      <td>Jabatan</td>
+      <td>:</td>
+      <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_1) ?></td>
+    </tr>
+  </table>
+
+  <?php if (strtolower($jenis) !== 'bupati'): ?>
+    <p>Selanjutnya disebut PIHAK KESATU</p>
+
+    <table class="table-no-border" syle="width: 100%; border-collapse: collapse; margin-top: 15px;">
       <tr>
         <td style="width: 80px;">Nama</td>
         <td style="width: 10px;">:</td>
-        <td class="fw-bold text-uppercase"><?= esc($nama_pihak_1) ?></td>
+        <td class="fw-bold text-uppercase"><?= esc($nama_pihak_2) ?></td>
       </tr>
       <tr>
         <td>Jabatan</td>
         <td>:</td>
-        <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_1) ?></td>
+        <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_2) ?></td>
       </tr>
     </table>
 
-    <?php if (strtolower($jenis) !== 'bupati'): ?>
-      <p>Selanjutnya disebut PIHAK KESATU</p>
+    <p>Selaku atasan PIHAK KESATU, selanjutnya disebut PIHAK KEDUA.</p>
 
-      <table class="table-no-border" syle="width: 100%; border-collapse: collapse; margin-top: 15px;">
-        <tr>
-          <td style="width: 80px;">Nama</td>
-          <td style="width: 10px;">:</td>
-          <td class="fw-bold text-uppercase"><?= esc($nama_pihak_2) ?></td>
-        </tr>
-        <tr>
-          <td>Jabatan</td>
-          <td>:</td>
-          <td class="fw-bold text-uppercase"><?= esc($jabatan_pihak_2) ?></td>
-        </tr>
-      </table>
+    <p>PIHAK KESATU pada tahun <?= esc(date('Y', strtotime($tanggal))) ?> berjanji akan mewujudkan target kinerja
+      tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target kinerja jangka menengah seperti yang
+      ditetapkan dalam dokumen perencanaan. Keberhasilan pencapaian target kinerja tersebut menjadi tanggung jawab PIHAK
+      KESATU.</p>
 
-      <p>Selaku atasan PIHAK KESATU, selanjutnya disebut PIHAK KEDUA.</p>
+    <p>PIHAK KEDUA akan memberikan supervisi yang diperlukan serta akan melakukan evaluasi akuntabilitas kinerja
+      terhadap capaian kinerja dari perjanjian ini dan mengambil tindakan yang diperlukan dalam rangka pemberian
+      penghargaan dan sanksi.</p>
+  <?php endif; ?>
 
-      <p>PIHAK KESATU pada tahun <?= esc(date('Y', strtotime($tanggal))) ?> berjanji akan mewujudkan target kinerja
-        tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target kinerja jangka menengah seperti yang
-        ditetapkan dalam dokumen perencanaan. Keberhasilan pencapaian target kinerja tersebut menjadi tanggung jawab PIHAK
-        KESATU.</p>
+  <?php if (strtolower($jenis) === 'bupati'): ?>
+    <p>Berjanji akan mewujudkan target kinerja tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target
+      kinerja
+      jangka menengah seperti yang ditetapkan dalam dokumen perencanaan. Keberhasilan dan kegagalan pencapaian target
+      kinerja
+      tersebut menjadi tanggungjawab kami.</p>
 
-      <p>PIHAK KEDUA akan memberikan supervisi yang diperlukan serta akan melakukan evaluasi akuntabilitas kinerja
-        terhadap capaian kinerja dari perjanjian ini dan mengambil tindakan yang diperlukan dalam rangka pemberian
-        penghargaan dan sanksi.</p>
-    <?php endif; ?>
+  <?php endif; ?>
 
-    <?php if (strtolower($jenis) === 'bupati'): ?>
-      <p>Berjanji akan mewujudkan target kinerja tahunan sesuai lampiran perjanjian ini dalam rangka mencapai target
-        kinerja
-        jangka menengah seperti yang ditetapkan dalam dokumen perencanaan. Keberhasilan dan kegagalan pencapaian target
-        kinerja
-        tersebut menjadi tanggungjawab kami.</p>
+  <table width="100%" cellspacing="0" cellpadding="4" style="margin-top:30px;">
+    <tr>
+      <?php if (strtolower($jenis) !== 'bupati'): ?>
 
-    <?php endif; ?>
+        <!-- PIHAK KEDUA -->
+        <td width="50%" align="center" valign="top">
+          <strong>PIHAK KEDUA,</strong><br>
+          <?= esc($jabatan_pihak_2) ?><br><br><br><br>
 
-    <table style="width:100%; margin-top:30px; ">
-      <tr>
-        <td style="width:50%; text-align:right; vertical-align:top;">
+          <strong><?= esc(strtoupper($nama_pihak_2)) ?></strong><br>
+          <?php if (strtolower($jenis) !== 'jpt'): ?>
+            NIP. <?= esc($nip_pihak_2) ?>
+          <?php endif; ?>
         </td>
-        <td style="width:50%; text-align:right; vertical-align:top;">
-          <p style="margin-bottom:10px;">
-            Pringsewu, <?= esc(formatTanggal($tanggal)) ?>
-          </p>
+
+        <!-- PIHAK KESATU -->
+        <td width="50%" align="center" valign="top">
+          <strong>PIHAK KESATU,</strong><br>
+          <?= esc($jabatan_pihak_1) ?><br><br><br><br>
+
+          <strong><?= esc(strtoupper($nama_pihak_1)) ?></strong><br>
+          NIP. <?= esc($nip_pihak_1) ?>
         </td>
-      </tr>
-      <tr>
 
-        <?php if (strtolower($jenis) !== 'bupati'): ?>
-          <!-- KOLOM PIHAK KEDUA (KIRI) -->
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <p class="label">PIHAK KEDUA,</p>
-                  <p><?= esc($jabatan_pihak_2) ?></p>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-bottom">
-              <tr>
-                <td class="signature-meta">
-                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
-                  <?php if (strtolower($jenis) !== 'jpt'): ?>
-                    <p>NIP. <?= esc($nip_pihak_2) ?></p>
-                  <?php endif; ?>
-                </td>
-              </tr>
-            </table>
-          </td>
+      <?php else: ?>
 
-          <!-- KOLOM PIHAK KESATU (KANAN) + TANGGAL -->
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <p class="label">PIHAK KESATU,</p>
-                  <p><?= esc($jabatan_pihak_1) ?></p>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-bottom">
-              <tr>
-                <td class="signature-meta">
-                  <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
-                  <p>NIP. <?= esc($nip_pihak_1) ?></p>
-                </td>
-              </tr>
-            </table>
-          </td>
+        <td width="50%"></td>
+        <td width="50%" align="center" valign="top">
+          <strong>BUPATI PRINGSEWU</strong><br><br><br><br>
+          <strong><?= esc(strtoupper($nama_pihak_1)) ?></strong>
+        </td>
 
-        <?php else: ?>
+      <?php endif; ?>
+    </tr>
+  </table>
 
-          <td style="width:50%;"></td>
-          <td style="width:50%;">
-            <table class="signature-table">
-              <tr>
-                <td class="signature-title">
-                  <strong>BUPATI PRINGSEWU</strong>
-                </td>
-              </tr>
-            </table>
-            <table class="signature-table">
-              <tr>
-                <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
-              </tr>
-            </table>
-          </td>
 
-        <?php endif; ?>
-      </tr>
-    </table>
-    
-  </page>
 </body>
 
 </html>

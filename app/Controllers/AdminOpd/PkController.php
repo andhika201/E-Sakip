@@ -6,6 +6,8 @@ use App\Controllers\BaseController;
 use App\Models\PegawaiModel;
 use App\Models\PkModel;
 use App\Models\OpdModel;
+use App\Libraries\PdfTcpdf;
+
 
 class PkController extends BaseController
 {
@@ -31,7 +33,7 @@ class PkController extends BaseController
         }
 
         $tahun = $this->request->getGet('tahun');
-        $pkId  = $this->request->getGet('pk_id');
+        $pkId = $this->request->getGet('pk_id');
 
         $pkData = null;
         $pkRelasiList = [];
@@ -71,9 +73,9 @@ class PkController extends BaseController
                             $key = $program['program_id'] . '|' . $program['anggaran'];
 
                             $uniquePrograms[$key] = [
-                                'program_id'        => $program['program_id'],
-                                'program_kegiatan'  => $program['program_kegiatan'],
-                                'anggaran'          => $program['anggaran'],
+                                'program_id' => $program['program_id'],
+                                'program_kegiatan' => $program['program_kegiatan'],
+                                'anggaran' => $program['anggaran'],
                             ];
                         }
                     }
@@ -98,30 +100,113 @@ class PkController extends BaseController
         $currentOpd = $this->opdModel->find($opdId);
 
         return view('adminOpd/pk/pk', [
-            'pk_data'          => $pkData,
-            'pkRelasiList'     => $pkRelasiList,
+            'pk_data' => $pkData,
+            'pkRelasiList' => $pkRelasiList,
             'tampilkanProgram' => $tampilkanProgram,
-            'current_opd'      => $currentOpd,
-            'currentYear'      => date('Y'),
-            'pk_id'            => $pkId,
-            'tahun'            => $tahun,
-            'jenis'            => $jenis,
+            'current_opd' => $currentOpd,
+            'currentYear' => date('Y'),
+            'pk_id' => $pkId,
+            'tahun' => $tahun,
+            'jenis' => $jenis,
         ]);
     }
 
-    public function cetak($jenis, $id = null)
+    // public function cetak($jenis, $id = null)
+    // {
+    //     helper('format');
+    //     if (!$id) {
+    //         return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
+    //     }
+    //     $data = $this->pkModel->getPkById($id);
+    //     if (!$data) {
+    //         return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+    //     }
+    //     $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+
+    //     $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+
+    //     if ($jenis === 'bupati' || $jenis === 'jpt') {
+    //         $program = "program_kegiatan";
+    //     } elseif ($jenis === 'administrator') {
+    //         $program = "kegiatan";
+    //     } elseif ($jenis === 'pengawas') {
+    //         $program = "sub_kegiatan";
+    //     }
+
+    //     $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
+    //     $pihak1Level = $pegawai1['level'] ?? null;
+    //     $opd = strtoupper($data['nama_opd']);
+
+    //     $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
+
+    //     $tahun = date('Y', strtotime($data['tanggal']));
+    //     $viewPath = 'adminOpd/pk/cetak';
+    //     $viewPathL = 'adminOpd/pk/cetak-L';
+    //     $html_1 = view($viewPath, $data);
+    //     $html_2 = view($viewPathL, [
+    //         'data' => $data,
+    //         'tampilkanProgram' => $tampilkanProgram,
+    //         'program' => $program,
+
+    //     ]);
+    //     $mpdf = new \Mpdf\Mpdf([
+    //         'mode' => 'utf-8',
+    //         'format' => 'FOLIO',
+    //         'default_font_size' => 12,
+    //         'mirrorMargins' => true,
+    //         'tempDir' => sys_get_temp_dir(),
+    //     ]);
+
+    //     $footerHtml = '
+    //     <table width="100%" style="font-size:9pt; color:#444;">
+    //         <tr>
+    //             <td align="left">
+    //                 © Kabupaten Pringsewu
+    //             </td>
+    //             <td align="right">
+    //                 {PAGENO}/{nbpg}
+    //             </td>
+    //         </tr>
+    //         <tr>
+    //             <td colspan="2" style="font-size:8.5pt;">
+    //                 ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
+    //             </td>
+    //         </tr>
+    //     </table>
+    //     ';
+
+    //     $css = 'img { width: 70px; height: auto; }';
+    //     $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+    //     $mpdf->SetHTMLFooter($footerHtml, 'O');
+    //     $mpdf->SetHTMLFooter($footerHtml, 'E');
+    //     $mpdf->WriteHTML($html_1);
+    //     $mpdf->AddPage('P');
+    //     $mpdf->WriteHTML($html_2);
+    //     $this->response->setHeader('Content-Type', 'application/pdf');
+    //     return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
+    // }
+
+
+    public function cetak($jenis, $id)
     {
-        helper('format');
-        if (!$id) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
-        }
+        helper(['format']);
+
         $data = $this->pkModel->getPkById($id);
         if (!$data) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
+
+        // =========================
+        // DATA TAMBAHAN
+        // =========================
+        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+        $data['logo_url'] = FCPATH . 'assets/images/logo.png';
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
 
-        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
+        $tahun = $data['tahun'];
+        $jenis = $data['jenis'];
+
+        // dd($data);
 
         if ($jenis === 'bupati' || $jenis === 'jpt') {
             $program = "program_kegiatan";
@@ -133,58 +218,81 @@ class PkController extends BaseController
 
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;
-        $opd = strtoupper($data['nama_opd']);
+        $nama_opd = strtoupper($data['nama_opd']);
 
         $tampilkanProgram = !($data['opd_id'] == 2 && $pihak1Level === 'VERIFIKATOR');
 
-        $tahun = date('Y', strtotime($data['tanggal']));
-        $viewPath = 'adminOpd/pk/cetak';
-        $viewPathL = 'adminOpd/pk/cetak-L';
-        $html_1 = view($viewPath, $data);
-        $html_2 = view($viewPathL, [
-            'data' => $data,
-            'tampilkanProgram' => $tampilkanProgram,
-            'program' => $program,
 
-        ]);
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'FOLIO',
-            'default_font_size' => 12,
-            'mirrorMargins' => true,
-            'tempDir' => sys_get_temp_dir(),
-        ]);
+        // =========================
+        // INIT TCPDF
+        // =========================
+        $pdf = new \App\Libraries\PdfTcpdf();
+        $pdf->SetTitle('Perjanjian Kinerja ' . $data['tahun']);
+        $pdf->SetMargins(20, 10, 20);
+        $pdf->SetAutoPageBreak(true, 15);
 
-        $footerHtml = '
-        <table width="100%" style="font-size:9pt; color:#444;">
-            <tr>
-                <td align="left">
-                    © Kabupaten Pringsewu
-                </td>
-                <td align="right">
-                    {PAGENO}/{nbpg}
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="font-size:8.5pt;">
-                    ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
-                </td>
-            </tr>
-        </table>
-        ';
+        $rows = [];
 
-        $css = 'img { width: 70px; height: auto; }';
-        $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->SetHTMLFooter($footerHtml, 'O');
-        $mpdf->SetHTMLFooter($footerHtml, 'E');
-        $mpdf->WriteHTML($html_1);
-        $mpdf->AddPage('P');
-        $mpdf->WriteHTML($html_2);
-        $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
+        foreach ($data['program_pk'] as $row) {
+            $rows[] = [
+                'nama' => $row[$program],
+                'anggaran' => (float) $row['anggaran'] ,
+            ];
+        }
+        $totalRows = count($rows);
+        $tailCount = 2; // 🔒 KUNCI: 2 BARIS TERAKHIR
+
+        if ($totalRows > $tailCount) {
+            $mainRows = array_slice($rows, 0, $totalRows - $tailCount);
+            $tailRows = array_slice($rows, -$tailCount);
+        } else {
+            // kalau datanya sedikit, semuanya ikut tanda tangan
+            $mainRows = [];
+            $tailRows = $rows;
+        }
+
+//      dd([
+//   'rows' => $rows,
+//   'mainRows' => $mainRows,
+//   'tailRows' => $tailRows,
+// ]);
+
+        // =========================
+        // HALAMAN 1 – PERJANJIAN
+        // =========================
+        // $pdf->AddPage();
+        // $html1 = view('adminOpd/pk/cetak', $data);
+        // $pdf->writeHTML($html1, true, false, true, false, '');
+
+        // =========================
+        // HALAMAN 2 – LAMPIRAN
+        // =========================
+        $pdf->AddPage();
+        $html2 = view(
+            'adminOpd/pk/cetak-L',
+            array_merge($data, [
+
+                'tampilkanProgram' => $tampilkanProgram,
+                'program' => $program,
+                'mainRows' => $mainRows,
+                'tailRows' => $tailRows,
+                'nama_opd' => $nama_opd,
+                'tahun' => $tahun,
+                'jenis' => $jenis
+            ])
+
+        );
+        $pdf->writeHTML($html2, true, false, true, false, '');
+
+        // =========================
+        // OUTPUT
+        // =========================
+        $pdf->Output(
+            'Perjanjian-Kinerja-' . $jenis . '-' . $data['tahun'] . '.pdf',
+            'I'
+        );
+        exit;
     }
-
-
 
     public function tambah($jenis)
     {
@@ -484,7 +592,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        };
+        }
+        ;
         // dd($this->request->getPost('sasaran_pk'));
 
         // ------------------------------
@@ -675,7 +784,7 @@ class PkController extends BaseController
                     log_message(
                         'debug',
                         "PROGRAM RESULT [{$sIndex}][{$iIndex}]: " .
-                            json_encode($indikatorData['program'])
+                        json_encode($indikatorData['program'])
                     );
 
 

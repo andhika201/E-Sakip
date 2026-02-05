@@ -156,18 +156,13 @@ class PkController extends BaseController
         ]);
 
         $footerHtml = '
-        <table width="100%" style="font-size:9pt; color:#444;">
+        <table width="100%" style="font-size:5pt; color:#444;">
             <tr>
                 <td align="left">
-                    © Kabupaten Pringsewu
+                    © Kabupaten Pringsewu ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
                 </td>
                 <td align="right">
                     {PAGENO}/{nbpg}
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="font-size:8.5pt;">
-                    ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
                 </td>
             </tr>
         </table>

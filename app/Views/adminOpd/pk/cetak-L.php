@@ -88,15 +88,13 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
      SIGNATURE
   ========================== */
     .signature-table {
-      width: auto;
-      display: inline-table;
+      width: 100%;
       border-collapse: collapse;
       border: none;
     }
 
     .signature-bottom {
-      width: auto;
-      display: inline-table;
+      width: 100%;
       border-collapse: collapse;
       border: none;
     }
@@ -146,13 +144,9 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
       margin-top: 40px;
     }
 
-    tfoot {
+    .program-table tbody tr:nth-last-child(-n+2),
+    .signature-block {
       page-break-inside: avoid;
-    }
-
-    .program-table tfoot td {
-      border: none;
-      padding-top: 30px;
     }
   </style>
 
@@ -250,8 +244,6 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
 
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
       <table class="table-bordered-custom program-table" style="width:100%; margin-top:30px;">
-
-        <!-- ================= HEADER ================= -->
         <thead>
           <tr class="center fw-bold">
             <th style="width:7%;">No</th>
@@ -259,150 +251,177 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
             <th style="width:28%;">ANGGARAN (Rp)</th>
           </tr>
         </thead>
-
-        <!-- ================= BODY (PROGRAM) ================= -->
         <tbody>
           <?php
+          /**
+           * ==============================
+           * SETTING STRUKTUR BERDASARKAN JENIS PK
+           * ==============================
+           */
           if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $groupField = null;
-            $itemField  = 'program_kegiatan';
+            $groupField = null;                 // tidak ada header
+            $itemField = 'program_kegiatan';   // item = program
           } elseif ($jenis === 'administrator') {
-            $groupField = 'program_kegiatan';
-            $itemField  = 'kegiatan';
+            $groupField = 'program_kegiatan';   // header = program
+            $itemField = 'kegiatan';            // item = kegiatan
           } elseif ($jenis === 'pengawas') {
-            $groupField = 'kegiatan';
-            $itemField  = 'sub_kegiatan';
+            $groupField = 'kegiatan';            // header = kegiatan
+            $itemField = 'sub_kegiatan';        // item = sub kegiatan
           }
 
+          /**
+           * ==============================
+           * GROUPING DATA (UNIVERSAL)
+           * ==============================
+           */
           $groupedData = [];
 
           foreach ($program_pk as $row) {
-            $groupName = $groupField ? ($row[$groupField] ?? '-') : '_flat';
 
-            if (!isset($groupedData[$groupName])) {
-              $groupedData[$groupName] = [];
+            $groupName = $groupField ? ($row[$groupField] ?? '-') : null;
+
+            // key unik item + anggaran
+            $itemKey = md5(
+              ($row[$itemField] ?? '') . '|' . ($row['anggaran'] ?? 0)
+            );
+
+            if ($groupField) {
+              // ADA HEADER (Administrator, Pengawas)
+              if (!isset($groupedData[$groupName])) {
+                $groupedData[$groupName] = [
+                  'nama' => $groupName,
+                  'items' => []
+                ];
+              }
+
+              if (!isset($groupedData[$groupName]['items'][$itemKey])) {
+                $groupedData[$groupName]['items'][$itemKey] = [
+                  'nama' => $row[$itemField],
+                  'anggaran' => $row['anggaran']
+                ];
+              }
+            } else {
+              // TANPA HEADER (JPT)
+              if (!isset($groupedData['_flat'])) {
+                $groupedData['_flat'] = [
+                  'nama' => null,
+                  'items' => []
+                ];
+              }
+
+              if (!isset($groupedData['_flat']['items'][$itemKey])) {
+                $groupedData['_flat']['items'][$itemKey] = [
+                  'nama' => $row[$itemField],
+                  'anggaran' => $row['anggaran']
+                ];
+              }
             }
-
-            $groupedData[$groupName][] = $row;
           }
-
-          $grandTotal = 0;
           ?>
 
-          <?php foreach ($groupedData as $groupName => $items): ?>
+          <?php $grandTotal = 0; ?>
 
-            <?php if ($groupField && $groupName !== '_flat'): ?>
+          <?php foreach ($groupedData as $group): ?>
+
+            <?php if ($group['nama']): ?>
               <tr class="fw-bold">
-                <td colspan="3"><?= esc($groupName) ?></td>
+                <td colspan="3">
+                  <?= esc($group['nama']) ?>
+                </td>
               </tr>
             <?php endif; ?>
 
             <?php $no = 1; ?>
-            <?php foreach ($items as $item): ?>
+            <?php foreach ($group['items'] as $item): ?>
               <?php $grandTotal += (float) $item['anggaran']; ?>
               <tr>
                 <td class="center"><?= $no++ ?></td>
-                <td><?= esc($item[$itemField]) ?></td>
+                <td><?= esc($item['nama']) ?></td>
                 <td align="right"><?= number_format($item['anggaran'], 0, ',', '.') ?></td>
               </tr>
             <?php endforeach; ?>
 
           <?php endforeach; ?>
 
-          <!-- ===== TOTAL ===== -->
           <tr class="fw-bold">
             <td colspan="2" class="right">TOTAL</td>
             <td align="right"><?= number_format($grandTotal, 0, ',', '.') ?></td>
           </tr>
         </tbody>
-
-        <!-- ================= FOOTER TABLE (TANDA TANGAN) ================= -->
-        <tfoot>
-          <tr>
-            <td colspan="3" style="border:none; padding-top:30px;">
-
-              <table width="100%" style="border:none; table-layout:fixed;">
-                <tr>
-
-                  <?php if (strtolower($jenis) !== 'bupati'): ?>
-
-                    <!-- PIHAK KEDUA (KIRI) -->
-                    <td width="50%" style="vertical-align:top; text-align:center;">
-                      <table class="signature-table" style="margin:0 auto;">
-                        <tr>
-                          <td class="signature-title">
-                            <p class="label">PIHAK KEDUA,</p>
-                            <p><?= esc($jabatan_pihak_2) ?></p>
-                          </td>
-                        </tr>
-                      </table>
-
-                      <table class="signature-bottom" style="margin:0 auto;">
-                        <tr>
-                          <td class="signature-meta">
-                            <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
-                            <?php if (strtolower($jenis) !== 'jpt'): ?>
-                              <p>NIP. <?= esc($nip_pihak_2) ?></p>
-                            <?php endif; ?>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-
-                    <!-- PIHAK KESATU (KANAN) -->
-                    <td width="50%" style="vertical-align:top; text-align:right;">
-                      <table class="signature-table" style="margin-left:auto;">
-                        <tr>
-                          <td class="signature-title">
-                            <p class="label">PIHAK KESATU,</p>
-                            <p><?= esc($jabatan_pihak_1) ?></p>
-                          </td>
-                        </tr>
-                      </table>
-
-                      <table class="signature-bottom" style="margin-left:auto;">
-                        <tr>
-                          <td class="signature-meta">
-                            <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
-                            <p>NIP. <?= esc($nip_pihak_1) ?></p>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-
-                  <?php else: ?>
-
-                    <td width="50%"></td>
-                    <td width="50%" style="text-align:right;">
-                      <table class="signature-table" style="margin-left:auto;">
-                        <tr>
-                          <td class="signature-title">
-                            <strong>BUPATI PRINGSEWU</strong>
-                          </td>
-                        </tr>
-                      </table>
-
-                      <table class="signature-table" style="margin-left:auto;">
-                        <tr>
-                          <td class="signature-name">
-                            <?= esc(strtoupper($nama_pihak_1)) ?>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-
-                  <?php endif; ?>
-
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-        </tfoot>
-
-
       </table>
     <?php endif; ?>
+
+
+    <div class="signature-block">
+
+      <table style="width:100%; margin-top:30px;">
+        <tr>
+          <?php if (strtolower($jenis) !== 'bupati'): ?>
+            <!-- PIHAK KEDUA -->
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <p class="label">PIHAK KEDUA,</p>
+                    <p><?= esc($jabatan_pihak_2) ?></p>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-bottom">
+                <tr>
+                  <td class="signature-meta">
+                    <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
+                    <?php if (strtolower($jenis) !== 'jpt'): ?>
+                      <p>NIP. <?= esc($nip_pihak_2) ?></p>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              </table>
+            </td>
+
+            <!-- PIHAK KESATU -->
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <p class="label">PIHAK KESATU,</p>
+                    <p><?= esc($jabatan_pihak_1) ?></p>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-bottom">
+                <tr>
+                  <td class="signature-meta">
+                    <p class="label"><strong><?= esc(strtoupper($nama_pihak_1)) ?></strong></p>
+                    <p>NIP. <?= esc($nip_pihak_1) ?></p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          <?php else: ?>
+
+            <td style="width:50%;"></td>
+            <td style="width:50%;">
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-title">
+                    <strong>BUPATI PRINGSEWU</strong>
+                  </td>
+                </tr>
+              </table>
+              <table class="signature-table">
+                <tr>
+                  <td class="signature-name"><?= esc(strtoupper($nama_pihak_1)) ?></td>
+                </tr>
+              </table>
+            </td>
+
+          <?php endif; ?>
+
+        </tr>
+      </table>
+    </div>
+
 
     <page />
 </body>

@@ -57,10 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const selected = select.options[select.selectedIndex];
       if (!selected) return;
 
-      const kegiatanItem = select.closest(".kegiatan-item");
-      if (!kegiatanItem) return;
+      const kegItem = select.closest(".kegiatan-item");
+      if (!kegItem) return;
 
-      const anggaranInput = kegiatanItem.querySelector(
+      const anggaranInput = kegItem.querySelector(
         'input[name*="[anggaran]"]',
       );
       if (!anggaranInput) return;
@@ -72,32 +72,39 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   );
 
+
   // Ambil single templates berdasarkan item pertama di DOM (safe cloning)
   const templateSasaran = qs(".sasaran-item")?.cloneNode(true);
   const templateIndikator = qs(".indikator-item")?.cloneNode(true);
   const templateProgramItem = qs(".program-item")?.cloneNode(true);
   const templateKegiatanItem = qs(".kegiatan-item")?.cloneNode(true);
-  const templateSubkegItem = qs(".subkeg-item")?.cloneNode(true);
 
-  // Jika templates ada, bersihkan nilainya supaya jadi "kosong"
-  if (templateProgramItem && window.jQuery) {
-    qsa("select.select2", templateProgramItem).forEach((sel) => {
-      if (jQuery(sel).hasClass("select2-hidden-accessible")) {
-        jQuery(sel).select2("destroy");
-      }
-    });
+  if (templateSasaran) {
+    templateSasaran.querySelectorAll("textarea, input").forEach(el => el.value = "");
   }
-
   if (templateIndikator) {
-    const programs = qsa(".program-item", templateIndikator);
-    programs.forEach((el, idx) => {
-      if (idx > 0) el.remove(); // sisakan 1 program saja
+    templateIndikator.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
     });
   }
+  if (templateKegiatanItem) {
+    templateKegiatanItem.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+  }
+  if (templateProgramItem) {
+    templateProgramItem.querySelectorAll("input, select").forEach(el => {
+      if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else el.value = "";
+    });
+  }
+
   if (templateSasaran) clearFormControls(templateSasaran);
   if (templateIndikator) clearFormControls(templateIndikator);
   if (templateKegiatanItem) clearFormControls(templateKegiatanItem);
-  if (templateSubkegItem) clearFormControls(templateSubkegItem);
+  if (templateProgramItem) clearFormControls(templateProgramItem);
 
   /* =========================================================
      UPDATE FORM NAMES (ADMIN)
@@ -105,263 +112,210 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateFormNames() {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
       // ===== SASARAN =====
-      const sasaranTxt = sasaran.querySelector("textarea");
-      if (sasaranTxt) {
-        sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
-      }
+      sasaran
+        .querySelector("textarea")
+        ?.setAttribute("name", `sasaran_pk[${si}][sasaran]`);
 
       // ===== INDIKATOR =====
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
-        const inputIndikator = indikator.querySelector(
-          'input[type="text"]:not([name*="target"])',
-        );
-        if (inputIndikator) {
-          inputIndikator.name = `sasaran_pk[${si}][indikator][${ii}][indikator]`;
-        }
+        indikator
+          .querySelector(".indikator-input")
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][indikator]`
+          );
 
-        const inputTarget = indikator.querySelector('input[name*="[target]"]');
-        if (inputTarget) {
-          inputTarget.name = `sasaran_pk[${si}][indikator][${ii}][target]`;
-        }
+        indikator
+          .querySelector(".indikator-target")
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][target]`
+          );
 
-        const selectSatuan = indikator.querySelector(
-          'select[name*="[id_satuan]"]',
-        );
-        if (selectSatuan) {
-          selectSatuan.name = `sasaran_pk[${si}][indikator][${ii}][id_satuan]`;
-        }
+        indikator
+          .querySelector(".satuan-select")
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][id_satuan]`
+          );
 
-        const selectJenis = indikator.querySelector(
-          'select[name*="[jenis_indikator]"]',
-        );
-        if (selectJenis) {
-          selectJenis.name = `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`;
-        }
+        indikator
+          .querySelector(".jenis-indikator-select")
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][jenis_indikator]`
+          );
 
         // ===== PROGRAM =====
         qsa(".program-item", indikator).forEach((program, pi) => {
-          const programSelect = program.querySelector(
-            'select[name*="[program_id]"]',
-          );
-          if (programSelect) {
-            programSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`;
-          }
+          program
+            .querySelector(".program-select")
+            ?.setAttribute(
+              "name",
+              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][program_id]`
+            );
 
           // ===== KEGIATAN =====
-          qsa(".kegiatan-item", program).forEach((keg, ki) => {
-            const kegSelect = keg.querySelector(
-              'select[name*="[kegiatan_id]"]',
-            );
-            if (kegSelect) {
-              kegSelect.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`;
-            }
+          qsa(".kegiatan-item", program).forEach((kegiatan, ki) => {
+            kegiatan
+              .querySelector(".kegiatan-select")
+              ?.setAttribute(
+                "name",
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][kegiatan_id]`
+              );
 
-            const anggaranInput = keg.querySelector(
-              'input[name*="[anggaran]"]',
-            );
-            if (anggaranInput) {
-              anggaranInput.name = `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`;
-            }
+            kegiatan
+              .querySelector(".anggaran-input")
+              ?.setAttribute(
+                "name",
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][anggaran]`
+              );
           });
         });
       });
     });
   }
 
+
   updateFormNames();
   /* =========================================================
      ADD / REMOVE HANDLER
   ========================================================= */
   document.body.addEventListener("click", (e) => {
-    const target = e.target;
+    const t = e.target;
 
-    //   ------- ADD SASARAN ---------- */
-    if (target.closest(".add-sasaran")) {
+    /* =======================
+       ADD SASARAN
+    ======================= */
+    if (t.closest(".add-sasaran")) {
       e.preventDefault();
 
-      if (!templateSasaran) return;
-      const clone = templateSasaran.cloneNode(true);
-      clearFormControls(clone);
-      
-      // paksa hanya 1 indikator awal
-      const indikatorContainer = clone.querySelector(".indikator-container");
+      const sasaranClone = templateSasaran.cloneNode(true);
+      const indikatorContainer =
+        sasaranClone.querySelector(".indikator-container");
+
       indikatorContainer.innerHTML = "";
 
       const indikatorClone = templateIndikator.cloneNode(true);
-      clearFormControls(indikatorClone);
-
-      // paksa 1 program awal
       const programContainer =
         indikatorClone.querySelector(".program-container");
+
       programContainer.innerHTML = "";
 
       const programClone = templateProgramItem.cloneNode(true);
-      clearFormControls(programClone);
+      const kegiatanContainer =
+        programClone.querySelector(".kegiatan-container");
+
+      kegiatanContainer.innerHTML = "";
+
+      const kegiatanClone = templateKegiatanItem.cloneNode(true);
+      kegiatanContainer.appendChild(kegiatanClone);
+
       programContainer.appendChild(programClone);
-
       indikatorContainer.appendChild(indikatorClone);
-      sasaranContainer.appendChild(clone);
+      sasaranContainer.appendChild(sasaranClone);
+
       updateFormNames();
-      initSelect2(clone);
-      return;      
+      initSelect2(sasaranClone);
     }
 
-    // add-indikator
-    if (target.closest(".add-indikator")) {
+    /* =======================
+       ADD INDIKATOR
+    ======================= */
+    if (t.closest(".add-indikator")) {
       e.preventDefault();
-      const indikatorSection = target.closest(".indikator-section");
-      if (!indikatorSection) return;
-      const indikatorContainer = qs(".indikator-container", indikatorSection);
+
+      const indikatorContainer = t
+        .closest(".indikator-section")
+        ?.querySelector(".indikator-container");
       if (!indikatorContainer) return;
-      // choose template: if there's at least one existing indikator, clone that first; else fallback to global template
-      const prototype = templateIndikator
-        ? templateIndikator.cloneNode(true)
-        : null;
-      if (!prototype) return;
-      clearFormControls(prototype);
-      // ensure program/kegiatan/subkeg inside prototype reduced to single item
-      // remove extra program-items
-      const programItems = qsa(".program-item", prototype);
-      programItems.forEach((el, idx) => {
-        if (idx > 0) el.remove();
-      });
-      qsa(".program-item", prototype).forEach((el, idx) => {
-        if (idx > 0) el.remove();
-      });
-      qsa(".kegiatan-item", prototype).forEach((el, idx) => {
-        if (idx > 0) el.remove();
-      });
-      qsa(".subkeg-item", prototype).forEach((el, idx) => {
-        if (idx > 0) el.remove();
-      });
 
-      indikatorContainer.appendChild(prototype);
-      updateFormNames();
-      initSelect2(prototype);
+      const indikatorClone = templateIndikator.cloneNode(true);
+      const programContainer =
+        indikatorClone.querySelector(".program-container");
 
-      return;
-    }
+      programContainer.innerHTML = "";
 
-    /* ---------- ADD PROGRAM ---------- */
-    if (target.closest(".add-program")) {
-      e.preventDefault();
+      const programClone = templateProgramItem.cloneNode(true);
+      const kegiatanContainer =
+        programClone.querySelector(".kegiatan-container");
 
-      const indikatorItem = target.closest(".indikator-item");
-      if (!indikatorItem) return;
+      kegiatanContainer.innerHTML = "";
 
-      const programContainer = qs(".program-container", indikatorItem);
-      if (!programContainer) return;
+      const kegiatanClone = templateKegiatanItem.cloneNode(true);
+      kegiatanContainer.appendChild(kegiatanClone);
 
-      const proto = templateProgramItem
-        ? templateProgramItem.cloneNode(true)
-        : null;
-      if (!proto) return;
-
-      clearFormControls(proto);
-
-      // pastikan hanya 1 kegiatan
-      qsa(".kegiatan-item", proto).forEach((el, i) => {
-        if (i > 0) el.remove();
-      });
-
-      programContainer.appendChild(proto);
+      programContainer.appendChild(programClone);
+      indikatorContainer.appendChild(indikatorClone);
 
       updateFormNames();
-      initSelect2(proto);
-      return;
+      initSelect2(indikatorClone);
     }
 
-    /* ---------- ADD KEGIATAN ---------- */
-    if (target.closest(".add-kegiatan")) {
+    /* =======================
+       ADD PROGRAM
+    ======================= */
+    if (t.closest(".add-program")) {
       e.preventDefault();
 
-      const programitem = target.closest(".program-item");
-      if (!programitem) return;
-
-      const kegiatancontainer = qs(".kegiatan-container", programitem);
-      if (!kegiatancontainer) return;
-
-      const proto = templateKegiatanItem
-        ? templateKegiatanItem.cloneNode(true)
-        : null;
-      if (!proto) return;
-
-      clearFormControls(proto);
-
-      kegiatancontainer.appendChild(proto);
-
-      updateFormNames();
-      initSelect2(proto);
-      return;
-    }
-
-    /* ---------- REMOVE PROGRAM ---------- */
-    if (target.closest(".remove-program")) {
-      e.preventDefault();
-
-      const program = target.closest(".program-item");
-      const container = program?.parentElement;
+      const indikator = t.closest(".indikator-item");
+      const container = indikator?.querySelector(".program-container");
       if (!container) return;
 
-      if (qsa(".program-item", container).length > 1) {
-        program.remove();
-        updateFormNames();
-      } else {
-        clearFormControls(program);
-      }
-      return;
+      const programClone = templateProgramItem.cloneNode(true);
+      const kegiatanContainer =
+        programClone.querySelector(".kegiatan-container");
+
+      kegiatanContainer.innerHTML = "";
+
+      const kegiatanClone = templateKegiatanItem.cloneNode(true);
+      kegiatanContainer.appendChild(kegiatanClone);
+
+      container.appendChild(programClone);
+
+      updateFormNames();
+      initSelect2(programClone);
     }
 
-    /* ---------- REMOVE KEGIATAN ---------- */
-    if (target.closest(".remove-kegiatan")) {
+    /* =======================
+       ADD KEGIATAN
+    ======================= */
+    if (t.closest(".add-kegiatan")) {
       e.preventDefault();
 
-      const kegiatan = target.closest(".kegiatan-item");
-      const container = kegiatan?.parentElement;
+      const program = t.closest(".program-item");
+      const container = program?.querySelector(".kegiatan-container");
       if (!container) return;
 
-      if (qsa(".kegiatan-item", container).length > 1) {
-        kegiatan.remove();
+      const kegiatanClone = templateKegiatanItem.cloneNode(true);
+      container.appendChild(kegiatanClone);
+
+      updateFormNames();
+      initSelect2(kegiatanClone);
+    }
+
+    /* =======================
+       REMOVE GENERIC
+    ======================= */
+    ["sasaran", "indikator", "program", "kegiatan"].forEach((type) => {
+      if (t.closest(`.remove-${type}`)) {
+        e.preventDefault();
+
+        const item = t.closest(`.${type}-item`);
+        const parent = item?.parentElement;
+        if (!item || !parent) return;
+
+        if (parent.children.length > 1) {
+          item.remove();
+        } else {
+          clearFormControls(item);
+        }
+
         updateFormNames();
-      } else {
-        clearFormControls(kegiatan);
       }
-      return;
-    }
-
-    // remove-sasaran
-    if (target.closest(".remove-sasaran")) {
-      e.preventDefault();
-      const item = target.closest(".sasaran-item");
-      if (!item) return;
-      const total = qsa(".sasaran-item", sasaranContainer).length;
-      if (total <= 1) {
-        alert("Minimal harus ada 1 sasaran!");
-        return;
-      }
-      if (!confirm("Yakin ingin menghapus sasaran ini?")) return;
-      item.remove();
-      updateFormNames();
-      return;
-    }
-
-    // remove-indikator
-    if (target.closest(".remove-indikator")) {
-      e.preventDefault();
-      const container = target.closest(".indikator-container");
-      const item = target.closest(".indikator-item");
-      if (!container || !item) return;
-      const total = qsa(".indikator-item", container).length;
-      if (total <= 1) {
-        alert("Minimal harus ada 1 indikator!");
-        return;
-      }
-      if (!confirm("Yakin ingin menghapus indikator ini?")) return;
-      item.remove();
-      updateFormNames();
-      return;
-    }
+    });
   });
+
 
   updateFormNames();
   initSelect2();
@@ -370,22 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ========================================================= */
   document.body.addEventListener("change", (ev) => {
     const tgt = ev.target;
-    if (tgt.matches('select.kegiatan-select, select[name*="[kegiatan_id]"]')) {
-      const kegiatanItem = tgt.closest(".kegiatan-item") || tgt.closest(".row");
-      if (!kegiatanItem) return;
-      const anggaranField = kegiatanItem.querySelector(
-        'input[name*="[anggaran]"]',
-      );
-      const selected = tgt.options[tgt.selectedIndex];
-      if (anggaranField) {
-        const ang = selected
-          ? selected.getAttribute("data-anggaran") || ""
-          : "";
-        anggaranField.value = ang ? formatRupiahNumber(ang) : "";
-      }
-      updateFormNames();
-      return;
-    }
+
 
     // pegawai select -> fill nip
     if (tgt.matches(".pegawai-select")) {
@@ -403,17 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // initialize anggaran values for existing selects on load
-  qsa(".kegiatan-select").forEach((sel) => {
-    const selected = sel.options[sel.selectedIndex];
-    if (selected && selected.dataset && selected.dataset.anggaran) {
-      const angInput = sel
-        .closest(".kegiatan-item")
-        ?.querySelector('input[name*="[anggaran]"]');
-      if (angInput)
-        angInput.value = formatRupiahNumber(selected.dataset.anggaran);
-    }
-  });
+
 
   window.addEventListener("load", () => {
     initSelect2(document);

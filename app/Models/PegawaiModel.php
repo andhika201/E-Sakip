@@ -71,10 +71,30 @@ class PegawaiModel extends Model
             ->findAll();
     }
     public function getLevelByPegawaiId($pegawaiId)
-{
-    return $this->select('level')
-                ->where('id', $pegawaiId)
-                ->first();
-}
+    {
+        return $this->select('level')
+            ->where('id', $pegawaiId)
+            ->first();
+    }
+
+    public function getPegawaiDenganJabatan($opdId, $jenis)
+    {
+        $builder = $this->db->table('pegawai p')
+            ->select('p.id, p.nama_pegawai, p.nip_pegawai, j.nama_jabatan')
+            ->join('jabatan j', 'j.id = p.jabatan_id', 'left')
+            ->orderBy('p.nama_pegawai', 'ASC');
+
+        if ($jenis === 'jpt') {
+            $builder->groupStart()
+                ->where('p.opd_id', $opdId)
+                ->orWhere('p.opd_id', 46)
+                ->groupEnd();
+        } else {
+            $builder->where('p.opd_id', $opdId);
+        }
+
+        return $builder->get()->getResultArray();
+    }
+
 
 }

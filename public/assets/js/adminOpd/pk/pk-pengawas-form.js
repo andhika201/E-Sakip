@@ -196,8 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ev.preventDefault();
 
       const sasaranClone = tplSasaran.cloneNode(true);
-
-
       const indikatorContainer = sasaranClone.querySelector(".indikator-container");
       if (indikatorContainer && tplIndikator) {
         indikatorContainer.innerHTML = "";

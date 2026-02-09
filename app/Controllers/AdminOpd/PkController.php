@@ -188,22 +188,8 @@ class PkController extends BaseController
         $opdId = $session->get('opd_id');
         if (!$opdId)
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        if ($jenis === 'jpt') {
-            // JPT boleh memilih pegawai dari OPD sendiri + OPD 46
-            $pegawaiOpd = $this->pegawaiModel
-                ->groupStart()
-                ->where('opd_id', $opdId)
-                ->orWhere('opd_id', 46)
-                ->groupEnd()
-                ->orderBy('nama_pegawai', 'ASC')
-                ->findAll();
-        } else {
-            // Administrator & Pengawas tetap hanya OPD sendiri
-            $pegawaiOpd = $this->pegawaiModel
-                ->where('opd_id', $opdId)
-                ->orderBy('nama_pegawai', 'ASC')
-                ->findAll();
-        }
+        $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
+
         $currentOpd = $this->opdModel->find($opdId);
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
@@ -481,6 +467,7 @@ class PkController extends BaseController
             }
         };
         // dd($this->request->getPost('sasaran_pk'));
+        // dd($saveData);
 
         // ------------------------------
         // SIMPAN KE MODEL

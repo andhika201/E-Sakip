@@ -201,6 +201,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');
 
+    // Cascading
+    $routes->get('cascading', 'AdminOpd\CascadingController::index');
+
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });

@@ -131,6 +131,8 @@
             <li><a class="dropdown-item" href="<?= base_url('adminopd/lakip') ?>">LAKIP OPD</a></li>
           </ul>
         </div>
+        <a href="<?= base_url('adminopd/cascading') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Cascading</a>
       </div>
     </nav>
   </div>

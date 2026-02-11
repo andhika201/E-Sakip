@@ -668,18 +668,30 @@ class PkModel extends Model
     {
         return $this->db->table('program_pk')->orderBy('program_kegiatan', 'ASC')->get()->getResultArray();
     }
-    public function getProgramsFromPkJpt()
+
+    public function getProgramsFromPkJpt(int $tahun)
     {
         return $this->db->table('pk_indikator pi')
-            ->select('
-            pr.id AS program_id,
-            pr.program_kegiatan,
-            pr.anggaran,
-            pi.id AS pk_indikator_id
-        ')
+            ->select([
+                'pr.id AS program_id',
+                'pr.program_kegiatan',
+                'pr.anggaran',
+                'pi.id AS pk_indikator_id',
+                'pk.id AS pk_id',
+                'pk.tahun'
+            ])
+            // relasi ke sasaran
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'inner')
+            // relasi ke pk
+            ->join('pk', 'pk.id = ps.pk_id', 'inner')
+            // relasi ke program
             ->join('pk_program pp', 'pp.pk_indikator_id = pi.id', 'inner')
             ->join('program_pk pr', 'pr.id = pp.program_id', 'inner')
+            // filter PK JPT
             ->where('pi.jenis', 'jpt')
+            ->where('pk.jenis', 'jpt')
+            // 🔥 FILTER TAHUN PK (INI YANG BENAR)
+            ->where('pk.tahun', $tahun)
             ->orderBy('pr.program_kegiatan', 'ASC')
             ->get()
             ->getResultArray();

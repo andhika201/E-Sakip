@@ -31,7 +31,7 @@ class PkController extends BaseController
         }
 
         $tahun = $this->request->getGet('tahun');
-        $pkId  = $this->request->getGet('pk_id');
+        $pkId = $this->request->getGet('pk_id');
 
         $pkData = null;
         $pkRelasiList = [];
@@ -71,9 +71,9 @@ class PkController extends BaseController
                             $key = $program['program_id'] . '|' . $program['anggaran'];
 
                             $uniquePrograms[$key] = [
-                                'program_id'        => $program['program_id'],
-                                'program_kegiatan'  => $program['program_kegiatan'],
-                                'anggaran'          => $program['anggaran'],
+                                'program_id' => $program['program_id'],
+                                'program_kegiatan' => $program['program_kegiatan'],
+                                'anggaran' => $program['anggaran'],
                             ];
                         }
                     }
@@ -98,38 +98,41 @@ class PkController extends BaseController
         $currentOpd = $this->opdModel->find($opdId);
 
         return view('adminOpd/pk/pk', [
-            'pk_data'          => $pkData,
-            'pkRelasiList'     => $pkRelasiList,
+            'pk_data' => $pkData,
+            'pkRelasiList' => $pkRelasiList,
             'tampilkanProgram' => $tampilkanProgram,
-            'current_opd'      => $currentOpd,
-            'currentYear'      => date('Y'),
-            'pk_id'            => $pkId,
-            'tahun'            => $tahun,
-            'jenis'            => $jenis,
+            'current_opd' => $currentOpd,
+            'currentYear' => date('Y'),
+            'pk_id' => $pkId,
+            'tahun' => $tahun,
+            'jenis' => $jenis,
         ]);
     }
 
     public function cetak($jenis, $id = null)
     {
+
         helper('format');
         if (!$id) {
             return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
         }
         $data = $this->pkModel->getPkById($id);
+        $tahun = $data['tahun'];
         if (!$data) {
             return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
         }
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
 
-        $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
-
-        if ($jenis === 'bupati' || $jenis === 'jpt') {
-            $program = "program_kegiatan";
-        } elseif ($jenis === 'administrator') {
-            $program = "kegiatan";
-        } elseif ($jenis === 'pengawas') {
-            $program = "sub_kegiatan";
+        if ($jenis === 'bupati') {
+            // Ambil program dari seluruh PK JPT
+            $data['program_pk'] = $this->pkModel->getProgramsFromPkJpt($tahun);
+        } else {
+            // Jenis lain tetap normal
+            $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
         }
+
+        // dd($data['program_pk']);
+
 
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;
@@ -141,12 +144,10 @@ class PkController extends BaseController
         $viewPath = 'adminOpd/pk/cetak';
         $viewPathL = 'adminOpd/pk/cetak-L';
         $html_1 = view($viewPath, $data);
-        $html_2 = view($viewPathL, [
-            'data' => $data,
+        $html_2 = view($viewPathL, array_merge($data, [
             'tampilkanProgram' => $tampilkanProgram,
-            'program' => $program,
+        ]));
 
-        ]);
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'FOLIO',
@@ -248,11 +249,11 @@ class PkController extends BaseController
                 ->findAll();
         } else {
             // Administrator & Pengawas tetap hanya OPD sendiri
-            $pegawaiOpd = $this->pegawaiModel
-                ->where('opd_id', $opdId)
-                ->orderBy('nama_pegawai', 'ASC')
-                ->findAll();
+            $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
+
         }
+
+
         $program = $this->pkModel->getAllPrograms();
         $jptProgram = $this->pkModel->getJptPrograms($opdId);
         $kegiatan = $this->pkModel->getKegiatan();
@@ -465,7 +466,8 @@ class PkController extends BaseController
 
                 $saveData['sasaran_pk'][] = $sasaranData;
             }
-        };
+        }
+        ;
         // dd($saveData);
         // dd($this->request->getPost('sasaran_pk'));
         // dd($saveData);
@@ -658,7 +660,7 @@ class PkController extends BaseController
                     log_message(
                         'debug',
                         "PROGRAM RESULT [{$sIndex}][{$iIndex}]: " .
-                            json_encode($indikatorData['program'])
+                        json_encode($indikatorData['program'])
                     );
 
 

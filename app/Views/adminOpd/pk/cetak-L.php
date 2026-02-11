@@ -278,15 +278,41 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
 
           foreach ($program_pk as $row) {
 
+            /**
+             * ==============================
+             * KHUSUS PK BUPATI (OPSI B)
+             * TAMPILKAN SEMUA BARIS (TANPA DEDUPLIKASI)
+             * ==============================
+             */
+            if ($jenis === 'bupati') {
+
+              if (!isset($groupedData['_flat'])) {
+                $groupedData['_flat'] = [
+                  'nama' => null,
+                  'items' => []
+                ];
+              }
+
+              $groupedData['_flat']['items'][] = [
+                'nama' => $row['program_kegiatan'],
+                'anggaran' => $row['anggaran']
+              ];
+
+              continue;
+            }
+
+            /**
+             * ==============================
+             * JENIS LAIN (LOGIKA LAMA)
+             * ==============================
+             */
             $groupName = $groupField ? ($row[$groupField] ?? '-') : null;
 
-            // key unik item + anggaran
             $itemKey = md5(
               ($row[$itemField] ?? '') . '|' . ($row['anggaran'] ?? 0)
             );
 
             if ($groupField) {
-              // ADA HEADER (Administrator, Pengawas)
               if (!isset($groupedData[$groupName])) {
                 $groupedData[$groupName] = [
                   'nama' => $groupName,
@@ -301,7 +327,6 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
                 ];
               }
             } else {
-              // TANPA HEADER (JPT)
               if (!isset($groupedData['_flat'])) {
                 $groupedData['_flat'] = [
                   'nama' => null,

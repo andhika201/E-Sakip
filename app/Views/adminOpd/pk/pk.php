@@ -220,7 +220,7 @@
                             </thead>
                             <tbody>
                                 <?php $no_program = 1; ?>
-                                <?php $allPrograms = model('App\\Models\\PkModel')->getProgramsFromPkJpt(); ?>
+                                <?php $allPrograms = model('App\\Models\\PkModel')->getProgramsForBupatiFromPkJpt($tahun); ?>
                                 <?php foreach ($allPrograms as $program): ?>
                                     <tr>
                                         <td class="border p-2"><?= $no_program++ ?></td>

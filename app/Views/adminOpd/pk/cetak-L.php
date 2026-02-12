@@ -241,6 +241,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
         </tr>
       </tbody>
     </table>
+    
 
     <?php if ($tampilkanProgram && !empty($program_pk)): ?>
       <table class="table-bordered-custom program-table" style="width:100%; margin-top:30px;">

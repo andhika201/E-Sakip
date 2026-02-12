@@ -125,14 +125,13 @@ class PkController extends BaseController
 
         if ($jenis === 'bupati') {
             // Ambil program dari seluruh PK JPT
-            $data['program_pk'] = $this->pkModel->getProgramsFromPkJpt($tahun);
+            $data['program_pk'] = $this->pkModel->getProgramsForBupatiFromPkJpt($tahun);
         } else {
             // Jenis lain tetap normal
             $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
         }
 
-        // dd($data['program_pk']);
-
+dd($data['program_pk']);
 
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;
@@ -238,20 +237,10 @@ class PkController extends BaseController
         if (!$pk)
             return redirect()->to('/adminopd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
 
-        if ($jenis === 'jpt') {
-            // JPT boleh memilih pegawai dari OPD sendiri + OPD 46
-            $pegawaiOpd = $this->pegawaiModel
-                ->groupStart()
-                ->where('opd_id', $opdId)
-                ->orWhere('opd_id', 46)
-                ->groupEnd()
-                ->orderBy('nama_pegawai', 'ASC')
-                ->findAll();
-        } else {
-            // Administrator & Pengawas tetap hanya OPD sendiri
-            $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
 
-        }
+        $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
+
+
 
 
         $program = $this->pkModel->getAllPrograms();

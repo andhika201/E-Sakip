@@ -5,7 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <?php
-    if (stripos($current_opd['nama_opd'], 'kecamatan') !== false) {
+    if (
+        stripos($current_opd['nama_opd'], 'kecamatan') !== false
+        && strtoupper($jenis) === 'JPT'
+    ) {
         $judulPk = 'CAMAT';
     } else {
         $judulPk = strtoupper($jenis);

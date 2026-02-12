@@ -131,7 +131,6 @@ class PkController extends BaseController
             $data['program_pk'] = $this->pkModel->getProgramByJenis($id, $jenis);
         }
 
-dd($data['program_pk']);
 
         $pegawai1 = $this->pegawaiModel->getLevelByPegawaiId($data['pihak_1']);
         $pihak1Level = $pegawai1['level'] ?? null;

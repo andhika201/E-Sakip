@@ -99,6 +99,7 @@ class RpjmdController extends BaseController
             // fallback 5 tahun umum (bukan patokan header, hanya untuk kompatibilitas lama)
             $data['available_years'] = [2025, 2026, 2027, 2028, 2029];
         }
+        // dd($data['rpjmd_data'][0]['tujuan'][0]);
 
         return view('adminKabupaten/rpjmd/rpjmd', $data);
     }

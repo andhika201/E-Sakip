@@ -18,7 +18,7 @@
             $yearsCount = count($firstGroup['years']);
         }
     }
-    $emptyColspan = 9 + 2 * $yearsCount;
+    $emptyColspan = 11 + 2 * $yearsCount;
     ?>
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
@@ -90,10 +90,12 @@
                                 <th rowspan="2" class="border p-2 align-middle">MISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
-                                <th colspan="5" class="border p-2" id="year-header-span-tujuan">TARGET TUJUAN PER TAHUN
-                                </th>
+                                <th rowspan="2" class="border p-2 align-middle">BASELINE</th>
+                                <th colspan="5" class="border p-2" id="year-header-span-tujuan">TARGET TUJUAN PER TAHUN</th>
+
                                 <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
+                                <th rowspan="2" class="border p-2 align-middle">BASELINE SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
                                 <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">JENIS INDIKATOR</th>
@@ -127,12 +129,17 @@
                                                     }
                                                     $leftRows[] = [
                                                         'indikator' => $it['indikator_tujuan'] ?? '-',
+                                                        'baseline' => $it['baseline'] ?? '-',
                                                         'targets' => $targets
                                                     ];
                                                 }
                                             } else {
                                                 // placeholder 1 baris jika tidak ada indikator tujuan
-                                                $leftRows[] = ['indikator' => '-', 'targets' => []];
+                                                $leftRows[] = [
+                                                    'indikator' => '-',
+                                                    'baseline' => '-',
+                                                    'targets' => []
+                                                ];
                                             }
 
                                             // Right rows: sasaran -> indikator_sasaran (dengan rowspan pada kolom sasaran)
@@ -149,6 +156,7 @@
                                                             $rightRows[] = [
                                                                 'sasaran' => ($idx === 0) ? ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => $countIs] : null,
                                                                 'indikator' => $is['indikator_sasaran'] ?? '-',
+                                                                'baseline' => $is['baseline'] ?? '-',
                                                                 'definisi' => $is['definisi_op'] ?? '-',
                                                                 'satuan' => $is['satuan'] ?? '-',
                                                                 'jenis_indikator' => $is['jenis_indikator'] ?? '-',
@@ -160,6 +168,7 @@
                                                         $rightRows[] = [
                                                             'sasaran' => ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => 1],
                                                             'indikator' => '-',
+                                                            'baseline' => '-',
                                                             'definisi' => '-',
                                                             'satuan' => '-',
                                                             'jenis_indikator' => '-',
@@ -172,6 +181,7 @@
                                                 $rightRows[] = [
                                                     'sasaran' => ['text' => '-', 'rowspan' => 1],
                                                     'indikator' => '-',
+                                                    'baseline' => '-',
                                                     'definisi' => '-',
                                                     'satuan' => '-',
                                                     'jenis_indikator' => '-',
@@ -235,6 +245,11 @@
                                                         <?= esc($left['indikator']) ?>
                                                     </td>
 
+                                                    <!-- BASELINE -->
+                                                    <td class="border p-2 align-top text-start">
+                                                        <?= esc($left['baseline'] ?? '-') ?>
+                                                    </td>
+
                                                     <!-- TARGET TUJUAN PER TAHUN -->
                                                     <span class="year-cells-tujuan" data-periode="<?= esc($periodIndex) ?>">
                                                         <?php foreach ($years as $y): ?>
@@ -253,6 +268,7 @@
 
                                                     <!-- INDIKATOR SASARAN + DEF OP + SATUAN -->
                                                     <td class="border p-2 align-top text-start"><?= esc($right['indikator']) ?></td>
+                                                    <td class="border p-2 align-top text-start"><?= esc($right['baseline'] ?? '-') ?></td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['definisi']) ?></td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['satuan']) ?></td>
                                                     <?php

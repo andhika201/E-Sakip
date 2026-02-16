@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= esc($title ?? 'CASCADING') ?></title>
-    <?= $this->include('adminOpd/templates/style.php'); ?>
+    <?= $this->include('adminKabupaten/templates/style.php'); ?>
 
     <?php if (function_exists('csrf_token')): ?>
         <meta name="csrf-token" content="<?= csrf_token() ?>">
@@ -16,8 +16,8 @@
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
-        <?= $this->include('adminOpd/templates/header.php'); ?>
-        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+        <?= $this->include('adminKabupaten/templates/header.php'); ?>
+        <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
@@ -49,11 +49,12 @@
                 ?>
 
                 <!-- ===================== FORM FILTER ===================== -->
-                <form id="filterForm" method="GET" action="<?= base_url('adminopd/cascading') ?>"
+                <form id="filterForm" method="GET" action="<?= base_url('adminkab/cascading') ?>"
                     class="d-flex flex-column flex-md-row gap-2 mb-4 align-items-center">
 
                     <!-- Periode -->
-                    <select id="periodeFilter" name="periode" class="form-select" style="flex:1;">
+                    <select id="periodeFilter" name="periode" class="form-select" style="flex:1;"
+                        onchange="this.form.submit()">
                         <option value="">-- Pilih Periode --</option>
                         <?php
                         $periodeList = [];
@@ -79,11 +80,8 @@
 
                     <!-- Tombol Aksi -->
                     <div class="d-flex gap-2 mt-2 mt-md-0">
-                        <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-outline-secondary">
+                        <a href="<?= base_url('adminKabupaten/cascading') ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-undo"></i> Reset
-                        </a>
-                        <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Tambah RENSTRA
                         </a>
                     </div>
                 </form>
@@ -95,10 +93,10 @@
                         📅 Silakan pilih <strong>Periode</strong> terlebih dahulu untuk menampilkan data RENSTRA.
                     </div>
 
-                <?php elseif (empty($renstra_data)): ?>
+                <?php elseif (empty($rows)): ?>
 
                     <div class="alert alert-info text-center p-4">
-                        📁 Tidak ada data RENSTRA untuk filter yang dipilih.
+                        📁 Tidak ada data Cascading untuk periode yang dipilih.
                     </div>
 
                 <?php else: ?>
@@ -114,22 +112,28 @@
                         <table class="table table-bordered text-center align-middle small">
                             <thead class="table-success text-center">
                                 <tr>
-                                    <th>Tujuan</th>
-                                    <th>Sasaran</th>
-                                    <th>Indikator</th>
-                                    <th>Satuan</th>
-                                    <th>Baseline</th>
+                                    <th rowspan="2">Tujuan</th>
+                                    <th rowspan="2">Sasaran</th>
+                                    <th rowspan="2">Indikator</th>
+                                    <th rowspan="2">Satuan</th>
+                                    <th rowspan="2">Baseline</th>
 
-                                    <th>2023</th>
-                                    <th>2024</th>
-                                    <th>2025</th>
-                                    <th>2026</th>
+                                    <th colspan="<?= count($years) ?>">Target</th>
 
-                                    <th>Program</th>
-                                    <th>OPD</th>
-                                    <th>Aksi</th>
+                                    <th rowspan="2">Program</th>
+                                    <th rowspan="2">OPD</th>
+                                    <th rowspan="2">Aksi</th>
+                                </tr>
+
+                                <tr>
+                                    <?php foreach ($years as $y): ?>
+                                        <th>
+                                            <?= $y ?>
+                                        </th>
+                                    <?php endforeach; ?>
                                 </tr>
                             </thead>
+
 
 
                             <tbody>
@@ -164,40 +168,36 @@
                                                 <?= esc($r['baseline']) ?>
                                             </td>
 
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2023'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2024'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2025'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2026'] ?? '-') ?>
-                                            </td>
+                                            <?php foreach ($years as $y): ?>
+                                                <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
+                                                    <?= esc($r['targets'][$y] ?? '-') ?>
+                                                </td>
+                                            <?php endforeach; ?>
                                         <?php endif; ?>
 
                                         <!-- PROGRAM -->
                                         <td>
-                                            <?= $r['program_nama'] ?? '-' ?>
+                                            <?= $r['program_kegiatan'] ?? '-' ?>
                                         </td>
 
                                         <!-- OPD -->
-                                        <td>
-                                            <?= $r['nama_opd'] ?? '-' ?>
-                                        </td>
+                                        <?php
+                                        $key = $r['indikator_id'] . '-' . $r['nama_opd'];
+                                        ?>
+
+                                        <?php if ($firstShow['opd'][$key] == $index): ?>
+                                            <td rowspan="<?= $rowspan['opd'][$key] ?>">
+                                                <?= esc($r['nama_opd']) ?>
+                                            </td>
+                                        <?php endif; ?>
 
                                         <!-- ACTION -->
                                         <?php if ($firstShow['indikator'][$r['indikator_id']] == $index): ?>
                                             <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <button class="btn btn-success btn-sm btn-map"
-                                                    data-indikator="<?= $r['indikator_id'] ?>">
+                                                <a href="<?= base_url('adminkab/cascading/tambah/' . $r['indikator_id'] . '?periode=' . ($filters['periode'] ?? '')) ?>"
+                                                    class="btn btn-success btn-sm">
                                                     <i class="fas fa-plus"></i>
-                                                </button>
+                                                </a>
                                             </td>
                                         <?php endif; ?>
 
@@ -212,7 +212,7 @@
             </div>
         </main>
 
-        <?= $this->include('adminOpd/templates/footer.php'); ?>
+        <?= $this->include('adminKabupaten/templates/footer.php'); ?>
     </div>
 
 

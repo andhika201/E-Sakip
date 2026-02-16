@@ -72,6 +72,13 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
         $routes->post('rpjmd/update-status', 'RpjmdController::updateStatus');
 
+        // Cascading
+        $routes->get('cascading', 'AdminKab\CascadingController::index');
+        $routes->get('cascading/tambah/(:num)', 'AdminKab\CascadingController::tambah/$1');
+        $routes->get('cascading/get-pk-program-by-opd','AdminKab\CascadingController::getPkProgramByOpd');
+        $routes->post('cascading/save','AdminKab\CascadingController::save');
+
+
         // RKPD
         $routes->get('rkpd', 'RkpdController::index');
         $routes->get('rkpd/tambah', 'RkpdController::tambah');

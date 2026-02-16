@@ -75,9 +75,9 @@ $routes->group(
         // Cascading
         $routes->get('cascading', 'AdminKab\CascadingController::index');
         $routes->get('cascading/tambah/(:num)', 'AdminKab\CascadingController::tambah/$1');
-        $routes->get('cascading/get-pk-program-by-opd','AdminKab\CascadingController::getPkProgramByOpd');
-        $routes->post('cascading/save','AdminKab\CascadingController::save');
-
+        $routes->get('cascading/get-pk-program-by-opd', 'AdminKab\CascadingController::getPkProgramByOpd');
+        $routes->post('cascading/save', 'AdminKab\CascadingController::save');
+        $routes->get('cascading/cetak', 'AdminKab\CascadingController::cetak');
 
         // RKPD
         $routes->get('rkpd', 'RkpdController::index');

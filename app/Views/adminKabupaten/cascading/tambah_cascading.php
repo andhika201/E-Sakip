@@ -36,7 +36,7 @@
 
                     <select name="tahun" id="tahun" class="form-select">
                         <?php foreach ($years as $y): ?>
-                            <option value="<?= $y ?>" <?= ($y == $currentYear ? 'selected' : '') ?>>
+                            <option value="<?= $y ?>" <?= ($selected_tahun == $y) ? 'selected' : '' ?>>
                                 <?= $y ?>
                             </option>
                         <?php endforeach; ?>
@@ -84,6 +84,9 @@
 
     <script>
         const BASE_URL = "<?= base_url() ?>";
+    </script>
+    <script>
+        const EXISTING_MAPPING = <?= json_encode($existing_mapping ?? []) ?>;
     </script>
 
     <script src="<?= base_url('assets/js/adminKabupaten/cascading/cascading.js') ?>"></script>

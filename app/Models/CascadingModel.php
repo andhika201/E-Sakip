@@ -31,30 +31,34 @@ class CascadingModel extends Model
         // ======================
         $rows = $this->db->table('rpjmd_tujuan t')
             ->select("
-            t.id as tujuan_id,
-            t.tujuan_rpjmd,
+                t.id as tujuan_id,
+                t.tujuan_rpjmd,
 
-            s.id as sasaran_id,
-            s.sasaran_rpjmd,
+                s.id as sasaran_id,
+                s.sasaran_rpjmd,
 
-            i.id as indikator_id,
-            i.indikator_sasaran,
-            i.satuan,
-            i.baseline,
+                i.id as indikator_id,
+                i.indikator_sasaran,
+                i.satuan,
+                i.baseline,
 
-            p.program_kegiatan,
-            o.nama_opd
-        ")
+                p.program_kegiatan,
+                o.nama_opd,
+
+                IF(map.id IS NULL, 0, 1) as is_mapped,
+                map.indikator_sasaran_id as mapped_indikator
+            ", false)
+
             ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
             ->join('rpjmd_indikator_sasaran i', 'i.sasaran_id = s.id', 'left')
 
-            // CASCADING
             ->join(
                 'rpjmd_cascading map',
-                "map.indikator_sasaran_id = i.id 
-                        AND map.tahun BETWEEN {$start} AND {$end}",
+                "map.indikator_sasaran_id = i.id
+                AND map.tahun BETWEEN {$start} AND {$end}",
                 'left'
             )
+
             ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
             ->join('program_pk p', 'p.id = pp.program_id', 'left')
             ->join('opd o', 'o.id = map.opd_id', 'left')
@@ -139,4 +143,80 @@ class CascadingModel extends Model
             ->where('p.opd_id', $opdId)
             ->countAllResults() > 0;
     }
+
+    public function getExistingMapping($indikatorId, $tahun)
+    {
+        return $this->db->table('rpjmd_cascading c')
+            ->select('c.opd_id, c.pk_program_id')
+            ->where('c.indikator_sasaran_id', $indikatorId)
+            ->where('c.tahun', $tahun)
+            ->get()
+            ->getResultArray();
+    }
+
+    public function deleteByIndikatorAndYear($indikatorId, $tahun)
+    {
+        return $this->db->table($this->table)
+            ->where('indikator_sasaran_id', $indikatorId)
+            ->where('tahun', $tahun)
+            ->delete();
+    }
+
+    public function getPdfMatrix($start, $end)
+    {
+        $rows = $this->db->table('rpjmd_indikator_sasaran i')
+            ->select("
+            i.id as indikator_id,
+            i.indikator_sasaran,
+            i.satuan,
+            i.baseline,
+
+            map.opd_id,
+            o.nama_opd,
+
+            p.program_kegiatan
+        ")
+            ->join('rpjmd_cascading map', 'map.indikator_sasaran_id = i.id', 'left')
+            ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
+            ->join('program_pk p', 'p.id = pp.program_id', 'left')
+            ->join('opd o', 'o.id = map.opd_id', 'left')
+            ->where("map.tahun BETWEEN {$start} AND {$end}")
+            ->orderBy('i.id')
+            ->orderBy('o.nama_opd')
+            ->get()
+            ->getResultArray();
+
+        $grouped = [];
+
+        foreach ($rows as $r) {
+
+            $indikator = $r['indikator_id'];
+            $opd = $r['opd_id'];
+
+            if (!isset($grouped[$indikator])) {
+                $grouped[$indikator] = [
+                    'indikator' => $r['indikator_sasaran'],
+                    'satuan' => $r['satuan'],
+                    'baseline' => $r['baseline'],
+                    'opd' => []
+                ];
+            }
+
+            if (!isset($grouped[$indikator]['opd'][$opd])) {
+                $grouped[$indikator]['opd'][$opd] = [
+                    'nama_opd' => $r['nama_opd'],
+                    'program' => []
+                ];
+            }
+
+            if ($r['program_kegiatan']) {
+                $grouped[$indikator]['opd'][$opd]['program'][] =
+                    $r['program_kegiatan'];
+            }
+        }
+
+        return $grouped;
+    }
+
+
 }

@@ -177,6 +177,92 @@ document.getElementById('tahun')
             });
 
     });
-window.onload = function () {
-    addOpdGroup();
+window.onload = async function () {
+
+    if (!EXISTING_MAPPING) return;
+
+    for (let opdId in EXISTING_MAPPING) {
+
+        addOpdGroup();
+
+        let lastGroup =
+            document.querySelectorAll('.opd-group');
+
+        let group =
+            lastGroup[lastGroup.length - 1];
+
+        let opdSelect =
+            group.querySelector('.opd-select');
+
+        opdSelect.value = opdId;
+
+        await loadExistingPrograms(
+            opdSelect,
+            EXISTING_MAPPING[opdId]
+        );
+
+    }
+
 }
+
+
+
+async function loadExistingPrograms(opdSelect, programs) {
+
+    let opdId = opdSelect.value;
+    let tahun = document.getElementById('tahun').value;
+
+    let group =
+        opdSelect.closest('.opd-group');
+
+    let container =
+        group.querySelector('.program-container');
+
+    let res = await fetch(
+        `${BASE_URL}/adminkab/cascading/get-pk-program-by-opd?opd_id=${opdId}&tahun=${tahun}`
+    );
+
+    let data = await res.json();
+    group.dataset.programList =
+    JSON.stringify(data);
+    
+    container.innerHTML = '';
+
+    programs.forEach(pid => {
+
+        let options =
+            '<option value="">-- Pilih Program --</option>';
+
+        data.forEach(p => {
+
+            options += `
+                <option value="${p.id}"
+                    ${p.id == pid ? 'selected' : ''}>
+                    ${p.program_kegiatan}
+                </option>
+            `;
+
+        });
+
+        container.innerHTML += `
+            <div class="input-group mb-2">
+
+                <select name="opd[${opdSelect.dataset.index}][program][]"
+                        class="form-select"
+                        required>
+
+                    ${options}
+
+                </select>
+
+                <button type="button"
+                        class="btn btn-danger remove-program">
+                    -
+                </button>
+
+            </div>
+        `;
+    });
+
+}
+

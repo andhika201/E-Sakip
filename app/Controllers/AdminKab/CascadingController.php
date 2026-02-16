@@ -150,6 +150,7 @@ class CascadingController extends BaseController
 
         return $this->response->setJSON($data);
     }
+
     public function tambah($indikatorId = null)
     {
         if (!$indikatorId) {
@@ -175,6 +176,27 @@ class CascadingController extends BaseController
         // ambil periode dari GET
         $periode = $this->request->getGet('periode');
 
+
+        [$start, $end] = explode('-', $periode);
+
+        $tahun = $this->request->getGet('tahun');
+
+        if (!$tahun) {
+
+            // cari tahun mapping existing
+            $existYear = $this->db->table('rpjmd_cascading')
+                ->select('tahun')
+                ->where('indikator_sasaran_id', $indikatorId)
+                ->orderBy('tahun', 'DESC')
+                ->get()
+                ->getRow();
+
+            if ($existYear) {
+                $tahun = $existYear->tahun;
+            } else {
+                $tahun = date('Y');
+            }
+        }
         if ($periode && strpos($periode, '-') !== false) {
             [$start, $end] = explode('-', $periode);
             $years = range((int) $start, (int) $end);
@@ -182,11 +204,33 @@ class CascadingController extends BaseController
             $years = [date('Y')];
         }
 
+        // ===========================
+        // AMBIL MAPPING LAMA
+        // ===========================
+        $existing = $this->cascadingModel
+            ->getExistingMapping($indikatorId, $tahun);
+
+        // ===========================
+        // GROUP BY OPD
+        // ===========================
+        $grouped = [];
+
+        foreach ($existing as $row) {
+
+            if (!isset($grouped[$row['opd_id']])) {
+                $grouped[$row['opd_id']] = [];
+            }
+
+            $grouped[$row['opd_id']][] = $row['pk_program_id'];
+        }
+
         return view('adminKabupaten/cascading/tambah_cascading', [
             'indikator' => $indikator,
             'opd_list' => $opdList,
+            'existing_mapping' => $grouped,
             'years' => $years,
-            'periode' => $periode
+            'periode' => $periode,
+            'selected_tahun' => $tahun
         ]);
     }
 
@@ -231,11 +275,23 @@ class CascadingController extends BaseController
             }
         }
 
+        // ==============================
+        // 🔥 EDIT MODE FIX
+        // ==============================
+        // HAPUS MAPPING LAMA DULU
+
+        $this->db->transStart();
+
+        $this->cascadingModel
+            ->deleteByIndikatorAndYear($indikatorId, $tahun);
 
         if (!empty($insertBatch)) {
             $this->cascadingModel
                 ->saveBatchMapping($insertBatch);
         }
+
+        $this->db->transComplete();
+
 
         return redirect()->to(
             base_url('adminkab/cascading?periode=' .
@@ -243,7 +299,46 @@ class CascadingController extends BaseController
         )->with('success', 'Mapping Cascading berhasil disimpan');
     }
 
+    public function cetak()
+    {
+        ob_clean(); // 🔥 BUANG OUTPUT SEBELUMNYA
+        ob_start();
 
+        $periode = $this->request->getGet('periode');
+
+        if (!$periode) {
+            return redirect()->back()
+                ->with('error', 'Periode wajib dipilih');
+        }
+
+        [$start, $end] = explode('-', $periode);
+
+        $rows = $this->cascadingModel
+            ->getMatrix((int) $start, (int) $end);
+
+        $rowspan = $this->buildRowspanMeta($rows);
+        $firstShow = $this->buildFirstShowMeta($rows);
+        $years = range((int) $start, (int) $end);
+
+        $html = view(
+            'adminKabupaten/cascading/cascading_cetak',
+            compact('rows', 'rowspan', 'firstShow', 'years')
+        );
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'tempDir' => sys_get_temp_dir()
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Cascading-' . $periode . '.pdf"');
+
+        $mpdf->Output();
+        exit;
+    }
 
 
 

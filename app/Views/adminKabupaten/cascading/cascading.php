@@ -80,7 +80,7 @@
 
                     <!-- Tombol Aksi -->
                     <div class="d-flex gap-2 mt-2 mt-md-0">
-                        <a href="<?= base_url('adminKabupaten/cascading') ?>" class="btn btn-outline-secondary">
+                        <a href="<?= base_url('adminkab/cascading') ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-undo"></i> Reset
                         </a>
                     </div>
@@ -90,7 +90,7 @@
                 <?php if (empty($filters['periode'])): ?>
 
                     <div class="alert alert-warning text-center p-4">
-                        📅 Silakan pilih <strong>Periode</strong> terlebih dahulu untuk menampilkan data RENSTRA.
+                        📅 Silakan pilih <strong>Periode</strong> terlebih dahulu untuk menampilkan data Cascading.
                     </div>
 
                 <?php elseif (empty($rows)): ?>
@@ -142,34 +142,34 @@
 
                                         <!-- TUJUAN -->
                                         <?php if ($firstShow['tujuan'][$r['tujuan_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?>">
+                                            <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?? 1 ?>">
                                                 <?= esc($r['tujuan_rpjmd']) ?>
                                             </td>
                                         <?php endif; ?>
 
                                         <!-- SASARAN -->
                                         <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?>">
+                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>">
                                                 <?= esc($r['sasaran_rpjmd']) ?>
                                             </td>
                                         <?php endif; ?>
 
                                         <!-- INDIKATOR -->
                                         <?php if ($firstShow['indikator'][$r['indikator_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
+                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>">
                                                 <?= esc($r['indikator_sasaran']) ?>
                                             </td>
 
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
+                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>">
                                                 <?= esc($r['satuan']) ?>
                                             </td>
 
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
+                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>">
                                                 <?= esc($r['baseline']) ?>
                                             </td>
 
                                             <?php foreach ($years as $y): ?>
-                                                <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
+                                                <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>">
                                                     <?= esc($r['targets'][$y] ?? '-') ?>
                                                 </td>
                                             <?php endforeach; ?>
@@ -186,20 +186,34 @@
                                         ?>
 
                                         <?php if ($firstShow['opd'][$key] == $index): ?>
-                                            <td rowspan="<?= $rowspan['opd'][$key] ?>">
+                                            <td rowspan="<?= $rowspan['opd'][$key] ?? 1 ?>">
                                                 <?= esc($r['nama_opd']) ?>
                                             </td>
                                         <?php endif; ?>
 
                                         <!-- ACTION -->
                                         <?php if ($firstShow['indikator'][$r['indikator_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <a href="<?= base_url('adminkab/cascading/tambah/' . $r['indikator_id'] . '?periode=' . ($filters['periode'] ?? '')) ?>"
-                                                    class="btn btn-success btn-sm">
-                                                    <i class="fas fa-plus"></i>
-                                                </a>
+                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>">
+
+                                                <?php if (($r['is_mapped'] ?? 0) == 1): ?>
+
+                                                    <a href="<?= base_url('adminkab/cascading/tambah/' . $r['indikator_id'] . '?periode=' . ($filters['periode'] ?? '')) ?>"
+                                                        class="btn btn-warning btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+
+                                                <?php else: ?>
+
+                                                    <a href="<?= base_url('adminkab/cascading/tambah/' . $r['indikator_id'] . '?periode=' . ($filters['periode'] ?? '')) ?>"
+                                                        class="btn btn-success btn-sm">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+
+                                                <?php endif; ?>
+
                                             </td>
                                         <?php endif; ?>
+
 
                                     </tr>
                                 <?php endforeach; ?>
@@ -210,6 +224,14 @@
                 <?php endif; ?>
 
             </div>
+
+            <a href="<?= base_url(
+                'adminkab/cascading/cetak?periode=' . $filters['periode']
+            ) ?>" class="btn btn-danger">
+
+                <i class="fas fa-file-pdf"></i> Cetak PDF
+
+            </a>
         </main>
 
         <?= $this->include('adminKabupaten/templates/footer.php'); ?>

@@ -1,7 +1,10 @@
 <!-- app/views/adminOpd/templates/header.php -->
 <!-- Navbar/Header -->
-<header class="bg-success px-4 py-3 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
+<header class="bg-success px-4 py-3 shadow-sm border-bottom border-success-subtle position-relative"
+  style="z-index: 20;">
   <meta name="csrf-token" content="<?= csrf_hash(); ?>">
+  <meta name="csrf-name" content="<?= csrf_token() ?>">
+  <meta name="csrf-hash" content="<?= csrf_hash() ?>">
   <div class="d-flex align-items-center justify-content-between">
     <!-- Left Side -->
     <div class="d-flex align-items-center">
@@ -17,7 +20,8 @@
     <!-- Right Side -->
     <div class="d-flex align-items-center">
       <div class="d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2"
+          style="width: 32px; height: 32px;">
           <i class="fas fa-user text-success"></i>
         </div>
         <div>
@@ -65,7 +69,7 @@
   }
 
   // Handle window resize
-  window.addEventListener('resize', function() {
+  window.addEventListener('resize', function () {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('main-content');
     const overlay = document.getElementById('sidebar-overlay');
@@ -85,7 +89,7 @@
   });
 
   // Close sidebar on mobile when clicking outside
-  document.addEventListener('click', function(event) {
+  document.addEventListener('click', function (event) {
     if (window.innerWidth <= 768 && sidebarOpen) {
       const sidebar = document.getElementById('sidebar');
       const toggleButton = event.target.closest('[onclick="toggleSidebar()"]');

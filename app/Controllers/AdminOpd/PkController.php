@@ -353,7 +353,9 @@ class PkController extends BaseController
 
                     foreach ($s['indikator'] as $indikator) {
 
-
+                        if ($jenis === 'bupati' && empty(trim($indikator['indikator'] ?? ''))) {
+                            continue;
+                        }
                         $indikatorData = [
                             'indikator' => $indikator['indikator'] ?? '',
                             'target' => $indikator['target'] ?? '',

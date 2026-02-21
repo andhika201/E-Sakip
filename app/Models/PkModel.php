@@ -1052,11 +1052,16 @@ class PkModel extends Model
         return $this->db->table('pk p')
             ->select("
             p.id,
-            CONCAT(
-                peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')',
-                ' ↔ ',
-                peg2.nama_pegawai, ' (', jab2.nama_jabatan, ')'
-            ) AS relasi
+            CASE 
+                WHEN p.jenis = 'bupati' THEN 
+                    CONCAT(peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')')
+                ELSE
+                    CONCAT(
+                        peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')',
+                        ' ↔ ',
+                        peg2.nama_pegawai, ' (', jab2.nama_jabatan, ')'
+                    )
+            END AS relasi
         ")
             ->join('pegawai peg1', 'peg1.id = p.pihak_1', 'left')
             ->join('jabatan jab1', 'jab1.id = peg1.jabatan_id', 'left')
@@ -1069,6 +1074,7 @@ class PkModel extends Model
             ->get()
             ->getResultArray();
     }
+
 
 
     /**

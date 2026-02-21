@@ -3,6 +3,8 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="csrf-name" content="<?= csrf_token() ?>">
+    <meta name="csrf-hash" content="<?= csrf_hash() ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PK <?= ucfirst($jenis) ?> - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
@@ -283,7 +285,7 @@
                                         foreach ($indikator['program'] as $program) {
 
                                             $programKey = $program['program_id']; // kunci bisnis
-
+                        
                                             if (!isset($programMap[$programKey])) {
                                                 $programMap[$programKey] = [
                                                     'program_kegiatan' => $program['program_kegiatan'],
@@ -395,7 +397,7 @@
                                 $no = 1;
 
                                 foreach ($grouped as $kegiatan):
-                                ?>
+                                    ?>
 
                                     <!-- HEADER KEGIATAN (HANYA SEKALI) -->
                                     <tr class="table-secondary fw-bold">
@@ -452,14 +454,15 @@
     <script>
         const tahunSelect = document.getElementById('tahun');
         if (tahunSelect) {
-            tahunSelect.addEventListener('change', function() {
+            tahunSelect.addEventListener('change', function () {
                 window.location = '?tahun=' + this.value;
             });
         }
-        window.base_url = '<?= base_url() ?>';
-        window.jenis = '<?= $jenis ?>';
+        window.base_url = "<?= base_url() ?>";
+        window.jenis = "<?= $jenis ?>";
+        window.roleBase = "<?= service('uri')->getSegment(1) ?>";
     </script>
-    <!-- <script src="<?= base_url('assets/js/adminOpd/pk/pk.js') ?>"></script> -->
+
     <script src="<?= base_url('assets/js/adminOpd/pk/pk_detail.js') ?>"></script>
 </body>
 

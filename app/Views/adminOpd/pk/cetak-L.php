@@ -278,7 +278,6 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
           $groupedData = [];
 
           foreach ($program_pk as $row) {
-
             /**
              * ==============================
              * KHUSUS PK BUPATI (OPSI B)
@@ -343,6 +342,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
               }
             }
           }
+
           ?>
 
           <?php $grandTotal = 0; ?>
@@ -368,6 +368,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
             <?php endforeach; ?>
 
           <?php endforeach; ?>
+
 
           <tr class="fw-bold">
             <td colspan="2" class="right">TOTAL</td>

@@ -13,19 +13,20 @@ document.addEventListener('DOMContentLoaded', function () {
      * UPDATE NAME ATTRIBUTES
      * =============================== */
     function updateFormNames() {
+
         document.querySelectorAll('.sasaran-item').forEach((sasaranItem, sIdx) => {
 
-            const sasaranTextarea = sasaranItem.querySelector('textarea[name*="[sasaran]"]');
+            const sasaranTextarea = sasaranItem.querySelector('textarea');
             if (sasaranTextarea) {
                 sasaranTextarea.name = `sasaran_pk[${sIdx}][sasaran]`;
             }
 
             sasaranItem.querySelectorAll('.indikator-item').forEach((indikatorItem, iIdx) => {
 
-                const indikatorInput = indikatorItem.querySelector('input[name*="[indikator]"]');
-                const targetInput    = indikatorItem.querySelector('input[name*="[target]"]');
-                const satuanSelect   = indikatorItem.querySelector('select[name*="[id_satuan]"]');
-                const jenisSelect    = indikatorItem.querySelector('select[name*="[jenis_indikator]"]');
+                const indikatorInput = indikatorItem.querySelector('.indikator-input');
+                const targetInput = indikatorItem.querySelector('.indikator-target');
+                const satuanSelect = indikatorItem.querySelector('.satuan-select');
+                const jenisSelect = indikatorItem.querySelector('.jenis-indikator-select');
 
                 if (indikatorInput)
                     indikatorInput.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][indikator]`;
@@ -38,9 +39,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (jenisSelect)
                     jenisSelect.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][jenis_indikator]`;
+
+                // 🔥 WAJIB: hidden jenis indikator
+                const jenisHidden = indikatorItem.querySelector('input[type="hidden"]');
+                if (jenisHidden)
+                    jenisHidden.name = `sasaran_pk[${sIdx}][indikator][${iIdx}][jenis]`;
             });
         });
     }
+
 
     updateFormNames();
 
@@ -70,9 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.closest('.add-indikator')) {
             e.preventDefault();
 
-            const indikatorSection   = e.target.closest('.indikator-section');
+            const indikatorSection = e.target.closest('.indikator-section');
             const indikatorContainer = indikatorSection?.querySelector('.indikator-container');
-            const template           = indikatorContainer?.querySelector('.indikator-item');
+            const template = indikatorContainer?.querySelector('.indikator-item');
 
             if (!indikatorContainer || !template) return;
 
@@ -109,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.closest('.remove-indikator')) {
             e.preventDefault();
 
-            const indikatorItem      = e.target.closest('.indikator-item');
+            const indikatorItem = e.target.closest('.indikator-item');
             const indikatorContainer = e.target.closest('.indikator-container');
 
             if (!indikatorItem || !indikatorContainer) return;
@@ -134,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!e.target.classList.contains('pegawai-select')) return;
 
         const selected = e.target.options[e.target.selectedIndex];
-        const target   = e.target.dataset.target;
+        const target = e.target.dataset.target;
         if (!selected || !target) return;
 
         const nipInput = document.querySelector(`input[name="${target}"]`);

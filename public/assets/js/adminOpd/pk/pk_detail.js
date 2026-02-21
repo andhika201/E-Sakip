@@ -1,20 +1,23 @@
-// Pastikan base_url dan jenis tersedia
-const baseUrl = window.base_url || '';
-const jenisPk = window.jenis || document.body.dataset.jenis || '';
-
-// Delete PK function
 function deletePk(pkId) {
     if (!confirm('Yakin ingin menghapus data PK ini?')) return;
 
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-console.log("DELETE URL:", `${baseUrl}adminopd/pk/${jenisPk}/delete/${pkId}`);
+    const baseUrl  = window.base_url  ?? '/';
+    const jenisPk  = window.jenis     ?? '';
+    const roleBase = window.roleBase  ?? '';
 
-    fetch(`${baseUrl}adminopd/pk/${jenisPk}/delete/${pkId}`, {
+    const csrfName = document.querySelector('meta[name="csrf-name"]')?.content;
+    const csrfHash = document.querySelector('meta[name="csrf-hash"]')?.content;
+
+    const deleteUrl = `${baseUrl}${roleBase}/pk/${jenisPk}/delete/${pkId}`;
+
+    console.log("DELETE URL:", deleteUrl);
+
+    fetch(deleteUrl, {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken
+            [csrfName]: csrfHash
         },
         credentials: 'same-origin',
     })
@@ -27,6 +30,8 @@ console.log("DELETE URL:", `${baseUrl}adminopd/pk/${jenisPk}/delete/${pkId}`);
             alert(data.error || 'Gagal menghapus data PK.');
         }
     })
-    .catch(() => alert('Terjadi kesalahan saat menghapus data PK.'));
+    .catch(err => {
+        console.error(err);
+        alert('Terjadi kesalahan saat menghapus data PK.');
+    });
 }
-

@@ -188,6 +188,7 @@
 
                   <div class="mb-3">
                     <label class="form-label">Indikator Tujuan</label>
+                    <input type="hidden" name="indikator_tujuan[<?= $idx ?>][id]" value="<?= esc($it['id'] ?? '') ?>">
                     <textarea name="indikator_tujuan[<?= $idx ?>][indikator_tujuan]" class="form-control" rows="2"
                       required><?= esc($it['indikator_tujuan'] ?? '') ?></textarea>
                   </div>
@@ -435,8 +436,8 @@
                       <div class="row mb-3">
                         <div class="col-md-6">
                           <label class="form-label">Satuan</label>
-                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][satuan]"
-                            class="form-select" required>
+                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][satuan]" class="form-select"
+                            required>
                             <option value="">Pilih Satuan</option>
                             <?php if (!empty($satuan_options)): ?>
                               <?php foreach ($satuan_options as $key => $label): ?>

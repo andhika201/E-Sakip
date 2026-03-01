@@ -16,6 +16,7 @@ class RenstraController extends BaseController
     protected $rpjmdModel;
     protected $opdModel;
     protected $pkModel;
+    
 
     public function __construct()
     {
@@ -47,6 +48,8 @@ class RenstraController extends BaseController
     // ==================== INDEX RENSTRA ====================
     public function index()
     {
+        $db = \Config\Database::connect();
+        $db->transStart();
         $session = session();
         $opdId = $session->get('opd_id');
 
@@ -71,11 +74,21 @@ class RenstraController extends BaseController
             $periode ?: null
         );
 
+      $periodeMaster = $db->table('renstra_sasaran')
+    ->select('tahun_mulai, tahun_akhir')
+    ->where('opd_id', $opdId)
+    ->distinct()
+    ->orderBy('tahun_mulai', 'ASC')
+    ->get()
+    ->getResultArray();
+
         $currentOpd = $this->opdModel->find($opdId);
 
+        // dd($renstraData);
         $data = [
             'title' => 'Rencana Strategis - ' . ($currentOpd['nama_opd'] ?? ''),
             'current_opd' => $currentOpd,
+            'periode_master' => $periodeMaster,
             'renstra_data' => $renstraData,
             'filters' => [
                 'misi' => $misi,
@@ -381,6 +394,8 @@ class RenstraController extends BaseController
         try {
             $post = $this->request->getPost();
 
+            // dd($post['indikator_tujuan']); // ← TARUH DISINI
+
             // ============================
             // VALIDASI UTAMA
             // ============================
@@ -442,18 +457,18 @@ class RenstraController extends BaseController
                     // ======================
                     $success = $this->renstraModel
                         ->createCompleteRenstra([
-                                'opd_id' => $opdId,
-                                'renstra_tujuan_id' => $renstraTujuanId,
-                                'tahun_mulai' => $post['tahun_mulai'],
-                                'tahun_akhir' => $post['tahun_akhir'],
-                                'status' => $post['status'] ?? 'draft',
-                                'sasaran_renstra' => [
-                                    [
-                                        'sasaran' => $sasaranText,
-                                        'indikator_sasaran' => $sr['indikator_sasaran'] ?? []
-                                    ]
+                            'opd_id' => $opdId,
+                            'renstra_tujuan_id' => $renstraTujuanId,
+                            'tahun_mulai' => $post['tahun_mulai'],
+                            'tahun_akhir' => $post['tahun_akhir'],
+                            'status' => $post['status'] ?? 'draft',
+                            'sasaran_renstra' => [
+                                [
+                                    'sasaran' => $sasaranText,
+                                    'indikator_sasaran' => $sr['indikator_sasaran'] ?? []
                                 ]
-                            ]);
+                            ]
+                        ]);
                 }
 
                 if (!$success) {
@@ -561,6 +576,88 @@ class RenstraController extends BaseController
             }
         } catch (\Exception $e) {
             return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+    public function editTujuan($tujuanId)
+    {
+        $db = \Config\Database::connect();
+        $session = session();
+        $opdId = $session->get('opd_id');
+
+        if (!$opdId) {
+            return redirect()->to('/login');
+        }
+
+        $data = $this->renstraModel->getCompleteTujuan($tujuanId, $opdId);
+
+        if (!$data) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException();
+        }
+
+        $tahunMulai = (int) $data['sasaran'][0]['tahun_mulai'];
+        $tahunAkhir = (int) $data['sasaran'][0]['tahun_akhir'];
+
+        foreach ($data['indikator_tujuan'] as &$it) {
+            if (!empty($it['targets'])) {
+                $it['targets'] = array_values(array_filter(
+                    $it['targets'],
+                    fn($t) =>
+                    isset($t['tahun']) &&
+                    $t['tahun'] >= $tahunMulai &&
+                    $t['tahun'] <= $tahunAkhir
+                ));
+            }
+        }
+
+        foreach ($data['sasaran'] as &$sr) {
+            foreach ($sr['indikator'] as &$ind) {
+                if (!empty($ind['targets'])) {
+                    $ind['targets'] = array_values(array_filter(
+                        $ind['targets'],
+                        fn($t) =>
+                        isset($t['tahun']) &&
+                        $t['tahun'] >= $tahunMulai &&
+                        $t['tahun'] <= $tahunAkhir
+                    ));
+                }
+            }
+        }
+
+        return view('adminOpd/renstra/edit_tujuan', [
+            'title' => 'Edit Tujuan Renstra',
+
+            // 🔥 INI YANG DIPAKAI VIEW
+            'tujuan' => $data['tujuan'],
+            'indikator_tujuan' => $data['indikator_tujuan'],
+            'sasaran' => $data['sasaran'],
+
+            // 🔥 INI UNTUK DROPDOWN
+            'rpjmd_sasaran' => $this->rpjmdModel->getAllSasaranFromCompletedMisi(),
+            'satuan_options' => $this->pkModel->getAllSatuan()
+        ]);
+    }
+    public function updateTujuan($tujuanId)
+    {
+        try {
+
+            $post = $this->request->getPost();
+
+            // dd("MASUK CONTROLLER", $post); // ← DEBUG DISINI
+
+            // dd($post['sasaran_renstra'][0]['indikator_sasaran'][0]['target_tahunan']);
+
+            $this->renstraModel->updateCompleteTujuan($tujuanId, $post);
+
+            return redirect()->to('/adminopd/renstra')
+                ->with('success', 'Berhasil diperbarui');
+
+        } catch (\Exception $e) {
+
+            log_message('error', 'UPDATE TUJUAN ERROR: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
     }
 }

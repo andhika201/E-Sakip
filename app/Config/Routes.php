@@ -159,6 +159,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('renstra/update/(:num)', 'AdminOpd\RenstraController::update/$1');
     $routes->match(['get', 'post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
+    $routes->get('renstra/edit-tujuan/(:num)', 'AdminOpd\RenstraController::editTujuan/$1');
+    $routes->post('renstra/update-tujuan/(:num)', 'AdminOpd\RenstraController::updateTujuan/$1');
 
     // RKT
     $routes->get('rkt', 'AdminOpd\RktController::index');

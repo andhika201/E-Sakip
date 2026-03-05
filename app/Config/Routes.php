@@ -168,6 +168,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
     $routes->post('rkt/save', 'AdminOpd\RktController::save');
     $routes->post('rkt/update', 'AdminOpd\RktController::update');
+    $routes->post('rkt/delete-indikator', 'AdminOpd\RktController::deleteByIndicator');
     $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
     $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 

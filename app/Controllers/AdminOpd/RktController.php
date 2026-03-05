@@ -600,4 +600,29 @@ class RktController extends BaseController
             );
         }
     }
+    public function deleteByIndicator()
+    {
+        $db = \Config\Database::connect();
+
+        $indikatorId = $this->request->getPost('indikator_id');
+        $opdId = session()->get('opd_id');
+
+        if (!$indikatorId) {
+            return redirect()->back()->with('error', 'Indikator tidak valid.');
+        }
+
+        try {
+
+            $db->table('rkt')
+                ->where('indikator_id', $indikatorId)
+                ->where('opd_id', $opdId)
+                ->delete();
+
+            return redirect()->back()->with('success', 'Seluruh RKT indikator berhasil dihapus.');
+
+        } catch (\Throwable $e) {
+
+            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
 }

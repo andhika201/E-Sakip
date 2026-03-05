@@ -96,7 +96,7 @@
 
             <!-- TABEL -->
             <div class="table-responsive">
-                <table class="table table-bordered table-striped text-center small align-middle">
+                <table class="table table-bordered table-striped table-rkt text-center small align-middle">
                     <thead class="table-success">
                     <tr>
                         <th class="border p-2">SATUAN KERJA</th>
@@ -117,6 +117,12 @@
                     helper('format_helper');
                     $no = 1;
 
+                    $groupedBySasaran = [];
+
+                    foreach ($rktdata as $ind) {
+                        $sasaran = $ind['sasaran'] ?? 'Tanpa Sasaran';
+                        $groupedBySasaran[$sasaran][] = $ind;
+                    }
                     // Hitung total rows untuk rowspan SATUAN KERJA
                     $totalRowsAll = 0;
                     foreach ($rktdata as $indTmp) {
@@ -140,7 +146,44 @@
 
                     $firstOpdRow = true;
 
-                    foreach ($rktdata as $ind):
+                    foreach ($groupedBySasaran as $sasaranNama => $indikators):
+                        
+                        $sasaranRowspan = 0;
+
+                        foreach ($indikators as $indTmp) {
+
+                            if (!empty($indTmp['rkts'])) {
+
+                                foreach ($indTmp['rkts'] as $rktTmp) {
+
+                                    if (!empty($rktTmp['kegiatan'])) {
+
+                                        foreach ($rktTmp['kegiatan'] as $kTmp) {
+
+                                            $subCount = count($kTmp['subkegiatan'] ?? []);
+                                            $sasaranRowspan += ($subCount > 0 ? $subCount : 1);
+
+                                        }
+
+                                    } else {
+
+                                        $sasaranRowspan++;
+
+                                    }
+
+                                }
+
+                            } else {
+
+                                $sasaranRowspan++;
+
+                            }
+
+                        }
+
+                        $firstSasaranRow = true;
+
+                        foreach ($indikators as $ind):
 
                         // ======= HITUNG TAHUN YANG DITAMPILKAN UNTUK INDIKATOR INI =======
                         $displayYear = '-';
@@ -206,9 +249,12 @@
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle">
                                     <?= esc($displayYear) ?>
                                 </td>
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
-                                    <?= esc($ind['sasaran']) ?>
-                                </td>
+                                <?php if ($firstSasaranRow): ?>
+                                    <td rowspan="<?= $sasaranRowspan ?>" class="align-middle text-start">
+                                        <?= esc($sasaranNama) ?>
+                                    </td>
+                                    <?php $firstSasaranRow = false; ?>
+                                <?php endif; ?>
                                 <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                     <?= esc($ind['indikator_sasaran']) ?>
                                 </td>
@@ -272,9 +318,12 @@
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle">
                                                             <?= esc($displayYear) ?>
                                                         </td>
-                                                        <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
-                                                            <?= esc($ind['sasaran']) ?>
-                                                        </td>
+                                                        <?php if ($firstSasaranRow): ?>
+                                                            <td rowspan="<?= $sasaranRowspan ?>" class="align-middle text-start">
+                                                                <?= esc($sasaranNama) ?>
+                                                            </td>
+                                                            <?php $firstSasaranRow = false; ?>
+                                                        <?php endif; ?>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                             <?= esc($ind['indikator_sasaran']) ?>
                                                         </td>
@@ -331,6 +380,22 @@
                                                                     <i class="fas fa-edit"></i>
                                                                 </a>
 
+                                                                <!-- Hapus -->
+                                                                <form action="<?= base_url('adminopd/rkt/delete-indikator') ?>"
+                                                                    method="post"
+                                                                    onsubmit="return confirm('Yakin ingin menghapus seluruh RKT indikator ini?')">
+
+                                                                    <?= csrf_field() ?>
+                                                                    <input type="hidden" name="indikator_id" value="<?= esc($ind['id']) ?>">
+
+                                                                    <button type="submit"
+                                                                            class="btn btn-danger btn-sm"
+                                                                            title="Hapus seluruh RKT indikator">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+
+                                                                </form>
+
                                                                 <!-- Ubah Status -->
                                                                 <form action="<?= base_url('adminopd/rkt/update-status') ?>"
                                                                       method="post" class="d-inline">
@@ -369,9 +434,12 @@
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle">
                                                         <?= esc($displayYear) ?>
                                                     </td>
-                                                    <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
-                                                        <?= esc($ind['sasaran']) ?>
-                                                    </td>
+                                                    <?php if ($firstSasaranRow): ?>
+                                                        <td rowspan="<?= $sasaranRowspan ?>" class="align-middle text-start">
+                                                            <?= esc($sasaranNama) ?>
+                                                        </td>
+                                                        <?php $firstSasaranRow = false; ?>
+                                                    <?php endif; ?>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                         <?= esc($ind['indikator_sasaran']) ?>
                                                     </td>
@@ -456,9 +524,12 @@
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle">
                                                 <?= esc($displayYear) ?>
                                             </td>
-                                            <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
-                                                <?= esc($ind['sasaran']) ?>
-                                            </td>
+                                           <?php if ($firstSasaranRow): ?>
+                                                <td rowspan="<?= $sasaranRowspan ?>" class="align-middle text-start">
+                                                    <?= esc($sasaranNama) ?>
+                                                </td>
+                                                <?php $firstSasaranRow = false; ?>
+                                            <?php endif; ?>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
                                                 <?= esc($ind['indikator_sasaran']) ?>
                                             </td>
@@ -519,8 +590,9 @@
                                 <?php endif; // end if kegiatan ?>
                             <?php endforeach; // foreach rkts ?>
                         <?php endif; // end if empty rkts
-                    endforeach; // foreach indikator
-                    ?>
+                    endforeach; // foreach indikator dalam sasaran
+                    endforeach; // foreach sasaran                    
+?>
                     </tbody>
                 </table>
             </div>

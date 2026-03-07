@@ -1,143 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Edit Program PK' ?></title>
+  <meta charset="UTF-8">
+  <title><?= $title ?? 'Edit Program PK' ?></title>
   <?= $this->include('adminKabupaten/templates/style.php'); ?>
+  <link rel="stylesheet" href="<?= base_url('assets/css/program-pk-form.css') ?>">
 </head>
 
-<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<body class="bg-light d-flex flex-column min-vh-100">
 
-  <!-- Navbar/Header -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
-
-  <!-- Sidebar -->
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
-  <!-- Konten Utama -->
-  <main class="flex-fill d-flex justify-content-center p-4 mt-4">
-    <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
-      <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit Program PK</h2>
+  <main class="container-fluid p-4">
+    <div class="card shadow-sm mx-auto" style="max-width:1200px;">
+      <div class="card-body">
 
-      <form id="program-pk-form" method="POST" action="<?= base_url('adminkab/program_pk/update/' . ($program['id'] ?? '')) ?>">
-        <?= csrf_field() ?>
+        <h3 class="text-center fw-bold text-success mb-4">Edit Program PK</h3>
 
-        <!-- Hidden field for program ID -->
-        <input type="hidden" name="id" value="<?= $program['id'] ?? '' ?>">
-
-        <!-- Flash Messages -->
-        <?php if (session()->getFlashdata('validation')) : ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <ul class="mb-0">
-                  <?php foreach (session()->getFlashdata('validation') as $error) : ?>
-                    <li><?= $error ?></li>
-                  <?php endforeach; ?>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (session()->getFlashdata('success')) : ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                <?= session()->getFlashdata('success') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (session()->getFlashdata('error')) : ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <?= session()->getFlashdata('error') ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-      <!-- Program PK Data -->
-      <section>
-        <div class="program-pk-container">
-          <div class="program-pk-item bg-light border rounded p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <label class="fw-medium">Edit Program PK</label>
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-8">
-                <label class="form-label">Program atau Kegiatan</label>
-                <textarea name="program_kegiatan" class="form-control border-secondary" rows="3" placeholder="Masukkan Program Kegiatan" required><?= esc($program['program_kegiatan'] ?? '') ?></textarea>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Anggaran (Rp)</label>
-                <input type="number" name="anggaran" class="form-control anggaran-input border-secondary" placeholder="0" min="0" step="1" value="<?= isset($program['anggaran']) ? intval($program['anggaran']) : '' ?>" required>
-                <small class="text-muted">Contoh: 1000000 untuk Rp 1.000.000</small>
-                <?php if (isset($program['anggaran']) && $program['anggaran']): ?>
-                  <small class="text-info d-block">Anggaran Saat Ini: <?= 'Rp ' . number_format($program['anggaran'], 0, ',', '.') ?></small>
-                <?php endif; ?>
-              </div>
-            </div>
+        <form method="post" action="<?= base_url('adminkab/program_pk/update/' . $program['id']) ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="program_id" value="<?= $program['id'] ?>">
+          <div class="mb-4">
+            <label class="form-label fw-semibold">OPD</label>
+            <select name="opd_id" class="form-select" required>
+              <option value="">-- Pilih OPD --</option>
+              <?php foreach ($opds as $opd): ?>
+                <option value="<?= $opd['id'] ?>" <?= $opd['id'] == $program['opd_id'] ? 'selected' : '' ?>>
+                  <?= esc($opd['nama_opd']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
           </div>
-        </div>
-      </section>
 
-      <!-- Tombol Aksi -->
-      <div class="d-flex justify-content-between mt-4">
-        <a href="<?= base_url('adminkab/program_pk') ?>" class="btn btn-secondary">
-          <i class="fas fa-arrow-left me-1"></i> Kembali
-        </a>
-        <button type="submit" class="btn btn-success">
-          <i class="fas fa-save me-1"></i> Simpan
-        </button>
+          <!-- Tahun -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Tahun Anggaran</label>
+            <select name="tahun_anggaran" class="form-select" required>
+              <option value="">-- Pilih Tahun --</option>
+              <?php for ($y = date('Y') - 1; $y <= date('Y') + 3; $y++): ?>
+                <option value="<?= $y ?>" <?= $y == $program['tahun_anggaran'] ? 'selected' : '' ?>>
+                  <?= $y ?>
+                </option>
+              <?php endfor; ?>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Jenis Anggaran</label>
+            <select name="jenis_anggaran" class="form-select" required>
+              <option value="">-- Pilih Jenis Anggaran --</option>
+              <option value="murni" <?= $program['jenis_anggaran'] == 'murni' ? 'selected' : '' ?>>APBD Murni</option>
+              <option value="perubahan" <?= $program['jenis_anggaran'] == 'perubahan' ? 'selected' : '' ?>>APBD Perubahan
+              </option>
+            </select>
+          </div>
+
+          <hr>
+
+          <!-- PROGRAM CONTAINER -->
+          <div id="program-container"></div>
+
+          <button type="button" id="add-program" class="btn btn-outline-success mb-4">
+            + Tambah Program
+          </button>
+
+          <div class="text-end">
+            <button type="submit" class="btn btn-success px-4">
+              Simpan
+            </button>
+          </div>
+
+        </form>
+
       </div>
-      </form>
     </div>
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
-
   <script>
-
-    // Alert untuk reload halaman
-    function reloadPageAlert() {
-      if (confirm('Yakin ingin me-reload halaman? Data yang belum disimpan akan hilang!')) {
-        location.reload();
-      }
-    }
-    // Contoh pemakaian: panggil reloadPageAlert() pada event tertentu
-
-    // Alert untuk tombol kembali
-    document.querySelector('a.btn-secondary').addEventListener('click', function(e) {
-      if (!confirm('Yakin ingin kembali? Data yang belum disimpan akan hilang!')) {
-        e.preventDefault();
-      }
-    });
-
-    // Alert untuk tombol simpan
-    document.getElementById('program-pk-form').addEventListener('submit', function(e) {
-      const programKegiatan = document.querySelector('textarea[name="program_kegiatan"]').value.trim();
-      const anggaran = document.querySelector('input[name="anggaran"]').value;
-      
-      let isValid = true;
-      
-      if (!programKegiatan) {
-        alert('Program Kegiatan tidak boleh kosong');
-        isValid = false;
-      }
-      
-      if (!anggaran || parseFloat(anggaran) <= 0) {
-        alert('Anggaran harus lebih dari 0');
-        isValid = false;
-      }
-      
-      if (!isValid) {
-        e.preventDefault();
-        return;
-      }
-      
-      if (!confirm('Yakin ingin memperbarui data program PK?')) {
-        e.preventDefault();
-      }
-    });
+    const programData = <?= json_encode($program, JSON_UNESCAPED_UNICODE) ?>;
   </script>
+  <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js') ?>"></script>
 </body>
+
 </html>

@@ -21,6 +21,17 @@
 
         <form method="post" action="<?= base_url('adminkab/program_pk/save') ?>">
           <?= csrf_field() ?>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">OPD</label>
+            <select name="opd_id" class="form-select" required>
+              <option value="">-- Pilih OPD --</option>
+              <?php foreach ($opds as $opd): ?>
+                <option value="<?= $opd['id'] ?>">
+                  <?= esc($opd['nama_opd']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
 
           <!-- Tahun -->
           <div class="mb-4">
@@ -30,6 +41,15 @@
               <?php for ($y = date('Y') - 1; $y <= date('Y') + 3; $y++): ?>
                 <option value="<?= $y ?>"><?= $y ?></option>
               <?php endfor; ?>
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Jenis Anggaran</label>
+            <select name="jenis_anggaran" class="form-select" required>
+              <option value="">-- Pilih Jenis Anggaran --</option>
+              <option value="murni">APBD Murni</option>
+              <option value="perubahan">APBD Perubahan</option>
             </select>
           </div>
 

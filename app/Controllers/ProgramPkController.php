@@ -4,16 +4,19 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\ProgramPkModel;
+use App\Models\OpdModel;
 use CodeIgniter\HTTP\ResponseInterface;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProgramPkController extends BaseController
 {
     protected $programPkModel;
+    protected $OpdModel;
 
     public function __construct()
     {
         $this->programPkModel = new ProgramPkModel();
+        $this->OpdModel = new OpdModel();
     }
 
     /**
@@ -36,7 +39,8 @@ class ProgramPkController extends BaseController
     {
         $data = [
             'title' => 'Tambah Program PK',
-            'validation' => session()->getFlashdata('validation')
+            'validation' => session()->getFlashdata('validation'),
+            'opds' => $this->OpdModel->getAllOpd()
         ];
 
         return view('adminKabupaten/program_pk/tambah_program', $data);
@@ -240,15 +244,32 @@ class ProgramPkController extends BaseController
         $db->transStart();
 
         $tahun = $this->request->getPost('tahun_anggaran');
+        $opdId = $this->request->getPost('opd_id');
+        $jenisAnggaran = $this->request->getPost('jenis_anggaran');
         $programs = $this->request->getPost('program');
+        // dd($this->request->getPost());
 
+        if (!$programs) {
+            return redirect()->back()->with('error', 'Program tidak boleh kosong');
+        }
         foreach ($programs as $p) {
 
+
+            $anggaran = (int) $p['anggaran'];
+
+            if ($anggaran <= 0) {
+                throw new \Exception("Anggaran program tidak valid");
+            }
+
             $db->table('program_pk')->insert([
-                'kode_program' => time(), // auto sementara
+                'kode_program' => uniqid('PRG-'),
+                'opd_id' => $opdId,
                 'program_kegiatan' => $p['nama'],
                 'tahun_anggaran' => $tahun,
                 'anggaran' => $p['anggaran'],
+                'jenis_anggaran' => $jenisAnggaran,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
             ]);
 
             $programId = $db->insertID();
@@ -257,10 +278,13 @@ class ProgramPkController extends BaseController
 
                 $db->table('kegiatan_pk')->insert([
                     'program_id' => $programId,
-                    'kode_kegiatan' => time(),
+                    'kode_kegiatan' => uniqid('KEG-'),
                     'kegiatan' => $k['nama'],
                     'tahun_anggaran' => $tahun,
                     'anggaran' => $k['anggaran'],
+                    'jenis_anggaran' => $jenisAnggaran,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
                 ]);
 
                 $kegiatanId = $db->insertID();
@@ -268,10 +292,13 @@ class ProgramPkController extends BaseController
                 foreach ($k['sub'] ?? [] as $s) {
                     $db->table('sub_kegiatan_pk')->insert([
                         'kegiatan_id' => $kegiatanId,
-                        'kode_sub_kegiatan' => time(),
+                        'kode_sub_kegiatan' => uniqid('SUB-'),
                         'sub_kegiatan' => $s['nama'],
                         'tahun_anggaran' => $tahun,
                         'anggaran' => $s['anggaran'],
+                        'jenis_anggaran' => $jenisAnggaran,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
                     ]);
                 }
             }
@@ -292,17 +319,20 @@ class ProgramPkController extends BaseController
      */
     public function edit($id)
     {
-        $program = $this->programPkModel->getProgramById($id);
+        $program = $this->programPkModel->getProgramWithDetails($id);
 
         if (!$program) {
             session()->setFlashdata('error', 'Program PK tidak ditemukan');
             return redirect()->to('/adminkab/program_pk');
         }
 
+        // dd($program);
+
         $data = [
             'title' => 'Edit Program PK',
             'program' => $program,
-            'validation' => session()->getFlashdata('validation')
+            'validation' => session()->getFlashdata('validation'),
+            'opds' => $this->OpdModel->getAllOpd(),
         ];
 
         return view('adminKabupaten/program_pk/edit_program', $data);
@@ -313,47 +343,87 @@ class ProgramPkController extends BaseController
      */
     public function update($id)
     {
-        // Check if program exists
-        $program = $this->programPkModel->getProgramById($id);
-        if (!$program) {
-            session()->setFlashdata('error', 'Program PK tidak ditemukan');
-            return redirect()->to('/adminkab/program_pk');
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $programs = $this->request->getPost('program');
+        $tahun = $this->request->getPost('tahun_anggaran');
+        $opdId = $this->request->getPost('opd_id');
+        $jenisAnggaran = $this->request->getPost('jenis_anggaran');
+
+        // dd($this->request->getPost());
+        if (!$programs) {
+            return redirect()->back()->with('error', 'Program tidak boleh kosong');
         }
 
-        $noScript = 'regex_match[#^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$#is]';
+        // update program utama
+        $programData = $programs[0];
 
-        // Validation rules
-        $rules = [
-            'program_kegiatan' => 'required|min_length[3]|max_length[500]|' . $noScript,
-            'anggaran' => 'required|numeric'
-        ];
+        $db->table('program_pk')
+            ->where('id', $id)
+            ->update([
+                'program_kegiatan' => $programData['nama'],
+                'anggaran' => $programData['anggaran'],
+                'opd_id' => $opdId,
+                'tahun_anggaran' => $tahun,
+                'jenis_anggaran' => $jenisAnggaran
+            ]);
 
-        $messages = [
-            'program_kegiatan' => [
-                'regex_match' => 'Program/Kegiatan terdeteksi mengandung script / input berbahaya.',
-            ],
-        ];
+        // hapus kegiatan lama
+        $kegiatanIds = $db->table('kegiatan_pk')
+            ->select('id')
+            ->where('program_id', $id)
+            ->get()
+            ->getResultArray();
 
-        if (!$this->validate($rules, $messages)) {
-            return redirect()->back()
-                ->withInput()
-                ->with('validation', $this->validator->getErrors());
+        $kegiatanIds = array_column($kegiatanIds, 'id');
+
+        if (!empty($kegiatanIds)) {
+            $db->table('sub_kegiatan_pk')
+                ->whereIn('kegiatan_id', $kegiatanIds)
+                ->delete();
+
+            $db->table('kegiatan_pk')
+                ->where('program_id', $id)
+                ->delete();
         }
 
-        // Prepare data
-        $data = [
-            'program_kegiatan' => $this->request->getPost('program_kegiatan'),
-            'anggaran' => $this->request->getPost('anggaran')
-        ];
+        // insert ulang kegiatan
+        foreach ($programData['kegiatan'] ?? [] as $k) {
 
-        // Update data
-        if ($this->programPkModel->update($id, $data)) {
-            session()->setFlashdata('success', 'Program PK berhasil diperbarui');
-            return redirect()->to('/adminkab/program_pk');
-        } else {
-            session()->setFlashdata('error', 'Gagal memperbarui program PK');
-            return redirect()->back()->withInput();
+            $db->table('kegiatan_pk')->insert([
+                'program_id' => $id,
+                'kode_kegiatan' => uniqid('KEG-'),
+                'kegiatan' => $k['nama'],
+                'anggaran' => $k['anggaran'],
+                'tahun_anggaran' => $tahun,
+                'jenis_anggaran' => $jenisAnggaran
+            ]);
+
+            $kegiatanId = $db->insertID();
+
+            foreach ($k['sub'] ?? [] as $s) {
+
+                $db->table('sub_kegiatan_pk')->insert([
+                    'kegiatan_id' => $kegiatanId,
+                    'kode_sub_kegiatan' => uniqid('SUB-'),
+                    'sub_kegiatan' => $s['nama'],
+                    'anggaran' => $s['anggaran'],
+                    'tahun_anggaran' => $tahun,
+                    'jenis_anggaran' => $jenisAnggaran
+                ]);
+
+            }
         }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return redirect()->back()->with('error', 'Gagal memperbarui data');
+        }
+
+        return redirect()->to('/adminkab/program_pk')
+            ->with('success', 'Program berhasil diperbarui');
     }
 
     /**

@@ -6,61 +6,61 @@ use CodeIgniter\Model;
 
 class ProgramPkModel extends Model
 {
-    protected $table            = 'program_pk';
-    protected $primaryKey       = 'id';
+    protected $table = 'program_pk';
+    protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
+    protected $returnType = 'array';
+    protected $useSoftDeletes = false;
+    protected $protectFields = true;
 
     protected $allowedFields = [
         'program_kegiatan',
         'anggaran',
     ];
 
-    protected bool $allowEmptyInserts  = false;
-    protected bool $updateOnlyChanged  = true;
+    protected bool $allowEmptyInserts = false;
+    protected bool $updateOnlyChanged = true;
 
-    protected array $casts        = [];
+    protected array $casts = [];
     protected array $castHandlers = [];
 
     // Dates
     protected $useTimestamps = true;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
 
     // Validation
     protected $validationRules = [
         'program_kegiatan' => 'required|min_length[3]',
-        'anggaran'         => 'required|numeric',
+        'anggaran' => 'required|numeric',
     ];
 
     protected $validationMessages = [
         'program_kegiatan' => [
-            'required'   => 'Program kegiatan harus diisi',
+            'required' => 'Program kegiatan harus diisi',
             'min_length' => 'Program kegiatan minimal 3 karakter',
         ],
         'anggaran' => [
             'required' => 'Anggaran harus diisi',
-            'numeric'  => 'Anggaran harus berupa angka',
+            'numeric' => 'Anggaran harus berupa angka',
         ],
     ];
 
-    protected $skipValidation       = false;
+    protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    protected $beforeInsert = [];
+    protected $afterInsert = [];
+    protected $beforeUpdate = [];
+    protected $afterUpdate = [];
+    protected $beforeFind = [];
+    protected $afterFind = [];
+    protected $beforeDelete = [];
+    protected $afterDelete = [];
 
     /**
      * Ambil semua program PK
@@ -76,6 +76,49 @@ class ProgramPkModel extends Model
     public function getProgramById($id): ?array
     {
         return $this->find($id);
+    }
+
+    public function getProgramWithDetails($programId)
+    {
+        $program = $this->find($programId);
+
+        if (!$program) {
+            return null;
+        }
+
+        // Ambil kegiatan
+        $kegiatan = $this->db->table('kegiatan_pk')
+            ->where('program_id', $programId)
+            ->orderBy('kode_kegiatan', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Ambil semua id kegiatan
+        $kegiatanIds = array_column($kegiatan, 'id');
+
+        $subKegiatan = [];
+
+        if (!empty($kegiatanIds)) {
+            $subKegiatan = $this->db->table('sub_kegiatan_pk')
+                ->whereIn('kegiatan_id', $kegiatanIds)
+                ->orderBy('kode_sub_kegiatan', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        // Susun sub kegiatan ke kegiatan
+        foreach ($kegiatan as &$k) {
+
+            $k['sub_kegiatan'] = array_values(array_filter($subKegiatan, function ($s) use ($k) {
+                return $s['kegiatan_id'] == $k['id'];
+            }));
+
+        }
+
+        // Gabungkan ke program
+        $program['kegiatan'] = $kegiatan;
+
+        return $program;
     }
 
     /**

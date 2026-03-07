@@ -142,4 +142,12 @@
   .table-rkt thead th {
     border-bottom: 2px solid #cfd4da !important;
   }
+
+  .sub-item {
+    margin-left: 20px;
+  }
+
+  .kegiatan-item {
+    margin-left: 10px;
+  }
 </style>

@@ -5,25 +5,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= esc($title ?? 'CASCADING') ?></title>
+
     <?= $this->include('adminOpd/templates/style.php'); ?>
 
     <?php if (function_exists('csrf_token')): ?>
         <meta name="csrf-token" content="<?= csrf_token() ?>">
         <meta name="csrf-hash" content="<?= csrf_hash() ?>">
     <?php endif; ?>
+
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
         <?= $this->include('adminOpd/templates/header.php'); ?>
         <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
         <main class="flex-fill p-4 mt-2">
-            <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">Cascading</h2>
 
-                <!-- Flash Message -->
+            <div class="bg-white rounded shadow p-4">
+
+                <h2 class="h3 fw-bold text-success text-center mb-4">
+                    Cascading
+                </h2>
+
+                <!-- FLASH MESSAGE -->
+
                 <?php if (session()->getFlashdata('error')): ?>
                     <div class="alert alert-danger alert-dismissible fade show">
                         <?= session()->getFlashdata('error') ?>
@@ -40,182 +48,177 @@
 
                 <?php
                 $filters = $filters ?? [
-                    'misi' => '',
-                    'tujuan' => '',
-                    'rpjmd' => '',
-                    'periode' => '',
-                    'status' => '',
+                    'periode' => ''
                 ];
                 ?>
 
-                <!-- ===================== FORM FILTER ===================== -->
-                <form id="filterForm" method="GET" action="<?= base_url('adminopd/cascading') ?>"
+                <!-- ====================== FILTER ====================== -->
+
+                <form method="GET" action="<?= base_url('adminopd/cascading') ?>"
                     class="d-flex flex-column flex-md-row gap-2 mb-4 align-items-center">
 
-                    <!-- Periode -->
-                    <select id="periodeFilter" name="periode" class="form-select" style="flex:1;">
+                    <select name="periode" class="form-select" style="flex:1;">
+
                         <option value="">-- Pilih Periode --</option>
-                        <?php
-                        $periodeList = [];
-                        if (!empty($periode_master ?? [])) {
-                            foreach ($periode_master as $p) {
-                                $key = $p['tahun_mulai'] . '-' . $p['tahun_akhir'];
-                                $periodeList[$key] = $p['tahun_mulai'] . ' - ' . $p['tahun_akhir'];
-                            }
-                        } elseif (!empty($renstra_data)) {
-                            foreach ($renstra_data as $d) {
-                                if (!empty($d['tahun_mulai']) && !empty($d['tahun_akhir'])) {
-                                    $key = $d['tahun_mulai'] . '-' . $d['tahun_akhir'];
-                                    $periodeList[$key] = $d['tahun_mulai'] . ' - ' . $d['tahun_akhir'];
-                                }
-                            }
-                        }
-                        foreach ($periodeList as $key => $label): ?>
-                            <option value="<?= esc($key) ?>" <?= ($filters['periode'] === $key) ? 'selected' : '' ?>>
-                                <?= esc($label) ?>
+
+                        <?php foreach ($periode_master ?? [] as $p): ?>
+
+                            <?php
+                            $key = $p['tahun_mulai'] . '-' . $p['tahun_akhir'];
+                            ?>
+
+                            <option value="<?= $key ?>" <?= ($filters['periode'] == $key) ? 'selected' : '' ?>>
+
+                                <?= $p['tahun_mulai'] . ' - ' . $p['tahun_akhir'] ?>
+
                             </option>
+
                         <?php endforeach; ?>
+
                     </select>
 
-                    <!-- Tombol Aksi -->
                     <div class="d-flex gap-2 mt-2 mt-md-0">
-                        <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-outline-secondary">
-                            <i class="fas fa-undo"></i> Reset
+
+                        <button type="submit" class="btn btn-success">
+
+                            <i class="fas fa-search"></i>
+                            Tampilkan
+
+                        </button>
+
+                        <a href="<?= base_url('adminopd/cascading') ?>" class="btn btn-outline-secondary">
+
+                            <i class="fas fa-undo"></i>
+                            Reset
+
                         </a>
-                        <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Tambah RENSTRA
-                        </a>
+
                     </div>
+
                 </form>
 
-                <!-- ================ LOGIKA TAMPIL DATA ================= -->
+                <!-- ====================== DATA ====================== -->
+
                 <?php if (empty($filters['periode'])): ?>
 
                     <div class="alert alert-warning text-center p-4">
-                        📅 Silakan pilih <strong>Periode</strong> terlebih dahulu untuk menampilkan data RENSTRA.
+
+                        📅 Silakan pilih <strong>Periode</strong> terlebih dahulu
+                        untuk menampilkan data Cascading.
+
                     </div>
 
-                <?php elseif (empty($renstra_data)): ?>
+                <?php elseif (empty($rows)): ?>
 
                     <div class="alert alert-info text-center p-4">
-                        📁 Tidak ada data RENSTRA untuk filter yang dipilih.
+
+                        📁 Belum ada data RENSTRA untuk OPD ini.
+
                     </div>
 
                 <?php else: ?>
 
-                    <?php
-                    [$start, $end] = explode('-', $filters['periode']);
-                    $start = (int) trim($start);
-                    $end = (int) trim($end);
-                    $yearCount = $end - $start + 1;
-                    ?>
-
                     <div class="table-responsive">
+
                         <table class="table table-bordered text-center align-middle small">
+
                             <thead class="table-success text-center">
+
                                 <tr>
-                                    <th>Tujuan</th>
-                                    <th>Sasaran</th>
-                                    <th>Indikator</th>
-                                    <th>Satuan</th>
-                                    <th>Baseline</th>
 
-                                    <th>2023</th>
-                                    <th>2024</th>
-                                    <th>2025</th>
-                                    <th>2026</th>
+                                    <th>Tujuan RPJMD</th>
+                                    <th>Sasaran RPJMD</th>
+                                    <th>Tujuan RENSTRA</th>
+                                    <th>Sasaran RENSTRA</th>
+                                    <th>Indikator RENSTRA</th>
 
-                                    <th>Program</th>
-                                    <th>OPD</th>
-                                    <th>Aksi</th>
+                                    <th>Sasaran ESS II</th>
+                                    <th>Indikator ESS II</th>
+
+                                    <th>Sasaran ESS III</th>
+                                    <th>Indikator ESS III</th>
+
+                                    <th>Sasaran ESS IV / JF</th>
+                                    <th>Indikator ESS IV</th>
+
+                                    <th width="90">Aksi</th>
+
                                 </tr>
+
                             </thead>
 
-
                             <tbody>
+
                                 <?php foreach ($rows as $index => $r): ?>
                                     <tr>
 
-                                        <!-- TUJUAN -->
                                         <?php if ($firstShow['tujuan'][$r['tujuan_id']] == $index): ?>
                                             <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?>">
                                                 <?= esc($r['tujuan_rpjmd']) ?>
                                             </td>
                                         <?php endif; ?>
 
-                                        <!-- SASARAN -->
                                         <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
                                             <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?>">
                                                 <?= esc($r['sasaran_rpjmd']) ?>
                                             </td>
                                         <?php endif; ?>
 
-                                        <!-- INDIKATOR -->
-                                        <?php if ($firstShow['indikator'][$r['indikator_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['indikator_sasaran']) ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['satuan']) ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['baseline']) ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2023'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2024'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2025'] ?? '-') ?>
-                                            </td>
-
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <?= esc($r['t2026'] ?? '-') ?>
+                                        <?php if ($firstShow['tujuan_renstra'][$r['renstra_tujuan_id']] == $index): ?>
+                                            <td rowspan="<?= $rowspan['tujuan_renstra'][$r['renstra_tujuan_id']] ?>">
+                                                <?= esc($r['renstra_tujuan']) ?>
                                             </td>
                                         <?php endif; ?>
 
-                                        <!-- PROGRAM -->
-                                        <td>
-                                            <?= $r['program_nama'] ?? '-' ?>
-                                        </td>
-
-                                        <!-- OPD -->
-                                        <td>
-                                            <?= $r['nama_opd'] ?? '-' ?>
-                                        </td>
-
-                                        <!-- ACTION -->
-                                        <?php if ($firstShow['indikator'][$r['indikator_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?>">
-                                                <button class="btn btn-success btn-sm btn-map"
-                                                    data-indikator="<?= $r['indikator_id'] ?>">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                        <?php if ($firstShow['sasaran_renstra'][$r['renstra_sasaran_id']] == $index): ?>
+                                            <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>">
+                                                <?= esc($r['renstra_sasaran']) ?>
                                             </td>
                                         <?php endif; ?>
+
+                                        <td class="text-start">
+                                            <?= esc($r['indikator_sasaran'] ?? '-') ?>
+                                        </td>
+
+                                        <td>-</td>
+                                        <td>-</td>
+
+                                        <td>-</td>
+                                        <td>-</td>
+
+                                        <td>-</td>
+                                        <td>-</td>
+
+                                        <td>
+
+                                            <a href="<?= base_url('adminopd/cascading/tambah/' . $r['indikator_id'] . '?periode=' . $filters['periode']) ?>"
+                                                class="btn btn-success btn-sm">
+
+                                                <i class="fas fa-plus"></i>
+
+                                            </a>
+
+                                        </td>
 
                                     </tr>
+
                                 <?php endforeach; ?>
+
                             </tbody>
 
                         </table>
+
                     </div>
+
                 <?php endif; ?>
 
             </div>
+
         </main>
 
         <?= $this->include('adminOpd/templates/footer.php'); ?>
+
     </div>
-
-
 
 </body>
 

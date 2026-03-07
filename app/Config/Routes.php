@@ -213,6 +213,10 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
 
     // Cascading
     $routes->get('cascading', 'AdminOpd\CascadingController::index');
+    $routes->get('cascading/tambah/(:num)', 'AdminOpd\CascadingController::tambah/$1');
+    $routes->get('cascading/get-pk-program-by-opd', 'AdminOpd\CascadingController::getPkProgramByOpd');
+    $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
+    $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
 
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');

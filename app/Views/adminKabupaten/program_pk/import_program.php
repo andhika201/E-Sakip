@@ -62,13 +62,13 @@
 
                         <div class="row">
                             <div class="col-md-4">
-                                <select name="tahun_anggaran" id="tahun_anggaran"
-                                    class="form-control border-secondary" required>
+                                <select name="tahun_anggaran" id="tahun_anggaran" class="form-control border-secondary"
+                                    required>
                                     <option value="">-- Pilih Tahun Anggaran --</option>
                                     <?php
                                     $tahunSekarang = date('Y');
                                     for ($t = $tahunSekarang - 2; $t <= $tahunSekarang + 1; $t++):
-                                    ?>
+                                        ?>
                                         <option value="<?= $t ?>"><?= $t ?></option>
                                     <?php endfor; ?>
                                 </select>
@@ -78,6 +78,45 @@
                             </div>
                         </div>
                     </div>
+                    <div class="bg-light border rounded p-3 mb-3">
+                        <label class="fw-medium h5 d-block mb-3">Jenis Anggaran</label>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select name="jenis_anggaran" class="form-control border-secondary" required>
+                                    <option value="">-- Pilih Jenis Anggaran --</option>
+                                    <option value="murni">APBD Murni</option>
+                                    <option value="perubahan">APBD Perubahan</option>
+                                </select>
+
+                                <small class="text-muted">
+                                    Pilih jenis APBD yang akan diimpor
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-light border rounded p-3 mb-3">
+                        <label class="fw-medium h5 d-block mb-3">OPD</label>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <select name="opd_id" class="form-control border-secondary" required>
+                                    <option value="">-- Pilih OPD --</option>
+                                    <?php foreach ($opds as $opd): ?>
+                                        <option value="<?= $opd['id'] ?>">
+                                            <?= esc($opd['nama_opd']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+
+                                <small class="text-muted">
+                                    Pilih OPD yang sesuai dengan file Lampiran APBD
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+
 
                     <!-- Upload File -->
                     <div class="bg-light border rounded p-3 mb-3">
@@ -86,13 +125,8 @@
                         <div class="row g-3">
                             <div class="col-lg-6">
                                 <label class="form-label">Pilih File (.xlsx / .xls)</label>
-                                <input
-                                    type="file"
-                                    name="file"
-                                    id="excel-file"
-                                    class="form-control border-secondary"
-                                    accept=".xlsx,.xls"
-                                    required>
+                                <input type="file" name="file" id="excel-file" class="form-control border-secondary"
+                                    accept=".xlsx,.xls" required>
                                 <small class="text-muted d-block mt-1">
                                     Maksimal 20 MB. File Lampiran APBD (format SIPD).
                                 </small>
@@ -100,33 +134,21 @@
 
                             <div class="col-lg-3">
                                 <label class="form-label">Sheet (opsional)</label>
-                                <input
-                                    type="text"
-                                    name="sheet"
-                                    class="form-control border-secondary"
+                                <input type="text" name="sheet" class="form-control border-secondary"
                                     placeholder="Kosongkan untuk sheet aktif">
                             </div>
 
                             <div class="col-lg-3">
                                 <label class="form-label">Header di Baris</label>
-                                <input
-                                    type="number"
-                                    name="header_row"
-                                    class="form-control border-secondary"
-                                    value="1"
+                                <input type="number" name="header_row" class="form-control border-secondary" value="1"
                                     min="1">
                                 <small class="text-muted">Umumnya: 1</small>
                             </div>
 
                             <div class="col-12">
                                 <div class="form-check mt-2">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        value="1"
-                                        id="filldown"
-                                        name="filldown"
-                                        checked>
+                                    <input class="form-check-input" type="checkbox" value="1" id="filldown"
+                                        name="filldown" checked>
                                     <label class="form-check-label" for="filldown">
                                         Gunakan <em>fill-down</em> otomatis untuk sel kosong
                                         (mengikuti baris sebelumnya)
@@ -134,12 +156,7 @@
                                 </div>
 
                                 <div class="form-check mt-2">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        value="1"
-                                        id="dryrun"
-                                        name="dryrun">
+                                    <input class="form-check-input" type="checkbox" value="1" id="dryrun" name="dryrun">
                                     <label class="form-check-label" for="dryrun">
                                         <strong>Simulasi saja</strong> (tanpa menyimpan ke database)
                                     </label>
@@ -168,7 +185,8 @@
                                     <ul class="small text-muted mb-0">
                                         <li>Pastikan tahun anggaran sesuai dengan file.</li>
                                         <li>Gunakan <strong>Simulasi</strong> untuk cek hasil sebelum commit.</li>
-                                        <li>Re-import di tahun yang sama akan <strong>update</strong>, bukan duplikasi.</li>
+                                        <li>Re-import di tahun yang sama akan <strong>update</strong>, bukan duplikasi.
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -193,19 +211,19 @@
 
     <script>
         // Alert ke pengguna saat menekan tombol kembali
-        document.querySelector('a.btn-secondary').addEventListener('click', function(e) {
+        document.querySelector('a.btn-secondary').addEventListener('click', function (e) {
             if (!confirm('Yakin ingin kembali? Proses import dibatalkan.')) {
                 e.preventDefault();
             }
         });
 
         // Validasi front-end file Excel
-        (function() {
+        (function () {
             const form = document.getElementById('import-lampiran8-form');
             const input = document.getElementById('excel-file');
             const MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 if (!input.files || input.files.length === 0) {
                     alert('Silakan pilih file Excel (.xlsx / .xls)');
                     e.preventDefault();
@@ -232,7 +250,7 @@
             });
         })();
 
-        document.getElementById('import-lampiran8-form').addEventListener('submit', function(e) {
+        document.getElementById('import-lampiran8-form').addEventListener('submit', function (e) {
             const tahun = document.getElementById('tahun_anggaran').value;
             if (!tahun) {
                 alert('Silakan pilih Tahun Anggaran terlebih dahulu');

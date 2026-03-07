@@ -51,6 +51,7 @@ class ProgramPkController extends BaseController
     {
         $data = [
             'title' => 'Import Program PK',
+            'opds' => $this->OpdModel->findAll(),
             'validation' => session()->getFlashdata('validation')
         ];
 
@@ -65,9 +66,26 @@ class ProgramPkController extends BaseController
             return redirect()->back()->with('error', 'File tidak valid');
         }
 
+        $ext = strtolower($file->getExtension());
+
+        if (!in_array($ext, ['xls', 'xlsx'])) {
+            return redirect()->back()->with('error', 'Format file harus Excel');
+        }
+
         $tahun = (int) $this->request->getPost('tahun_anggaran');
+        $opdId = (int) $this->request->getPost('opd_id');
+        $jenisAnggaran = $this->request->getPost('jenis_anggaran');
+
         if ($tahun <= 0) {
             return redirect()->back()->with('error', 'Tahun anggaran wajib diisi');
+        }
+
+        if ($opdId <= 0) {
+            return redirect()->back()->with('error', 'OPD wajib dipilih');
+        }
+
+        if (!$jenisAnggaran) {
+            return redirect()->back()->with('error', 'Jenis anggaran wajib dipilih');
         }
 
         $spreadsheet = IOFactory::load($file->getTempName());
@@ -84,6 +102,8 @@ class ProgramPkController extends BaseController
 
         $db->transStart();
 
+        $lastA = null;
+        $lastD = null;
         foreach ($rows as $i => $r) {
 
             // Lewati header awal (judul, OPD, urusan)
@@ -97,9 +117,21 @@ class ProgramPkController extends BaseController
             $F = trim((string) ($r['F'] ?? ''));
             $G = trim((string) ($r['G'] ?? ''));
 
+            if ($A !== '') {
+                $lastA = $A;
+            } else {
+                $A = $lastA;
+            }
+
+            if ($D !== '') {
+                $lastD = $D;
+            } else {
+                $D = $lastD;
+            }
             if ($G === '') {
                 continue;
             }
+
 
             // Ambil anggaran dari kolom K
             $cellJ = $sheet->getCell("K{$i}");
@@ -125,10 +157,9 @@ class ProgramPkController extends BaseController
              * PROGRAM
              * =========================
              */
-            if ($E === '' && $F === '') {
+            if (empty($E) && empty($F)) {
 
-                $kodeProgram = $A . '.' . $D;
-
+                $kodeProgram = trim($A . '.' . $D, '.');
                 $program = $tbProgram
                     ->where('kode_program', $kodeProgram)
                     ->where('tahun_anggaran', $tahun)
@@ -146,7 +177,11 @@ class ProgramPkController extends BaseController
                         'kode_program' => $kodeProgram,
                         'program_kegiatan' => $G,
                         'tahun_anggaran' => $tahun,
-                        'anggaran' => $anggaran
+                        'opd_id' => $opdId,
+                        'jenis_anggaran' => $jenisAnggaran,
+                        'anggaran' => $anggaran,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                     $currentProgramId = $db->insertID();
                 }
@@ -159,19 +194,20 @@ class ProgramPkController extends BaseController
              * =========================
              * KEGIATAN
              * =========================
-             */
-            if ($E !== '' && $F === '') {
+             */ elseif (!empty($E) && empty($F)) {
 
                 if (!$currentProgramId) {
                     continue;
                 }
 
-                $kodeKegiatan = $A . '.' . $D . '.' . $E;
+                $kodeKegiatan = trim($A . '.' . $D . '.' . $E, '.');
 
                 $kegiatan = $tbKegiatan
-                    ->where('kode_kegiatan', $kodeKegiatan)
+                    ->where('program_id', $currentProgramId)
+                    ->where('kegiatan', $G)
                     ->where('tahun_anggaran', $tahun)
-                    ->get()->getRow();
+                    ->get()
+                    ->getRow();
 
                 if ($kegiatan) {
                     $currentKegiatanId = $kegiatan->id;
@@ -186,10 +222,13 @@ class ProgramPkController extends BaseController
                         'kode_kegiatan' => $kodeKegiatan,
                         'kegiatan' => $G,
                         'tahun_anggaran' => $tahun,
+                        'jenis_anggaran' => $jenisAnggaran,
                         'anggaran' => $anggaran
                     ]);
+
                     $currentKegiatanId = $db->insertID();
                 }
+
                 continue;
             }
 
@@ -197,14 +236,13 @@ class ProgramPkController extends BaseController
              * =========================
              * SUB KEGIATAN
              * =========================
-             */
-            if ($E !== '' && $F !== '') {
+             */ elseif (!empty($E) && !empty($F)) {
 
                 if (!$currentKegiatanId) {
                     continue;
                 }
 
-                $kodeSub = $A . '.' . $D . '.' . $E . '.' . $F;
+                $kodeSub = trim($A . '.' . $D . '.' . $E . '.' . $F, '.');
 
                 $sub = $tbSub
                     ->where('kode_sub_kegiatan', $kodeSub)
@@ -222,7 +260,10 @@ class ProgramPkController extends BaseController
                         'kode_sub_kegiatan' => $kodeSub,
                         'sub_kegiatan' => $G,
                         'tahun_anggaran' => $tahun,
-                        'anggaran' => $anggaran
+                        'jenis_anggaran' => $jenisAnggaran,
+                        'anggaran' => $anggaran,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                     ]);
                 }
             }

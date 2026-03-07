@@ -240,6 +240,7 @@ class CascadingController extends BaseController
         $tahun = $this->request->getPost('tahun');
         $opdData = $this->request->getPost('opd');
 
+        // dd(request()->getPost());
         if (!$indikatorId || !$tahun || empty($opdData)) {
             return redirect()->back()
                 ->with('error', 'Data tidak lengkap');
@@ -257,13 +258,8 @@ class CascadingController extends BaseController
 
             foreach ($programs as $programId) {
 
-                if (!$programId)
-                    continue;
 
-                if (
-                    !$this->cascadingModel
-                        ->isProgramBelongsToOpd($programId, $opdId)
-                )
+                if (!$programId)
                     continue;
 
                 $insertBatch[] = [
@@ -284,7 +280,7 @@ class CascadingController extends BaseController
 
         $this->cascadingModel
             ->deleteByIndikatorAndYear($indikatorId, $tahun);
-
+        
         if (!empty($insertBatch)) {
             $this->cascadingModel
                 ->saveBatchMapping($insertBatch);

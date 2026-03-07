@@ -27,8 +27,6 @@ function fetchProgramByGroup(group) {
 
 }
 
-
-
 let opdIndex = 0;
 
 window.addOpdGroup = function () {
@@ -144,7 +142,7 @@ document.addEventListener('click', function (e) {
 
         // 🔥 CREATE ELEMENT BARU
         let wrapper = document.createElement('div');
-        wrapper.classList.add('input-group', 'mb-2');
+        wrapper.classList.add('input-group', 'mb-2','program-item');
 
         wrapper.innerHTML = `
         <select name="opd[${idx}][program][]"
@@ -159,7 +157,12 @@ document.addEventListener('click', function (e) {
         </button>
     `;
 
-        // 🔥 TAMBAH TANPA RESET DOM LAMA
+        if (!container.querySelector('.program-label')) {
+            container.insertAdjacentHTML(
+                "afterbegin",
+                `<label class="form-label mt-2 program-label">Program</label>`
+            );
+        }
         container.appendChild(wrapper);
 
     }
@@ -205,8 +208,6 @@ window.onload = async function () {
 
 }
 
-
-
 async function loadExistingPrograms(opdSelect, programs) {
 
     let opdId = opdSelect.value;
@@ -224,8 +225,8 @@ async function loadExistingPrograms(opdSelect, programs) {
 
     let data = await res.json();
     group.dataset.programList =
-    JSON.stringify(data);
-    
+        JSON.stringify(data);
+
     container.innerHTML = '';
 
     programs.forEach(pid => {

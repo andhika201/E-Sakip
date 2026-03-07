@@ -107,10 +107,7 @@ class CascadingModel extends Model
     public function getPkProgramByOpd($opdId, $tahun)
     {
         return $this->db->table('pk_program pp')
-            ->select("
-                pp.id,
-                p.program_kegiatan
-            ")
+            ->select('MIN(pp.id) as id, p.program_kegiatan')
             ->join('pk_indikator pi', 'pi.id = pp.pk_indikator_id')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id')
             ->join('pk pk', 'pk.id = ps.pk_id')
@@ -118,7 +115,7 @@ class CascadingModel extends Model
             ->where('pk.opd_id', $opdId)
             ->where('pk.tahun', $tahun)
             ->where('pi.jenis', 'jpt')
-            ->groupBy('pp.id')
+            ->groupBy('pp.program_id')
             ->orderBy('p.program_kegiatan', 'ASC')
             ->get()
             ->getResultArray();

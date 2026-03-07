@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tambah Cascading</title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <style>
+        .opd-group {
+            margin-bottom: 20px;
+        }
+
+        .program-container {
+            margin-top: 10px;
+            padding-left: 15px;
+            border-left: 3px solid #e9ecef;
+        }
+
+        .program-container select {
+            margin-top: 6px;
+        }
+    </style>
 </head>
 
 <body class="bg-light">

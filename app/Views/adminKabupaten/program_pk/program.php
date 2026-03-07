@@ -20,10 +20,11 @@
         <!-- Sidebar -->
         <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
+
         <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">Daftar Program PK</h2>
+                <h2 class="h3 fw-bold text-success text-center mb-4">Daftar <?= esc($level) ?> PK</h2>
 
                 <!-- Flash Messages -->
                 <?php if (session()->getFlashdata('success')): ?>
@@ -58,33 +59,58 @@
                     </div>
                 </div>
 
+                <div class="btn-group mb-3">
+                    <a href="<?= base_url('adminkab/program_pk?level=program') ?>"
+                        class="btn btn-outline-success <?= $level == 'program' ? 'active' : '' ?>">
+                        Program
+                    </a>
+                    <a href="<?= base_url('adminkab/program_pk?level=kegiatan') ?>"
+                        class="btn btn-outline-primary <?= $level == 'kegiatan' ? 'active' : '' ?>">
+                        Kegiatan
+                    </a>
+                    <a href="<?= base_url('adminkab/program_pk?level=sub') ?>"
+                        class="btn btn-outline-secondary <?= $level == 'sub' ? 'active' : '' ?>">
+                        Sub Kegiatan
+                    </a>
+                </div>
+
                 <!-- Tabel -->
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped text-center small">
                         <thead class="table-success">
                             <tr>
                                 <th class="border p-2">NO</th>
-                                <th class="border p-2">PROGRAM</th>
+                                <th class="border p-2"><?php if ($level == 'program'): ?>PROGRAM<?php elseif ($level == 'kegiatan'): ?>KEGIATAN<?php else: ?>SUB KEGIATAN<?php endif; ?></th>
                                 <th class="border p-2">ANGGARAN</th>
                                 <th class="border p-2">ACTION</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (!empty($programs)): ?>
+                            <?php if (!empty($dataList)): ?>
                                 <?php $no = 1; ?>
-                                <?php foreach ($programs as $program): ?>
+                                <?php foreach ($dataList as $row): ?>
                                     <tr>
                                         <td class="border p-2"><?= $no++ ?></td>
-                                        <td class="border p-2 text-start"><?= esc($program['program_kegiatan']) ?></td>
-                                        <td class="border p-2">Rp <?= number_format($program['anggaran'], 0, ',', '.') ?></td>
+                                        <td class="border p-2 text-start">
+                                            <?php if ($level == 'program'): ?>
+                                                <?= esc($row['program_kegiatan']) ?>
+                                            <?php elseif ($level == 'kegiatan'): ?>
+                                                <?= esc($row['kegiatan']) ?>
+                                            <?php else: ?>
+                                                <?= esc($row['sub_kegiatan']) ?>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="border p-2">
+                                            Rp <?= number_format($row['anggaran'], 0, ',', '.') ?>
+                                        </td>
                                         <td class="border p-2">
                                             <div class="d-flex flex-column align-items-center gap-2">
-                                                <a href="<?= base_url('adminkab/program_pk/edit/' . $program['id']) ?>"
+                                                <a href="<?= base_url('adminkab/program_pk/edit/' . ($row['program_id'] ?? $row['id'])) ?>"
                                                     class="btn btn-success btn-sm">
                                                     <i class="fas fa-edit me-1"></i>Edit
                                                 </a>
                                                 <button class="btn btn-danger btn-sm"
-                                                    onclick="confirmDelete(<?= $program['id'] ?>)">
+                                                    onclick="confirmDelete(<?= $row['program_id'] ?? $row['id'] ?>)">
                                                     <i class="fas fa-trash me-1"></i>Hapus
                                                 </button>
                                             </div>

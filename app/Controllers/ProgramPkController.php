@@ -24,9 +24,27 @@ class ProgramPkController extends BaseController
      */
     public function index()
     {
+        $level = $this->request->getGet('level') ?? 'program';
+
+        switch ($level) {
+
+            case 'kegiatan':
+                $dataList = $this->programPkModel->getAllKegiatan();
+                break;
+
+            case 'sub':
+                $dataList = $this->programPkModel->getAllSubKegiatan();
+                break;
+
+            default:
+                $dataList = $this->programPkModel->getAllPrograms();
+                $level = 'program';
+        }
+
         $data = [
             'title' => 'Manajemen Program PK',
-            'programs' => $this->programPkModel->getAllPrograms()
+            'level' => $level,
+            'dataList' => $dataList
         ];
 
         return view('adminKabupaten/program_pk/program', $data);

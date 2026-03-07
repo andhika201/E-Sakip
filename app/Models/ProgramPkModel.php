@@ -148,29 +148,27 @@ class ProgramPkModel extends Model
      * Tabel: kegiatan_pk
      * Kolom penting: id, program_id, kegiatan, anggaran
      */
-    public function getAllKegiatan(): array
+    public function getAllKegiatan()
     {
-        return $this->db->table('kegiatan_pk')
-            ->select('id, program_id, kegiatan, anggaran')
-            ->orderBy('kegiatan', 'ASC')
+        return $this->db->table('kegiatan_pk k')
+            ->select('k.*, p.id as program_id')
+            ->join('program_pk p', 'p.id = k.program_id')
+            ->orderBy('k.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-    /**
-     * Ambil semua sub kegiatan PK
-     * Tabel: sub_kegiatan_pk
-     * Kolom penting: id, kegiatan_id, sub_kegiatan, anggaran
-     */
-    public function getAllSubKegiatan(): array
+    
+    public function getAllSubKegiatan()
     {
-        return $this->db->table('sub_kegiatan_pk')
-            ->select('id, kegiatan_id, sub_kegiatan, anggaran')
-            ->orderBy('sub_kegiatan', 'ASC')
+        return $this->db->table('sub_kegiatan_pk s')
+            ->select('s.*, p.id as program_id')
+            ->join('kegiatan_pk k', 'k.id = s.kegiatan_id')
+            ->join('program_pk p', 'p.id = k.program_id')
+            ->orderBy('s.sub_kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
-
     public function getSubKegiatanByTahun($tahun)
     {
         $subQuery = $this->db->table('sub_kegiatan_pk')

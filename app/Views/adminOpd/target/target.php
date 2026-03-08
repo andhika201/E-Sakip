@@ -123,7 +123,9 @@
                                             <td><?= esc($row['satuan'] ?? '-') ?></td>
 
                                             <!-- Target Rencana -->
-                                            <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                            <td class="text-start">
+                                                <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+                                            </td>
                                             <td><?= esc($row['capaian'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>

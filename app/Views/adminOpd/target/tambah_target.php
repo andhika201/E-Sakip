@@ -90,8 +90,8 @@
 
                     <div class="mb-3">
                         <label class="form-label" for="rencana_aksi">Rencana Aksi</label>
-                        <input type="text" class="form-control" id="rencana_aksi" name="rencana_aksi"
-                            value="<?= old('rencana_aksi') ?>" required>
+                        <textarea class="form-control" id="rencana_aksi" name="rencana_aksi" rows="4"
+                            required><?= old('rencana_aksi') ?></textarea>
                     </div>
 
                     <div class="mb-3">

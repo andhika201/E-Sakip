@@ -151,7 +151,9 @@
                                                 <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
                                                 <td><?= esc($row['indikator_tahun'] ?? '-') ?></td>
                                                 <td><?= esc($row['satuan'] ?? '-') ?></td>
-                                                <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                                <td class="text-start">
+    <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+</td>
                                                 <td><?= esc($row['indikator_target'] ?? '-') ?></td>
                                                 <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
                                                 <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
@@ -209,7 +211,9 @@
                                             <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
                                             <td><?= esc($row['indikator_tahun'] ?? '-') ?></td>
                                             <td><?= esc($row['satuan'] ?? '-') ?></td>
-                                            <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                            <td class="text-start">
+                                                <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+                                            </td>
                                             <td><?= esc($row['indikator_target'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
@@ -267,7 +271,7 @@
                                         <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
                                         <td><?= esc($row['indikator_tahun'] ?? '-') ?></td>
                                         <td><?= esc($row['satuan'] ?? '-') ?></td>
-                                        <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                        <td class="text-start"><?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?></td>
                                         <td><?= esc($row['target_tahunan'] ?? $row['indikator_target'] ?? '-') ?></td>
 
                                         <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>

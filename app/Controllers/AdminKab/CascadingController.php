@@ -102,8 +102,6 @@ class CascadingController extends BaseController
 
         return $meta;
     }
-
-
     private function buildFirstShowMeta($rows)
     {
         $shown = [

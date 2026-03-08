@@ -1,269 +1,147 @@
-function fetchProgramByGroup(group) {
+let es3Index = 0;
 
-    let opdSelect = group.querySelector('.opd-select');
-    let opdId = opdSelect.value;
-    let tahun = document.getElementById('tahun').value;
-
-    if (!opdId || !tahun) {
-
-        group.dataset.programList = "[]";
-
-        group.querySelector('.program-container')
-            .innerHTML = '';
-
-        return;
-    }
-
-    fetch(`${BASE_URL}/adminkab/cascading/get-pk-program-by-opd?opd_id=${opdId}&tahun=${tahun}`)
-        .then(res => res.json())
-        .then(data => {
-
-            group.dataset.programList = JSON.stringify(data);
-
-            group.querySelector('.program-container')
-                .innerHTML = '';
-
-        });
-
-}
-
-let opdIndex = 0;
-
-window.addOpdGroup = function () {
-
-    let opdContainer = document.getElementById('opd-container');
+function addEs3() {
 
     let html = `
-    <div class="card mb-3 opd-group shadow-sm">
+        <div class="es3-group">
 
-        <div class="card-body">
+        <div class="level-title">Sasaran ESS III</div>
 
-            <div class="row mb-2">
+        <input type="text"
+        name="sasaran[${es3Index}][nama]"
+        class="form-control mb-2"
+        placeholder="Masukkan Sasaran ESS III"
+        required>
 
-                <div class="col-md-10">
-
-                    <label>OPD</label>
-                    <select name="opd[${opdIndex}][id]"
-                            class="form-select opd-select"
-                            data-index="${opdIndex}"
-                            required>
-
-                        <option value="">-- Pilih OPD --</option>
-                        ${opdOptions}
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-2 d-flex align-items-end">
-
-                    <button type="button"
-                            class="btn btn-danger w-100 remove-opd">
-                        -
-                    </button>
-
-                </div>
-
-            </div>
-
-            <div class="program-container mb-2"></div>
-
-            <button type="button"
-                    class="btn btn-sm btn-outline-success add-program"
-                    data-index="${opdIndex}">
-                + Tambah Program
-            </button>
-
-        </div>
-
-    </div>
-    `;
-
-    opdContainer.insertAdjacentHTML('beforeend', html);
-
-    opdIndex++;
-
-}
-
-document.addEventListener('change', function (e) {
-
-    if (e.target.classList.contains('opd-select')) {
-
-        let group = e.target.closest('.opd-group');
-        fetchProgramByGroup(group);
-
-    }
-
-});
-
-document.addEventListener('click', function (e) {
-
-    if (e.target.classList.contains('remove-program')) {
-        e.target.closest('.input-group').remove();
-    }
-
-    if (e.target.classList.contains('remove-opd')) {
-        e.target.closest('.opd-group').remove();
-    }
-
-});
-
-document.addEventListener('click', function (e) {
-
-    if (e.target.classList.contains('add-program')) {
-
-        let group = e.target.closest('.opd-group');
-
-        let idx = group.querySelector('.opd-select').dataset.index;
-
-        let container = group.querySelector('.program-container');
-
-        let list = JSON.parse(group.dataset.programList || "[]");
-
-        let tahun = document.getElementById('tahun').value;
-
-        if (!tahun) {
-            alert("Pilih Tahun terlebih dahulu!");
-            return;
-        }
-
-        if (list.length === 0) {
-            alert("Tidak ada Program Kegiatan untuk OPD ini di tahun " + tahun);
-            return;
-        }
-
-        let opt = '<option value="">-- Pilih Program --</option>';
-
-        list.forEach(p => {
-            opt += `<option value="${p.id}">
-                    ${p.program_kegiatan}
-                </option>`;
-        });
-
-        // 🔥 CREATE ELEMENT BARU
-        let wrapper = document.createElement('div');
-        wrapper.classList.add('input-group', 'mb-2','program-item');
-
-        wrapper.innerHTML = `
-        <select name="opd[${idx}][program][]"
-                class="form-select"
-                required>
-            ${opt}
-        </select>
+        <div id="indikator-container-${es3Index}" class="indikator-row"></div>
 
         <button type="button"
-                class="btn btn-danger remove-program">
-            -
+        class="btn btn-sm btn-outline-success mt-2"
+        onclick="addIndikatorEs3(${es3Index})">
+
+        + Tambah Indikator ESS III
+
         </button>
-    `;
 
-        if (!container.querySelector('.program-label')) {
-            container.insertAdjacentHTML(
-                "afterbegin",
-                `<label class="form-label mt-2 program-label">Program</label>`
-            );
-        }
-        container.appendChild(wrapper);
+        <button type="button"
+        class="btn btn-sm btn-danger btn-delete"
+        onclick="this.parentElement.remove()"
+        title="Hapus">
 
-    }
+        <i class="fas fa-trash"></i>
 
+        </button>
 
-
-});
-
-document.getElementById('tahun')
-    .addEventListener('change', function () {
-
-        document.querySelectorAll('.opd-group')
-            .forEach(group => {
-                fetchProgramByGroup(group);
-            });
-
-    });
-window.onload = async function () {
-
-    if (!EXISTING_MAPPING) return;
-
-    for (let opdId in EXISTING_MAPPING) {
-
-        addOpdGroup();
-
-        let lastGroup =
-            document.querySelectorAll('.opd-group');
-
-        let group =
-            lastGroup[lastGroup.length - 1];
-
-        let opdSelect =
-            group.querySelector('.opd-select');
-
-        opdSelect.value = opdId;
-
-        await loadExistingPrograms(
-            opdSelect,
-            EXISTING_MAPPING[opdId]
-        );
-
-    }
-
-}
-
-async function loadExistingPrograms(opdSelect, programs) {
-
-    let opdId = opdSelect.value;
-    let tahun = document.getElementById('tahun').value;
-
-    let group =
-        opdSelect.closest('.opd-group');
-
-    let container =
-        group.querySelector('.program-container');
-
-    let res = await fetch(
-        `${BASE_URL}/adminopd/cascading/get-pk-program-by-opd?opd_id=${opdId}&tahun=${tahun}`
-    );
-
-    let data = await res.json();
-    group.dataset.programList =
-        JSON.stringify(data);
-
-    container.innerHTML = '';
-
-    programs.forEach(pid => {
-
-        let options =
-            '<option value="">-- Pilih Program --</option>';
-
-        data.forEach(p => {
-
-            options += `
-                <option value="${p.id}"
-                    ${p.id == pid ? 'selected' : ''}>
-                    ${p.program_kegiatan}
-                </option>
-            `;
-
-        });
-
-        container.innerHTML += `
-            <div class="input-group mb-2">
-
-                <select name="opd[${opdSelect.dataset.index}][program][]"
-                        class="form-select"
-                        required>
-
-                    ${options}
-
-                </select>
-
-                <button type="button"
-                        class="btn btn-danger remove-program">
-                    -
-                </button>
-
-            </div>
+        </div>
         `;
-    });
+
+    document.getElementById("es3-container")
+        .insertAdjacentHTML("beforeend", html);
+
+    es3Index++;
 
 }
 
+
+function addIndikatorEs3(es3) {
+
+    let indikatorIndex = Date.now();
+
+    let html = `
+        <div class="indikator-es3 card shadow-sm p-3">
+
+        <div class="level-title">Indikator ESS III</div>
+
+        <input type="text"
+        name="sasaran[${es3}][indikator][${indikatorIndex}][nama]"
+        class="form-control mb-2"
+        placeholder="Masukkan indikator ESS III">
+
+        <div id="es4-container-${es3}-${indikatorIndex}"></div>
+
+        <button type="button"
+        class="btn btn-sm btn-outline-primary mt-2"
+        onclick="addEs4(${es3}, ${indikatorIndex})">
+
+        + Tambah Sasaran ESS IV
+
+        <button type="button"
+        class="btn btn-sm btn-danger btn-delete"
+        onclick="this.parentElement.remove()"
+        title="Hapus">
+
+        <i class="fas fa-trash"></i>
+
+        </button>
+
+        </div>
+        `;
+
+    document.getElementById(`indikator-container-${es3}`)
+        .insertAdjacentHTML("beforeend", html);
+
+}
+
+
+function addEs4(es3, indikator) {
+
+    let es4Index = Date.now();
+
+    let html = `
+        <div class="es4-group">
+
+        <div class="level-title">Sasaran ESS IV</div>
+
+        <input type="text"
+        name="sasaran[${es3}][indikator][${indikator}][sasaran][${es4Index}][nama]"
+        class="form-control mb-2"
+        placeholder="Masukkan sasaran ESS IV">
+
+        <div id="indikator-es4-container-${es3}-${indikator}-${es4Index}"></div>
+
+        <button type="button"
+        class="btn btn-sm btn-outline-primary mt-2"
+        onclick="addIndikatorEs4(${es3}, ${indikator}, ${es4Index})">
+
+        + Tambah Indikator ESS IV
+
+        <button type="button"
+        class="btn btn-sm btn-danger btn-delete"
+        onclick="this.parentElement.remove()"
+        title="Hapus">
+
+        <i class="fas fa-trash"></i>
+
+        </button>
+
+        </div>
+        `;
+
+    document
+        .getElementById(`es4-container-${es3}-${indikator}`)
+        ?.insertAdjacentHTML("beforeend", html);
+
+}
+
+function addIndikatorEs4(es3, indikator, es4) {
+
+    let indikatorIndex = Date.now();
+
+    let html = `
+        <div class="indikator-es4">
+
+        <div class="level-title">Indikator ESS IV</div>
+
+        <input type="text"
+        name="sasaran[${es3}][indikator][${indikator}][sasaran][${es4}][indikator][${indikatorIndex}][nama]"
+        class="form-control mb-2"
+        placeholder="Masukkan indikator ESS IV">
+
+        </div>
+        `;
+
+    document
+        .getElementById(`indikator-es4-container-${es3}-${indikator}-${es4}`)
+        ?.insertAdjacentHTML("beforeend", html);
+
+}

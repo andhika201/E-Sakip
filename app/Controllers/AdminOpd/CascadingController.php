@@ -58,81 +58,142 @@ class CascadingController extends BaseController
                 'periode' => $periode
             ]
         ];
-        // dd($data);
+        // dd($rows);
 
         return view('adminOpd/cascading/cascading', $data);
     }
 
-    public function tambah($renstraIndikatorId = null)
+    public function tambah($indikatorId = null)
     {
-        if (!$renstraIndikatorId) {
-            return redirect()->back()
-                ->with('error', 'Indikator tidak ditemukan');
+        if (!$indikatorId) {
+            return redirect()->back()->with('error', 'Indikator tidak ditemukan');
         }
 
-        $indikator = $this->db->table('renstra_indikator_sasaran')
-            ->where('id', $renstraIndikatorId)
+        $indikator = $this->db->table('renstra_indikator_sasaran ris')
+            ->select("
+            ris.id,
+            ris.indikator_sasaran,
+            rs.sasaran as sasaran_es2,
+            rt.tujuan as tujuan_renstra
+        ")
+            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id')
+            ->join('renstra_tujuan rt', 'rt.id = rs.renstra_tujuan_id')
+            ->where('ris.id', $indikatorId)
             ->get()
             ->getRowArray();
 
         if (!$indikator) {
-            return redirect()->back()
-                ->with('error', 'Indikator tidak ditemukan');
+            return redirect()->back()->with('error', 'Indikator tidak ditemukan');
         }
 
-        $existing = $this->cascadingModel
-            ->getCascadingTree($renstraIndikatorId, $this->opdId);
+        $periode = $this->request->getGet('periode');
 
-        return view('adminOpd/cascading/tambah', [
+        return view('adminOpd/cascading/tambah_cascading', [
             'indikator' => $indikator,
-            'existing' => $existing
+            'periode' => $periode
         ]);
     }
-
     public function save()
     {
         $renstraIndikatorId = $this->request->getPost('renstra_indikator_sasaran_id');
-        $sasaran = $this->request->getPost('sasaran');
+        $sasaranData = $this->request->getPost('sasaran');
+        $opdId = session()->get('opd_id');
 
-        if (!$renstraIndikatorId || empty($sasaran)) {
-            return redirect()->back()
-                ->with('error', 'Data tidak lengkap');
+        if (!$renstraIndikatorId || empty($sasaranData)) {
+            return redirect()->back()->with('error', 'Data tidak lengkap');
         }
 
         $this->db->transStart();
 
-        foreach ($sasaran as $row) {
+        foreach ($sasaranData as $es3) {
 
-            $parentId = $row['parent_id'] ?? null;
+            if (empty($es3['nama']))
+                continue;
 
-            $insert = [
-                'opd_id' => $this->opdId,
+            // ==========================
+            // INSERT SASARAN ESS III
+            // ==========================
+
+            $this->db->table('cascading_sasaran_opd')->insert([
+                'opd_id' => $opdId,
                 'renstra_indikator_sasaran_id' => $renstraIndikatorId,
-                'parent_id' => $parentId,
-                'level' => $row['level'],
-                'nama_sasaran' => $row['nama']
-            ];
+                'parent_id' => null,
+                'level' => 'es3',
+                'nama_sasaran' => $es3['nama']
+            ]);
 
-            $sasaranId = $this->cascadingModel
-                ->insertSasaran($insert);
+            $es3Id = $this->db->insertID();
 
-            if (!empty($row['indikator'])) {
+            if (!empty($es3['indikator'])) {
 
-                foreach ($row['indikator'] as $indikator) {
+                foreach ($es3['indikator'] as $indikatorEs3) {
 
-                    $this->cascadingModel
-                        ->insertIndikator([
-                            'cascading_sasaran_id' => $sasaranId,
-                            'indikator' => $indikator['nama'],
-                            'satuan' => $indikator['satuan']
+                    if (!empty($indikatorEs3['nama'])) {
+
+                        // ==========================
+                        // INSERT INDIKATOR ESS III
+                        // ==========================
+
+                        $this->db->table('cascading_indikator_opd')->insert([
+                            'cascading_sasaran_id' => $es3Id,
+                            'indikator' => $indikatorEs3['nama']
                         ]);
+
+                    }
+
+                    // ==========================
+                    // SASARAN ESS IV
+                    // ==========================
+
+                    if (!empty($indikatorEs3['sasaran'])) {
+
+                        foreach ($indikatorEs3['sasaran'] as $es4) {
+
+                            if (empty($es4['nama']))
+                                continue;
+
+                            $this->db->table('cascading_sasaran_opd')->insert([
+                                'opd_id' => $opdId,
+                                'renstra_indikator_sasaran_id' => $renstraIndikatorId,
+                                'parent_id' => $es3Id,
+                                'level' => 'es4',
+                                'nama_sasaran' => $es4['nama']
+                            ]);
+
+                            $es4Id = $this->db->insertID();
+
+                            // ==========================
+                            // INDIKATOR ESS IV
+                            // ==========================
+
+                            if (!empty($es4['indikator'])) {
+
+                                foreach ($es4['indikator'] as $indikatorEs4) {
+
+                                    if (empty($indikatorEs4['nama']))
+                                        continue;
+
+                                    $this->db->table('cascading_indikator_opd')->insert([
+                                        'cascading_sasaran_id' => $es4Id,
+                                        'indikator' => $indikatorEs4['nama']
+                                    ]);
+                                }
+
+                            }
+
+                        }
+
+                    }
+
                 }
+
             }
+
         }
 
         $this->db->transComplete();
 
-        return redirect()->to(base_url('adminopd/cascading'))
+        return redirect()->to('adminopd/cascading')
             ->with('success', 'Cascading berhasil disimpan');
     }
 

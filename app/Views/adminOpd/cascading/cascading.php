@@ -129,8 +129,6 @@
                                     <th>Tujuan RPJMD</th>
                                     <th>Sasaran RPJMD</th>
                                     <th>Tujuan RENSTRA</th>
-                                    <th>Sasaran RENSTRA</th>
-                                    <th>Indikator RENSTRA</th>
 
                                     <th>Sasaran ESS II</th>
                                     <th>Indikator ESS II</th>
@@ -186,16 +184,11 @@
                                         <td>-</td>
                                         <td>-</td>
 
-                                        <td>-</td>
-                                        <td>-</td>
-
                                         <td>
 
                                             <a href="<?= base_url('adminopd/cascading/tambah/' . $r['indikator_id'] . '?periode=' . $filters['periode']) ?>"
                                                 class="btn btn-success btn-sm">
-
                                                 <i class="fas fa-plus"></i>
-
                                             </a>
 
                                         </td>

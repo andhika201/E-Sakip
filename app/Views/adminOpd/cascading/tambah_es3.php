@@ -10,51 +10,21 @@
 
     <style>
         .cascading-container {
-            width: 95%;
-            max-width: 2000px;
+            max-width: 900px;
+            margin: auto;
         }
+
+        /* GROUP SASARAN */
 
         .es3-group {
-            border: 2px solid #198754;
+            border: 1px solid #e3e6ea;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            background: #f8fff9;
-            position: relative;
+            padding: 16px;
+            margin-bottom: 18px;
+            background: #fafafa;
         }
 
-        .indikator-es3 {
-            border-left: 4px solid #198754;
-            background: #ffffff;
-            padding: 12px;
-            margin-top: 12px;
-            border-radius: 6px;
-            min-height: 120px;
-            flex: 0 0 calc(33.333% - 10px);
-            max-width: calc(33.333% - 10px);
-            min-width: 320px;
-            position: relative;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-
-        }
-
-        .es4-group {
-            border-left: 4px solid #0d6efd;
-            background: #f5f9ff;
-            padding: 12px;
-            margin-top: 12px;
-            margin-left: 20px;
-            border-radius: 6px;
-            position: relative;
-        }
-
-        .indikator-es4 {
-            border-left: 4px dashed #0d6efd;
-            padding: 10px;
-            margin-left: 20px;
-            margin-top: 8px;
-            position: relative;
-        }
+        /* TITLE */
 
         .level-title {
             font-weight: 600;
@@ -63,50 +33,67 @@
             margin-bottom: 6px;
         }
 
-        .indikator-row {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 10px;
+        /* INDIKATOR AREA */
 
-            overflow-x: auto;
-            padding-bottom: 10px;
+        .indikator-container {
+            margin-top: 10px;
+            padding-left: 18px;
+            border-left: 3px solid #dfe3e7;
         }
 
+        /* INDIKATOR ITEM */
+
+        .indikator-es3 {
+            background: #ffffff;
+            border: 1px solid #e5e7ea;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* INPUT */
+
+        .indikator-es3 input {
+            flex: 1;
+        }
+
+        /* DELETE BUTTON */
+
         .btn-delete {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 28px;
-            height: 28px;
-            padding: 0;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
+            padding: 0;
         }
 
-        .btn-delete:hover {
-            transform: scale(1.05);
+        /* DELETE INDIKATOR */
+
+        .btn-delete-indikator {
+            background: #fff5f5;
+            border: 1px solid #ffc9c9;
+            color: #e03131;
         }
 
-        .indikator-es3 input,
-        .es4-group input {
-            padding-right: 35px;
+        .btn-delete-indikator:hover {
+            background: #ffe3e3;
         }
 
-        @media (max-width:1400px) {
-            .indikator-es3 {
-                flex: 0 0 calc(50% - 10px);
-                max-width: calc(50% - 10px);
-            }
+        /* DELETE SASARAN */
+
+        .btn-delete-sasaran {
+            background: #fff4e6;
+            border: 1px solid #ffd8a8;
+            color: #d9480f;
         }
 
-        @media (max-width:900px) {
-            .indikator-es3 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
+        .btn-delete-sasaran:hover {
+            background: #ffe8cc;
         }
     </style>
 
@@ -122,9 +109,9 @@
         <div class="bg-white rounded shadow-sm p-4 mx-auto cascading-container">
 
             <h4 class="text-success mb-4">
-                Tambah Cascading
+                Tambah Cascading Esselon III
             </h4>
-            <form action="<?= base_url('adminopd/cascading/save') ?>" method="post">
+            <form action="<?= base_url('adminopd/cascading/save-es3') ?>" method="post">
                 <?= csrf_field() ?>
 
                 <input type="hidden" name="renstra_indikator_sasaran_id" value="<?= $indikator['id'] ?>">
@@ -202,7 +189,7 @@
 
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3.js') ?>"></script>
 </body>
 
 </html>

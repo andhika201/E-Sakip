@@ -212,12 +212,29 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');
 
     // Cascading
-    $routes->get('cascading', 'AdminOpd\CascadingController::index');
-    $routes->get('cascading/tambah/(:num)', 'AdminOpd\CascadingController::tambah/$1');
-    $routes->get('cascading/get-pk-program-by-opd', 'AdminOpd\CascadingController::getPkProgramByOpd');
-    $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
-    $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
+    // $routes->get('cascading', 'AdminOpd\CascadingController::index');
+    // $routes->get('cascading/tambah/(:num)', 'AdminOpd\CascadingController::tambah/$1');
+    // $routes->get('cascading/get-pk-program-by-opd', 'AdminOpd\CascadingController::getPkProgramByOpd');
+    // $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
+    // $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
 
+
+    // Cascading
+    $routes->get('cascading', 'AdminOpd\CascadingController::index');
+    // ESS III
+    $routes->get('cascading/tambah-es3/(:num)', 'AdminOpd\CascadingController::tambahEs3/$1');
+    $routes->post('cascading/save-es3', 'AdminOpd\CascadingController::saveEs3');
+    $routes->get('cascading/edit-es3/(:num)', 'AdminOpd\CascadingController::editEs3/$1');
+    $routes->post('cascading/update-es3/(:num)', 'AdminOpd\CascadingController::updateEs3/$1');
+    $routes->get('cascading/delete-es3/(:num)', 'AdminOpd\CascadingController::deleteEs3/$1');
+    // ESS IV
+    $routes->get('cascading/tambah-es4/(:num)', 'AdminOpd\CascadingController::tambahEs4/$1');
+    $routes->post('cascading/save-es4', 'AdminOpd\CascadingController::saveEs4');
+    $routes->get('cascading/edit-es4/(:num)', 'AdminOpd\CascadingController::editEs4/$1');
+    $routes->post('cascading/update-es4/(:num)', 'AdminOpd\CascadingController::updateEs4/$1');
+    $routes->get('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
+
+    $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });

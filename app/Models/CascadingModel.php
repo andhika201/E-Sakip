@@ -216,59 +216,123 @@ class CascadingModel extends Model
     }
 
     // adminopd
-    public function getCascadingByOpd($opdId)
-{
-    return $this->db->table('cascading_sasaran_opd cs')
-        ->select("
-            cs.id,
-            cs.parent_id,
-            cs.level,
-            cs.nama_sasaran,
-            ri.indikator_sasaran
+    public function getCascadingMatrixByOpd($opdId)
+    {
+        return $this->db->table('rpjmd_tujuan t')
+
+            ->select("
+            t.id as tujuan_id,
+            t.tujuan_rpjmd,
+
+            s.id as sasaran_id,
+            s.sasaran_rpjmd,
+
+            rt.id as renstra_tujuan_id,
+            rt.tujuan as renstra_tujuan,
+
+            rs.id as renstra_sasaran_id,
+            rs.sasaran as renstra_sasaran,
+
+            ris.id as indikator_id,
+            ris.indikator_sasaran,
+            ris.satuan,
+
+            es3.id as es3_id,
+            es3.nama_sasaran as es3_sasaran,
+
+            i3.id as es3_indikator_id,
+            i3.indikator as es3_indikator,
+
+            es4.id as es4_id,
+            es4.nama_sasaran as es4_sasaran,
+
+            i4.id as es4_indikator_id,
+            i4.indikator as es4_indikator
         ")
-        ->join(
-            'renstra_indikator_sasaran ri',
-            'ri.id = cs.renstra_indikator_sasaran_id',
-            'left'
-        )
-        ->where('cs.opd_id', $opdId)
-        ->orderBy('cs.level', 'ASC')
-        ->get()
-        ->getResultArray();
-}
-public function getCascadingTree($renstraIndikatorId, $opdId)
-{
-    return $this->db->table('cascading_sasaran_opd')
-        ->where('renstra_indikator_sasaran_id', $renstraIndikatorId)
-        ->where('opd_id', $opdId)
-        ->orderBy('level', 'ASC')
-        ->get()
-        ->getResultArray();
-}
 
-public function insertSasaran($data)
-{
-    $this->db->table('cascading_sasaran_opd')
-        ->insert($data);
+            ->join('rpjmd_sasaran s', 's.tujuan_id=t.id', 'left')
 
-    return $this->db->insertID();
-}
-public function insertIndikator($data)
-{
-    return $this->db->table('cascading_indikator_opd')
-        ->insert($data);
-}
-public function getIndikatorBySasaran($sasaranId)
-{
-    return $this->db->table('cascading_indikator_opd')
-        ->where('cascading_sasaran_id', $sasaranId)
-        ->get()
-        ->getResultArray();
-}
-public function getRenstraHierarchyByOpd($opdId)
-{
-    return $this->db->table('rpjmd_tujuan t')
-        ->select("
+            ->join('renstra_tujuan rt', 'rt.rpjmd_sasaran_id=s.id', 'left')
+
+            ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id=rt.id', 'left')
+
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id=rs.id', 'left')
+
+            ->join(
+                'cascading_sasaran_opd es3',
+                'es3.renstra_indikator_sasaran_id = ris.id 
+            AND es3.level="es3" 
+            AND es3.opd_id=' . $opdId,
+                'left'
+            )
+
+            ->join(
+                'cascading_indikator_opd i3',
+                'i3.cascading_sasaran_id = es3.id',
+                'left'
+            )
+
+            ->join(
+                'cascading_sasaran_opd es4',
+                'es4.es3_indikator_id = i3.id AND es4.level="es4"',
+                'left'
+            )
+
+            ->join(
+                'cascading_indikator_opd i4',
+                'i4.cascading_sasaran_id = es4.id',
+                'left'
+            )
+
+            ->where('rs.opd_id', $opdId)
+
+            ->orderBy('t.id', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+
+            ->orderBy('es3.id', 'ASC')
+            ->orderBy('i3.id', 'ASC')
+            ->orderBy('es4.id', 'ASC')
+            ->orderBy('i4.id', 'ASC')
+
+            ->get()
+            ->getResultArray();
+    }
+    public function getCascadingTree($renstraIndikatorId, $opdId)
+    {
+        return $this->db->table('cascading_sasaran_opd')
+            ->where('renstra_indikator_sasaran_id', $renstraIndikatorId)
+            ->where('opd_id', $opdId)
+            ->orderBy('level', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function insertSasaran($data)
+    {
+        $this->db->table('cascading_sasaran_opd')
+            ->insert($data);
+
+        return $this->db->insertID();
+    }
+    public function insertIndikator($data)
+    {
+        return $this->db->table('cascading_indikator_opd')
+            ->insert($data);
+    }
+    public function getIndikatorBySasaran($sasaranId)
+    {
+        return $this->db->table('cascading_indikator_opd')
+            ->where('cascading_sasaran_id', $sasaranId)
+            ->get()
+            ->getResultArray();
+    }
+    public function getRenstraHierarchyByOpd($opdId)
+    {
+        return $this->db->table('rpjmd_tujuan t')
+            ->select("
             t.id as rpjmd_tujuan_id,
             t.tujuan_rpjmd,
 
@@ -286,42 +350,43 @@ public function getRenstraHierarchyByOpd($opdId)
             ris.satuan
         ")
 
-        ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
+            ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
 
-        ->join(
-            'renstra_tujuan rt',
-            'rt.rpjmd_sasaran_id = s.id',
-            'left'
-        )
+            ->join(
+                'renstra_tujuan rt',
+                'rt.rpjmd_sasaran_id = s.id',
+                'left'
+            )
 
-        ->join(
-            'renstra_sasaran rs',
-            'rs.renstra_tujuan_id = rt.id',
-            'left'
-        )
+            ->join(
+                'renstra_sasaran rs',
+                'rs.renstra_tujuan_id = rt.id',
+                'left'
+            )
 
-        ->join(
-            'renstra_indikator_sasaran ris',
-            'ris.renstra_sasaran_id = rs.id',
-            'left'
-        )
+            ->join(
+                'renstra_indikator_sasaran ris',
+                'ris.renstra_sasaran_id = rs.id',
+                'left'
+            )
 
-        ->where('rs.opd_id', $opdId)
+            ->where('rs.opd_id', $opdId)
 
-        ->orderBy('t.id', 'ASC')
-        ->orderBy('s.id', 'ASC')
-        ->orderBy('rt.id', 'ASC')
-        ->orderBy('rs.id', 'ASC')
-        ->orderBy('ris.id', 'ASC')
+            ->orderBy('t.id', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
 
-        ->get()
-        ->getResultArray();
-}
+            ->get()
+            ->getResultArray();
+    }
 
-public function getRenstraByOpd($opdId)
-{
-    return $this->db->table('rpjmd_tujuan t')
-        ->select("
+
+    public function getRenstraByOpd($opdId)
+    {
+        return $this->db->table('rpjmd_tujuan t')
+            ->select("
             t.id as tujuan_id,
             t.tujuan_rpjmd,
 
@@ -339,35 +404,37 @@ public function getRenstraByOpd($opdId)
             ris.satuan
         ")
 
-        ->join('rpjmd_sasaran s','s.tujuan_id = t.id','left')
+            ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
 
-        ->join(
-            'renstra_tujuan rt',
-            'rt.rpjmd_sasaran_id = s.id',
-            'left'
-        )
+            ->join(
+                'renstra_tujuan rt',
+                'rt.rpjmd_sasaran_id = s.id',
+                'left'
+            )
 
-        ->join(
-            'renstra_sasaran rs',
-            'rs.renstra_tujuan_id = rt.id',
-            'left'
-        )
+            ->join(
+                'renstra_sasaran rs',
+                'rs.renstra_tujuan_id = rt.id',
+                'left'
+            )
 
-        ->join(
-            'renstra_indikator_sasaran ris',
-            'ris.renstra_sasaran_id = rs.id',
-            'left'
-        )
+            ->join(
+                'renstra_indikator_sasaran ris',
+                'ris.renstra_sasaran_id = rs.id',
+                'left'
+            )
 
-        ->where('rs.opd_id',$opdId)
+            ->where('rs.opd_id', $opdId)
 
-        ->orderBy('t.id','ASC')
-        ->orderBy('s.id','ASC')
-        ->orderBy('rt.id','ASC')
-        ->orderBy('rs.id','ASC')
-        ->orderBy('ris.id','ASC')
+            ->orderBy('t.id', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
 
-        ->get()
-        ->getResultArray();
-}
+            ->get()
+            ->getResultArray();
+    }
+
+
 }

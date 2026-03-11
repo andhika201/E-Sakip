@@ -150,4 +150,8 @@
   .kegiatan-item {
     margin-left: 10px;
   }
+
+  .btn-sm {
+    margin: 2px;
+  }
 </style>

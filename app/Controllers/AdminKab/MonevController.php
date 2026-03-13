@@ -4,16 +4,22 @@ namespace App\Controllers\AdminKab;
 
 use App\Controllers\BaseController;
 use App\Models\Opd\MonevModel;
+use App\Models\OpdModel;
+
 
 class MonevController extends BaseController
 {
     protected $db;
     protected $monev;
+    protected $opdModel;
+
 
     public function __construct()
     {
         $this->db = \Config\Database::connect();
         $this->monev = new MonevModel();
+        $this->opdModel = new OpdModel();
+
     }
 
     /**
@@ -470,4 +476,85 @@ class MonevController extends BaseController
             'opd_id' => $opdFilter,
         ])))->with('success', 'Data capaian berhasil diperbarui.');
     }
+    public function cetak()
+    {
+        helper('format');
+
+        $session = session();
+        $role = $session->get('role');
+        $opdIdSession = (int) $session->get('opd_id');
+
+        $mode = $this->request->getGet('mode') ?? 'opd';
+        $tahunParam = $this->request->getGet('tahun') ?? 'all';
+        $opdIdParam = $this->request->getGet('opd_id');
+
+        $tahun = ($tahunParam === 'all' || $tahunParam === '')
+            ? null
+            : (string) (int) $tahunParam;
+
+        $opd = null;
+
+        if ($role === 'admin_opd') {
+
+            $monevList = $this->monev->getIndexDataAdminOpd($opdIdSession, $tahun);
+            $opd = $this->opdModel->getOpdById($opdIdSession);
+
+        } elseif ($role === 'admin_kab') {
+
+            if ($mode === 'kab') {
+
+                $monevList = $this->monev->getIndexDataAdminKabModeKab($tahun);
+
+                // untuk mode kabupaten
+                $opd = [
+                    'nama_opd' => 'Kabupaten Pringsewu'
+                ];
+
+            } else {
+
+                $filterOpdId = ($opdIdParam === 'all' || !$opdIdParam)
+                    ? null
+                    : (int) $opdIdParam;
+
+                $monevList = $this->monev->getIndexDataAdminKabModeOpd($tahun, $filterOpdId);
+
+                if ($filterOpdId) {
+                    $opd = $this->opdModel->getOpdById($filterOpdId);
+
+                    // jika nama opd = bupati
+                    if (strtolower($opd['nama_opd']) === 'bupati') {
+                        $opd['nama_opd'] = 'Kabupaten Pringsewu';
+                    }
+
+                } else {
+                    $opd = [
+                        'nama_opd' => 'Seluruh OPD'
+                    ];
+                }
+            }
+        }
+
+        $data = [
+            'monevList' => $monevList,
+            'tahun' => $tahun,
+            'opd' => $opd,
+            'logo_url' => FCPATH . 'assets/images/logo.png'
+        ];
+
+        $html = view('adminKabupaten/monev/cetak', $data);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'FOLIO-L',
+            'default_font_size' => 11,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $mpdf->Output('Monev-' . ($tahun ?? 'semua') . '.pdf', 'I');
+        exit;
+    }
 }
+

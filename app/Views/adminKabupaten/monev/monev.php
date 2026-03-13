@@ -88,6 +88,12 @@
 
                 </form>
 
+                <div class="mb-3 text-end">
+                    <a href="<?= base_url('adminkab/monev/cetak?mode=' . $mode . '&opd_id=' . $opdId . '&tahun=' . ($tahun ?? 'all')) ?>"
+                        class="btn btn-success">
+                        <i class="fas fa-print"></i> Cetak
+                    </a>
+                </div>
                 <!-- Tabel -->
                 <div class="table-responsive">
                     <table class="table table-bordered text-center align-middle small">
@@ -178,7 +184,9 @@
                                             <td><?= esc($row['satuan'] ?? '-') ?></td>
 
                                             <!-- Target & baseline -->
-                                            <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                            <td class="text-start">
+                                                <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+                                            </td>
                                             <td><?= esc($row['target_capaian'] ?? '-') ?></td>
 
                                             <!-- Target Triwulan -->

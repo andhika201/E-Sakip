@@ -57,7 +57,7 @@ class CascadingController extends BaseController
                 'periode' => $periode
             ]
         ];
-        dd($data['rowspan']);
+        // dd($data['rowspan']);
 
         return view('adminOpd/cascading/cascading', $data);
     }

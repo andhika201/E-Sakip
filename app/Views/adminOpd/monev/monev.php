@@ -45,6 +45,13 @@
                     </div>
                 </form>
 
+                <div class="mb-3 text-end">
+                    <a href="<?= base_url('adminopd/monev/cetak?tahun=' . ($tahun ?? 'all')) ?>"
+                        class="btn btn-success">
+                        <i class="fas fa-print"></i> Cetak
+                    </a>
+                </div>
+
                 <!-- Tabel -->
                 <div class="table-responsive">
                     <table class="table table-bordered text-center align-middle small">
@@ -109,7 +116,9 @@
                                             <td><?= esc($row['satuan'] ?? '-') ?></td>
 
                                             <!-- Target & baseline -->
-                                            <td class="text-start"><?= esc($row['rencana_aksi'] ?? '-') ?></td>
+                                            <td class="text-start">
+                                                <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+                                            </td>
                                             <td><?= esc($row['target_capaian'] ?? '-') ?></td>
 
                                             <!-- Target Triwulan -->
@@ -147,13 +156,13 @@
                                                     <a href="<?= base_url('adminopd/monev/tambah?target_rencana_id=' . (int) $targetRencanaId) ?>"
                                                         class="btn btn-primary btn-sm" title="Tambah Target">
                                                         <i class="fas fa-plus"></i></a>
-                                                        <?php elseif ($hasMonev): ?>
-                                                            <a href="<?= base_url('adminopd/monev/edit/' . (int) $row['monev_id']) ?>"
-                                                                class="btn btn-warning btn-sm" title="Edit Monev">
-                                                                <i class="fas fa-edit"></i></a>
-                                                        <?php else: ?>
-                                                            <span class="text-muted">-</span>
-                                                        <?php endif; ?>
+                                                <?php elseif ($hasMonev): ?>
+                                                    <a href="<?= base_url('adminopd/monev/edit/' . (int) $row['monev_id']) ?>"
+                                                        class="btn btn-warning btn-sm" title="Edit Monev">
+                                                        <i class="fas fa-edit"></i></a>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

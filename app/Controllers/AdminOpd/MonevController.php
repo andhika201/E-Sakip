@@ -4,16 +4,20 @@ namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
 use App\Models\Opd\MonevModel;
+use App\Models\OpdModel;
 
 class MonevController extends BaseController
 {
     protected $db;
     protected $monev;
+    protected $opdModel;
+
 
     public function __construct()
     {
         $this->db = \Config\Database::connect();
         $this->monev = new MonevModel();
+        $this->opdModel = new OpdModel();
     }
     private function xssRule(): string
     {
@@ -105,10 +109,9 @@ class MonevController extends BaseController
                 'monevList' => $monevList,
             ]);
         }
-
-        // Role lain: tolak
         return redirect()->to(base_url('/'))->with('error', 'Tidak berhak mengakses halaman Monev.');
     }
+
     private function normalizeNumber(?string $val): ?float
     {
         if ($val === null || $val === '') {
@@ -332,6 +335,66 @@ class MonevController extends BaseController
 
         return redirect()->to(base_url('adminopd/monev'))
             ->with('success', 'Data capaian berhasil diperbarui.');
+    }
+
+    public function cetak()
+    {
+        helper('format');
+
+        $session = session();
+        $role = $session->get('role');
+        $opdId = (int) $session->get('opd_id');
+        $opd = $this->opdModel->getOpdById($opdId);
+        $mode = $this->request->getGet('mode') ?? 'opd';
+        $tahunParam = $this->request->getGet('tahun') ?? 'all';
+
+        $tahun = ($tahunParam === 'all' || $tahunParam === '')
+            ? null
+            : (string) (int) $tahunParam;
+
+        if ($role === 'admin_opd') {
+
+            $monevList = $this->monev->getIndexDataAdminOpd($opdId, $tahun);
+        } elseif ($role === 'admin_kab') {
+
+            $opdIdParam = $this->request->getGet('opd_id') ?? null;
+
+            if ($mode === 'kab') {
+
+                $monevList = $this->monev->getIndexDataAdminKabModeKab($tahun);
+
+            } else {
+
+                $filterOpdId = ($opdIdParam === 'all' || !$opdIdParam)
+                    ? null
+                    : (int) $opdIdParam;
+
+                $monevList = $this->monev->getIndexDataAdminKabModeOpd($tahun, $filterOpdId);
+            }
+        }
+
+        // dd($opd);
+        $data = [
+            'monevList' => $monevList,
+            'tahun' => $tahun,
+            'opd' => $opd,
+            'logo_url' => FCPATH . 'assets/images/logo.png'
+        ];
+
+        $html = view('adminOpd/monev/cetak', $data);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'FOLIO-L',
+            'default_font_size' => 11,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $mpdf->Output('Monev-' . ($tahun ?? 'semua') . '.pdf', 'I');
+        exit;
     }
 
 

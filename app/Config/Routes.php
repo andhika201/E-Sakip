@@ -103,6 +103,8 @@ $routes->group(
         $routes->post('monev/save', 'AdminKab\MonevController::save');
         $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
         $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
+        $routes->get('monev/cetak', 'AdminKab\MonevController::cetak');
+
 
         // target
         $routes->get('target', 'AdminKab\TargetController::index');
@@ -195,6 +197,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->post('monev/save', 'AdminOpd\MonevController::save');
     $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
     $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
+    $routes->get('monev/cetak', 'AdminOpd\MonevController::cetak');
+
 
     // Lakip OPD
     $routes->get('lakip', 'AdminOpd\LakipOpdController::index');

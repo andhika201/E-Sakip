@@ -157,7 +157,7 @@
                                                 </td>
                                             <?php endif; ?>
 
-                                            <?php $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? 0); ?>
+                                            <?php $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null); ?>
                                             <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
                                                 <td rowspan="<?= $rowspan['es3_indikator'][$key] ?? 1 ?>">
                                                     <?= esc($r['es3_indikator']) ?>

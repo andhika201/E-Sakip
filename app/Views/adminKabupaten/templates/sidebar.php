@@ -2,8 +2,10 @@
   /* Sidebar yang menggeser konten */
   .sidebar {
     transition: margin-left 0.3s ease;
-    margin-left: -240px; /* Hidden by default */
-    width: 240px; /* Kurangi lebar sidebar sedikit */
+    margin-left: -240px;
+    /* Hidden by default */
+    width: 240px;
+    /* Kurangi lebar sidebar sedikit */
     flex-shrink: 0;
     z-index: 1000;
     position: fixed;
@@ -11,11 +13,12 @@
     left: 0;
     height: 100vh;
   }
-  
+
   .sidebar-show {
-    margin-left: 0; /* Show sidebar */
+    margin-left: 0;
+    /* Show sidebar */
   }
-  
+
   /* Content wrapper adjustment */
   .content-wrapper {
     flex: 1;
@@ -23,24 +26,25 @@
     margin-left: 0;
     min-height: 100vh;
   }
-  
+
   .content-wrapper.sidebar-open {
-    margin-left: 240px; /* Sesuai dengan lebar sidebar */
+    margin-left: 240px;
+    /* Sesuai dengan lebar sidebar */
   }
-  
+
   /* Custom hover effects with secondary green */
   .sidebar-nav-link:hover {
     background-color: rgba(110, 171, 17, 0.1) !important;
     color: #6eab11 !important;
     border-color: transparent !important;
   }
-  
+
   .sidebar-logout-link:hover {
     background-color: #f5c6cb !important;
     color: #721c24 !important;
     border-color: transparent !important;
   }
-  
+
   /* Overlay untuk mobile */
   .sidebar-overlay {
     position: fixed;
@@ -54,27 +58,28 @@
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-  
+
   .sidebar-overlay.show {
     display: block;
     opacity: 1;
   }
-  
+
   /* Desktop behavior */
   @media (min-width: 769px) {
     .sidebar-overlay {
       display: none !important;
     }
   }
-  
+
   /* Responsive behavior untuk mobile */
   @media (max-width: 768px) {
     .sidebar {
       z-index: 1001;
     }
-    
+
     .content-wrapper.sidebar-open {
-      margin-left: 0 !important; /* Di mobile, content tidak bergeser */
+      margin-left: 0 !important;
+      /* Di mobile, content tidak bergeser */
     }
   }
 </style>
@@ -83,7 +88,8 @@
 <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <!-- Sidebar -->
-<div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between" style="box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
+<div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between"
+  style="box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
   <!-- Atas: Logo + Navigasi -->
   <div>
     <div class="p-3 border-bottom">
@@ -91,11 +97,16 @@
     </div>
     <nav class="p-3">
       <div class="d-grid gap-2">
-        <a href="<?= base_url('adminkab/dashboard') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
-        <a href="<?= base_url('adminkab/rpjmd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD Kabupaten</a>
-        <a href="<?= base_url('adminkab/rkpd') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
-        <a href="<?= base_url('adminkab/iku') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
-      
+        <a href="<?= base_url('adminkab/dashboard') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
+        <a href="<?= base_url('adminkab/rpjmd') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD
+          Kabupaten</a>
+        <a href="<?= base_url('adminkab/rkpd') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
+        <a href="<?= base_url('adminkab/iku') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
+
         <div class="dropdown">
           <button
             class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
@@ -103,8 +114,12 @@
             <span>Perjanjian Kerja</span>
           </button>
           <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a href="<?= base_url('adminkab/pk/bupati') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK Bupati</a></li>
-            <li><a href="<?= base_url('adminkab/program_pk') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Program PK</a></li>
+            <li><a href="<?= base_url('adminkab/pk/bupati') ?>"
+                class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK
+                Bupati</a></li>
+            <li><a href="<?= base_url('adminkab/program_pk') ?>"
+                class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Program
+                PK</a></li>
           </ul>
         </div>
 
@@ -120,8 +135,13 @@
             <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP KABUBPATEN</a></li>
           </ul>
         </div>
-                
-        <a href="<?= base_url('adminkab/tentang_kami') ?>" class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang Kami</a>
+
+        <a href="<?= base_url('adminkab/cascading') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Cascading</a>
+
+        <a href="<?= base_url('adminkab/tentang_kami') ?>"
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang
+          Kami</a>
 
       </div>
     </nav>
@@ -129,7 +149,8 @@
 
   <!-- Bawah: Tombol Keluar -->
   <div class="p-3 border-top">
-    <a href="<?= base_url('logout') ?>" class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
+    <a href="<?= base_url('logout') ?>"
+      class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
       <i class="fas fa-sign-out-alt me-2"></i>
       <span>Keluar</span>
     </a>

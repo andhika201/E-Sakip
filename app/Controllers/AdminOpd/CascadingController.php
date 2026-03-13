@@ -47,7 +47,6 @@ class CascadingController extends BaseController
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
         }
-
         $data = [
             'rows' => $rows,
             'rowspan' => $rowspan ?? [],
@@ -58,7 +57,7 @@ class CascadingController extends BaseController
                 'periode' => $periode
             ]
         ];
-        // dd($rows);
+        dd($data['rowspan']);
 
         return view('adminOpd/cascading/cascading', $data);
     }
@@ -576,7 +575,7 @@ class CascadingController extends BaseController
                     ($meta['es3'][$r['es3_id']] ?? 0) + 1;
             }
 
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? 0);
+            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
 
             $meta['es3_indikator'][$key] =
                 ($meta['es3_indikator'][$key] ?? 0) + 1;
@@ -630,7 +629,7 @@ class CascadingController extends BaseController
                 $shown['es3'][$r['es3_id']] = $index;
             }
 
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? 0);
+            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
 
             if (!isset($shown['es3_indikator'][$key])) {
                 $shown['es3_indikator'][$key] = $index;

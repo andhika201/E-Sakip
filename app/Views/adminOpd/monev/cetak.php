@@ -13,13 +13,21 @@
         table {
             border-collapse: collapse;
             width: 100%;
+            page-break-inside: auto;
+
+        }
+
+        thead {
+            display: table-header-group;
         }
 
         th,
         td {
             border: 1px solid #000;
             padding: 5px;
+            vertical-align: top;
         }
+
 
         th {
             background: #eee;
@@ -31,6 +39,28 @@
             top: 10px;
             left: 10px;
             width: 70px;
+        }
+
+        .signature-space {
+            height: 120px;
+        }
+
+        .signature-name {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .keep-with-signature {
+            page-break-inside: avoid;
+        }
+
+        .signature-block {
+            page-break-before: avoid;
+            margin-top: 40px;
+        }
+
+        tr {
+            page-break-inside: avoid;
         }
     </style>
 
@@ -92,10 +122,14 @@
 
         <tbody>
 
-            <?php $no = 1;
-            foreach ($monevList as $row): ?>
+            <?php
+            $total = count($monevList);
+            $no = 1;
 
-                <tr>
+            foreach ($monevList as $i => $row):
+                $class = ($i >= $total - 2) ? 'keep-with-signature' : '';
+                ?>
+                <tr class="<?= $class ?>">
 
                     <td><?= $no++ ?></td>
                     <td><?= esc($row['sasaran_renstra']) ?></td>
@@ -103,8 +137,9 @@
                     <td><?= esc($row['indikator_tahun']) ?></td>
                     <td><?= esc($row['satuan']) ?></td>
 
-                    <td><?= esc($row['rencana_aksi']) ?></td>
-
+                    <td class="text-start">
+                        <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
+                    </td>
                     <td><?= esc($row['target_capaian']) ?></td>
 
                     <td><?= esc($row['target_triwulan_1']) ?></td>
@@ -128,6 +163,41 @@
         </tbody>
 
     </table>
+
+    <!-- SIGNATURE -->
+    <!-- <div style="height:80px;"></div>
+
+    <div class="signature-block">
+
+        <table style="width:100%; border:none;">
+
+            <tr>
+                <td style="width:50%; border:none;"></td>
+
+                <td style="width:50%; border:none; text-align:center;">
+
+                    Pringsewu, <?= date('Y') ?>
+
+                    <div>
+                        Kepala <?= esc($opd['nama_opd'] ?? '-') ?>
+                    </div>
+
+                    <div style="height:120px;"></div>
+
+                    <strong>(........................................)</strong>
+
+                    <div>
+                        NIP. ....................................
+                    </div>
+
+                </td>
+
+            </tr>
+
+        </table>
+
+    </div> -->
+
 
 </body>
 

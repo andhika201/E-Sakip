@@ -32,6 +32,19 @@
             left: 10px;
             width: 70px;
         }
+
+        .signature-space {
+            height: 120px;
+        }
+
+        .signature-name {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .signature-table {
+            page-break-inside: avoid;
+        }
     </style>
 
 </head>
@@ -128,6 +141,31 @@
         </tbody>
 
     </table>
+
+    <!-- <table class="signature-table" style="width:100%; border:none; margin-top:40px;">
+        <tr>
+            <td style="width:50%; border:none;"></td>
+
+            <td style="width:50%; border:none; text-align:center;">
+                Pringsewu, <?= date('Y') ?>
+                <div>Kepala <?= esc($opd['nama_opd'] ?? '-') ?></div>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="border:none;"></td>
+            <td style="border:none; height:120px;"></td>
+        </tr>
+
+        <tr>
+            <td style="border:none;"></td>
+
+            <td style="border:none; text-align:center;">
+                <strong>(........................................)</strong>
+                <div>NIP. ....................................</div>
+            </td>
+        </tr>
+    </table> -->
 
 </body>
 

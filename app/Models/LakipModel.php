@@ -60,7 +60,7 @@ class LakipModel extends Model
 
                 ris.id                   AS indikator_id,
                 ris.indikator_sasaran    AS indikator_sasaran,
-                ris.satuan               AS satuan,
+                s.satuan                 AS satuan,
                 ris.jenis_indikator      AS jenis_indikator,
 
                 rs.id                    AS sasaran_id,
@@ -71,6 +71,7 @@ class LakipModel extends Model
             ")
             ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->join('opd o', 'o.id = rs.opd_id', 'left')
             ->where('rt.tahun', $tahun);
 

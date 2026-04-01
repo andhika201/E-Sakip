@@ -89,7 +89,7 @@ class TargetModel extends Model
             ->select("
                 ris.id                 AS indikator_id,
                 ris.indikator_sasaran,
-                ris.satuan,
+                s.satuan AS satuan,
 
                 rt.id                  AS renstra_target_id,
                 rt.target              AS indikator_target,
@@ -110,6 +110,7 @@ class TargetModel extends Model
             ")
             ->join('renstra_target rt', 'rt.renstra_indikator_id = ris.id', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left') 
             ->join('target_rencana tr', $trJoin, 'left');
 
         if (!empty($tahun)) {
@@ -137,31 +138,32 @@ class TargetModel extends Model
 
         $b = $this->db->table('renstra_target rt')
             ->select("
-            rt.id      AS renstra_target_id,
-            rt.tahun   AS indikator_tahun,
-            rt.target  AS indikator_target,
+        rt.id      AS renstra_target_id,
+        rt.tahun   AS indikator_tahun,
+        rt.target  AS indikator_target,
 
-            ris.id     AS indikator_id,
-            ris.indikator_sasaran,
-            ris.satuan,
+        ris.id     AS indikator_id,
+        ris.indikator_sasaran,
+        s.satuan AS satuan,
 
-            rs.id      AS renstra_sasaran_id,
-            rs.sasaran AS sasaran_renstra,
-            rs.opd_id  AS opd_id,
-            o.nama_opd AS nama_opd,   
+        rs.id      AS renstra_sasaran_id,
+        rs.sasaran AS sasaran_renstra,
+        rs.opd_id  AS opd_id,
+        o.nama_opd AS nama_opd,   
 
-            tr.id      AS target_id,
-            tr.rencana_aksi,
-            tr.capaian,
-            tr.target_triwulan_1,
-            tr.target_triwulan_2,
-            tr.target_triwulan_3,
-            tr.target_triwulan_4,
-            tr.penanggung_jawab
-        ")
+        tr.id      AS target_id,
+        tr.rencana_aksi,
+        tr.capaian,
+        tr.target_triwulan_1,
+        tr.target_triwulan_2,
+        tr.target_triwulan_3,
+        tr.target_triwulan_4,
+        tr.penanggung_jawab
+    ")
             ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
-            ->join('opd o', 'o.id = rs.opd_id', 'left')   
+            ->join('opd o', 'o.id = rs.opd_id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left') 
             ->join('target_rencana tr', $trJoin, 'left');
 
         if (!empty($tahun)) {

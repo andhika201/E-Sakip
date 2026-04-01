@@ -113,7 +113,7 @@ class MonevModel extends Model
             ->select('
                 ris.id AS indikator_id,
                 ris.indikator_sasaran,
-                ris.satuan
+                s.satuan AS satuan,
             ')
             ->select('
                 rs.id      AS renstra_sasaran_id,
@@ -132,6 +132,7 @@ class MonevModel extends Model
             ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
             ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('satuan AS s', 's.id = ris.satuan', 'left')
             ->join('opd AS o', 'o.id = tr.opd_id', 'left')
             ->select('o.nama_opd')
             ->join(
@@ -186,7 +187,7 @@ class MonevModel extends Model
             ->select('
                 rpis.id AS indikator_id,
                 rpis.indikator_sasaran,
-                rpis.satuan
+                s.satuan AS satuan,
             ')
             // sasaran RPJMD
             ->select('
@@ -205,6 +206,7 @@ class MonevModel extends Model
             ->join('rpjmd_target AS rpt', 'rpt.id = tr.rpjmd_target_id', 'left')
             ->join('rpjmd_indikator_sasaran AS rpis', 'rpis.id = rpt.indikator_sasaran_id', 'left')
             ->join('rpjmd_sasaran AS rps', 'rps.id = rpis.sasaran_id', 'left')
+            ->join('satuan AS s', 's.id = rpis.satuan', 'left')
             ->join('opd AS o', 'o.id = tr.opd_id', 'left')
             ->select('o.nama_opd')
             // >>> di mode KAB, monev.opd_id = NULL <<<
@@ -253,7 +255,7 @@ class MonevModel extends Model
             ->select('
                 ris.id AS indikator_id,
                 ris.indikator_sasaran,
-                ris.satuan
+                s.satuan AS satuan,
             ')
             ->select('
                 rs.id      AS renstra_sasaran_id,
@@ -272,6 +274,7 @@ class MonevModel extends Model
             ->join('renstra_target AS rt', 'rt.id = tr.renstra_target_id', 'left')
             ->join('renstra_indikator_sasaran AS ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran AS rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('satuan AS s', 's.id = ris.satuan', 'left')
             ->join('opd AS o', 'o.id = tr.opd_id', 'left')
             ->select('o.nama_opd')
             ->join(

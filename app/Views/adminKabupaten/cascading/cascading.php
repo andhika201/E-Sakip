@@ -21,7 +21,7 @@
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">Cascading</h2>
+                <h2 class="h3 fw-bold text-success text-center mb-4">Cascading & Pohon Kinerja</h2>
 
                 <!-- Flash Message -->
                 <?php if (session()->getFlashdata('error')): ?>
@@ -113,6 +113,7 @@
                             <thead class="table-success text-center">
                                 <tr>
                                     <th rowspan="2">Tujuan</th>
+                                    <th rowspan="2">CSF</th>
                                     <th rowspan="2">Sasaran</th>
                                     <th rowspan="2">Indikator</th>
                                     <th rowspan="2">Satuan</th>
@@ -144,6 +145,21 @@
                                         <?php if ($firstShow['tujuan'][$r['tujuan_id']] == $index): ?>
                                             <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?? 1 ?>">
                                                 <?= esc($r['tujuan_rpjmd']) ?>
+                                            </td>
+                                        <?php endif; ?>
+
+                                        <!-- CSF -->
+                                        <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
+                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" style="min-width:180px;">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <textarea class="form-control form-control-sm csf-input"
+                                                        data-sasaran-id="<?= $r['sasaran_id'] ?>"
+                                                        rows="2"
+                                                        placeholder="Isi CSF..."><?= esc($r['csf'] ?? '') ?></textarea>
+                                                    <button type="button" class="btn btn-sm btn-primary btn-save-csf" data-sasaran-id="<?= $r['sasaran_id'] ?>">
+                                                        <i class="fas fa-save"></i> Simpan
+                                                    </button>
+                                                </div>
                                             </td>
                                         <?php endif; ?>
 
@@ -225,19 +241,75 @@
 
             </div>
 
-            <a href="<?= base_url(
-                'adminkab/cascading/cetak?periode=' . $filters['periode']
-            ) ?>" class="btn btn-danger">
+            <div class="d-flex gap-2 mt-3">
+                <a href="<?= base_url(
+                    'adminkab/cascading/cetak?periode=' . $filters['periode']
+                ) ?>" class="btn btn-danger">
+                    <i class="fas fa-file-pdf"></i> Cetak PDF
+                </a>
 
-                <i class="fas fa-file-pdf"></i> Cetak PDF
-
-            </a>
+                <a href="<?= base_url(
+                    'adminkab/cascading/cetak-pohon?periode=' . $filters['periode']
+                ) ?>" class="btn btn-success">
+                    <i class="fas fa-sitemap"></i> Cetak Pohon Kinerja
+                </a>
+            </div>
         </main>
 
         <?= $this->include('adminKabupaten/templates/footer.php'); ?>
     </div>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-save-csf').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const sasaranId = this.getAttribute('data-sasaran-id');
+                const textarea = document.querySelector('.csf-input[data-sasaran-id="' + sasaranId + '"]');
+                const csf = textarea.value;
+                const button = this;
 
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+                const formData = new FormData();
+                formData.append('sasaran_id', sasaranId);
+                formData.append('csf', csf);
+
+                <?php if (function_exists('csrf_token')): ?>
+                formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+                <?php endif; ?>
+
+                fetch('<?= base_url('adminkab/cascading/save-csf') ?>', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        button.innerHTML = '<i class="fas fa-check"></i> Tersimpan';
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-success');
+                        setTimeout(() => {
+                            button.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                            button.classList.remove('btn-success');
+                            button.classList.add('btn-primary');
+                            button.disabled = false;
+                        }, 2000);
+                    } else {
+                        alert('Gagal menyimpan CSF: ' + (data.message || ''));
+                        button.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                        button.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    alert('Terjadi kesalahan saat menyimpan CSF');
+                    button.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                    button.disabled = false;
+                });
+            });
+        });
+    });
+    </script>
 
 </body>
 

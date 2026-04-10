@@ -334,6 +334,72 @@ class CascadingController extends BaseController
         exit;
     }
 
+    public function saveCsf()
+    {
+        $sasaranId = $this->request->getPost('sasaran_id');
+        $csf = $this->request->getPost('csf');
 
+        if (!$sasaranId) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Sasaran ID tidak ditemukan'
+            ]);
+        }
+
+        $this->db->table('rpjmd_sasaran')
+            ->where('id', $sasaranId)
+            ->update(['csf' => $csf]);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'message' => 'CSF berhasil disimpan'
+        ]);
+    }
+
+    public function cetakPohon()
+    {
+        ob_clean();
+        ob_start();
+
+        $periode = $this->request->getGet('periode');
+
+        if (!$periode) {
+            return redirect()->back()
+                ->with('error', 'Periode wajib dipilih');
+        }
+
+        [$start, $end] = explode('-', $periode);
+        $start = (int) $start;
+        $end = (int) $end;
+
+        $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+
+        $html = view(
+            'adminKabupaten/cascading/pohon_kinerja_cetak',
+            [
+                'tree' => $tree,
+                'tahun_mulai' => $start,
+                'tahun_akhir' => $end
+            ]
+        );
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'tempDir' => sys_get_temp_dir(),
+            'margin_top' => 15,
+            'margin_bottom' => 15,
+            'margin_left' => 15,
+            'margin_right' => 15
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Pohon-Kinerja-' . $periode . '.pdf"');
+
+        $mpdf->Output();
+        exit;
+    }
 
 }

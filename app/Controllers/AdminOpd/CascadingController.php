@@ -42,7 +42,7 @@ class CascadingController extends BaseController
             $years = range($start, $end);
 
             $rows = $this->cascadingModel
-                ->getCascadingMatrixByOpd($this->opdId);
+                ->getCascadingMatrixByOpd($this->opdId, $start, $end);
 
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
@@ -641,6 +641,25 @@ class CascadingController extends BaseController
         }
 
         return $shown;
+    }
+
+    public function saveCsf()
+    {
+        $id = $this->request->getPost('id');
+        $csfVal = $this->request->getPost('csf');
+        $level = $this->request->getPost('level'); // es2 or es3
+
+        if ($level === 'es2') {
+            $this->db->table('renstra_sasaran')
+                ->where('id', $id)
+                ->update(['csf' => $csfVal]);
+        } elseif ($level === 'es3') {
+            $this->db->table('cascading_sasaran_opd')
+                ->where('id', $id)
+                ->update(['csf' => $csfVal]);
+        }
+
+        return $this->response->setJSON(['status' => 'success']);
     }
 
 }

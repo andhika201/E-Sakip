@@ -78,6 +78,8 @@ $routes->group(
         $routes->get('cascading/get-pk-program-by-opd', 'AdminKab\CascadingController::getPkProgramByOpd');
         $routes->post('cascading/save', 'AdminKab\CascadingController::save');
         $routes->get('cascading/cetak', 'AdminKab\CascadingController::cetak');
+        $routes->post('cascading/save-csf', 'AdminKab\CascadingController::saveCsf');
+        $routes->get('cascading/cetak-pohon', 'AdminKab\CascadingController::cetakPohon');
 
         // RKPD
         $routes->get('rkpd', 'RkpdController::index');
@@ -219,8 +221,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     // $routes->get('cascading', 'AdminOpd\CascadingController::index');
     // $routes->get('cascading/tambah/(:num)', 'AdminOpd\CascadingController::tambah/$1');
     // $routes->get('cascading/get-pk-program-by-opd', 'AdminOpd\CascadingController::getPkProgramByOpd');
-    // $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
-    // $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
+    $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
+    $routes->post('cascading/savecsf', 'AdminOpd\CascadingController::saveCsf');
+    $routes->post('cascading/save-es3', 'AdminOpd\CascadingController::saveEs3');
 
 
     // Cascading

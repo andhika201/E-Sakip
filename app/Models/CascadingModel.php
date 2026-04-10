@@ -36,6 +36,7 @@ class CascadingModel extends Model
 
                 s.id as sasaran_id,
                 s.sasaran_rpjmd,
+                s.csf,
 
                 i.id as indikator_id,
                 i.indikator_sasaran,
@@ -216,10 +217,9 @@ class CascadingModel extends Model
     }
 
     // adminopd
-    public function getCascadingMatrixByOpd($opdId)
+    public function getCascadingMatrixByOpd($opdId, $startYear = null, $endYear = null)
     {
-        return $this->db->table('rpjmd_tujuan t')
-
+        $builder = $this->db->table('renstra_sasaran rs')
             ->select("
             t.id as tujuan_id,
             t.tujuan_rpjmd,
@@ -230,6 +230,7 @@ class CascadingModel extends Model
             rt.id as renstra_tujuan_id,
             rt.tujuan as renstra_tujuan,
 
+            rs.csf as csf_es2,
             rs.id as renstra_sasaran_id,
             rs.sasaran as renstra_sasaran,
 
@@ -237,6 +238,7 @@ class CascadingModel extends Model
             ris.indikator_sasaran,
             ris.satuan,
 
+            es3.csf as csf_es3,
             es3.id as es3_id,
             es3.nama_sasaran as es3_sasaran,
 
@@ -249,54 +251,49 @@ class CascadingModel extends Model
             i4.id as es4_indikator_id,
             i4.indikator as es4_indikator
         ")
-
-            ->join('rpjmd_sasaran s', 's.tujuan_id=t.id', 'left')
-
-            ->join('renstra_tujuan rt', 'rt.rpjmd_sasaran_id=s.id', 'left')
-
-            ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id=rt.id', 'left')
-
+            ->join('renstra_tujuan rt', 'rt.id=rs.renstra_tujuan_id', 'left')
+            ->join('rpjmd_sasaran s', 's.id=rt.rpjmd_sasaran_id', 'left')
+            ->join('rpjmd_tujuan t', 't.id=s.tujuan_id', 'left')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id=rs.id', 'left')
-
             ->join(
                 'cascading_sasaran_opd es3',
                 'es3.renstra_indikator_sasaran_id = ris.id 
             AND es3.level="es3" 
-            AND es3.opd_id=' . $opdId,
+            AND es3.opd_id=' . $this->db->escape($opdId),
                 'left'
             )
-
             ->join(
                 'cascading_indikator_opd i3',
                 'i3.cascading_sasaran_id = es3.id',
                 'left'
             )
-
             ->join(
                 'cascading_sasaran_opd es4',
                 'es4.es3_indikator_id = i3.id AND es4.level="es4"',
                 'left'
             )
-
             ->join(
                 'cascading_indikator_opd i4',
                 'i4.cascading_sasaran_id = es4.id',
                 'left'
             )
+            ->where('rs.opd_id', $opdId);
 
-            ->where('rs.opd_id', $opdId)
+        if ($startYear && $endYear) {
+            $builder->where('rs.tahun_mulai', $startYear);
+            $builder->where('rs.tahun_akhir', $endYear);
+        }
 
+        return $builder
             ->orderBy('t.id', 'ASC')
             ->orderBy('s.id', 'ASC')
             ->orderBy('rt.id', 'ASC')
             ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
-
             ->orderBy('es3.id', 'ASC')
             ->orderBy('i3.id', 'ASC')
             ->orderBy('es4.id', 'ASC')
             ->orderBy('i4.id', 'ASC')
-
             ->get()
             ->getResultArray();
     }
@@ -436,5 +433,88 @@ class CascadingModel extends Model
             ->getResultArray();
     }
 
+
+    /**
+     * Get hierarchical tree data for Pohon Kinerja PDF
+     * Misi → Tujuan → Indikator Tujuan + CSF → Sasaran → Indikator Sasaran
+     */
+    public function getPohonKinerja($tahunMulai, $tahunAkhir)
+    {
+        // 1. Get all Misi for the period
+        $misiList = $this->db->table('rpjmd_misi')
+            ->where('tahun_mulai', $tahunMulai)
+            ->where('tahun_akhir', $tahunAkhir)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $tree = [];
+
+        foreach ($misiList as $misi) {
+            $misiNode = [
+                'id' => $misi['id'],
+                'misi' => $misi['misi'],
+                'tujuan' => []
+            ];
+
+            // 2. Get Tujuan under this Misi
+            $tujuanList = $this->db->table('rpjmd_tujuan')
+                ->where('misi_id', $misi['id'])
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($tujuanList as $tujuan) {
+                $tujuanNode = [
+                    'id' => $tujuan['id'],
+                    'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
+                    'indikator_tujuan' => [],
+                    'sasaran' => []
+                ];
+
+                // 3. Get Indikator Tujuan
+                $indikatorTujuan = $this->db->table('rpjmd_indikator_tujuan')
+                    ->where('tujuan_id', $tujuan['id'])
+                    ->orderBy('id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                $tujuanNode['indikator_tujuan'] = $indikatorTujuan;
+
+                // 4. Get Sasaran (with CSF)
+                $sasaranList = $this->db->table('rpjmd_sasaran')
+                    ->where('tujuan_id', $tujuan['id'])
+                    ->orderBy('id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($sasaranList as $sasaran) {
+                    $sasaranNode = [
+                        'id' => $sasaran['id'],
+                        'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
+                        'csf' => $sasaran['csf'] ?? '',
+                        'indikator_sasaran' => []
+                    ];
+
+                    // 5. Get Indikator Sasaran
+                    $indikatorSasaran = $this->db->table('rpjmd_indikator_sasaran')
+                        ->where('sasaran_id', $sasaran['id'])
+                        ->orderBy('id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    $sasaranNode['indikator_sasaran'] = $indikatorSasaran;
+
+                    $tujuanNode['sasaran'][] = $sasaranNode;
+                }
+
+                $misiNode['tujuan'][] = $tujuanNode;
+            }
+
+            $tree[] = $misiNode;
+        }
+
+        return $tree;
+    }
 
 }

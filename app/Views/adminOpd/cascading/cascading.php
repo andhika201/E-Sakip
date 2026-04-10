@@ -96,9 +96,11 @@
                                     <th>Sasaran RPJMD</th>
                                     <th>Tujuan RENSTRA</th>
 
+                                    <th>CSF ESS II</th>
                                     <th>Sasaran ESS II</th>
                                     <th>Indikator ESS II</th>
 
+                                    <th>CSF ESS III</th>
                                     <th>Sasaran ESS III</th>
                                     <th>Indikator ESS III</th>
 
@@ -131,6 +133,13 @@
                                         <?php endif; ?>
 
                                         <?php if ($firstShow['sasaran_renstra'][$r['renstra_sasaran_id']] == $index): ?>
+                                            <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>" class="p-1">
+                                                <textarea class="form-control csf-input text-center" 
+                                                    style="font-size: 12px; min-width: 120px; resize: none;" 
+                                                    rows="3" 
+                                                    data-id="<?= $r['renstra_sasaran_id'] ?>" 
+                                                    data-level="es2"><?= esc($r['csf_es2'] ?? '') ?></textarea>
+                                            </td>
                                             <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>">
                                                 <?= esc($r['renstra_sasaran']) ?>
                                             </td>
@@ -143,7 +152,7 @@
                                         <?php endif; ?>
                                         <?php if (empty($r['es3_id'])): ?>
                                             <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
-                                                <td colspan="2" class="text-center">
+                                                <td colspan="3" class="text-center">
                                                     <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
                                                         class="btn btn-success btn-sm">
                                                         <i class="fas fa-plus"></i>
@@ -152,6 +161,13 @@
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
+                                                <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="p-1">
+                                                    <textarea class="form-control csf-input text-center" 
+                                                        style="font-size: 12px; min-width: 120px; resize: none;" 
+                                                        rows="3" 
+                                                        data-id="<?= $r['es3_id'] ?>" 
+                                                        data-level="es3"><?= esc($r['csf_es3'] ?? '') ?></textarea>
+                                                </td>
                                                 <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>">
                                                     <?= esc($r['es3_sasaran']) ?>
                                                 </td>
@@ -225,6 +241,56 @@
         <?= $this->include('adminOpd/templates/footer.php'); ?>
     </div>
 
+    <!-- AJAX Script for CSF Input -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const csfInputs = document.querySelectorAll('.csf-input');
+            let timeout = null;
+
+            csfInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const id = this.getAttribute('data-id');
+                    const level = this.getAttribute('data-level');
+                    const value = this.value;
+
+                    // Add visual feedback
+                    this.style.backgroundColor = '#fff3cd';
+
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        const formData = new FormData();
+                        formData.append('id', id);
+                        formData.append('csf', value);
+                        formData.append('level', level);
+
+                        // If CSRF is enabled, add it
+                        const csrfToken = document.querySelector('meta[name="csrf-hash"]');
+                        if (csrfToken) {
+                            formData.append('csrf_test_name', csrfToken.content);
+                        }
+
+                        fetch('<?= base_url('adminopd/cascading/savecsf') ?>', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                this.style.backgroundColor = '#d1e7dd';
+                                setTimeout(() => {
+                                    this.style.backgroundColor = '';
+                                }, 1000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error saving CSF:', error);
+                            this.style.backgroundColor = '#f8d7da';
+                        });
+                    }, 500); // 500ms debounce
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

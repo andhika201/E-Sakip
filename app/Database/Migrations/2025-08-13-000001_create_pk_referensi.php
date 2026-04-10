@@ -29,6 +29,12 @@ class CreatePkReferensi extends Migration
                 'constraint' => 11,
                 'unsigned' => true,
             ],
+            'created_at' => [
+                'type' => 'TIMESTAMP',
+            ],
+            'updated_at' => [
+                'type' => 'TIMESTAMP',
+            ],
         ]);
         $this->forge->addKey('id', true);
         $this->forge->addForeignKey('pk_id', 'pk', 'id', 'CASCADE', 'CASCADE');

@@ -14,9 +14,11 @@ class LakipModel extends Model
     protected $allowedFields = [
         'renstra_target_id',
         'rpjmd_target_id',
+        'target_hitung',
         'target_lalu',
         'capaian_lalu',
         'capaian_tahun_ini',
+        'capaian_hitung',
         'status',
         'created_at',
         'updated_at',

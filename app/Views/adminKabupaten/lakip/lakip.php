@@ -219,7 +219,12 @@
                                 $targetNow = $r['target_tahun_ini'] ?? null;
 
                                 $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
-                                $capaianPersen = hitungCapaianLakip($targetNow, $realisasiNow, $jenis);
+                                
+                                // Prioritaskan kolom perhitungan apabila user mengisinya
+                                $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetNow;
+                                $realisasiCalc = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realisasiNow;
+
+                                $capaianPersen = hitungCapaianLakip($targetCalc, $realisasiCalc, $jenis);
 
                                 $statusText = $lakipItem['status'] ?? null;
                                 $badge = 'badge bg-secondary';
@@ -277,11 +282,11 @@
                                     <td><?= esc($r['satuan'] ?? '-') ?></td>
                                     <td><?= esc(ucwords(str_replace('indikator ', '', strtolower((string) $jenis)))) ?></td>
                                     <td><?= esc($r['tahun'] ?? '-') ?></td>
-                                    <td><?= formatAngkaID(toFloatComma($targetNow), 2) ?></td>
+                                    <td><?= formatAtauRaw($targetNow, 2) ?></td>
 
                                     <td><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
                                     <td><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
-                                    <td><?= formatAngkaID(toFloatComma($lakipItem['capaian_tahun_ini'] ?? null), 2) ?></td>
+                                    <td><?= formatAtauRaw($lakipItem['capaian_tahun_ini'] ?? null, 2) ?></td>
 
                                     <td>
                                         <?= ($capaianPersen === null)

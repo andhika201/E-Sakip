@@ -149,6 +149,8 @@ class LakipController extends BaseController
             'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_hitung' => 'permit_empty|numeric',
+            'capaian_hitung' => 'permit_empty|numeric',
             'status' => 'permit_empty|string|max_length[50]|' . $rx,
 
             // id target sesuai mode (dibuat required dua-duanya, nanti dicek logika mode)
@@ -163,6 +165,8 @@ class LakipController extends BaseController
             'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
             'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
             'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+            'target_hitung' => ['numeric' => 'Nilai target hitung harus berupa angka desimal/bulat.'],
+            'capaian_hitung' => ['numeric' => 'Nilai capaian hitung harus berupa angka desimal/bulat.'],
             'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
         ];
 
@@ -179,6 +183,8 @@ class LakipController extends BaseController
             'target_lalu' => $this->request->getPost('target_lalu') ?: null,
             'capaian_lalu' => $this->request->getPost('capaian_lalu') ?: null,
             'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
+            'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
+            'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
             'status' => 'proses',
         ];
 
@@ -301,12 +307,16 @@ class LakipController extends BaseController
             'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_hitung' => 'permit_empty|numeric',
+            'capaian_hitung' => 'permit_empty|numeric',
             'status' => 'permit_empty|string|max_length[50]|' . $rx,
         ];
         $messages = [
             'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
             'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
             'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+            'target_hitung' => ['numeric' => 'Nilai target hitung harus berupa angka.'],
+            'capaian_hitung' => ['numeric' => 'Nilai capaian hitung harus berupa angka.'],
             'status' => ['regex_match' => 'Status mengandung script / input berbahaya.'],
             'mode' => ['regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.'],
             'tahun' => ['regex_match' => 'Tahun terdeteksi mengandung script / input berbahaya.'],
@@ -330,6 +340,8 @@ class LakipController extends BaseController
             'target_lalu' => $this->request->getPost('target_lalu') ?: null,
             'capaian_lalu' => $this->request->getPost('capaian_lalu') ?: null,
             'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
+            'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
+            'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
             'status' => $this->request->getPost('status') ?: 'proses',
         ];
 

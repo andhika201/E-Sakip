@@ -25,3 +25,15 @@ if (!function_exists('formatAngkaID')) {
         return number_format((float) $val, $digit, ',', '.');
     }
 }
+
+if (!function_exists('formatAtauRaw')) {
+    function formatAtauRaw($val, int $digit = 2): string
+    {
+        if ($val === null || (is_string($val) && trim($val) === '')) return '-';
+        $num = toFloatComma($val);
+        if ($num !== null) {
+            return number_format($num, $digit, ',', '.');
+        }
+        return (string) $val;
+    }
+}

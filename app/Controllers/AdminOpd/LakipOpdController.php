@@ -264,6 +264,8 @@ class LakipOpdController extends BaseController
             'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_hitung' => 'permit_empty|numeric',
+            'capaian_hitung' => 'permit_empty|numeric',
         ];
 
         // target id wajib tergantung role
@@ -278,6 +280,8 @@ class LakipOpdController extends BaseController
             'target_lalu' => ['regex_match' => 'Target lalu mengandung script / input berbahaya.'],
             'capaian_lalu' => ['regex_match' => 'Capaian lalu mengandung script / input berbahaya.'],
             'capaian_tahun_ini' => ['regex_match' => 'Capaian tahun ini mengandung script / input berbahaya.'],
+            'target_hitung' => ['numeric' => 'Target hitung harus berupa angka.'],
+            'capaian_hitung' => ['numeric' => 'Capaian hitung harus berupa angka.'],
         ];
 
         if (!$this->validate($rules, $messages)) {
@@ -301,6 +305,8 @@ class LakipOpdController extends BaseController
                 'target_lalu' => $targetPrev ?: null,
                 'capaian_lalu' => $capaianPrev ?: null,
                 'capaian_tahun_ini' => $capaianNow ?: null,
+                'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
+                'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
                 'status' => $status,
             ];
         } else {
@@ -315,6 +321,8 @@ class LakipOpdController extends BaseController
                 'target_lalu' => $targetPrev ?: null,
                 'capaian_lalu' => $capaianPrev ?: null,
                 'capaian_tahun_ini' => $capaianNow ?: null,
+                'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
+                'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
                 'status' => $status,
             ];
         }
@@ -402,6 +410,8 @@ class LakipOpdController extends BaseController
             'target_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_lalu' => 'permit_empty|string|max_length[255]|' . $rx,
             'capaian_tahun_ini' => 'permit_empty|string|max_length[255]|' . $rx,
+            'target_hitung' => 'permit_empty|numeric',
+            'capaian_hitung' => 'permit_empty|numeric',
         ];
 
         $messages = [
@@ -428,6 +438,8 @@ class LakipOpdController extends BaseController
                 'target_lalu' => $data['target_lalu'] ?? null,
                 'capaian_lalu' => $data['capaian_lalu'] ?? null,
                 'capaian_tahun_ini' => $data['capaian_tahun_ini'] ?? null,
+                'target_hitung' => ($data['target_hitung'] ?? '') !== '' ? $data['target_hitung'] : null,
+                'capaian_hitung' => ($data['capaian_hitung'] ?? '') !== '' ? $data['capaian_hitung'] : null,
             ];
 
             if (!empty($data['status'])) {

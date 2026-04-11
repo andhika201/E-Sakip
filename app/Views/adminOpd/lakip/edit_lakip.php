@@ -90,6 +90,25 @@
           </div>
         </div>
 
+        <!-- Input Perhitungan -->
+        <hr>
+        <h6 class="fw-bold px-1 text-secondary"><i class="fas fa-calculator me-1"></i> Mode Perhitungan Manual</h6>
+        <div class="row g-3 mb-4 mt-1">
+          <div class="col-md-6">
+            <label for="target_hitung" class="form-label fw-bold">Nilai Perhitungan Target <small class="text-danger">(Opsional)</small></label>
+            <input type="number" step="any" name="target_hitung" id="target_hitung" class="form-control border-success"
+              placeholder="Angka numerik target (misal: 100)" value="<?= old('target_hitung', $lakip['target_hitung'] ?? '') ?>">
+            <small class="text-muted">Gunakan jika Target Tahun Ini bernilai huruf (misal "WTP") atau rentang/range agar hitungan persen berhasil.</small>
+          </div>
+
+          <div class="col-md-6">
+            <label for="capaian_hitung" class="form-label fw-bold">Nilai Perhitungan Capaian <small class="text-danger">(Opsional)</small></label>
+            <input type="number" step="any" name="capaian_hitung" id="capaian_hitung" class="form-control border-success"
+              placeholder="Angka numerik capaian (misal: 100)" value="<?= old('capaian_hitung', $lakip['capaian_hitung'] ?? '') ?>">
+            <small class="text-muted">Gunakan jika Capaian bernilai huruf agar hitungan persentase LAKIP dapat diproses otomatis.</small>
+          </div>
+        </div>
+
         <!-- Tombol Aksi -->
         <div class="d-flex justify-content-between mt-4">
           <a href="<?= base_url('adminopd/lakip') ?>" class="btn btn-secondary">

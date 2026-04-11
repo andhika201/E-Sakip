@@ -310,9 +310,12 @@
 
                                     $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
 
+                                    $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetTahun;
+                                    $realisasiCalc = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realisasiNow;
+
                                     $capaianPersen = hitungCapaianLakip(
-                                        $targetTahun,
-                                        $realisasiNow,
+                                        $targetCalc,
+                                        $realisasiCalc,
                                         $jenisIndikator
                                     );
 

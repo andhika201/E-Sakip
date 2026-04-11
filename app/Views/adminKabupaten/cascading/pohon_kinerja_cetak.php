@@ -154,6 +154,7 @@
             border-radius: 8px;
             padding: 10px;
             font-size: 13px;
+            
             font-weight: 600;
             box-shadow: 0 3px 5px rgba(109, 76, 65, 0.3);
         }

@@ -109,6 +109,7 @@ $routes->group(
 
 
         // target
+        $routes->get('target/cetak', 'AdminKab\TargetController::cetak');
         $routes->get('target', 'AdminKab\TargetController::index');
         $routes->get('target/tambah', 'AdminKab\TargetController::tambah');
         $routes->post('target/save', 'AdminKab\TargetController::save');

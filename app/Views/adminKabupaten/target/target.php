@@ -26,49 +26,68 @@
                 <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
             <?php endif; ?>
 
-            <!-- FILTER -->
-            <form method="get" class="row g-2 mb-4 align-items-center">
-
-                <!-- Tahun -->
-                <div class="col-md-3">
-                    <select name="tahun" class="form-select" onchange="this.form.submit()">
-                        <?php foreach ($tahunList as $t): ?>
-                            <option value="<?= esc($t['tahun']) ?>"
-                                <?= ($tahun == $t['tahun']) ? 'selected' : '' ?>>
-                                <?= esc($t['tahun']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <!-- Mode tampilan -->
-                <div class="col-md-3">
-                    <select name="mode" class="form-select" onchange="this.form.submit()">
-                        <option value="opd" <?= ($mode === 'opd') ? 'selected' : '' ?>>
-                            Tampilan per OPD (RENSTRA)
-                        </option>
-                        <option value="kabupaten" <?= ($mode === 'kabupaten') ? 'selected' : '' ?>>
-                            Tampilan Kabupaten (RPJMD)
-                        </option>
-                    </select>
-                </div>
-
-                <!-- Filter OPD (hanya kalau mode = opd) -->
-                <?php if ($mode === 'opd'): ?>
-                    <div class="col-md-3">
-                        <select name="opd_id" class="form-select" onchange="this.form.submit()">
-                            <option value="" <?= ($opdFilter === null) ? 'selected' : '' ?>>Semua OPD</option>
-                            <?php foreach ($opdList as $opd): ?>
-                                <option value="<?= (int) $opd['id'] ?>"
-                                    <?= ($opdFilter !== null && (int)$opdFilter === (int)$opd['id']) ? 'selected' : '' ?>>
-                                    <?= esc($opd['nama_opd']) ?>
+            <!-- FILTER & TOMBOL CETAK -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+                <form method="get" class="row g-2 align-items-center w-100">
+                    <!-- Tahun -->
+                    <div class="col-md-2">
+                        <select name="tahun" class="form-select" onchange="this.form.submit()">
+                            <?php foreach ($tahunList as $t): ?>
+                                <option value="<?= esc($t['tahun']) ?>"
+                                    <?= ($tahun == $t['tahun']) ? 'selected' : '' ?>>
+                                    <?= esc($t['tahun']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                <?php endif; ?>
 
-            </form>
+                    <!-- Mode tampilan -->
+                    <div class="col-md-3">
+                        <select name="mode" class="form-select" onchange="this.form.submit()">
+                            <option value="opd" <?= ($mode === 'opd') ? 'selected' : '' ?>>
+                                Tampilan per OPD (RENSTRA)
+                            </option>
+                            <option value="kabupaten" <?= ($mode === 'kabupaten') ? 'selected' : '' ?>>
+                                Tampilan Kabupaten (RPJMD)
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Filter OPD (hanya kalau mode = opd) -->
+                    <?php if ($mode === 'opd'): ?>
+                        <div class="col-md-3">
+                            <select name="opd_id" class="form-select" onchange="this.form.submit()">
+                                <option value="" <?= ($opdFilter === null) ? 'selected' : '' ?>>Semua OPD</option>
+                                <?php foreach ($opdList as $opd): ?>
+                                    <option value="<?= (int) $opd['id'] ?>"
+                                        <?= ($opdFilter !== null && (int)$opdFilter === (int)$opd['id']) ? 'selected' : '' ?>>
+                                        <?= esc($opd['nama_opd']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                        <!-- Tombol Cetak -->
+                        <div class="btn-group">
+                            <?php 
+                            $cetakRenstraUrl = base_url('adminkab/target/cetak?mode=opd&tahun=' . urlencode($tahun));
+                            if ($opdFilter !== null) {
+                                $cetakRenstraUrl .= '&opd_id=' . urlencode($opdFilter);
+                            }
+                            $cetakRpjmdUrl = base_url('adminkab/target/cetak?mode=kabupaten&tahun=' . urlencode($tahun));
+                            ?>
+                            <a href="<?= $cetakRenstraUrl ?>" class="btn btn-outline-success" target="_blank" title="Cetak Renstra (OPD)">
+                                <i class="fas fa-print"></i> Cetak Renstra
+                            </a>
+                            <a href="<?= $cetakRpjmdUrl ?>" class="btn btn-outline-primary" target="_blank" title="Cetak RPJMD (Kabupaten)">
+                                <i class="fas fa-print"></i> Cetak RPJMD
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
             <?php
             // kolom OPD hanya untuk mode RENSTRA + Semua OPD

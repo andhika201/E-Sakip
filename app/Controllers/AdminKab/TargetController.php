@@ -111,6 +111,82 @@ class TargetController extends BaseController
     }
 
     /* =========================================================
+     *  CETAK PDF TARGET & RENCANA (ADMIN_KAB)
+     * =======================================================*/
+    public function cetak()
+    {
+        $session = session();
+        $role = (string) ($session->get('role') ?? '');
+
+        if ($role !== 'admin_kab') {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak punya akses.');
+        }
+
+        $tahun = $this->request->getGet('tahun');
+        if ($tahun === null || $tahun === '') {
+            $tahun = date('Y');
+        }
+
+        $mode = $this->request->getGet('mode') ?? 'opd';
+        $opdFilter = null;
+
+        if ($mode === 'kabupaten') {
+            // MODE KABUPATEN: RPJMD
+            $raw = $this->targets->getTargetListByRpjmdKabupaten($tahun);
+        } else {
+            // MODE OPD: RENSTRA
+            $opdIdRaw = $this->request->getGet('opd_id');
+
+            if ($opdIdRaw === null || $opdIdRaw === '') {
+                $opdFilter = null;
+            } else {
+                $opdFilter = (int) $opdIdRaw;
+            }
+
+            $raw = $this->targets->getTargetListByRenstraAdminKab($tahun, $opdFilter);
+        }
+
+        // ====== GROUPING DATA UNTUK VIEW ======
+        $grouped = [];
+
+        if ($mode === 'opd' && $opdFilter === null) {
+            // SEMUA OPD: group = OPD -> Sasaran -> rows
+            foreach ($raw as $row) {
+                $opdName = $row['nama_opd'] ?? 'Tanpa OPD';
+                $sasaran = $row['sasaran_renstra'] ?? '-';
+                $grouped[$opdName][$sasaran][] = $row;
+            }
+        } else {
+            // OPD tertentu atau mode kabupaten: group per sasaran saja
+            foreach ($raw as $row) {
+                $sasaran = $row['sasaran_renstra'] ?? '-';
+                $grouped[$sasaran][] = $row;
+            }
+        }
+
+        $html = view('adminKabupaten/target/cetak_target', [
+            'grouped'   => $grouped,
+            'mode'      => $mode,
+            'tahun'     => $tahun,
+            'opdFilter' => $opdFilter,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'orientation' => 'L',
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+        ]);
+
+        $mpdf->WriteHTML($html);
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $mpdf->Output('Target_dan_Rencana_Aksi.pdf', 'I');
+    }
+
+    /* =========================================================
      *  FORM TAMBAH TARGET – ADMIN_KAB
      *  RENSTRA : /adminkab/target/tambah?rt={renstra_target_id}&opd_id={id_opd}
      *  RPJMD   : /adminkab/target/tambah?rpj={rpjmd_target_id}

@@ -351,7 +351,12 @@
         return window.generateSatuanOptions();
       }
       // fallback
-      const units = ['', '%', 'Orang', 'Unit', 'Lembaga', 'Kegiatan', 'Km', 'Ha', 'PPM', 'Indeks', 'Nilai', 'Rp'];
+      let units = <?= json_encode(array_values(array_filter(array_unique(array_column($satuan_list ?? [], 'satuan'))))) ?>;
+      units.unshift(''); // empty string for 'Pilih Satuan' option
+      
+      if (!units || units.length <= 1) {
+          units = ['', '%', 'Orang', 'Unit', 'Lembaga', 'Kegiatan', 'Km', 'Ha', 'PPM'];
+      }
       return units.map(u => `<option value="${u}">${u ? u : 'Pilih Satuan'}</option>`).join('');
     }
 

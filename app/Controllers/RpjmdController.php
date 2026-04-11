@@ -111,6 +111,7 @@ class RpjmdController extends BaseController
         $data['tujuan_list'] = $this->rpjmdModel->getAllTujuan();
         $data['sasaran_list'] = $this->rpjmdModel->getAllSasaran();
         $data['indikator_sasaran_list'] = $this->rpjmdModel->getAllIndikatorSasaran();
+        $data['satuan_list'] = \Config\Database::connect()->table('satuan')->get()->getResultArray();
 
         return view('adminKabupaten/rpjmd/tambah_rpjmd', $data);
     }
@@ -267,6 +268,7 @@ class RpjmdController extends BaseController
         $data['tujuan_list'] = $this->rpjmdModel->getAllTujuan();
         $data['sasaran_list'] = $this->rpjmdModel->getAllSasaran();
         $data['indikator_sasaran_list'] = $this->rpjmdModel->getAllIndikatorSasaran();
+        $data['satuan_list'] = \Config\Database::connect()->table('satuan')->get()->getResultArray();
 
         return view('adminKabupaten/rpjmd/edit_rpjmd', $data);
     }
@@ -313,90 +315,50 @@ class RpjmdController extends BaseController
                 ]);
 
             /* ======================================================
-             |  HAPUS TOTAL DATA LAMA (URUTAN ANAK → INDUK)
+             |  UPSERT (UPDATE / INSERT) DATA
              ====================================================== */
-
-            $tujuanList = $db->table('rpjmd_tujuan')
-                ->where('misi_id', $misiId)
-                ->get()->getResultArray();
-
-            foreach ($tujuanList as $tujuan) {
-                $tujuanId = (int) $tujuan['id'];
-
-                // ===== SASARAN =====
-                $sasaranList = $db->table('rpjmd_sasaran')
-                    ->where('tujuan_id', $tujuanId)
-                    ->get()->getResultArray();
-
-                foreach ($sasaranList as $sas) {
-                    $sasaranId = (int) $sas['id'];
-
-                    // INDIKATOR SASARAN
-                    $indikatorSasaran = $db->table('rpjmd_indikator_sasaran')
-                        ->where('sasaran_id', $sasaranId)
-                        ->get()->getResultArray();
-
-                    foreach ($indikatorSasaran as $is) {
-                        $db->table('rpjmd_target')
-                            ->where('indikator_sasaran_id', $is['id'])
-                            ->delete();
-                    }
-
-                    $db->table('rpjmd_indikator_sasaran')
-                        ->where('sasaran_id', $sasaranId)
-                        ->delete();
-                }
-
-                $db->table('rpjmd_sasaran')
-                    ->where('tujuan_id', $tujuanId)
-                    ->delete();
-
-                // ===== INDIKATOR TUJUAN =====
-                $indikatorTujuan = $db->table('rpjmd_indikator_tujuan')
-                    ->where('tujuan_id', $tujuanId)
-                    ->get()->getResultArray();
-
-                foreach ($indikatorTujuan as $it) {
-                    $db->table('rpjmd_target_tujuan')
-                        ->where('indikator_tujuan_id', $it['id'])
-                        ->delete();
-                }
-
-                $db->table('rpjmd_indikator_tujuan')
-                    ->where('tujuan_id', $tujuanId)
-                    ->delete();
-            }
-
-            $db->table('rpjmd_tujuan')
-                ->where('misi_id', $misiId)
-                ->delete();
-
-            /* ======================================================
-             |  INSERT DATA BARU
-             ====================================================== */
+            $processedTujuan = [];
+            $processedIndTujuan = [];
+            $processedTargetTujuan = [];
+            $processedSasaran = [];
+            $processedIndSasaran = [];
+            $processedTargetSasaran = [];
 
             // 🔥 NORMALISASI INDEX TUJUAN
-            $post['tujuan'] = array_values($post['tujuan']);
+            $post['tujuan'] = array_values($post['tujuan'] ?? []);
 
             foreach ($post['tujuan'] as $tujuan) {
-
-                $db->table('rpjmd_tujuan')->insert([
-                    'misi_id' => $misiId,
-                    'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
-                ]);
-                $tujuanId = $db->insertID();
+                $tId = !empty($tujuan['id']) ? (int) $tujuan['id'] : null;
+                if ($tId) {
+                    $db->table('rpjmd_tujuan')->where('id', $tId)->update(['tujuan_rpjmd' => $tujuan['tujuan_rpjmd']]);
+                    $tujuanId = $tId;
+                } else {
+                    $db->table('rpjmd_tujuan')->insert([
+                        'misi_id' => $misiId,
+                        'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
+                    ]);
+                    $tujuanId = $db->insertID();
+                }
+                $processedTujuan[] = $tujuanId;
 
                 /* ===== INDIKATOR TUJUAN ===== */
                 $indikatorTujuan = array_values($tujuan['indikator_tujuan'] ?? []);
                 foreach ($indikatorTujuan as $it) {
+                    $itIdKey = !empty($it['id']) ? (int) $it['id'] : null;
+                    if ($itIdKey) {
+                        $db->table('rpjmd_indikator_tujuan')->where('id', $itIdKey)->update([
+                            'indikator_tujuan' => $it['indikator_tujuan'],
+                        ]);
+                        $itId = $itIdKey;
+                    } else {
+                        $db->table('rpjmd_indikator_tujuan')->insert([
+                            'tujuan_id' => $tujuanId,
+                            'indikator_tujuan' => $it['indikator_tujuan'],
+                        ]);
+                        $itId = $db->insertID();
+                    }
+                    $processedIndTujuan[] = $itId;
 
-                    $db->table('rpjmd_indikator_tujuan')->insert([
-                        'tujuan_id' => $tujuanId,
-                        'indikator_tujuan' => $it['indikator_tujuan'],
-                    ]);
-                    $itId = $db->insertID();
-
-                    // cegah target dobel tahun
                     $targets = [];
                     foreach (($it['target_tahunan_tujuan'] ?? []) as $tt) {
                         if (isset($tt['tahun'])) {
@@ -405,42 +367,69 @@ class RpjmdController extends BaseController
                     }
 
                     foreach ($targets as $tt) {
-                        log_message('debug', 'TARGET TUJUAN: ' . json_encode($tt));
                         if (!isset($tt['target_tahunan']) || trim((string)$tt['target_tahunan']) === '') {
                             continue;
                         }
 
-                        $db->table('rpjmd_target_tujuan')->insert([
-                            'indikator_tujuan_id' => $itId,
-                            'tahun' => (int) $tt['tahun'],
-                            'target_tahunan' => trim((string) $tt['target_tahunan']),
-                        ]);
+                        $ttIdKey = !empty($tt['id']) ? (int) $tt['id'] : null;
+                        if ($ttIdKey) {
+                            $db->table('rpjmd_target_tujuan')->where('id', $ttIdKey)->update([
+                                'target_tahunan' => trim((string) $tt['target_tahunan']),
+                            ]);
+                            $ttId = $ttIdKey;
+                        } else {
+                            $db->table('rpjmd_target_tujuan')->insert([
+                                'indikator_tujuan_id' => $itId,
+                                'tahun' => (int) $tt['tahun'],
+                                'target_tahunan' => trim((string) $tt['target_tahunan']),
+                            ]);
+                            $ttId = $db->insertID();
+                        }
+                        $processedTargetTujuan[] = $ttId;
                     }
                 }
 
                 /* ===== SASARAN ===== */
                 $sasaranList = array_values($tujuan['sasaran'] ?? []);
                 foreach ($sasaranList as $sas) {
-
-                    $db->table('rpjmd_sasaran')->insert([
-                        'tujuan_id' => $tujuanId,
-                        'sasaran_rpjmd' => $sas['sasaran_rpjmd'],
-                    ]);
-                    $sasaranId = $db->insertID();
+                    $sIdKey = !empty($sas['id']) ? (int) $sas['id'] : null;
+                    if ($sIdKey) {
+                        $db->table('rpjmd_sasaran')->where('id', $sIdKey)->update([
+                            'sasaran_rpjmd' => $sas['sasaran_rpjmd'],
+                        ]);
+                        $sasaranId = $sIdKey;
+                    } else {
+                        $db->table('rpjmd_sasaran')->insert([
+                            'tujuan_id' => $tujuanId,
+                            'sasaran_rpjmd' => $sas['sasaran_rpjmd'],
+                        ]);
+                        $sasaranId = $db->insertID();
+                    }
+                    $processedSasaran[] = $sasaranId;
 
                     $indikatorSasaran = array_values($sas['indikator_sasaran'] ?? []);
                     foreach ($indikatorSasaran as $is) {
+                        $isIdKey = !empty($is['id']) ? (int) $is['id'] : null;
+                        if ($isIdKey) {
+                            $db->table('rpjmd_indikator_sasaran')->where('id', $isIdKey)->update([
+                                'indikator_sasaran'   => $is['indikator_sasaran'],
+                                'definisi_op'         => $is['definisi_op'],
+                                'satuan'              => $is['satuan'],
+                                'jenis_indikator'     => $is['jenis_indikator'],
+                            ]);
+                            $isId = $isIdKey;
+                        } else {
+                            $db->table('rpjmd_indikator_sasaran')->insert([
+                                'sasaran_id'          => $sasaranId,
+                                'indikator_sasaran'   => $is['indikator_sasaran'],
+                                'definisi_op'         => $is['definisi_op'],
+                                'satuan'              => $is['satuan'],
+                                'jenis_indikator'     => $is['jenis_indikator'],
+                            ]);
+                            $isId = $db->insertID();
+                        }
+                        $processedIndSasaran[] = $isId;
 
-                        $db->table('rpjmd_indikator_sasaran')->insert([
-                            'sasaran_id' => $sasaranId,
-                            'indikator_sasaran' => $is['indikator_sasaran'],
-                            'definisi_op' => $is['definisi_op'],
-                            'satuan' => $is['satuan'],
-                            'jenis_indikator' => $is['jenis_indikator'],
-                        ]);
-                        $isId = $db->insertID();
-
-                        // cegah target dobel tahun
                         $targets = [];
                         foreach (($is['target_tahunan'] ?? []) as $tt) {
                             if (isset($tt['tahun'])) {
@@ -449,20 +438,97 @@ class RpjmdController extends BaseController
                         }
 
                         foreach ($targets as $tt) {
-                            log_message('debug', 'TARGET TUJUAN: ' . json_encode($tt));
                             if (!isset($tt['target_tahunan']) || trim((string)$tt['target_tahunan']) === '') {
                                 continue;
                             }
 
-                            $db->table('rpjmd_target')->insert([
-                                'indikator_sasaran_id' => $isId,
-                                'tahun' => (int) $tt['tahun'],
-                                'target_tahunan' => trim((string) $tt['target_tahunan']),
-                            ]);
+                            $ttIdKey = !empty($tt['id']) ? (int) $tt['id'] : null;
+                            if ($ttIdKey) {
+                                $db->table('rpjmd_target')->where('id', $ttIdKey)->update([
+                                    'target_tahunan' => trim((string) $tt['target_tahunan']),
+                                ]);
+                                $ttId = $ttIdKey;
+                            } else {
+                                $db->table('rpjmd_target')->insert([
+                                    'indikator_sasaran_id' => $isId,
+                                    'tahun'                => (int) $tt['tahun'],
+                                    'target_tahunan'       => trim((string) $tt['target_tahunan']),
+                                ]);
+                                $ttId = $db->insertID();
+                            }
+                            $processedTargetSasaran[] = $ttId;
                         }
                     }
                 }
             }
+
+            /* ======================================================
+             |  DELETE ORPHANS (MENJAGA INTEGRITAS RELASI)
+             ====================================================== */
+            $dbTujuanList = $db->table('rpjmd_tujuan')->where('misi_id', $misiId)->get()->getResultArray();
+            $dbTujuanIds = array_column($dbTujuanList, 'id');
+
+            if (!empty($dbTujuanIds)) {
+                $dbSasaranList = $db->table('rpjmd_sasaran')->whereIn('tujuan_id', $dbTujuanIds)->get()->getResultArray();
+                $dbSasaranIds = array_column($dbSasaranList, 'id');
+                
+                $dbIndTujuanList = $db->table('rpjmd_indikator_tujuan')->whereIn('tujuan_id', $dbTujuanIds)->get()->getResultArray();
+                $dbIndTujuanIds = array_column($dbIndTujuanList, 'id');
+
+                $dbIndSasaranIds = [];
+                if (!empty($dbSasaranIds)) {
+                    $dbIndSasaranList = $db->table('rpjmd_indikator_sasaran')->whereIn('sasaran_id', $dbSasaranIds)->get()->getResultArray();
+                    $dbIndSasaranIds = array_column($dbIndSasaranList, 'id');
+                }
+
+                // Delete Orphans Target Sasaran
+                if (!empty($dbIndSasaranIds)) {
+                    $q = $db->table('rpjmd_target')->whereIn('indikator_sasaran_id', $dbIndSasaranIds);
+                    if (!empty($processedTargetSasaran)) {
+                        $q->whereNotIn('id', $processedTargetSasaran);
+                    }
+                    $q->delete();
+                }
+
+                // Delete Orphans Target Tujuan
+                if (!empty($dbIndTujuanIds)) {
+                    $q = $db->table('rpjmd_target_tujuan')->whereIn('indikator_tujuan_id', $dbIndTujuanIds);
+                    if (!empty($processedTargetTujuan)) {
+                        $q->whereNotIn('id', $processedTargetTujuan);
+                    }
+                    $q->delete();
+                }
+
+                // Delete Orphans Indikator Sasaran
+                if (!empty($dbSasaranIds)) {
+                    $q = $db->table('rpjmd_indikator_sasaran')->whereIn('sasaran_id', $dbSasaranIds);
+                    if (!empty($processedIndSasaran)) {
+                        $q->whereNotIn('id', $processedIndSasaran);
+                    }
+                    $q->delete();
+                }
+
+                // Delete Orphans Sasaran
+                $q = $db->table('rpjmd_sasaran')->whereIn('tujuan_id', $dbTujuanIds);
+                if (!empty($processedSasaran)) {
+                    $q->whereNotIn('id', $processedSasaran);
+                }
+                $q->delete();
+
+                // Delete Orphans Indikator Tujuan
+                $q = $db->table('rpjmd_indikator_tujuan')->whereIn('tujuan_id', $dbTujuanIds);
+                if (!empty($processedIndTujuan)) {
+                    $q->whereNotIn('id', $processedIndTujuan);
+                }
+                $q->delete();
+            }
+
+            // Delete Orphans Tujuan
+            $q = $db->table('rpjmd_tujuan')->where('misi_id', $misiId);
+            if (!empty($processedTujuan)) {
+                $q->whereNotIn('id', $processedTujuan);
+            }
+            $q->delete();
 
 
             if ($db->transStatus() === false) {

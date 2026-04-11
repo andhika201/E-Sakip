@@ -589,7 +589,13 @@
 
     /* =================== UTIL =================== */
     function generateSatuanOptions() {
-      const items = ['', '%', 'Orang', 'Unit', 'Kegiatan', 'Dokumen', 'Nilai', 'Indeks'];
+      let items = <?= json_encode(array_values(array_filter(array_unique(array_column($satuan_list ?? [], 'satuan'))))) ?>;
+      items.unshift(''); // empty option
+      
+      if (!items || items.length <= 1) {
+          items = ['', '%', 'Orang', 'Unit', 'Kegiatan', 'Dokumen', 'Nilai', 'Indeks'];
+      }
+      
       return items.map(v =>
         v ? `<option value="${v}">${v}</option>` : '<option value="">Pilih Satuan</option>'
       ).join('');

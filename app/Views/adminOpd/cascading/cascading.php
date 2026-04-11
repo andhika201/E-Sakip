@@ -237,6 +237,18 @@
                     </div>
                 <?php endif; ?>
             </div>
+
+            <?php if (!empty($filters['periode']) && !empty($rows)): ?>
+            <div class="d-flex gap-2 mt-3">
+                <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-print"></i> Cetak Cascading
+                </a>
+                <a href="<?= base_url('adminopd/cascading/cetakpohon?periode=' . $filters['periode']) ?>" class="btn btn-info text-white" target="_blank">
+                    <i class="fas fa-sitemap"></i> Cetak Pohon Kinerja
+                </a>
+            </div>
+            <?php endif; ?>
+
         </main>
         <?= $this->include('adminOpd/templates/footer.php'); ?>
     </div>

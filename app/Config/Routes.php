@@ -242,6 +242,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], funct
     $routes->get('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
 
     $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
+    $routes->get('cascading/cetakpohon', 'AdminOpd\CascadingController::cetakPohon');
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });

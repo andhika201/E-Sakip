@@ -62,6 +62,150 @@ class CascadingController extends BaseController
         return view('adminOpd/cascading/cascading', $data);
     }
 
+    public function cetak()
+    {
+        ob_clean(); // BUANG OUTPUT SEBELUMNYA
+        ob_start();
+
+        $periode = $this->request->getGet('periode');
+
+        if (!$periode) {
+            return redirect()->back()
+                ->with('error', 'Periode wajib dipilih');
+        }
+
+        [$start, $end] = explode('-', $periode);
+        $start = (int) $start;
+        $end = (int) $end;
+
+        $rows = $this->cascadingModel
+            ->getCascadingMatrixByOpd($this->opdId, $start, $end);
+
+        $rowspan = $this->buildRowspanMeta($rows);
+        $firstShow = $this->buildFirstShowMeta($rows);
+
+        $html = view('adminOpd/cascading/cascading_cetak', [
+            'rows' => $rows,
+            'rowspan' => $rowspan,
+            'firstShow' => $firstShow,
+            'tahun_mulai' => $start,
+            'tahun_akhir' => $end,
+            'periode' => $periode
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'tempDir' => sys_get_temp_dir()
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Cascading-OPD-' . $periode . '.pdf"');
+
+        $mpdf->Output();
+        exit;
+    }
+
+    public function cetakPohon()
+    {
+        $periode = $this->request->getGet('periode');
+
+        if (!$periode) {
+            return redirect()->back()
+                ->with('error', 'Periode wajib dipilih');
+        }
+
+        [$start, $end] = explode('-', $periode);
+        $start = (int) $start;
+        $end = (int) $end;
+
+        $rows = $this->cascadingModel
+            ->getCascadingMatrixByOpd($this->opdId, $start, $end);
+
+        $tree = $this->buildOpdTree($rows);
+
+        return view('adminOpd/cascading/pohon_kinerja_cetak', [
+            'tree' => $tree,
+            'tahun_mulai' => $start,
+            'tahun_akhir' => $end,
+            'periode' => $periode
+        ]);
+    }
+
+    private function buildOpdTree($rows)
+    {
+        $tree = [];
+        foreach ($rows as $r) {
+            // Handle possibility of unlinked data (null IDs)
+            $tId = rtrim('_' . ($r['tujuan_id'] ?? 'none'), '_');
+            
+            if (!isset($tree[$tId])) {
+                $tree[$tId] = [
+                    'nama' => $r['tujuan_rpjmd'] ?: '(Tanpa Tujuan RPJMD)',
+                    'sasarans' => []
+                ];
+            }
+            
+            $sId = rtrim('_' . ($r['sasaran_id'] ?? 'none'), '_');
+            
+            if (!isset($tree[$tId]['sasarans'][$sId])) {
+                $tree[$tId]['sasarans'][$sId] = [
+                    'nama' => $r['sasaran_rpjmd'] ?: '(Tanpa Sasaran RPJMD)',
+                    'tujuan_renstras' => []
+                ];
+            }
+            
+            $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
+            
+            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
+                    'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
+                    'es2s' => []
+                ];
+            }
+            
+            $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
+            
+            // if there's no ES2 at all, skip rendering the deeper tree for this specific row
+            if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran'])) {
+                continue;
+            }
+            
+            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId] = [
+                    'nama' => $r['renstra_sasaran'] ?: '(Tanpa Sasaran ES.II)',
+                    'csf' => $r['csf_es2'],
+                    'indikators' => [],
+                    'es3s' => []
+                ];
+            }
+            
+            $risId = $r['indikator_id'];
+            if ($risId) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['indikators'][$risId] = $r['indikator_sasaran'];
+            }
+            
+            $es3Id = $r['es3_id'];
+            if ($es3Id) {
+                if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id])) {
+                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id] = [
+                        'nama' => $r['es3_sasaran'],
+                        'csf' => $r['csf_es3'],
+                        'indikators' => []
+                    ];
+                }
+                
+                $es3IndId = $r['es3_indikator_id'];
+                if ($es3IndId) {
+                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['indikators'][$es3IndId] = $r['es3_indikator'];
+                }
+            }
+        }
+        return $tree;
+    }
+
     public function tambah($indikatorId = null)
     {
         if (!$indikatorId) {
@@ -653,7 +797,7 @@ class CascadingController extends BaseController
             $this->db->table('renstra_sasaran')
                 ->where('id', $id)
                 ->update(['csf' => $csfVal]);
-        } elseif ($level === 'es3') {
+        } elseif ($level === 'es3') { 
             $this->db->table('cascading_sasaran_opd')
                 ->where('id', $id)
                 ->update(['csf' => $csfVal]);

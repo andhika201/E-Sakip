@@ -358,9 +358,6 @@ class CascadingController extends BaseController
 
     public function cetakPohon()
     {
-        ob_clean();
-        ob_start();
-
         $periode = $this->request->getGet('periode');
 
         if (!$periode) {
@@ -374,32 +371,15 @@ class CascadingController extends BaseController
 
         $tree = $this->cascadingModel->getPohonKinerja($start, $end);
 
-        $html = view(
+        return view(
             'adminKabupaten/cascading/pohon_kinerja_cetak',
             [
                 'tree' => $tree,
                 'tahun_mulai' => $start,
-                'tahun_akhir' => $end
+                'tahun_akhir' => $end,
+                'periode' => $periode
             ]
         );
-
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4-L',
-            'tempDir' => sys_get_temp_dir(),
-            'margin_top' => 15,
-            'margin_bottom' => 15,
-            'margin_left' => 15,
-            'margin_right' => 15
-        ]);
-
-        $mpdf->WriteHTML($html);
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Pohon-Kinerja-' . $periode . '.pdf"');
-
-        $mpdf->Output();
-        exit;
     }
 
 }

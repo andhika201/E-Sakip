@@ -437,136 +437,122 @@ class RenstraModel extends Model
                 ->update($tujuanUpdate);
 
             // ----------------------------------------------------
-// 3. UPDATE / INSERT indikator_tujuan + target_tujuan
-// ----------------------------------------------------
+            // ----------------------------------------------------
+            // 3. UPSERT indikator_tujuan + target_tujuan
+            // ----------------------------------------------------
+            $keepIndikatorTujuanIds = [];
 
             if (!empty($data['indikator_tujuan']) && is_array($data['indikator_tujuan'])) {
-
                 foreach ($data['indikator_tujuan'] as $ind) {
+                    $namaIndikator = trim($ind['indikator_tujuan'] ?? ($ind['indikator'] ?? ''));
+                    $satuan = $ind['satuan'] ?? null;
 
-                    $namaIndikator = trim(
-                        $ind['indikator_tujuan']
-                        ?? ($ind['indikator'] ?? '')
-                    );
-
-                    if ($namaIndikator === '')
+                    if ($namaIndikator === '') {
                         continue;
+                    }
 
-                    // ======================================
-                    // ADA ID → UPDATE
-                    // ======================================
+                    $indikatorTujuanId = null;
+
+                    // ==========================
+                    // ADA ID → UPDATE EXISTING
+                    // ==========================
                     if (!empty($ind['id'])) {
-
                         $indikatorTujuanId = (int) $ind['id'];
+                        $updateData = ['indikator_tujuan' => $namaIndikator];
+                        if ($satuan !== null) {
+                            $updateData['satuan'] = $satuan;
+                        }
 
-                        // ==========================
-                        // UPDATE INDIKATOR TUJUAN
-                        // ==========================
                         $this->db->table('renstra_indikator_tujuan')
                             ->where('id', $indikatorTujuanId)
-                            ->update([
-                                'indikator_tujuan' => $namaIndikator
-                            ]);
-
-                        // ==========================
-                        // 🔥 WAJIB: DELETE TARGET LAMA LANGSUNG
-                        // ==========================
-                        $this->db->table('renstra_target_tujuan')
-                            ->where('indikator_tujuan_id', $indikatorTujuanId)
-                            ->delete();
+                            ->update($updateData);
                     }
-                    // ======================================
+                    // ==========================
                     // TIDAK ADA ID → INSERT BARU
-                    // ======================================
+                    // ==========================
                     else {
-
-                        // CEK APAKAH SUDAH ADA DENGAN NAMA SAMA
-                        $existing = $this->db->table('renstra_indikator_tujuan')
-                            ->where('tujuan_id', $tujuanId)
-                            ->where('indikator_tujuan', $namaIndikator)
-                            ->get()
-                            ->getRowArray();
-
-                        if ($existing) {
-
-                            $indikatorTujuanId = $existing['id'];
-
-                            // HAPUS TARGET LAMA
-                            $this->deleteTargetTujuanByIndikatorId($indikatorTujuanId);
-
-                        } else {
-
-                            $indikatorTujuanId = $this->createIndikatorTujuan([
-                                'tujuan_id' => $tujuanId,
-                                'indikator_tujuan' => $namaIndikator,
-                            ]);
+                        $insertData = [
+                            'tujuan_id' => $tujuanId,
+                            'indikator_tujuan' => $namaIndikator,
+                        ];
+                        if ($satuan !== null) {
+                            $insertData['satuan'] = $satuan;
                         }
+
+                        $this->db->table('renstra_indikator_tujuan')->insert($insertData);
+                        $indikatorTujuanId = $this->db->insertID();
                     }
 
-                    // INSERT TARGET BARU
-                    if (!empty($ind['target_tahunan']) && is_array($ind['target_tahunan'])) {
+                    if ($indikatorTujuanId) {
+                        $keepIndikatorTujuanIds[] = $indikatorTujuanId;
 
-                        foreach ($ind['target_tahunan'] as $t) {
+                        // ==========================
+                        // UPSERT TARGET TUJUAN
+                        // ==========================
+                        $keepTargetTujuanIds = [];
+                        if (!empty($ind['target_tahunan']) && is_array($ind['target_tahunan'])) {
+                            foreach ($ind['target_tahunan'] as $t) {
+                                $tahun = $t['tahun'] ?? null;
+                                $nilaiTarget = $t['target'] ?? ($t['target_tahunan'] ?? null);
 
-                            $tahun = $t['tahun'] ?? null;
-                            $nilaiTarget = $t['target']
-                                ?? ($t['target_tahunan'] ?? null);
+                                if (empty($tahun) || $nilaiTarget === '' || $nilaiTarget === null) {
+                                    continue;
+                                }
 
-                            if (empty($tahun) || $nilaiTarget === '' || $nilaiTarget === null)
-                                continue;
+                                $existingTarget = $this->db->table('renstra_target_tujuan')
+                                    ->where('indikator_tujuan_id', $indikatorTujuanId)
+                                    ->where('tahun', $tahun)
+                                    ->get()->getRowArray();
 
-                            $this->createTargetTujuan([
-                                'indikator_tujuan_id' => $indikatorTujuanId,
-                                'tahun' => $tahun,
-                                'target_tahunan' => trim($nilaiTarget),
-                            ]);
+                                if ($existingTarget) {
+                                    // Update
+                                    $this->db->table('renstra_target_tujuan')
+                                        ->where('id', $existingTarget['id'])
+                                        ->update([
+                                            'target_tahunan' => trim($nilaiTarget)
+                                        ]);
+                                    $keepTargetTujuanIds[] = $existingTarget['id'];
+                                } else {
+                                    // Insert
+                                    $this->db->table('renstra_target_tujuan')->insert([
+                                        'indikator_tujuan_id' => $indikatorTujuanId,
+                                        'tahun' => $tahun,
+                                        'target_tahunan' => trim($nilaiTarget),
+                                        'created_at' => date('Y-m-d H:i:s'),
+                                        'updated_at' => date('Y-m-d H:i:s'),
+                                    ]);
+                                    $keepTargetTujuanIds[] = $this->db->insertID();
+                                }
+                            }
                         }
+
+                        // Hapus target tujuan yang ter-orphan
+                        $qTT = $this->db->table('renstra_target_tujuan')->where('indikator_tujuan_id', $indikatorTujuanId);
+                        if (!empty($keepTargetTujuanIds)) {
+                            $qTT->whereNotIn('id', $keepTargetTujuanIds);
+                        }
+                        $qTT->delete();
                     }
                 }
             }
 
-            // Insert ulang indikator_tujuan + target_tujuan
-            if (!empty($data['indikator_tujuan']) && is_array($data['indikator_tujuan'])) {
-                foreach ($data['indikator_tujuan'] as $ind) {
-
-                    // antisipasi kalau key berbeda
-                    $namaIndikator = $ind['indikator_tujuan']
-                        ?? ($ind['indikator'] ?? '');
-
-                    if (trim($namaIndikator) === '') {
-                        continue;
+            // Hapus indikator tujuan yang ter-orphan
+            $oldIndTList = $this->db->table('renstra_indikator_tujuan')->where('tujuan_id', $tujuanId)->get()->getResultArray();
+            $oldIndTIds = array_column($oldIndTList, 'id');
+            if (!empty($oldIndTIds)) {
+                $qIndT = $this->db->table('renstra_indikator_tujuan')->whereIn('id', $oldIndTIds);
+                if (!empty($keepIndikatorTujuanIds)) {
+                    $qIndT->whereNotIn('id', $keepIndikatorTujuanIds);
+                    
+                    // Juga perlu menghapus target turunan dari orphan indikator tujuan
+                    $orphanIndTIds = array_diff($oldIndTIds, $keepIndikatorTujuanIds);
+                    if (!empty($orphanIndTIds)) {
+                         $this->db->table('renstra_target_tujuan')->whereIn('indikator_tujuan_id', $orphanIndTIds)->delete();
                     }
-
-                    $indikatorTujuanId = $this->createIndikatorTujuan([
-                        'tujuan_id' => $tujuanId,
-                        'indikator_tujuan' => trim($namaIndikator),
-                    ]);
-
-                    if (!empty($ind['satuan'])) {
-                        $this->db->table('renstra_indikator_tujuan')
-                            ->where('id', $indikatorTujuanId)
-                            ->update(['satuan' => $ind['satuan']]);
-                    }
-
-                    if (!empty($ind['target_tahunan']) && is_array($ind['target_tahunan'])) {
-                        foreach ($ind['target_tahunan'] as $t) {
-
-                            $tahun = $t['tahun'] ?? null;
-                            // terima kedua nama: target / target_tahunan
-                            $nilaiTarget = $t['target'] ?? ($t['target_tahunan'] ?? null);
-
-                            if (empty($tahun) || $nilaiTarget === '' || $nilaiTarget === null) {
-                                continue;
-                            }
-
-                            $this->createTargetTujuan([
-                                'indikator_tujuan_id' => $indikatorTujuanId,
-                                'tahun' => $tahun,
-                                'target_tahunan' => trim($nilaiTarget),
-                            ]);
-                        }
-                    }
+                } else {
+                     $this->db->table('renstra_target_tujuan')->whereIn('indikator_tujuan_id', $oldIndTIds)->delete();
                 }
+                $qIndT->delete();
             }
 
             // ----------------------------------------------------
@@ -591,56 +577,119 @@ class RenstraModel extends Model
                 ->update($sasaranUpdate);
 
             // ----------------------------------------------------
-            // 5. RESET indikator_sasaran + target
+            // 5. UPSERT indikator_sasaran + target
             // ----------------------------------------------------
-            $oldIndS = $this->getIndikatorSasaranBySasaranId($sasaranId);
-            foreach ($oldIndS as $is) {
-                $this->deleteTargetTahunanByIndikatorId($is['id']);
-            }
+            $keepIndikatorSasaranIds = [];
 
-            $this->db->table('renstra_indikator_sasaran')
-                ->where('renstra_sasaran_id', $sasaranId)
-                ->delete();
-
-            // Insert ulang indikator_sasaran + target
             if (!empty($data['indikator_sasaran']) && is_array($data['indikator_sasaran'])) {
                 foreach ($data['indikator_sasaran'] as $ind) {
 
                     // antisipasi variasi nama key
-                    $namaIndikatorSasaran = $ind['indikator_sasaran']
-                        ?? ($ind['indikator'] ?? null);
-                    $satuan = $ind['satuan'] ?? ($ind['satuan_id'] ?? null);
-                    $jenis = $ind['jenis_indikator'] ?? ($ind['jenis'] ?? '');
+                    $namaIndikatorSasaran = trim($ind['indikator_sasaran'] ?? ($ind['indikator'] ?? ''));
+                    $satuan = trim($ind['satuan'] ?? ($ind['satuan_id'] ?? ''));
+                    $jenis = trim($ind['jenis_indikator'] ?? ($ind['jenis'] ?? ''));
 
                     if (empty($namaIndikatorSasaran) || empty($satuan)) {
                         continue;
                     }
 
-                    $indikatorId = $this->createIndikatorSasaran([
-                        'renstra_sasaran_id' => $sasaranId,
-                        'indikator_sasaran' => trim($namaIndikatorSasaran),
-                        'satuan' => trim($satuan),
-                        'jenis_indikator' => trim($jenis),
-                    ]);
+                    $indikatorSasaranId = null;
 
-                    if (!empty($ind['target_tahunan']) && is_array($ind['target_tahunan'])) {
-                        foreach ($ind['target_tahunan'] as $t) {
-
-                            $tahun = $t['tahun'] ?? null;
-                            $nilaiTarget = $t['target'] ?? ($t['target_tahunan'] ?? null);
-
-                            if (empty($tahun) || $nilaiTarget === '' || $nilaiTarget === null) {
-                                continue;
-                            }
-
-                            $this->createTargetTahunan([
-                                'renstra_indikator_id' => $indikatorId,
-                                'tahun' => $tahun,
-                                'target' => trim($nilaiTarget),
+                    if (!empty($ind['id'])) {
+                        // UPDATE EXISTING
+                        $indikatorSasaranId = (int) $ind['id'];
+                        $this->db->table('renstra_indikator_sasaran')
+                            ->where('id', $indikatorSasaranId)
+                            ->update([
+                                'indikator_sasaran' => $namaIndikatorSasaran,
+                                'satuan' => $satuan,
+                                'jenis_indikator' => $jenis,
+                                'updated_at' => date('Y-m-d H:i:s')
                             ]);
+                    } else {
+                        // INSERT BARU
+                        $this->db->table('renstra_indikator_sasaran')->insert([
+                            'renstra_sasaran_id' => $sasaranId,
+                            'indikator_sasaran' => $namaIndikatorSasaran,
+                            'satuan' => $satuan,
+                            'jenis_indikator' => $jenis,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                        $indikatorSasaranId = $this->db->insertID();
+                    }
+
+                    if ($indikatorSasaranId) {
+                        $keepIndikatorSasaranIds[] = $indikatorSasaranId;
+
+                        // ==========================
+                        // UPSERT TARGET SASARAN
+                        // ==========================
+                        $keepTargetSasaranIds = [];
+                        if (!empty($ind['target_tahunan']) && is_array($ind['target_tahunan'])) {
+                            foreach ($ind['target_tahunan'] as $t) {
+                                $tahun = $t['tahun'] ?? null;
+                                $nilaiTarget = $t['target'] ?? ($t['target_tahunan'] ?? null);
+
+                                if (empty($tahun) || $nilaiTarget === '' || $nilaiTarget === null) {
+                                    continue;
+                                }
+
+                                $existingTarget = $this->db->table('renstra_target')
+                                    ->where('renstra_indikator_id', $indikatorSasaranId)
+                                    ->where('tahun', $tahun)
+                                    ->get()->getRowArray();
+
+                                if ($existingTarget) {
+                                    // Update
+                                    $this->db->table('renstra_target')
+                                        ->where('id', $existingTarget['id'])
+                                        ->update([
+                                            'target' => trim($nilaiTarget),
+                                            'updated_at' => date('Y-m-d H:i:s')
+                                        ]);
+                                    $keepTargetSasaranIds[] = $existingTarget['id'];
+                                } else {
+                                    // Insert
+                                    $this->db->table('renstra_target')->insert([
+                                        'renstra_indikator_id' => $indikatorSasaranId,
+                                        'tahun' => $tahun,
+                                        'target' => trim($nilaiTarget),
+                                        'created_at' => date('Y-m-d H:i:s'),
+                                        'updated_at' => date('Y-m-d H:i:s')
+                                    ]);
+                                    $keepTargetSasaranIds[] = $this->db->insertID();
+                                }
+                            }
                         }
+
+                        // Hapus target sasaran yang ter-orphan
+                        $qTS = $this->db->table('renstra_target')->where('renstra_indikator_id', $indikatorSasaranId);
+                        if (!empty($keepTargetSasaranIds)) {
+                            $qTS->whereNotIn('id', $keepTargetSasaranIds);
+                        }
+                        $qTS->delete();
                     }
                 }
+            }
+
+            // Hapus indikator sasaran yang ter-orphan
+            $oldIndSList = $this->db->table('renstra_indikator_sasaran')->where('renstra_sasaran_id', $sasaranId)->get()->getResultArray();
+            $oldIndSIds = array_column($oldIndSList, 'id');
+            if (!empty($oldIndSIds)) {
+                $qIndS = $this->db->table('renstra_indikator_sasaran')->whereIn('id', $oldIndSIds);
+                if (!empty($keepIndikatorSasaranIds)) {
+                    $qIndS->whereNotIn('id', $keepIndikatorSasaranIds);
+                    
+                    // Juga hapus target turunan dari orphan
+                    $orphanIndSIds = array_diff($oldIndSIds, $keepIndikatorSasaranIds);
+                    if (!empty($orphanIndSIds)) {
+                         $this->db->table('renstra_target')->whereIn('renstra_indikator_id', $orphanIndSIds)->delete();
+                    }
+                } else {
+                     $this->db->table('renstra_target')->whereIn('renstra_indikator_id', $oldIndSIds)->delete();
+                }
+                $qIndS->delete();
             }
 
             $this->db->transComplete();

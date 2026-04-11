@@ -435,64 +435,44 @@ class RktController extends BaseController
         $db->transStart();
 
         try {
-            // ========== 1. Hapus semua RKT lama indikator ini ==========
-            // cari semua rkt.id untuk indikator ini
-            $oldRkts = $db->table('rkt')
-                ->select('id')
-                ->where('indikator_id', $indikatorId)
-                ->get()
-                ->getResultArray();
+            // ========== UPSERT (UPDATE / INSERT) berdasarkan POST ==========
+            $processedRktIds = [];
+            $processedKegIds = [];
+            $processedSubIds = [];
 
-            $oldRktIds = array_column($oldRkts, 'id');
-
-            if (!empty($oldRktIds)) {
-                // cari semua rkt_kegiatan.id
-                $oldKegs = $db->table('rkt_kegiatan')
-                    ->select('id')
-                    ->whereIn('rkt_id', $oldRktIds)
-                    ->get()
-                    ->getResultArray();
-
-                $oldKegIds = array_column($oldKegs, 'id');
-
-                if (!empty($oldKegIds)) {
-                    // hapus subkegiatan
-                    $db->table('rkt_subkegiatan')
-                        ->whereIn('rkt_kegiatan_id', $oldKegIds)
-                        ->delete();
-
-                    // hapus kegiatan
-                    $db->table('rkt_kegiatan')
-                        ->whereIn('id', $oldKegIds)
-                        ->delete();
-                }
-
-                // hapus rkt
-                $db->table('rkt')
-                    ->whereIn('id', $oldRktIds)
-                    ->delete();
-            }
-
-            // ========== 2. Insert ulang berdasarkan POST ==========
             foreach ($postPrograms as $p) {
                 $programId = isset($p['program_id']) ? (int) $p['program_id'] : 0;
                 if (!$programId) {
-                    // kalau program belum dipilih, skip
                     continue;
                 }
 
-                // insert RKT (program)
-                $db->table('rkt')->insert([
-                    'opd_id' => $opdId,
-                    'tahun' => $tahun,
-                    'indikator_id' => $indikatorId,
-                    'program_id' => $programId,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
-                $rktId = $db->insertID();
+                // 2.1 UPSERT RKT
+                $existRkt = $db->table('rkt')
+                    ->where('indikator_id', $indikatorId)
+                    ->where('program_id', $programId)
+                    ->where('tahun', $tahun)
+                    ->where('opd_id', $opdId)
+                    ->get()->getRowArray();
+                
+                if ($existRkt) {
+                    $rktId = $existRkt['id'];
+                    $db->table('rkt')->where('id', $rktId)->update([
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                } else {
+                    $db->table('rkt')->insert([
+                        'opd_id' => $opdId,
+                        'tahun' => $tahun,
+                        'indikator_id' => $indikatorId,
+                        'program_id' => $programId,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                    $rktId = $db->insertID();
+                }
+                $processedRktIds[] = $rktId;
 
-                // kegiatan di dalam program ini
+                // 2.2 UPSERT KEGIATAN di dalam program ini
                 $kegList = $p['kegiatan'] ?? [];
                 foreach ($kegList as $k) {
                     $kegiatanId = isset($k['kegiatan_id']) ? (int) $k['kegiatan_id'] : 0;
@@ -500,16 +480,28 @@ class RktController extends BaseController
                         continue;
                     }
 
-                    // insert rkt_kegiatan
-                    $db->table('rkt_kegiatan')->insert([
-                        'rkt_id' => $rktId,
-                        'kegiatan_id' => $kegiatanId,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]);
-                    $rktKegId = $db->insertID();
+                    $existKeg = $db->table('rkt_kegiatan')
+                        ->where('rkt_id', $rktId)
+                        ->where('kegiatan_id', $kegiatanId)
+                        ->get()->getRowArray();
 
-                    // subkegiatan di dalam kegiatan ini
+                    if ($existKeg) {
+                        $rktKegId = $existKeg['id'];
+                        $db->table('rkt_kegiatan')->where('id', $rktKegId)->update([
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    } else {
+                        $db->table('rkt_kegiatan')->insert([
+                            'rkt_id' => $rktId,
+                            'kegiatan_id' => $kegiatanId,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                        $rktKegId = $db->insertID();
+                    }
+                    $processedKegIds[] = $rktKegId;
+
+                    // 2.3 UPSERT SUBKEGIATAN di dalam kegiatan ini
                     $subs = $k['subkegiatan'] ?? [];
                     foreach ($subs as $s) {
                         $subId = isset($s['subkegiatan_id']) ? (int) $s['subkegiatan_id'] : 0;
@@ -517,14 +509,67 @@ class RktController extends BaseController
                             continue;
                         }
 
-                        $db->table('rkt_subkegiatan')->insert([
-                            'rkt_kegiatan_id' => $rktKegId,
-                            'sub_kegiatan_id' => $subId,
-                            'created_at' => date('Y-m-d H:i:s'),
-                            'updated_at' => date('Y-m-d H:i:s'),
-                        ]);
+                        $existSub = $db->table('rkt_subkegiatan')
+                            ->where('rkt_kegiatan_id', $rktKegId)
+                            ->where('sub_kegiatan_id', $subId)
+                            ->get()->getRowArray();
+                            
+                        if ($existSub) {
+                            $rktSubId = $existSub['id'];
+                            $db->table('rkt_subkegiatan')->where('id', $rktSubId)->update([
+                                'updated_at' => date('Y-m-d H:i:s')
+                            ]);
+                        } else {
+                            $db->table('rkt_subkegiatan')->insert([
+                                'rkt_kegiatan_id' => $rktKegId,
+                                'sub_kegiatan_id' => $subId,
+                                'created_at' => date('Y-m-d H:i:s'),
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+                            $rktSubId = $db->insertID();
+                        }
+                        $processedSubIds[] = $rktSubId;
                     }
                 }
+            }
+
+            // ========== DELETE ORPHANS (Hapus sisa-sisa ID lama yang tak lagi dipilih di form) ==========
+            $allDbRkts = $db->table('rkt')
+                ->where('indikator_id', $indikatorId)
+                ->where('tahun', $tahun)
+                ->where('opd_id', $opdId)
+                ->get()->getResultArray();
+            
+            $dbRktIds = array_column($allDbRkts, 'id');
+
+            if (!empty($dbRktIds)) {
+                $allDbKegs = $db->table('rkt_kegiatan')
+                    ->whereIn('rkt_id', $dbRktIds)
+                    ->get()->getResultArray();
+                $dbKegIds = array_column($allDbKegs, 'id');
+
+                if (!empty($dbKegIds)) {
+                    // hapus subkegiatan
+                    $qSub = $db->table('rkt_subkegiatan')->whereIn('rkt_kegiatan_id', $dbKegIds);
+                    if (!empty($processedSubIds)) {
+                        $qSub->whereNotIn('id', $processedSubIds);
+                    }
+                    $qSub->delete();
+
+                    // hapus kegiatan
+                    $qKeg = $db->table('rkt_kegiatan')->whereIn('id', $dbKegIds);
+                    if (!empty($processedKegIds)) {
+                        $qKeg->whereNotIn('id', $processedKegIds);
+                    }
+                    $qKeg->delete();
+                }
+
+                // hapus rkt program
+                $qRkt = $db->table('rkt')->whereIn('id', $dbRktIds);
+                if (!empty($processedRktIds)) {
+                    $qRkt->whereNotIn('id', $processedRktIds);
+                }
+                $qRkt->delete();
             }
 
             $db->transComplete();

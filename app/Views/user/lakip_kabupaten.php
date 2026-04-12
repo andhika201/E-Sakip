@@ -14,12 +14,26 @@
   <main class="flex-grow-1 d-flex align-items-center justify-content-center">
     <div class="container my-5" style="max-width: 1700px;">
       <div class="bg-white p-4 rounded shadow-sm">
-        <h4 class="fw-bold text-center text-success mb-4">
+        <h4 class="fw-bold text-center text-success mb-4 text-uppercase">
           LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAHAN KABUPATEN
         </h4>
+
+        <!-- Filter -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-12 col-md-4 col-lg-3">
+                <form method="GET" action="<?= base_url('lakip_kabupaten') ?>">
+                    <select name="tahun" class="form-select w-100" onchange="this.form.submit()">
+                        <option value="">Pilih Tahun</option>
+                        <?php foreach ($available_years as $year): ?>
+                            <option value="<?= $year ?>" <?= ($selected_tahun == $year) ? 'selected' : '' ?>><?= $year ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            </div>
+        </div>
         
-        <div class="table-responive">
-          <table class="table table=bordered align-middle text-center">
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle text-center table-hover">
             <thead class="table-success">
               <tr>
                 <th>No</th>

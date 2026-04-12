@@ -411,6 +411,11 @@
                                                                 <i class="fas fa-sync-alt"></i>
                                                             </a>
                                                         <?php endif; ?>
+                                                        <a href="<?= base_url('adminopd/lakip/delete/' . $lakipItem['id']) . $qsBase ?>"
+                                                            class="btn btn-sm btn-danger" title="Hapus LAKIP"
+                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus data LAKIP ini?');">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <span class="text-muted">-</span>

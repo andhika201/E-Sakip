@@ -7,6 +7,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 $routes->get('/', 'Home::index');
+$routes->get('/unauthorized', 'Home::unauthorized');
 
 // User Routes
 $routes->get('/dashboard', 'UserController::index');
@@ -16,12 +17,21 @@ $routes->get('/lakip_kabupaten', 'UserController::lakip_kabupaten');
 $routes->get('/pk_bupati', 'UserController::pk_bupati');
 $routes->get('/renja', 'UserController::renja');
 $routes->get('/renstra', 'UserController::renstra');
+$routes->get('/rkt', 'UserController::rkt');
 $routes->get('/lakip_opd', 'UserController::lakip_opd');
 $routes->get('/iku_opd', 'UserController::iku_opd');
 $routes->get('/pk_pimpinan', 'UserController::pk_pimpinan');
 $routes->get('/pk_administrator', 'UserController::pk_administrator');
 $routes->get('/pk_pengawas', 'UserController::pk_pengawas');
 $routes->get('/tentang_kami', 'UserController::tentang_kami');
+
+// Public Cascading Routes
+$routes->get('/cascading_kabupaten', 'UserController::cascading_kabupaten');
+$routes->get('/cascading_kabupaten/cetak', 'UserController::cascading_kabupaten_cetak');
+$routes->get('/cascading_kabupaten/cetak-pohon', 'UserController::cascading_kabupaten_pohon');
+$routes->get('/cascading_opd', 'UserController::cascading_opd');
+$routes->get('/cascading_opd/cetak', 'UserController::cascading_opd_cetak');
+$routes->get('/cascading_opd/cetak-pohon', 'UserController::cascading_opd_pohon');
 
 $routes->group(
     'adminkab',
@@ -143,7 +153,7 @@ $routes->group(
 );
 
 
-$routes->group('adminopd', ['filter' => 'auth:admin_opd,admin_kab,admin'], function ($routes) {
+$routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($routes) {
     // PK Generic Controller (slash-based, for compatibility with button href)
     $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
     $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');

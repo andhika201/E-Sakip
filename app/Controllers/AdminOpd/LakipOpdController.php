@@ -471,16 +471,16 @@ class LakipOpdController extends BaseController
         $lakip = $this->lakipModel->find($id);
 
         if (!$lakip) {
-            return redirect()->to(base_url('adminopd/lakip'))
+            return redirect()->back()
                 ->with('error', 'Data LAKIP tidak ditemukan');
         }
 
         if ($this->lakipModel->deleteLakip((int) $id)) {
-            return redirect()->to(base_url('adminopd/lakip'))
+            return redirect()->back()
                 ->with('success', 'LAKIP berhasil dihapus');
         }
 
-        return redirect()->to(base_url('adminopd/lakip'))
+        return redirect()->back()
             ->with('error', 'Gagal menghapus LAKIP');
     }
 

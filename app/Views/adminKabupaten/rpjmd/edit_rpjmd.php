@@ -593,7 +593,7 @@
       items.unshift(''); // empty option
       
       if (!items || items.length <= 1) {
-          items = ['', '%', 'Orang', 'Unit', 'Kegiatan', 'Dokumen', 'Nilai', 'Indeks'];
+          items = ['', '%', 'Orang', 'Unit', 'Kegiatan', 'Dokumen', 'Nilai', 'Indeks', 'Ton'];
       }
       
       return items.map(v =>

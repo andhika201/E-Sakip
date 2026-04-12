@@ -153,7 +153,7 @@ class RktController extends BaseController
                 foreach ($kegiatans as &$keg) {
                     // SUB KEGIATAN (anggaran diambil dari sub_kegiatan_pk)
                     $subs = $db->table('rkt_subkegiatan rs')
-                        ->select('rs.id, rs.sub_kegiatan_id, sk.sub_kegiatan, sk.anggaran')
+                        ->select('rs.id, rs.sub_kegiatan_id, rs.indikator_sasaran_sub_kegiatan, rs.target, sk.sub_kegiatan, sk.anggaran')
                         ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
                         ->where('rs.rkt_kegiatan_id', $keg['id'])
                         ->orderBy('rs.id', 'ASC')
@@ -362,7 +362,7 @@ class RktController extends BaseController
 
                 // subkegiatan utk rkt_kegiatan ini
                 $subs = $db->table('rkt_subkegiatan rs')
-                    ->select('rs.sub_kegiatan_id, sk.anggaran')
+                    ->select('rs.sub_kegiatan_id, rs.indikator_sasaran_sub_kegiatan, rs.target, sk.anggaran')
                     ->join(
                         'sub_kegiatan_pk sk',
                         'sk.id = rs.sub_kegiatan_id',
@@ -379,7 +379,8 @@ class RktController extends BaseController
                     $subNested[] = [
                         'sub_kegiatan_id' => $sRow['sub_kegiatan_id'],
                         'anggaran' => $sRow['anggaran'],
-
+                        'indikator_sasaran_sub_kegiatan' => $sRow['indikator_sasaran_sub_kegiatan'] ?? null,
+                        'target' => $sRow['target'] ?? null,
                     ];
                 }
 
@@ -517,12 +518,16 @@ class RktController extends BaseController
                         if ($existSub) {
                             $rktSubId = $existSub['id'];
                             $db->table('rkt_subkegiatan')->where('id', $rktSubId)->update([
+                                'indikator_sasaran_sub_kegiatan' => $s['indikator_sasaran_sub_kegiatan'] ?? null,
+                                'target' => $s['target'] ?? null,
                                 'updated_at' => date('Y-m-d H:i:s')
                             ]);
                         } else {
                             $db->table('rkt_subkegiatan')->insert([
                                 'rkt_kegiatan_id' => $rktKegId,
                                 'sub_kegiatan_id' => $subId,
+                                'indikator_sasaran_sub_kegiatan' => $s['indikator_sasaran_sub_kegiatan'] ?? null,
+                                'target' => $s['target'] ?? null,
                                 'created_at' => date('Y-m-d H:i:s'),
                                 'updated_at' => date('Y-m-d H:i:s'),
                             ]);

@@ -355,7 +355,7 @@
       units.unshift(''); // empty string for 'Pilih Satuan' option
       
       if (!units || units.length <= 1) {
-          units = ['', '%', 'Orang', 'Unit', 'Lembaga', 'Kegiatan', 'Km', 'Ha', 'PPM'];
+          units = ['', '%', 'Orang', 'Unit', 'Lembaga', 'Kegiatan', 'Km', 'Ha', 'PPM', 'Ton'];
       }
       return units.map(u => `<option value="${u}">${u ? u : 'Pilih Satuan'}</option>`).join('');
     }

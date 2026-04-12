@@ -136,6 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         anggaranSub.name =
                             `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][anggaran]`;
                     }
+
+                    const indikatorSubkeg = subItem.querySelector(".id_indikator_sasaran_sub_kegiatan_input");
+                    if (indikatorSubkeg) {
+                        indikatorSubkeg.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][indikator_sasaran_sub_kegiatan]`;
+                    }
+
+                    const targetSubkeg = subItem.querySelector(".target_input");
+                    if (targetSubkeg) {
+                        targetSubkeg.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][target]`;
+                    }
                 });
             });
         });

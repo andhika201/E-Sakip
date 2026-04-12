@@ -14,30 +14,74 @@
   <main class="flex-grow-1 d-flex align-items-center justify-content-center">
     <div class="container my-5" style="max-width: 1700px;">
       <div class="bg-white p-4 rounded shadow-sm">
-      <h4 class="fw-bold text-center text-success mb-4">
-        RENCANA KINERJA TAHUNAN
+      <h4 class="fw-bold text-center text-success mb-4 text-uppercase">
+        RENCANA KINERJA TAHUNAN (RKT) PERANGKAT DAERAH
       </h4>
+      
+      <!-- Filter -->
+      <div class="row justify-content-center mb-4">
+          <div class="col-12 col-xl-10">
+              <form method="GET" action="<?= base_url('rkt') ?>" class="row g-2 justify-content-center align-items-center">
+                  <div class="col-12 col-md-5">
+                      <select name="opd_id" class="form-select w-100" onchange="this.form.submit()">
+                          <option value="all">Semua Perangkat Daerah</option>
+                          <?php foreach ($opdList as $opd): ?>
+                              <option value="<?= $opd['id'] ?>" <?= ($selected_opd == $opd['id']) ? 'selected' : '' ?>>
+                                  <?= esc($opd['nama_opd']) ?>
+                              </option>
+                          <?php endforeach; ?>
+                      </select>
+                  </div>
+                  
+                  <div class="col-12 col-md-3">
+                      <select name="tahun" class="form-select w-100" onchange="this.form.submit()">
+                          <option value="all">Semua Tahun</option>
+                          <?php foreach ($available_years as $year): ?>
+                              <option value="<?= $year ?>" <?= ($selected_tahun == $year) ? 'selected' : '' ?>><?= $year ?></option>
+                          <?php endforeach; ?>
+                      </select>
+                  </div>
+                  
+                  <div class="col-12 col-md-auto">
+                      <noscript><button type="submit" class="btn btn-success w-100"><i class="fas fa-filter me-1"></i> Filter</button></noscript>
+                  </div>
+              </form>
+          </div>
+      </div>
       
       <!-- Tabel RKT -->
       <div class="table-responsive">
-        <table class="table table-bordered align-middle text-center">
+        <table class="table table-bordered align-middle text-center table-hover">
           <thead class="table-success">
             <tr>
               <th style="width: 5%;">No</th>
+              <th>Perangkat Daerah</th>
               <th>Sasaran</th>
               <th>Indikator Sasaran</th>
               <th>Target Capaian Per Tahun</th>
             </tr>
           </thead>
           <tbody>
-            <?php $no = 1; foreach ($rktData as $item): ?>
+            <?php if(empty($rktData)): ?>
               <tr>
-                <td><?= $no++ ?></td>
-                <td><?= esc($item['sasaran']) ?></td>
-                <td><?= esc($item['indikator']) ?></td>
-                <td><?= esc($item['target']) ?></td>
+                <td colspan="5" class="text-center text-muted p-4">Tidak ada data RKT untuk filter yang dipilih.</td>
               </tr>
-              <?php endforeach; ?>
+            <?php else: ?>
+              <?php $no = 1; foreach ($rktData as $item): ?>
+                <tr>
+                  <td><?= $no++ ?></td>
+                  <td class="text-start"><?= esc($item['opd']) ?></td>
+                  <td class="text-start"><?= esc($item['sasaran']) ?></td>
+                  <td class="text-start">
+                    <?= esc($item['indikator']) ?>
+                    <?php if(!empty($item['satuan'])): ?>
+                        <br><small class="text-muted">(<?= esc($item['satuan']) ?>)</small>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= esc($item['target'] ?? '-') ?></td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
             </tbody>
         </table>
       </div>

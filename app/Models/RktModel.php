@@ -136,6 +136,8 @@ class RktModel extends Model
                     $tblRktSub->insert([
                         'rkt_kegiatan_id' => $rktKegId,
                         'sub_kegiatan_id' => $sub['subkegiatan_id'],
+                        'indikator_sasaran_sub_kegiatan' => $sub['indikator_sasaran_sub_kegiatan'] ?? null,
+                        'target' => $sub['target'] ?? null,
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);
@@ -551,6 +553,8 @@ class RktModel extends Model
             p.program_kegiatan      AS program_kegiatan,
             k.kegiatan              AS nama_kegiatan,
             sk.sub_kegiatan         AS nama_subkegiatan,
+            rs.indikator_sasaran_sub_kegiatan,
+            rs.target,
             sk.anggaran             AS target_anggaran
         ")
             ->join('renstra_indikator_sasaran i', 'i.id = r.indikator_id', 'left')

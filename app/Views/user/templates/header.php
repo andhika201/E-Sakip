@@ -48,8 +48,9 @@
           </a>
           <ul class="dropdown-menu" aria-labelledby="kabupatenDropdown">
             <li><a class="dropdown-item" href="<?= base_url('rpjmd') ?>">RPJMD</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('rkpd') ?>">RKPD</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('cascading_kabupaten') ?>">CASCADING</a></li>
             <li><a class="dropdown-item" href="<?= base_url('pk_bupati') ?>">PK-Bupati</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('rkt') ?>">RKT</a></li>
             <li><a class="dropdown-item" href="<?= base_url('lakip_kabupaten') ?>">LAKIP</a></li>
           </ul>
         </li>
@@ -62,6 +63,8 @@
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">
             <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('renstra') ?>">RENSTRA</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('cascading_opd') ?>">CASCADING</a></li>
+            <li><a class="dropdown-item" href="<?= base_url('rkt') ?>">RKT</a></li>
             <li><a class="dropdown-item" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
             <li><a class="dropdown-item" href="<?= base_url('iku_opd') ?>">IKU</a></li>
             <li><a class="dropdown-item" href="<?= base_url('pk_pimpinan') ?>">PK Pimpinan</a></li>

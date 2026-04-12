@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Halaman Tidak Ditemukan</title>
+    <title>403 - Akses Ditolak</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Option 1: Include in HTML -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body {
@@ -26,7 +27,7 @@
         .error-code {
             font-size: 6rem;
             font-weight: 800;
-            color: #6c757d;
+            color: #dc3545;
             line-height: 1;
             margin-bottom: 20px;
         }
@@ -45,11 +46,10 @@
 <body>
 
 <div class="error-container">
-    <div class="error-code">404</div>
-    <div class="error-head">Halaman Tidak Ditemukan!</div>
+    <div class="error-code">403</div>
+    <div class="error-head">Akses Ditolak!</div>
     <div class="error-text">
-        Maaf, halaman yang Anda cari tidak ada, telah dihapus, atau namanya diubah.
-        Coba periksa kembali URL yang Anda tuju.
+        Maaf, Anda tidak memiliki izin untuk mengakses halaman ini dengan peran (role) Anda saat ini.
     </div>
     <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">
         <i class="bi bi-arrow-left"></i> Kembali

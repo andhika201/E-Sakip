@@ -282,7 +282,7 @@
                                     <td><?= esc($r['satuan'] ?? '-') ?></td>
                                     <td><?= esc(ucwords(str_replace('indikator ', '', strtolower((string) $jenis)))) ?></td>
                                     <td><?= esc($r['tahun'] ?? '-') ?></td>
-                                    <td><?= formatAtauRaw($targetNow, 2) ?></td>
+                                    <td><?= esc($targetNow ?? '-') ?></td>
 
                                     <td><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
                                     <td><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>

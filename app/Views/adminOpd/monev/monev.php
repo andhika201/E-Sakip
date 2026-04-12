@@ -45,12 +45,34 @@
                     </div>
                 </form>
 
-                <div class="mb-3 text-end">
-                    <a href="<?= base_url('adminopd/monev/cetak?tahun=' . ($tahun ?? 'all')) ?>"
-                        class="btn btn-success">
+                <div class="mb-3 d-flex justify-content-end align-items-center gap-2">
+                    <div style="width: 250px;">
+                        <select id="pegawai_id" class="form-select">
+                            <option value="">-- Pilih Penandatangan --</option>
+                            <?php foreach ($pegawaiList as $p): ?>
+                                <option value="<?= (int) $p['id'] ?>">
+                                    <?= esc($p['nama_pegawai']) ?> (<?= esc($p['nama_jabatan'] ?? '-') ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <a href="#" onclick="cetakMonev()" class="btn btn-success">
                         <i class="fas fa-print"></i> Cetak
                     </a>
                 </div>
+
+                <script>
+                    function cetakMonev() {
+                        const pegawaiId = document.getElementById('pegawai_id').value;
+                        if (!pegawaiId) {
+                            alert('Silakan pilih pejabat penandatangan terlebih dahulu.');
+                            return;
+                        }
+                        const tahun = "<?= $tahun ?? 'all' ?>";
+                        const url = "<?= base_url('adminopd/monev/cetak') ?>?tahun=" + tahun + "&pegawai_id=" + pegawaiId;
+                        window.open(url, '_blank');
+                    }
+                </script>
 
                 <!-- Tabel -->
                 <div class="table-responsive">

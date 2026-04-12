@@ -52,10 +52,19 @@ class MonevController extends BaseController
             $monevList = $this->monev->getIndexDataAdminOpd((int) $opdId, $tahun);
             $tahunList = $this->monev->getAvailableYears();
 
+            // Daftar pegawai OPD untuk dropdown pejabat penandatangan
+            $pegawaiList = $this->db->table('pegawai AS p')
+                ->select('p.id, p.nama_pegawai, p.nip_pegawai, j.nama_jabatan')
+                ->join('jabatan AS j', 'j.id = p.jabatan_id', 'left')
+                ->where('p.opd_id', $opdId)
+                ->orderBy('p.nama_pegawai', 'ASC')
+                ->get()->getResultArray();
+
             return view('adminOpd/monev/monev', [
-                'monevList' => $monevList,
-                'tahun' => $tahun ?? 'all',
-                'tahunList' => $tahunList,
+                'monevList'   => $monevList,
+                'tahun'       => $tahun ?? 'all',
+                'tahunList'   => $tahunList,
+                'pegawaiList' => $pegawaiList,
             ]);
         }
 
@@ -341,11 +350,11 @@ class MonevController extends BaseController
     {
         helper('format');
 
-        $session = session();
-        $role = $session->get('role');
-        $opdId = (int) $session->get('opd_id');
-        $opd = $this->opdModel->getOpdById($opdId);
-        $mode = $this->request->getGet('mode') ?? 'opd';
+        $session  = session();
+        $role     = $session->get('role');
+        $opdId    = (int) $session->get('opd_id');
+        $opd      = $this->opdModel->getOpdById($opdId);
+        $mode     = $this->request->getGet('mode') ?? 'opd';
         $tahunParam = $this->request->getGet('tahun') ?? 'all';
 
         $tahun = ($tahunParam === 'all' || $tahunParam === '')
@@ -353,42 +362,56 @@ class MonevController extends BaseController
             : (string) (int) $tahunParam;
 
         if ($role === 'admin_opd') {
-
             $monevList = $this->monev->getIndexDataAdminOpd($opdId, $tahun);
         } elseif ($role === 'admin_kab') {
-
-            $opdIdParam = $this->request->getGet('opd_id') ?? null;
-
+            $opdIdParam  = $this->request->getGet('opd_id') ?? null;
             if ($mode === 'kab') {
-
                 $monevList = $this->monev->getIndexDataAdminKabModeKab($tahun);
-
             } else {
-
                 $filterOpdId = ($opdIdParam === 'all' || !$opdIdParam)
                     ? null
                     : (int) $opdIdParam;
-
                 $monevList = $this->monev->getIndexDataAdminKabModeOpd($tahun, $filterOpdId);
             }
         }
 
-        // dd($opd);
+        // Ambil data pejabat penandatangan yang dipilih user
+        $pegawaiId  = (int) ($this->request->getGet('pegawai_id') ?? 0);
+        $pejabat    = null;
+        if ($pegawaiId > 0) {
+            $pejabat = $this->db->table('pegawai AS p')
+                ->select('p.nama_pegawai, p.nip_pegawai, j.nama_jabatan')
+                ->join('jabatan AS j', 'j.id = p.jabatan_id', 'left')
+                ->where('p.id', $pegawaiId)
+                ->get()->getRowArray();
+        }
+
         $data = [
             'monevList' => $monevList,
-            'tahun' => $tahun,
-            'opd' => $opd,
-            'logo_url' => FCPATH . 'assets/images/logo.png'
+            'tahun'     => $tahun,
+            'opd'       => $opd,
+            'pejabat'   => $pejabat,
+            'logo_url'  => FCPATH . 'assets/images/logo.png',
         ];
 
         $html = view('adminOpd/monev/cetak', $data);
 
         $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'FOLIO-L',
+            'mode'              => 'utf-8',
+            'format'            => 'FOLIO-L',
             'default_font_size' => 11,
-            'tempDir' => sys_get_temp_dir(),
+            'tempDir'           => sys_get_temp_dir(),
         ]);
+
+        // Footer nomor halaman
+        $mpdf->SetHTMLFooter('
+            <table width="100%" style="font-size:9pt; color:#555; border-top:1px solid #ccc; padding-top:4px;">
+                <tr>
+                    <td width="50%">Monitoring dan Evaluasi Kinerja &mdash; ' . esc($opd['nama_opd'] ?? '') . '</td>
+                    <td width="50%" style="text-align:right;">Halaman {PAGENO} dari {nb}</td>
+                </tr>
+            </table>
+        ');
 
         $mpdf->WriteHTML($html);
 

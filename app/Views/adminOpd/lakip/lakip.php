@@ -368,7 +368,7 @@
                                         <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
 
                                         <td class="text-center">
-                                            <?= (is_numeric($targetTahun) || $targetTahun !== null) ? esc((string) $targetTahun) : '-' ?>
+                                            <?= ($targetTahun !== null && $targetTahun !== '') ? esc((string) $targetTahun) : '-' ?>
                                         </td>
 
                                         <td class="text-center">

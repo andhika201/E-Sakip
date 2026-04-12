@@ -62,6 +62,10 @@
         tr {
             page-break-inside: avoid;
         }
+
+        .no-border-table td {
+            border: none !important;
+        }
     </style>
 
 </head>
@@ -121,17 +125,21 @@
         </thead>
 
         <tbody>
-
             <?php
             $total = count($monevList);
+            $breakPoint = $total - 2; // Kita sisakan 2 baris terakhir untuk menemani ttd
             $no = 1;
 
             foreach ($monevList as $i => $row):
-                $class = ($i >= $total - 2) ? 'keep-with-signature' : '';
-                ?>
-                <tr class="<?= $class ?>">
+                // Jika sudah mencapai 2 baris terakhir, tutup tbody lama dan buka yang baru
+                if ($i == $breakPoint && $i > 0):
+                    ?>
+                </tbody>
+                <tbody style="page-break-inside: avoid;">
+                <?php endif; ?>
 
-                    <td><?= $no++ ?></td>
+                <tr>
+                    <td style="text-align:center;"><?= $no++ ?></td>
                     <td><?= esc($row['sasaran_renstra']) ?></td>
                     <td><?= esc($row['indikator_sasaran']) ?></td>
                     <td><?= esc($row['indikator_tahun']) ?></td>
@@ -140,63 +148,47 @@
                     <td class="text-start">
                         <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
                     </td>
-                    <td><?= esc($row['target_capaian']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['target_capaian']) ?></td>
 
-                    <td><?= esc($row['target_triwulan_1']) ?></td>
-                    <td><?= esc($row['target_triwulan_2']) ?></td>
-                    <td><?= esc($row['target_triwulan_3']) ?></td>
-                    <td><?= esc($row['target_triwulan_4']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['target_triwulan_1']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['target_triwulan_2']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['target_triwulan_3']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['target_triwulan_4']) ?></td>
 
-                    <td><?= esc($row['capaian_triwulan_1']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_2']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_3']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_4']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['capaian_triwulan_1']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['capaian_triwulan_2']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['capaian_triwulan_3']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['capaian_triwulan_4']) ?></td>
 
-                    <td><?= esc($row['monev_total']) ?></td>
+                    <td style="text-align:center;"><?= esc($row['monev_total']) ?></td>
 
                     <td><?= esc($row['penanggung_jawab']) ?></td>
-
                 </tr>
 
             <?php endforeach ?>
 
+            <!-- Baris Kosong Penengah -->
+            <tr>
+                <td colspan="17" style="border:none; height:30px;"></td>
+            </tr>
+
+            <!-- Area Tanda Tangan (masih di dalam tbody yang sama agar tidak terpisah) -->
+            <tr>
+                <td colspan="11" style="border:none;"></td>
+                <td colspan="6" style="border:none; text-align:center;">
+                    Pringsewu, <?= formatTanggal(date('Y-m-d')) ?>
+                    <br>
+                    <?= esc($pejabat['nama_jabatan'] ?? ('Kepala ' . ($opd['nama_opd'] ?? '-'))) ?>
+                    <br><br><br><br><br>
+                    <strong>( <?= esc($pejabat['nama_pegawai'] ?? '........................................') ?> )</strong>
+                    <br>
+                    NIP. <?= esc($pejabat['nip_pegawai'] ?? '....................................') ?>
+                </td>
+            </tr>
         </tbody>
 
     </table>
 
-    <!-- SIGNATURE -->
-    <!-- <div style="height:80px;"></div>
-
-    <div class="signature-block">
-
-        <table style="width:100%; border:none;">
-
-            <tr>
-                <td style="width:50%; border:none;"></td>
-
-                <td style="width:50%; border:none; text-align:center;">
-
-                    Pringsewu, <?= date('Y') ?>
-
-                    <div>
-                        Kepala <?= esc($opd['nama_opd'] ?? '-') ?>
-                    </div>
-
-                    <div style="height:120px;"></div>
-
-                    <strong>(........................................)</strong>
-
-                    <div>
-                        NIP. ....................................
-                    </div>
-
-                </td>
-
-            </tr>
-
-        </table>
-
-    </div> -->
 
 
 </body>

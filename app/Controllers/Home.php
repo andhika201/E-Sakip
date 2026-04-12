@@ -9,4 +9,9 @@ class Home extends BaseController
         helper('url');
         return redirect()->to('/dashboard');
     }
+
+    public function unauthorized()
+    {
+        return view('errors/unauthorized');
+    }
 }

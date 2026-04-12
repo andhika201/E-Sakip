@@ -318,6 +318,10 @@
                                                         <i class="fas fa-sync-alt"></i>
                                                     </a>
                                                 <?php endif; ?>
+                                                <a class="btn btn-danger aksi-btn" href="<?= base_url('adminkab/lakip/delete/' . $lakipItem['id']) . '?' . $q ?>"
+                                                    title="Hapus LAKIP" onclick="return confirm('Apakah Anda yakin ingin menghapus data LAKIP ini?');">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
                                             <?php endif; ?>
                                         </div>
                                     </td>

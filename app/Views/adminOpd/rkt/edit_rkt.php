@@ -204,7 +204,7 @@
                         <?php foreach ($keg['subkegiatan'] as $sub): ?>
                           <div class="subkeg-item border rounded p-3 mb-3">
                             <div class="row">
-                              <div class="col-md-6">
+                              <div class="col-md-3">
                                 <label class="form-label">Sub Kegiatan</label>
                                 <select class="form-select select2 subkeg-select border-secondary">
                                   <option value="">Pilih Sub Kegiatan</option>
@@ -218,14 +218,24 @@
                                 </select>
                               </div>
 
-                              <div class="col-md-3">
+                              <div class="col-md-4">
+                                <label class="form-label">Indikator Sasaran Sub Kegiatan</label>
+                                <input type="text" name="indikator_sasaran_sub_kegiatan" class="form-control mb-3 border-secondary id_indikator_sasaran_sub_kegiatan_input" value="<?= esc($sub['indikator_sasaran_sub_kegiatan'] ?? '') ?>">
+                              </div>
+
+                              <div class="col-md-2">
+                                <label class="form-label">Target</label>
+                                <input type="text" name="target" class="form-control mb-3 border-secondary target_input" value="<?= esc($sub['target'] ?? '') ?>">
+                              </div>
+
+                              <div class="col-md-2">
                                 <label class="form-label">Anggaran</label>
-                                <input type="text" class="form-control anggaran-input"
+                                <input type="text" class="form-control margin-bottom-3 border-secondary anggaran-input"
                                   value="<?= number_format($sub['anggaran'], 0, ',', '.') ?>" readonly>
                               </div>
 
-                              <div class="col-md-3 d-flex align-items-end">
-                                <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm">
+                              <div class="col-md-1 d-flex align-items-end">
+                                <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm mb-3">
                                   <i class="fas fa-trash"></i>
                                 </button>
                               </div>

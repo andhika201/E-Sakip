@@ -19,19 +19,20 @@
       </h4>
   
       <!-- Filter OPD -->
-      <div class="row mb-3">
-        <div class="col-md-4 d-flex align-items-center">
-          <label for="filterOpd" class="me-2 fw-bold">OPD:</label>
-          <select id="filterOpd" class="form-select">
-            <?php foreach ($opdList as $opd): ?>
-              <option value="<?= esc($opd) ?>"><?= esc($opd) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <button class="btn btn-success w-100" onclick="filterOpd()">
-            <i class="fas fa-filter"></i> Filter
-          </button>
+      <div class="row justify-content-center mb-4">
+        <div class="col-12 col-md-6 col-lg-5">
+            <form method="GET" action="<?= base_url('renstra') ?>" class="d-flex w-100">
+                <select name="opd_id" class="form-select" onchange="this.form.submit()">
+                    <option value="all">Semua Perangkat Daerah</option>
+                    <?php foreach ($opdList as $opd): ?>
+                        <option value="<?= $opd['id'] ?>" <?= ($selected_opd == $opd['id']) ? 'selected' : '' ?>>
+                            <?= esc($opd['nama_opd']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <!-- Tombol Submit Disembunyikan karena sudah ada onchange -->
+                <noscript><button type="submit" class="btn btn-success ms-2">Filter</button></noscript>
+            </form>
         </div>
       </div>
 
@@ -39,29 +40,41 @@
         <table class="table table-bordered align-middle text-center" id="renstraTable">
           <thead class="table-success">
             <tr>
-              <th>No</th>
-              <th>Sasaran</th>
-              <th>Indikator Sasaran</th>
+              <th rowspan="2" class="align-middle">No</th>
+              <th rowspan="2" class="align-middle">Perangkat Daerah</th>
+              <th rowspan="2" class="align-middle">Sasaran</th>
+              <th rowspan="2" class="align-middle">Indikator Sasaran</th>
               <th colspan="<?= count($tahunList) ?>">Target Capaian Per Tahun</th>
             </tr>
             <tr>
-              <th colspan="3"></th>
               <?php foreach ($tahunList as $tahun): ?>
                 <th class="tahun-col tahun-<?= $tahun ?>"><?= $tahun ?></th>
-                <?php endforeach; ?>
+              <?php endforeach; ?>
             </tr>
           </thead>
           <tbody>
-            <?php $no = 1; foreach ($renstraData as $row): ?>
-              <tr data-opd="<?= esc($row['opd']) ?>">
-                <td><?= $no++ ?></td>
-                <td><?= esc($row['sasaran']) ?></td>
-                <td><?= esc($row['indikator']) ?></td>
-                <?php foreach ($tahunList as $tahun): ?>
-                  <td><?= esc($row['target_capaian'][$tahun] ?? '-') ?></td>
-                <?php endforeach; ?>
+            <?php if(empty($renstraData)): ?>
+              <tr>
+                <td colspan="<?= 4 + count($tahunList) ?>" class="text-center text-muted p-4">Tidak ada data Renstra.</td>
               </tr>
-            <?php endforeach; ?>
+            <?php else: ?>
+              <?php $no = 1; foreach ($renstraData as $row): ?>
+                <tr>
+                  <td><?= $no++ ?></td>
+                  <td class="text-start"><?= esc($row['opd']) ?></td>
+                  <td class="text-start"><?= esc($row['sasaran']) ?></td>
+                  <td class="text-start">
+                    <?= esc($row['indikator']) ?>
+                    <?php if(!empty($row['satuan'])): ?>
+                        <br><small class="text-muted">(<?= esc($row['satuan']) ?>)</small>
+                    <?php endif; ?>
+                  </td>
+                  <?php foreach ($tahunList as $tahun): ?>
+                    <td><?= esc($row['target_capaian'][$tahun] ?? '-') ?></td>
+                  <?php endforeach; ?>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>
@@ -70,23 +83,7 @@
   </div>
 </main>
 
-<script>
-  function filterOpd() {
-    const selectedOpd = document.getElementById('filterOpd').value;
-    const rows = document.querySelectorAll('#renstraTable tbody tr');
-    
-    rows.forEach(row => {
-      if (row.getAttribute('data-opd') === selectedOpd) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  }
-  
-  // Jalankan saat halaman pertama dibuka agar default filter aktif
-  document.addEventListener('DOMContentLoaded', filterOpd);
-</script>
+
 
 <?= $this->include('user/templates/footer'); ?>
 </body>

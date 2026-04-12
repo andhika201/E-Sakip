@@ -368,4 +368,24 @@ class LakipController extends BaseController
         $this->lakipModel->updateLakip((int) $id, ['status' => $to]);
         return redirect()->back()->with('success', 'Status LAKIP diubah menjadi ' . ucfirst($to));
     }
+
+    public function delete($id)
+    {
+        $session = session();
+        $role = $session->get('role');
+        if ($role !== 'admin_kab') {
+            return redirect()->to('/login')->with('error', 'Akses ditolak');
+        }
+
+        $lakip = $this->lakipModel->find($id);
+        if (!$lakip) {
+            return redirect()->back()->with('error', 'Data LAKIP tidak ditemukan.');
+        }
+
+        if ($this->lakipModel->deleteLakip((int) $id)) {
+            return redirect()->back()->with('success', 'LAKIP berhasil dihapus.');
+        }
+
+        return redirect()->back()->with('error', 'Gagal menghapus LAKIP.');
+    }
 }

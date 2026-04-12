@@ -6,6 +6,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= esc($title ?? 'RENJA (RKT)') ?></title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
+    <style>
+        /* ===== RKT TABLE STYLES ===== */
+        .tbl-rkt-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .tbl-rkt {
+            min-width: 1600px;
+            border-collapse: collapse;
+            font-size: 0.825rem;
+            width: 100%;
+        }
+        .tbl-rkt thead th {
+            background-color: #1a7a4a;
+            color: #fff;
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px 8px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            border: 1px solid #155d38;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            white-space: nowrap;
+        }
+        .tbl-rkt tbody td {
+            vertical-align: middle;
+            padding: 8px 10px;
+            border: 1px solid #dee2e6;
+            line-height: 1.45;
+        }
+        /* Kolom teks panjang bisa wrap */
+        .tbl-rkt td.col-wrap {
+            white-space: normal;
+            word-break: break-word;
+            text-align: left;
+        }
+        /* Kolom pendek tetap nowrap */
+        .tbl-rkt td.col-nowrap {
+            white-space: nowrap;
+        }
+        /* Stripe rows */
+        .tbl-rkt tbody tr:nth-child(even) { background-color: #f9fafb; }
+        .tbl-rkt tbody tr:hover { background-color: #e8f5ee; }
+        /* Kolom SATUAN KERJA – beri warna beda agar mudah dibaca */
+        .tbl-rkt td.col-opd {
+            background-color: #d4edda;
+            font-weight: 600;
+            text-align: left;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .tbl-rkt td.col-no  { text-align: center; white-space: nowrap; width: 40px; }
+        .tbl-rkt td.col-thn { text-align: center; white-space: nowrap; width: 60px; }
+        .tbl-rkt td.col-ang { text-align: right;  white-space: nowrap; }
+        /* Badge status */
+        .badge-selesai { background-color:#198754; color:#fff; padding:4px 8px; border-radius:4px; font-size:.75rem; }
+        .badge-draft   { background-color:#ffc107; color:#212529; padding:4px 8px; border-radius:4px; font-size:.75rem; }
+        /* Info bar */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0fdf5;
+            border: 1px solid #b7e4c7;
+            border-radius: 6px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #155d38;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -83,33 +158,29 @@
             </div>
 
             <!-- Info ringkas -->
-            <div class="row mb-3">
-                <div class="col-12 d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        Total indikator: <?= isset($rktdata) ? count($rktdata) : 0 ?>
-                    </small>
-                    <small class="text-muted">
-                        OPD: <strong><?= esc($currentOpd['nama_opd'] ?? '-') ?></strong>
-                    </small>
-                </div>
+            <div class="info-bar">
+                <span>📋 Total indikator: <strong><?= isset($rktdata) ? count($rktdata) : 0 ?></strong></span>
+                <span>🏢 OPD: <strong><?= esc($currentOpd['nama_opd'] ?? '-') ?></strong></span>
             </div>
 
             <!-- TABEL -->
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-rkt text-center small align-middle">
-                    <thead class="table-success">
+            <div class="tbl-rkt-wrapper">
+                <table class="tbl-rkt">
+                    <thead>
                     <tr>
-                        <th class="border p-2">SATUAN KERJA</th>
-                        <th class="border p-2">NO</th>
-                        <th class="border p-2">TAHUN</th>
-                        <th class="border p-2">SASARAN</th>
-                        <th class="border p-2">INDIKATOR SASARAN</th>
-                        <th class="border p-2">PROGRAM</th>
-                        <th class="border p-2">KEGIATAN</th>
-                        <th class="border p-2">SUB KEGIATAN</th>
-                        <th class="border p-2">TARGET ANGGARAN</th>
-                        <th class="border p-2">STATUS RKT</th>
-                        <th class="border p-2">AKSI</th>
+                        <th style="min-width:160px;">SATUAN KERJA</th>
+                        <th style="width:44px;">NO</th>
+                        <th style="width:68px;">TAHUN</th>
+                        <th style="min-width:220px;">SASARAN</th>
+                        <th style="min-width:220px;">INDIKATOR SASARAN</th>
+                        <th style="min-width:200px;">PROGRAM</th>
+                        <th style="min-width:200px;">KEGIATAN</th>
+                        <th style="min-width:200px;">SUB KEGIATAN</th>
+                        <th style="min-width:220px;">INDIKATOR SASARAN SUB KEGIATAN</th>
+                        <th style="min-width:90px;">TARGET</th>
+                        <th style="min-width:140px;">TARGET ANGGARAN</th>
+                        <th style="min-width:100px;">STATUS RKT</th>
+                        <th style="min-width:110px;">AKSI</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -239,36 +310,38 @@
                         if (empty($ind['rkts'])): ?>
                             <tr>
                                 <?php if ($firstOpdRow): ?>
-                                    <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
+                                    <td rowspan="<?= $totalRowsAll ?>" class="col-opd">
                                         <?= esc($currentOpd['nama_opd'] ?? '-') ?>
                                     </td>
                                     <?php $firstOpdRow = false; ?>
                                 <?php endif; ?>
 
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle"><?= $no++ ?></td>
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle">
+                                <td rowspan="<?= $totalSubRows ?>" class="col-no"><?= $no++ ?></td>
+                                <td rowspan="<?= $totalSubRows ?>" class="col-thn">
                                     <?= esc($displayYear) ?>
                                 </td>
                                 <?php if ($firstSasaranRow): ?>
-                                    <td rowspan="<?= $sasaranRowspan ?>" class="align-middle text-start">
+                                    <td rowspan="<?= $sasaranRowspan ?>" class="col-wrap">
                                         <?= esc($sasaranNama) ?>
                                     </td>
                                     <?php $firstSasaranRow = false; ?>
                                 <?php endif; ?>
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle text-start">
+                                <td rowspan="<?= $totalSubRows ?>" class="col-wrap">
                                     <?= esc($ind['indikator_sasaran']) ?>
                                 </td>
 
-                                <td class="text-start">-</td>
-                                <td class="text-start">-</td>
-                                <td class="text-start">-</td>
-                                <td class="text-end">-</td>
+                                <td class="col-wrap">-</td>
+                                <td class="col-wrap">-</td>
+                                <td class="col-wrap">-</td>
+                                <td class="col-wrap">-</td>
+                                <td class="col-wrap">-</td>
+                                <td class="col-ang">-</td>
 
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle">
+                                <td rowspan="<?= $totalSubRows ?>" class="text-center align-middle">
                                     <span class="badge bg-secondary">Belum ada RKT</span>
                                 </td>
 
-                                <td rowspan="<?= $totalSubRows ?>" class="align-middle">
+                                <td rowspan="<?= $totalSubRows ?>" class="text-center align-middle">
                                     <a href="<?= base_url('adminopd/rkt/tambah/' . $ind['id']) ?>"
                                        class="btn btn-primary btn-sm" title="Tambah RKT">
                                         <i class="fas fa-plus"></i>
@@ -346,6 +419,14 @@
 
                                                     <td class="text-start">
                                                         <?= esc($sub['sub_kegiatan'] ?? '-') ?>
+                                                    </td>
+                                                    
+                                                    <td class="text-start">
+                                                        <?= esc($sub['indikator_sasaran_sub_kegiatan'] ?? '-') ?>
+                                                    </td>
+
+                                                    <td class="text-start">
+                                                        <?= esc($sub['target'] ?? '-') ?>
                                                     </td>
 
                                                     <td class="text-end">
@@ -458,6 +539,8 @@
                                                 </td>
 
                                                 <td class="text-start">-</td>
+                                                <td class="text-start">-</td>
+                                                <td class="text-start">-</td>
                                                 <td class="text-end">-</td>
 
                                                 <?php if (!$statusRendered): ?>
@@ -541,6 +624,8 @@
                                         </td>
                                         <td class="text-start">-</td>
                                         <td class="text-start">-</td>
+                                        <td class="text-start">-</td>
+                                        <td class="text-start">-</td>
                                         <td class="text-end">-</td>
 
                                         <?php if (!$statusRendered): ?>
@@ -595,7 +680,7 @@
 ?>
                     </tbody>
                 </table>
-            </div>
+            </div><!-- /.tbl-rkt-wrapper -->
         </div>
     </main>
 

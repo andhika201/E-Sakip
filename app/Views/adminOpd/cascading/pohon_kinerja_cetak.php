@@ -291,20 +291,16 @@
                                                                     <li>
                                                                         <!-- L4: Sasaran ESS II -->
                                                                         <div class="tree-node">
-                                                                            <!-- CSF ES2 -->
                                                                             <?php if (!empty($es2['csf'])): ?>
                                                                                 <div class="box-csf">
                                                                                     <div class="opacity-75 mb-1" style="font-size:9px;">Critical Success Factor ES.II</div>
                                                                                     <?= nl2br(esc($es2['csf'])) ?>
                                                                                 </div>
                                                                             <?php endif; ?>
-
                                                                             <div class="box-sasaran">
                                                                                 <div class="opacity-75 mb-1" style="font-size: 9px; font-weight: normal;">Sasaran ESS II</div>
                                                                                 <?= nl2br(esc($es2['nama'])) ?>
                                                                             </div>
-
-                                                                            <!-- Indikator ES2 -->
                                                                             <?php foreach ($es2['indikators'] as $indikatorEs2): ?>
                                                                                 <div class="box-iks">
                                                                                     <div class="opacity-75" style="font-size:8px;">Indikator ESS II</div>
@@ -319,20 +315,16 @@
                                                                                     <li>
                                                                                         <!-- L5: Sasaran ESS III -->
                                                                                         <div class="tree-node">
-                                                                                            <!-- CSF ES3 -->
                                                                                             <?php if (!empty($es3['csf'])): ?>
                                                                                                 <div class="box-csf">
                                                                                                     <div class="opacity-75 mb-1" style="font-size:9px;">Critical Success Factor ES.III</div>
                                                                                                     <?= nl2br(esc($es3['csf'])) ?>
                                                                                                 </div>
                                                                                             <?php endif; ?>
-
                                                                                             <div class="box-sasaran" style="background: linear-gradient(135deg, #7b1fa2 0%, #4a148c 100%);">
                                                                                                 <div class="opacity-75 mb-1" style="font-size: 9px; font-weight: normal;">Sasaran ESS III</div>
                                                                                                 <?= nl2br(esc($es3['nama'])) ?>
                                                                                             </div>
-
-                                                                                            <!-- Indikator ES3 -->
                                                                                             <?php foreach ($es3['indikators'] as $indikatorEs3): ?>
                                                                                                 <div class="box-iks" style="background: #8e24aa;">
                                                                                                     <div class="opacity-75" style="font-size:8px;">Indikator ESS III</div>

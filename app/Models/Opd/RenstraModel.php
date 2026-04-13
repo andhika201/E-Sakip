@@ -738,6 +738,7 @@ class RenstraModel extends Model
         }
 
         $rows = $query
+            ->orderBy('rtj.id', 'ASC')  // tujuan renstra
             ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->orderBy('rt.tahun', 'ASC')
@@ -957,8 +958,9 @@ class RenstraModel extends Model
         }
 
         $indikatorData = $query
+            ->orderBy('rt.id', 'ASC')   // tujuan renstra
             ->orderBy('rs.id', 'ASC')
-            ->orderBy('ris.id', 'ASC') // indikator sasaran
+            ->orderBy('ris.id', 'ASC')  // indikator sasaran
             ->get()
             ->getResultArray();
 

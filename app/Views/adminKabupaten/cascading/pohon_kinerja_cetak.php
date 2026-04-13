@@ -113,6 +113,19 @@
             transition: all 0.3s;
         }
 
+        /* Box Visi - Deep Blue/Indigo */
+        .box-visi {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: #fff;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 6px 12px rgba(26, 35, 126, 0.4);
+            border: 2px solid rgba(255,255,255,0.3);
+            letter-spacing: 0.3px;
+        }
+
         /* Box Misi - Teal */
         .box-misi {
             background: linear-gradient(135deg, #00b8a9 0%, #008f83 100%);
@@ -227,7 +240,8 @@
             .tree li {
                 padding: 15px 3px 0 3px;
             }
-            .box-misi { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
+            .box-visi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
+            .box-misi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
             .box-tujuan { font-size: 11px; padding: 8px; box-shadow: none;}
             .box-sasaran { font-size: 11px; padding: 8px; box-shadow: none;}
             .box-ikt, .box-iks, .box-csf { font-size: 9px; padding: 5px; box-shadow: none;}
@@ -256,68 +270,81 @@
     <div class="tree-container text-center">
         <div class="tree" id="tree-container">
             <ul>
-                <?php $misiNo = 0; foreach ($tree as $misi): $misiNo++; ?>
-                    <li>
-                        <!-- MISI NODE -->
-                        <div class="tree-node">
-                            <div class="box-misi">
-                                <div class="mb-1 opacity-75 small">Misi <?= $misiNo ?></div>
-                                <?= esc($misi['misi']) ?>
-                            </div>
+                <!-- VISI NODE (root tunggal) -->
+                <li>
+                    <div class="tree-node" style="width:280px;">
+                        <div class="box-visi">
+                            <div class="mb-1 opacity-75 small">VISI</div>
+                            <?= !empty($visi) ? esc($visi) : '<em style="opacity:.6">Visi belum diisi</em>' ?>
                         </div>
+                    </div>
 
-                        <?php if (!empty($misi['tujuan'])): ?>
-                            <ul>
-                                <?php foreach ($misi['tujuan'] as $tujuan): ?>
-                                    <li>
-                                        <!-- TUJUAN NODE -->
-                                        <div class="tree-node">
-                                            <div class="box-tujuan">
-                                                <?= esc($tujuan['tujuan_rpjmd']) ?>
-                                            </div>
-                                            <!-- INDIKATOR TUJUAN -->
-                                            <?php foreach ($tujuan['indikator_tujuan'] as $ikt): ?>
-                                                <div class="box-ikt">
-                                                    <?= esc($ikt['indikator_tujuan']) ?>
+                    <!-- Misi sebagai anak dari Visi -->
+                    <?php if (!empty($tree)): ?>
+                    <ul>
+                        <?php $misiNo = 0; foreach ($tree as $misi): $misiNo++; ?>
+                        <li>
+                            <!-- MISI NODE -->
+                            <div class="tree-node">
+                                <div class="box-misi">
+                                    <div class="mb-1 opacity-75 small">Misi <?= $misiNo ?></div>
+                                    <?= esc($misi['misi']) ?>
+                                </div>
+                            </div>
+
+                            <?php if (!empty($misi['tujuan'])): ?>
+                                <ul>
+                                    <?php foreach ($misi['tujuan'] as $tujuan): ?>
+                                        <li>
+                                            <!-- TUJUAN NODE -->
+                                            <div class="tree-node">
+                                                <div class="box-tujuan">
+                                                    <?= esc($tujuan['tujuan_rpjmd']) ?>
                                                 </div>
-                                            <?php endforeach; ?>
-                                        </div>
-
-                                        <?php if (!empty($tujuan['sasaran'])): ?>
-                                            <ul>
-                                                <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
-                                                    <li>
-                                                        <!-- SASARAN NODE -->
-                                                        <div class="tree-node">
-                                                            <!-- CSF -->
-                                                            <?php if (!empty($sasaran['csf'])): ?>
-                                                                <div class="box-csf">
-                                                                    <div class="opacity-75 mb-1" style="font-size:9px;">Critical Success Factor</div>
-                                                                    <?= nl2br(esc($sasaran['csf'])) ?>
-                                                                </div>
-                                                            <?php endif; ?>
-
-                                                            <div class="box-sasaran">
-                                                                <?= nl2br(esc($sasaran['sasaran_rpjmd'])) ?>
-                                                            </div>
-                                                            <!-- INDIKATOR SASARAN -->
-                                                            <?php foreach ($sasaran['indikator_sasaran'] as $iks): ?>
-                                                                <div class="box-iks">
-                                                                    <?= esc($iks['indikator_sasaran']) ?>
-                                                                </div>
-                                                            <?php endforeach; ?>
-                                                        </div>
-                                                    </li>
+                                                <!-- INDIKATOR TUJUAN -->
+                                                <?php foreach ($tujuan['indikator_tujuan'] as $ikt): ?>
+                                                    <div class="box-ikt">
+                                                        <?= esc($ikt['indikator_tujuan']) ?>
+                                                    </div>
                                                 <?php endforeach; ?>
-                                            </ul>
-                                        <?php endif; ?>
+                                            </div>
 
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </li>
-                <?php endforeach; ?>
+                                            <?php if (!empty($tujuan['sasaran'])): ?>
+                                                <ul>
+                                                    <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
+                                                        <li>
+                                                            <!-- SASARAN NODE -->
+                                                            <div class="tree-node">
+                                                                <!-- CSF -->
+                                                                <?php if (!empty($sasaran['csf'])): ?>
+                                                                    <div class="box-csf">
+                                                                        <div class="opacity-75 mb-1" style="font-size:9px;">Critical Success Factor</div>
+                                                                        <?= nl2br(esc($sasaran['csf'])) ?>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                                <div class="box-sasaran">
+                                                                    <?= nl2br(esc($sasaran['sasaran_rpjmd'])) ?>
+                                                                </div>
+                                                                <!-- INDIKATOR SASARAN -->
+                                                                <?php foreach ($sasaran['indikator_sasaran'] as $iks): ?>
+                                                                    <div class="box-iks">
+                                                                        <?= esc($iks['indikator_sasaran']) ?>
+                                                                    </div>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            <?php endif; ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <?php endif; ?>
+                </li>
             </ul>
         </div>
     </div>

@@ -87,6 +87,7 @@
                         <thead class="table-success">
                             <tr>
                                 <th rowspan="2" class="border p-2 align-middle">STATUS</th>
+                                <th rowspan="2" class="border p-2 align-middle">VISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">MISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR</th>
@@ -226,6 +227,9 @@
                                                             <button class="badge <?= $badgeClass ?> border-0"
                                                                 onclick="toggleStatus(<?= (int) ($misi['id'] ?? 0) ?>)"
                                                                 style="cursor:pointer"><?= $statusText ?></button>
+                                                        </td>
+                                                        <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>">
+                                                            <?= esc($misi['visi'] ?? '-') ?>
                                                         </td>
                                                         <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>">
                                                             <?= esc($misi['misi'] ?? '-') ?>

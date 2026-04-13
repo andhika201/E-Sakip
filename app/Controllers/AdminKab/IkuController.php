@@ -211,7 +211,7 @@ class IkuController extends BaseController
                 'rpjmd_id' => $indikatorId,
                 'renstra_id' => null,
                 'definisi' => $definisi,
-                'status' => 'belum',
+                'status' => 'draft',
                 'program_pendukung' => $programs,
             ];
         } else {
@@ -225,7 +225,7 @@ class IkuController extends BaseController
                 'renstra_id' => $indikatorId,
                 'rpjmd_id' => null,
                 'definisi' => $definisi,
-                'status' => 'belum',
+                'status' => 'draft',
                 'program_pendukung' => $programs,
             ];
         }
@@ -341,7 +341,7 @@ class IkuController extends BaseController
     }
 
     /* =========================================================
-     * UBAH STATUS IKU (BELUM <-> TERCAPAI)
+     * UBAH STATUS IKU (DRAFT <-> SELESAI)
      * route: GET adminkab/iku/change_status/(:num)
      * $id = ID IKU
      * =======================================================*/
@@ -364,14 +364,14 @@ class IkuController extends BaseController
             return redirect()->back()->with('error', 'IKU belum dibuat untuk indikator ini.');
         }
 
-        $currentStatus = strtolower($iku['status'] ?? 'belum');
-        $newStatus = ($currentStatus === 'tercapai') ? 'belum' : 'tercapai';
+        $currentStatus = strtolower($iku['status'] ?? 'draft');
+        $newStatus = ($currentStatus === 'selesai') ? 'draft' : 'selesai';
 
         // pakai helper updateIku yang sudah ada di model
         $this->ikuModel->updateIku($iku['id'], ['status' => $newStatus]);
 
         return redirect()->to(base_url('adminkab/iku?mode=' . $mode))
-            ->with('success', 'Status IKU berhasil diubah.');
+            ->with('success', 'Status IKU berhasil diubah menjadi: ' . ucfirst($newStatus));
     }
 
 

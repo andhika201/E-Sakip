@@ -26,7 +26,7 @@ class RktModel extends Model
         $rows = $this->db->table('rkt')
             ->distinct()
             ->select('tahun')
-            ->orderBy('tahun', 'DESC')
+            ->orderBy('tahun', 'ASC')
             ->get()
             ->getResultArray();
 

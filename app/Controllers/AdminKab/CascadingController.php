@@ -27,7 +27,7 @@ class CascadingController extends BaseController
         $periodeList = $this->db->table('rpjmd_misi')
             ->select('tahun_mulai, tahun_akhir')
             ->groupBy(['tahun_mulai', 'tahun_akhir'])
-            ->orderBy('tahun_mulai', 'DESC')
+            ->orderBy('tahun_mulai', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -320,15 +320,21 @@ class CascadingController extends BaseController
         );
 
         $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4-L',
-            'tempDir' => sys_get_temp_dir()
+            'mode'              => 'utf-8',
+            'format'            => 'A4-L',
+            'margin_left'       => 10,
+            'margin_right'      => 10,
+            'margin_top'        => 12,
+            'margin_bottom'     => 10,
+            'margin_header'     => 0,
+            'margin_footer'     => 0,
+            'tempDir'           => sys_get_temp_dir()
         ]);
-
+        $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Cascading-' . $periode . '.pdf"');
+        header('Content-Disposition: inline; filename="Cascading-Kabupaten-' . $periode . '.pdf"');
 
         $mpdf->Output();
         exit;
@@ -367,17 +373,28 @@ class CascadingController extends BaseController
 
         [$start, $end] = explode('-', $periode);
         $start = (int) $start;
-        $end = (int) $end;
+        $end   = (int) $end;
 
         $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+
+        // Ambil visi via JOIN rpjmd_visi (FK: rpjmd_misi.rpjmd_visi_id)
+        $firstMisi = $this->db->table('rpjmd_misi m')
+            ->select('rv.visi')
+            ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+            ->where('m.tahun_mulai', $start)
+            ->where('m.tahun_akhir', $end)
+            ->orderBy('m.id', 'ASC')
+            ->get()->getRowArray();
+        $visi = $firstMisi['visi'] ?? '';
 
         return view(
             'adminKabupaten/cascading/pohon_kinerja_cetak',
             [
-                'tree' => $tree,
+                'tree'        => $tree,
+                'visi'        => $visi,
                 'tahun_mulai' => $start,
                 'tahun_akhir' => $end,
-                'periode' => $periode
+                'periode'     => $periode
             ]
         );
     }

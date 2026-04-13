@@ -268,12 +268,12 @@
                                                     $rawStatus   = $iku['status'] ?? null;
                                                     $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
 
-                                                    if ($statusLower === 'tercapai') {
+                                                    if ($statusLower === 'selesai') {
                                                         $badgeClass  = 'bg-success';
-                                                        $statusLabel = 'Tercapai';
+                                                        $statusLabel = 'Selesai';
                                                     } else {
-                                                        $badgeClass  = 'bg-secondary';
-                                                        $statusLabel = 'Belum';
+                                                        $badgeClass  = 'bg-warning text-dark';
+                                                        $statusLabel = 'Draft';
                                                     }
                                                     ?>
                                                     <span class="badge <?= $badgeClass ?>"><?= esc($statusLabel) ?></span>

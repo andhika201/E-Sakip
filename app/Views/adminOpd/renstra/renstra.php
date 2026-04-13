@@ -319,8 +319,13 @@
 
                                             <?php if (!$rowPrinted): ?>
                                                 <td rowspan="<?= $totalRow ?>">
-                                                    <span class="badge bg-success">
-                                                        <?= ucfirst($sasaranStatus ?? 'draft') ?>
+                                                    <?php
+                                                    $sStatus = strtolower($sasaranStatus ?? 'draft');
+                                                    $sBadge  = $sStatus === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                                    $sLabel  = $sStatus === 'selesai' ? 'Selesai' : 'Draft';
+                                                    ?>
+                                                    <span class="badge <?= $sBadge ?>">
+                                                        <?= $sLabel ?>
                                                     </span>
                                                 </td>
 

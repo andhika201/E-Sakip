@@ -26,7 +26,7 @@
     $nilaiTarget = $target['target'] ?? $target['target_tahunan'] ?? null;
   }
 
-  $status = $lakip['status'] ?? 'proses';
+  $status = $lakip['status'] ?? 'draft';
   ?>
 
   <!-- Konten Utama -->

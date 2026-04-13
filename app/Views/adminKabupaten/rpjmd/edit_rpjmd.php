@@ -83,6 +83,12 @@
         <!-- Informasi Umum -->
         <section class="mb-4">
           <h2 class="h5 fw-semibold mb-3">Informasi Umum Misi</h2>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Visi Daerah</label>
+            <textarea name="visi" class="form-control" rows="2"
+              placeholder="Contoh: Terwujudnya Kabupaten yang Maju, Sejahtera dan Berkeadilan"><?= esc($misi['visi'] ?? '') ?></textarea>
+            <small class="text-muted">Visi berlaku untuk seluruh misi dalam satu periode RPJMD.</small>
+          </div>
           <div class="row">
             <div class="col-md-8">
               <label class="form-label">Misi RPJMD</label>
@@ -156,6 +162,12 @@
                               <input type="text" name="tujuan[<?= $ti ?>][indikator_tujuan][<?= $ij ?>][indikator_tujuan]"
                                 class="form-control" value="<?= esc($it['indikator_tujuan'] ?? '') ?>" required>
                             </div>
+                            <div class="mb-3">
+                              <label class="form-label">Baseline (Kondisi Awal)</label>
+                              <input type="text" name="tujuan[<?= $ti ?>][indikator_tujuan][<?= $ij ?>][baseline]"
+                                class="form-control" value="<?= esc($it['baseline'] ?? '') ?>"
+                                placeholder="Contoh: 75,5">
+                            </div>
                             <div class="target-tujuan-section">
                               <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
                               <div class="target-tujuan-container">
@@ -196,6 +208,11 @@
                             <label class="form-label">Indikator</label>
                             <input type="text" name="tujuan[<?= $ti ?>][indikator_tujuan][0][indikator_tujuan]"
                               class="form-control" required>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Baseline (Kondisi Awal)</label>
+                            <input type="text" name="tujuan[<?= $ti ?>][indikator_tujuan][0][baseline]"
+                              class="form-control" placeholder="Contoh: 75,5">
                           </div>
                           <div class="target-tujuan-section">
                             <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
@@ -317,6 +334,16 @@
                                         </div>
                                       </div>
 
+                                      <div class="row mb-3">
+                                        <div class="col-md-6">
+                                          <label class="form-label">Baseline (Kondisi Awal)</label>
+                                          <input type="text" class="form-control"
+                                            name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][<?= $ii ?>][baseline]"
+                                            value="<?= esc($is['baseline'] ?? '') ?>"
+                                            placeholder="Contoh: 68,5">
+                                        </div>
+                                      </div>
+
                                       <div class="mb-3">
                                         <label class="form-label">Definisi Operasional</label>
                                         <textarea class="form-control mb-3"
@@ -385,6 +412,15 @@
                                           <option value="indikator positif">Indikator Positif</option>
                                           <option value="indikator negatif">Indikator Negatif</option>
                                         </select>
+                                      </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                      <div class="col-md-6">
+                                        <label class="form-label">Baseline (Kondisi Awal)</label>
+                                        <input type="text" class="form-control"
+                                          name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][0][baseline]"
+                                          placeholder="Contoh: 68,5">
                                       </div>
                                     </div>
 

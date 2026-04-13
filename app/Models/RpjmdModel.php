@@ -37,16 +37,20 @@ class RpjmdModel extends Model
 
     public function getAllMisi()
     {
-        return $this->db->table('rpjmd_misi')
-            ->orderBy('tahun_mulai', 'ASC')
+        return $this->db->table('rpjmd_misi m')
+            ->select('m.*, rv.visi')
+            ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+            ->orderBy('m.tahun_mulai', 'ASC')
             ->get()
             ->getResultArray();
     }
 
     public function getMisiById($id)
     {
-        return $this->db->table('rpjmd_misi')
-            ->where('id', $id)
+        return $this->db->table('rpjmd_misi m')
+            ->select('m.*, rv.visi')
+            ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+            ->where('m.id', $id)
             ->get()
             ->getRowArray();
     }
@@ -639,8 +643,9 @@ class RpjmdModel extends Model
         }
 
         $ok = $this->db->table('rpjmd_indikator_tujuan')->insert([
-            'tujuan_id' => (int) $data['tujuan_id'],
-            'indikator_tujuan' => $data['indikator_tujuan'],
+            'tujuan_id'         => (int) $data['tujuan_id'],
+            'indikator_tujuan'  => $data['indikator_tujuan'],
+            'baseline'          => $data['baseline'] ?? null,
         ]);
         if (!$ok) {
             $err = $this->db->error();
@@ -894,10 +899,11 @@ class RpjmdModel extends Model
         // ================== INSERT MISI ==================
         $builderMisi = $db->table('rpjmd_misi');
         $builderMisi->insert([
-            'misi' => $data['misi']['misi'] ?? '',
+            'visi'        => $data['misi']['visi'] ?? '',
+            'misi'        => $data['misi']['misi'] ?? '',
             'tahun_mulai' => $data['misi']['tahun_mulai'] ?? null,
             'tahun_akhir' => $data['misi']['tahun_akhir'] ?? null,
-            'status' => $data['misi']['status'] ?? 'draft',
+            'status'      => $data['misi']['status'] ?? 'draft',
         ]);
         $misiId = $db->insertID();
 

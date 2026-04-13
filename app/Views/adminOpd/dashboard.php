@@ -117,15 +117,15 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Tercapai</td>
-                  <td class="text-end"><?= esc($ikuStats['tercapai'] ?? 0) ?></td>
-                  <td class="text-center <?= ($ikuStats['tercapai'] ?? 0) > 0 ? 'text-success' : '' ?>">
-                    <?= ($ikuStats['tercapai'] ?? 0) > 0 ? '<i class="fas fa-check-circle"></i>' : '—' ?>
+                  <td>Selesai</td>
+                  <td class="text-end"><?= esc($ikuStats['selesai'] ?? 0) ?></td>
+                  <td class="text-center <?= ($ikuStats['selesai'] ?? 0) > 0 ? 'text-success' : '' ?>">
+                    <?= ($ikuStats['selesai'] ?? 0) > 0 ? '<i class="fas fa-check-circle"></i>' : '—' ?>
                   </td>
                 </tr>
                 <tr>
-                  <td>Belum</td>
-                  <td class="text-end"><?= esc($ikuStats['belum'] ?? 0) ?></td>
+                  <td>Draft</td>
+                  <td class="text-end"><?= esc($ikuStats['draft'] ?? 0) ?></td>
                   <td class="text-center">—</td>
                 </tr>
               </tbody>
@@ -183,15 +183,15 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Siap</td>
-                  <td class="text-end"><?= esc($lakipStats['siap'] ?? 0) ?></td>
-                  <td class="text-center <?= ($lakipStats['siap'] ?? 0) > 0 ? 'text-success' : '' ?>">
-                    <?= ($lakipStats['siap'] ?? 0) > 0 ? '<i class="fas fa-check-circle"></i>' : '—' ?>
+                  <td>Selesai</td>
+                  <td class="text-end"><?= esc($lakipStats['selesai'] ?? 0) ?></td>
+                  <td class="text-center <?= ($lakipStats['selesai'] ?? 0) > 0 ? 'text-success' : '' ?>">
+                    <?= ($lakipStats['selesai'] ?? 0) > 0 ? '<i class="fas fa-check-circle"></i>' : '—' ?>
                   </td>
                 </tr>
                 <tr>
-                  <td>Proses</td>
-                  <td class="text-end"><?= esc($lakipStats['proses'] ?? 0) ?></td>
+                  <td>Draft</td>
+                  <td class="text-end"><?= esc($lakipStats['draft'] ?? 0) ?></td>
                   <td class="text-center">—</td>
                 </tr>
               </tbody>
@@ -222,14 +222,14 @@
     const renjaSelesai = <?= (int) ($renjaStats['selesai'] ?? 0) ?>;
     const renjaDraft = <?= (int) ($renjaStats['draft'] ?? 0) ?>;
 
-    const ikuTercapai = <?= (int) ($ikuStats['tercapai'] ?? 0) ?>;
-    const ikuBelum = <?= (int) ($ikuStats['belum'] ?? 0) ?>;
+    const ikuSelesai = <?= (int) ($ikuStats['selesai'] ?? 0) ?>;
+    const ikuDraft   = <?= (int) ($ikuStats['draft']   ?? 0) ?>;
 
-    const pkTtd = <?= (int) ($pkStats['ditandatangani'] ?? 0) ?>;
+    const pkTtd   = <?= (int) ($pkStats['ditandatangani'] ?? 0) ?>;
     const pkBelum = <?= (int) ($pkStats['belum'] ?? 0) ?>;
 
-    const lakipSiap = <?= (int) ($lakipStats['siap'] ?? 0) ?>;
-    const lakipProses = <?= (int) ($lakipStats['proses'] ?? 0) ?>;
+    const lakipSelesai = <?= (int) ($lakipStats['selesai'] ?? 0) ?>;
+    const lakipDraft   = <?= (int) ($lakipStats['draft']   ?? 0) ?>;
 
     new Chart(document.getElementById('renstraChart'), {
       type: 'doughnut',
@@ -260,10 +260,10 @@
     new Chart(document.getElementById('ikuChart'), {
       type: 'doughnut',
       data: {
-        labels: ['Tercapai', 'Belum'],
+        labels: ['Selesai', 'Draft'],
         datasets: [{
-          data: [ikuTercapai, ikuBelum],
-          backgroundColor: ['#0dcaf0', '#dc3545'],
+          data: [ikuSelesai, ikuDraft],
+          backgroundColor: ['#198754', '#ffc107'],
           borderWidth: 0
         }]
       },
@@ -286,10 +286,10 @@
     new Chart(document.getElementById('lakipChart'), {
       type: 'doughnut',
       data: {
-        labels: ['Siap', 'Proses'],
+        labels: ['Selesai', 'Draft'],
         datasets: [{
-          data: [lakipSiap, lakipProses],
-          backgroundColor: ['#6f42c1', '#adb5bd'],
+          data: [lakipSelesai, lakipDraft],
+          backgroundColor: ['#198754', '#ffc107'],
           borderWidth: 0
         }]
       },

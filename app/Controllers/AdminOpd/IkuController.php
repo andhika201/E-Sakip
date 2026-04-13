@@ -221,9 +221,10 @@ class IkuController extends BaseController
 
 
             $this->ikuModel->createCompleteIku([
-                'definisi' => $data['definisi'],
-                'rpjmd_id' => $data['rpjmd_id'] ?? null,
-                'renstra_id' => $data['renstra_indikator_sasaran_id'] ?? null,
+                'definisi'         => $data['definisi'],
+                'rpjmd_id'         => $data['rpjmd_id'] ?? null,
+                'renstra_id'       => $data['renstra_indikator_sasaran_id'] ?? null,
+                'status'           => 'draft',
                 'program_pendukung' => $data['program_pendukung'] ?? [],
             ]);
 
@@ -378,18 +379,18 @@ class IkuController extends BaseController
 
         $current = strtolower(trim($iku['status'] ?? ''));
 
-        // Toggle: kalau belum / kosong → Tercapai, kalau Tercapai → Belum
-        if ($current === 'tercapai') {
-            $newStatus = 'Belum';
+        // Toggle: kalau draft / kosong → selesai, kalau selesai → draft
+        if ($current === 'selesai') {
+            $newStatus = 'draft';
         } else {
-            $newStatus = 'Tercapai';
+            $newStatus = 'selesai';
         }
 
         $ikuModel->update($iku['id'], [
             'status' => $newStatus,
         ]);
 
-        return redirect()->back()->with('success', 'Status IKU berhasil diubah menjadi ' . $newStatus . '.');
+        return redirect()->back()->with('success', 'Status IKU berhasil diubah menjadi ' . ucfirst($newStatus) . '.');
     }
 
 }

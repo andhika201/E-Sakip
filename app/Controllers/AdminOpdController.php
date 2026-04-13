@@ -56,36 +56,42 @@ class AdminOpdController extends BaseController
 
         /**
          * ================= IKU (tabel iku) =================
-         * Asumsi kolom status berisi 'Tercapai' / 'Belum'
+         * Kolom status: 'selesai' / 'draft'
          */
-        $ikuTercapai = $this->db->table('iku')
-            ->where('status', 'Tercapai')
+        $ikuSelesai = $this->db->table('iku')
+            ->where('status', 'selesai')
             ->countAllResults();
 
-        $ikuBelum = $this->db->table('iku')
-            ->where('status', 'Belum')
+        $ikuDraft = $this->db->table('iku')
+            ->groupStart()
+                ->where('status', 'draft')
+                ->orWhere('status IS NULL OR TRIM(status) = ', "''", false)
+            ->groupEnd()
             ->countAllResults();
 
         $ikuStats = [
-            'tercapai' => $ikuTercapai,
-            'belum' => $ikuBelum,
+            'selesai' => $ikuSelesai,
+            'draft'   => $ikuDraft,
         ];
 
         /**
          * ================= LAKIP (tabel lakip) =================
-         * Tidak pakai filter tahun (langsung total per status)
+         * Kolom status: 'selesai' / 'draft'
          */
-        $lakipSiap = $this->db->table('lakip')
-            ->where('status', 'Siap')
+        $lakipSelesai = $this->db->table('lakip')
+            ->where('status', 'selesai')
             ->countAllResults();
 
-        $lakipProses = $this->db->table('lakip')
-            ->where('status', 'Proses')
+        $lakipDraft = $this->db->table('lakip')
+            ->groupStart()
+                ->where('status', 'draft')
+                ->orWhere('status IS NULL OR TRIM(status) = ', "''", false)
+            ->groupEnd()
             ->countAllResults();
 
         $lakipStats = [
-            'siap' => $lakipSiap,
-            'proses' => $lakipProses,
+            'selesai' => $lakipSelesai,
+            'draft'   => $lakipDraft,
         ];
 
         /**

@@ -211,7 +211,7 @@ class DashboardKabupatenModel
     private function countIku(?int $opdId, ?int $year): array
     {
         if (!$this->tableExists('iku'))
-            return ['tercapai' => 0, 'belum' => 0];
+            return ['selesai' => 0, 'draft' => 0];
 
         $b = $this->db->table('iku i');
 
@@ -245,13 +245,13 @@ class DashboardKabupatenModel
         }
 
         $row = $b->select("
-                SUM(CASE WHEN LOWER(i.status)='tercapai' THEN 1 ELSE 0 END) AS tercapai,
-                SUM(CASE WHEN LOWER(i.status)='belum' THEN 1 ELSE 0 END) AS belum
+                SUM(CASE WHEN LOWER(i.status)='selesai' THEN 1 ELSE 0 END) AS selesai,
+                SUM(CASE WHEN LOWER(i.status)='draft' OR i.status IS NULL OR TRIM(i.status)='' THEN 1 ELSE 0 END) AS draft
             ", false)->get()->getRowArray();
 
         return [
-            'tercapai' => (int) ($row['tercapai'] ?? 0),
-            'belum' => (int) ($row['belum'] ?? 0),
+            'selesai' => (int) ($row['selesai'] ?? 0),
+            'draft'   => (int) ($row['draft']   ?? 0),
         ];
     }
 
@@ -259,9 +259,9 @@ class DashboardKabupatenModel
     private function countLakipOpd(?int $opdId, ?int $year): array
     {
         if (!$this->tableExists('lakip'))
-            return ['proses' => 0, 'siap' => 0];
+            return ['draft' => 0, 'selesai' => 0];
         if (!$this->tableExists('renstra_target'))
-            return ['proses' => 0, 'siap' => 0];
+            return ['draft' => 0, 'selesai' => 0];
 
         $b = $this->db->table('lakip l')
             ->join('renstra_target rt', 'rt.id = l.renstra_target_id', 'left')
@@ -282,16 +282,16 @@ class DashboardKabupatenModel
             $b->where('rt.tahun', $year);
         }
 
-        return $this->countProsesSiap($b, 'l.status');
+        return $this->countDraftSelesaiLakip($b, 'l.status');
     }
 
     // --- LAKIP KABUPATEN (lakip -> rpjmd_target) ---
     private function countLakipKabupaten(?int $year): array
     {
         if (!$this->tableExists('lakip'))
-            return ['proses' => 0, 'siap' => 0];
+            return ['draft' => 0, 'selesai' => 0];
         if (!$this->tableExists('rpjmd_target'))
-            return ['proses' => 0, 'siap' => 0];
+            return ['draft' => 0, 'selesai' => 0];
 
         $b = $this->db->table('lakip l')
             ->join('rpjmd_target rpj', 'rpj.id = l.rpjmd_target_id', 'left')
@@ -301,7 +301,7 @@ class DashboardKabupatenModel
             $b->where('rpj.tahun', $year);
         }
 
-        return $this->countProsesSiap($b, 'l.status');
+        return $this->countDraftSelesaiLakip($b, 'l.status');
     }
 
     // =========================================================
@@ -321,17 +321,17 @@ class DashboardKabupatenModel
         ];
     }
 
-    private function countProsesSiap($builder, string $statusField = 'status'): array
+    private function countDraftSelesaiLakip($builder, string $statusField = 'status'): array
     {
-        // status: proses/siap
+        // status: draft / selesai
         $row = $builder->select("
-            SUM(CASE WHEN LOWER($statusField)='siap' THEN 1 ELSE 0 END) AS siap,
-            SUM(CASE WHEN LOWER($statusField)='proses' THEN 1 ELSE 0 END) AS proses
+            SUM(CASE WHEN LOWER($statusField)='selesai' THEN 1 ELSE 0 END) AS selesai,
+            SUM(CASE WHEN LOWER($statusField)='draft' OR $statusField IS NULL OR TRIM($statusField)='' THEN 1 ELSE 0 END) AS draft
         ", false)->get()->getRowArray();
 
         return [
-            'proses' => (int) ($row['proses'] ?? 0),
-            'siap' => (int) ($row['siap'] ?? 0),
+            'draft'   => (int) ($row['draft']   ?? 0),
+            'selesai' => (int) ($row['selesai'] ?? 0),
         ];
     }
 

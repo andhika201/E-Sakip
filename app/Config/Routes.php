@@ -9,6 +9,10 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->get('/unauthorized', 'Home::unauthorized');
 
+// Change Password (semua role yang login)
+$routes->get('/change-password',         'ChangePasswordController::index');
+$routes->post('/change-password/update', 'ChangePasswordController::update');
+
 // User Routes
 $routes->get('/dashboard', 'UserController::index');
 $routes->get('/rkpd', 'UserController::rkpd');

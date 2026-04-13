@@ -36,7 +36,7 @@ class IkuModel extends Model
                 'rpjmd_id' => $data['rpjmd_id'] ?? null,
                 'renstra_id' => $data['renstra_id'] ?? null,
                 'definisi' => $data['definisi'],
-                'status' => $data['status'] ?? 'belum',
+                'status' => $data['status'] ?? 'draft',
             ];
 
             $db->table('iku')->insert($ikuData);
@@ -379,7 +379,7 @@ class IkuModel extends Model
         }
 
         $builder->orderBy('o.nama_opd', 'ASC')
-            ->orderBy('rs.sasaran', 'ASC')
+            ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->orderBy('rt.tahun', 'ASC');
 
@@ -450,6 +450,8 @@ class IkuModel extends Model
                 rt.tahun,
                 rt.target_tahunan AS target_tahunan
             ')
+            ->join('rpjmd_tujuan rtuj', 'rtuj.id = rs.tujuan_id', 'left')
+            ->join('rpjmd_misi rmis', 'rmis.id = rtuj.misi_id', 'left')
             ->join('rpjmd_indikator_sasaran ris', 'ris.sasaran_id = rs.id', 'left')
             ->join('rpjmd_target rt', 'rt.indikator_sasaran_id = ris.id', 'left');
 
@@ -457,7 +459,9 @@ class IkuModel extends Model
             $builder->whereIn('rt.tahun', $yearsFilter);
         }
 
-        $builder->orderBy('rs.sasaran_rpjmd', 'ASC')
+        $builder->orderBy('rmis.id', 'ASC')
+            ->orderBy('rtuj.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->orderBy('rt.tahun', 'ASC');
 

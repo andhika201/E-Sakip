@@ -185,7 +185,7 @@ class LakipController extends BaseController
             'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
             'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
             'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
-            'status' => 'proses',
+            'status' => 'draft',
         ];
 
         if ($mode === 'opd') {
@@ -342,7 +342,7 @@ class LakipController extends BaseController
             'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
             'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
             'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
-            'status' => $this->request->getPost('status') ?: 'proses',
+            'status' => $this->request->getPost('status') ?: 'draft',
         ];
 
         $this->lakipModel->updateLakip($lakipId, $updateData);
@@ -361,7 +361,7 @@ class LakipController extends BaseController
         if ($role !== 'admin_kab')
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
-        $allowed = ['proses', 'siap'];
+        $allowed = ['draft', 'selesai'];
         if (!in_array($to, $allowed, true))
             return redirect()->back()->with('error', 'Status tidak valid.');
 

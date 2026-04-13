@@ -109,9 +109,13 @@ class LakipModel extends Model
             ")
             ->join('rpjmd_indikator_sasaran ris', 'ris.id = rpj.indikator_sasaran_id', 'left')
             ->join('rpjmd_sasaran rs', 'rs.id = ris.sasaran_id', 'left')
+            ->join('rpjmd_tujuan rtuj', 'rtuj.id = rs.tujuan_id', 'left')
+            ->join('rpjmd_misi rmis', 'rmis.id = rtuj.misi_id', 'left')
             ->where('rpj.tahun', $tahun);
 
-        return $b->orderBy('rs.id', 'ASC')
+        return $b->orderBy('rmis.id', 'ASC')
+            ->orderBy('rtuj.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
             ->get()
             ->getResultArray();

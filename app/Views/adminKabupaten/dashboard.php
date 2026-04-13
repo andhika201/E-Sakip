@@ -144,15 +144,15 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Proses</td>
-                  <td id="lakipKabProses" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_kabupaten']['proses'] ?? 0) ?>
+                  <td>Draft</td>
+                  <td id="lakipKabDraft" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_kabupaten']['draft'] ?? 0) ?>
                   </td>
                 </tr>
                 <tr>
-                  <td>Siap</td>
-                  <td id="lakipKabSiap" class="text-end">
-                    <?= (int) ($dashboard_data['lakip_kabupaten']['siap'] ?? 0) ?>
+                  <td>Selesai</td>
+                  <td id="lakipKabSelesai" class="text-end">
+                    <?= (int) ($dashboard_data['lakip_kabupaten']['selesai'] ?? 0) ?>
                   </td>
                 </tr>
               </tbody>
@@ -257,12 +257,12 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Tercapai</td>
-                  <td id="ikuTercapai" class="text-end"><?= (int) ($dashboard_data['iku']['tercapai'] ?? 0) ?></td>
+                  <td>Selesai</td>
+                  <td id="ikuSelesai" class="text-end"><?= (int) ($dashboard_data['iku']['selesai'] ?? 0) ?></td>
                 </tr>
                 <tr>
-                  <td>Belum</td>
-                  <td id="ikuBelum" class="text-end"><?= (int) ($dashboard_data['iku']['belum'] ?? 0) ?></td>
+                  <td>Draft</td>
+                  <td id="ikuDraft" class="text-end"><?= (int) ($dashboard_data['iku']['draft'] ?? 0) ?></td>
                 </tr>
               </tbody>
             </table>
@@ -283,13 +283,13 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Proses</td>
-                  <td id="lakipOpdProses" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['proses'] ?? 0) ?>
+                  <td>Draft</td>
+                  <td id="lakipOpdDraft" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['draft'] ?? 0) ?>
                   </td>
                 </tr>
                 <tr>
-                  <td>Siap</td>
-                  <td id="lakipOpdSiap" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['siap'] ?? 0) ?></td>
+                  <td>Selesai</td>
+                  <td id="lakipOpdSelesai" class="text-end"><?= (int) ($dashboard_data['lakip_opd']['selesai'] ?? 0) ?></td>
                 </tr>
               </tbody>
             </table>
@@ -353,11 +353,11 @@
       lakip_kabupaten: new Chart(document.getElementById('lakipKabChart'), {
         type: 'doughnut',
         data: {
-          labels: ['Siap', 'Proses'],
+          labels: ['Selesai', 'Draft'],
           datasets: [{
             data: [
-              getVal(dataPHP.lakip_kabupaten || {}, 'siap'),
-              getVal(dataPHP.lakip_kabupaten || {}, 'proses')
+              getVal(dataPHP.lakip_kabupaten || {}, 'selesai'),
+              getVal(dataPHP.lakip_kabupaten || {}, 'draft')
             ],
             backgroundColor: ['#198754', '#ffc107'],
             borderWidth: 0
@@ -398,11 +398,11 @@
       iku: new Chart(document.getElementById('ikuChart'), {
         type: 'doughnut',
         data: {
-          labels: ['Tercapai', 'Belum'],
+          labels: ['Selesai', 'Draft'],
           datasets: [{
             data: [
-              getVal(dataPHP.iku || {}, 'tercapai'),
-              getVal(dataPHP.iku || {}, 'belum')
+              getVal(dataPHP.iku || {}, 'selesai'),
+              getVal(dataPHP.iku || {}, 'draft')
             ],
             backgroundColor: ['#198754', '#ffc107'],
             borderWidth: 0
@@ -413,11 +413,11 @@
       lakip_opd: new Chart(document.getElementById('lakipOpdChart'), {
         type: 'doughnut',
         data: {
-          labels: ['Siap', 'Proses'],
+          labels: ['Selesai', 'Draft'],
           datasets: [{
             data: [
-              getVal(dataPHP.lakip_opd || {}, 'siap'),
-              getVal(dataPHP.lakip_opd || {}, 'proses')
+              getVal(dataPHP.lakip_opd || {}, 'selesai'),
+              getVal(dataPHP.lakip_opd || {}, 'draft')
             ],
             backgroundColor: ['#198754', '#ffc107'],
             borderWidth: 0
@@ -471,46 +471,46 @@
 
         case 'iku': {
           const obj = data.iku || {};
-          const tercapai = getVal(obj, 'tercapai');
-          const belum = getVal(obj, 'belum');
+          const selesai = getVal(obj, 'selesai');
+          const draft   = getVal(obj, 'draft');
 
-          charts.iku.data.datasets[0].data = [tercapai, belum];
+          charts.iku.data.datasets[0].data = [selesai, draft];
           charts.iku.update();
 
-          const tCell = document.getElementById('ikuTercapai');
-          const bCell = document.getElementById('ikuBelum');
-          if (tCell) tCell.textContent = tercapai;
-          if (bCell) bCell.textContent = belum;
+          const sCell = document.getElementById('ikuSelesai');
+          const dCell = document.getElementById('ikuDraft');
+          if (sCell) sCell.textContent = selesai;
+          if (dCell) dCell.textContent = draft;
           break;
         }
 
         case 'lakip_kabupaten': {
           const obj = data.lakip_kabupaten || {};
-          const siap = getVal(obj, 'siap');
-          const proses = getVal(obj, 'proses');
+          const selesai = getVal(obj, 'selesai');
+          const draft   = getVal(obj, 'draft');
 
-          charts.lakip_kabupaten.data.datasets[0].data = [siap, proses];
+          charts.lakip_kabupaten.data.datasets[0].data = [selesai, draft];
           charts.lakip_kabupaten.update();
 
-          const pCell = document.getElementById('lakipKabProses');
-          const sCell = document.getElementById('lakipKabSiap');
-          if (pCell) pCell.textContent = proses;
-          if (sCell) sCell.textContent = siap;
+          const dCell = document.getElementById('lakipKabDraft');
+          const sCell = document.getElementById('lakipKabSelesai');
+          if (dCell) dCell.textContent = draft;
+          if (sCell) sCell.textContent = selesai;
           break;
         }
 
         case 'lakip_opd': {
           const obj = data.lakip_opd || {};
-          const siap = getVal(obj, 'siap');
-          const proses = getVal(obj, 'proses');
+          const selesai = getVal(obj, 'selesai');
+          const draft   = getVal(obj, 'draft');
 
-          charts.lakip_opd.data.datasets[0].data = [siap, proses];
+          charts.lakip_opd.data.datasets[0].data = [selesai, draft];
           charts.lakip_opd.update();
 
-          const pCell = document.getElementById('lakipOpdProses');
-          const sCell = document.getElementById('lakipOpdSiap');
-          if (pCell) pCell.textContent = proses;
-          if (sCell) sCell.textContent = siap;
+          const dCell = document.getElementById('lakipOpdDraft');
+          const sCell = document.getElementById('lakipOpdSelesai');
+          if (dCell) dCell.textContent = draft;
+          if (sCell) sCell.textContent = selesai;
           break;
         }
       }

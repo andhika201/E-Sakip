@@ -125,13 +125,28 @@ class RpjmdController extends BaseController
             $post = $this->request->getPost();
 
             /* =======================
+             |  SIMPAN VISI
+             ======================= */
+            $visiText = trim($post['visi'] ?? '');
+            $visiId   = null;
+            if ($visiText !== '') {
+                $db->table('rpjmd_visi')->insert([
+                    'visi'       => $visiText,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+                $visiId = $db->insertID();
+            }
+
+            /* =======================
              |  SIMPAN MISI
              ======================= */
             $db->table('rpjmd_misi')->insert([
-                'misi' => $post['misi'],
-                'tahun_mulai' => (int) $post['tahun_mulai'],
-                'tahun_akhir' => (int) $post['tahun_akhir'],
-                'status' => 'draft'
+                'rpjmd_visi_id' => $visiId,
+                'misi'          => $post['misi'],
+                'tahun_mulai'   => (int) $post['tahun_mulai'],
+                'tahun_akhir'   => (int) $post['tahun_akhir'],
+                'status'        => 'draft'
             ]);
 
             $misiId = $db->insertID();
@@ -304,14 +319,43 @@ class RpjmdController extends BaseController
             }
 
             /* =======================
+             |  UPDATE VISI
+             ======================= */
+            $visiText     = trim($post['visi'] ?? '');
+            $currentMisiRow = $db->table('rpjmd_misi')->where('id', $misiId)->get()->getRowArray();
+            $existingVisiId = $currentMisiRow['rpjmd_visi_id'] ?? null;
+
+            if ($visiText !== '') {
+                if ($existingVisiId) {
+                    // update visi yang sudah ada
+                    $db->table('rpjmd_visi')->where('id', $existingVisiId)->update([
+                        'visi'       => $visiText,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                    $newVisiId = $existingVisiId;
+                } else {
+                    // buat visi baru
+                    $db->table('rpjmd_visi')->insert([
+                        'visi'       => $visiText,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                    $newVisiId = $db->insertID();
+                }
+            } else {
+                $newVisiId = $existingVisiId;
+            }
+
+            /* =======================
              |  UPDATE MISI
              ======================= */
             $db->table('rpjmd_misi')
                 ->where('id', $misiId)
                 ->update([
-                    'misi' => $post['misi'],
-                    'tahun_mulai' => $tahunMulai,
-                    'tahun_akhir' => $tahunAkhir,
+                    'rpjmd_visi_id' => $newVisiId,
+                    'misi'          => $post['misi'],
+                    'tahun_mulai'   => $tahunMulai,
+                    'tahun_akhir'   => $tahunAkhir,
                 ]);
 
             /* ======================================================

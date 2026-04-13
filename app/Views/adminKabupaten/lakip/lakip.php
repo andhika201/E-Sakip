@@ -117,9 +117,9 @@
                     <label class="form-label fw-semibold">Status</label>
                     <select id="status_filter" class="form-select border-secondary" onchange="filterData()">
                         <option value="" <?= empty($filters['status']) ? 'selected' : '' ?>>Semua Status</option>
-                        <option value="proses" <?= (($filters['status'] ?? '') === 'proses') ? 'selected' : '' ?>>Proses
+                        <option value="draft" <?= (($filters['status'] ?? '') === 'draft') ? 'selected' : '' ?>>Draft
                         </option>
-                        <option value="siap" <?= (($filters['status'] ?? '') === 'siap') ? 'selected' : '' ?>>Siap</option>
+                        <option value="selesai" <?= (($filters['status'] ?? '') === 'selesai') ? 'selected' : '' ?>>Selesai</option>
                     </select>
                 </div>
             </div>
@@ -225,13 +225,15 @@
                                 $realisasiCalc = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realisasiNow;
 
                                 $capaianPersen = hitungCapaianLakip($targetCalc, $realisasiCalc, $jenis);
-
                                 $statusText = $lakipItem['status'] ?? null;
-                                $badge = 'badge bg-secondary';
-                                if ($statusText === 'siap')
+                                $sLower = strtolower(trim($statusText ?? ''));
+                                if ($sLower === 'selesai') {
                                     $badge = 'badge bg-success';
-                                if ($statusText === 'proses')
+                                } elseif ($sLower === 'draft' || $sLower === '') {
                                     $badge = 'badge bg-warning text-dark';
+                                } else {
+                                    $badge = 'badge bg-secondary';
+                                }
 
                                 // preserve query
                                 $q = 'mode=' . urlencode($mode)
@@ -247,7 +249,7 @@
                                 $changeStatusUrl = '';
                                 $nextStatus = '';
                                 if (!empty($lakipItem['id'])) {
-                                    $nextStatus = ($statusText === 'siap') ? 'proses' : 'siap';
+                                    $nextStatus = ($sLower === 'selesai') ? 'draft' : 'selesai';
                                     $changeStatusUrl = base_url('adminkab/lakip/status/' . $lakipItem['id'] . '/' . $nextStatus) . '?' . $q;
                                 }
 
@@ -295,8 +297,14 @@
                                     </td>
 
                                     <td>
-                                        <?php if (!empty($statusText)): ?>
-                                            <span class="<?= $badge ?>"><?= esc(ucfirst($statusText)) ?></span>
+                                        <?php
+                                        $displayLabel = '';
+                                        if ($sLower === 'selesai') $displayLabel = 'Selesai';
+                                        elseif ($sLower === 'draft') $displayLabel = 'Draft';
+                                        elseif (!empty($statusText)) $displayLabel = ucfirst($statusText);
+                                        ?>
+                                        <?php if ($displayLabel): ?>
+                                            <span class="<?= $badge ?>"><?= esc($displayLabel) ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>

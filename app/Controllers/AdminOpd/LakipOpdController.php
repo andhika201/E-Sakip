@@ -291,7 +291,7 @@ class LakipOpdController extends BaseController
         $targetPrev = $this->request->getPost('target_lalu');
         $capaianPrev = $this->request->getPost('capaian_lalu');
         $capaianNow = $this->request->getPost('capaian_tahun_ini');
-        $status = $this->request->getPost('status') ?: 'proses';
+        $status = $this->request->getPost('status') ?: 'draft';
 
         if ($role === 'admin_kab') {
             $targetId = $this->request->getPost('rpjmd_target_id');
@@ -497,7 +497,7 @@ class LakipOpdController extends BaseController
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
-        $allowedStatus = ['proses', 'siap'];
+        $allowedStatus = ['draft', 'selesai'];
         if (!in_array($to, $allowedStatus)) {
             return redirect()->to(base_url('adminopd/lakip'))
                 ->with('error', 'Status tidak valid.');

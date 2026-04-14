@@ -16,7 +16,7 @@
         <div class="container-fluid" style="max-width: 1700px;">
             <div class="bg-white p-4 rounded shadow-sm">
                 <h4 class="fw-bold text-center text-success mb-4 text-uppercase">
-                    CASCADING & POHON KINERJA PERANGKAT DAERAH
+                    POHON KINERJA & CASCADING PERANGKAT DAERAH
                 </h4>
 
                 <?php

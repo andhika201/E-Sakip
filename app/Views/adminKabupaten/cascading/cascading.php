@@ -150,12 +150,11 @@
 
                                         <!-- CSF -->
                                         <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" class="p-1" style="min-width:180px;">
+                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" class="p-1"
+                                                style="min-width:180px;">
                                                 <textarea class="form-control csf-input text-center"
-                                                    style="font-size: 12px; resize: none;"
-                                                    data-sasaran-id="<?= $r['sasaran_id'] ?>"
-                                                    rows="3"
-                                                    placeholder="Isi CSF..."><?= esc($r['csf'] ?? '') ?></textarea>
+                                                    style="font-size: 12px; resize: none;" data-sasaran-id="<?= $r['sasaran_id'] ?>"
+                                                    rows="3" placeholder="Isi CSF..."><?= esc($r['csf'] ?? '') ?></textarea>
                                             </td>
                                         <?php endif; ?>
 
@@ -241,7 +240,7 @@
                 <a href="<?= base_url(
                     'adminkab/cascading/cetak?periode=' . $filters['periode']
                 ) ?>" class="btn btn-danger">
-                    <i class="fas fa-file-pdf"></i> Cetak PDF
+                    <i class="fas fa-file-pdf"></i> Cetak Cascading
                 </a>
 
                 <a href="<?= base_url(
@@ -262,7 +261,7 @@
             let timeout = null;
 
             csfInputs.forEach(input => {
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     const sasaranId = this.getAttribute('data-sasaran-id');
                     const value = this.value;
 
@@ -276,29 +275,29 @@
                         formData.append('csf', value);
 
                         <?php if (function_exists('csrf_token')): ?>
-                        formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+                            formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
                         <?php endif; ?>
 
                         fetch('<?= base_url('adminkab/cascading/save-csf') ?>', {
                             method: 'POST',
                             body: formData
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success') {
-                                this.style.backgroundColor = '#d1e7dd';
-                                setTimeout(() => {
-                                    this.style.backgroundColor = '';
-                                }, 1000);
-                            } else {
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    this.style.backgroundColor = '#d1e7dd';
+                                    setTimeout(() => {
+                                        this.style.backgroundColor = '';
+                                    }, 1000);
+                                } else {
+                                    this.style.backgroundColor = '#f8d7da';
+                                    alert('Gagal menyimpan CSF: ' + (data.message || ''));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error saving CSF:', error);
                                 this.style.backgroundColor = '#f8d7da';
-                                alert('Gagal menyimpan CSF: ' + (data.message || ''));
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error saving CSF:', error);
-                            this.style.backgroundColor = '#f8d7da';
-                        });
+                            });
                     }, 500); // 500ms debounce
                 });
             });

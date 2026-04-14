@@ -15,7 +15,8 @@
     <main class="flex-grow-1 d-flex flex-column align-items-center justify-content-center my-5">
         <div class="container-fluid" style="max-width: 1700px;">
             <div class="bg-white p-4 rounded shadow-sm">
-                <h4 class="fw-bold text-center text-success mb-4 text-uppercase">CASCADING & POHON KINERJA KABUPATEN</h4>
+                <h4 class="fw-bold text-center text-success mb-4 text-uppercase">POHON KINERJA & CASCADING KABUPATEN
+                </h4>
 
                 <?php
                 $filters = $filters ?? [
@@ -26,9 +27,11 @@
                 <!-- ===================== FORM FILTER ===================== -->
                 <div class="row justify-content-center mb-4">
                     <div class="col-12 col-md-8 col-lg-6">
-                        <form id="filterForm" method="GET" action="<?= base_url('cascading_kabupaten') ?>" class="d-flex flex-column flex-md-row gap-2 align-items-center w-100">
+                        <form id="filterForm" method="GET" action="<?= base_url('cascading_kabupaten') ?>"
+                            class="d-flex flex-column flex-md-row gap-2 align-items-center w-100">
                             <!-- Periode -->
-                            <select id="periodeFilter" name="periode" class="form-select w-100" onchange="this.form.submit()">
+                            <select id="periodeFilter" name="periode" class="form-select w-100"
+                                onchange="this.form.submit()">
                                 <option value="">-- Pilih Periode --</option>
                                 <?php
                                 $periodeList = [];
@@ -44,9 +47,10 @@
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            
+
                             <noscript><button type="submit" class="btn btn-success ms-2">Filter</button></noscript>
-                            <a href="<?= base_url('cascading_kabupaten') ?>" class="btn btn-outline-secondary ms-2 w-auto">
+                            <a href="<?= base_url('cascading_kabupaten') ?>"
+                                class="btn btn-outline-secondary ms-2 w-auto">
                                 Reset
                             </a>
                         </form>
@@ -112,7 +116,8 @@
 
                                         <!-- CSF -->
                                         <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
-                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" class="p-2 text-start" style="min-width:180px;">
+                                            <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" class="p-2 text-start"
+                                                style="min-width:180px;">
                                                 <?= esc($r['csf'] ?? '-') ?>
                                             </td>
                                         <?php endif; ?>
@@ -169,11 +174,13 @@
 
                 <?php if (!empty($filters['periode']) && !empty($rows)): ?>
                     <div class="d-flex gap-2 justify-content-center mt-4">
-                        <a href="<?= base_url('cascading_kabupaten/cetak?periode=' . $filters['periode']) ?>" class="btn btn-danger" target="_blank">
+                        <a href="<?= base_url('cascading_kabupaten/cetak?periode=' . $filters['periode']) ?>"
+                            class="btn btn-danger" target="_blank">
                             <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
                         </a>
 
-                        <a href="<?= base_url('cascading_kabupaten/cetak-pohon?periode=' . $filters['periode']) ?>" class="btn btn-primary" target="_blank">
+                        <a href="<?= base_url('cascading_kabupaten/cetak-pohon?periode=' . $filters['periode']) ?>"
+                            class="btn btn-primary" target="_blank">
                             <i class="fas fa-sitemap me-1"></i> Cetak Pohon Kinerja
                         </a>
                     </div>
@@ -185,4 +192,5 @@
 
     <?= $this->include('user/templates/footer'); ?>
 </body>
+
 </html>

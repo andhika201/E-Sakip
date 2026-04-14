@@ -23,7 +23,7 @@
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
                 <h2 class="h3 fw-bold text-success text-center mb-4">
-                    Cascading
+                    Pohon Kinerja & Cascading
                 </h2>
                 <!-- FLASH MESSAGE -->
                 <?php if (session()->getFlashdata('error')): ?>
@@ -134,10 +134,9 @@
 
                                         <?php if ($firstShow['sasaran_renstra'][$r['renstra_sasaran_id']] == $index): ?>
                                             <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>" class="p-1">
-                                                <textarea class="form-control csf-input text-center" 
-                                                    style="font-size: 12px; min-width: 120px; resize: none;" 
-                                                    rows="3" 
-                                                    data-id="<?= $r['renstra_sasaran_id'] ?>" 
+                                                <textarea class="form-control csf-input text-center"
+                                                    style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
+                                                    data-id="<?= $r['renstra_sasaran_id'] ?>"
                                                     data-level="es2"><?= esc($r['csf_es2'] ?? '') ?></textarea>
                                             </td>
                                             <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>">
@@ -162,10 +161,9 @@
                                         <?php else: ?>
                                             <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
                                                 <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="p-1">
-                                                    <textarea class="form-control csf-input text-center" 
-                                                        style="font-size: 12px; min-width: 120px; resize: none;" 
-                                                        rows="3" 
-                                                        data-id="<?= $r['es3_id'] ?>" 
+                                                    <textarea class="form-control csf-input text-center"
+                                                        style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
+                                                        data-id="<?= $r['es3_id'] ?>"
                                                         data-level="es3"><?= esc($r['csf_es3'] ?? '') ?></textarea>
                                                 </td>
                                                 <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>">
@@ -239,14 +237,16 @@
             </div>
 
             <?php if (!empty($filters['periode']) && !empty($rows)): ?>
-            <div class="d-flex gap-2 mt-3">
-                <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>" class="btn btn-primary" target="_blank">
-                    <i class="fas fa-print"></i> Cetak Cascading
-                </a>
-                <a href="<?= base_url('adminopd/cascading/cetakpohon?periode=' . $filters['periode']) ?>" class="btn btn-info text-white" target="_blank">
-                    <i class="fas fa-sitemap"></i> Cetak Pohon Kinerja
-                </a>
-            </div>
+                <div class="d-flex gap-2 mt-3">
+                    <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>"
+                        class="btn btn-primary" target="_blank">
+                        <i class="fas fa-print"></i> Cetak Cascading
+                    </a>
+                    <a href="<?= base_url('adminopd/cascading/cetakpohon?periode=' . $filters['periode']) ?>"
+                        class="btn btn-info text-white" target="_blank">
+                        <i class="fas fa-sitemap"></i> Cetak Pohon Kinerja
+                    </a>
+                </div>
             <?php endif; ?>
 
         </main>
@@ -260,7 +260,7 @@
             let timeout = null;
 
             csfInputs.forEach(input => {
-                input.addEventListener('input', function() {
+                input.addEventListener('input', function () {
                     const id = this.getAttribute('data-id');
                     const level = this.getAttribute('data-level');
                     const value = this.value;
@@ -285,19 +285,19 @@
                             method: 'POST',
                             body: formData
                         })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success') {
-                                this.style.backgroundColor = '#d1e7dd';
-                                setTimeout(() => {
-                                    this.style.backgroundColor = '';
-                                }, 1000);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error saving CSF:', error);
-                            this.style.backgroundColor = '#f8d7da';
-                        });
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    this.style.backgroundColor = '#d1e7dd';
+                                    setTimeout(() => {
+                                        this.style.backgroundColor = '';
+                                    }, 1000);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error saving CSF:', error);
+                                this.style.backgroundColor = '#f8d7da';
+                            });
                     }, 500); // 500ms debounce
                 });
             });

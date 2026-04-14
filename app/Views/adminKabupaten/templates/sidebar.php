@@ -137,7 +137,8 @@
         </div>
 
         <a href="<?= base_url('adminkab/cascading') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Cascading</a>
+          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Pohon
+          Kinerja & Cascading</a>
 
         <a href="<?= base_url('adminkab/tentang_kami') ?>"
           class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang

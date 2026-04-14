@@ -21,7 +21,7 @@
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">Cascading & Pohon Kinerja</h2>
+                <h2 class="h3 fw-bold text-success text-center mb-4">Pohon Kinerja & Cascading</h2>
 
                 <!-- Flash Message -->
                 <?php if (session()->getFlashdata('error')): ?>

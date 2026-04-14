@@ -64,7 +64,7 @@ class UserController extends BaseController
         sort($available_years);
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/rkpd', [
             'rkpd_data' => $rktDataRaw,
@@ -218,7 +218,7 @@ class UserController extends BaseController
             }
         }
 
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/renstra', [
             'tahunList' => $tahunList,
@@ -257,7 +257,7 @@ class UserController extends BaseController
         sort($available_years);
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/rkt', [
             'rktData' => $rktData,
@@ -298,7 +298,7 @@ class UserController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/lakip_opd', [
             'lakipOpdData' => $lakipOpdData,
@@ -348,7 +348,7 @@ class UserController extends BaseController
             $ikuOpdData[] = $row;
         }
 
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/iku_opd', [
             'ikuOpdData' => $ikuOpdData,
@@ -522,7 +522,7 @@ class UserController extends BaseController
             ->get()
             ->getResultArray();
 
-        $opdList = $db->table('opd')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         $rows = [];
         $years = [];
@@ -732,71 +732,88 @@ class UserController extends BaseController
         return $tree;
     }
 
+    private function getPkDataByJenis($jenis)
+    {
+        $db = \Config\Database::connect();
+        
+        $opd_id = $this->request->getGet('opd_id') ?? 'all';
+
+        // Daftar tahun tersedia
+        $availableYears = $db->table('pk')
+            ->select('tahun')
+            ->where('jenis', $jenis)
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'DESC')
+            ->get()
+            ->getResultArray();
+        $availableYears = array_column($availableYears, 'tahun');
+
+        $tahun = $this->request->getGet('tahun') ?? (!empty($availableYears) ? $availableYears[0] : null);
+
+        $pkData = [];
+        if ($tahun) {
+            $query = $db->table('pk p')
+                ->select('
+                    p.id as pk_id,
+                    o.nama_opd,
+                    ps.id as sasaran_id,
+                    ps.sasaran,
+                    pi.id as indikator_id,
+                    pi.indikator,
+                    pi.target,
+                    s.satuan as satuan_nama
+                ')
+                ->join('opd o', 'o.id = p.opd_id', 'left')
+                ->join('pk_sasaran ps', 'ps.pk_id = p.id', 'inner')
+                ->join('pk_indikator pi', 'pi.pk_sasaran_id = ps.id', 'inner')
+                ->join('satuan s', 's.id = pi.id_satuan', 'left')
+                ->where('p.jenis', $jenis)
+                ->where('p.tahun', $tahun);
+
+            if ($opd_id !== 'all') {
+                $query->where('p.opd_id', (int) $opd_id);
+            }
+
+            $rawData = $query->orderBy('p.opd_id', 'ASC')
+                             ->orderBy('ps.id', 'ASC')
+                             ->orderBy('pi.id', 'ASC')
+                             ->get()->getResultArray();
+
+            foreach ($rawData as $row) {
+                 $pkData[] = [
+                     'opd' => $row['nama_opd'],
+                     'sasaran' => $row['sasaran'],
+                     'indikator' => $row['indikator'],
+                     'target' => $row['target'],
+                     'satuan' => $row['satuan_nama'] ?? '-'
+                 ];
+            }
+        }
+
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+
+        return [
+            'pkData' => $pkData,
+            'available_years' => $availableYears,
+            'selected_tahun' => $tahun,
+            'selected_opd' => $opd_id,
+            'opdList' => $opdList
+        ];
+    }
+
     public function pk_pimpinan()
     {
-        $pkPimpinanData = [
-            [
-                'tahun' => '2023',
-                'misi' => 'Meningkatkan kualitas sumber daya manusia yang berdaya saing',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'misi' => 'Meningkatkan kualitas sumber daya manusia yang berdaya saing',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-        ];
-
-        return view('user/pk_pimpinan', [
-            'pkPimpinanData' => $pkPimpinanData
-        ]);
+        return view('user/pk_pimpinan', $this->getPkDataByJenis('jpt'));
     }
 
     public function pk_administrator()
     {
-        $pkAdministratorData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-        ];
-        return view('user/pk_administrator', [
-            'pkAdministratorData' => $pkAdministratorData
-        ]);
+        return view('user/pk_administrator', $this->getPkDataByJenis('administrator'));
     }
 
     public function pk_pengawas()
     {
-        $pkPengawasData = [
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ],
-            [
-                'tahun' => '2023',
-                'sasaran' => 'Meningkatkan kualitas pendidikan',
-                'indikator' => 'Angkat Partisipsi Sekolah',
-                'target' => '98%',
-            ]
-        ];
-
-        return view('user/pk_pengawas', [
-            'pkPengawasData' => $pkPengawasData
-        ]);
+        return view('user/pk_pengawas', $this->getPkDataByJenis('pengawas'));
     }
 
     public function tentang_kami()

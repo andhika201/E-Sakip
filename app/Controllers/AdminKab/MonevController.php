@@ -76,6 +76,7 @@ class MonevController extends BaseController
         $tahunList = $this->monev->getAvailableYears();
         $opdList = $this->db->table('opd')
             ->select('id, nama_opd')
+            ->whereNotIn('id', [1, 46, 209])
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();

@@ -54,7 +54,7 @@ class OpdModel extends Model
 
     public function getAllOpd()
     {
-        return $this->findAll();
+        return $this->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->findAll();
     }
     public function getOpdById(int $opdId)
     {

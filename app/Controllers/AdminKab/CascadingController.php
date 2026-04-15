@@ -165,8 +165,8 @@ class CascadingController extends BaseController
             return redirect()->back()->with('error', 'Indikator tidak ditemukan');
         }
 
-        // ambil list OPD
         $opdList = $this->db->table('opd')
+            ->whereNotIn('id', [1, 46, 209])
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();

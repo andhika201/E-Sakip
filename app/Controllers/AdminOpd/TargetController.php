@@ -49,6 +49,7 @@ class TargetController extends BaseController
             // Ambil daftar OPD untuk filter (mode opd)
             $opdList = $this->db->table('opd')
                 ->select('id, nama_opd')
+                ->whereNotIn('id', [1, 46, 209])
                 ->orderBy('nama_opd', 'ASC')
                 ->get()->getResultArray();
 

@@ -105,6 +105,7 @@ class MonevController extends BaseController
             // daftar OPD untuk dropdown (sesuaikan nama tabel/kolom jika beda)
             $opdList = $this->db->table('opd')
                 ->select('id, nama_opd')
+                ->whereNotIn('id', [1, 46, 209])
                 ->orderBy('nama_opd', 'ASC')
                 ->get()
                 ->getResultArray();

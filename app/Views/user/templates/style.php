@@ -1,3 +1,15 @@
+<!-- Meta SEO Lengkap -->
+<meta name="description" content="e-SAKIP Kabupaten Pringsewu. Sistem Informasi Akuntabilitas Kinerja Instansi Pemerintah Kabupaten Pringsewu. Akses data RPJMD, RKPD, LAKIP, dan Kinerja secara transparan." />
+<meta name="keywords" content="e-sakip, pringsewu, kabupaten pringsewu, akuntabilitas, kinerja, rpjmd, rkpd, lakip, diskominfo pringsewu, pemerintahan" />
+<meta name="author" content="DevTech - Dinas Komunikasi dan Informatika Kabupaten Pringsewu" />
+<meta name="robots" content="index, follow" />
+
+<!-- Open Graph / Social Media -->
+<meta property="og:title" content="e-SAKIP Kabupaten Pringsewu" />
+<meta property="og:description" content="Sistem Informasi Akuntabilitas Kinerja Instansi Pemerintah Kabupaten Pringsewu." />
+<meta property="og:image" content="<?= base_url('assets/images/devtech.png') ?>" />
+<meta property="og:type" content="website" />
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
 

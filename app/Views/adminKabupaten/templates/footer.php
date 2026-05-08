@@ -1,8 +1,5 @@
   <!-- app/views/adminKabupaten/templates/footer.php -->
-  <!-- Footer -->
-  <footer class="bg-success text-white py-3 mt-auto text-center">
-    <p class="small mb-0">&copy; 2025 Pemerintah Kabupaten Pringsewu. All rights reserved.</p>
-  </footer>
+  <?= $this->include('layout/footer', ['sn' => 'ESAKIP-KAB-2025-001', 'full' => false]); ?>
 
   <!-- jQuery (required for Select2) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

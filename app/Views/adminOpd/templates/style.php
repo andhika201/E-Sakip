@@ -154,4 +154,57 @@
   .btn-sm {
     margin: 2px;
   }
+
+  /* ===== RESPONSIVE LAYOUT ===== */
+
+  /* Header: sembunyikan subtitle di layar sangat kecil */
+  @media (max-width: 480px) {
+    header .text-white-50 {
+      display: none;
+    }
+    header h1.h4 {
+      font-size: 1rem !important;
+    }
+    header .px-4 {
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+  }
+
+  /* Main content: kurangi padding di mobile */
+  @media (max-width: 768px) {
+    main.flex-fill {
+      padding: 0.75rem !important;
+    }
+    .bg-white.rounded.shadow.p-4 {
+      padding: 1rem !important;
+    }
+  }
+
+  /* Tabel: scroll horizontal di mobile */
+  @media (max-width: 768px) {
+    .table-responsive-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      min-width: 500px;
+    }
+  }
+
+  /* Card grid: 1 kolom di hp kecil */
+  @media (max-width: 576px) {
+    .row.g-4 > [class*="col-"] {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Footer: center text di mobile */
+  @media (max-width: 576px) {
+    footer.bg-success .col-md-4.text-end {
+      text-align: center !important;
+      margin-top: 0.5rem;
+    }
+  }
 </style>

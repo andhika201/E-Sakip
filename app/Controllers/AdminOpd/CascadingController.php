@@ -210,13 +210,29 @@ class CascadingController extends BaseController
                     $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id] = [
                         'nama' => $r['es3_sasaran'],
                         'csf' => $r['csf_es3'],
-                        'indikators' => []
+                        'indikators' => [],
+                        'es4s' => []
                     ];
                 }
                 
                 $es3IndId = $r['es3_indikator_id'];
                 if ($es3IndId) {
                     $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['indikators'][$es3IndId] = $r['es3_indikator'];
+                }
+
+                $es4Id = $r['es4_id'];
+                if ($es4Id) {
+                    if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id])) {
+                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id] = [
+                            'nama'      => $r['es4_sasaran'],
+                            'csf'       => $r['csf_es4'],
+                            'indikators' => []
+                        ];
+                    }
+                    $es4IndId = $r['es4_indikator_id'];
+                    if ($es4IndId) {
+                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id]['indikators'][$es4IndId] = $r['es4_indikator'];
+                    }
                 }
             }
         }
@@ -806,17 +822,23 @@ class CascadingController extends BaseController
 
     public function saveCsf()
     {
-        $id = $this->request->getPost('id');
+        $id     = $this->request->getPost('id');
         $csfVal = $this->request->getPost('csf');
-        $level = $this->request->getPost('level'); // es2 or es3
+        $level  = $this->request->getPost('level'); // es2, es3, or es4
 
         if ($level === 'es2') {
             $this->db->table('renstra_sasaran')
                 ->where('id', $id)
                 ->update(['csf' => $csfVal]);
-        } elseif ($level === 'es3') { 
+        } elseif ($level === 'es3') {
             $this->db->table('cascading_sasaran_opd')
                 ->where('id', $id)
+                ->where('level', 'es3')
+                ->update(['csf' => $csfVal]);
+        } elseif ($level === 'es4') {
+            $this->db->table('cascading_sasaran_opd')
+                ->where('id', $id)
+                ->where('level', 'es4')
                 ->update(['csf' => $csfVal]);
         }
 

@@ -1,22 +1,28 @@
 <style>
-  /* Sidebar yang menggeser konten */
+  /* ===== SIDEBAR ===== */
   .sidebar {
-    transition: margin-left 0.3s ease;
+    transition: transform 0.3s ease, margin-left 0.3s ease;
     margin-left: -240px;
-    /* Hidden by default */
     width: 240px;
-    /* Kurangi lebar sidebar sedikit */
     flex-shrink: 0;
-    z-index: 1000;
+    z-index: 1050;
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .sidebar-show {
     margin-left: 0;
-    /* Show sidebar */
+  }
+
+  /* Nav area scrollable jika konten panjang */
+  .sidebar nav {
+    overflow-y: auto;
+    flex: 1;
   }
 
   /* Content wrapper adjustment */
@@ -29,10 +35,9 @@
 
   .content-wrapper.sidebar-open {
     margin-left: 240px;
-    /* Sesuai dengan lebar sidebar */
   }
 
-  /* Custom hover effects with secondary green */
+  /* Hover effects */
   .sidebar-nav-link:hover {
     background-color: rgba(110, 171, 17, 0.1) !important;
     color: #6eab11 !important;
@@ -45,15 +50,12 @@
     border-color: transparent !important;
   }
 
-  /* Overlay untuk mobile */
+  /* ===== OVERLAY ===== */
   .sidebar-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    z-index: 1040;
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -64,22 +66,30 @@
     opacity: 1;
   }
 
-  /* Desktop behavior */
+  /* Desktop: overlay tidak pernah tampil */
   @media (min-width: 769px) {
     .sidebar-overlay {
       display: none !important;
     }
   }
 
-  /* Responsive behavior untuk mobile */
+  /* Mobile: content tidak bergeser, sidebar overlay di atas */
   @media (max-width: 768px) {
     .sidebar {
-      z-index: 1001;
+      z-index: 1060;
+      width: 220px;
+      margin-left: -220px;
     }
 
     .content-wrapper.sidebar-open {
       margin-left: 0 !important;
-      /* Di mobile, content tidak bergeser */
+    }
+  }
+
+  @media (max-width: 360px) {
+    .sidebar {
+      width: 200px;
+      margin-left: -200px;
     }
   }
 </style>

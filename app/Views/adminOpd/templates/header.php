@@ -1,35 +1,44 @@
 <!-- app/views/adminOpd/templates/header.php -->
 <!-- Navbar/Header -->
-<header class="bg-success px-4 py-3 shadow-sm border-bottom border-success-subtle position-relative"
-  style="z-index: 20;">
+<header class="bg-success px-3 px-md-4 py-2 py-md-3 shadow-sm border-bottom border-success-subtle"
+  style="z-index: 1070; position: sticky; top: 0;">
   <meta name="csrf-token" content="<?= csrf_hash(); ?>">
   <meta name="csrf-name" content="<?= csrf_token() ?>">
   <meta name="csrf-hash" content="<?= csrf_hash() ?>">
-  <div class="d-flex align-items-center justify-content-between">
-    <!-- Left Side -->
-    <div class="d-flex align-items-center">
-      <button onclick="toggleSidebar()" class="btn btn-link text-white fs-4 p-0 me-3 border-0">
+  <div class="d-flex align-items-center justify-content-between gap-2">
+
+    <!-- Left Side: Toggle + Title -->
+    <div class="d-flex align-items-center gap-2 gap-md-3 overflow-hidden">
+      <button onclick="toggleSidebar()"
+        class="btn btn-link text-white fs-5 p-0 border-0 flex-shrink-0"
+        style="line-height:1; min-width:36px;"
+        title="Toggle Sidebar">
         <i class="fas fa-bars"></i>
       </button>
-      <div>
-        <h1 class="h4 fw-bold text-white mb-0">Dashboard Admin</h1>
-        <p class="small text-white-50 mb-0">Sistem Akuntabilitas Kinerja Instansi Pemerintah</p>
+      <div class="overflow-hidden">
+        <h1 class="fw-bold text-white mb-0 text-truncate"
+            style="font-size: clamp(0.9rem, 2.5vw, 1.25rem); line-height: 1.2;">
+          Dashboard Admin
+        </h1>
+        <p class="text-white-50 mb-0 d-none d-sm-block"
+           style="font-size: clamp(0.65rem, 1.5vw, 0.8rem);">
+          Sistem Akuntabilitas Kinerja Instansi Pemerintah
+        </p>
       </div>
     </div>
 
-    <!-- Right Side -->
-    <div class="d-flex align-items-center">
-      <div class="d-flex align-items-center">
-        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2"
-          style="width: 32px; height: 32px;">
-          <i class="fas fa-user text-success"></i>
-        </div>
-        <div>
-          <p class="small fw-medium text-white mb-0">Admin OPD</p>
-          <p class="small text-white-50 mb-0" style="font-size: 0.75rem;">Administrator</p>
-        </div>
+    <!-- Right Side: User Info -->
+    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+      <div class="bg-white rounded-circle d-flex align-items-center justify-content-center"
+        style="width: 34px; height: 34px; min-width: 34px;">
+        <i class="fas fa-user text-success" style="font-size: 14px;"></i>
+      </div>
+      <div class="d-none d-md-block text-end">
+        <p class="small fw-semibold text-white mb-0" style="line-height: 1.2;">Admin OPD</p>
+        <p class="text-white-50 mb-0" style="font-size: 0.7rem; line-height: 1.2;">Administrator</p>
       </div>
     </div>
+
   </div>
 </header>
 

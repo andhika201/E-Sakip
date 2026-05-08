@@ -114,6 +114,17 @@
         
     </div>
 
+    <!-- Login Page Footer (DevTech + SN) -->
+    <div style="position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px 20px; display: flex; justify-content: flex-end; align-items: center; gap: 15px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(2px);">
+        <img src="<?= base_url('assets/images/devtech.png') ?>" 
+             alt="DevTech" 
+             style="height: 85px; width: auto; object-fit: contain; filter: brightness(0) invert(1); opacity: 0.95;">
+        <div class="text-end text-white">
+            <div style="font-size: 0.85rem; opacity: 0.9; line-height: 1.3; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Powered by</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; line-height: 1.3; letter-spacing: 0.05em; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">SN: ESAKIP-LOG-2025-001</div>
+        </div>
+    </div>
+
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>

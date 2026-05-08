@@ -96,14 +96,15 @@
                                     <th>Sasaran RPJMD</th>
                                     <th>Tujuan RENSTRA</th>
 
-                                    <th>CSF ESS II</th>
+                                    <th>CSF</th>
                                     <th>Sasaran ESS II</th>
                                     <th>Indikator ESS II</th>
 
-                                    <th>CSF ESS III</th>
+                                    <th>CSF</th>
                                     <th>Sasaran ESS III</th>
                                     <th>Indikator ESS III</th>
 
+                                    <th>CSF</th>
                                     <th>Sasaran ESS IV / JF</th>
                                     <th>Indikator ESS IV</th>
 
@@ -151,10 +152,10 @@
                                         <?php endif; ?>
                                         <?php if (empty($r['es3_id'])): ?>
                                             <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
-                                                <td colspan="3" class="text-center">
+                                                <td colspan="6" class="text-center">
                                                     <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
                                                         class="btn btn-success btn-sm">
-                                                        <i class="fas fa-plus"></i>
+                                                        <i class="fas fa-plus"></i> Tambah ESS III
                                                     </a>
                                                 </td>
                                             <?php endif; ?>
@@ -181,7 +182,7 @@
 
                                         <?php if (!empty($r['es3_id']) && empty($r['es4_id'])): ?>
                                             <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
-                                                <td colspan="2" class="text-center">
+                                                <td colspan="3" class="text-center">
                                                     <a href="<?= base_url('adminopd/cascading/tambah-es4/' . $r['es3_indikator_id']) ?>"
                                                         class="btn btn-success btn-sm">
                                                         <i class="fas fa-plus"></i>
@@ -191,6 +192,14 @@
 
                                         <?php else: ?>
                                             <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
+                                                <!-- CSF ES IV -->
+                                                <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="p-1">
+                                                    <textarea class="form-control csf-input text-center"
+                                                        style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
+                                                        data-id="<?= $r['es4_id'] ?>"
+                                                        data-level="es4"><?= esc($r['csf_es4'] ?? '') ?></textarea>
+                                                </td>
+                                                <!-- Sasaran ES IV -->
                                                 <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>">
                                                     <?= esc($r['es4_sasaran']) ?>
                                                 </td>

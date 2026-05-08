@@ -55,10 +55,11 @@ class CascadingModel extends Model
 
             ->join(
                 'rpjmd_cascading map',
-                "map.indikator_sasaran_id = i.id
-                AND map.tahun BETWEEN {$start} AND {$end}",
+                'map.indikator_sasaran_id = i.id',
                 'left'
             )
+            ->where('map.tahun >=', (int) $start)
+            ->where('map.tahun <=', (int) $end)
 
             ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
             ->join('program_pk p', 'p.id = pp.program_id', 'left')
@@ -178,7 +179,8 @@ class CascadingModel extends Model
             ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
             ->join('program_pk p', 'p.id = pp.program_id', 'left')
             ->join('opd o', 'o.id = map.opd_id', 'left')
-            ->where("map.tahun BETWEEN {$start} AND {$end}")
+            ->where('map.tahun >=', (int) $start)
+            ->where('map.tahun <=', (int) $end)
             ->orderBy('i.id')
             ->orderBy('o.nama_opd')
             ->get()
@@ -245,6 +247,7 @@ class CascadingModel extends Model
             i3.id as es3_indikator_id,
             i3.indikator as es3_indikator,
 
+            es4.csf as csf_es4,
             es4.id as es4_id,
             es4.nama_sasaran as es4_sasaran,
 
@@ -448,69 +451,98 @@ class CascadingModel extends Model
             ->get()
             ->getResultArray();
 
-        $tree = [];
+        if (empty($misiList)) {
+            return [];
+        }
 
-        foreach ($misiList as $misi) {
-            $misiNode = [
-                'id' => $misi['id'],
-                'misi' => $misi['misi'],
-                'tujuan' => []
-            ];
+        $misiIds = array_column($misiList, 'id');
 
-            // 2. Get Tujuan under this Misi
-            $tujuanList = $this->db->table('rpjmd_tujuan')
-                ->where('misi_id', $misi['id'])
+        // 2. Get all Tujuan for these Misi
+        $tujuanList = $this->db->table('rpjmd_tujuan')
+            ->whereIn('misi_id', $misiIds)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $tujuanIds = array_column($tujuanList, 'id');
+
+        // 3. Get all Indikator Tujuan and Sasaran for these Tujuan
+        $indikatorTujuanList = [];
+        $sasaranList = [];
+        $sasaranIds = [];
+        
+        if (!empty($tujuanIds)) {
+            $indikatorTujuanList = $this->db->table('rpjmd_indikator_tujuan')
+                ->whereIn('tujuan_id', $tujuanIds)
                 ->orderBy('id', 'ASC')
                 ->get()
                 ->getResultArray();
 
-            foreach ($tujuanList as $tujuan) {
-                $tujuanNode = [
-                    'id' => $tujuan['id'],
-                    'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
-                    'indikator_tujuan' => [],
-                    'sasaran' => []
-                ];
+            $sasaranList = $this->db->table('rpjmd_sasaran')
+                ->whereIn('tujuan_id', $tujuanIds)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
 
-                // 3. Get Indikator Tujuan
-                $indikatorTujuan = $this->db->table('rpjmd_indikator_tujuan')
-                    ->where('tujuan_id', $tujuan['id'])
-                    ->orderBy('id', 'ASC')
-                    ->get()
-                    ->getResultArray();
+            $sasaranIds = array_column($sasaranList, 'id');
+        }
 
-                $tujuanNode['indikator_tujuan'] = $indikatorTujuan;
+        // 4. Get all Indikator Sasaran for these Sasaran
+        $indikatorSasaranList = [];
+        if (!empty($sasaranIds)) {
+            $indikatorSasaranList = $this->db->table('rpjmd_indikator_sasaran')
+                ->whereIn('sasaran_id', $sasaranIds)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
 
-                // 4. Get Sasaran (with CSF)
-                $sasaranList = $this->db->table('rpjmd_sasaran')
-                    ->where('tujuan_id', $tujuan['id'])
-                    ->orderBy('id', 'ASC')
-                    ->get()
-                    ->getResultArray();
+        // --- GROUPING IN MEMORY ---
 
-                foreach ($sasaranList as $sasaran) {
-                    $sasaranNode = [
-                        'id' => $sasaran['id'],
-                        'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
-                        'csf' => $sasaran['csf'] ?? '',
-                        'indikator_sasaran' => []
-                    ];
+        // Group Indikator Sasaran by sasaran_id
+        $groupedIndikatorSasaran = [];
+        foreach ($indikatorSasaranList as $indSas) {
+            $groupedIndikatorSasaran[$indSas['sasaran_id']][] = $indSas;
+        }
 
-                    // 5. Get Indikator Sasaran
-                    $indikatorSasaran = $this->db->table('rpjmd_indikator_sasaran')
-                        ->where('sasaran_id', $sasaran['id'])
-                        ->orderBy('id', 'ASC')
-                        ->get()
-                        ->getResultArray();
+        // Group Sasaran by tujuan_id and attach their Indikator Sasaran
+        $groupedSasaran = [];
+        foreach ($sasaranList as $sasaran) {
+            $sasaranNode = [
+                'id' => $sasaran['id'],
+                'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
+                'csf' => $sasaran['csf'] ?? '',
+                'indikator_sasaran' => $groupedIndikatorSasaran[$sasaran['id']] ?? []
+            ];
+            $groupedSasaran[$sasaran['tujuan_id']][] = $sasaranNode;
+        }
 
-                    $sasaranNode['indikator_sasaran'] = $indikatorSasaran;
+        // Group Indikator Tujuan by tujuan_id
+        $groupedIndikatorTujuan = [];
+        foreach ($indikatorTujuanList as $indTuj) {
+            $groupedIndikatorTujuan[$indTuj['tujuan_id']][] = $indTuj;
+        }
 
-                    $tujuanNode['sasaran'][] = $sasaranNode;
-                }
+        // Group Tujuan by misi_id and attach Sasaran & Indikator Tujuan
+        $groupedTujuan = [];
+        foreach ($tujuanList as $tujuan) {
+            $tujuanNode = [
+                'id' => $tujuan['id'],
+                'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
+                'indikator_tujuan' => $groupedIndikatorTujuan[$tujuan['id']] ?? [],
+                'sasaran' => $groupedSasaran[$tujuan['id']] ?? []
+            ];
+            $groupedTujuan[$tujuan['misi_id']][] = $tujuanNode;
+        }
 
-                $misiNode['tujuan'][] = $tujuanNode;
-            }
-
+        // Assemble final tree
+        $tree = [];
+        foreach ($misiList as $misi) {
+            $misiNode = [
+                'id' => $misi['id'],
+                'misi' => $misi['misi'],
+                'tujuan' => $groupedTujuan[$misi['id']] ?? []
+            ];
             $tree[] = $misiNode;
         }
 

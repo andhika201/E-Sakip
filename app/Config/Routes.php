@@ -9,9 +9,9 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->get('/unauthorized', 'Home::unauthorized');
 
-// Change Password (semua role yang login)
-$routes->get('/change-password',         'ChangePasswordController::index');
-$routes->post('/change-password/update', 'ChangePasswordController::update');
+// Change Password (semua role yang sudah login)
+$routes->get('/change-password', 'ChangePasswordController::index', ['filter' => 'auth']);
+$routes->post('/change-password/update', 'ChangePasswordController::update', ['filter' => 'auth']);
 
 // User Routes
 $routes->get('/dashboard', 'UserController::index');
@@ -36,6 +36,19 @@ $routes->get('/cascading_kabupaten/cetak-pohon', 'UserController::cascading_kabu
 $routes->get('/cascading_opd', 'UserController::cascading_opd');
 $routes->get('/cascading_opd/cetak', 'UserController::cascading_opd_cetak');
 $routes->get('/cascading_opd/cetak-pohon', 'UserController::cascading_opd_pohon');
+
+$routes->get('/api-docs', 'ApiDocsController::index');
+
+$routes->group('api', ['filter' => 'api-token'], static function ($routes) {
+    $routes->get('perangkat-daerah', 'Api\PerangkatDaerahController::index');
+    $routes->get('perangkat-daerah/(:num)', 'Api\PerangkatDaerahController::show/$1');
+    $routes->get('perangkat-daerah/(:num)/iku', 'Api\PerangkatDaerahController::iku/$1');
+    $routes->get('perangkat-daerah/(:num)/cascading', 'Api\PerangkatDaerahController::cascading/$1');
+    $routes->get('perangkat-daerah/(:num)/pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja/$1');
+    $routes->get('iku', 'Api\PerangkatDaerahController::iku');
+    $routes->get('cascading', 'Api\PerangkatDaerahController::cascading');
+    $routes->get('pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja');
+});
 
 $routes->group(
     'adminkab',

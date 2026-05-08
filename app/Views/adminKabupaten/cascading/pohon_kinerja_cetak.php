@@ -207,21 +207,40 @@
             right: 20px;
             z-index: 1000;
             background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            width: 210px;
+        }
+        .print-controls label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .print-controls select {
+            font-size: 12px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .zoom-info {
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            margin-top: 4px;
         }
 
+        /* Dynamic @page – dioverride oleh JS */
         @media print {
-            @page {
-                size: A4 landscape;
-                margin: 5mm;
-            }
             body {
                 background: #fff;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                padding: 0;
+                padding-bottom: 14mm;
             }
             .print-controls {
                 display: none !important;
@@ -230,41 +249,137 @@
                 overflow: visible !important;
                 width: 100%;
             }
-            .tree {
-                zoom: 0.65; /* Memperkecil rasio agar muat banyak cabang di satu lembar */
-            }
             .tree-node {
-                width: 140px; /* Compress slightly for print */
                 page-break-inside: avoid;
             }
             .tree li {
-                padding: 15px 3px 0 3px;
+                padding: 12px 3px 0 3px;
             }
             .box-visi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
             .box-misi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
             .box-tujuan { font-size: 11px; padding: 8px; box-shadow: none;}
             .box-sasaran { font-size: 11px; padding: 8px; box-shadow: none;}
             .box-ikt, .box-iks, .box-csf { font-size: 9px; padding: 5px; box-shadow: none;}
+            .wm-footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: #fff;
+                border-top: 1px solid #ccc;
+            }
+        }
+
+        /* ===== WATERMARK FOOTER ===== */
+        .wm-footer { display: none; }
+
+        @media print {
+            .wm-footer {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                padding: 5px 10mm;
+                background: #fff;
+                border-top: 1px solid #ccc;
+                justify-content: space-between;
+                align-items: center;
+                font-family: Arial, sans-serif;
+                font-size: 8pt;
+                color: #888;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .wm-footer .wm-left  { font-style: italic; }
+            .wm-footer .wm-right { font-weight: 600; color: #aaa; }
         }
     </style>
 </head>
 <body>
 
-    <div class="print-controls d-flex flex-column gap-2">
-        <button onclick="window.print()" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+    <div class="print-controls">
+        <div class="fw-bold mb-2" style="font-size:13px; color:#333;">
+            <i class="fas fa-print me-1 text-primary"></i> Pengaturan Cetak
+        </div>
+
+        <label for="selectKertas">Ukuran Kertas</label>
+        <select id="selectKertas" onchange="updatePrintStyle()">
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="A3">A3 (297 × 420 mm)</option>
+            <option value="F4">F4 / Folio (215 × 330 mm)</option>
+            <option value="legal">Legal (216 × 356 mm)</option>
+        </select>
+
+        <label for="selectOrientasi">Orientasi</label>
+        <select id="selectOrientasi" onchange="updatePrintStyle()">
+            <option value="landscape" selected>Landscape</option>
+            <option value="portrait">Portrait</option>
+        </select>
+
+        <label for="selectZoom">Zoom Pohon</label>
+        <select id="selectZoom" onchange="updateZoom()">
+            <option value="0.35">35% — Sangat Kecil</option>
+            <option value="0.45">45% — Kecil</option>
+            <option value="0.55">55% — Normal</option>
+            <option value="0.65" selected>65% — Agak Besar</option>
+            <option value="0.70">70% — Besar</option>
+            <option value="0.85">85% — Sangat Besar</option>
+            <option value="1.00">100% — Penuh</option>
+        </select>
+
+        <button onclick="doCetak()" class="btn btn-primary btn-sm w-100 mb-2">
             <i class="fas fa-print"></i> Cetak Sekarang
         </button>
-        <button onclick="window.close()" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2" id="btnClose">
+        <button onclick="tutupHalaman()" class="btn btn-outline-secondary btn-sm w-100">
             <i class="fas fa-times"></i> Tutup
         </button>
-        <small class="text-muted mt-2 text-center" style="max-width: 150px; font-size: 11px;">
-            Pastikan pengaturan cetak diset ke <b>Landscape</b> dan <b>Background graphics</b> diaktifkan.
-        </small>
+        <div class="zoom-info" id="zoomInfo">Zoom: 65%</div>
     </div>
 
     <div class="print-header">
         <h2 class="fw-bold mb-1">POHON KINERJA</h2>
         <p class="text-muted mb-0" style="font-size: 16px;">Periode <?= esc($tahun_mulai) ?> - <?= esc($tahun_akhir) ?></p>
+    </div>
+
+    <!-- LEGENDA WARNA -->
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 24px; padding: 12px 20px; background: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;">
+        <span style="font-size: 11px; font-weight: 700; color: #555; align-self: center; margin-right: 4px;">Keterangan:</span>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #1a237e, #283593);"></div>
+            <span style="font-size: 11px; color: #333;">Visi</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #00b8a9, #008f83);"></div>
+            <span style="font-size: 11px; color: #333;">Misi</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #00897b, #00695c);"></div>
+            <span style="font-size: 11px; color: #333;">Tujuan RPJMD</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: #43a047;"></div>
+            <span style="font-size: 11px; color: #333;">Indikator Tujuan</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #6d4c41, #4e342e);"></div>
+            <span style="font-size: 11px; color: #333;">Sasaran RPJMD</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: #f57c00;"></div>
+            <span style="font-size: 11px; color: #333;">Indikator Sasaran</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 5px;">
+            <div style="width: 20px; height: 20px; border-radius: 5px; background: #fff3e0; border: 1px solid #ffb74d;"></div>
+            <span style="font-size: 11px; color: #333;">CSF (Critical Success Factor)</span>
+        </div>
     </div>
 
     <div class="tree-container text-center">
@@ -349,23 +464,82 @@
         </div>
     </div>
 
-    <!-- Script to Auto Print (dimatikan sesuai request) -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Auto open print dialog when page is loaded (disabled request user)
-            // setTimeout(() => {
-            //     window.print();
-            // }, 500);
 
-            // Logic to go back / close window when user clicks close
-            document.getElementById('btnClose').addEventListener('click', () => {
-                if(window.history.length > 1) {
-                    window.history.back();
-                } else {
-                    window.close();
-                }
-            });
-        });
-    </script>
+    <!-- WATERMARK FOOTER -->
+    <div class="wm-footer">
+        <span class="wm-left">
+            &copy; Kabupaten Pringsewu &mdash; E-Sakip &bull; Dicetak: <?= date('d/m/Y H:i') ?>
+        </span>
+        <span class="wm-right">Print by Aksara</span>
+    </div>
+
 </body>
-</html>
+
+<script>
+    // ============================================================
+    // Inject dynamic @page style sesuai pilihan kertas & orientasi
+    // ============================================================
+    const pageSizes = {
+        'A4':    { w: '210mm', h: '297mm' },
+        'A3':    { w: '297mm', h: '420mm' },
+        'F4':    { w: '215mm', h: '330mm' },
+        'legal': { w: '216mm', h: '356mm' },
+    };
+
+    let dynamicStyle = document.getElementById('dynamicPrintStyle');
+    if (!dynamicStyle) {
+        dynamicStyle = document.createElement('style');
+        dynamicStyle.id = 'dynamicPrintStyle';
+        document.head.appendChild(dynamicStyle);
+    }
+
+    function updatePrintStyle() {
+        const kertas    = document.getElementById('selectKertas').value;
+        const orientasi = document.getElementById('selectOrientasi').value;
+        const size      = pageSizes[kertas] || pageSizes['A4'];
+
+        const pageSize = orientasi === 'landscape'
+            ? `${size.h} ${size.w}`
+            : `${size.w} ${size.h}`;
+
+        dynamicStyle.textContent = `
+            @media print {
+                @page {
+                    size: ${pageSize};
+                    margin: 6mm;
+                }
+            }
+        `;
+
+        document.getElementById('zoomInfo').textContent =
+            `${kertas} | ${orientasi === 'landscape' ? 'Landscape' : 'Portrait'} | Zoom: ${Math.round(parseFloat(document.getElementById('selectZoom').value)*100)}%`;
+    }
+
+    function updateZoom() {
+        const zoom = parseFloat(document.getElementById('selectZoom').value);
+        document.getElementById('tree-container').style.zoom = zoom;
+        updatePrintStyle();
+    }
+
+    function tutupHalaman() {
+        // Coba tutup tab; jika gagal (dibuka langsung), kembali ke halaman sebelumnya
+        window.close();
+        setTimeout(() => {
+            if (!window.closed) {
+                window.history.back();
+            }
+        }, 300);
+    }
+
+    function doCetak() {
+        updatePrintStyle();
+        setTimeout(() => window.print(), 100);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePrintStyle();
+        updateZoom();
+    });
+</script>
+
+</html>

@@ -37,6 +37,19 @@ $routes->get('/cascading_opd', 'UserController::cascading_opd');
 $routes->get('/cascading_opd/cetak', 'UserController::cascading_opd_cetak');
 $routes->get('/cascading_opd/cetak-pohon', 'UserController::cascading_opd_pohon');
 
+$routes->get('/api-docs', 'ApiDocsController::index');
+
+$routes->group('api', ['filter' => 'api-token'], static function ($routes) {
+    $routes->get('perangkat-daerah', 'Api\PerangkatDaerahController::index');
+    $routes->get('perangkat-daerah/(:num)', 'Api\PerangkatDaerahController::show/$1');
+    $routes->get('perangkat-daerah/(:num)/iku', 'Api\PerangkatDaerahController::iku/$1');
+    $routes->get('perangkat-daerah/(:num)/cascading', 'Api\PerangkatDaerahController::cascading/$1');
+    $routes->get('perangkat-daerah/(:num)/pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja/$1');
+    $routes->get('iku', 'Api\PerangkatDaerahController::iku');
+    $routes->get('cascading', 'Api\PerangkatDaerahController::cascading');
+    $routes->get('pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja');
+});
+
 $routes->group(
     'adminkab',
     ['filter' => 'auth:admin_kab,admin'],

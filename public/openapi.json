@@ -1,0 +1,719 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API e-SAKIP Kabupaten Pringsewu",
+    "version": "1.0.0",
+    "description": "API read-only untuk perangkat daerah, IKU, cascading, dan pohon kinerja perangkat daerah."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Server aplikasi saat ini"
+    }
+  ],
+  "security": [
+    {
+      "ApiToken": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Perangkat Daerah"
+    },
+    {
+      "name": "IKU"
+    },
+    {
+      "name": "Cascading"
+    },
+    {
+      "name": "Pohon Kinerja"
+    }
+  ],
+  "paths": {
+    "/api/perangkat-daerah": {
+      "get": {
+        "tags": ["Perangkat Daerah"],
+        "summary": "Daftar perangkat daerah",
+        "responses": {
+          "200": {
+            "description": "Daftar perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpdListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/perangkat-daerah/{opd_id}": {
+      "get": {
+        "tags": ["Perangkat Daerah"],
+        "summary": "Detail perangkat daerah",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpdResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/perangkat-daerah/{opd_id}/iku": {
+      "get": {
+        "tags": ["IKU"],
+        "summary": "IKU perangkat daerah",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          },
+          {
+            "$ref": "#/components/parameters/StatusIku"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar IKU perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IkuListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/perangkat-daerah/{opd_id}/cascading": {
+      "get": {
+        "tags": ["Cascading"],
+        "summary": "Cascading perangkat daerah",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matriks cascading perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CascadingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/perangkat-daerah/{opd_id}/pohon-kinerja": {
+      "get": {
+        "tags": ["Pohon Kinerja"],
+        "summary": "Pohon kinerja perangkat daerah",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tree pohon kinerja perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PohonKinerjaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/iku": {
+      "get": {
+        "tags": ["IKU"],
+        "summary": "IKU perangkat daerah menggunakan query opd_id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          },
+          {
+            "$ref": "#/components/parameters/StatusIku"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar IKU perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IkuListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/cascading": {
+      "get": {
+        "tags": ["Cascading"],
+        "summary": "Cascading perangkat daerah menggunakan query opd_id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matriks cascading perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CascadingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/pohon-kinerja": {
+      "get": {
+        "tags": ["Pohon Kinerja"],
+        "summary": "Pohon kinerja perangkat daerah menggunakan query opd_id",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdQuery"
+          },
+          {
+            "$ref": "#/components/parameters/Periode"
+          },
+          {
+            "$ref": "#/components/parameters/TahunMulai"
+          },
+          {
+            "$ref": "#/components/parameters/TahunAkhir"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tree pohon kinerja perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PohonKinerjaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "api-token",
+        "description": "Masukkan token API dari file .env."
+      }
+    },
+    "parameters": {
+      "OpdIdPath": {
+        "name": "opd_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "example": 20
+        },
+        "description": "ID perangkat daerah."
+      },
+      "OpdIdQuery": {
+        "name": "opd_id",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "example": 20
+        },
+        "description": "ID perangkat daerah."
+      },
+      "Periode": {
+        "name": "periode",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{4}$",
+          "example": "2025-2029"
+        },
+        "description": "Filter periode dalam format YYYY-YYYY."
+      },
+      "TahunMulai": {
+        "name": "tahun_mulai",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "example": 2025
+        },
+        "description": "Alternatif filter tahun awal periode."
+      },
+      "TahunAkhir": {
+        "name": "tahun_akhir",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "example": 2029
+        },
+        "description": "Alternatif filter tahun akhir periode."
+      },
+      "StatusIku": {
+        "name": "status",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": ["all", "selesai", "draft", "belum", "tercapai"],
+          "default": "selesai"
+        },
+        "description": "Filter status IKU. Default hanya menampilkan IKU dengan status selesai."
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Parameter tidak valid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "API token tidak valid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Data tidak ditemukan",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "message": {
+            "type": "string",
+            "example": "API token tidak valid."
+          }
+        }
+      },
+      "Opd": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 20
+          },
+          "nama_opd": {
+            "type": "string",
+            "example": "DINAS KOMUNIKASI DAN INFORMATIKA"
+          },
+          "singkatan": {
+            "type": "string",
+            "nullable": true,
+            "example": "DISKOMINFO"
+          }
+        }
+      },
+      "Period": {
+        "type": "object",
+        "properties": {
+          "periode": {
+            "type": "string",
+            "example": "2025-2029"
+          },
+          "tahun_mulai": {
+            "type": "integer",
+            "example": 2025
+          },
+          "tahun_akhir": {
+            "type": "integer",
+            "example": 2029
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [2025, 2026, 2027, 2028, 2029]
+          }
+        }
+      },
+      "OpdListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Opd"
+            }
+          }
+        }
+      },
+      "OpdResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Opd"
+          }
+        }
+      },
+      "Iku": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 52
+          },
+          "renstra_id": {
+            "type": "integer",
+            "example": 126
+          },
+          "definisi": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "opd": {
+            "$ref": "#/components/schemas/Opd"
+          },
+          "sasaran": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nama": {
+                "type": "string"
+              }
+            }
+          },
+          "indikator": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "nama": {
+                "type": "string"
+              },
+              "satuan": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "periode": {
+            "type": "object"
+          },
+          "target_tahunan": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "2025": "3,05",
+              "2026": "3,3"
+            }
+          },
+          "program_pendukung": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "program": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "IkuListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Iku"
+            }
+          }
+        }
+      },
+      "CascadingRow": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "tujuan_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "tujuan_rpjmd": {
+            "type": "string",
+            "nullable": true
+          },
+          "sasaran_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "sasaran_rpjmd": {
+            "type": "string",
+            "nullable": true
+          },
+          "renstra_sasaran_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "renstra_sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikator_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "indikator_sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "es3_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "es4_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "CascadingResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CascadingRow"
+            }
+          }
+        }
+      },
+      "PohonNode": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "nama": {
+            "type": "string"
+          },
+          "sasaran": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "PohonKinerjaResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PohonNode"
+            }
+          }
+        }
+      }
+    }
+  }
+}

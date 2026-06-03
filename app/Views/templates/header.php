@@ -4,7 +4,7 @@
   <div class="d-flex align-items-center justify-content-between">
     <!-- Left Side -->
     <div class="d-flex align-items-center">
-      <img src="<?= base_url('assets/images/sakipLogo-light.png') ?>" alt="sakipLogo" width="auto" height="50" class="rounded me-2" />
+      <img src="<?= base_url('assets/images/logoHeader.png') ?>" alt="sakipLogo" width="auto" height="80" class="me-2" />
     </div>
 
     <!-- Right Side -->

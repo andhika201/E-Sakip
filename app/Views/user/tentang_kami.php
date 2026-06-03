@@ -22,10 +22,10 @@
         <h2 class="h3 fw-bold text-success text-center mb-4">TENTANG AKSARA</h2>
         <div class="text-center mb-4">
             <img
-                src="<?= base_url('assets/images/LogoAKSARA.png') ?>"
+                src="<?= base_url('assets/images/LogoTentang.png') ?>"
                 alt="Logo AKSARA Kabupaten Pringsewu"
                 class="img-fluid"
-                style="max-width: 220px;"
+                style="max-width: 240px;"
             >
         </div>
 

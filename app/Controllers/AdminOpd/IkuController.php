@@ -222,6 +222,7 @@ class IkuController extends BaseController
 
             $this->ikuModel->createCompleteIku([
                 'definisi'         => $data['definisi'],
+                'penanggung_jawab' => trim($data['penanggung_jawab'] ?? '') ?: null,
                 'rpjmd_id'         => $data['rpjmd_id'] ?? null,
                 'renstra_id'       => $data['renstra_indikator_sasaran_id'] ?? null,
                 'status'           => 'draft',
@@ -334,6 +335,7 @@ class IkuController extends BaseController
             // Update definisi IKU
             $updateData = [
                 'definisi' => $data['definisi'] ?? null,
+                'penanggung_jawab' => trim($data['penanggung_jawab'] ?? '') ?: null,
             ];
             $this->ikuModel->updateIku($ikuId, $updateData, 'id');
 

@@ -5,6 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= esc($title ?? 'IKU - e-SAKIP') ?></title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <style>
+        /* Rapikan tabel IKU */
+        .iku-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .iku-table th,
+        .iku-table td {
+            vertical-align: middle;
+        }
+        .iku-table td.text-start {
+            min-width: 160px;
+        }
+        .iku-table tbody tr:hover {
+            background-color: #f3faf5;
+        }
+        .table-wrap {
+            max-height: 70vh;
+            overflow: auto;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -113,8 +137,8 @@
                 }
 
                 // total kolom untuk colspan "data kosong"
-                // No + (OPD?) + Status + Sasaran + Indikator + Definisi + Satuan + Tahun(=count years) + Program + Aksi
-                $totalCols = 1 + ($showOpdCol ? 1 : 0) + 1 + 1 + 1 + 1 + 1 + count($years) + 1 + 1;
+                // No + (OPD?) + Status + Sasaran + Indikator + Definisi + Penanggung Jawab + Satuan + Tahun(=count years) + Program + Aksi
+                $totalCols = 1 + ($showOpdCol ? 1 : 0) + 1 + 1 + 1 + 1 + 1 + 1 + count($years) + 1 + 1;
 
                 // helper cari IKU untuk 1 indikator
                 $findIku = function (int $indikatorId) use ($iku_data, $mode) {
@@ -167,8 +191,8 @@
                 $printedSasaran = [];
                 ?>
 
-                <div class="table-responsive mt-3">
-                    <table class="table table-bordered table-striped align-middle small">
+                <div class="table-responsive table-wrap mt-3">
+                    <table class="table table-bordered table-striped align-middle small iku-table">
                         <thead class="table-success text-dark">
                         <tr class="text-center">
                             <th rowspan="2" class="align-middle">No</th>
@@ -179,6 +203,7 @@
                             <th rowspan="2" class="align-middle">Sasaran</th>
                             <th rowspan="2" class="align-middle">Indikator Sasaran</th>
                             <th rowspan="2" class="align-middle">Definisi Operasional</th>
+                            <th rowspan="2" class="align-middle">Penanggung Jawab</th>
                             <th rowspan="2" class="align-middle">Satuan</th>
 
                             <th colspan="<?= count($years) ?>" class="align-middle">
@@ -294,9 +319,20 @@
                                                     <?= esc($indikator['indikator_sasaran'] ?? '-') ?>
                                                 </td>
 
-                                                <!-- Definisi -->
+                                                <!-- Definisi (fallback ke definisi_op RPJMD bila IKU belum diisi) -->
+                                                <?php
+                                                $definisiText = trim((string)($iku['definisi'] ?? ''));
+                                                if ($definisiText === '') {
+                                                    $definisiText = trim((string)($indikator['definisi_op'] ?? ''));
+                                                }
+                                                ?>
                                                 <td rowspan="<?= $programCount ?>" class="align-middle text-start">
-                                                    <?= esc($iku['definisi'] ?? '-') ?>
+                                                    <?= esc($definisiText !== '' ? $definisiText : '-') ?>
+                                                </td>
+
+                                                <!-- Penanggung Jawab -->
+                                                <td rowspan="<?= $programCount ?>" class="align-middle text-start">
+                                                    <?= esc(trim((string)($iku['penanggung_jawab'] ?? '')) !== '' ? $iku['penanggung_jawab'] : '-') ?>
                                                 </td>
 
                                                 <!-- Satuan -->
@@ -333,11 +369,14 @@
                                                 <td rowspan="<?= $programCount ?>" class="align-middle text-center">
                                                     <?php if (!empty($indikatorId)): ?>
                                                         <?php if (empty($iku['definisi'])): ?>
+                                                            <?php if (user_can('iku_kab.create')): ?>
                                                             <a href="<?= base_url('adminkab/iku/tambah/' . $indikator['id'] . '?mode=' . $mode) ?>"
                                                                class="btn btn-primary btn-sm" title="Tambah IKU">
                                                                 <i class="fas fa-plus"></i>
                                                             </a>
+                                                            <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                         <?php else: ?>
+                                                            <?php if (user_can('iku_kab.update')): ?>
                                                             <a href="<?= base_url('adminkab/iku/edit/' . $indikator['id'] . '?mode=' . $mode) ?>"
                                                                class="btn btn-warning btn-sm" title="Edit IKU">
                                                                 <i class="fas fa-edit"></i>
@@ -347,6 +386,7 @@
                                                                title="Ubah Status IKU">
                                                                 <i class="fas fa-sync-alt"></i>
                                                             </a>
+                                                            <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                         <?php endif; ?>
                                                     <?php else: ?>
                                                         <span class="text-muted">-</span>

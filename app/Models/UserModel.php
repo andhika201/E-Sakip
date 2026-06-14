@@ -28,28 +28,28 @@ class UserModel extends Model
     protected $updatedField = 'updated_at';
 
     // Validation
+    // Catatan: PK tabel ini `user_id` (bukan `id`), dan role sekarang dinamis
+    // (lihat tabel roles). Keunikan username/email divalidasi di controller agar
+    // bebas dari masalah placeholder is_unique pada PK non-standar.
     protected $validationRules = [
-        'username' => 'required|min_length[4]|max_length[50]|is_unique[users.username,id,{id}]',
-        'password' => 'required|min_length[6]',
-        'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
-        'role' => 'required|in_list[admin_kabupaten,admin_opd]',
+        'username' => 'required|min_length[4]|max_length[50]',
+        'password' => 'permit_empty|min_length[6]',
+        'email'    => 'required|valid_email',
+        'role'     => 'required|string|max_length[50]',
     ];
 
     protected $validationMessages = [
         'username' => [
             'required' => 'Username harus diisi',
-            'min_length' => 'Username minimal 3 karakter',
+            'min_length' => 'Username minimal 4 karakter',
             'max_length' => 'Username maksimal 50 karakter',
-            'is_unique' => 'Username sudah digunakan'
         ],
         'password' => [
-            'required' => 'Password harus diisi',
-            'min_length' => 'Password minimal 6 karakter'
+            'min_length' => 'Password minimal 6 karakter',
         ],
         'email' => [
             'required' => 'Email harus diisi',
             'valid_email' => 'Format email tidak valid',
-            'is_unique' => 'Email sudah digunakan'
         ],
     ];
 

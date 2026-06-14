@@ -97,6 +97,9 @@
             </div>
           </div>
 
+          <!-- 2FA -->
+          <?= $this->include('templates/two_factor_card', ['twofaEnabled' => $twofaEnabled ?? false]); ?>
+
         </div>
       </div>
     </main>

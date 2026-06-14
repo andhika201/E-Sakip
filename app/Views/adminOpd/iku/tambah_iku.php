@@ -59,6 +59,13 @@
         </div>
         <div class="row mb-3">
           <div class="col-md-12">
+            <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
+            <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
+              placeholder="Unit/jabatan penanggung jawab IKU (opsional)">
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
             <label for="program_pendukung" class="form-label">Program Pendukung</label>
             <div id="program-container">
               <div class="input-group mb-2">

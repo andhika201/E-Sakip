@@ -43,10 +43,15 @@
             margin-bottom: 1rem;
         }
         .logo {
-            max-width: 200px;
+            width: 55%;
+            max-width: 170px;
             height: auto;
-            margin-bottom: 0.25rem;
-
+            display: block;
+            margin: 0 auto 0.5rem;
+            object-fit: contain;
+        }
+        @media (max-width: 480px) {
+            .logo { width: 45%; max-width: 130px; }
         }
 
         .input-border-green {
@@ -81,8 +86,8 @@
 <body>
     <div class="login-card">
         <div class="logo-container">
-            <img src="/assets/images/sakipLogo.png" 
-                 alt="Logo SAKIP" 
+            <img src="<?= base_url('assets/images/logoHeader.png') ?>"
+                 alt="AKSARA"
                  class="logo img-fluid">
         </div>
         

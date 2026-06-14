@@ -194,6 +194,7 @@ class IkuController extends BaseController
         }
         $mode = $this->request->getPost('mode') ?: 'opd';
         $definisi = trim($this->request->getPost('definisi') ?? '');
+        $penanggungJawab = trim($this->request->getPost('penanggung_jawab') ?? '') ?: null;
         $programs = $this->request->getPost('program_pendukung') ?? [];
 
         if ($definisi === '') {
@@ -211,6 +212,7 @@ class IkuController extends BaseController
                 'rpjmd_id' => $indikatorId,
                 'renstra_id' => null,
                 'definisi' => $definisi,
+                'penanggung_jawab' => $penanggungJawab,
                 'status' => 'draft',
                 'program_pendukung' => $programs,
             ];
@@ -225,6 +227,7 @@ class IkuController extends BaseController
                 'renstra_id' => $indikatorId,
                 'rpjmd_id' => null,
                 'definisi' => $definisi,
+                'penanggung_jawab' => $penanggungJawab,
                 'status' => 'draft',
                 'program_pendukung' => $programs,
             ];
@@ -315,6 +318,7 @@ class IkuController extends BaseController
 
         $dataUpdate = [
             'definisi' => $definisi,
+            'penanggung_jawab' => trim($request->getPost('penanggung_jawab') ?? '') ?: null,
         ];
         if (!empty($renstraId)) {
             $dataUpdate['renstra_id'] = $renstraId;

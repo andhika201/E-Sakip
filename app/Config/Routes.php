@@ -13,6 +13,13 @@ $routes->get('/unauthorized', 'Home::unauthorized');
 $routes->get('/change-password', 'ChangePasswordController::index', ['filter' => 'auth']);
 $routes->post('/change-password/update', 'ChangePasswordController::update', ['filter' => 'auth']);
 
+// 2FA (TOTP authenticator)
+$routes->get('/2fa/setup', 'TwoFactorController::setup', ['filter' => 'auth']);
+$routes->post('/2fa/enable', 'TwoFactorController::enable', ['filter' => 'auth']);
+$routes->post('/2fa/disable', 'TwoFactorController::disable', ['filter' => 'auth']);
+$routes->get('/2fa/verify', 'TwoFactorController::verify');   // langkah login (belum sesi penuh)
+$routes->post('/2fa/verify', 'TwoFactorController::verifyPost');
+
 // User Routes
 $routes->get('/dashboard', 'UserController::index');
 $routes->get('/rkpd', 'UserController::rkpd');
@@ -89,6 +96,9 @@ $routes->group(
         $routes->post('iku/update', 'AdminKab\IkuController::update');
         // route untuk ubah status IKU
         $routes->get('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
+
+        // Catatan: seluruh rute Pegawai (kelola + sinkron SIMPEG/SIKASN) dipindah
+        // ke grup khusus super admin (auth:admin) di bawah.
 
         // RPJMD
         $routes->get('rpjmd', 'RpjmdController::index');
@@ -169,6 +179,50 @@ $routes->group(
     }
 );
 
+
+// ===== SUPER ADMIN: Master Data (satu tampilan tabbed) — khusus role 'admin' =====
+$routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
+    $routes->get('master', 'SuperAdmin\MasterController::index');
+    $routes->get('master/pegawai-data', 'SuperAdmin\MasterController::pegawaiData'); // DataTables server-side
+
+    // Kelola Pegawai (jabatan & OPD) — KHUSUS super admin
+    $routes->get('pegawai', 'AdminKab\PegawaiController::index');
+    $routes->get('pegawai/edit/(:num)', 'AdminKab\PegawaiController::edit/$1');
+    $routes->post('pegawai/update/(:num)', 'AdminKab\PegawaiController::update/$1');
+    $routes->get('pegawai/jabatan', 'AdminKab\PegawaiController::jabatan');
+    $routes->post('pegawai/jabatan/update/(:num)', 'AdminKab\PegawaiController::updateJabatan/$1');
+
+    // Sinkron SIMPEG/SIKASN — KHUSUS super admin (OPD, Pangkat, Jabatan, Pegawai)
+    $routes->get('pegawai/sync', 'AdminKab\PegawaiController::sync');
+    $routes->post('pegawai/sync/run', 'AdminKab\PegawaiController::runSync');
+
+    // Log Aktivitas Pengguna — KHUSUS super admin
+    $routes->get('log-aktivitas', 'AdminKab\ActivityLogController::index');
+    $routes->get('log-aktivitas/pdf', 'AdminKab\ActivityLogController::pdf');
+    $routes->post('log-aktivitas/clear', 'AdminKab\ActivityLogController::clearOld');
+
+    $routes->post('master/pegawai/save', 'SuperAdmin\MasterController::pegawaiSave');
+    $routes->match(['get', 'post', 'delete'], 'master/pegawai/delete/(:num)', 'SuperAdmin\MasterController::pegawaiDelete/$1');
+
+    $routes->post('master/pangkat/save', 'SuperAdmin\MasterController::pangkatSave');
+    $routes->match(['get', 'post', 'delete'], 'master/pangkat/delete/(:num)', 'SuperAdmin\MasterController::pangkatDelete/$1');
+
+    $routes->post('master/jabatan/save', 'SuperAdmin\MasterController::jabatanSave');
+    $routes->match(['get', 'post', 'delete'], 'master/jabatan/delete/(:num)', 'SuperAdmin\MasterController::jabatanDelete/$1');
+
+    $routes->post('master/opd/save', 'SuperAdmin\MasterController::opdSave');
+    $routes->match(['get', 'post', 'delete'], 'master/opd/delete/(:num)', 'SuperAdmin\MasterController::opdDelete/$1');
+
+    $routes->post('master/user/save', 'SuperAdmin\MasterController::userSave');
+    $routes->match(['get', 'post', 'delete'], 'master/user/delete/(:num)', 'SuperAdmin\MasterController::userDelete/$1');
+
+    $routes->post('master/role/save', 'SuperAdmin\MasterController::roleSave');
+    $routes->match(['get', 'post', 'delete'], 'master/role/delete/(:num)', 'SuperAdmin\MasterController::roleDelete/$1');
+    $routes->post('master/role/permissions', 'SuperAdmin\MasterController::rolePermSave');
+
+    $routes->post('master/satuan/save', 'SuperAdmin\MasterController::satuanSave');
+    $routes->match(['get', 'post', 'delete'], 'master/satuan/delete/(:num)', 'SuperAdmin\MasterController::satuanDelete/$1');
+});
 
 $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($routes) {
     // PK Generic Controller (slash-based, for compatibility with button href)

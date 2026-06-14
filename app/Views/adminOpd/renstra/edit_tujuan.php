@@ -356,6 +356,13 @@
                                                     <option value="negatif" <?= $ind['jenis_indikator']=='negatif'?'selected':'' ?>>Negatif</option>
                                                     </select>
 
+                                                <label class="form-label mt-2">Kondisi Awal (Baseline)</label>
+                                                <input type="text"
+                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][baseline]"
+                                                    class="form-control mb-2"
+                                                    value="<?= esc($ind['baseline'] ?? '') ?>"
+                                                    placeholder="Kondisi awal / baseline (opsional)">
+
                                                 <!-- ================= TARGET ================= -->
 
                                                 <?php if (!empty($ind['targets'])): ?>
@@ -614,6 +621,16 @@
               <option value="positif">Indikator Positif (naik = baik)</option>
               <option value="negatif">Indikator Negatif (turun = baik)</option>
             </select>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Kondisi Awal (Baseline)</label>
+            <input type="text"
+              name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][baseline]"
+              class="form-control"
+              placeholder="Kondisi awal / baseline (opsional)">
           </div>
         </div>
 

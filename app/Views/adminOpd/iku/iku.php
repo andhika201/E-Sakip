@@ -6,6 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IKU - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
+    <style>
+        /* Rapikan tabel IKU */
+        .iku-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .iku-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .iku-table th,
+        .iku-table td {
+            vertical-align: middle;
+        }
+        .iku-table td.text-start {
+            min-width: 160px;
+        }
+        .iku-table .col-tahun {
+            white-space: nowrap;
+            width: 64px;
+        }
+        .iku-table tbody tr:hover {
+            background-color: #f3faf5;
+        }
+        .table-wrap {
+            max-height: 70vh;
+            overflow: auto;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -61,8 +93,8 @@
 
                 <?php else: ?>
 
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered table-striped align-middle small text-center">
+                    <div class="table-responsive table-wrap mt-3">
+                        <table class="table table-bordered table-striped align-middle small text-center iku-table">
                             <thead class="table-success text-dark">
                                 <tr>
                                     <th rowspan="2" class="align-middle">No</th>
@@ -85,6 +117,7 @@
                                     <?php endif; ?>
 
                                     <th rowspan="2" class="align-middle">Definisi Operasional</th>
+                                    <th rowspan="2" class="align-middle">Penanggung Jawab</th>
                                     <th rowspan="2" class="align-middle">Status</th>
                                     <th rowspan="2" class="align-middle">Program Pendukung</th>
                                     <th rowspan="2" class="align-middle">Aksi</th>
@@ -208,6 +241,11 @@
                                                         <?= esc($iku['definisi'] ?? '-') ?>
                                                     </td>
 
+                                                    <!-- Penanggung Jawab -->
+                                                    <td rowspan="<?= $programCount ?>" class="text-start">
+                                                        <?= esc(($iku['penanggung_jawab'] ?? '') !== '' ? $iku['penanggung_jawab'] : '-') ?>
+                                                    </td>
+
                                                     <!-- Status (badge) -->
                                                         <td rowspan="<?= $programCount ?>" class="align-middle">
                                                             <?php
@@ -241,15 +279,19 @@
                                                 <?php if ($pIndex === 0): ?>
                                                     <!-- Aksi -->
                                                     <td rowspan="<?= $programCount ?>">
+                                                        <?php $ikuPerm = ($role === 'admin_kab') ? 'iku_kab' : 'iku_opd'; ?>
                                                         <?php if (!empty($indikator['id'])): ?>
                                                             <?php if (empty($iku['definisi'])): ?>
                                                                 <!-- Belum ada IKU: hanya tombol tambah -->
+                                                                <?php if (user_can($ikuPerm . '.create')): ?>
                                                                 <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
                                                                     class="btn btn-primary btn-sm" title="Tambah IKU">
                                                                     <i class="fas fa-plus"></i>
                                                                 </a>
+                                                                <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                             <?php else: ?>
                                                                 <!-- Sudah ada IKU: tombol edit + change status -->
+                                                                <?php if (user_can($ikuPerm . '.update')): ?>
                                                                 <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
                                                                     class="btn btn-warning btn-sm" title="Edit IKU">
                                                                     <i class="fas fa-edit"></i>
@@ -260,6 +302,7 @@
                                                                     title="Ubah Status IKU">
                                                                     <i class="fas fa-sync-alt"></i>
                                                                 </a>
+                                                                <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                             <?php endif; ?>
                                                         <?php else: ?>
                                                             <span class="text-muted">-</span>

@@ -341,6 +341,7 @@ class RenstraController extends BaseController
                                 'renstra_sasaran_id' => $sasaranId,
                                 'indikator_sasaran' => $is['indikator_sasaran'] ?? null,
                                 'satuan' => $is['satuan'] ?? null,
+                                'baseline' => $is['baseline'] ?? '',
                                 'jenis_indikator' => $is['jenis_indikator'] ?? null,
                                 'created_at' => date('Y-m-d H:i:s'),
                                 'updated_at' => date('Y-m-d H:i:s'),

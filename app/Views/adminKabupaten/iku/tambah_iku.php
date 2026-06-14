@@ -74,6 +74,13 @@
           </div>
         </div>
 
+        <!-- Penanggung Jawab -->
+        <div class="mb-3">
+          <label for="penanggung_jawab" class="form-label fw-semibold">Penanggung Jawab</label>
+          <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
+            placeholder="Unit/jabatan penanggung jawab IKU (opsional)">
+        </div>
+
         <!-- Program Pendukung -->
         <div class="mb-3">
           <label class="form-label fw-semibold">Program Pendukung</label>

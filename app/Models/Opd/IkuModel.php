@@ -14,6 +14,7 @@ class IkuModel extends Model
         'rpjmd_id',
         'renstra_id',
         'definisi',
+        'penanggung_jawab',
         'status',
         'created_at',
         'updated_at',
@@ -36,6 +37,7 @@ class IkuModel extends Model
                 'rpjmd_id' => $data['rpjmd_id'] ?? null,
                 'renstra_id' => $data['renstra_id'] ?? null,
                 'definisi' => $data['definisi'],
+                'penanggung_jawab' => $data['penanggung_jawab'] ?? null,
                 'status' => $data['status'] ?? 'draft',
             ];
 
@@ -415,6 +417,7 @@ class IkuModel extends Model
                     'id' => $indikatorId,
                     'indikator_sasaran' => $r['indikator_sasaran'] ?? '-',
                     'satuan' => $r['satuan'] ?? '-',
+                    'definisi_op' => $r['definisi_op'] ?? null,
                     'target_tahunan' => [],
                 ];
             }
@@ -447,6 +450,7 @@ class IkuModel extends Model
                 ris.id            AS indikator_id,
                 ris.indikator_sasaran,
                 ris.satuan,
+                ris.definisi_op,
                 rt.tahun,
                 rt.target_tahunan AS target_tahunan
             ')

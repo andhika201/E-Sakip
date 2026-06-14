@@ -3,9 +3,7 @@
   .sidebar {
     transition: margin-left 0.3s ease;
     margin-left: -240px;
-    /* Hidden by default */
     width: 240px;
-    /* Kurangi lebar sidebar sedikit */
     flex-shrink: 0;
     z-index: 1000;
     position: fixed;
@@ -16,10 +14,8 @@
 
   .sidebar-show {
     margin-left: 0;
-    /* Show sidebar */
   }
 
-  /* Content wrapper adjustment */
   .content-wrapper {
     flex: 1;
     transition: margin-left 0.3s ease;
@@ -29,10 +25,8 @@
 
   .content-wrapper.sidebar-open {
     margin-left: 240px;
-    /* Sesuai dengan lebar sidebar */
   }
 
-  /* Custom hover effects with secondary green */
   .sidebar-nav-link:hover {
     background-color: rgba(110, 171, 17, 0.1) !important;
     color: #6eab11 !important;
@@ -45,7 +39,10 @@
     border-color: transparent !important;
   }
 
-  /* Overlay untuk mobile */
+  .sidebar nav {
+    overflow-y: auto;
+  }
+
   .sidebar-overlay {
     position: fixed;
     top: 0;
@@ -64,23 +61,13 @@
     opacity: 1;
   }
 
-  /* Desktop behavior */
   @media (min-width: 769px) {
-    .sidebar-overlay {
-      display: none !important;
-    }
+    .sidebar-overlay { display: none !important; }
   }
 
-  /* Responsive behavior untuk mobile */
   @media (max-width: 768px) {
-    .sidebar {
-      z-index: 1001;
-    }
-
-    .content-wrapper.sidebar-open {
-      margin-left: 0 !important;
-      /* Di mobile, content tidak bergeser */
-    }
+    .sidebar { z-index: 1001; }
+    .content-wrapper.sidebar-open { margin-left: 0 !important; }
   }
 </style>
 
@@ -91,59 +78,16 @@
 <div id="sidebar" class="sidebar bg-white position-fixed top-0 start-0 h-100 d-flex flex-column justify-content-between"
   style="box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
   <!-- Atas: Logo + Navigasi -->
-  <div>
+  <div class="d-flex flex-column" style="min-height:0; flex:1;">
     <div class="p-3 border-bottom">
-      <h2 class="h5 fw-bold text-dark mb-0">Admin Kabupaten</h2>
+      <?php $r = session()->get('role'); ?>
+      <h2 class="h5 fw-bold text-dark mb-0">
+        <?= $r === 'admin' ? 'Super Admin' : ($r === 'admin_opd' ? 'Admin OPD' : 'Admin Kabupaten') ?>
+      </h2>
     </div>
     <nav class="p-3">
       <div class="d-grid gap-2">
-        <a href="<?= base_url('adminkab/dashboard') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
-        <a href="<?= base_url('adminkab/rpjmd') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RPJMD
-          Kabupaten</a>
-        <a href="<?= base_url('adminkab/rkpd') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">RKPD</a>
-        <a href="<?= base_url('adminkab/iku') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
-
-        <div class="dropdown">
-          <button
-            class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
-            type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Perjanjian Kerja</span>
-          </button>
-          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a href="<?= base_url('adminkab/pk/bupati') ?>"
-                class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">PK
-                Bupati</a></li>
-            <li><a href="<?= base_url('adminkab/program_pk') ?>"
-                class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Program
-                PK</a></li>
-          </ul>
-        </div>
-
-        <div class="dropdown">
-          <button
-            class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
-            type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Pengukuran Kinerja</span>
-          </button>
-          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a class="dropdown-item" href="<?= base_url('adminkab/target') ?>">Target & Rencana Aksi</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminkab/monev') ?>">MONEV</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP KABUBPATEN</a></li>
-          </ul>
-        </div>
-
-        <a href="<?= base_url('adminkab/cascading') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Pohon
-          Kinerja & Cascading</a>
-
-        <a href="<?= base_url('adminkab/tentang_kami') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Tentang
-          Kami</a>
-
+        <?= $this->include('templates/admin_menu') ?>
       </div>
     </nav>
   </div>

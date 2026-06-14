@@ -246,6 +246,14 @@
                       </div>
                     </div>
 
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Kondisi Awal (Baseline)</label>
+                        <input type="text" name="sasaran_renstra[0][indikator_sasaran][0][baseline]"
+                          class="form-control" placeholder="Kondisi awal / baseline (opsional)">
+                      </div>
+                    </div>
+
                     <!-- Target Tahunan Sasaran -->
                     <div class="target-section">
                       <h5 class="fw-medium mb-3">Target Sasaran per Tahun</h5>
@@ -477,6 +485,16 @@
               <option value="positif">Indikator Positif (naik = baik)</option>
               <option value="negatif">Indikator Negatif (turun = baik)</option>
             </select>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Kondisi Awal (Baseline)</label>
+            <input type="text"
+                   name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][baseline]"
+                   class="form-control"
+                   placeholder="Kondisi awal / baseline (opsional)">
           </div>
         </div>
 

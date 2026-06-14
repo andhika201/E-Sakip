@@ -76,10 +76,12 @@
                         </select>
                     </div>
 
+                    <?php if (user_can('rpjmd.create')): ?>
                     <a href="<?= base_url('adminkab/rpjmd/tambah') ?>"
                         class="btn btn-success d-flex align-items-center">
                         <i class="fas fa-plus me-1"></i> TAMBAH
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="table-responsive">
@@ -303,6 +305,7 @@
                                                     <?php if (!isset($misi['_action_printed'])): ?>
                                                         <td class="border p-2 align-middle text-center" rowspan="<?= $misiRowspan ?>">
                                                             <div class="d-flex flex-column align-items-center gap-2">
+                                                                <?php if (user_can('rpjmd.update')): ?>
                                                                 <a href="<?= base_url('adminkab/rpjmd/edit/' . (int) ($misi['id'] ?? 0)) ?>"
                                                                     class="btn btn-success btn-sm">
                                                                     <i class="fas fa-edit me-1"></i>Edit
@@ -317,10 +320,13 @@
                                                                     onclick="toggleStatus(<?= (int) ($misi['id'] ?? 0) ?>)">
                                                                     <i class="<?= $toggleIcon ?> me-1"></i><?= $toggleText ?>
                                                                 </button>
+                                                                <?php endif; ?>
+                                                                <?php if (user_can('rpjmd.delete')): ?>
                                                                 <button class="btn btn-danger btn-sm"
                                                                     onclick="confirmDelete(<?= (int) ($misi['id'] ?? 0) ?>)">
                                                                     <i class="fas fa-trash me-1"></i>Hapus
                                                                 </button>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </td>
                                                         <?php $misi['_action_printed'] = true; ?>
@@ -339,8 +345,10 @@
                                         class="border p-4 text-center text-muted">
                                         <i class="fas fa-info-circle me-2"></i>
                                         Belum ada data RPJMD.
+                                        <?php if (user_can('rpjmd.create')): ?>
                                         <a href="<?= base_url('adminkab/rpjmd/tambah') ?>" class="text-success">Tambah data
                                             pertama</a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endif; ?>

@@ -56,6 +56,14 @@
               value="<?= esc($iku_data['definisi'] ?? '') ?>" required>
           </div>
         </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
+            <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
+              value="<?= esc($iku_data['penanggung_jawab'] ?? '') ?>"
+              placeholder="Unit/jabatan penanggung jawab IKU (opsional)">
+          </div>
+        </div>
 
         <!-- Program Pendukung -->
         <div class="row mb-3">

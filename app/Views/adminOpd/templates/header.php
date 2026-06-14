@@ -48,7 +48,7 @@
 
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
+    const mainContent = document.querySelector('.content-wrapper') || document.getElementById('main-content');
     const overlay = document.getElementById('sidebar-overlay');
     const isMobile = window.innerWidth <= 768;
 
@@ -80,7 +80,7 @@
   // Handle window resize
   window.addEventListener('resize', function () {
     const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
+    const mainContent = document.querySelector('.content-wrapper') || document.getElementById('main-content');
     const overlay = document.getElementById('sidebar-overlay');
     const isMobile = window.innerWidth <= 768;
 

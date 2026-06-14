@@ -103,48 +103,14 @@
   <!-- Atas: Logo + Navigasi -->
   <div>
     <div class="p-3 border-bottom">
-      <h2 class="h5 fw-bold text-dark mb-0">Admin OPD</h2>
+      <?php $r = session()->get('role'); ?>
+      <h2 class="h5 fw-bold text-dark mb-0">
+        <?= $r === 'admin' ? 'Super Admin' : ($r === 'admin_opd' ? 'Admin OPD' : 'Admin Kabupaten') ?>
+      </h2>
     </div>
     <nav class="p-3">
       <div class="d-grid gap-2">
-        <a href="<?= base_url('adminopd/dashboard') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Dashboard</a>
-        <a href="<?= base_url('adminopd/renstra') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renstra</a>
-        <a href="<?= base_url('adminopd/rkt') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Renja/RKT</a>
-        <a href="<?= base_url('adminopd/iku') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">IKU</a>
-
-        <div class="dropdown">
-          <button
-            class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
-            type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Perjanjian Kinerja</span>
-          </button>
-          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT & Kecamatan</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas</a></li>
-          </ul>
-        </div>
-
-        <div class="dropdown">
-          <button
-            class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center"
-            type="button" id="dropdownPkJpt" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Pengukuran Kinerja</span>
-          </button>
-          <ul class="dropdown-menu w-100" aria-labelledby="dropdownPkJpt">
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/target') ?>">Target & Rencana Aksi</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">MONEV</a></li>
-            <li><a class="dropdown-item" href="<?= base_url('adminopd/lakip') ?>">LAKIP OPD</a></li>
-          </ul>
-        </div>
-        <a href="<?= base_url('adminopd/cascading') ?>"
-          class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link">Pohon
-          Kinerja & Cascading
-        </a>
+        <?= $this->include('templates/admin_menu') ?>
       </div>
     </nav>
   </div>

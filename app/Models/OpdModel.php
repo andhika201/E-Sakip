@@ -12,7 +12,7 @@ class OpdModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
-    protected $allowedFields = ['nama_opd', 'singkatan', 'kode'];
+    protected $allowedFields = ['nama_opd', 'singkatan', 'alamat_opd'];
 
     // Automatically handle timestamps
     protected $useTimestamps = true;
@@ -25,16 +25,13 @@ class OpdModel extends Model
     protected $validationRules = [
         'nama_opd' => 'required|string|max_length[255]',
         'singkatan' => 'permit_empty|string|max_length[50]',
-        'kode' => 'permit_empty|string|max_length[50]|is_unique[opd.kode,id,{id}]',
+        'alamat_opd' => 'permit_empty|string|max_length[50]',
     ];
 
     protected $validationMessages = [
         'nama_opd' => [
             'required' => 'Nama OPD harus diisi',
             'max_length' => 'Nama OPD maksimal 255 karakter',
-        ],
-        'kode' => [
-            'is_unique' => 'Kode OPD sudah digunakan',
         ],
     ];
 

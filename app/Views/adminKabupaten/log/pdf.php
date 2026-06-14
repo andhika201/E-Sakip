@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        * { font-family: sans-serif; }
+        h3 { margin: 0 0 2px; color: #00743e; }
+        .meta { font-size: 9px; color: #555; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 0.5px solid #999; padding: 3px 4px; font-size: 8px; vertical-align: top; }
+        thead th { background: #cfe9d9; text-align: center; }
+        .nowrap { white-space: nowrap; }
+    </style>
+</head>
+
+<body>
+    <h3>Log Aktivitas Pengguna</h3>
+    <div class="meta">
+        Dicetak: <?= esc($dicetak) ?> oleh <?= esc($oleh ?? '-') ?>.
+        <?php
+        $aktif = array_filter([
+            'Kata kunci' => $filters['q'] ?? '',
+            'Aksi'       => $filters['action'] ?? '',
+            'Modul'      => $filters['module'] ?? '',
+            'User'       => $filters['user'] ?? '',
+            'Dari'       => $filters['from'] ?? '',
+            'Sampai'     => $filters['to'] ?? '',
+        ], static fn($v) => $v !== '');
+        ?>
+        <?php if (!empty($aktif)): ?>
+            Filter:
+            <?php $i = 0; foreach ($aktif as $k => $v): ?>
+                <?= $i++ ? ', ' : '' ?><strong><?= esc($k) ?></strong>: <?= esc($v) ?>
+            <?php endforeach; ?>.
+        <?php endif; ?>
+        Total baris: <?= count($logs) ?><?= !empty($truncated) ? ' (dibatasi ' . (int) $maxRows . ')' : '' ?>.
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:18px;">No</th>
+                <th class="nowrap">Waktu</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Aksi</th>
+                <th>Modul</th>
+                <th>Deskripsi</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($logs)): ?>
+                <tr><td colspan="8" style="text-align:center;">Tidak ada data.</td></tr>
+            <?php else: ?>
+                <?php $no = 1; foreach ($logs as $l): ?>
+                    <tr>
+                        <td style="text-align:center;"><?= $no++ ?></td>
+                        <td class="nowrap"><?= esc($l['created_at'] ?? '-') ?></td>
+                        <td><?= esc($l['username'] ?? '-') ?></td>
+                        <td><?= esc($l['role'] ?? '-') ?></td>
+                        <td><?= esc($l['action'] ?? '-') ?></td>
+                        <td><?= esc($l['module'] ?? '-') ?></td>
+                        <td><?= esc($l['description'] ?? '-') ?></td>
+                        <td class="nowrap"><?= esc($l['ip_address'] ?? '-') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</body>
+
+</html>

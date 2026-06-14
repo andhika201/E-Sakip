@@ -5,6 +5,13 @@
   <meta name="csrf-token" content="<?= csrf_hash(); ?>">
   <meta name="csrf-name" content="<?= csrf_token() ?>">
   <meta name="csrf-hash" content="<?= csrf_hash() ?>">
+  <?php
+    $hRole  = session('role');
+    $hLabel = $hRole === 'admin' ? 'Super Admin'
+            : ($hRole === 'admin_kab' ? 'Admin Kabupaten'
+            : ($hRole === 'admin_opd' ? 'Admin OPD' : 'Pengguna'));
+    $hName  = session('username') ?: 'Pengguna';
+  ?>
   <div class="d-flex align-items-center justify-content-between gap-2">
 
     <!-- Left Side: Toggle + Title -->
@@ -34,8 +41,8 @@
         <i class="fas fa-user text-success" style="font-size: 14px;"></i>
       </div>
       <div class="d-none d-md-block text-end">
-        <p class="small fw-semibold text-white mb-0" style="line-height: 1.2;">Admin OPD</p>
-        <p class="text-white-50 mb-0" style="font-size: 0.7rem; line-height: 1.2;">Administrator</p>
+        <p class="small fw-semibold text-white mb-0" style="line-height: 1.2;"><?= esc($hName) ?></p>
+        <p class="text-white-50 mb-0" style="font-size: 0.7rem; line-height: 1.2;"><?= esc($hLabel) ?></p>
       </div>
     </div>
 

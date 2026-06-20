@@ -86,7 +86,7 @@
 <body>
     <div class="login-card">
         <div class="logo-container">
-            <img src="<?= base_url('assets/images/logoTentang.png') ?>"
+            <img src="<?= base_url('assets/images/LogoTentang.png') ?>"
                  alt="AKSARA"
                  class="logo img-fluid">
         </div>

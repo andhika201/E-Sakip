@@ -9,7 +9,7 @@
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
 
-<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<body data-no-paginate class="bg-light min-vh-100 d-flex flex-column position-relative">
 
     <!-- Content Wrapper -->
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">

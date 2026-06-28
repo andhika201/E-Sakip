@@ -26,10 +26,13 @@ class CascadingModel extends Model
 
     public function getMatrix($start, $end)
     {
-        // ======================
-        // AMBIL MATRIX UTAMA
-        // ======================
-        $rows = $this->db->table('rpjmd_tujuan t')
+        // ==========================================================
+        // 1. BACKBONE RPJMD: Misi -> Tujuan -> Sasaran -> Indikator
+        //    Selalu tampil walau OPD belum di-mapping.
+        //    (Tidak lagi memakai WHERE pada tabel LEFT JOIN yang
+        //     dulu menyebabkan baris RPJMD tanpa mapping menghilang.)
+        // ==========================================================
+        $backbone = $this->db->table('rpjmd_misi m')
             ->select("
                 t.id as tujuan_id,
                 t.tujuan_rpjmd,
@@ -41,41 +44,94 @@ class CascadingModel extends Model
                 i.id as indikator_id,
                 i.indikator_sasaran,
                 i.satuan,
-                i.baseline,
-
-                p.program_kegiatan,
-                o.nama_opd,
-
-                IF(map.id IS NULL, 0, 1) as is_mapped,
-                map.indikator_sasaran_id as mapped_indikator
+                i.baseline
             ", false)
-
+            ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
             ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
             ->join('rpjmd_indikator_sasaran i', 'i.sasaran_id = s.id', 'left')
-
-            ->join(
-                'rpjmd_cascading map',
-                'map.indikator_sasaran_id = i.id',
-                'left'
-            )
-            ->where('map.tahun >=', (int) $start)
-            ->where('map.tahun <=', (int) $end)
-
-            ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
-            ->join('program_pk p', 'p.id = pp.program_id', 'left')
-            ->join('opd o', 'o.id = map.opd_id', 'left')
-
+            ->where('m.tahun_mulai', (int) $start)
+            ->where('m.tahun_akhir', (int) $end)
             ->orderBy('t.id', 'ASC')
             ->orderBy('s.id', 'ASC')
             ->orderBy('i.id', 'ASC')
-
             ->get()
             ->getResultArray();
 
-        // ======================
-        // AMBIL TARGET TERPISAH
-        // ======================
-        $indikatorIds = array_column($rows, 'indikator_id');
+        if (empty($backbone)) {
+            return [];
+        }
+
+        // ==========================================================
+        // 2-3b. Sumber data OPD & Program (helper bersama, dipakai juga
+        //       oleh getPohonKinerja agar pohon SELARAS dengan cascading).
+        // ==========================================================
+        $opdBySasaran      = $this->opdBySasaranMap();              // sasaran_id => [opd_id => nama_opd]
+        $manualByIndikator = $this->manualMappingMap($start, $end); // indikator_id => [opd_id => ['nama_opd','programs']]
+        $programByOpd      = $this->programByOpdMap();              // opd_id => [program_kegiatan,...]
+
+        // ==========================================================
+        // 4. RAKIT BARIS FLAT untuk view
+        //    Gabung OPD otomatis (renstra) + OPD mapping manual.
+        //    Program: utamakan mapping manual, fallback ke PK otomatis.
+        // ==========================================================
+        $rows = [];
+
+        foreach ($backbone as $b) {
+            $sasaranId = $b['sasaran_id'];
+            $indikatorId = $b['indikator_id'];
+
+            // Gabungan OPD: dari renstra (otomatis) + dari mapping manual
+            $opdSet = $opdBySasaran[$sasaranId] ?? [];
+            foreach ($manualByIndikator[$indikatorId] ?? [] as $opdId => $info) {
+                $opdSet[$opdId] = $info['nama_opd'];
+            }
+
+            // Indikator dianggap "mapped" bila ada mapping manual apa pun
+            $isMapped = !empty($manualByIndikator[$indikatorId]) ? 1 : 0;
+
+            asort($opdSet); // urutkan OPD berdasarkan nama
+
+            if (empty($opdSet)) {
+                // Tidak ada OPD sama sekali -> baris tetap tampil (kolom OPD kosong)
+                $rows[] = $b + [
+                    'nama_opd' => null,
+                    'program_kegiatan' => null,
+                    'is_mapped' => $isMapped,
+                ];
+                continue;
+            }
+
+            foreach ($opdSet as $opdId => $namaOpd) {
+                // Program: utamakan mapping manual; jika tidak ada, pakai
+                // program PK otomatis milik OPD tsb (hybrid).
+                $manualPrograms = $manualByIndikator[$indikatorId][$opdId]['programs'] ?? [];
+                $programs = !empty($manualPrograms)
+                    ? $manualPrograms
+                    : ($programByOpd[$opdId] ?? []);
+
+                if (empty($programs)) {
+                    // OPD muncul otomatis tapi tidak punya program (manual maupun PK)
+                    $rows[] = $b + [
+                        'nama_opd' => $namaOpd,
+                        'program_kegiatan' => null,
+                        'is_mapped' => $isMapped,
+                    ];
+                } else {
+                    foreach ($programs as $prog) {
+                        $rows[] = $b + [
+                            'nama_opd' => $namaOpd,
+                            'program_kegiatan' => $prog,
+                            'is_mapped' => $isMapped,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // ==========================================================
+        // 5. AMBIL & ATTACH TARGET per indikator
+        // ==========================================================
+        $indikatorIds = array_values(array_unique(array_filter(array_column($rows, 'indikator_id'))));
 
         if (empty($indikatorIds)) {
             return $rows;
@@ -87,23 +143,111 @@ class CascadingModel extends Model
             ->get()
             ->getResultArray();
 
-        // ======================
-        // GROUP TARGET
-        // ======================
         $targetMap = [];
-
         foreach ($targets as $t) {
             $targetMap[$t['indikator_sasaran_id']][$t['tahun']] = $t['target_tahunan'];
         }
 
-        // ======================
-        // ATTACH KE ROW
-        // ======================
         foreach ($rows as &$r) {
             $r['targets'] = $targetMap[$r['indikator_id']] ?? [];
         }
+        unset($r);
 
         return $rows;
+    }
+
+    /**
+     * OPD per sasaran RPJMD, ditarik otomatis dari rantai Renstra.
+     * renstra_tujuan.rpjmd_sasaran_id -> rpjmd_sasaran.id ;
+     * OPD diambil dari renstra_sasaran.opd_id.
+     * @return array sasaran_id => [ opd_id => nama_opd ]
+     */
+    private function opdBySasaranMap(): array
+    {
+        $rows = $this->db->table('renstra_tujuan rt')
+            ->select('rt.rpjmd_sasaran_id as sasaran_id, rs.opd_id, o.nama_opd')
+            ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'inner')
+            ->join('opd o', 'o.id = rs.opd_id', 'inner')
+            ->where('rt.rpjmd_sasaran_id IS NOT NULL')
+            ->groupBy('rt.rpjmd_sasaran_id, rs.opd_id, o.nama_opd')
+            ->orderBy('o.nama_opd', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row['sasaran_id']][$row['opd_id']] = $row['nama_opd'];
+        }
+        return $map;
+    }
+
+    /**
+     * Program JPT per OPD, ditarik otomatis dari rantai PK (Perjanjian Kinerja).
+     * program_pk.opd_id NULL, jadi OPD hanya bisa dijangkau lewat tabel pk.
+     * Diambil program tahun PK TERBARU per OPD.
+     * @return array opd_id => [ program_kegiatan, ... ]
+     */
+    private function programByOpdMap(): array
+    {
+        $rows = $this->db->table('pk')
+            ->select('pk.opd_id, pk.tahun, p.program_kegiatan')
+            ->join('pk_sasaran ps', 'ps.pk_id = pk.id', 'inner')
+            ->join('pk_indikator pi', 'pi.pk_sasaran_id = ps.id', 'inner')
+            ->join('pk_program pp', 'pp.pk_indikator_id = pi.id', 'inner')
+            ->join('program_pk p', 'p.id = pp.program_id', 'inner')
+            ->where('pi.jenis', 'jpt')
+            ->orderBy('pk.opd_id', 'ASC')
+            ->orderBy('pk.tahun', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $byOpd  = [];
+        $latest = [];
+        foreach ($rows as $row) {
+            $opd = $row['opd_id'];
+            $th  = (int) $row['tahun'];
+            if (!isset($latest[$opd])) {
+                $latest[$opd] = $th; // baris terurut tahun DESC -> pertama = terbaru
+            }
+            if ($th !== $latest[$opd]) {
+                continue;
+            }
+            $prog = $row['program_kegiatan'];
+            if ($prog !== null && $prog !== '' && !in_array($prog, $byOpd[$opd] ?? [], true)) {
+                $byOpd[$opd][] = $prog;
+            }
+        }
+        return $byOpd;
+    }
+
+    /**
+     * Mapping manual cascading (rpjmd_cascading) untuk satu periode.
+     * @return array indikator_id => [ opd_id => ['nama_opd' => ..., 'programs' => [...] ] ]
+     */
+    private function manualMappingMap($start, $end): array
+    {
+        $rows = $this->db->table('rpjmd_cascading map')
+            ->select('map.indikator_sasaran_id, map.opd_id, o.nama_opd, p.program_kegiatan')
+            ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
+            ->join('program_pk p', 'p.id = pp.program_id', 'left')
+            ->join('opd o', 'o.id = map.opd_id', 'left')
+            ->where('map.tahun >=', (int) $start)
+            ->where('map.tahun <=', (int) $end)
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $ind = $row['indikator_sasaran_id'];
+            $opd = $row['opd_id'];
+            if (!isset($map[$ind][$opd])) {
+                $map[$ind][$opd] = ['nama_opd' => $row['nama_opd'], 'programs' => []];
+            }
+            if (!empty($row['program_kegiatan'])) {
+                $map[$ind][$opd]['programs'][] = $row['program_kegiatan'];
+            }
+        }
+        return $map;
     }
 
     public function getPkProgramByOpd($opdId, $tahun)
@@ -221,6 +365,12 @@ class CascadingModel extends Model
     // adminopd
     public function getCascadingMatrixByOpd($opdId, $startYear = null, $endYear = null)
     {
+        // Hindari query rusak (ON clause "opd_id = NULL") bila OPD tidak diketahui,
+        // mis. akun super admin yang tidak terikat OPD.
+        if (empty($opdId)) {
+            return [];
+        }
+
         $builder = $this->db->table('renstra_sasaran rs')
             ->select("
             t.id as tujuan_id,
@@ -497,6 +647,11 @@ class CascadingModel extends Model
                 ->getResultArray();
         }
 
+        // --- SUMBER OPD & PROGRAM (logika identik dengan cascading getMatrix) ---
+        $opdBySasaran      = $this->opdBySasaranMap();
+        $manualByIndikator = $this->manualMappingMap($tahunMulai, $tahunAkhir);
+        $programByOpd      = $this->programByOpdMap();
+
         // --- GROUPING IN MEMORY ---
 
         // Group Indikator Sasaran by sasaran_id
@@ -505,16 +660,47 @@ class CascadingModel extends Model
             $groupedIndikatorSasaran[$indSas['sasaran_id']][] = $indSas;
         }
 
-        // Group Sasaran by tujuan_id and attach their Indikator Sasaran
+        // Group Sasaran by tujuan_id + lampirkan Indikator Sasaran & cabang OPD/Program
         $groupedSasaran = [];
         foreach ($sasaranList as $sasaran) {
-            $sasaranNode = [
-                'id' => $sasaran['id'],
+            $sid = $sasaran['id'];
+            $indikatorSasaran = $groupedIndikatorSasaran[$sid] ?? [];
+            $indIds = array_column($indikatorSasaran, 'id');
+
+            // OPD: otomatis dari Renstra + union OPD dari mapping manual indikator sasaran ini
+            $opdSet = $opdBySasaran[$sid] ?? [];
+            foreach ($indIds as $ind) {
+                foreach ($manualByIndikator[$ind] ?? [] as $opdId => $info) {
+                    $opdSet[$opdId] = $info['nama_opd'];
+                }
+            }
+            asort($opdSet);
+
+            // Program per OPD: utamakan mapping manual (gabungan indikator sasaran ini),
+            // jika tidak ada pakai program PK otomatis (hybrid, sama seperti cascading).
+            $opdNodes = [];
+            foreach ($opdSet as $opdId => $namaOpd) {
+                $manualProgs = [];
+                foreach ($indIds as $ind) {
+                    foreach ($manualByIndikator[$ind][$opdId]['programs'] ?? [] as $pg) {
+                        if (!in_array($pg, $manualProgs, true)) {
+                            $manualProgs[] = $pg;
+                        }
+                    }
+                }
+                $opdNodes[] = [
+                    'nama_opd' => $namaOpd,
+                    'programs' => !empty($manualProgs) ? $manualProgs : ($programByOpd[$opdId] ?? []),
+                ];
+            }
+
+            $groupedSasaran[$sasaran['tujuan_id']][] = [
+                'id' => $sid,
                 'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
                 'csf' => $sasaran['csf'] ?? '',
-                'indikator_sasaran' => $groupedIndikatorSasaran[$sasaran['id']] ?? []
+                'indikator_sasaran' => $indikatorSasaran,
+                'opd' => $opdNodes,
             ];
-            $groupedSasaran[$sasaran['tujuan_id']][] = $sasaranNode;
         }
 
         // Group Indikator Tujuan by tujuan_id

@@ -31,6 +31,7 @@ class CascadingController extends BaseController
 
         $rows = [];
         $years = [];
+        $tree = [];
 
         if ($periode) {
 
@@ -46,6 +47,9 @@ class CascadingController extends BaseController
 
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
+
+            // Pohon Kinerja OPD tampil inline (tidak harus klik cetak)
+            $tree = $this->buildOpdTree($rows);
         }
         $data = [
             'rows' => $rows,
@@ -53,6 +57,8 @@ class CascadingController extends BaseController
             'firstShow' => $firstShow ?? [],
             'periode_master' => $periodeList,
             'years' => $years,
+            'tree' => $tree,
+            'opd_missing' => empty($this->opdId),
             'filters' => [
                 'periode' => $periode
             ]

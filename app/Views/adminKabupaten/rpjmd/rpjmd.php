@@ -8,7 +8,7 @@
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
 
-<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<body data-no-paginate class="bg-light min-vh-100 d-flex flex-column position-relative">
     <?php
     // fallback colspan saat kosong
     $yearsCount = 0;

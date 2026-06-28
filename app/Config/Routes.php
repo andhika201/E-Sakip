@@ -182,6 +182,10 @@ $routes->group(
 
 // ===== SUPER ADMIN: Master Data (satu tampilan tabbed) — khusus role 'admin' =====
 $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
+    // Pengaturan Aplikasi — KHUSUS super admin
+    $routes->get('pengaturan', 'SettingController::index');
+    $routes->post('pengaturan/save', 'SettingController::save');
+
     $routes->get('master', 'SuperAdmin\MasterController::index');
     $routes->get('master/pegawai-data', 'SuperAdmin\MasterController::pegawaiData'); // DataTables server-side
 

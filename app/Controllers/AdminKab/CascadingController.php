@@ -35,6 +35,10 @@ class CascadingController extends BaseController
         $rowspan = [];
         $firstShow = [];
         $years = [];
+        $tree = [];
+        $visi = '';
+        $tahunMulai = null;
+        $tahunAkhir = null;
 
         // ==============================
         // JIKA PERIODE DIPILIH
@@ -47,6 +51,8 @@ class CascadingController extends BaseController
             $tahun = (int) $start;
             $start = (int) $start;
             $end = (int) $end;
+            $tahunMulai = $start;
+            $tahunAkhir = $end;
 
             $years = range($start, $end);
 
@@ -54,6 +60,20 @@ class CascadingController extends BaseController
 
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
+
+            // ==============================
+            // POHON KINERJA (tampil inline, tidak harus klik cetak)
+            // ==============================
+            $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+
+            $firstMisi = $this->db->table('rpjmd_misi m')
+                ->select('rv.visi')
+                ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+                ->where('m.tahun_mulai', $start)
+                ->where('m.tahun_akhir', $end)
+                ->orderBy('m.id', 'ASC')
+                ->get()->getRowArray();
+            $visi = $firstMisi['visi'] ?? '';
         }
         // dd($periodeList);
         $data = [
@@ -62,6 +82,10 @@ class CascadingController extends BaseController
             'firstShow' => $firstShow,
             'periode_master' => $periodeList,
             'years' => $years,
+            'tree' => $tree,
+            'visi' => $visi,
+            'tahun_mulai' => $tahunMulai,
+            'tahun_akhir' => $tahunAkhir,
             'filters' => [
                 'periode' => $periode
             ]

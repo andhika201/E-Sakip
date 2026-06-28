@@ -6,7 +6,7 @@
   <title>PK JPT - OPD</title>
   <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
-<body>
+<body data-no-paginate>
 
   <?= $this->include('adminOpd/templates/header'); ?>
   

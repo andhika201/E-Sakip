@@ -16,21 +16,74 @@
   <?php endif; ?>
 
   <style>
-    .card-mini h4 {
-      font-weight: 700;
-    }
+    .card-mini h4 { font-weight: 700; }
+    .card-mini small { color: #6c757d; }
+    .chart-box { height: 150px; }
+    .btn-loading { pointer-events: none; opacity: .75; }
 
-    .card-mini small {
-      color: #6c757d;
+    /* ===== Dashboard modern ===== */
+    .dash-hero {
+      background: linear-gradient(120deg, #00803f 0%, #00642f 100%);
+      color: #fff;
+      border-radius: 18px;
+      padding: 26px 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 14px 34px rgba(0, 116, 62, .22);
     }
-
-    .chart-box {
-      height: 150px;
+    .dash-hero::after {
+      content: '';
+      position: absolute;
+      right: -30px; top: -40px;
+      width: 170px; height: 170px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .08);
     }
+    .dash-hero .dh-ic {
+      width: 60px; height: 60px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .16);
+      display: grid; place-items: center;
+      font-size: 26px; flex: 0 0 auto;
+    }
+    .dash-hero h2 { font-weight: 800; margin: 0 0 4px; font-size: clamp(1.2rem, 2.4vw, 1.5rem); }
+    .dash-hero p { margin: 0; opacity: .88; font-size: .9rem; }
 
-    .btn-loading {
-      pointer-events: none;
-      opacity: .75;
+    .stat-card {
+      background: #fff;
+      border: 1px solid #ebefec;
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 100%;
+      box-shadow: 0 8px 22px rgba(16, 40, 24, .06);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(16, 40, 24, .12); }
+    .stat-card .sc-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      color: #fff; font-size: 22px; flex: 0 0 auto;
+    }
+    .stat-card .sc-num { font-size: 1.7rem; font-weight: 800; line-height: 1; color: #15311f; }
+    .stat-card .sc-label { font-size: .82rem; color: #6b7a70; margin-top: 3px; }
+    .sc-green { background: linear-gradient(135deg, #0a8f50, #00743e); }
+    .sc-lime  { background: linear-gradient(135deg, #84c225, #6eab11); }
+    .sc-blue  { background: linear-gradient(135deg, #3f6296, #2f4d7a); }
+    .sc-amber { background: linear-gradient(135deg, #c98a3c, #a86a26); }
+
+    @media (max-width: 575px) {
+      .dash-hero { padding: 20px; gap: 14px; }
+      .dash-hero .dh-ic { width: 48px; height: 48px; font-size: 20px; }
+      .stat-card { padding: 14px 16px; gap: 12px; }
+      .stat-card .sc-icon { width: 44px; height: 44px; font-size: 18px; }
+      .stat-card .sc-num { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -44,38 +97,61 @@
     <?= $this->include('adminKabupaten/templates/header.php'); ?>
 
     <main class="flex-fill p-4 mt-2" id="main-content">
-      <div class="bg-white rounded shadow p-4 mb-3">
-        <h2 class="h3 fw-bold text-dark mb-1">Selamat Datang di e-SAKIP</h2>
-        <p class="text-muted mb-3">Sistem Akuntabilitas Kinerja Instansi Pemerintah — Admin Kabupaten</p>
-
-        <?php if (isset($error_message)): ?>
-          <div class="alert alert-warning" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <?= esc($error_message) ?>
-          </div>
-        <?php endif; ?>
-
-        <?php if (isset($summary_stats)): ?>
-          <div class="row g-3 mt-2">
-            <div class="col-6 col-md-3 card-mini text-center">
-              <h4 class="text-primary mb-0"><?= (int) ($summary_stats['total_rpjmd'] ?? 0) ?></h4>
-              <small>Total RPJMD</small>
-            </div>
-            <div class="col-6 col-md-3 card-mini text-center">
-              <h4 class="text-success mb-0"><?= (int) ($summary_stats['total_renstra'] ?? 0) ?></h4>
-              <small>Total RENSTRA</small>
-            </div>
-            <div class="col-6 col-md-3 card-mini text-center">
-              <h4 class="text-warning mb-0"><?= (int) ($summary_stats['total_rkt'] ?? 0) ?></h4>
-              <small>Total RKT</small>
-            </div>
-            <div class="col-6 col-md-3 card-mini text-center">
-              <h4 class="text-info mb-0"><?= (int) ($summary_stats['total_opd'] ?? 0) ?></h4>
-              <small>Total OPD</small>
-            </div>
-          </div>
-        <?php endif; ?>
+      <div class="dash-hero mb-4">
+        <div class="dh-ic"><i class="fas fa-gauge-high"></i></div>
+        <div>
+          <h2>Selamat Datang di e-SAKIP</h2>
+          <p>Sistem Akuntabilitas Kinerja Instansi Pemerintah &mdash; Admin Kabupaten</p>
+        </div>
       </div>
+
+      <?php if (isset($error_message)): ?>
+        <div class="alert alert-warning" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <?= esc($error_message) ?>
+        </div>
+      <?php endif; ?>
+
+      <?php if (isset($summary_stats)): ?>
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="sc-icon sc-green"><i class="fas fa-landmark"></i></div>
+              <div>
+                <div class="sc-num"><?= (int) ($summary_stats['total_rpjmd'] ?? 0) ?></div>
+                <div class="sc-label">Total RPJMD</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="sc-icon sc-lime"><i class="fas fa-diagram-project"></i></div>
+              <div>
+                <div class="sc-num"><?= (int) ($summary_stats['total_renstra'] ?? 0) ?></div>
+                <div class="sc-label">Total RENSTRA</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="sc-icon sc-amber"><i class="fas fa-list-check"></i></div>
+              <div>
+                <div class="sc-num"><?= (int) ($summary_stats['total_rkt'] ?? 0) ?></div>
+                <div class="sc-label">Total RKT</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="stat-card">
+              <div class="sc-icon sc-blue"><i class="fas fa-building"></i></div>
+              <div>
+                <div class="sc-num"><?= (int) ($summary_stats['total_opd'] ?? 0) ?></div>
+                <div class="sc-label">Total OPD</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <?php endif; ?>
 
       <div class="row g-4">
         <!-- RPJMD -->
@@ -305,11 +381,46 @@
   <script>
     const dataPHP = <?= json_encode($dashboard_data ?? [], JSON_UNESCAPED_UNICODE) ?>;
 
+    // Plugin: teks total di tengah doughnut
+    Chart.register({
+      id: 'centerText',
+      afterDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea) return;
+        const ds = (chart.data.datasets[0] || {}).data || [];
+        const total = ds.reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
+        const cx = (chartArea.left + chartArea.right) / 2;
+        const cy = (chartArea.top + chartArea.bottom) / 2;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#15311f';
+        ctx.font = '700 22px Inter, "Segoe UI", sans-serif';
+        ctx.fillText(total, cx, cy - 5);
+        ctx.fillStyle = '#9aa6a0';
+        ctx.font = '700 9px Inter, "Segoe UI", sans-serif';
+        ctx.fillText('TOTAL', cx, cy + 13);
+        ctx.restore();
+      }
+    });
+
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: { legend: { display: false } }
+      cutout: '72%',
+      layout: { padding: 4 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#15311f',
+          padding: 10,
+          cornerRadius: 8,
+          titleColor: '#fff',
+          bodyColor: '#e8efe9',
+          displayColors: false
+        }
+      },
+      elements: { arc: { borderRadius: 6, borderWidth: 0, hoverOffset: 8 } }
     };
 
     function getVal(obj, key, def = 0) {
@@ -329,7 +440,7 @@
               getVal(dataPHP.rpjmd || {}, 'selesai'),
               getVal(dataPHP.rpjmd || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -344,7 +455,7 @@
               getVal(dataPHP.rkpd || {}, 'selesai'),
               getVal(dataPHP.rkpd || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -359,7 +470,7 @@
               getVal(dataPHP.lakip_kabupaten || {}, 'selesai'),
               getVal(dataPHP.lakip_kabupaten || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -374,7 +485,7 @@
               getVal(dataPHP.renstra || {}, 'selesai'),
               getVal(dataPHP.renstra || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -389,7 +500,7 @@
               getVal(dataPHP.rkt || {}, 'selesai'),
               getVal(dataPHP.rkt || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -404,7 +515,7 @@
               getVal(dataPHP.iku || {}, 'selesai'),
               getVal(dataPHP.iku || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },
@@ -419,7 +530,7 @@
               getVal(dataPHP.lakip_opd || {}, 'selesai'),
               getVal(dataPHP.lakip_opd || {}, 'draft')
             ],
-            backgroundColor: ['#198754', '#ffc107'],
+            backgroundColor: ['#0a8f50', '#e9b949'],
             borderWidth: 0
           }]
         },

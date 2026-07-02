@@ -27,36 +27,51 @@ $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_
 <?php if ($canKab): ?>
   <div class="sidebar-section">Kabupaten</div>
 <?php endif; ?>
-<?php if (user_can('rpjmd.view')): ?>
-  <a href="<?= base_url('adminkab/rpjmd') ?>" class="<?= $linkCls ?>"><i class="fas fa-landmark"></i><span>RPJMD Kabupaten</span></a>
-<?php endif; ?>
-<?php if (user_can('rkpd.view')): ?>
-  <a href="<?= base_url('adminkab/rkpd') ?>" class="<?= $linkCls ?>"><i class="fas fa-calendar-check"></i><span>RKPD</span></a>
-<?php endif; ?>
-<?php if (user_can('iku_kab.view')): ?>
-  <a href="<?= base_url('adminkab/iku') ?>" class="<?= $linkCls ?>"><i class="fas fa-bullseye"></i><span>IKU Kabupaten</span></a>
-<?php endif; ?>
-<?php if (user_can('pk_bupati.view') || user_can('program_pk.view')): ?>
+<?php
+$canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('iku_kab.view')
+    || user_can('cascading_kab.view') || user_can('pk_bupati.view');
+?>
+<?php if ($canRencanaKab): ?>
   <div class="dropdown">
-    <button class="<?= $ddBtn ?>" type="button" id="ddPkKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-file-signature"></i> Perjanjian Kerja</span></button>
-    <ul class="dropdown-menu w-100" aria-labelledby="ddPkKab">
-      <?php if (user_can('pk_bupati.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/pk/bupati') ?>">PK Bupati</a></li><?php endif; ?>
-      <?php if (user_can('program_pk.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/program_pk') ?>">Program PK</a></li><?php endif; ?>
+    <button class="<?= $ddBtn ?>" type="button" id="ddRencanaKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-clipboard-list"></i> Perencanaan Kinerja</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddRencanaKab">
+      <?php if (user_can('rpjmd.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/rpjmd') ?>">RPJMD</a></li><?php endif; ?>
+      <?php if (user_can('rkpd.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/rkpd') ?>">RKPD</a></li><?php endif; ?>
+      <?php if (user_can('iku_kab.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/iku') ?>">IKU</a></li><?php endif; ?>
+      <?php if (user_can('cascading_kab.view')): ?>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/cascading') ?>#pohon">Pohon Kinerja</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/cascading') ?>">Cascading</a></li>
+      <?php endif; ?>
+      <?php if (user_can('pk_bupati.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/pk/bupati') ?>">Perjanjian Kinerja Bupati</a></li><?php endif; ?>
     </ul>
   </div>
 <?php endif; ?>
-<?php if (user_can('target_kab.view') || user_can('monev_kab.view') || user_can('lakip_kab.view')): ?>
+<?php if (user_can('target_kab.view') || user_can('monev_kab.view') || user_can('pk_bupati.view')): ?>
   <div class="dropdown">
     <button class="<?= $ddBtn ?>" type="button" id="ddUkurKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-chart-line"></i> Pengukuran Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddUkurKab">
-      <?php if (user_can('target_kab.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/target') ?>">Target & Rencana Aksi</a></li><?php endif; ?>
-      <?php if (user_can('monev_kab.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/monev') ?>">MONEV</a></li><?php endif; ?>
-      <?php if (user_can('lakip_kab.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP Kabupaten</a></li><?php endif; ?>
+      <?php if (user_can('pk_bupati.view')): ?>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/target_renaksi') ?>">Target Rencana Aksi</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/monev_pk/es3') ?>">Monitoring Capaian Rencana Aksi</a></li>
+      <?php endif; ?>
     </ul>
   </div>
 <?php endif; ?>
-<?php if (user_can('cascading_kab.view')): ?>
-  <a href="<?= base_url('adminkab/cascading') ?>" class="<?= $linkCls ?>"><i class="fas fa-sitemap"></i><span>Pohon Kinerja &amp; Cascading</span></a>
+<?php if (user_can('lakip_kab.view')): ?>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddLaporKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-file-lines"></i> Pelaporan Kinerja</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddLaporKab">
+      <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP</a></li>
+    </ul>
+  </div>
+<?php endif; ?>
+<?php if ($role === 'admin_kab' || $role === 'admin'): ?>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddEvalKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-clipboard-check"></i> Evaluasi Kinerja</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddEvalKab">
+      <li><a class="dropdown-item" href="<?= base_url('adminkab/evaluasi_inspektorat') ?>">Evaluasi Inspektorat</a></li>
+    </ul>
+  </div>
 <?php endif; ?>
 
 <?php /* ===================== PERANGKAT DAERAH (OPD) ===================== */ ?>
@@ -76,18 +91,21 @@ $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_
   <div class="dropdown">
     <button class="<?= $ddBtn ?>" type="button" id="ddPkOpd" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-file-signature"></i> Perjanjian Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddPkOpd">
-      <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT &amp; Kecamatan</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/kecamatan') ?>">PK Kecamatan</a></li>
       <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator</a></li>
       <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas</a></li>
     </ul>
   </div>
 <?php endif; ?>
-<?php if (user_can('target_opd.view') || user_can('monev_opd.view') || user_can('lakip_opd.view')): ?>
+<?php if (user_can('target_opd.view') || user_can('monev_opd.view') || user_can('lakip_opd.view') || user_can('pk_opd.view')): ?>
   <div class="dropdown">
     <button class="<?= $ddBtn ?>" type="button" id="ddUkurOpd" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-chart-line"></i> Pengukuran Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddUkurOpd">
-      <?php if (user_can('target_opd.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminopd/target') ?>">Target & Rencana Aksi</a></li><?php endif; ?>
-      <?php if (user_can('monev_opd.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">MONEV</a></li><?php endif; ?>
+      <?php if (user_can('pk_opd.view')): ?>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/target_renaksi') ?>">Target & Rencana Aksi</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">MONEV</a></li>
+      <?php endif; ?>
       <?php if (user_can('lakip_opd.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminopd/lakip') ?>">LAKIP OPD</a></li><?php endif; ?>
     </ul>
   </div>
@@ -100,6 +118,7 @@ $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_
 <?php if ($role === 'admin'): ?>
   <div class="sidebar-section">Super Admin</div>
   <a href="<?= base_url('adminkab/master') ?>" class="<?= $linkCls ?>"><i class="fas fa-database"></i><span>Master Data</span></a>
+  <a href="<?= base_url('adminkab/program_pk') ?>" class="<?= $linkCls ?>"><i class="fas fa-list-ol"></i><span>Program &amp; Kegiatan PK</span></a>
   <a href="<?= base_url('adminkab/log-aktivitas') ?>" class="<?= $linkCls ?>"><i class="fas fa-clock-rotate-left"></i><span>Log Aktivitas</span></a>
   <a href="<?= base_url('adminkab/pengaturan') ?>" class="<?= $linkCls ?>"><i class="fas fa-gear"></i><span>Pengaturan Aplikasi</span></a>
 <?php endif; ?>

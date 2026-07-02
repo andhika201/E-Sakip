@@ -341,6 +341,9 @@ class PkAdminController extends BaseController
             'tempDir' => sys_get_temp_dir(),
         ]);
 
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+
         // Tambahkan CSS jika perlu
         $css = '
             img { width: 70px; height: auto; }

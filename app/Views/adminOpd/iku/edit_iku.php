@@ -19,6 +19,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <!-- Navbar/Header -->
   <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
@@ -56,6 +57,20 @@
               value="<?= esc($iku_data['definisi'] ?? '') ?>" required>
           </div>
         </div>
+        <!-- Formula/Rumusan Perhitungan & Sumber Data -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="rumusan_perhitungan" class="form-label">Formula / Rumusan Perhitungan</label>
+            <textarea name="rumusan_perhitungan" id="rumusan_perhitungan" class="form-control" rows="2"
+              placeholder="Tulis formula / rumusan perhitungan indikator"><?= esc($iku_data['rumusan_perhitungan'] ?? '') ?></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="sumber_data" class="form-label">Sumber Data</label>
+            <textarea name="sumber_data" id="sumber_data" class="form-control" rows="2"
+              placeholder="Sumber data indikator (mis. BPS, aplikasi, laporan OPD)"><?= esc($iku_data['sumber_data'] ?? '') ?></textarea>
+          </div>
+        </div>
+
         <div class="row mb-3">
           <div class="col-md-12">
             <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
@@ -65,7 +80,7 @@
           </div>
         </div>
 
-        <!-- Program Pendukung -->
+        <!-- Program Pendukung dinonaktifkan sementara:
         <div class="row mb-3">
           <div class="col-md-12">
             <label class="form-label">Program Pendukung</label>
@@ -73,7 +88,6 @@
               <?php if (!empty($iku_data['program_pendukung'])): ?>
                 <?php foreach ($iku_data['program_pendukung'] as $p): ?>
                   <div class="input-group mb-2">
-                    <!-- ID program lama -->
                     <input type="hidden" name="program_id[]" value="<?= esc($p['id']) ?>">
                     <input type="text" name="program_pendukung[]" class="form-control" value="<?= esc($p['program']) ?>"
                       placeholder="Isi program pendukung">
@@ -81,7 +95,6 @@
                   </div>
                 <?php endforeach; ?>
               <?php else: ?>
-                <!-- Jika belum ada program, tampilkan satu input kosong -->
                 <div class="input-group mb-2">
                   <input type="hidden" name="program_id[]" value="">
                   <input type="text" name="program_pendukung[]" class="form-control" placeholder="Isi program pendukung">
@@ -91,13 +104,13 @@
             </div>
 
             <?php if (!empty($iku_data['program_pendukung'])): ?>
-              <!-- Tombol tambah di bawah jika program sudah ada -->
               <button type="button" class="btn btn-sm btn-outline-success mt-2 add-program">
                 + Tambah Program
               </button>
             <?php endif; ?>
           </div>
         </div>
+        -->
 
         <div class="d-flex justify-content-between mt-4">
           <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-secondary">
@@ -112,6 +125,7 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  </div>
 
   <script>
     document.addEventListener("click", function (e) {

@@ -51,8 +51,9 @@
             white-space: nowrap;
         }
         /* Stripe rows */
-        .tbl-rkt tbody tr:nth-child(even) { background-color: #f9fafb; }
-        .tbl-rkt tbody tr:hover { background-color: #e8f5ee; }
+        .tbl-rkt tbody tr:nth-child(even) { background-color: #fafbfc; }
+        /* Hover halus & konsisten (target sel; tabel penuh rowspan -> tetap rapi) */
+        .tbl-rkt tbody tr:hover > td { background-color: #eef3f0; transition: background-color .12s ease; }
         /* Kolom SATUAN KERJA – beri warna beda agar mudah dibaca */
         .tbl-rkt td.col-opd {
             background-color: #d4edda;
@@ -168,7 +169,7 @@
                 <table class="tbl-rkt">
                     <thead>
                     <tr>
-                        <th style="min-width:160px;">SATUAN KERJA</th>
+                        <?php /* Kolom "SATUAN KERJA" di-hide (permintaan user) */ ?>
                         <th style="width:44px;">NO</th>
                         <th style="width:68px;">TAHUN</th>
                         <th style="min-width:220px;">SASARAN</th>
@@ -309,7 +310,7 @@
                         // === BELUM ADA RKT UNTUK INDIKATOR INI ===
                         if (empty($ind['rkts'])): ?>
                             <tr>
-                                <?php if ($firstOpdRow): ?>
+                                <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
                                     <td rowspan="<?= $totalRowsAll ?>" class="col-opd">
                                         <?= esc($currentOpd['nama_opd'] ?? '-') ?>
                                     </td>
@@ -377,7 +378,7 @@
                                         if (!empty($keg['subkegiatan'])):
                                             foreach ($keg['subkegiatan'] as $sub): ?>
                                                 <tr>
-                                                    <?php if ($firstOpdRow): ?>
+                                                    <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
                                                         <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
                                                             <?= esc($currentOpd['nama_opd'] ?? '-') ?>
                                                         </td>
@@ -501,7 +502,7 @@
                                         // --- Kegiatan tanpa subkegiatan ---
                                         else: ?>
                                             <tr>
-                                                <?php if ($firstOpdRow): ?>
+                                                <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
                                                     <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
                                                         <?= esc($currentOpd['nama_opd'] ?? '-') ?>
                                                     </td>
@@ -593,7 +594,7 @@
                                 // --- Program tanpa kegiatan ---
                                 else: ?>
                                     <tr>
-                                        <?php if ($firstOpdRow): ?>
+                                        <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
                                             <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
                                                 <?= esc($currentOpd['nama_opd'] ?? '-') ?>
                                             </td>

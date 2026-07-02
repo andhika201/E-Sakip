@@ -114,9 +114,20 @@
                     <img src="<?= base_url($settings['app_logo'] ?? 'assets/images/LogoTentang.png') ?>" alt="Logo">
                   </div>
                   <div class="flex-fill">
-                    <label class="form-label">Logo Aplikasi</label>
+                    <label class="form-label">Logo Aplikasi (AKSARA)</label>
                     <input type="file" name="app_logo" class="form-control" accept="image/*">
-                    <small class="text-muted">Kosongkan jika tidak ingin mengganti.</small>
+                    <small class="text-muted">Branding aplikasi (dashboard/login). Kosongkan jika tidak ingin mengganti.</small>
+                  </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                  <div class="set-preview">
+                    <img src="<?= base_url($settings['kab_logo'] ?? 'assets/images/logo.png') ?>" alt="Logo Kabupaten">
+                  </div>
+                  <div class="flex-fill">
+                    <label class="form-label">Logo Kabupaten (Kop Dokumen)</label>
+                    <input type="file" name="kab_logo" class="form-control" accept="image/*">
+                    <small class="text-muted">Lambang daerah untuk kop <strong>semua cetak PDF</strong>. Kosongkan untuk memakai lambang bawaan.</small>
                   </div>
                 </div>
 
@@ -180,6 +191,56 @@
                 <div class="mb-0">
                   <label class="form-label">Author</label>
                   <input type="text" name="seo_author" class="form-control" value="<?= esc($settings['seo_author'] ?? '') ?>">
+                </div>
+              </div>
+            </div>
+
+            <!-- Integrasi AI -->
+            <div class="col-12">
+              <div class="set-card">
+                <div class="set-card-head">
+                  <div class="ic"><i class="fas fa-robot"></i></div>
+                  <div><h3>Integrasi AI (Gemini)</h3><p>Untuk fitur <strong>Analisis AI</strong>. Dapatkan API key gratis di Google AI Studio.</p></div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                  <input class="form-check-input" type="checkbox" role="switch" id="aiDashToggle"
+                    name="ai_dashboard_enabled" value="1"
+                    <?= (($settings['ai_dashboard_enabled'] ?? '1') === '1') ? 'checked' : '' ?>>
+                  <label class="form-check-label fw-semibold" for="aiDashToggle">
+                    Tampilkan widget <strong>Analisis AI</strong> di Dashboard
+                  </label>
+                  <div><small class="text-muted">Jika dimatikan, widget Analisis AI tidak muncul di dashboard (halaman menu Analisis AI tetap bisa diakses).</small></div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-12 col-md-8">
+                    <label class="form-label">API Key Gemini</label>
+                    <input type="password" name="gemini_api_key" class="form-control" autocomplete="off"
+                      value="<?= esc($settings['gemini_api_key'] ?? '') ?>" placeholder="AIza...">
+                    <small class="text-muted">Disimpan di server. Kosongkan untuk menonaktifkan Analisis AI.</small>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label">Model</label>
+                    <?php
+                      $curModel  = $settings['gemini_model'] ?? 'gemini-2.0-flash';
+                      $modelOpts = !empty($availableModels) ? $availableModels
+                          : ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+                      if ($curModel && !in_array($curModel, $modelOpts, true)) {
+                          array_unshift($modelOpts, $curModel);
+                      }
+                    ?>
+                    <select name="gemini_model" class="form-select">
+                      <?php foreach ($modelOpts as $m): ?>
+                        <option value="<?= esc($m) ?>" <?= $curModel === $m ? 'selected' : '' ?>><?= esc($m) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                    <?php if (!empty($availableModels)): ?>
+                      <small class="text-success"><i class="fas fa-circle-check me-1"></i><?= count($availableModels) ?> model tersedia untuk API key ini.</small>
+                    <?php else: ?>
+                      <small class="text-muted">Setelah API key disimpan, daftar model diisi otomatis dari key Anda.</small>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>

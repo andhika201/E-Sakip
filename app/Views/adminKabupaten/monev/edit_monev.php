@@ -9,6 +9,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
     <?= $this->include('adminKabupaten/templates/header.php'); ?>
     <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
@@ -126,6 +127,7 @@
     </main>
 
     <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+    </div>
 </body>
 
 </html>

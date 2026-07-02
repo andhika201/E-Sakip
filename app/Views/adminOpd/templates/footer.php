@@ -129,3 +129,21 @@
       });
     })();
   </script>
+
+  <!-- Global: Select2 untuk SEMUA dropdown FILTER (di form GET / navigasi) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.jQuery || !jQuery.fn || !jQuery.fn.select2) return;
+      var $ = jQuery;
+      $('select.form-select').each(function () {
+        var $s = $(this);
+        if ($s.hasClass('select2-hidden-accessible')) return;  // sudah select2
+        if ($s.hasClass('pg-size')) return;                    // pemilih baris pagination
+        if ($s.is('[data-no-select2]')) return;                // opt-out manual
+        if ($s.closest('.modal').length) return;               // skip di dalam modal
+        var f = $s.closest('form');
+        if (f.length && (f.attr('method') || 'get').toLowerCase() === 'post') return; // form input (POST) -> lewati (hindari select AJAX dependen)
+        $s.select2({ width: '100%', theme: 'bootstrap-5', dropdownParent: $(document.body) });
+      });
+    });
+  </script>

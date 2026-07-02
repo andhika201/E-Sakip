@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <?php
     if (
-        stripos($current_opd['nama_opd'], 'kecamatan') !== false
-        && strtoupper($jenis) === 'JPT'
+        ($isKecamatan ?? false)
+        || (stripos($current_opd['nama_opd'], 'kecamatan') !== false && strtoupper($jenis) === 'JPT')
     ) {
         $judulPk = 'CAMAT';
     } else {
-        $judulPk = strtoupper($jenis);
+        $judulPk = strtoupper($seg ?? $jenis);
     }
     ?>
     <title>Tambah PK <?= ucfirst($judulPk) ?> - e-SAKIP</title>
@@ -108,7 +108,7 @@
                 <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah PK <?= strtoupper($judulPk) ?>
                 </h2>
                 <form id="pk-form" method="POST"
-                    action="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/save') ?>">
+                    action="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/save') ?>">
                     <?= csrf_field() ?>
                     <section class="mb-4">
                         <h2 class="h5 fw-semibold mb-3">Informasi Umum PK</h2>
@@ -553,7 +553,7 @@
                         </div> <!-- End Sasaran Section -->
                     </section>
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis) ?>"
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis)) ?>"
                             class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Kembali
                         </a>

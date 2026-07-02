@@ -9,6 +9,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
     <!-- Navbar/Header -->
     <?= $this->include('adminKabupaten/templates/header.php'); ?>
@@ -120,7 +121,13 @@
 
                     <!-- Upload File -->
                     <div class="bg-light border rounded p-3 mb-3">
-                        <label class="fw-medium h5 d-block mb-3">Upload File Excel</label>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                            <label class="fw-medium h5 mb-0">Upload File Excel</label>
+                            <a href="<?= base_url('adminkab/program_pk/template') ?>"
+                                class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-file-excel me-1"></i> Unduh Template Excel
+                            </a>
+                        </div>
 
                         <div class="row g-3">
                             <div class="col-lg-6">
@@ -174,7 +181,7 @@
                                         <li><strong>D ≠ 0, E & F kosong</strong> → Program</li>
                                         <li><strong>D ≠ 0, E ada, F kosong</strong> → Kegiatan</li>
                                         <li><strong>D ≠ 0, E & F ada</strong> → Sub Kegiatan</li>
-                                        <li>Kolom <strong>J</strong> → Anggaran (Rp)</li>
+                                        <li>Kolom <strong>K</strong> → Anggaran (Rp)</li>
                                     </ul>
                                 </div>
                             </div>
@@ -258,6 +265,7 @@
             }
         });
     </script>
+    </div>
 </body>
 
 </html>

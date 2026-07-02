@@ -113,6 +113,7 @@
 </head>
 
 <body class="bg-light d-flex flex-column min-vh-100">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
     <?= $this->include('adminOpd/templates/header.php'); ?>
     <?= $this->include('adminOpd/templates/sidebar.php'); ?>
@@ -203,6 +204,7 @@
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
     <script src="<?= base_url('assets/js/adminOpd/cascading/cascading.js') ?>"></script>
+    </div>
 </body>
 
 </html>

@@ -28,13 +28,16 @@ class ModulePermissionFilter implements FilterInterface
         'cascading'       => 'cascading_kab',
         'rkt'             => 'rkt_kab',
         'target'          => 'target_kab',
-        'monev'           => 'monev_kab',
+        'monev'           => 'pk_bupati',  // adminkab/monev kini melayani MONEV PK Bupati
+        'target_renaksi'  => 'pk_bupati',  // adminkab/target_renaksi = Rencana Aksi PK Bupati
         'lakip'           => 'lakip_kab',
         'lakip_kabupaten' => 'lakip_kab',
         'program_pk'      => 'program_pk',
         'pk'              => 'pk_bupati',
         'capaian_pk'      => 'pk_bupati',
         'pk_bupati'       => 'pk_bupati',
+        'renaksi_pk'      => 'pk_bupati',
+        'monev_pk'        => 'pk_bupati',
         'tentang_kami'    => 'tentang_kami',
     ];
 
@@ -46,10 +49,13 @@ class ModulePermissionFilter implements FilterInterface
         'iku'          => 'iku_opd',
         'cascading'    => 'cascading_opd',
         'target'       => 'target_opd',
-        'monev'        => 'monev_opd',
+        'monev'        => 'pk_opd',       // adminopd/monev kini melayani MONEV PK Eselon II/III/IV
+        'target_renaksi' => 'pk_opd',     // adminopd/target_renaksi = Rencana Aksi PK Eselon II/III/IV
         'lakip'        => 'lakip_opd',
         'pk'           => 'pk_opd',
         'capaian_pk'   => 'pk_opd',
+        'renaksi_pk'   => 'pk_opd',
+        'monev_pk'     => 'pk_opd',
         'tentang_kami' => 'tentang_kami',
     ];
 

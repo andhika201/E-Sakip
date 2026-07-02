@@ -7,20 +7,23 @@
  */
 $tree = $tree ?? [];
 $visi = $visi ?? '';
+// Mode Kabupaten memangkas cabang OPD/Program (hanya sampai Indikator Sasaran).
+$showOpd = $showOpd ?? true;
 ?>
 
 <!-- LEGENDA WARNA -->
 <div class="pohon-legend">
     <span class="lg-title">Keterangan:</span>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#34487d,#28365f)"></span> Visi</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2f8579,#246b61)"></span> Misi</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#43885d,#356f4a)"></span> Tujuan RPJMD</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#e9f3ed;border:1px solid #cce3d5"></span> Indikator Tujuan</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9a6a44,#7e5334)"></span> Sasaran RPJMD</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#fbeede;border:1px solid #f0d6b4"></span> Indikator Sasaran</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#fff7e9;border:1px solid #f0dcaf"></span> CSF</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#6f5f8a,#574a6e)"></span> Perangkat Daerah</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#e9eef7;border:1px solid #cfd9ec"></span> Program</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2f3e63,#212c46)"></span> Visi</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#1f6f68,#14524d)"></span> Misi</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2f7d4f,#21603a)"></span> Tujuan RPJMD</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Tujuan</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#8a6a3c,#654b27)"></span> Sasaran RPJMD</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Sasaran</div>
+    <?php if ($showOpd): ?>
+        <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#565f70,#3d4553)"></span> Perangkat Daerah</div>
+        <div class="lg-item"><span class="lg-swatch" style="background:#eef1f6;border:1px solid #dbe1ee"></span> Program</div>
+    <?php endif; ?>
 </div>
 
 <div class="tree-container text-center">
@@ -58,7 +61,7 @@ $visi = $visi ?? '';
                                                         <?= esc($tujuan['tujuan_rpjmd']) ?>
                                                     </div>
                                                     <?php foreach ($tujuan['indikator_tujuan'] as $ikt): ?>
-                                                        <div class="box-ikt"><?= esc($ikt['indikator_tujuan']) ?></div>
+                                                        <div class="box-ikt"><span class="ind-kode">IK</span><?= esc($ikt['indikator_tujuan']) ?></div>
                                                     <?php endforeach; ?>
                                                 </div>
 
@@ -68,23 +71,17 @@ $visi = $visi ?? '';
                                                             <li>
                                                                 <!-- SASARAN -->
                                                                 <div class="tree-node">
-                                                                    <?php if (!empty($sasaran['csf'])): ?>
-                                                                        <div class="box-csf">
-                                                                            <div class="node-label" style="opacity:.8">Critical Success Factor</div>
-                                                                            <?= nl2br(esc($sasaran['csf'])) ?>
-                                                                        </div>
-                                                                    <?php endif; ?>
                                                                     <div class="box-sasaran">
                                                                         <div class="node-label">Sasaran RPJMD</div>
                                                                         <?= nl2br(esc($sasaran['sasaran_rpjmd'])) ?>
                                                                     </div>
                                                                     <?php foreach ($sasaran['indikator_sasaran'] as $iks): ?>
-                                                                        <div class="box-iks"><?= esc($iks['indikator_sasaran']) ?></div>
+                                                                        <div class="box-iks"><span class="ind-kode">IK</span><?= esc($iks['indikator_sasaran']) ?></div>
                                                                     <?php endforeach; ?>
                                                                 </div>
 
                                                                 <!-- CABANG OPD + PROGRAM -->
-                                                                <?php if (!empty($sasaran['opd'])): ?>
+                                                                <?php if ($showOpd && !empty($sasaran['opd'])): ?>
                                                                     <ul>
                                                                         <?php foreach ($sasaran['opd'] as $opd): ?>
                                                                             <li>

@@ -14,6 +14,8 @@ class IkuModel extends Model
         'rpjmd_id',
         'renstra_id',
         'definisi',
+        'rumusan_perhitungan',
+        'sumber_data',
         'penanggung_jawab',
         'status',
         'created_at',
@@ -37,6 +39,8 @@ class IkuModel extends Model
                 'rpjmd_id' => $data['rpjmd_id'] ?? null,
                 'renstra_id' => $data['renstra_id'] ?? null,
                 'definisi' => $data['definisi'],
+                'rumusan_perhitungan' => $data['rumusan_perhitungan'] ?? null,
+                'sumber_data' => $data['sumber_data'] ?? null,
                 'penanggung_jawab' => $data['penanggung_jawab'] ?? null,
                 'status' => $data['status'] ?? 'draft',
             ];

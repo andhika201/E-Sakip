@@ -153,6 +153,53 @@
         </div>
       <?php endif; ?>
 
+      <?php if (!empty($pk_rollup)): ?>
+        <div class="bg-white rounded shadow p-4 mb-4">
+          <p class="fw-semibold text-dark mb-3">
+            <i class="fas fa-file-signature me-2 text-success"></i>Realisasi Perjanjian Kinerja <span class="text-muted small">(lewat Rencana Aksi &amp; MONEV)</span>
+          </p>
+          <div class="row g-3">
+            <?php
+            $pkCards = [
+              ['key' => 'bupati', 'label' => 'PK Bupati', 'url' => base_url('adminkab/monev')],
+              ['key' => 'es3', 'label' => 'PK Eselon III (Administrator)', 'url' => base_url('adminkab/monev_pk/es3')],
+            ];
+            ?>
+            <?php foreach ($pkCards as $c): ?>
+              <?php $d = $pk_rollup[$c['key']] ?? ['indikator' => 0, 'renaksi' => 0, 'capaian' => 0]; ?>
+              <div class="col-12 col-lg-6">
+                <div class="border rounded p-3 h-100">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold text-dark"><?= esc($c['label']) ?></span>
+                    <a href="<?= $c['url'] ?>" class="btn btn-outline-success btn-sm">
+                      <i class="fas fa-chart-line me-1"></i> Pantau
+                    </a>
+                  </div>
+                  <div class="row text-center">
+                    <div class="col">
+                      <div class="h5 mb-0 fw-bold text-dark"><?= (int) ($d['indikator'] ?? 0) ?></div>
+                      <small class="text-muted">Indikator</small>
+                    </div>
+                    <div class="col">
+                      <div class="h5 mb-0 fw-bold text-primary"><?= (int) ($d['renaksi'] ?? 0) ?></div>
+                      <small class="text-muted">Rencana Aksi</small>
+                    </div>
+                    <div class="col">
+                      <div class="h5 mb-0 fw-bold text-success"><?= (int) ($d['capaian'] ?? 0) ?></div>
+                      <small class="text-muted">Ada Capaian</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      <?php endif; ?>
+
+      <?php if (setting('ai_dashboard_enabled', '1') === '1'): ?>
+        <?= $this->include('templates/ai_widget') ?>
+      <?php endif; ?>
+
       <div class="row g-4">
         <!-- RPJMD -->
         <div class="col-12 col-md-6 col-lg-4">

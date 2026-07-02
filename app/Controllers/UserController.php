@@ -343,6 +343,8 @@ class UserController extends BaseController
             'margin_footer' => 0,
             'tempDir'       => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');
@@ -512,6 +514,8 @@ class UserController extends BaseController
             'margin_footer' => 0,
             'tempDir'       => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');

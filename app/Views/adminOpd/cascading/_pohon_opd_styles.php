@@ -31,14 +31,14 @@
         position: absolute;
         top: 0;
         right: 50%;
-        border-top: 2px solid #cbd5e1;
+        border-top: 2px solid #000;
         width: 50%;
         height: 20px;
     }
     .tree li::after {
         right: auto;
         left: 50%;
-        border-left: 2px solid #cbd5e1;
+        border-left: 2px solid #000;
     }
     .tree li:only-child::after,
     .tree li:only-child::before { display: none; }
@@ -46,7 +46,7 @@
     .tree li:first-child::before,
     .tree li:last-child::after { border: 0 none; }
     .tree li:last-child::before {
-        border-right: 2px solid #cbd5e1;
+        border-right: 2px solid #000;
         border-radius: 0 6px 0 0;
     }
     .tree li:first-child::after { border-radius: 6px 0 0 0; }
@@ -55,7 +55,7 @@
         position: absolute;
         top: 0;
         left: 50%;
-        border-left: 2px solid #cbd5e1;
+        border-left: 2px solid #000;
         width: 0;
         height: 20px;
         transform: translateX(-50%);
@@ -70,13 +70,9 @@
         width: 180px;
         transition: transform .2s ease;
     }
+    /* Label kategori node (TUJUAN/SASARAN/ESS/CSF/dll) disembunyikan (permintaan user) */
     .node-label {
-        font-size: 8.5px;
-        font-weight: 700;
-        letter-spacing: .8px;
-        text-transform: uppercase;
-        opacity: .72;
-        margin-bottom: 2px;
+        display: none;
     }
 
     /* Node utama (terisi) */
@@ -99,36 +95,51 @@
         box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
     }
 
-    /* Tujuan RPJMD — teal */
+    /* Warna antar-level dibuat KONTRAS: tiap tingkat beda hue jelas.
+       Hijau → Teal → Biru → Oranye → Ungu → Merah-rose. */
+    /* Tujuan RPJMD — hijau */
     .box-l1 {
-        background: linear-gradient(135deg, #2f8579 0%, #246b61 100%);
+        background: linear-gradient(135deg, #15803d 0%, #166534 100%);
         font-size: 12.5px;
         border-radius: 11px;
     }
-    /* Sasaran RPJMD — hijau */
-    .box-l2 { background: linear-gradient(135deg, #43885d 0%, #356f4a 100%); }
+    /* Sasaran RPJMD — teal */
+    .box-l2 { background: linear-gradient(135deg, #0f766e 0%, #115e59 100%); }
     /* Tujuan Renstra — biru */
-    .box-l3 { background: linear-gradient(135deg, #3f6296 0%, #2f4d7a 100%); }
-    /* Sasaran ESS II — coklat hangat */
-    .box-es2 { background: linear-gradient(135deg, #9a6a44 0%, #7e5334 100%); }
-    /* Sasaran ESS III — mauve */
-    .box-es3 { background: linear-gradient(135deg, #6f5f8a 0%, #574a6e 100%); }
-    /* Sasaran ESS IV — slate biru */
-    .box-es4 { background: linear-gradient(135deg, #41709e 0%, #2f5680 100%); }
+    .box-l3 { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); }
+    /* Sasaran ESS II — oranye */
+    .box-es2 { background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%); }
+    /* Sasaran ESS III — ungu */
+    .box-es3 { background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%); }
+    /* Sasaran ESS IV — merah rose */
+    .box-es4 { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
 
-    /* Indikator kinerja — chip amber */
+    /* Indikator kinerja — chip netral */
     .box-iks {
-        background: #fbeede;
-        color: #8f561d;
-        border-color: #f0d6b4;
+        background: #eef2f5;
+        color: #39493f;
+        border-color: #dbe4de;
         text-align: left;
         margin-top: -1px;
     }
-    /* CSF — catatan krem */
+    /* Kode indikator (label "IK" di depan nama) */
+    .ind-kode {
+        display: inline-block;
+        font-weight: 800;
+        font-size: .72em;
+        letter-spacing: .6px;
+        padding: 1px 6px;
+        margin-right: 5px;
+        border-radius: 5px;
+        background: #00743e;
+        color: #fff;
+        vertical-align: middle;
+    }
+    /* CSF — catatan krem lembut */
     .box-csf {
-        background: #fff7e9;
-        color: #8a5a14;
-        border-color: #f0dcaf;
+        background: #faf3e6;
+        color: #7a5a1e;
+        border-color: #ecdcb8;
         text-align: left;
         margin-bottom: 1px;
     }

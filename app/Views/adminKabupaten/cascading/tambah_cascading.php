@@ -24,6 +24,7 @@
 </head>
 
 <body class="bg-light">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
     <?= $this->include('adminKabupaten/templates/header.php'); ?>
     <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
@@ -106,6 +107,7 @@
 
     <script src="<?= base_url('assets/js/adminKabupaten/cascading/cascading.js') ?>"></script>
 
+    </div>
 </body>
 
 </html>

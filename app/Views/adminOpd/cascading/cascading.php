@@ -156,12 +156,6 @@
                             <a href="<?= base_url('adminopd/cascading') ?>" class="btn btn-outline-secondary text-nowrap">
                                 <i class="fas fa-undo"></i> Reset
                             </a>
-                            <?php if (!empty($filters['periode']) && !empty($rows)): ?>
-                                <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>"
-                                    class="btn btn-danger text-nowrap" target="_blank">
-                                    <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
-                                </a>
-                            <?php endif; ?>
                         </div>
                     </form>
                 </div>
@@ -203,6 +197,14 @@
                                 <i class="fas fa-sitemap me-1"></i> Pohon Kinerja
                             </button>
                         </div>
+                        <!-- Tools tab Tabel Cascading -->
+                        <div class="casc-viewtools" id="tabelTools">
+                            <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>"
+                                target="_blank" class="btn btn-sm btn-danger text-nowrap">
+                                <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
+                            </a>
+                        </div>
+                        <!-- Tools tab Pohon Kinerja -->
                         <div class="casc-viewtools" id="pohonTools" hidden>
                             <button type="button" class="btn btn-sm btn-outline-secondary casc-act" onclick="pohonZoom(-1)" title="Perkecil">
                                 <i class="fas fa-magnifying-glass-minus"></i>
@@ -229,15 +231,12 @@
                                             <th>Sasaran RPJMD</th>
                                             <th>Tujuan RENSTRA</th>
 
-                                            <th>CSF</th>
                                             <th>Sasaran ESS II</th>
                                             <th>Indikator ESS II</th>
 
-                                            <th>CSF</th>
                                             <th>Sasaran ESS III</th>
                                             <th>Indikator ESS III</th>
 
-                                            <th>CSF</th>
                                             <th>Sasaran ESS IV / JF</th>
                                             <th>Indikator ESS IV</th>
 
@@ -267,12 +266,6 @@
                                                 <?php endif; ?>
 
                                                 <?php if ($firstShow['sasaran_renstra'][$r['renstra_sasaran_id']] == $index): ?>
-                                                    <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>" class="p-1">
-                                                        <textarea class="form-control csf-input text-center"
-                                                            style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
-                                                            data-id="<?= $r['renstra_sasaran_id'] ?>"
-                                                            data-level="es2"><?= esc($r['csf_es2'] ?? '') ?></textarea>
-                                                    </td>
                                                     <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>" class="text-start">
                                                         <?= esc($r['renstra_sasaran']) ?>
                                                     </td>
@@ -280,12 +273,16 @@
 
                                                 <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
                                                     <td rowspan="<?= $rowspan['indikator'][$r['indikator_id']] ?? 1 ?>" class="text-start">
-                                                        <?= esc($r['indikator_sasaran'] ?? '-') ?>
+                                                        <?php if (!empty($r['indikator_sasaran'])): ?>
+                                                            <span class="ind-kode">IK</span><?= esc($r['indikator_sasaran']) ?>
+                                                        <?php else: ?>
+                                                            -
+                                                        <?php endif; ?>
                                                     </td>
                                                 <?php endif; ?>
                                                 <?php if (empty($r['es3_id'])): ?>
                                                     <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
-                                                        <td colspan="6" class="text-center">
+                                                        <td colspan="4" class="text-center">
                                                             <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
                                                                 class="btn btn-success btn-sm">
                                                                 <i class="fas fa-plus"></i> Tambah ESS III
@@ -294,12 +291,6 @@
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
-                                                        <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="p-1">
-                                                            <textarea class="form-control csf-input text-center"
-                                                                style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
-                                                                data-id="<?= $r['es3_id'] ?>"
-                                                                data-level="es3"><?= esc($r['csf_es3'] ?? '') ?></textarea>
-                                                        </td>
                                                         <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="text-start">
                                                             <?= esc($r['es3_sasaran']) ?>
                                                         </td>
@@ -308,14 +299,18 @@
                                                     <?php $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null); ?>
                                                     <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
                                                         <td rowspan="<?= $rowspan['es3_indikator'][$key] ?? 1 ?>" class="text-start">
-                                                            <?= esc($r['es3_indikator']) ?>
+                                                            <?php if (!empty($r['es3_indikator'])): ?>
+                                                                <span class="ind-kode">IK</span><?= esc($r['es3_indikator']) ?>
+                                                            <?php else: ?>
+                                                                -
+                                                            <?php endif; ?>
                                                         </td>
                                                     <?php endif; ?>
                                                 <?php endif; ?>
 
                                                 <?php if (!empty($r['es3_id']) && empty($r['es4_id'])): ?>
                                                     <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
-                                                        <td colspan="3" class="text-center">
+                                                        <td colspan="2" class="text-center">
                                                             <a href="<?= base_url('adminopd/cascading/tambah-es4/' . $r['es3_indikator_id']) ?>"
                                                                 class="btn btn-success btn-sm">
                                                                 <i class="fas fa-plus"></i>
@@ -325,20 +320,17 @@
 
                                                 <?php else: ?>
                                                     <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
-                                                        <!-- CSF ES IV -->
-                                                        <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="p-1">
-                                                            <textarea class="form-control csf-input text-center"
-                                                                style="font-size: 12px; min-width: 120px; resize: none;" rows="3"
-                                                                data-id="<?= $r['es4_id'] ?>"
-                                                                data-level="es4"><?= esc($r['csf_es4'] ?? '') ?></textarea>
-                                                        </td>
                                                         <!-- Sasaran ES IV -->
                                                         <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="text-start">
                                                             <?= esc($r['es4_sasaran']) ?>
                                                         </td>
                                                     <?php endif; ?>
                                                     <td class="text-start">
-                                                        <?= $r['es4_indikator'] ?? '-' ?>
+                                                        <?php if (!empty($r['es4_indikator'])): ?>
+                                                            <span class="ind-kode">IK</span><?= esc($r['es4_indikator']) ?>
+                                                        <?php else: ?>
+                                                            -
+                                                        <?php endif; ?>
                                                     </td>
                                                 <?php endif; ?>
 
@@ -444,7 +436,8 @@
             const btns = document.querySelectorAll('.vt-btn');
             const vTabel = document.getElementById('view-tabel');
             const vPohon = document.getElementById('view-pohon');
-            const tools = document.getElementById('pohonTools');
+            const toolsPohon = document.getElementById('pohonTools');
+            const toolsTabel = document.getElementById('tabelTools');
 
             btns.forEach(b => b.addEventListener('click', () => {
                 btns.forEach(x => x.classList.remove('active'));
@@ -452,7 +445,9 @@
                 const v = b.dataset.view;
                 if (vTabel) vTabel.hidden = (v !== 'tabel');
                 if (vPohon) vPohon.hidden = (v !== 'pohon');
-                if (tools) tools.hidden = (v !== 'pohon');
+                if (toolsTabel) toolsTabel.hidden = (v !== 'tabel');
+                if (toolsPohon) toolsPohon.hidden = (v !== 'pohon');
+                if (v === 'pohon') pohonZoom(0); // terapkan skala setelah pohon tampil (offset valid)
             }));
         })();
 
@@ -460,7 +455,17 @@
         function pohonZoom(dir) {
             _pohonZoom = Math.min(1.2, Math.max(0.3, _pohonZoom + dir * 0.1));
             const t = document.getElementById('tree-container');
-            if (t) t.style.zoom = _pohonZoom;
+            if (t) {
+                // Pakai transform:scale (BUKAN zoom) agar tak muncul kotak hitam
+                // (bug render Chromium: zoom + gradient + box-shadow pada banyak node).
+                t.style.zoom = '';
+                t.style.transformOrigin = 'top left';
+                t.style.transform = 'scale(' + _pohonZoom + ')';
+                // Transform tak mengubah layout box -> kompensasi agar tak ada ruang kosong.
+                const natW = t.offsetWidth, natH = t.offsetHeight;
+                t.style.marginRight  = (natW * (_pohonZoom - 1)) + 'px';
+                t.style.marginBottom = (natH * (_pohonZoom - 1)) + 'px';
+            }
             const lbl = document.getElementById('pohonZoomLbl');
             if (lbl) lbl.textContent = Math.round(_pohonZoom * 100) + '%';
         }

@@ -3,19 +3,21 @@
 
 <head>
     <meta charset="UTF-8" />
+    <?= $this->include('templates/pdf_style') ?>
     <style>
-        * { font-family: sans-serif; }
-        h3 { margin: 0 0 2px; color: #00743e; }
+        .log-table { width: 100%; border-collapse: collapse; }
+        .log-table th, .log-table td { border: 0.5px solid #999; padding: 3px 4px; font-size: 8px; vertical-align: top; }
+        .log-table thead th { background: #00743e; color: #fff; text-align: center; }
         .meta { font-size: 9px; color: #555; margin-bottom: 8px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 0.5px solid #999; padding: 3px 4px; font-size: 8px; vertical-align: top; }
-        thead th { background: #cfe9d9; text-align: center; }
         .nowrap { white-space: nowrap; }
     </style>
 </head>
 
 <body>
-    <h3>Log Aktivitas Pengguna</h3>
+    <?= $this->include('templates/pdf_kop', [
+        'judul'    => 'Log Aktivitas Pengguna',
+        'namaUnit' => 'Kabupaten Pringsewu',
+    ]) ?>
     <div class="meta">
         Dicetak: <?= esc($dicetak) ?> oleh <?= esc($oleh ?? '-') ?>.
         <?php
@@ -37,7 +39,7 @@
         Total baris: <?= count($logs) ?><?= !empty($truncated) ? ' (dibatasi ' . (int) $maxRows . ')' : '' ?>.
     </div>
 
-    <table>
+    <table class="log-table">
         <thead>
             <tr>
                 <th style="width:18px;">No</th>

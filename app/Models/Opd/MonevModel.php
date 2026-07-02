@@ -297,6 +297,253 @@ class MonevModel extends Model
             ->getResultArray();
     }
 
+    /* =========================================================
+     *  MONEV PK BUPATI  (pk.jenis='bupati')
+     *  Renaksi: target_rencana.pk_indikator_id; monev.opd_id = NULL
+     *  (mengikuti pola mode KAB)
+     * =======================================================*/
+    public function getIndexDataPkBupati(?string $tahun = null): array
+    {
+        $b = $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.id  AS target_id,
+                tr.opd_id,
+                tr.pk_indikator_id,
+                tr.rencana_aksi,
+                tr.capaian AS target_capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab
+            ')
+            ->select('
+                pi.id AS indikator_id,
+                pi.indikator AS indikator_sasaran,
+                pi.target AS indikator_target,
+                s.satuan AS satuan
+            ')
+            ->select('
+                pk.id    AS pk_id,
+                pk.tahun AS indikator_tahun
+            ')
+            ->select('
+                ps.id      AS pk_sasaran_id,
+                ps.sasaran AS sasaran_renstra
+            ')
+            ->select('
+                m.id  AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total AS monev_total
+            ')
+            ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            ->join(
+                $this->table . ' AS m',
+                'm.target_rencana_id = tr.id AND m.opd_id IS NULL',
+                'left'
+            )
+            ->where('tr.pk_indikator_id IS NOT NULL', null, false)
+            ->where('pk.jenis', 'bupati');
+
+        if (!empty($tahun)) {
+            $b->where('pk.tahun', $tahun);
+        }
+
+        return $b->orderBy('ps.id', 'ASC')
+            ->orderBy('pi.id', 'ASC')
+            ->orderBy('tr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /* =========================================================
+     *  MONEV PK OPD / ESELON II-III-IV (jpt|administrator|pengawas)
+     *  Renaksi: target_rencana.pk_indikator_id; monev.opd_id = tr.opd_id
+     *  (mengikuti pola mode OPD). Bisa difilter per OPD, eselon, & pejabat.
+     *
+     *  @param string|null $tahun     Filter tahun PK (null = semua).
+     *  @param int|null    $opdId     Scope per OPD (null = semua, untuk admin_kab).
+     *  @param string|null $eselon    'jpt'|'administrator'|'pengawas' (null = semua).
+     *  @param int|null    $pejabatId Filter pejabat penandatangan (pk.pihak_1).
+     * =======================================================*/
+    public function getIndexDataPkOpd(
+        ?string $tahun = null,
+        ?int $opdId = null,
+        ?string $eselon = null,
+        ?int $pejabatId = null
+    ): array {
+        $b = $this->db->table('target_rencana AS tr')
+            ->select('
+                tr.id  AS target_id,
+                tr.opd_id,
+                tr.pk_indikator_id,
+                tr.rencana_aksi,
+                tr.capaian AS target_capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab
+            ')
+            ->select('
+                pi.id AS indikator_id,
+                pi.indikator AS indikator_sasaran,
+                pi.target AS indikator_target,
+                s.satuan AS satuan
+            ')
+            ->select('
+                pk.id     AS pk_id,
+                pk.tahun  AS indikator_tahun,
+                pk.opd_id AS pk_opd_id,
+                pk.jenis  AS pk_jenis
+            ')
+            ->select('
+                pj.id           AS pejabat_id,
+                pj.nama_pegawai AS pejabat_nama,
+                jb.nama_jabatan AS pejabat_jabatan
+            ')
+            ->select('
+                ps.id      AS pk_sasaran_id,
+                ps.sasaran AS sasaran_renstra
+            ')
+            ->select('o.nama_opd')
+            ->select('
+                m.id  AS monev_id,
+                m.opd_id AS monev_opd_id,
+                m.capaian_triwulan_1,
+                m.capaian_triwulan_2,
+                m.capaian_triwulan_3,
+                m.capaian_triwulan_4,
+                m.total AS monev_total
+            ')
+            ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->join('opd o', 'o.id = tr.opd_id', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
+            ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            ->join(
+                $this->table . ' AS m',
+                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
+                'left'
+            )
+            ->where('tr.pk_indikator_id IS NOT NULL', null, false);
+
+        if (!empty($eselon) && in_array($eselon, ['jpt', 'administrator', 'pengawas'], true)) {
+            $b->where('pk.jenis', $eselon);
+        } else {
+            $b->whereIn('pk.jenis', ['jpt', 'administrator', 'pengawas']);
+        }
+        if (!empty($tahun)) {
+            $b->where('pk.tahun', $tahun);
+        }
+        if (!empty($opdId)) {
+            $b->where('tr.opd_id', (int) $opdId);
+        }
+        if (!empty($pejabatId)) {
+            $b->where('pk.pihak_1', (int) $pejabatId);
+        }
+
+        return $b->orderBy('tr.opd_id', 'ASC')
+            ->orderBy("FIELD(pk.jenis,'jpt','administrator','pengawas')", '', false)
+            ->orderBy('ps.id', 'ASC')
+            ->orderBy('pi.id', 'ASC')
+            ->orderBy('tr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Rollup ringkas realisasi PK (untuk kartu dashboard).
+     * $jenis = 'bupati' | 'administrator'.
+     * Mengembalikan: indikator (total), renaksi (sudah punya rencana aksi),
+     * capaian (renaksi yang sudah ada baris monev).
+     */
+    public function getPkRealisasiRollup(string $jenis, ?int $opdId = null): array
+    {
+        // total indikator PK
+        $bi = $this->db->table('pk_indikator pi')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->where('pk.jenis', $jenis);
+        if ($opdId) {
+            $bi->where('pk.opd_id', (int) $opdId);
+        }
+        $indikator = (int) $bi->countAllResults();
+
+        // total renaksi PK
+        $br = $this->db->table('target_rencana tr')
+            ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->where('tr.pk_indikator_id IS NOT NULL', null, false)
+            ->where('pk.jenis', $jenis);
+        if ($opdId) {
+            $br->where('pk.opd_id', (int) $opdId);
+        }
+        $renaksi = (int) $br->countAllResults();
+
+        // renaksi yang sudah ada capaian (monev)
+        $monevJoin = ($jenis === 'bupati')
+            ? 'm.target_rencana_id = tr.id AND m.opd_id IS NULL'
+            : 'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id';
+        $bc = $this->db->table('target_rencana tr')
+            ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->join($this->table . ' m', $monevJoin, 'inner')
+            ->where('tr.pk_indikator_id IS NOT NULL', null, false)
+            ->where('pk.jenis', $jenis);
+        if ($opdId) {
+            $bc->where('pk.opd_id', (int) $opdId);
+        }
+        $capaian = (int) $bc->countAllResults();
+
+        return [
+            'indikator' => $indikator,
+            'renaksi'   => $renaksi,
+            'capaian'   => $capaian,
+        ];
+    }
+
+    /**
+     * Daftar tahun PK Bupati (untuk dropdown mode bupati).
+     */
+    public function getAvailableYearsPk(string $jenis): array
+    {
+        return $this->db->table('pk')
+            ->select('tahun')
+            ->where('jenis', $jenis)
+            ->distinct()
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Daftar tahun PK level OPD (Eselon II/III/IV), opsional di-scope per OPD.
+     */
+    public function getAvailableYearsPkOpd(?int $opdId = null): array
+    {
+        $b = $this->db->table('pk')
+            ->select('tahun')
+            ->whereIn('jenis', ['jpt', 'administrator', 'pengawas'])
+            ->distinct()
+            ->orderBy('tahun', 'ASC');
+        if (!empty($opdId)) {
+            $b->where('opd_id', (int) $opdId);
+        }
+        return $b->get()->getResultArray();
+    }
+
     /**
      * Daftar tahun RENSTRA (untuk dropdown).
      */

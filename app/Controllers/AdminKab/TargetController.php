@@ -182,6 +182,8 @@ class TargetController extends BaseController
             'margin_bottom' => 10,
         ]);
 
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->WriteHTML($html);
         $this->response->setHeader('Content-Type', 'application/pdf');
         $mpdf->Output('Target_dan_Rencana_Aksi.pdf', 'I');

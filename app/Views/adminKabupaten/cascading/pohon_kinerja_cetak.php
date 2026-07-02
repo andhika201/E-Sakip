@@ -16,6 +16,11 @@
     <!-- Gaya pohon bersama -->
     <?= $this->include('adminKabupaten/cascading/_pohon_styles') ?>
 
+    <!-- html2canvas: ekspor pohon ke gambar (PNG) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF: bungkus gambar pohon ke PDF (unduh langsung) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
@@ -29,8 +34,23 @@
         .print-header {
             text-align: center;
             margin-bottom: 22px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #d7dde4;
+            padding-bottom: 14px;
+            border-bottom: 3px double #14532d;
+        }
+        /* Kop surat (letterhead) 2 logo — selaras dengan Cascading cetak */
+        .kop-surat { width: 100%; border-collapse: collapse; }
+        .kop-surat td { vertical-align: middle; padding: 0; }
+        .kop-logo-l { width: 96px; text-align: left; }
+        .kop-logo-r { width: 120px; text-align: right; }
+        .kop-logo-l img { height: 66px; width: auto; }
+        .kop-logo-r img { height: 52px; width: auto; }
+        .kop-teks { text-align: center; padding: 0 10px; }
+        .kop-inst { font-weight: 800; font-size: 17px; letter-spacing: .5px; text-transform: uppercase; color: #15311f; line-height: 1.25; }
+        .kop-addr { font-size: 11px; color: #5b6675; font-weight: 500; margin-top: 3px; line-height: 1.35; }
+        @media (max-width: 768px) {
+            .kop-logo-l img { height: 52px; }
+            .kop-logo-r img { height: 42px; }
+            .kop-inst { font-size: 14px; }
         }
         .print-header h2 {
             font-weight: 800;
@@ -92,6 +112,8 @@
 
         /* ===== Penyesuaian cetak ===== */
         @media print {
+            /* Default landscape (pohon melebar); ditimpa dinamis bila user ganti orientasi */
+            @page { size: A4 landscape; margin: 6mm; }
             body {
                 background: #fff;
                 -webkit-print-color-adjust: exact !important;
@@ -99,7 +121,12 @@
                 padding: 0 0 14mm;
             }
             .print-controls { display: none !important; }
-            .tree-container { overflow: visible !important; width: 100%; }
+            .tree-container { overflow: visible !important; width: 100%; text-align: center !important; }
+            .tree { min-width: 0 !important; display: inline-block; }
+            [class^="box-"], [class*=" box-"], .ind-kode, .pohon-legend .lg-swatch {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             .tree-node { page-break-inside: avoid; }
             .tree li { padding: 12px 3px 0 3px; }
 
@@ -135,8 +162,8 @@
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            .wm-footer .wm-left  { font-style: italic; }
-            .wm-footer .wm-right { font-weight: 600; color: #aaa; }
+            .wm-footer .wm-left  { font-weight: 500; color: #555; }
+            .wm-footer .wm-right { color: #888; }
         }
     </style>
 </head>
@@ -163,10 +190,11 @@
 
         <label for="selectZoom">Zoom Pohon</label>
         <select id="selectZoom" onchange="updateZoom()">
+            <option value="fit" selected>Fit — Sesuaikan Halaman</option>
             <option value="0.35">35% — Sangat Kecil</option>
             <option value="0.45">45% — Kecil</option>
             <option value="0.55">55% — Normal</option>
-            <option value="0.65" selected>65% — Agak Besar</option>
+            <option value="0.65">65% — Agak Besar</option>
             <option value="0.70">70% — Besar</option>
             <option value="0.85">85% — Sangat Besar</option>
             <option value="1.00">100% — Penuh</option>
@@ -175,26 +203,56 @@
         <button onclick="doCetak()" class="btn btn-success btn-sm w-100 mb-2">
             <i class="fas fa-print"></i> Cetak Sekarang
         </button>
+        <button onclick="unduhPDF()" id="btnPDF" class="btn btn-danger btn-sm w-100 mb-2">
+            <i class="fas fa-file-pdf"></i> Unduh PDF
+        </button>
+        <button onclick="unduhGambar()" id="btnGambar" class="btn btn-outline-success btn-sm w-100 mb-2">
+            <i class="fas fa-image"></i> Unduh Gambar (PNG)
+        </button>
         <button onclick="tutupHalaman()" class="btn btn-outline-secondary btn-sm w-100">
             <i class="fas fa-times"></i> Tutup
         </button>
         <div class="zoom-info" id="zoomInfo">Zoom: 65%</div>
     </div>
 
+    <?php
+    helper('setting');
+    $kopLogo   = setting_asset('kab_logo', 'assets/images/logo.png');
+    $kopAksara = setting_asset('app_logo', 'assets/images/LogoTentang.png');
+    $kopInst   = setting('instansi', 'Pemerintah Kabupaten Pringsewu');
+    $kopAlamat = trim(setting('instansi_address', ''));
+    $kopTelp   = trim(setting('instansi_phone', ''));
+    $kopEmail  = trim(setting('instansi_email', ''));
+    $kopKontak = [];
+    if ($kopAlamat !== '') { $kopKontak[] = $kopAlamat; }
+    $kopTE = trim($kopTelp . (($kopTelp && $kopEmail) ? ' · ' : '') . $kopEmail);
+    if ($kopTE !== '') { $kopKontak[] = $kopTE; }
+    ?>
+    <div id="capture-area">
     <div class="print-header">
-        <h2>POHON KINERJA</h2>
+        <table class="kop-surat">
+            <tr>
+                <td class="kop-logo-l">
+                    <?php if ($kopLogo): ?><img src="<?= esc($kopLogo) ?>" alt="Lambang Kabupaten"><?php endif; ?>
+                </td>
+                <td class="kop-teks"><!-- logo saja: teks instansi dihilangkan --></td>
+                <td class="kop-logo-r">
+                    <?php if ($kopAksara): ?><img src="<?= esc($kopAksara) ?>" alt="AKSARA"><?php endif; ?>
+                </td>
+            </tr>
+        </table>
+        <h2 style="margin-top:6px;">POHON KINERJA</h2>
         <p class="ph-sub">Cascading RPJMD &mdash; Visi &middot; Misi &middot; Tujuan &middot; Sasaran &middot; Perangkat Daerah</p>
         <div class="ph-meta">Periode <?= esc($tahun_mulai) ?> &ndash; <?= esc($tahun_akhir) ?></div>
     </div>
 
-    <?= $this->include('adminKabupaten/cascading/_pohon_tree') ?>
+    <?= $this->include('adminKabupaten/cascading/_pohon_tree', ['showOpd' => $showOpd ?? true]) ?>
+    </div>
 
     <!-- WATERMARK FOOTER -->
     <div class="wm-footer">
-        <span class="wm-left">
-            &copy; Kabupaten Pringsewu &mdash; E-Sakip &bull; Dicetak: <?= date('d/m/Y H:i') ?>
-        </span>
-        <span class="wm-right">Print by Aksara</span>
+        <span class="wm-left">Print Document by AKSARA</span>
+        <span class="wm-right">Dicetak <?= date('d/m/Y H:i') ?></span>
     </div>
 
 </body>
@@ -217,52 +275,190 @@
         document.head.appendChild(dynamicStyle);
     }
 
-    function updatePrintStyle() {
-        const kertas    = document.getElementById('selectKertas').value;
-        const orientasi = document.getElementById('selectOrientasi').value;
-        const size      = pageSizes[kertas] || pageSizes['A4'];
+    const PAGE_MARGIN_MM = 6;
 
-        const pageSize = orientasi === 'landscape'
-            ? `${size.h} ${size.w}`
-            : `${size.w} ${size.h}`;
+    function selVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 
-        dynamicStyle.textContent = `
-            @media print {
-                @page {
-                    size: ${pageSize};
-                    margin: 6mm;
-                }
-            }
-        `;
+    // Lebar area cetak (px @96dpi): kertas + orientasi - margin.
+    function printableWidthPx() {
+        const size = pageSizes[selVal('selectKertas')] || pageSizes['A4'];
+        const wMm  = parseFloat(selVal('selectOrientasi') === 'landscape' ? size.h : size.w);
+        const mm   = Math.max(20, wMm - 2 * PAGE_MARGIN_MM);
+        return mm / 25.4 * 96;
+    }
+    // Tinggi area cetak (px @96dpi).
+    function printableHeightPx() {
+        const size = pageSizes[selVal('selectKertas')] || pageSizes['A4'];
+        const hMm  = parseFloat(selVal('selectOrientasi') === 'landscape' ? size.w : size.h);
+        const mm   = Math.max(20, hMm - 2 * PAGE_MARGIN_MM);
+        return mm / 25.4 * 96;
+    }
 
-        document.getElementById('zoomInfo').textContent =
-            `${kertas} | ${orientasi === 'landscape' ? 'Landscape' : 'Portrait'} | Zoom: ${Math.round(parseFloat(document.getElementById('selectZoom').value)*100)}%`;
+    // Ukur dimensi natural pohon (px) pada skala 1 & tanpa min-width (lebar KONTEN sebenarnya).
+    function treeNaturalSize() {
+        const t = document.getElementById('tree-container');
+        if (!t) return { w: 0, h: 0 };
+        const pz = t.style.zoom, pm = t.style.minWidth;
+        t.style.zoom = '1';
+        t.style.minWidth = '0';
+        const w = t.scrollWidth, h = t.scrollHeight;
+        t.style.zoom = pz;
+        t.style.minWidth = pm;
+        return { w, h };
+    }
+
+    // Skala: manual, atau "fit" = muat SATU halaman (lebar & tinggi), maks 100%, margin aman 3%.
+    function effectiveZoom() {
+        const sel = selVal('selectZoom');
+        if (sel === 'fit') {
+            const nat = treeNaturalSize();
+            if (!nat.w) return 1;
+            const sw = (printableWidthPx()  * 0.97) / nat.w;
+            const sh = nat.h ? (printableHeightPx() * 0.97) / nat.h : sw;
+            let s = Math.min(sw, sh);
+            if (!isFinite(s) || s <= 0) s = 1;
+            return Math.min(1, Math.max(0.10, s));
+        }
+        return parseFloat(sel) || 1;
+    }
+
+    // Ukuran standar -> sintaks "A4 landscape" (lebih andal memaksa orientasi di dialog cetak).
+    const NAMED_SIZE = { 'A4': 'A4', 'A3': 'A3' };
+    function applyPageStyle() {
+        const kertas = selVal('selectKertas');
+        const ori = selVal('selectOrientasi') === 'portrait' ? 'portrait' : 'landscape';
+        let decl;
+        if (NAMED_SIZE[kertas]) {
+            decl = `${NAMED_SIZE[kertas]} ${ori}`;
+        } else {
+            const size = pageSizes[kertas] || pageSizes['A4'];
+            decl = ori === 'landscape' ? `${size.h} ${size.w}` : `${size.w} ${size.h}`;
+        }
+        dynamicStyle.textContent =
+            `@media print { @page { size: ${decl}; margin: ${PAGE_MARGIN_MM}mm; } }`;
     }
 
     function updateZoom() {
-        const zoom = parseFloat(document.getElementById('selectZoom').value);
-        document.getElementById('tree-container').style.zoom = zoom;
-        updatePrintStyle();
+        applyPageStyle();
+        const z = effectiveZoom();
+        const t = document.getElementById('tree-container');
+        if (t) t.style.zoom = z;
+        const info = document.getElementById('zoomInfo');
+        if (info) {
+            const isFit = selVal('selectZoom') === 'fit';
+            info.textContent = `${selVal('selectKertas')} | ${selVal('selectOrientasi') === 'landscape' ? 'Landscape' : 'Portrait'} | Zoom: ${(isFit ? 'Fit ' : '')}${Math.round(z * 100)}%`;
+        }
     }
+
+    // Alias lama (onchange kertas/orientasi memanggil ini) -> hitung ulang fit.
+    function updatePrintStyle() { updateZoom(); }
 
     function tutupHalaman() {
         window.close();
-        setTimeout(() => {
-            if (!window.closed) {
-                window.history.back();
-            }
-        }, 300);
+        setTimeout(() => { if (!window.closed) { window.history.back(); } }, 300);
     }
 
     function doCetak() {
-        updatePrintStyle();
-        setTimeout(() => window.print(), 100);
+        updateZoom();
+        setTimeout(() => window.print(), 150);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updatePrintStyle();
-        updateZoom();
-    });
+    // ============================================================
+    // Render pohon ke <canvas> full-size (html2canvas) — dipakai bersama
+    // oleh unduh PNG & unduh PDF. Sembunyikan kontrol/footer sementara.
+    // ============================================================
+    async function captureTreeCanvas() {
+        const area     = document.getElementById('capture-area');
+        const treeEl   = document.getElementById('tree-container');
+        const wrap     = document.querySelector('.tree-container');
+        const controls = document.querySelector('.print-controls');
+        const footer   = document.querySelector('.wm-footer');
+        if (!area) return null;
+
+        const st = {
+            zoom: treeEl ? treeEl.style.zoom : '',
+            ov:   wrap ? wrap.style.overflow : '',
+            ctrl: controls ? controls.style.display : '',
+            ft:   footer ? footer.style.display : ''
+        };
+        if (treeEl) treeEl.style.zoom = '1';
+        if (wrap)   wrap.style.overflow = 'visible';
+        if (controls) controls.style.display = 'none';
+        if (footer)   footer.style.display = 'none';
+
+        try {
+            const w = area.scrollWidth, h = area.scrollHeight;
+            let scale = Math.min(2, 12000 / Math.max(w, h));   // jaga kanvas < ~12000px
+            if (!isFinite(scale) || scale < 1) scale = 1;
+            return await html2canvas(area, {
+                backgroundColor: '#ffffff',
+                scale: scale,
+                useCORS: true,
+                logging: false,
+                width: w, height: h, windowWidth: w, windowHeight: h
+            });
+        } finally {
+            if (treeEl) treeEl.style.zoom = st.zoom;
+            if (wrap)   wrap.style.overflow = st.ov;
+            if (controls) controls.style.display = st.ctrl;
+            if (footer)   footer.style.display = st.ft;
+            updateZoom();
+        }
+    }
+
+    async function withButtonBusy(id, task) {
+        const btn = document.getElementById(id);
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses…'; }
+        try { await task(); }
+        finally { if (btn) { btn.disabled = false; btn.innerHTML = orig; } }
+    }
+
+    // Ekspor pohon ke gambar PNG.
+    async function unduhGambar() {
+        if (typeof html2canvas === 'undefined') { alert('Pustaka gambar belum termuat, coba lagi sebentar.'); return; }
+        await withButtonBusy('btnGambar', async () => {
+            try {
+                const canvas = await captureTreeCanvas();
+                if (!canvas) return;
+                const link = document.createElement('a');
+                link.download = 'pohon-kinerja-<?= esc($tahun_mulai) ?>-<?= esc($tahun_akhir) ?>.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (e) {
+                alert('Gagal membuat gambar: ' + (e && e.message ? e.message : e));
+            }
+        });
+    }
+
+    // Unduh langsung sebagai PDF (gambar pohon dibungkus jsPDF, 1 halaman se-ukuran pohon).
+    async function unduhPDF() {
+        if (typeof html2canvas === 'undefined') { alert('Pustaka gambar belum termuat, coba lagi sebentar.'); return; }
+        const jsPDF = (window.jspdf || {}).jsPDF;
+        if (!jsPDF) { alert('Pustaka PDF belum termuat, coba lagi sebentar.'); return; }
+        await withButtonBusy('btnPDF', async () => {
+            try {
+                const canvas = await captureTreeCanvas();
+                if (!canvas) return;
+                const imgData = canvas.toDataURL('image/png');
+                const w = canvas.width, h = canvas.height;
+                const pdf = new jsPDF({
+                    orientation: w >= h ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [w, h],
+                    compress: true
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, w, h, undefined, 'FAST');
+                pdf.save('pohon-kinerja-<?= esc($tahun_mulai) ?>-<?= esc($tahun_akhir) ?>.pdf');
+            } catch (e) {
+                alert('Gagal membuat PDF: ' + (e && e.message ? e.message : e));
+            }
+        });
+    }
+
+    window.addEventListener('beforeprint', updateZoom);
+    window.addEventListener('resize', function () { if (selVal('selectZoom') === 'fit') updateZoom(); });
+    document.addEventListener('DOMContentLoaded', updateZoom);
 </script>
 
 </html>

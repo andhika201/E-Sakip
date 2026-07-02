@@ -41,6 +41,15 @@ INSERT IGNORE INTO `app_settings` (`skey`, `svalue`) VALUES
     ('seo_keywords',     'e-sakip, pringsewu, kabupaten pringsewu, akuntabilitas, kinerja, rpjmd, rkpd, lakip'),
     ('seo_author',       'DevTech - Dinas Komunikasi dan Informatika Kabupaten Pringsewu');
 
+-- ---------------------------------------------------------------------
+-- 3) Integrasi AI (Google Gemini) untuk fitur "Analisis AI"
+--    gemini_api_key diisi via halaman Pengaturan Aplikasi (Super Admin).
+-- ---------------------------------------------------------------------
+
+INSERT IGNORE INTO `app_settings` (`skey`, `svalue`) VALUES
+    ('gemini_api_key', ''),
+    ('gemini_model',   'gemini-2.5-flash');
+
 -- =====================================================================
 --  Selesai.
 --  Catatan: nilai logo/favicon yang diunggah via halaman Pengaturan

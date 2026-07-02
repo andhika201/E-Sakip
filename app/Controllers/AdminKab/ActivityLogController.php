@@ -94,6 +94,8 @@ class ActivityLogController extends BaseController
             'default_font_size' => 8,
             'tempDir'           => sys_get_temp_dir(),
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->WriteHTML($html);
 
         $this->response->setHeader('Content-Type', 'application/pdf');

@@ -13,10 +13,11 @@ class SettingController extends BaseController
         'app_name', 'app_long_name', 'instansi', 'instansi_address',
         'instansi_phone', 'instansi_email', 'dev_name', 'serial_number',
         'seo_description', 'seo_keywords', 'seo_author',
+        'gemini_api_key', 'gemini_model',
     ];
 
     /** Field file (upload) yang dikelola */
-    private array $fileKeys = ['app_logo', 'favicon', 'dev_logo'];
+    private array $fileKeys = ['app_logo', 'favicon', 'dev_logo', 'kab_logo'];
 
     public function __construct()
     {
@@ -30,7 +31,20 @@ class SettingController extends BaseController
             $settings[$row['skey']] = $row['svalue'];
         }
 
-        return view('adminKabupaten/setting/index', ['settings' => $settings]);
+        // Ambil daftar model yang tersedia untuk API key (jika sudah diisi)
+        $availableModels = [];
+        if (trim($settings['gemini_api_key'] ?? '') !== '') {
+            try {
+                $availableModels = (new \App\Libraries\GeminiClient())->listModels();
+            } catch (\Throwable $e) {
+                $availableModels = [];
+            }
+        }
+
+        return view('adminKabupaten/setting/index', [
+            'settings'        => $settings,
+            'availableModels' => $availableModels,
+        ]);
     }
 
     public function save()
@@ -42,6 +56,10 @@ class SettingController extends BaseController
                 $this->set($key, trim($val));
             }
         }
+
+        // --- Toggle (checkbox) ---
+        // Checkbox tidak terkirim saat tidak dicentang, jadi diset eksplisit 1/0.
+        $this->set('ai_dashboard_enabled', $this->request->getPost('ai_dashboard_enabled') ? '1' : '0');
 
         // --- File (logo, favicon, logo pengembang) ---
         $allowed = ['png', 'jpg', 'jpeg', 'webp', 'svg', 'ico', 'gif'];
@@ -58,7 +76,7 @@ class SettingController extends BaseController
                     return redirect()->back()->withInput()
                         ->with('error', 'Format file ' . esc($key) . ' tidak didukung (gunakan PNG/JPG/WEBP/SVG/ICO).');
                 }
-                if ($file->getSizeByUnit('mb') > 3) {
+                if ($file->getSize() > 3 * 1024 * 1024) {
                     return redirect()->back()->withInput()
                         ->with('error', 'Ukuran file ' . esc($key) . ' maksimal 3 MB.');
                 }

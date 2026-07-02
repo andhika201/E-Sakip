@@ -6,23 +6,24 @@
     <meta name="csrf-name" content="<?= csrf_token() ?>">
     <meta name="csrf-hash" content="<?= csrf_hash() ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PK <?= ucfirst($jenis) ?> - e-SAKIP</title>
+    <title>PK <?= ucfirst($seg ?? $jenis) ?> - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative" data-jenis="<?= $jenis ?>">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
     <main class="flex-fill p-4 mt-2">
         <div class="bg-white rounded shadow p-4">
             <?php
             if (
-                stripos($current_opd['nama_opd'], 'kecamatan') !== false
-                && strtoupper($jenis) === 'JPT'
+                ($isKecamatan ?? false)
+                || (stripos($current_opd['nama_opd'], 'kecamatan') !== false && strtoupper($jenis) === 'JPT')
             ) {
                 $judulPk = 'CAMAT';
             } else {
-                $judulPk = strtoupper($jenis);
+                $judulPk = strtoupper($seg ?? $jenis);
             }
             ?>
 
@@ -75,7 +76,7 @@
 
                         <!-- Tombol Tambah -->
                         <div class="col-lg-2 col-md-6 text-lg-end">
-                            <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/tambah') ?>"
+                            <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/tambah') ?>"
                                 class="btn btn-outline-success w-100">
                                 <i class="fas fa-plus me-1"></i>
                                 Tambah
@@ -428,12 +429,12 @@
 
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $jenis . '/cetak/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/cetak/' . $pk_data['id']) ?>"
                             class="btn btn-primary btn-sm text-white" target="_blank">
                             <i class="fas fa-download me-1"></i> Download
                         </a>
 
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . $pk_data['jenis'] . '/edit/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/edit/' . $pk_data['id']) ?>"
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
@@ -464,6 +465,7 @@
     </script>
 
     <script src="<?= base_url('assets/js/adminOpd/pk/pk_detail.js') ?>"></script>
+    </div>
 </body>
 
 </html>

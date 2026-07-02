@@ -106,6 +106,10 @@ $rName  = session('username') ?: 'Pengguna';
     </nav>
   </div>
   <div class="p-3 border-top">
+    <a href="<?= base_url('profile') ?>"
+      class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded d-flex align-items-center mb-2 sidebar-nav-link">
+      <i class="fas fa-user-circle me-2"></i><span>Profil Saya</span>
+    </a>
     <a href="<?= base_url('change-password') ?>"
       class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded d-flex align-items-center mb-2 sidebar-nav-link">
       <i class="fas fa-lock me-2"></i><span>Ganti Password</span>

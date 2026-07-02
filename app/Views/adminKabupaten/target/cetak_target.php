@@ -3,38 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Cetak Target & Rencana Aksi</title>
+    <?= $this->include('templates/pdf_style') ?>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 11px;
-            color: #333;
-        }
-        h2, h3 {
-            text-align: center;
-            margin: 5px 0;
-            color: #000;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .text-left {
-            text-align: left;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #000;
-            padding: 6px;
-            vertical-align: middle;
-        }
-        th {
-            background-color: #d1e7dd;
-            font-weight: bold;
-            text-align: center;
-        }
+        td.text-center, th.text-center { text-align: center; }
+        td.text-left, th.text-left { text-align: left; }
     </style>
 </head>
 <body>
@@ -48,13 +20,15 @@
         // Lebih seragam jika menampilkan string konstan.
     }
     ?>
-    <h2>TARGET DAN RENCANA AKSI</h2>
-    <h3><?= $modeText ?></h3>
-    <h3>Tahun: <?= esc($tahun) ?></h3>
+    <?= $this->include('templates/pdf_kop', [
+        'judul'    => 'Target dan Rencana Aksi',
+        'subjudul' => $modeText . ' · Tahun ' . esc($tahun),
+        'namaUnit' => 'Kabupaten Pringsewu',
+    ]) ?>
 
     <?php $showOpdCol = ($mode === 'opd' && $opdFilter === null); ?>
 
-    <table>
+    <table class="pdf-table">
         <thead>
             <tr>
                 <th rowspan="2">No</th>

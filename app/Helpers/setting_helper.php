@@ -50,3 +50,16 @@ if (!function_exists('setting_asset')) {
         return $path ? base_url($path) : '';
     }
 }
+
+if (!function_exists('pdf_footer_aksara')) {
+    /**
+     * Footer standar untuk semua dokumen cetak PDF (Mpdf): "Print Document by AKSARA"
+     * di kiri + nomor halaman di kanan. Placeholder {PAGENO}/{nbpg} diisi Mpdf.
+     */
+    function pdf_footer_aksara(): string
+    {
+        return '<table width="100%" style="font-size:8pt; color:#777; border-top:0.5px solid #bbb; padding-top:3px;">'
+            . '<tr><td>Print Document by AKSARA</td>'
+            . '<td style="text-align:right;">Halaman {PAGENO} dari {nbpg}</td></tr></table>';
+    }
+}

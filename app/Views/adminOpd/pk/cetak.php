@@ -180,6 +180,14 @@
           <?php if (strtolower($jenis) === 'bupati'): ?>
             <h3 style="font-weight: bold; margin: 0;">BUPATI PRINGSEWU</h3>
             <h3 style="font-weight: bold; margin: 0;">PROVINSI LAMPUNG</h3>
+          <?php else: ?>
+            <?php helper('setting'); ?>
+            <h3 style="font-weight: bold; margin: 0;">
+              <?= esc(strtoupper(setting('instansi', 'Pemerintah Kabupaten Pringsewu'))) ?>
+            </h3>
+            <?php if (!empty($nama_opd)): ?>
+              <h3 style="font-weight: bold; margin: 0;"><?= esc(strtoupper($nama_opd)) ?></h3>
+            <?php endif; ?>
           <?php endif; ?>
         </td>
       </tr>

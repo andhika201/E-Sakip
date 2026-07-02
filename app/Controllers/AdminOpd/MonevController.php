@@ -404,15 +404,9 @@ class MonevController extends BaseController
             'tempDir'           => sys_get_temp_dir(),
         ]);
 
-        // Footer nomor halaman
-        $mpdf->SetHTMLFooter('
-            <table width="100%" style="font-size:9pt; color:#555; border-top:1px solid #ccc; padding-top:4px;">
-                <tr>
-                    <td width="50%">Monitoring dan Evaluasi Kinerja &mdash; ' . esc($opd['nama_opd'] ?? '') . '</td>
-                    <td width="50%" style="text-align:right;">Halaman {PAGENO} dari {nb}</td>
-                </tr>
-            </table>
-        ');
+        // Footer standar AKSARA
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
 
         $mpdf->WriteHTML($html);
 

@@ -38,6 +38,19 @@
             max-height: 72vh;
             overflow: auto;
         }
+        /* Kode indikator (badge "IK" di depan nama) */
+        .ind-kode {
+            display: inline-block;
+            font-weight: 800;
+            font-size: .72em;
+            letter-spacing: .6px;
+            padding: 1px 6px;
+            margin-right: 5px;
+            border-radius: 5px;
+            background: #00743e;
+            color: #fff;
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -80,53 +93,17 @@
                 <form id="filterForm" method="GET" action="<?= base_url('adminopd/renstra') ?>"
                     class="d-flex flex-column flex-md-row gap-2 mb-4 align-items-center">
 
-                    <!-- Misi RPJMD -->
-                    <select id="misiFilter" name="misi" class="form-select" style="flex:1;">
-                        <option value="">Semua Misi RPJMD</option>
-                        <?php
-                        $misiList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $row) {
-                                if (!empty($row['rpjmd_misi'])) {
-                                    $misiList[$row['rpjmd_misi']] = $row['rpjmd_misi'];
-                                }
-                            }
-                        }
-                        ksort($misiList);
-                        foreach ($misiList as $misiText): ?>
-                            <option value="<?= esc($misiText) ?>" <?= ($filters['misi'] === $misiText) ? 'selected' : '' ?>>
-                                <?= esc($misiText) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <!-- Tujuan Renstra -->
-                    <select id="tujuanFilter" name="tujuan" class="form-select" style="flex:1;">
-                        <option value="">Semua Tujuan Renstra</option>
-                        <?php
-                        $tujuanList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $d) {
-                                if (!empty($d['tujuan_renstra'])) {
-                                    $tujuanList[$d['tujuan_renstra']] = $d['tujuan_renstra'];
-                                }
-                            }
-                        }
-                        asort($tujuanList);
-                        foreach ($tujuanList as $t): ?>
-                            <option value="<?= esc($t) ?>" <?= ($filters['tujuan'] === $t) ? 'selected' : '' ?>>
-                                <?= esc($t) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php /* Filter "Misi RPJMD" & "Tujuan Renstra" dihapus (permintaan user) */ ?>
 
                     <!-- Sasaran RPJMD -->
-                    <select id="rpjmdFilter" name="rpjmd" class="form-select" style="flex:1;">
+                    <select id="rpjmdFilter" name="rpjmd" class="form-select select2-flt" style="flex:1;">
                         <option value="">Semua Sasaran RPJMD</option>
                         <?php
+                        // Opsi filter diambil dari data se-periode (bukan yang sudah terfilter) agar tidak menciut.
+                        $filterSrc = $filter_source ?? ($renstra_data ?? []);
                         $sList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $d) {
+                        if (!empty($filterSrc)) {
+                            foreach ($filterSrc as $d) {
                                 if (!empty($d['sasaran_rpjmd'])) {
                                     $sList[$d['sasaran_rpjmd']] = $d['sasaran_rpjmd'];
                                 }
@@ -141,7 +118,7 @@
                     </select>
 
                     <!-- Periode -->
-                    <select id="periodeFilter" name="periode" class="form-select" style="flex:1;">
+                    <select id="periodeFilter" name="periode" class="form-select select2-flt" style="flex:1;">
                         <option value="">-- Pilih Periode --</option>
                         <?php
                         $periodeList = [];
@@ -166,7 +143,7 @@
                     </select>
 
                     <!-- Status -->
-                    <select id="statusFilter" name="status" class="form-select" style="flex:1;">
+                    <select id="statusFilter" name="status" class="form-select select2-flt" style="flex:1;">
                         <option value="">Semua Status</option>
                         <option value="draft" <?= ($filters['status'] === 'draft') ? 'selected' : '' ?>>Draft</option>
                         <option value="selesai" <?= ($filters['status'] === 'selesai') ? 'selected' : '' ?>>Selesai
@@ -212,18 +189,19 @@
                         <table class="table table-bordered text-center align-middle small renstra-table">
                             <thead class="table-success fw-bold text-dark text-center">
                                 <tr>
-                                    <th rowspan="2">Sasaran RPJMD</th>
-                                    <th rowspan="2">Tujuan RENSTRA</th>
+                                    <th rowspan="2">No</th>
+                                    <?php /* Kolom "Sasaran RPJMD" di-hide (permintaan user) */ ?>
+                                    <th rowspan="2">Tujuan</th>
                                     <th rowspan="2">Indikator Tujuan</th>
                                     <th colspan="<?= $yearCount ?>">TARGET TUJUAN PER TAHUN</th>
 
-                                    <th rowspan="2">Sasaran RENSTRA</th>
+                                    <th rowspan="2">Sasaran</th>
                                     <th rowspan="2">Indikator Sasaran</th>
                                     <th rowspan="2">Satuan</th>
-                                    <th rowspan="2">Jenis Indikator</th>
                                     <th rowspan="2">Kondisi Awal</th>
                                     <th colspan="<?= $yearCount ?>">TARGET SASARAN PER TAHUN</th>
                                     <th rowspan="2">Kondisi Akhir</th>
+                                    <th rowspan="2">Jenis Indikator</th>
 
                                     <th rowspan="2">Status</th>
                                     <th rowspan="2">Aksi</th>
@@ -246,6 +224,7 @@
                                     if ($v === 'negatif') return 'Negatif';
                                     return $v !== '' ? ucfirst($v) : '';
                                 };
+                                $no = 1;
                                 ?>
                                 <?php foreach ($renstra_data as $tujuan): ?>
                                     <?php
@@ -285,14 +264,15 @@
                                     <?php for ($i = 0; $i < $totalRow; $i++): ?>
                                         <tr>
                                             <?php if (!$rowPrinted): ?>
-                                                <td rowspan="<?= $totalRow ?>" class="text-start"><?= esc($tujuan['sasaran_rpjmd']) ?></td>
+                                                <td rowspan="<?= $totalRow ?>" class="text-center align-middle"><?= $no++ ?></td>
+                                                <?php /* Kolom "Sasaran RPJMD" di-hide (permintaan user) */ ?>
                                                 <td rowspan="<?= $totalRow ?>" class="text-start"><?= esc($tujuan['tujuan']) ?></td>
                                             <?php endif; ?>
 
                                             <!-- ================= INDIKATOR TUJUAN ================= -->
                                             <?php if ($i < $itCount): ?>
                                                 <?php $it = $tujuan['indikator_tujuan'][$i]; ?>
-                                                <td class="text-start"><?= esc($it['indikator_tujuan']) ?></td>
+                                                <td class="text-start"><span class="ind-kode">IK</span><?= esc($it['indikator_tujuan']) ?></td>
                                                 <?php for ($y = $start; $y <= $end; $y++): ?>
                                                     <td class="col-tahun"><?= esc($it['targets'][$y] ?? '') ?></td>
                                                 <?php endfor; ?>
@@ -317,14 +297,14 @@
                                                     <td rowspan="<?= $sasRowspan[$sid] ?>" class="text-start"><?= esc($ss['sasaran']) ?></td>
                                                 <?php endif; ?>
 
-                                                <td class="text-start"><?= esc($ss['indikator']) ?></td>
+                                                <td class="text-start"><span class="ind-kode">IK</span><?= esc($ss['indikator']) ?></td>
                                                 <td><?= esc($ss['satuan']) ?></td>
-                                                <td><?= esc($jenisLabel($ss['jenis'])) ?></td>
                                                 <td><?= esc($ss['baseline']) ?></td>
                                                 <?php for ($y = $start; $y <= $end; $y++): ?>
                                                     <td class="col-tahun"><?= esc($ss['targets'][$y] ?? '') ?></td>
                                                 <?php endfor; ?>
                                                 <td><?= esc($kondisiAkhir) ?></td>
+                                                <td><?= esc($jenisLabel($ss['jenis'])) ?></td>
 
                                                 <?php if ($isFirstOfSasaran): ?>
                                                     <!-- STATUS (per sasaran) -->
@@ -365,10 +345,10 @@
                                                 <td></td><!-- Sasaran -->
                                                 <td></td><!-- Indikator Sasaran -->
                                                 <td></td><!-- Satuan -->
-                                                <td></td><!-- Jenis Indikator -->
                                                 <td></td><!-- Kondisi Awal -->
                                                 <?php for ($y = $start; $y <= $end; $y++): ?><td></td><?php endfor; ?>
                                                 <td></td><!-- Kondisi Akhir -->
+                                                <td></td><!-- Jenis Indikator -->
                                                 <td></td><!-- Status -->
                                                 <td></td><!-- Aksi -->
                                             <?php endif; ?>
@@ -396,18 +376,26 @@
             const form = document.getElementById('filterForm');
 
             const periodeSelect = document.getElementById('periodeFilter');
-            const misiSelect = document.getElementById('misiFilter');
-            const tujuanSelect = document.getElementById('tujuanFilter');
             const rpjmdSelect = document.getElementById('rpjmdFilter');
             const statusSelect = document.getElementById('statusFilter');
 
-            const otherFilters = [misiSelect, tujuanSelect, rpjmdSelect, statusSelect];
+            const otherFilters = [rpjmdSelect, statusSelect];
+
+            // Semua filter dropdown jadi Select2 (searchable)
+            const hasSelect2 = window.jQuery && $.fn.select2;
+            if (hasSelect2) {
+                $('.select2-flt').select2({ width: '100%', theme: 'bootstrap-5', dropdownParent: $('body') });
+            }
 
             function toggleFilters() {
                 const hasPeriode = (periodeSelect?.value || '').trim() !== '';
                 otherFilters.forEach(el => {
                     if (!el) return;
-                    el.disabled = !hasPeriode;
+                    if (hasSelect2) {
+                        $(el).prop('disabled', !hasPeriode);
+                    } else {
+                        el.disabled = !hasPeriode;
+                    }
                 });
             }
 
@@ -415,10 +403,11 @@
 
             [periodeSelect, ...otherFilters].forEach(el => {
                 if (!el) return;
-                el.addEventListener('change', function () {
-                    toggleFilters();
-                    form.submit();
-                });
+                const handler = function () { toggleFilters(); form.submit(); };
+                // Pakai jQuery .on agar perubahan dari Select2 (dipicu lewat jQuery) tertangkap;
+                // addEventListener native TIDAK menerima event yang dipicu Select2.
+                if (hasSelect2) { $(el).on('change', handler); }
+                else { el.addEventListener('change', handler); }
             });
 
             // ===================== UBAH STATUS (AJAX) =====================

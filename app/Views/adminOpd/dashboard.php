@@ -140,6 +140,10 @@
         </div>
       </div>
 
+      <?php if (setting('ai_dashboard_enabled', '1') === '1'): ?>
+        <?= $this->include('templates/ai_widget') ?>
+      <?php endif; ?>
+
       <div class="row g-4">
         <!-- RENSTRA -->
         <div class="col-12 col-md-6 col-lg-4">

@@ -137,8 +137,8 @@
                 }
 
                 // total kolom untuk colspan "data kosong"
-                // No + (OPD?) + Status + Sasaran + Indikator + Definisi + Penanggung Jawab + Satuan + Tahun(=count years) + Program + Aksi
-                $totalCols = 1 + ($showOpdCol ? 1 : 0) + 1 + 1 + 1 + 1 + 1 + 1 + count($years) + 1 + 1;
+                // No + (OPD?) + Status + Sasaran + Indikator + Definisi + Formula + Satuan + Tahun + Sumber Data + Penanggung Jawab + Aksi
+                $totalCols = 10 + ($showOpdCol ? 1 : 0) + count($years);
 
                 // helper cari IKU untuk 1 indikator
                 $findIku = function (int $indikatorId) use ($iku_data, $mode) {
@@ -152,6 +152,7 @@
 
                 /* ===================================================
                  * PRE-CALC ROWSPAN OPD & SASARAN
+                 * (Program Pendukung dinonaktifkan -> 1 baris per indikator)
                  * ==================================================*/
                 $opdRowspan      = [];
                 $sasaranRowspan  = [];
@@ -165,20 +166,7 @@
                         $opdName    = $row['nama_opd'] ?? '-';
                         $indikators = $row['indikator_sasaran'] ?? [];
 
-                        $rowsForSasaran = 0;
-
-                        foreach ($indikators as $indikator) {
-                            $indikatorId = (int)($indikator['id'] ?? 0);
-                            $iku         = $findIku($indikatorId);
-
-                            $programList = [];
-                            if (!empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])) {
-                                $programList = $iku['program_pendukung'];
-                            }
-                            if (empty($programList)) $programList = [null];
-
-                            $rowsForSasaran += count($programList);
-                        }
+                        $rowsForSasaran = count($indikators);
 
                         $sasKey = $opdName . '|' . $sasaranText;
                         $sasaranRowspan[$sasKey] = ($sasaranRowspan[$sasKey] ?? 0) + $rowsForSasaran;
@@ -203,14 +191,18 @@
                             <th rowspan="2" class="align-middle">Sasaran</th>
                             <th rowspan="2" class="align-middle">Indikator Sasaran</th>
                             <th rowspan="2" class="align-middle">Definisi Operasional</th>
-                            <th rowspan="2" class="align-middle">Penanggung Jawab</th>
+                            <th rowspan="2" class="align-middle">Formula / Rumusan Perhitungan</th>
                             <th rowspan="2" class="align-middle">Satuan</th>
 
                             <th colspan="<?= count($years) ?>" class="align-middle">
                                 Target Capaian per Tahun
                             </th>
 
+                            <th rowspan="2" class="align-middle">Sumber Data</th>
+                            <th rowspan="2" class="align-middle">Penanggung Jawab</th>
+                            <!-- Program Pendukung dinonaktifkan sementara:
                             <th rowspan="2" class="align-middle">Program Pendukung</th>
+                            -->
                             <th rowspan="2" class="align-middle">Aksi</th>
                         </tr>
 
@@ -256,147 +248,130 @@
                                         }
                                     }
 
-                                    // program list
-                                    $programList = [];
-                                    if (!empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])) {
-                                        $programList = $iku['program_pendukung'];
+                                    // Definisi (fallback ke definisi_op RPJMD/RENSTRA bila IKU belum diisi)
+                                    $definisiText = trim((string)($iku['definisi'] ?? ''));
+                                    if ($definisiText === '') {
+                                        $definisiText = trim((string)($indikator['definisi_op'] ?? ''));
                                     }
-                                    if (empty($programList)) $programList = [null];
-
-                                    $programCount = count($programList);
                                     ?>
-
-                                    <?php foreach ($programList as $pIndex => $programName): ?>
-                                        <tr>
-
-                                            <?php if ($pIndex === 0): ?>
-                                                <!-- No (rowspan per indikator) -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-center">
-                                                    <?= $no++ ?>
-                                                </td>
+                                    <tr>
+                                        <!-- No: rowspan mengikuti kelompok terluar (mode OPD -> per OPD; mode kabupaten -> per Sasaran)
+                                             agar pagination footer (rowspan-aware, patokan sel pertama) tidak memecah baris gabungan. -->
+                                        <?php if ($showOpdCol): ?>
+                                            <?php if (!isset($printedOpd[$opdName])): ?>
+                                                <td rowspan="<?= $opdRowspan[$opdName] ?? 1 ?>" class="align-middle text-center"><?= $no++ ?></td>
                                             <?php endif; ?>
+                                        <?php elseif (!isset($printedSasaran[$sasKey])): ?>
+                                            <td rowspan="<?= $sasaranRowspan[$sasKey] ?? 1 ?>" class="align-middle text-center"><?= $no++ ?></td>
+                                        <?php endif; ?>
 
-                                            <!-- OPD (rowspan seluruh OPD) -->
-                                            <?php if ($showOpdCol): ?>
-                                                <?php if (!isset($printedOpd[$opdName])): ?>
-                                                    <td rowspan="<?= $opdRowspan[$opdName] ?? 1 ?>" class="align-middle text-start">
-                                                        <?= esc($opdName) ?>
-                                                    </td>
-                                                    <?php $printedOpd[$opdName] = true; ?>
-                                                <?php endif; ?>
+                                        <!-- OPD (rowspan seluruh OPD) -->
+                                        <?php if ($showOpdCol): ?>
+                                            <?php if (!isset($printedOpd[$opdName])): ?>
+                                                <td rowspan="<?= $opdRowspan[$opdName] ?? 1 ?>" class="align-middle text-start">
+                                                    <?= esc($opdName) ?>
+                                                </td>
+                                                <?php $printedOpd[$opdName] = true; ?>
                                             <?php endif; ?>
+                                        <?php endif; ?>
 
-                                            <?php if ($pIndex === 0): ?>
-                                                <!-- ✅ STATUS: hanya dicetak sekali (ini FIX UTAMA!) -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-center">
-                                                    <?php
-                                                    $rawStatus   = $iku['status'] ?? null;
-                                                    $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+                                        <!-- Status -->
+                                        <td class="align-middle text-center">
+                                            <?php
+                                            $rawStatus   = $iku['status'] ?? null;
+                                            $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+                                            if ($statusLower === 'selesai') {
+                                                $badgeClass  = 'bg-success';
+                                                $statusLabel = 'Selesai';
+                                            } else {
+                                                $badgeClass  = 'bg-warning text-dark';
+                                                $statusLabel = 'Draft';
+                                            }
+                                            ?>
+                                            <span class="badge <?= $badgeClass ?>"><?= esc($statusLabel) ?></span>
+                                        </td>
 
-                                                    if ($statusLower === 'selesai') {
-                                                        $badgeClass  = 'bg-success';
-                                                        $statusLabel = 'Selesai';
-                                                    } else {
-                                                        $badgeClass  = 'bg-warning text-dark';
-                                                        $statusLabel = 'Draft';
-                                                    }
-                                                    ?>
-                                                    <span class="badge <?= $badgeClass ?>"><?= esc($statusLabel) ?></span>
-                                                </td>
-                                            <?php endif; ?>
-
-                                            <!-- Sasaran (rowspan per sasaran) -->
-                                            <?php if (!isset($printedSasaran[$sasKey])): ?>
-                                                <td rowspan="<?= $sasaranRowspan[$sasKey] ?? 1 ?>" class="align-middle text-start">
-                                                    <?= esc($sasaranText) ?>
-                                                </td>
-                                                <?php $printedSasaran[$sasKey] = true; ?>
-                                            <?php endif; ?>
-
-                                            <?php if ($pIndex === 0): ?>
-                                                <!-- Indikator -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-start">
-                                                    <?= esc($indikator['indikator_sasaran'] ?? '-') ?>
-                                                </td>
-
-                                                <!-- Definisi (fallback ke definisi_op RPJMD bila IKU belum diisi) -->
-                                                <?php
-                                                $definisiText = trim((string)($iku['definisi'] ?? ''));
-                                                if ($definisiText === '') {
-                                                    $definisiText = trim((string)($indikator['definisi_op'] ?? ''));
-                                                }
-                                                ?>
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-start">
-                                                    <?= esc($definisiText !== '' ? $definisiText : '-') ?>
-                                                </td>
-
-                                                <!-- Penanggung Jawab -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-start">
-                                                    <?= esc(trim((string)($iku['penanggung_jawab'] ?? '')) !== '' ? $iku['penanggung_jawab'] : '-') ?>
-                                                </td>
-
-                                                <!-- Satuan -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-center">
-                                                    <?= esc($indikator['satuan'] ?? '-') ?>
-                                                </td>
-
-                                                <!-- Target per tahun -->
-                                                <?php foreach ($years as $year): ?>
-                                                    <?php
-                                                    $y = (int)$year;
-                                                    $value = '-';
-                                                    if (isset($targetMap[$y]) && $targetMap[$y] !== '' && $targetMap[$y] !== null) {
-                                                        $value = $targetMap[$y];
-                                                    }
-                                                    ?>
-                                                    <td rowspan="<?= $programCount ?>" class="align-middle text-center">
-                                                        <?= esc($value) ?>
-                                                    </td>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-
-                                            <!-- Program pendukung (selalu dicetak tiap baris program) -->
-                                            <td class="align-middle text-start">
-                                                <?php if (!empty($programName)): ?>
-                                                    <?= esc($programName) ?>
-                                                <?php else: ?>
-                                                    <span class="text-muted">-</span>
-                                                <?php endif; ?>
+                                        <!-- Sasaran (rowspan per sasaran) -->
+                                        <?php if (!isset($printedSasaran[$sasKey])): ?>
+                                            <td rowspan="<?= $sasaranRowspan[$sasKey] ?? 1 ?>" class="align-middle text-start">
+                                                <?= esc($sasaranText) ?>
                                             </td>
+                                            <?php $printedSasaran[$sasKey] = true; ?>
+                                        <?php endif; ?>
 
-                                            <?php if ($pIndex === 0): ?>
-                                                <!-- Aksi (rowspan per indikator) -->
-                                                <td rowspan="<?= $programCount ?>" class="align-middle text-center">
-                                                    <?php if (!empty($indikatorId)): ?>
-                                                        <?php if (empty($iku['definisi'])): ?>
-                                                            <?php if (user_can('iku_kab.create')): ?>
-                                                            <a href="<?= base_url('adminkab/iku/tambah/' . $indikator['id'] . '?mode=' . $mode) ?>"
-                                                               class="btn btn-primary btn-sm" title="Tambah IKU">
-                                                                <i class="fas fa-plus"></i>
-                                                            </a>
-                                                            <?php else: ?><span class="text-muted">-</span><?php endif; ?>
-                                                        <?php else: ?>
-                                                            <?php if (user_can('iku_kab.update')): ?>
-                                                            <a href="<?= base_url('adminkab/iku/edit/' . $indikator['id'] . '?mode=' . $mode) ?>"
-                                                               class="btn btn-warning btn-sm" title="Edit IKU">
-                                                                <i class="fas fa-edit"></i>
-                                                            </a>
-                                                            <a href="<?= base_url('adminkab/iku/change_status/' . $indikator['id'] . '?mode=' . $mode) ?>"
-                                                               class="btn btn-info btn-sm change-status-btn"
-                                                               title="Ubah Status IKU">
-                                                                <i class="fas fa-sync-alt"></i>
-                                                            </a>
-                                                            <?php else: ?><span class="text-muted">-</span><?php endif; ?>
-                                                        <?php endif; ?>
-                                                    <?php else: ?>
-                                                        <span class="text-muted">-</span>
-                                                    <?php endif; ?>
-                                                </td>
+                                        <!-- Indikator -->
+                                        <td class="align-middle text-start">
+                                            <?= esc($indikator['indikator_sasaran'] ?? '-') ?>
+                                        </td>
+
+                                        <!-- Definisi Operasional -->
+                                        <td class="align-middle text-start">
+                                            <?= esc($definisiText !== '' ? $definisiText : '-') ?>
+                                        </td>
+
+                                        <!-- Formula / Rumusan Perhitungan -->
+                                        <td class="align-middle text-start">
+                                            <?= esc(trim((string)($iku['rumusan_perhitungan'] ?? '')) !== '' ? $iku['rumusan_perhitungan'] : '-') ?>
+                                        </td>
+
+                                        <!-- Satuan -->
+                                        <td class="align-middle text-center">
+                                            <?= esc($indikator['satuan'] ?? '-') ?>
+                                        </td>
+
+                                        <!-- Target per tahun -->
+                                        <?php foreach ($years as $year): ?>
+                                            <?php
+                                            $y = (int)$year;
+                                            $value = '-';
+                                            if (isset($targetMap[$y]) && $targetMap[$y] !== '' && $targetMap[$y] !== null) {
+                                                $value = $targetMap[$y];
+                                            }
+                                            ?>
+                                            <td class="align-middle text-center"><?= esc($value) ?></td>
+                                        <?php endforeach; ?>
+
+                                        <!-- Sumber Data -->
+                                        <td class="align-middle text-start">
+                                            <?= esc(trim((string)($iku['sumber_data'] ?? '')) !== '' ? $iku['sumber_data'] : '-') ?>
+                                        </td>
+
+                                        <!-- Penanggung Jawab -->
+                                        <td class="align-middle text-start">
+                                            <?= esc(trim((string)($iku['penanggung_jawab'] ?? '')) !== '' ? $iku['penanggung_jawab'] : '-') ?>
+                                        </td>
+
+                                        <!-- Program Pendukung dinonaktifkan sementara -->
+
+                                        <!-- Aksi -->
+                                        <td class="align-middle text-center">
+                                            <?php if (!empty($indikatorId)): ?>
+                                                <?php if (empty($iku['definisi'])): ?>
+                                                    <?php if (user_can('iku_kab.create')): ?>
+                                                    <a href="<?= base_url('adminkab/iku/tambah/' . $indikator['id'] . '?mode=' . $mode) ?>"
+                                                       class="btn btn-primary btn-sm" title="Tambah IKU">
+                                                        <i class="fas fa-plus"></i>
+                                                    </a>
+                                                    <?php else: ?><span class="text-muted">-</span><?php endif; ?>
+                                                <?php else: ?>
+                                                    <?php if (user_can('iku_kab.update')): ?>
+                                                    <a href="<?= base_url('adminkab/iku/edit/' . $indikator['id'] . '?mode=' . $mode) ?>"
+                                                       class="btn btn-warning btn-sm" title="Edit IKU">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="<?= base_url('adminkab/iku/change_status/' . $indikator['id'] . '?mode=' . $mode) ?>"
+                                                       class="btn btn-info btn-sm change-status-btn"
+                                                       title="Ubah Status IKU">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </a>
+                                                    <?php else: ?><span class="text-muted">-</span><?php endif; ?>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
                                             <?php endif; ?>
+                                        </td>
 
-                                        </tr>
-                                    <?php endforeach; ?>
-
+                                    </tr>
                                 <?php endforeach; ?>
                             <?php endforeach; ?>
 

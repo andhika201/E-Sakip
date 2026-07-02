@@ -97,8 +97,13 @@
             </div>
           </div>
 
-          <!-- 2FA -->
-          <?= $this->include('templates/two_factor_card', ['twofaEnabled' => $twofaEnabled ?? false]); ?>
+          <!-- 2FA dikelola terpusat di halaman Profil -->
+          <div class="col-12">
+            <div class="text-muted small">
+              <i class="fas fa-shield-halved me-1"></i> Pengaturan <strong>Autentikasi Dua Faktor (2FA)</strong> ada di
+              <a href="<?= base_url('profile') ?>">halaman Profil</a>.
+            </div>
+          </div>
 
         </div>
       </div>

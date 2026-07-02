@@ -277,3 +277,66 @@
   .btn-success { box-shadow: 0 4px 10px rgba(0, 116, 62, .18); }
   main .alert { border-radius: 12px; }
 </style>
+
+<!-- ============================================================
+     E-SAKIP — Polish Profesional v2 (penyempurnaan global)
+     ============================================================ -->
+<style>
+  /* Seleksi teks & scrollbar halus (global) */
+  ::selection { background: rgba(0, 116, 62, .15); }
+  * { scrollbar-width: thin; scrollbar-color: #c6d4cc transparent; }
+  *::-webkit-scrollbar { width: 9px; height: 9px; }
+  *::-webkit-scrollbar-thumb { background: #cbd7cf; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  *::-webkit-scrollbar-thumb:hover { background: #aabeb2; background-clip: content-box; }
+  *::-webkit-scrollbar-track { background: transparent; }
+
+  /* Tombol — konsisten, halus, ada umpan balik tekan */
+  .btn { font-weight: 600; border-radius: 10px; transition: transform .08s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease; }
+  .btn:active { transform: translateY(1px); }
+  .btn-sm { border-radius: 8px; }
+  .btn-success { box-shadow: 0 4px 12px rgba(0, 116, 62, .20); }
+  .btn-success:hover { box-shadow: 0 6px 16px rgba(0, 116, 62, .28); }
+  .btn-outline-secondary { border-color: #d8ded9; color: #4a5a50; }
+
+  /* Label & input seragam */
+  .form-label { font-weight: 600; font-size: .85rem; color: #384a3f; margin-bottom: .3rem; }
+  .form-control, .form-select { border-color: #dce4de; }
+  .form-control::placeholder { color: #9fada4; }
+  .input-group-text { background: #f2f6f3; border-color: #dce4de; color: #4a5a50; }
+
+  /* Select2 (tema bootstrap-5) — samakan tinggi & fokus dengan form-select */
+  .select2-container { width: 100% !important; }
+  .select2-container--bootstrap-5 .select2-selection { min-height: 40px; border-color: #dce4de; border-radius: 9px; }
+  .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+  .select2-container--bootstrap-5.select2-container--open .select2-selection { border-color: var(--lime); box-shadow: 0 0 0 .2rem rgba(110, 171, 17, .16); }
+  .select2-container--bootstrap-5 .select2-results__option--highlighted { background-color: var(--brand) !important; color: #fff !important; }
+  .select2-container--bootstrap-5 .select2-dropdown { border-radius: 10px; box-shadow: 0 14px 34px rgba(16, 40, 24, .14); }
+
+  /* Badge lebih rapi */
+  .badge { font-weight: 600; letter-spacing: .2px; border-radius: 7px; padding: .36em .6em; }
+
+  /* Alert — aksen garis kiri, lebih formal */
+  main .alert { border: 0; border-left: 4px solid transparent; border-radius: 12px; box-shadow: 0 4px 14px rgba(16, 40, 24, .05); }
+  main .alert-success { border-left-color: var(--brand); background: #eaf5ee; color: #14532d; }
+  main .alert-danger  { border-left-color: #dc3545; background: #fdeded; color: #842029; }
+  main .alert-warning { border-left-color: #eaa60a; background: #fff8e8; color: #6a5104; }
+  main .alert-info    { border-left-color: #0d9488; background: #e9f7f5; color: #0c5a52; }
+
+  /* Tabel — sedikit lebih terbaca */
+  main .table > :not(caption) > * > * { padding: .6rem .7rem; }
+  main .table tbody td { color: #33433a; }
+  main .table thead th { letter-spacing: .4px; }
+  /* Baris tabel SERAGAM: nonaktifkan hover & zebra striping (permintaan user) */
+  main .table { --bs-table-hover-bg: transparent !important; --bs-table-striped-bg: transparent !important; --bs-table-accent-bg: transparent !important; }
+  main table tbody tr:hover > td,
+  main table tbody tr:hover > th,
+  main table tbody tr:nth-child(even) > td,
+  main table tbody tr:nth-child(even) > th { background-color: transparent !important; }
+
+  /* Modal */
+  .modal-content { border: 0; border-radius: 16px; box-shadow: 0 24px 60px rgba(16, 40, 24, .20); }
+  .modal-header, .modal-footer { border-color: #eef1ee; }
+
+  /* Kartu konten */
+  main .bg-white { border-color: #eaefeb; }
+</style>

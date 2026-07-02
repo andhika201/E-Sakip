@@ -34,6 +34,9 @@ class CascadingModel extends Model
         // ==========================================================
         $backbone = $this->db->table('rpjmd_misi m')
             ->select("
+                m.id as misi_id,
+                m.misi,
+
                 t.id as tujuan_id,
                 t.tujuan_rpjmd,
 
@@ -51,6 +54,7 @@ class CascadingModel extends Model
             ->join('rpjmd_indikator_sasaran i', 'i.sasaran_id = s.id', 'left')
             ->where('m.tahun_mulai', (int) $start)
             ->where('m.tahun_akhir', (int) $end)
+            ->orderBy('m.id', 'ASC')
             ->orderBy('t.id', 'ASC')
             ->orderBy('s.id', 'ASC')
             ->orderBy('i.id', 'ASC')
@@ -732,6 +736,364 @@ class CascadingModel extends Model
             $tree[] = $misiNode;
         }
 
+        return $tree;
+    }
+
+    // =====================================================================
+    // MODE 1 — KABUPATEN: backbone RPJMD sampai Indikator Sasaran (tanpa OPD)
+    // Satu baris per indikator (atau per sasaran bila belum ada indikator).
+    // =====================================================================
+    public function getRpjmdMatrix($start, $end)
+    {
+        $backbone = $this->db->table('rpjmd_misi m')
+            ->select("
+                t.id as tujuan_id,
+                t.tujuan_rpjmd,
+
+                s.id as sasaran_id,
+                s.sasaran_rpjmd,
+                s.csf,
+
+                i.id as indikator_id,
+                i.indikator_sasaran,
+                i.satuan,
+                i.baseline
+            ", false)
+            ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
+            ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
+            ->join('rpjmd_indikator_sasaran i', 'i.sasaran_id = s.id', 'left')
+            ->where('m.tahun_mulai', (int) $start)
+            ->where('m.tahun_akhir', (int) $end)
+            ->orderBy('t.id', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('i.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($backbone)) {
+            return [];
+        }
+
+        // Tandai indikator yang sudah punya mapping manual (untuk tombol Aksi)
+        $manual = $this->manualMappingMap($start, $end);
+
+        $rows = [];
+        foreach ($backbone as $b) {
+            $rows[] = $b + [
+                'is_mapped' => !empty($manual[$b['indikator_id']]) ? 1 : 0,
+            ];
+        }
+
+        // Target per tahun
+        $indikatorIds = array_values(array_unique(array_filter(array_column($rows, 'indikator_id'))));
+        $targetMap = [];
+        if (!empty($indikatorIds)) {
+            $targets = $this->db->table('rpjmd_target')
+                ->select('indikator_sasaran_id, tahun, target_tahunan')
+                ->whereIn('indikator_sasaran_id', $indikatorIds)
+                ->get()
+                ->getResultArray();
+            foreach ($targets as $t) {
+                $targetMap[$t['indikator_sasaran_id']][$t['tahun']] = $t['target_tahunan'];
+            }
+        }
+        foreach ($rows as &$r) {
+            $r['targets'] = $targetMap[$r['indikator_id']] ?? [];
+        }
+        unset($r);
+
+        return $rows;
+    }
+
+    // =====================================================================
+    // MODE 3 — KESELURUHAN: RPJMD (Tujuan→Sasaran) turun ke Renstra tiap OPD
+    // Relasi: renstra_tujuan.rpjmd_sasaran_id = rpjmd_sasaran.id
+    // LEFT JOIN agar sasaran RPJMD tanpa renstra tetap tampil (kolom '-').
+    // =====================================================================
+    public function getKeseluruhanMatrix($start, $end)
+    {
+        $start = (int) $start;
+        $end   = (int) $end;
+
+        $rows = $this->db->table('rpjmd_misi m')
+            ->select("
+                t.id as tujuan_id,
+                t.tujuan_rpjmd,
+
+                s.id as sasaran_id,
+                s.sasaran_rpjmd,
+
+                o.id as opd_id,
+                o.nama_opd,
+
+                rt.id as renstra_tujuan_id,
+                rt.tujuan as renstra_tujuan,
+
+                rs.id as renstra_sasaran_id,
+                rs.sasaran as renstra_sasaran,
+
+                ris.id as renstra_indikator_id,
+                ris.indikator_sasaran as renstra_indikator
+            ", false)
+            ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
+            ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
+            ->join('renstra_tujuan rt', 'rt.rpjmd_sasaran_id = s.id', 'left')
+            ->join(
+                'renstra_sasaran rs',
+                "rs.renstra_tujuan_id = rt.id AND rs.tahun_mulai = {$start} AND rs.tahun_akhir = {$end}",
+                'left',
+                false
+            )
+            ->join('opd o', 'o.id = rs.opd_id', 'left')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->where('m.tahun_mulai', $start)
+            ->where('m.tahun_akhir', $end)
+            ->orderBy('t.id', 'ASC')
+            ->orderBy('s.id', 'ASC')
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $rows;
+    }
+
+    /**
+     * Renstra (per OPD) yang terhubung ke tiap sasaran RPJMD, untuk Pohon Keseluruhan.
+     * @return array sasaran_id => [ opd_id => ['nama_opd', 'tujuan' => [ rt_id => ['nama','sasaran'=>[ rs_id => ['nama','indikators'=>[]] ]] ]] ]
+     */
+    private function renstraBySasaranMap($start, $end): array
+    {
+        $rows = $this->db->table('renstra_tujuan rt')
+            ->select('
+                rt.rpjmd_sasaran_id as sasaran_id,
+                rt.id as rt_id,
+                rt.tujuan as renstra_tujuan,
+                rs.id as rs_id,
+                rs.sasaran as renstra_sasaran,
+                rs.opd_id,
+                o.nama_opd,
+                ris.id as ris_id,
+                ris.indikator_sasaran as renstra_indikator
+            ')
+            ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'inner')
+            ->join('opd o', 'o.id = rs.opd_id', 'inner')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->where('rt.rpjmd_sasaran_id IS NOT NULL')
+            ->where('rs.tahun_mulai', (int) $start)
+            ->where('rs.tahun_akhir', (int) $end)
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $sid = $r['sasaran_id'];
+            $opd = $r['opd_id'];
+            if (!isset($map[$sid][$opd])) {
+                $map[$sid][$opd] = ['nama_opd' => $r['nama_opd'], 'tujuan' => []];
+            }
+            $rt = $r['rt_id'];
+            if (!isset($map[$sid][$opd]['tujuan'][$rt])) {
+                $map[$sid][$opd]['tujuan'][$rt] = ['nama' => $r['renstra_tujuan'], 'sasaran' => []];
+            }
+            $rs = $r['rs_id'];
+            if (!isset($map[$sid][$opd]['tujuan'][$rt]['sasaran'][$rs])) {
+                $map[$sid][$opd]['tujuan'][$rt]['sasaran'][$rs] = ['nama' => $r['renstra_sasaran'], 'indikators' => []];
+            }
+            if (!empty($r['ris_id'])) {
+                $map[$sid][$opd]['tujuan'][$rt]['sasaran'][$rs]['indikators'][$r['ris_id']] = $r['renstra_indikator'];
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * Pohon Kinerja Keseluruhan: Visi → Misi → Tujuan RPJMD → Sasaran RPJMD
+     *  → (per OPD) Tujuan Renstra → Sasaran Renstra → Indikator Renstra.
+     */
+    public function getKeseluruhanTree($tahunMulai, $tahunAkhir)
+    {
+        $misiList = $this->db->table('rpjmd_misi')
+            ->where('tahun_mulai', $tahunMulai)
+            ->where('tahun_akhir', $tahunAkhir)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($misiList)) {
+            return [];
+        }
+
+        $misiIds = array_column($misiList, 'id');
+
+        $tujuanList = $this->db->table('rpjmd_tujuan')
+            ->whereIn('misi_id', $misiIds)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $tujuanIds = array_column($tujuanList, 'id');
+
+        $indikatorTujuanList = [];
+        $sasaranList = [];
+        $sasaranIds = [];
+        if (!empty($tujuanIds)) {
+            $indikatorTujuanList = $this->db->table('rpjmd_indikator_tujuan')
+                ->whereIn('tujuan_id', $tujuanIds)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $sasaranList = $this->db->table('rpjmd_sasaran')
+                ->whereIn('tujuan_id', $tujuanIds)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $sasaranIds = array_column($sasaranList, 'id');
+        }
+
+        $indikatorSasaranList = [];
+        if (!empty($sasaranIds)) {
+            $indikatorSasaranList = $this->db->table('rpjmd_indikator_sasaran')
+                ->whereIn('sasaran_id', $sasaranIds)
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+        }
+
+        $renstraBySasaran = $this->renstraBySasaranMap($tahunMulai, $tahunAkhir);
+
+        $groupedIndikatorSasaran = [];
+        foreach ($indikatorSasaranList as $is) {
+            $groupedIndikatorSasaran[$is['sasaran_id']][] = $is;
+        }
+
+        $groupedSasaran = [];
+        foreach ($sasaranList as $sasaran) {
+            $sid = $sasaran['id'];
+
+            // Ubah map renstra OPD menjadi list bersih untuk view
+            $opdNodes = [];
+            foreach ($renstraBySasaran[$sid] ?? [] as $opd) {
+                $tujuan = [];
+                foreach ($opd['tujuan'] as $t) {
+                    $sasaranArr = [];
+                    foreach ($t['sasaran'] as $s) {
+                        $sasaranArr[] = [
+                            'nama' => $s['nama'],
+                            'indikators' => array_values($s['indikators']),
+                        ];
+                    }
+                    $tujuan[] = ['nama' => $t['nama'], 'sasaran' => $sasaranArr];
+                }
+                $opdNodes[] = ['nama_opd' => $opd['nama_opd'], 'tujuan' => $tujuan];
+            }
+
+            $groupedSasaran[$sasaran['tujuan_id']][] = [
+                'id' => $sid,
+                'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
+                'indikator_sasaran' => $groupedIndikatorSasaran[$sid] ?? [],
+                'opd' => $opdNodes,
+            ];
+        }
+
+        $groupedIndikatorTujuan = [];
+        foreach ($indikatorTujuanList as $it) {
+            $groupedIndikatorTujuan[$it['tujuan_id']][] = $it;
+        }
+
+        $groupedTujuan = [];
+        foreach ($tujuanList as $tujuan) {
+            $groupedTujuan[$tujuan['misi_id']][] = [
+                'id' => $tujuan['id'],
+                'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
+                'indikator_tujuan' => $groupedIndikatorTujuan[$tujuan['id']] ?? [],
+                'sasaran' => $groupedSasaran[$tujuan['id']] ?? [],
+            ];
+        }
+
+        $tree = [];
+        foreach ($misiList as $misi) {
+            $tree[] = [
+                'id' => $misi['id'],
+                'misi' => $misi['misi'],
+                'tujuan' => $groupedTujuan[$misi['id']] ?? [],
+            ];
+        }
+
+        return $tree;
+    }
+
+    /**
+     * Pohon Keseluruhan versi ringkas (tanpa Visi/Misi/Tujuan RPJMD/Sasaran RPJMD):
+     * langsung per Perangkat Daerah → Tujuan Renstra → Sasaran Renstra → Indikator.
+     * @return array list [ ['nama_opd', 'tujuan' => [ ['nama','sasaran'=>[ ['nama','indikators'=>[...]] ]] ]] ]
+     */
+    public function getKeseluruhanByOpd($start, $end): array
+    {
+        $rows = $this->db->table('renstra_tujuan rt')
+            ->select('
+                rs.opd_id,
+                o.nama_opd,
+                rt.id as rt_id,
+                rt.tujuan as renstra_tujuan,
+                rs.id as rs_id,
+                rs.sasaran as renstra_sasaran,
+                ris.id as ris_id,
+                ris.indikator_sasaran as renstra_indikator
+            ')
+            ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'inner')
+            ->join('opd o', 'o.id = rs.opd_id', 'inner')
+            ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->where('rt.rpjmd_sasaran_id IS NOT NULL')
+            ->where('rs.tahun_mulai', (int) $start)
+            ->where('rs.tahun_akhir', (int) $end)
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('rt.id', 'ASC')
+            ->orderBy('rs.id', 'ASC')
+            ->orderBy('ris.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $opd = $r['opd_id'];
+            if (!isset($map[$opd])) {
+                $map[$opd] = ['nama_opd' => $r['nama_opd'], 'tujuan' => []];
+            }
+            $rt = $r['rt_id'];
+            if (!isset($map[$opd]['tujuan'][$rt])) {
+                $map[$opd]['tujuan'][$rt] = ['nama' => $r['renstra_tujuan'], 'sasaran' => []];
+            }
+            $rs = $r['rs_id'];
+            if (!isset($map[$opd]['tujuan'][$rt]['sasaran'][$rs])) {
+                $map[$opd]['tujuan'][$rt]['sasaran'][$rs] = ['nama' => $r['renstra_sasaran'], 'indikators' => []];
+            }
+            if (!empty($r['ris_id'])) {
+                $map[$opd]['tujuan'][$rt]['sasaran'][$rs]['indikators'][$r['ris_id']] = $r['renstra_indikator'];
+            }
+        }
+
+        // Bersihkan jadi list (buang key id)
+        $tree = [];
+        foreach ($map as $opd) {
+            $tujuanList = [];
+            foreach ($opd['tujuan'] as $t) {
+                $sasaranList = [];
+                foreach ($t['sasaran'] as $s) {
+                    $sasaranList[] = ['nama' => $s['nama'], 'indikators' => array_values($s['indikators'])];
+                }
+                $tujuanList[] = ['nama' => $t['nama'], 'sasaran' => $sasaranList];
+            }
+            $tree[] = ['nama_opd' => $opd['nama_opd'], 'tujuan' => $tujuanList];
+        }
         return $tree;
     }
 

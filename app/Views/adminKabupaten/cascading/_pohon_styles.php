@@ -38,14 +38,14 @@
         position: absolute;
         top: 0;
         right: 50%;
-        border-top: 2px solid #cbd5e1;
+        border-top: 2px solid #000;
         width: 50%;
         height: 20px;
     }
     .tree li::after {
         right: auto;
         left: 50%;
-        border-left: 2px solid #cbd5e1;
+        border-left: 2px solid #000;
     }
     .tree li:only-child::after,
     .tree li:only-child::before { display: none; }
@@ -53,7 +53,7 @@
     .tree li:first-child::before,
     .tree li:last-child::after { border: 0 none; }
     .tree li:last-child::before {
-        border-right: 2px solid #cbd5e1;
+        border-right: 2px solid #000;
         border-radius: 0 6px 0 0;
     }
     .tree li:first-child::after { border-radius: 6px 0 0 0; }
@@ -62,7 +62,7 @@
         position: absolute;
         top: 0;
         left: 50%;
-        border-left: 2px solid #cbd5e1;
+        border-left: 2px solid #000;
         width: 0;
         height: 20px;
         transform: translateX(-50%);
@@ -77,13 +77,9 @@
         width: 200px;
         transition: transform .2s ease;
     }
+    /* Label kategori node (MISI/VISI/SASARAN/TUJUAN/dll) disembunyikan (permintaan user) */
     .node-label {
-        font-size: 8.5px;
-        font-weight: 700;
-        letter-spacing: .8px;
-        text-transform: uppercase;
-        opacity: .72;
-        margin-bottom: 2px;
+        display: none;
     }
 
     /* Node utama (terisi penuh) — bagikan bentuk dasar */
@@ -113,60 +109,84 @@
         box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
     }
 
-    /* Visi — indigo lembut */
+    /* Visi — navy-slate (profesional) */
     .box-visi {
-        background: linear-gradient(135deg, #34487d 0%, #28365f 100%);
+        background: linear-gradient(135deg, #2f3e63 0%, #212c46 100%);
         font-size: 15px;
         border-radius: 12px;
         padding: 14px 18px;
     }
-    /* Misi — teal lembut */
+    /* Misi — teal dalam */
     .box-misi {
-        background: linear-gradient(135deg, #2f8579 0%, #246b61 100%);
+        background: linear-gradient(135deg, #1f6f68 0%, #14524d 100%);
         font-size: 13.5px;
     }
     /* Tujuan RPJMD — hijau */
     .box-tujuan {
-        background: linear-gradient(135deg, #43885d 0%, #356f4a 100%);
+        background: linear-gradient(135deg, #2f7d4f 0%, #21603a 100%);
         font-size: 12.5px;
     }
-    /* Indikator Tujuan — chip hijau muda */
+    /* Indikator Tujuan — chip netral */
     .box-ikt {
-        background: #e9f3ed;
-        color: #2c6b45;
-        border-color: #cce3d5;
+        background: #eef2f5;
+        color: #37493f;
+        border-color: #dbe4de;
         margin-top: -1px;
     }
-    /* Sasaran RPJMD — coklat hangat */
+    /* Sasaran RPJMD — bronze muted */
     .box-sasaran {
-        background: linear-gradient(135deg, #9a6a44 0%, #7e5334 100%);
+        background: linear-gradient(135deg, #8a6a3c 0%, #654b27 100%);
         font-size: 12.5px;
     }
-    /* Indikator Sasaran — chip amber muda */
+    /* Indikator Sasaran — chip netral */
     .box-iks {
-        background: #fbeede;
-        color: #8f561d;
-        border-color: #f0d6b4;
+        background: #eef2f5;
+        color: #39493f;
+        border-color: #dbe4de;
         margin-top: -1px;
     }
-    /* CSF — catatan krem */
+    /* Kode indikator (label "IK" di depan nama) */
+    .ind-kode {
+        display: inline-block;
+        font-weight: 800;
+        font-size: .72em;
+        letter-spacing: .6px;
+        padding: 1px 6px;
+        margin-right: 5px;
+        border-radius: 5px;
+        background: #00743e;
+        color: #fff;
+        vertical-align: middle;
+    }
+    /* CSF — catatan krem lembut */
     .box-csf {
-        background: #fff7e9;
-        color: #8a5a14;
-        border-color: #f0dcaf;
+        background: #faf3e6;
+        color: #7a5a1e;
+        border-color: #ecdcb8;
         text-align: left;
         margin-bottom: 1px;
     }
-    /* OPD — mauve lembut */
+    /* Perangkat Daerah — slate (profesional) */
     .box-opd {
-        background: linear-gradient(135deg, #6f5f8a 0%, #574a6e 100%);
+        background: linear-gradient(135deg, #565f70 0%, #3d4553 100%);
         font-size: 12px;
     }
-    /* Program — chip biru muda */
+    /* Sasaran Renstra (mode Keseluruhan) — teal-cyan, dibedakan dari Sasaran RPJMD (bronze) */
+    .box-sasaran-renstra {
+        color: #fff;
+        border-radius: 10px;
+        padding: 11px 13px;
+        font-weight: 600;
+        line-height: 1.4;
+        font-size: 12.5px;
+        box-shadow: 0 3px 8px rgba(15, 23, 42, .12);
+        background: linear-gradient(135deg, #2c7c92 0%, #1f5c6b 100%);
+    }
+    /* Program — chip steel muted */
     .box-program {
-        background: #e9eef7;
-        color: #3a548a;
-        border-color: #cfd9ec;
+        background: #eef1f6;
+        color: #3d5480;
+        border-color: #dbe1ee;
         text-align: left;
         margin-top: -1px;
     }

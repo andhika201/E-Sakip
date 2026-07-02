@@ -99,11 +99,14 @@
                                 <th rowspan="2" class="border p-2 align-middle">SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">INDIKATOR SASARAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">BASELINE SASARAN</th>
+                                <!-- DEFINISI OPERASIONAL dinonaktifkan sementara:
                                 <th rowspan="2" class="border p-2 align-middle">DEFINISI OPERASIONAL</th>
+                                -->
                                 <th rowspan="2" class="border p-2 align-middle">SATUAN</th>
                                 <th rowspan="2" class="border p-2 align-middle">JENIS INDIKATOR</th>
                                 <th colspan="5" class="border p-2" id="year-header-span-sasaran">TARGET CAPAIAN PER
                                     TAHUN</th>
+                                <th rowspan="2" class="border p-2 align-middle">KONDISI AKHIR</th>
                                 <th rowspan="2" class="border p-2 align-middle">ACTION</th>
                             </tr>
                             <tr id="year-header-row-tujuan" class="border p-2" style="border-top:2px solid;"></tr>
@@ -115,6 +118,29 @@
                                 <?php foreach ($rpjmd_grouped as $periodIndex => $periodData): ?>
                                     <?php
                                     $years = $periodData['years'] ?? [];
+
+                                    // Pra-hitung total rowspan per VISI (untuk menggabungkan sel VISI sekali
+                                    // saja walau dipakai beberapa misi). Logika hitung baris = sama dgn render.
+                                    $visiTotals = [];
+                                    foreach (($periodData['misi_data'] ?? []) as $mPre) {
+                                        $rs = 0;
+                                        foreach ($mPre['tujuan'] ?? [] as $tPre) {
+                                            $itc = !empty($tPre['indikator_tujuan']) ? count($tPre['indikator_tujuan']) : 1;
+                                            $sasc = 0;
+                                            if (!empty($tPre['sasaran'])) {
+                                                foreach ($tPre['sasaran'] as $sPre) {
+                                                    $sasc += !empty($sPre['indikator_sasaran']) ? count($sPre['indikator_sasaran']) : 1;
+                                                }
+                                            } else {
+                                                $sasc = 1;
+                                            }
+                                            $rs += max($itc, $sasc);
+                                        }
+                                        $vk = (string) ($mPre['rpjmd_visi_id'] ?? ('t:' . ($mPre['visi'] ?? '-')));
+                                        $visiTotals[$vk] = ($visiTotals[$vk] ?? 0) + $rs;
+                                    }
+                                    $visiPrinted = [];
+
                                     foreach (($periodData['misi_data'] ?? []) as $misi):
                                         // --- Siapkan struktur tujuan: flatten indikator tujuan & indikator sasaran jadi baris sejajar
                                         $preparedTujuan = [];
@@ -202,6 +228,7 @@
                                             $misiRowspan += $rowCount;
                                         }
 
+                                        $visiKey = (string) ($misi['rpjmd_visi_id'] ?? ('t:' . ($misi['visi'] ?? '-')));
                                         $misiCellsPrinted = false;
 
                                         // --- Render
@@ -230,9 +257,12 @@
                                                                 onclick="toggleStatus(<?= (int) ($misi['id'] ?? 0) ?>)"
                                                                 style="cursor:pointer"><?= $statusText ?></button>
                                                         </td>
-                                                        <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>">
-                                                            <?= esc($misi['visi'] ?? '-') ?>
-                                                        </td>
+                                                        <?php if (!isset($visiPrinted[$visiKey])): ?>
+                                                            <td class="border p-2 align-top text-start" rowspan="<?= (int) ($visiTotals[$visiKey] ?? $misiRowspan) ?>">
+                                                                <?= esc($misi['visi'] ?? '-') ?>
+                                                            </td>
+                                                            <?php $visiPrinted[$visiKey] = true; ?>
+                                                        <?php endif; ?>
                                                         <td class="border p-2 align-top text-start" rowspan="<?= $misiRowspan ?>">
                                                             <?= esc($misi['misi'] ?? '-') ?>
                                                         </td>
@@ -272,10 +302,11 @@
                                                         </td>
                                                     <?php endif; ?>
 
-                                                    <!-- INDIKATOR SASARAN + DEF OP + SATUAN -->
+                                                    <!-- INDIKATOR SASARAN + (DEF OP dinonaktifkan) + SATUAN -->
                                                     <td class="border p-2 align-top text-start"><?= esc($right['indikator']) ?></td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['baseline'] ?? '-') ?></td>
-                                                    <td class="border p-2 align-top text-start"><?= esc($right['definisi']) ?></td>
+                                                    <!-- DEFINISI OPERASIONAL dinonaktifkan sementara:
+                                                         <td class="border p-2 align-top text-start"> $right['definisi'] </td> -->
                                                     <td class="border p-2 align-top text-start"><?= esc($right['satuan']) ?></td>
                                                     <?php
                                                     $rawJenis = strtolower(trim($right['jenis_indikator'] ?? ''));
@@ -300,6 +331,13 @@
                                                             <td class="border p-2 align-top text-start"><?= esc($v2) ?></td>
                                                         <?php endforeach; ?>
                                                     </span>
+
+                                                    <!-- KONDISI AKHIR (target tahun terakhir periode) -->
+                                                    <?php
+                                                    $lastYear = !empty($years) ? (string) $years[array_key_last($years)] : null;
+                                                    $kondisiAkhir = ($lastYear !== null) ? ($right['targets'][$lastYear] ?? '-') : '-';
+                                                    ?>
+                                                    <td class="border p-2 align-top text-start"><?= esc($kondisiAkhir) ?></td>
 
                                                     <!-- ACTION (sekali per misi) -->
                                                     <?php if (!isset($misi['_action_printed'])): ?>

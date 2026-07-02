@@ -21,6 +21,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
@@ -74,16 +75,31 @@
           </div>
         </div>
 
+        <!-- Formula/Rumusan Perhitungan & Sumber Data -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label class="form-label fw-semibold">Formula / Rumusan Perhitungan</label>
+            <textarea name="rumusan_perhitungan" class="form-control" rows="2"
+              placeholder="Tulis formula / rumusan perhitungan indikator"><?= esc($iku_data['rumusan_perhitungan'] ?? '') ?></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Sumber Data</label>
+            <textarea name="sumber_data" class="form-control" rows="2"
+              placeholder="Sumber data indikator (mis. BPS, aplikasi, laporan OPD)"><?= esc($iku_data['sumber_data'] ?? '') ?></textarea>
+          </div>
+        </div>
+
         <!-- Penanggung Jawab -->
         <div class="mb-3">
           <label class="form-label fw-semibold">Penanggung Jawab</label>
           <input type="text" name="penanggung_jawab" class="form-control"
             value="<?= esc($iku_data['penanggung_jawab'] ?? '') ?>"
-            placeholder="Unit/jabatan penanggung jawab IKU (opsional)">
+            placeholder="Isi nama jabatan (mis. Kepala Dinas ...)">
+          <small class="text-muted">Diisi dengan <strong>nama jabatan</strong> penanggung jawab.</small>
         </div>
 
 
-        <!-- ======================= PROGRAM PENDUKUNG ======================= -->
+        <!-- ======================= PROGRAM PENDUKUNG (dinonaktifkan sementara) =======================
         <div class="mb-3">
           <label class="form-label fw-semibold">Program Pendukung</label>
 
@@ -103,7 +119,6 @@
               <?php endforeach; ?>
 
             <?php else: ?>
-              <!-- Jika tidak punya program pendukung -->
               <div class="input-group mb-2">
                 <input type="hidden" name="program_id[]" value="">
                 <input type="text" name="program_pendukung[]" class="form-control" placeholder="Isi program pendukung">
@@ -120,6 +135,7 @@
             <i class="fas fa-plus me-1"></i> Tambah Program
           </button>
         </div>
+        ======================= /PROGRAM PENDUKUNG ======================= -->
 
 
         <!-- ======================= BUTTONS ======================= -->
@@ -139,6 +155,7 @@
 
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+  </div>
 
 
   <!-- ======================= JS: Tambah / Hapus Program ======================= -->
@@ -147,6 +164,7 @@
 
       const container = document.getElementById("program-container");
       const addBtn = document.getElementById("add-program");
+      if (!addBtn || !container) return; // Program Pendukung dinonaktifkan sementara
 
       addBtn.addEventListener("click", () => {
         const div = document.createElement("div");

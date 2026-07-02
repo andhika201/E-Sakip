@@ -17,17 +17,30 @@ class CascadingController extends BaseController
 
     }
 
+    /** Mode tampilan yang valid. */
+    private const MODES = ['kabupaten', 'opd', 'keseluruhan'];
+
     public function index()
     {
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        if (!in_array($mode, self::MODES, true)) {
+            $mode = 'kabupaten';
+        }
         $periode = $this->request->getGet('periode');
+        $opdId   = $this->request->getGet('opd_id');
 
-        // ==============================
-        // AMBIL PERIODE RPJMD
-        // ==============================
+        // Periode RPJMD
         $periodeList = $this->db->table('rpjmd_misi')
             ->select('tahun_mulai, tahun_akhir')
             ->groupBy(['tahun_mulai', 'tahun_akhir'])
             ->orderBy('tahun_mulai', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Daftar OPD untuk dropdown mode OPD
+        $opdList = $this->db->table('opd')
+            ->whereNotIn('id', [1, 46, 209])
+            ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -39,59 +52,232 @@ class CascadingController extends BaseController
         $visi = '';
         $tahunMulai = null;
         $tahunAkhir = null;
+        $opdName = null;
 
-        // ==============================
-        // JIKA PERIODE DIPILIH
-        // ==============================
         if ($periode) {
-
-            [$start, $end] = explode('-', $periode);
-
-            // sementara pakai tahun awal
-            $tahun = (int) $start;
-            $start = (int) $start;
-            $end = (int) $end;
+            [$start, $end] = array_map('intval', explode('-', $periode));
             $tahunMulai = $start;
             $tahunAkhir = $end;
-
             $years = range($start, $end);
 
-            $rows = $this->cascadingModel->getMatrix($start, $end);
-
-            $rowspan = $this->buildRowspanMeta($rows);
-            $firstShow = $this->buildFirstShowMeta($rows);
-
-            // ==============================
-            // POHON KINERJA (tampil inline, tidak harus klik cetak)
-            // ==============================
-            $tree = $this->cascadingModel->getPohonKinerja($start, $end);
-
-            $firstMisi = $this->db->table('rpjmd_misi m')
-                ->select('rv.visi')
-                ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
-                ->where('m.tahun_mulai', $start)
-                ->where('m.tahun_akhir', $end)
-                ->orderBy('m.id', 'ASC')
-                ->get()->getRowArray();
-            $visi = $firstMisi['visi'] ?? '';
+            if ($mode === 'kabupaten') {
+                // Matriks RPJMD penuh (Misi -> Tujuan -> Sasaran -> Indikator -> Program
+                // -> Perangkat Daerah) + target & kondisi akhir — selaras Cetak Cascading.
+                $rows = $this->cascadingModel->getMatrix($start, $end);
+                $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+                $visi = $this->ambilVisi($start, $end);
+            } elseif ($mode === 'opd') {
+                if ($opdId) {
+                    $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+                    $rowspan   = $this->opdRowspanMeta($rows);
+                    $firstShow = $this->opdFirstShowMeta($rows);
+                    $tree      = $this->buildOpdTree($rows);
+                    $o         = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
+                    $opdName   = $o['nama_opd'] ?? null;
+                }
+            } else { // keseluruhan
+                $rows      = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
+                $rowspan   = $this->keseluruhanRowspanMeta($rows);
+                $firstShow = $this->keseluruhanFirstShowMeta($rows);
+                // Pohon Keseluruhan ringkas: mulai dari Perangkat Daerah (tanpa Visi/Misi/Tujuan/Sasaran RPJMD).
+                $tree      = $this->cascadingModel->getKeseluruhanByOpd($start, $end);
+                $visi      = $this->ambilVisi($start, $end);
+            }
         }
-        // dd($periodeList);
+
         $data = [
-            'rows' => $rows,
-            'rowspan' => $rowspan,
-            'firstShow' => $firstShow,
+            'mode'           => $mode,
+            // Pohon Kabupaten BERHENTI di Indikator Sasaran RPJMD (tanpa cabang Perangkat Daerah/Program).
+            // Pohon OPD tanpa CSF; indikator OPD diberi kode "IDK".
+            // Flag dikirim via DATA (bukan arg include options).
+            'showOpd'        => ($mode !== 'kabupaten'),
+            'showCsf'        => ($mode !== 'opd'),
+            'showKode'       => ($mode === 'opd'),
+            'opd_list'       => $opdList,
+            'opd_id'         => $opdId,
+            'opd_name'       => $opdName,
+            'rows'           => $rows,
+            'rowspan'        => $rowspan,
+            'firstShow'      => $firstShow,
             'periode_master' => $periodeList,
-            'years' => $years,
-            'tree' => $tree,
-            'visi' => $visi,
-            'tahun_mulai' => $tahunMulai,
-            'tahun_akhir' => $tahunAkhir,
-            'filters' => [
-                'periode' => $periode
-            ]
+            'years'          => $years,
+            'tree'           => $tree,
+            'visi'           => $visi,
+            'tahun_mulai'    => $tahunMulai,
+            'tahun_akhir'    => $tahunAkhir,
+            'filters'        => [
+                'periode' => $periode,
+            ],
         ];
 
         return view('adminKabupaten/cascading/cascading', $data);
+    }
+
+    /** Ambil visi RPJMD untuk satu periode. */
+    private function ambilVisi(int $start, int $end): string
+    {
+        $firstMisi = $this->db->table('rpjmd_misi m')
+            ->select('rv.visi')
+            ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+            ->where('m.tahun_mulai', $start)
+            ->where('m.tahun_akhir', $end)
+            ->orderBy('m.id', 'ASC')
+            ->get()->getRowArray();
+        return $firstMisi['visi'] ?? '';
+    }
+
+    // ================= META: MODE KABUPATEN (backbone RPJMD) =================
+    private function backboneRowspanMeta($rows): array
+    {
+        $m = ['tujuan' => [], 'sasaran' => []];
+        foreach ($rows as $r) {
+            $m['tujuan'][$r['tujuan_id']]   = ($m['tujuan'][$r['tujuan_id']] ?? 0) + 1;
+            $m['sasaran'][$r['sasaran_id']] = ($m['sasaran'][$r['sasaran_id']] ?? 0) + 1;
+        }
+        return $m;
+    }
+    private function backboneFirstShowMeta($rows): array
+    {
+        $s = ['tujuan' => [], 'sasaran' => []];
+        foreach ($rows as $i => $r) {
+            if (!isset($s['tujuan'][$r['tujuan_id']]))   $s['tujuan'][$r['tujuan_id']]   = $i;
+            if (!isset($s['sasaran'][$r['sasaran_id']])) $s['sasaran'][$r['sasaran_id']] = $i;
+        }
+        return $s;
+    }
+
+    // ================= META: MODE KESELURUHAN (RPJMD → Renstra OPD) =========
+    // Kunci komposit agar baris tanpa renstra (id null) tidak saling tumpang tindih.
+    public static function ksOpdKey($r): string { return ($r['sasaran_id'] ?? 'x') . '|' . ($r['opd_id'] ?? 'x'); }
+    public static function ksRtKey($r): string  { return self::ksOpdKey($r) . '|' . ($r['renstra_tujuan_id'] ?? 'x'); }
+    public static function ksRsKey($r): string  { return self::ksRtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x'); }
+
+    private function keseluruhanRowspanMeta($rows): array
+    {
+        $m = ['tujuan' => [], 'sasaran' => [], 'opd' => [], 'renstra_tujuan' => [], 'renstra_sasaran' => []];
+        foreach ($rows as $r) {
+            $m['tujuan'][$r['tujuan_id']]               = ($m['tujuan'][$r['tujuan_id']] ?? 0) + 1;
+            $m['sasaran'][$r['sasaran_id']]             = ($m['sasaran'][$r['sasaran_id']] ?? 0) + 1;
+            $m['opd'][self::ksOpdKey($r)]               = ($m['opd'][self::ksOpdKey($r)] ?? 0) + 1;
+            $m['renstra_tujuan'][self::ksRtKey($r)]     = ($m['renstra_tujuan'][self::ksRtKey($r)] ?? 0) + 1;
+            $m['renstra_sasaran'][self::ksRsKey($r)]    = ($m['renstra_sasaran'][self::ksRsKey($r)] ?? 0) + 1;
+        }
+        return $m;
+    }
+    private function keseluruhanFirstShowMeta($rows): array
+    {
+        $s = ['tujuan' => [], 'sasaran' => [], 'opd' => [], 'renstra_tujuan' => [], 'renstra_sasaran' => []];
+        foreach ($rows as $i => $r) {
+            if (!isset($s['tujuan'][$r['tujuan_id']]))            $s['tujuan'][$r['tujuan_id']]            = $i;
+            if (!isset($s['sasaran'][$r['sasaran_id']]))          $s['sasaran'][$r['sasaran_id']]          = $i;
+            if (!isset($s['opd'][self::ksOpdKey($r)]))            $s['opd'][self::ksOpdKey($r)]            = $i;
+            if (!isset($s['renstra_tujuan'][self::ksRtKey($r)]))  $s['renstra_tujuan'][self::ksRtKey($r)]  = $i;
+            if (!isset($s['renstra_sasaran'][self::ksRsKey($r)])) $s['renstra_sasaran'][self::ksRsKey($r)] = $i;
+        }
+        return $s;
+    }
+
+    // ================= META + TREE: MODE OPD (renstra lengkap, read-only) ===
+    // Disalin dari AdminOpd\CascadingController agar admin_kab bisa menampilkan
+    // cascade renstra OPD mana pun (tanpa terikat session opd_id).
+    private function opdRowspanMeta($rows): array
+    {
+        $meta = [
+            'tujuan' => [], 'sasaran' => [], 'tujuan_renstra' => [], 'sasaran_renstra' => [],
+            'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
+        ];
+        foreach ($rows as $r) {
+            $meta['tujuan'][$r['tujuan_id']]                 = ($meta['tujuan'][$r['tujuan_id']] ?? 0) + 1;
+            $meta['sasaran'][$r['sasaran_id']]               = ($meta['sasaran'][$r['sasaran_id']] ?? 0) + 1;
+            $meta['tujuan_renstra'][$r['renstra_tujuan_id']] = ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
+            $meta['sasaran_renstra'][$r['renstra_sasaran_id']] = ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
+            $meta['indikator'][$r['indikator_id']]           = ($meta['indikator'][$r['indikator_id']] ?? 0) + 1;
+            if ($r['es3_id']) {
+                $meta['es3'][$r['es3_id']] = ($meta['es3'][$r['es3_id']] ?? 0) + 1;
+            }
+            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
+            $meta['es3_indikator'][$key] = ($meta['es3_indikator'][$key] ?? 0) + 1;
+            if ($r['es4_id']) {
+                $meta['es4'][$r['es4_id']] = ($meta['es4'][$r['es4_id']] ?? 0) + 1;
+            }
+        }
+        return $meta;
+    }
+    private function opdFirstShowMeta($rows): array
+    {
+        $shown = [
+            'tujuan' => [], 'sasaran' => [], 'tujuan_renstra' => [], 'sasaran_renstra' => [],
+            'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
+        ];
+        foreach ($rows as $index => $r) {
+            if (!isset($shown['tujuan'][$r['tujuan_id']]))                 $shown['tujuan'][$r['tujuan_id']] = $index;
+            if (!isset($shown['sasaran'][$r['sasaran_id']]))               $shown['sasaran'][$r['sasaran_id']] = $index;
+            if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']])) $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
+            if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']])) $shown['sasaran_renstra'][$r['renstra_sasaran_id']] = $index;
+            if (!isset($shown['indikator'][$r['indikator_id']]))           $shown['indikator'][$r['indikator_id']] = $index;
+            if ($r['es3_id'] && !isset($shown['es3'][$r['es3_id']]))       $shown['es3'][$r['es3_id']] = $index;
+            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
+            if (!isset($shown['es3_indikator'][$key]))                     $shown['es3_indikator'][$key] = $index;
+            if ($r['es4_id'] && !isset($shown['es4'][$r['es4_id']]))       $shown['es4'][$r['es4_id']] = $index;
+        }
+        return $shown;
+    }
+    private function buildOpdTree($rows): array
+    {
+        $tree = [];
+        foreach ($rows as $r) {
+            $tId = rtrim('_' . ($r['tujuan_id'] ?? 'none'), '_');
+            if (!isset($tree[$tId])) {
+                $tree[$tId] = ['nama' => $r['tujuan_rpjmd'] ?: '(Tanpa Tujuan RPJMD)', 'sasarans' => []];
+            }
+            $sId = rtrim('_' . ($r['sasaran_id'] ?? 'none'), '_');
+            if (!isset($tree[$tId]['sasarans'][$sId])) {
+                $tree[$tId]['sasarans'][$sId] = ['nama' => $r['sasaran_rpjmd'] ?: '(Tanpa Sasaran RPJMD)', 'tujuan_renstras' => []];
+            }
+            $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
+            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = ['nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)', 'es2s' => []];
+            }
+            $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
+            if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran'])) {
+                continue;
+            }
+            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId] = [
+                    'nama' => $r['renstra_sasaran'] ?: '(Tanpa Sasaran ES.II)',
+                    'csf' => $r['csf_es2'], 'indikators' => [], 'es3s' => [],
+                ];
+            }
+            $risId = $r['indikator_id'];
+            if ($risId) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['indikators'][$risId] = $r['indikator_sasaran'];
+            }
+            $es3Id = $r['es3_id'];
+            if ($es3Id) {
+                if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id])) {
+                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id] = [
+                        'nama' => $r['es3_sasaran'], 'csf' => $r['csf_es3'], 'indikators' => [], 'es4s' => [],
+                    ];
+                }
+                $es3IndId = $r['es3_indikator_id'];
+                if ($es3IndId) {
+                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['indikators'][$es3IndId] = $r['es3_indikator'];
+                }
+                $es4Id = $r['es4_id'];
+                if ($es4Id) {
+                    if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id])) {
+                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id] = [
+                            'nama' => $r['es4_sasaran'], 'csf' => $r['csf_es4'], 'indikators' => [],
+                        ];
+                    }
+                    $es4IndId = $r['es4_indikator_id'];
+                    if ($es4IndId) {
+                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id]['indikators'][$es4IndId] = $r['es4_indikator'];
+                    }
+                }
+            }
+        }
+        return $tree;
     }
 
 
@@ -322,26 +508,61 @@ class CascadingController extends BaseController
         ob_clean(); // 🔥 BUANG OUTPUT SEBELUMNYA
         ob_start();
 
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        if (!in_array($mode, self::MODES, true)) {
+            $mode = 'kabupaten';
+        }
         $periode = $this->request->getGet('periode');
+        $opdId   = $this->request->getGet('opd_id');
 
         if (!$periode) {
             return redirect()->back()
                 ->with('error', 'Periode wajib dipilih');
         }
 
-        [$start, $end] = explode('-', $periode);
+        [$start, $end] = array_map('intval', explode('-', $periode));
+        $years = range($start, $end);
 
-        $rows = $this->cascadingModel
-            ->getMatrix((int) $start, (int) $end);
+        if ($mode === 'opd') {
+            if (!$opdId) {
+                return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
+            }
+            $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $rowspan   = $this->opdRowspanMeta($rows);
+            $firstShow = $this->opdFirstShowMeta($rows);
+            $o         = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
+            $namaOpd   = $o['nama_opd'] ?? '';
 
-        $rowspan = $this->buildRowspanMeta($rows);
-        $firstShow = $this->buildFirstShowMeta($rows);
-        $years = range((int) $start, (int) $end);
+            $html = view('adminOpd/cascading/cascading_cetak', [
+                'rows' => $rows, 'rowspan' => $rowspan, 'firstShow' => $firstShow,
+                'tahun_mulai' => $start, 'tahun_akhir' => $end, 'periode' => $periode,
+                'nama_opd' => $namaOpd, 'showKode' => true,
+            ]);
+            $filename = 'Cascading-OPD-' . preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' . $periode . '.pdf';
+        } elseif ($mode === 'keseluruhan') {
+            $rows      = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
+            $rowspan   = $this->keseluruhanRowspanMeta($rows);
+            $firstShow = $this->keseluruhanFirstShowMeta($rows);
 
-        $html = view(
-            'adminKabupaten/cascading/cascading_cetak',
-            compact('rows', 'rowspan', 'firstShow', 'years')
-        );
+            $html = view('adminKabupaten/cascading/cascading_cetak_keseluruhan', [
+                'rows' => $rows, 'rowspan' => $rowspan, 'firstShow' => $firstShow,
+                'tahun_mulai' => $start, 'tahun_akhir' => $end,
+            ]);
+            $filename = 'Cascading-Keseluruhan-' . $periode . '.pdf';
+        } else { // kabupaten
+            // Matriks lengkap RPJMD: Visi + Misi -> Tujuan -> Sasaran -> Indikator
+            // -> Program -> Perangkat Daerah (getMatrix), + target per tahun & kondisi akhir.
+            $rows = $this->cascadingModel->getMatrix($start, $end);
+
+            $html = view('adminKabupaten/cascading/cascading_cetak_kabupaten', [
+                'rows'        => $rows,
+                'visi'        => $this->ambilVisi($start, $end),
+                'years'       => $years,
+                'tahun_mulai' => $start,
+                'tahun_akhir' => $end,
+            ]);
+            $filename = 'Cascading-Kabupaten-' . $periode . '.pdf';
+        }
 
         $mpdf = new \Mpdf\Mpdf([
             'mode'              => 'utf-8',
@@ -354,11 +575,13 @@ class CascadingController extends BaseController
             'margin_footer'     => 0,
             'tempDir'           => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Cascading-Kabupaten-' . $periode . '.pdf"');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
 
         $mpdf->Output();
         exit;
@@ -388,39 +611,61 @@ class CascadingController extends BaseController
 
     public function cetakPohon()
     {
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        if (!in_array($mode, self::MODES, true)) {
+            $mode = 'kabupaten';
+        }
         $periode = $this->request->getGet('periode');
+        $opdId   = $this->request->getGet('opd_id');
 
         if (!$periode) {
             return redirect()->back()
                 ->with('error', 'Periode wajib dipilih');
         }
 
-        [$start, $end] = explode('-', $periode);
-        $start = (int) $start;
-        $end   = (int) $end;
+        [$start, $end] = array_map('intval', explode('-', $periode));
 
-        $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+        if ($mode === 'opd') {
+            if (!$opdId) {
+                return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
+            }
+            $rows    = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $tree    = $this->buildOpdTree($rows);
+            $o       = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
+            $namaOpd = $o['nama_opd'] ?? '';
 
-        // Ambil visi via JOIN rpjmd_visi (FK: rpjmd_misi.rpjmd_visi_id)
-        $firstMisi = $this->db->table('rpjmd_misi m')
-            ->select('rv.visi')
-            ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
-            ->where('m.tahun_mulai', $start)
-            ->where('m.tahun_akhir', $end)
-            ->orderBy('m.id', 'ASC')
-            ->get()->getRowArray();
-        $visi = $firstMisi['visi'] ?? '';
-
-        return view(
-            'adminKabupaten/cascading/pohon_kinerja_cetak',
-            [
+            return view('adminOpd/cascading/pohon_kinerja_cetak', [
                 'tree'        => $tree,
-                'visi'        => $visi,
+                'nama_opd'    => $namaOpd,
                 'tahun_mulai' => $start,
                 'tahun_akhir' => $end,
-                'periode'     => $periode
-            ]
-        );
+                'periode'     => $periode,
+                'showCsf'     => false,
+                'showKode'    => true,
+            ]);
+        }
+
+        if ($mode === 'keseluruhan') {
+            $tree = $this->cascadingModel->getKeseluruhanByOpd($start, $end);
+            return view('adminKabupaten/cascading/pohon_kinerja_cetak_keseluruhan', [
+                'tree'        => $tree,
+                'visi'        => $this->ambilVisi($start, $end),
+                'tahun_mulai' => $start,
+                'tahun_akhir' => $end,
+                'periode'     => $periode,
+            ]);
+        }
+
+        // kabupaten — pohon dipangkas sampai indikator (tanpa cabang OPD/Program)
+        $tree = $this->cascadingModel->getPohonKinerja($start, $end);
+        return view('adminKabupaten/cascading/pohon_kinerja_cetak', [
+            'tree'        => $tree,
+            'visi'        => $this->ambilVisi($start, $end),
+            'tahun_mulai' => $start,
+            'tahun_akhir' => $end,
+            'periode'     => $periode,
+            'showOpd'     => false,
+        ]);
     }
 
 }

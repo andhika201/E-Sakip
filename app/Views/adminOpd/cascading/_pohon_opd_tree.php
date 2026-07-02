@@ -5,19 +5,25 @@
  *   $tree  array  hasil buildOpdTree()
  */
 $tree = $tree ?? [];
+// CSF disembunyikan di semua tampilan pohon OPD (admin_kab & adminOpd). Bisa di-override true.
+$showCsf = $showCsf ?? false;
+// Indikator diberi kode "IK" secara default (admin_kab & adminOpd).
+$showKode = $showKode ?? true;
 ?>
 
 <!-- LEGENDA WARNA -->
 <div class="pohon-legend">
     <span class="lg-title">Keterangan:</span>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2f8579,#246b61)"></span> Tujuan RPJMD</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#43885d,#356f4a)"></span> Sasaran RPJMD</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#3f6296,#2f4d7a)"></span> Tujuan Renstra</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9a6a44,#7e5334)"></span> Sasaran Eselon II</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#6f5f8a,#574a6e)"></span> Sasaran Eselon III</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#41709e,#2f5680)"></span> Sasaran Eselon IV</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#fbeede;border:1px solid #f0d6b4"></span> Indikator Kinerja</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:#fff7e9;border:1px solid #f0dcaf"></span> CSF</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#15803d,#166534)"></span> Tujuan RPJMD</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#0f766e,#115e59)"></span> Sasaran RPJMD</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2563eb,#1e40af)"></span> Tujuan Renstra</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#c2410c,#9a3412)"></span> Sasaran Eselon II</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran Eselon III</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran Eselon IV</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Kinerja</div>
+    <?php if ($showCsf): ?>
+        <div class="lg-item"><span class="lg-swatch" style="background:#faf3e6;border:1px solid #ecdcb8"></span> CSF</div>
+    <?php endif; ?>
 </div>
 
 <div class="tree-container text-center">
@@ -63,7 +69,7 @@ $tree = $tree ?? [];
                                                                 <li>
                                                                     <!-- L4: Sasaran ESS II -->
                                                                     <div class="tree-node">
-                                                                        <?php if (!empty($es2['csf'])): ?>
+                                                                        <?php if ($showCsf && !empty($es2['csf'])): ?>
                                                                             <div class="box-csf">
                                                                                 <div class="node-label" style="opacity:.8">CSF</div>
                                                                                 <?= nl2br(esc($es2['csf'])) ?>
@@ -74,7 +80,7 @@ $tree = $tree ?? [];
                                                                             <?= nl2br(esc($es2['nama'])) ?>
                                                                         </div>
                                                                         <?php foreach ($es2['indikators'] as $indikatorEs2): ?>
-                                                                            <div class="box-iks"><?= nl2br(esc($indikatorEs2)) ?></div>
+                                                                            <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorEs2)) ?></div>
                                                                         <?php endforeach; ?>
                                                                     </div>
 
@@ -84,7 +90,7 @@ $tree = $tree ?? [];
                                                                                 <li>
                                                                                     <!-- L5: Sasaran ESS III -->
                                                                                     <div class="tree-node">
-                                                                                        <?php if (!empty($es3['csf'])): ?>
+                                                                                        <?php if ($showCsf && !empty($es3['csf'])): ?>
                                                                                             <div class="box-csf">
                                                                                                 <div class="node-label" style="opacity:.8">CSF</div>
                                                                                                 <?= nl2br(esc($es3['csf'])) ?>
@@ -95,7 +101,7 @@ $tree = $tree ?? [];
                                                                                             <?= nl2br(esc($es3['nama'])) ?>
                                                                                         </div>
                                                                                         <?php foreach ($es3['indikators'] as $indikatorEs3): ?>
-                                                                                            <div class="box-iks"><?= nl2br(esc($indikatorEs3)) ?></div>
+                                                                                            <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorEs3)) ?></div>
                                                                                         <?php endforeach; ?>
                                                                                     </div>
 
@@ -105,7 +111,7 @@ $tree = $tree ?? [];
                                                                                                 <li>
                                                                                                     <!-- L6: Sasaran ESS IV -->
                                                                                                     <div class="tree-node">
-                                                                                                        <?php if (!empty($es4['csf'])): ?>
+                                                                                                        <?php if ($showCsf && !empty($es4['csf'])): ?>
                                                                                                             <div class="box-csf">
                                                                                                                 <div class="node-label" style="opacity:.8">CSF</div>
                                                                                                                 <?= nl2br(esc($es4['csf'])) ?>
@@ -116,7 +122,7 @@ $tree = $tree ?? [];
                                                                                                             <?= nl2br(esc($es4['nama'])) ?>
                                                                                                         </div>
                                                                                                         <?php foreach ($es4['indikators'] as $indikatorEs4): ?>
-                                                                                                            <div class="box-iks"><?= nl2br(esc($indikatorEs4)) ?></div>
+                                                                                                            <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorEs4)) ?></div>
                                                                                                         <?php endforeach; ?>
                                                                                                     </div>
                                                                                                 </li>

@@ -174,6 +174,8 @@ class IkuController extends BaseController
         $rules = [
             'mode' => 'permit_empty|string|max_length[20]|' . $rx,
             'definisi' => 'required|string|max_length[10000]|' . $rx,
+            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
+            'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
             'rpjmd_id' => 'permit_empty|integer',
             'renstra_id' => 'permit_empty|integer',
         ];
@@ -182,6 +184,12 @@ class IkuController extends BaseController
             'definisi' => [
                 'required' => 'Definisi operasional wajib diisi.',
                 'regex_match' => 'Definisi terdeteksi mengandung script / input berbahaya.',
+            ],
+            'rumusan_perhitungan' => [
+                'regex_match' => 'Formula/Rumusan terdeteksi mengandung script / input berbahaya.',
+            ],
+            'sumber_data' => [
+                'regex_match' => 'Sumber Data terdeteksi mengandung script / input berbahaya.',
             ],
             'mode' => [
                 'regex_match' => 'Mode terdeteksi mengandung script / input berbahaya.',
@@ -194,6 +202,8 @@ class IkuController extends BaseController
         }
         $mode = $this->request->getPost('mode') ?: 'opd';
         $definisi = trim($this->request->getPost('definisi') ?? '');
+        $rumusan = trim($this->request->getPost('rumusan_perhitungan') ?? '') ?: null;
+        $sumberData = trim($this->request->getPost('sumber_data') ?? '') ?: null;
         $penanggungJawab = trim($this->request->getPost('penanggung_jawab') ?? '') ?: null;
         $programs = $this->request->getPost('program_pendukung') ?? [];
 
@@ -212,6 +222,8 @@ class IkuController extends BaseController
                 'rpjmd_id' => $indikatorId,
                 'renstra_id' => null,
                 'definisi' => $definisi,
+                'rumusan_perhitungan' => $rumusan,
+                'sumber_data' => $sumberData,
                 'penanggung_jawab' => $penanggungJawab,
                 'status' => 'draft',
                 'program_pendukung' => $programs,
@@ -227,6 +239,8 @@ class IkuController extends BaseController
                 'renstra_id' => $indikatorId,
                 'rpjmd_id' => null,
                 'definisi' => $definisi,
+                'rumusan_perhitungan' => $rumusan,
+                'sumber_data' => $sumberData,
                 'penanggung_jawab' => $penanggungJawab,
                 'status' => 'draft',
                 'program_pendukung' => $programs,
@@ -286,6 +300,8 @@ class IkuController extends BaseController
             'iku_id' => 'required|integer',
             'mode' => 'permit_empty|string|max_length[20]|' . $rx,
             'definisi' => 'required|string|max_length[10000]|' . $rx,
+            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
+            'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
 
             // id indikator (opsional)
             'renstra_indikator_sasaran_id' => 'permit_empty|integer',
@@ -318,6 +334,8 @@ class IkuController extends BaseController
 
         $dataUpdate = [
             'definisi' => $definisi,
+            'rumusan_perhitungan' => trim($request->getPost('rumusan_perhitungan') ?? '') ?: null,
+            'sumber_data' => trim($request->getPost('sumber_data') ?? '') ?: null,
             'penanggung_jawab' => trim($request->getPost('penanggung_jawab') ?? '') ?: null,
         ];
         if (!empty($renstraId)) {
@@ -331,10 +349,13 @@ class IkuController extends BaseController
             // update data utama IKU
             $this->ikuModel->updateIku($ikuId, $dataUpdate);
 
-            // update program pendukung
-            $programs = $request->getPost('program_pendukung') ?? [];
-            $programIds = $request->getPost('program_id') ?? [];
-            $this->ikuModel->updateProgramPendukung($ikuId, $programs, $programIds);
+            // update program pendukung — input dinonaktifkan di form, jadi
+            // hanya diproses bila benar-benar dikirim (pertahankan data lama).
+            $programs = $request->getPost('program_pendukung');
+            if ($programs !== null) {
+                $programIds = $request->getPost('program_id') ?? [];
+                $this->ikuModel->updateProgramPendukung($ikuId, $programs, $programIds);
+            }
 
             session()->setFlashdata('success', 'IKU berhasil diperbarui.');
         } catch (\Throwable $e) {

@@ -23,6 +23,11 @@ class PkController extends BaseController
 
     public function index($jenis)
     {
+        // 'kecamatan' = tampilan terpisah, tapi logika & data identik dgn 'jpt'.
+        $seg = $jenis;                                       // segmen URL (utk link/redirect/judul)
+        $isKecamatan = ($jenis === 'kecamatan');
+        $jenis = $isKecamatan ? 'jpt' : $jenis;             // jenis data
+
         $session = session();
         $opdId = $session->get('opd_id');
 
@@ -106,6 +111,8 @@ class PkController extends BaseController
             'pk_id' => $pkId,
             'tahun' => $tahun,
             'jenis' => $jenis,
+            'seg' => $seg,
+            'isKecamatan' => $isKecamatan,
         ]);
     }
 
@@ -113,15 +120,21 @@ class PkController extends BaseController
     {
 
         helper('format');
+        // 'kecamatan' = tampilan terpisah, data identik dgn 'jpt'.
+        $seg = $jenis;
+        $isKecamatan = ($jenis === 'kecamatan');
+        $jenis = $isKecamatan ? 'jpt' : $jenis;
+
         if (!$id) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'ID PK tidak ditemukan');
+            return redirect()->to('/adminOpd/pk/' . $seg)->with('error', 'ID PK tidak ditemukan');
         }
         $data = $this->pkModel->getPkById($id);
         $tahun = $data['tahun'];
         if (!$data) {
-            return redirect()->to('/adminOpd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+            return redirect()->to('/adminOpd/pk/' . $seg)->with('error', 'Data PK tidak ditemukan');
         }
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
+        $data['isKecamatan'] = $isKecamatan;
 
         if ($jenis === 'bupati') {
             // Ambil program dari seluruh PK JPT
@@ -154,18 +167,8 @@ class PkController extends BaseController
             'tempDir' => sys_get_temp_dir(),
         ]);
 
-        $footerHtml = '
-        <table width="100%" style="font-size:5pt; color:#444;">
-            <tr>
-                <td align="left">
-                    © Kabupaten Pringsewu ' . esc(strtoupper($opd)) . ' / ' . $tahun . ' – Print by Aksara
-                </td>
-                <td align="right">
-                    {PAGENO}/{nbpg}
-                </td>
-            </tr>
-        </table>
-        ';
+        helper('setting');
+        $footerHtml = pdf_footer_aksara();
 
         $css = 'img { width: 70px; height: auto; }';
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
@@ -175,13 +178,16 @@ class PkController extends BaseController
         $mpdf->AddPage('P');
         $mpdf->WriteHTML($html_2);
         $this->response->setHeader('Content-Type', 'application/pdf');
-        return $mpdf->Output('Perjanjian-Kinerja-' . $jenis . '-' . $tahun . '.pdf', 'I');
+        return $mpdf->Output('Perjanjian-Kinerja-' . $seg . '-' . $tahun . '.pdf', 'I');
     }
 
 
 
     public function tambah($jenis)
     {
+        $seg = $jenis;
+        $isKecamatan = ($jenis === 'kecamatan');
+        $jenis = $isKecamatan ? 'jpt' : $jenis;
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -221,20 +227,26 @@ class PkController extends BaseController
             'pkPimpinan' => $pkPimpinan,
             'jptProgram' => $jptProgram,
             'kegiatanAdmin' => $kegiatanAdmin,
-            'title' => 'Tambah PK ' . ucfirst($jenis),
-            'jenis' => $jenis
+            'title' => 'Tambah PK ' . ucfirst($seg),
+            'jenis' => $jenis,
+            'seg' => $seg,
+            'isKecamatan' => $isKecamatan,
         ]);
     }
 
     public function edit($jenis, $id)
     {
+        $seg = $jenis;
+        $isKecamatan = ($jenis === 'kecamatan');
+        $jenis = $isKecamatan ? 'jpt' : $jenis;
+
         $session = session();
         $opdId = $session->get('opd_id');
         if (!$opdId)
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         $pk = $this->pkModel->getPkById($id);
         if (!$pk)
-            return redirect()->to('/adminopd/pk/' . $jenis)->with('error', 'Data PK tidak ditemukan');
+            return redirect()->to('/adminopd/pk/' . $seg)->with('error', 'Data PK tidak ditemukan');
 
 
         $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
@@ -262,12 +274,17 @@ class PkController extends BaseController
             'jptProgram' => $jptProgram,
             'title' => 'Edit PK ',
             'jenis' => $jenis,
+            'seg' => $seg,
+            'isKecamatan' => $isKecamatan,
             'validation' => session()->getFlashdata('validation')
         ]);
     }
 
     public function save($jenis)
     {
+        $seg = $jenis;
+        $jenis = ($jenis === 'kecamatan') ? 'jpt' : $jenis;
+
         $validation = \Config\Services::validation();
 
         // Validasi pihak penandatangan
@@ -493,7 +510,7 @@ class PkController extends BaseController
                 ? '/adminkab/pk/'
                 : '/adminopd/pk/';
 
-            return redirect()->to($redirectBase . $jenis)
+            return redirect()->to($redirectBase . $seg)
                 ->with('success', 'Data PK berhasil disimpan');
         } catch (\Exception $e) {
 
@@ -511,6 +528,7 @@ class PkController extends BaseController
      */
     public function update($jenis, $id)
     {
+        $seg = $jenis; // segmen URL utk redirect (mis. 'kecamatan'); $jenis data diambil dari record
         log_message('debug', "=== UPDATE PK START: ID {$id} ===");
 
         $pk = $this->pkModel->find($id);
@@ -681,7 +699,7 @@ class PkController extends BaseController
             if ($ok) {
                 log_message('debug', "UPDATE SUCCESS ID {$id}");
                 $base = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
-                return redirect()->to($base . $jenis)->with('success', 'Data PK berhasil diperbarui.');
+                return redirect()->to($base . $seg)->with('success', 'Data PK berhasil diperbarui.');
             }
 
             log_message('error', "updateCompletePk gagal untuk ID {$id}");
@@ -698,6 +716,7 @@ class PkController extends BaseController
      */
     public function delete($jenis, $id)
     {
+        $seg = $jenis; // segmen URL utk redirect (mis. 'kecamatan')
         $jenis = strtolower($jenis);
         log_message('debug', 'DELETE PK | jenis: ' . $jenis . ' | id: ' . $id);
 
@@ -745,7 +764,7 @@ class PkController extends BaseController
 
             // fallback untuk non-AJAX
             $redirectBase = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
-            return redirect()->to($redirectBase . $jenis)
+            return redirect()->to($redirectBase . $seg)
                 ->with('success', 'Data PK berhasil dihapus.');
         } catch (\Exception $e) {
             $db->transRollback();

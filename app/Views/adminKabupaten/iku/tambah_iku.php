@@ -21,6 +21,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <!-- Header & Sidebar -->
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
@@ -74,7 +75,29 @@
           </div>
         </div>
 
-        <!-- Program Pendukung -->
+        <!-- Formula/Rumusan Perhitungan & Sumber Data -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="rumusan_perhitungan" class="form-label fw-semibold">Formula / Rumusan Perhitungan</label>
+            <textarea name="rumusan_perhitungan" id="rumusan_perhitungan" class="form-control" rows="2"
+              placeholder="Tulis formula / rumusan perhitungan indikator"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="sumber_data" class="form-label fw-semibold">Sumber Data</label>
+            <textarea name="sumber_data" id="sumber_data" class="form-control" rows="2"
+              placeholder="Sumber data indikator (mis. BPS, aplikasi, laporan OPD)"></textarea>
+          </div>
+        </div>
+
+        <!-- Penanggung Jawab -->
+        <div class="mb-3">
+          <label for="penanggung_jawab" class="form-label fw-semibold">Penanggung Jawab</label>
+          <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
+            placeholder="Isi nama jabatan (mis. Kepala Dinas ...)">
+          <small class="text-muted">Diisi dengan <strong>nama jabatan</strong> penanggung jawab.</small>
+        </div>
+
+        <!-- Program Pendukung dinonaktifkan sementara:
         <div class="mb-3">
           <label class="form-label fw-semibold">Program Pendukung</label>
           <div id="program-container">
@@ -87,6 +110,7 @@
             Tambahkan satu atau beberapa program yang mendukung pencapaian IKU ini.
           </small>
         </div>
+        -->
 
         <!-- Tombol -->
         <div class="d-flex justify-content-between mt-4">
@@ -102,6 +126,7 @@
   </main>
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
+  </div>
 
   <script>
     // Tambah / hapus input program pendukung

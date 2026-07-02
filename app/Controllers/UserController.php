@@ -271,15 +271,32 @@ class UserController extends BaseController
         $rowspan = [];
         $firstShow = [];
         $years = [];
+        $tree = [];
+        $visi = '';
+        $tahunMulai = null;
+        $tahunAkhir = null;
 
         if ($periode) {
             [$start, $end] = explode('-', $periode);
             $start = (int) $start;
             $end = (int) $end;
+            $tahunMulai = $start;
+            $tahunAkhir = $end;
             $years = range($start, $end);
             $rows = $cascadingModel->getMatrix($start, $end);
             $rowspan = $this->buildCascadingKabRowspan($rows);
             $firstShow = $this->buildCascadingKabFirstShow($rows);
+
+            // Pohon Kinerja tampil inline (tidak harus klik cetak)
+            $tree = $cascadingModel->getPohonKinerja($start, $end);
+            $firstMisi = $db->table('rpjmd_misi m')
+                ->select('rv.visi')
+                ->join('rpjmd_visi rv', 'rv.id = m.rpjmd_visi_id', 'left')
+                ->where('m.tahun_mulai', $start)
+                ->where('m.tahun_akhir', $end)
+                ->orderBy('m.id', 'ASC')
+                ->get()->getRowArray();
+            $visi = $firstMisi['visi'] ?? '';
         }
 
         $data = [
@@ -288,6 +305,10 @@ class UserController extends BaseController
             'firstShow' => $firstShow,
             'periode_master' => $periodeList,
             'years' => $years,
+            'tree' => $tree,
+            'visi' => $visi,
+            'tahun_mulai' => $tahunMulai,
+            'tahun_akhir' => $tahunAkhir,
             'filters' => ['periode' => $periode]
         ];
 
@@ -322,6 +343,8 @@ class UserController extends BaseController
             'margin_footer' => 0,
             'tempDir'       => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');
@@ -419,6 +442,7 @@ class UserController extends BaseController
         $years = [];
         $rowspan = [];
         $firstShow = [];
+        $tree = [];
 
         if ($periode && $opd_id) {
             [$start, $end] = explode('-', $periode);
@@ -429,6 +453,9 @@ class UserController extends BaseController
             $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, $start, $end);
             $rowspan = $this->buildCascadingOpdRowspan($rows);
             $firstShow = $this->buildCascadingOpdFirstShow($rows);
+
+            // Pohon Kinerja OPD tampil inline (tidak harus klik cetak)
+            $tree = $this->buildOpdTree($rows);
         }
 
         $data = [
@@ -438,6 +465,7 @@ class UserController extends BaseController
             'periode_master' => $periodeList,
             'opdList' => $opdList,
             'years' => $years,
+            'tree' => $tree,
             'filters' => [
                 'periode' => $periode,
                 'opd_id' => $opd_id
@@ -486,6 +514,8 @@ class UserController extends BaseController
             'margin_footer' => 0,
             'tempDir'       => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');

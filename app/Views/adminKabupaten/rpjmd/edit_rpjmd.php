@@ -62,6 +62,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
@@ -85,9 +86,19 @@
           <h2 class="h5 fw-semibold mb-3">Informasi Umum Misi</h2>
           <div class="mb-3">
             <label class="form-label fw-semibold">Visi Daerah</label>
-            <textarea name="visi" class="form-control" rows="2"
-              placeholder="Contoh: Terwujudnya Kabupaten yang Maju, Sejahtera dan Berkeadilan"><?= esc($misi['visi'] ?? '') ?></textarea>
-            <small class="text-muted">Visi berlaku untuk seluruh misi dalam satu periode RPJMD.</small>
+            <?php $curVisiId = (int) ($misi['rpjmd_visi_id'] ?? 0); ?>
+            <select name="visi_id" id="visi_select" class="form-select select2 mb-2">
+              <option value="">— Buat Visi Baru —</option>
+              <?php foreach (($visi_list ?? []) as $v): ?>
+                <option value="<?= (int) $v['id'] ?>" data-visi="<?= esc($v['visi'], 'attr') ?>" <?= ($curVisiId === (int) $v['id']) ? 'selected' : '' ?>>
+                  <?= esc($v['visi']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+            <textarea name="visi" id="visi_text" class="form-control" rows="2"
+              placeholder="Tulis visi baru di sini..."><?= esc($misi['visi'] ?? '') ?></textarea>
+            <small class="text-muted">Pilih visi yang sudah ada agar misi ini tergabung di bawah visi tersebut, atau pilih
+              "Buat Visi Baru". Satu visi bisa dipakai banyak misi.</small>
           </div>
           <div class="row">
             <div class="col-md-8">
@@ -344,12 +355,14 @@
                                         </div>
                                       </div>
 
+                                      <!-- Definisi Operasional dinonaktifkan sementara:
                                       <div class="mb-3">
                                         <label class="form-label">Definisi Operasional</label>
                                         <textarea class="form-control mb-3"
                                           name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][<?= $ii ?>][definisi_op]"
                                           rows="3" required><?= esc($is['definisi_op'] ?? '') ?></textarea>
                                       </div>
+                                      -->
 
                                       <div class="target-section">
                                         <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
@@ -424,12 +437,14 @@
                                       </div>
                                     </div>
 
+                                    <!-- Definisi Operasional dinonaktifkan sementara:
                                     <div class="mb-3">
                                       <label class="form-label">Definisi Operasional</label>
                                       <textarea class="form-control mb-3"
                                         name="tujuan[<?= $ti ?>][sasaran][<?= $si ?>][indikator_sasaran][0][definisi_op]" rows="3"
                                         required></textarea>
                                     </div>
+                                    -->
 
                                     <div class="target-section">
                                       <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
@@ -520,12 +535,14 @@
                                   </div>
                                 </div>
 
+                                <!-- Definisi Operasional dinonaktifkan sementara:
                                 <div class="mb-3">
                                   <label class="form-label">Definisi Operasional</label>
                                   <textarea class="form-control mb-3"
                                     name="tujuan[<?= $ti ?>][sasaran][0][indikator_sasaran][0][definisi_op]" rows="3"
                                     required></textarea>
                                 </div>
+                                -->
 
                                 <div class="target-section">
                                   <h5 class="fw-medium mb-3">Target 5 Tahunan</h5>
@@ -614,6 +631,14 @@
 
     $(document).ready(function () {
       initSelect2();
+
+      // Saat memilih VISI yang sudah ada, isi textarea dengan teksnya (boleh diedit);
+      // saat "Buat Visi Baru", kosongkan agar diisi visi baru.
+      $('#visi_select').on('change', function () {
+        var opt = this.options[this.selectedIndex];
+        var teks = (this.value && opt) ? (opt.getAttribute('data-visi') || '') : '';
+        document.getElementById('visi_text').value = teks;
+      });
     });
   </script>
   <script>
@@ -734,6 +759,7 @@
     });
   </script>
 
+    </div>
 </body>
 
 </html>

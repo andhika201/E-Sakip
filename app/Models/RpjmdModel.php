@@ -198,7 +198,7 @@ class RpjmdModel extends Model
     public function getAllSasaran()
     {
         return $this->db->table('rpjmd_sasaran s')
-            ->select('s.*, t.tujuan_rpjmd, m.misi')
+            ->select('s.*, t.tujuan_rpjmd, m.misi, m.tahun_mulai, m.tahun_akhir')
             ->join('rpjmd_tujuan t', 't.id = s.tujuan_id')
             ->join('rpjmd_misi m', 'm.id = t.misi_id')
             ->orderBy('s.tujuan_id', 'ASC')

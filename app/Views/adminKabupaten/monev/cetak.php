@@ -1,172 +1,83 @@
+<?php
+$namaUnit = strtoupper($opd['nama_opd'] ?? 'Kabupaten Pringsewu');
+$pejabat  = $pejabat ?? null;
+$tglCetak = function_exists('formatTanggal') ? formatTanggal(date('Y-m-d')) : date('d-m-Y');
+?>
 <!DOCTYPE html>
-<html>
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
-
-    <style>
-        body {
-            font-family: "Times New Roman";
-            font-size: 11pt;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th,
-        td {
-            border: 1px solid #000;
-            padding: 5px;
-        }
-
-        th {
-            background: #eee;
-            text-align: center;
-        }
-
-        .logo {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 70px;
-        }
-
-        .signature-space {
-            height: 120px;
-        }
-
-        .signature-name {
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        .signature-table {
-            page-break-inside: avoid;
-        }
-    </style>
-
+    <?= $this->include('templates/pdf_style') ?>
 </head>
 
 <body>
-    <table style="width:100%; border:none; margin-bottom:20px;">
-        <tr>
-            <td style="width:120px; border:none;">
-                <img src="<?= $logo_url ?>" style="width:80px;">
-            </td>
+    <?= $this->include('templates/pdf_kop', [
+        'judul'    => 'Monitoring dan Evaluasi Kinerja',
+        'subjudul' => 'Tahun ' . esc($tahun ?? '-'),
+        'namaUnit' => $namaUnit,
+    ]) ?>
 
-            <td style="border:none; text-align:center;">
-                <div style="font-weight:bold; font-size:16px;">
-                    MONITORING DAN EVALUASI KINERJA
-                </div>
-                <div style="font-weight:bold; font-size:14px;">
-                    <?= esc(strtoupper($opd['nama_opd'] ?? '-')) ?>
-                </div>
-                <div style="font-size:13px;">
-                    Tahun <?= esc($tahun ?? '-') ?>
-                </div>
-            </td>
-
-            <td style="width:120px; border:none;"></td>
-        </tr>
-    </table>
-
-    <table>
-
+    <table class="pdf-table">
         <thead>
-
             <tr>
-                <th>No</th>
-                <th>Sasaran</th>
-                <th>Indikator</th>
-                <th>Tahun</th>
-                <th>Satuan</th>
-                <th>Rencana Aksi</th>
-                <th>Baseline</th>
-
-                <th>TW1</th>
-                <th>TW2</th>
-                <th>TW3</th>
-                <th>TW4</th>
-
-                <th>C1</th>
-                <th>C2</th>
-                <th>C3</th>
-                <th>C4</th>
-
-                <th>Total</th>
-                <th>PJ</th>
-
+                <th rowspan="2">No</th>
+                <th rowspan="2">Sasaran</th>
+                <th rowspan="2">Indikator</th>
+                <th rowspan="2">Thn</th>
+                <th rowspan="2">Satuan</th>
+                <th rowspan="2">Rencana Aksi</th>
+                <th rowspan="2">Baseline</th>
+                <th colspan="4">Target Triwulan</th>
+                <th colspan="4">Realisasi Triwulan</th>
+                <th rowspan="2">Total</th>
+                <th rowspan="2">Penanggung Jawab</th>
             </tr>
-
+            <tr>
+                <th class="c">I</th><th class="c">II</th><th class="c">III</th><th class="c">IV</th>
+                <th class="c">I</th><th class="c">II</th><th class="c">III</th><th class="c">IV</th>
+            </tr>
         </thead>
-
         <tbody>
-
-            <?php $no = 1;
-            foreach ($monevList as $row): ?>
-
+            <?php $no = 1; foreach ($monevList as $row): ?>
                 <tr>
-
-                    <td><?= $no++ ?></td>
+                    <td class="c"><?= $no++ ?></td>
                     <td><?= esc($row['sasaran_renstra']) ?></td>
                     <td><?= esc($row['indikator_sasaran']) ?></td>
-                    <td><?= esc($row['indikator_tahun']) ?></td>
-                    <td><?= esc($row['satuan']) ?></td>
-
-                    <td class="text-start">
-                        <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
-                    </td>
-                    <td><?= esc($row['target_capaian']) ?></td>
-
-                    <td><?= esc($row['target_triwulan_1']) ?></td>
-                    <td><?= esc($row['target_triwulan_2']) ?></td>
-                    <td><?= esc($row['target_triwulan_3']) ?></td>
-                    <td><?= esc($row['target_triwulan_4']) ?></td>
-
-                    <td><?= esc($row['capaian_triwulan_1']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_2']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_3']) ?></td>
-                    <td><?= esc($row['capaian_triwulan_4']) ?></td>
-
-                    <td><?= esc($row['monev_total']) ?></td>
-
+                    <td class="c"><?= esc($row['indikator_tahun']) ?></td>
+                    <td class="c"><?= esc($row['satuan']) ?></td>
+                    <td><?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?></td>
+                    <td class="c"><?= esc($row['target_capaian']) ?></td>
+                    <td class="c"><?= esc($row['target_triwulan_1']) ?></td>
+                    <td class="c"><?= esc($row['target_triwulan_2']) ?></td>
+                    <td class="c"><?= esc($row['target_triwulan_3']) ?></td>
+                    <td class="c"><?= esc($row['target_triwulan_4']) ?></td>
+                    <td class="c"><?= esc($row['capaian_triwulan_1']) ?></td>
+                    <td class="c"><?= esc($row['capaian_triwulan_2']) ?></td>
+                    <td class="c"><?= esc($row['capaian_triwulan_3']) ?></td>
+                    <td class="c"><?= esc($row['capaian_triwulan_4']) ?></td>
+                    <td class="c"><?= esc($row['monev_total']) ?></td>
                     <td><?= esc($row['penanggung_jawab']) ?></td>
-
                 </tr>
-
-            <?php endforeach ?>
-
+            <?php endforeach; ?>
+            <?php if (empty($monevList)): ?>
+                <tr><td colspan="17" class="c pdf-muted">Tidak ada data.</td></tr>
+            <?php endif; ?>
         </tbody>
-
     </table>
 
-    <!-- <table class="signature-table" style="width:100%; border:none; margin-top:40px;">
+    <table class="pdf-ttd">
         <tr>
-            <td style="width:50%; border:none;"></td>
-
-            <td style="width:50%; border:none; text-align:center;">
-                Pringsewu, <?= date('Y') ?>
-                <div>Kepala <?= esc($opd['nama_opd'] ?? '-') ?></div>
+            <td style="width:58%;">&nbsp;</td>
+            <td>
+                Pringsewu, <?= esc($tglCetak) ?><br>
+                <?= esc($pejabat['nama_jabatan'] ?? ('Kepala ' . ($opd['nama_opd'] ?? '-'))) ?>
+                <div class="sp">&nbsp;</div>
+                <span class="nm"><?= esc($pejabat['nama_pegawai'] ?? '(........................................)') ?></span><br>
+                <span class="nip">NIP. <?= esc($pejabat['nip_pegawai'] ?? '....................................') ?></span>
             </td>
         </tr>
-
-        <tr>
-            <td style="border:none;"></td>
-            <td style="border:none; height:120px;"></td>
-        </tr>
-
-        <tr>
-            <td style="border:none;"></td>
-
-            <td style="border:none; text-align:center;">
-                <strong>(........................................)</strong>
-                <div>NIP. ....................................</div>
-            </td>
-        </tr>
-    </table> -->
-
+    </table>
 </body>
 
 </html>

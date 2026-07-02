@@ -74,6 +74,17 @@ class RenstraController extends BaseController
             $periode ?: null
         );
 
+        // Sumber opsi dropdown filter: HANYA di-scope periode (bukan misi/tujuan/rpjmd/status)
+        // agar opsi tidak menciut setelah salah satu filter dipilih.
+        $filterSource = $this->renstraModel->getFilteredRenstra(
+            $opdId,
+            null,
+            null,
+            null,
+            null,
+            $periode ?: null
+        );
+
       $periodeMaster = $db->table('renstra_sasaran')
     ->select('tahun_mulai, tahun_akhir')
     ->where('opd_id', $opdId)
@@ -90,6 +101,7 @@ class RenstraController extends BaseController
             'current_opd' => $currentOpd,
             'periode_master' => $periodeMaster,
             'renstra_data' => $renstraData,
+            'filter_source' => $filterSource,
             'filters' => [
                 'misi' => $misi,
                 'tujuan' => $tujuan,
@@ -341,6 +353,7 @@ class RenstraController extends BaseController
                                 'renstra_sasaran_id' => $sasaranId,
                                 'indikator_sasaran' => $is['indikator_sasaran'] ?? null,
                                 'satuan' => $is['satuan'] ?? null,
+                                'baseline' => $is['baseline'] ?? '',
                                 'jenis_indikator' => $is['jenis_indikator'] ?? null,
                                 'created_at' => date('Y-m-d H:i:s'),
                                 'updated_at' => date('Y-m-d H:i:s'),

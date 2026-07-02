@@ -9,7 +9,7 @@
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
 </head>
 
-<body class="bg-light min-vh-100 d-flex flex-column position-relative">
+<body data-no-paginate class="bg-light min-vh-100 d-flex flex-column position-relative">
 
     <!-- Content Wrapper -->
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
@@ -24,7 +24,10 @@
         <!-- Konten Utama -->
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
-                <h2 class="h3 fw-bold text-success text-center mb-4">Daftar <?= esc($level) ?> PK</h2>
+                <h2 class="h3 fw-bold text-success text-center mb-4">
+                    Daftar <?= esc(ucfirst($level === 'sub' ? 'Sub Kegiatan' : $level)) ?> PK
+                    <span class="d-block fs-6 fw-normal text-muted mt-1">Tahun Anggaran <?= esc($tahun) ?></span>
+                </h2>
 
                 <!-- Flash Messages -->
                 <?php if (session()->getFlashdata('success')): ?>
@@ -59,19 +62,34 @@
                     </div>
                 </div>
 
-                <div class="btn-group mb-3">
-                    <a href="<?= base_url('adminkab/program_pk?level=program') ?>"
-                        class="btn btn-outline-success <?= $level == 'program' ? 'active' : '' ?>">
-                        Program
-                    </a>
-                    <a href="<?= base_url('adminkab/program_pk?level=kegiatan') ?>"
-                        class="btn btn-outline-primary <?= $level == 'kegiatan' ? 'active' : '' ?>">
-                        Kegiatan
-                    </a>
-                    <a href="<?= base_url('adminkab/program_pk?level=sub') ?>"
-                        class="btn btn-outline-secondary <?= $level == 'sub' ? 'active' : '' ?>">
-                        Sub Kegiatan
-                    </a>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <div class="btn-group">
+                        <a href="<?= base_url('adminkab/program_pk?level=program&tahun=' . $tahun) ?>"
+                            class="btn btn-outline-success <?= $level == 'program' ? 'active' : '' ?>">
+                            Program
+                        </a>
+                        <a href="<?= base_url('adminkab/program_pk?level=kegiatan&tahun=' . $tahun) ?>"
+                            class="btn btn-outline-primary <?= $level == 'kegiatan' ? 'active' : '' ?>">
+                            Kegiatan
+                        </a>
+                        <a href="<?= base_url('adminkab/program_pk?level=sub&tahun=' . $tahun) ?>"
+                            class="btn btn-outline-secondary <?= $level == 'sub' ? 'active' : '' ?>">
+                            Sub Kegiatan
+                        </a>
+                    </div>
+                    <form method="get" class="d-flex align-items-center gap-2 mb-0">
+                        <input type="hidden" name="level" value="<?= esc($level) ?>">
+                        <label class="small text-muted mb-0 text-nowrap">Tahun Anggaran:</label>
+                        <select name="tahun" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                            <?php if (empty($tahunList)): ?>
+                                <option value="<?= esc($tahun) ?>" selected><?= esc($tahun) ?></option>
+                            <?php else: ?>
+                                <?php foreach ($tahunList as $y): ?>
+                                    <option value="<?= $y ?>" <?= ((int) $tahun === (int) $y) ? 'selected' : '' ?>><?= $y ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </form>
                 </div>
 
                 <!-- Tabel -->

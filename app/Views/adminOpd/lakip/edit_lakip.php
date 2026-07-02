@@ -9,6 +9,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <!-- Navbar/Header -->
   <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
@@ -123,6 +124,7 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+    </div>
 </body>
 
 </html>

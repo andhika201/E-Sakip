@@ -26,25 +26,34 @@ class ProgramPkController extends BaseController
     {
         $level = $this->request->getGet('level') ?? 'program';
 
+        // Master Program/Kegiatan/Sub dikelola PER TAHUN ANGGARAN.
+        $years      = $this->programPkModel->getAvailableYears();
+        $tahunParam = $this->request->getGet('tahun');
+        $tahun      = ($tahunParam !== null && $tahunParam !== '')
+            ? (int) $tahunParam
+            : ($years[0] ?? (int) date('Y')); // default: tahun terbaru yang ada
+
         switch ($level) {
 
             case 'kegiatan':
-                $dataList = $this->programPkModel->getAllKegiatan();
+                $dataList = $this->programPkModel->getAllKegiatan($tahun);
                 break;
 
             case 'sub':
-                $dataList = $this->programPkModel->getAllSubKegiatan();
+                $dataList = $this->programPkModel->getAllSubKegiatan($tahun);
                 break;
 
             default:
-                $dataList = $this->programPkModel->getAllPrograms();
+                $dataList = $this->programPkModel->getAllPrograms($tahun);
                 $level = 'program';
         }
 
         $data = [
             'title' => 'Manajemen Program PK',
             'level' => $level,
-            'dataList' => $dataList
+            'dataList' => $dataList,
+            'tahun' => $tahun,
+            'tahunList' => $years,
         ];
 
         return view('adminKabupaten/program_pk/program', $data);
@@ -76,6 +85,122 @@ class ProgramPkController extends BaseController
         return view('adminKabupaten/program_pk/import_program', $data);
     }
 
+
+    /**
+     * Unduh template Excel import (cocok dengan parser processImport):
+     * baris 1-2 = judul & header (dilewati importer), data mulai baris 3.
+     * Kolom: A=Kode1(Urusan.Bidang), D=Kode2(Program), E=Kode3(Kegiatan),
+     *        F=Kode4(Sub), G=Uraian, K=Anggaran. Level ditentukan dari E/F.
+     */
+    public function template()
+    {
+        $ss    = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $ss->getActiveSheet();
+        $sheet->setTitle('Data');
+
+        foreach (['A' => 18, 'B' => 6, 'C' => 6, 'D' => 14, 'E' => 14, 'F' => 12, 'G' => 60, 'H' => 6, 'I' => 6, 'J' => 6, 'K' => 22] as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
+
+        // Baris 1: judul (dilewati importer)
+        $sheet->mergeCells('A1:K1');
+        $sheet->setCellValue('A1', 'TEMPLATE IMPORT PROGRAM / KEGIATAN / SUB KEGIATAN PK — FORMAT SIPD');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(13);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal('center');
+
+        // Baris 2: header kolom (juga dilewati importer; data mulai baris 3)
+        $headers = [
+            'A2' => 'KODE 1 (Urusan.Bidang)',
+            'D2' => 'KODE 2 (Program)',
+            'E2' => 'KODE 3 (Kegiatan)',
+            'F2' => 'KODE 4 (Sub Keg.)',
+            'G2' => 'URAIAN (Nama Program / Kegiatan / Sub Kegiatan)',
+            'K2' => 'ANGGARAN (Rp)',
+        ];
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+        }
+        $sheet->getStyle('A2:K2')->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle('A2:K2')->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('00743E');
+        $sheet->getStyle('A2:K2')->getAlignment()->setHorizontal('center')->setVertical('center');
+        $sheet->getStyle('A2:K2')->getAlignment()->setWrapText(true);
+
+        // Baris 3+: contoh (Program -> Kegiatan -> Sub). A & D boleh dikosongkan
+        // pada baris turunan (importer mewarisi nilai di atasnya / fill-down).
+        $rows = [
+            // [A, D, E, F, Uraian, Anggaran]
+            ['1.01', '2.01', '', '', 'PROGRAM PENUNJANG URUSAN PEMERINTAHAN DAERAH', 1500000000],
+            ['', '', '2.01', '', 'Perencanaan, Penganggaran, dan Evaluasi Kinerja Perangkat Daerah', 500000000],
+            ['', '', '2.01', '01', 'Penyusunan Dokumen Perencanaan Perangkat Daerah', 200000000],
+            ['', '', '2.01', '02', 'Evaluasi Kinerja Perangkat Daerah', 300000000],
+            ['', '', '2.02', '', 'Administrasi Keuangan Perangkat Daerah', 800000000],
+            ['', '', '2.02', '01', 'Penyediaan Gaji dan Tunjangan ASN', 800000000],
+        ];
+        $r = 3;
+        foreach ($rows as $row) {
+            $sheet->setCellValue("A{$r}", $row[0]);
+            $sheet->setCellValue("D{$r}", $row[1]);
+            $sheet->setCellValueExplicit("E{$r}", $row[2], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit("F{$r}", $row[3], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue("G{$r}", $row[4]);
+            $sheet->setCellValueExplicit("K{$r}", $row[5], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
+            $r++;
+        }
+        $lastRow = $r - 1;
+        $sheet->getStyle("A3:K{$lastRow}")->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle("A2:K2")->getBorders()->getAllBorders()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle("K3:K{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle("A3:F{$lastRow}")->getAlignment()->setHorizontal('center');
+
+        // Sheet petunjuk
+        $help = $ss->createSheet();
+        $help->setTitle('Petunjuk');
+        $help->getColumnDimension('A')->setWidth(100);
+        $petunjuk = [
+            'PETUNJUK PENGISIAN TEMPLATE IMPORT',
+            '',
+            '1. Baris 1 (judul) dan baris 2 (header) JANGAN dihapus — importer melewati 2 baris pertama.',
+            '2. Mulai isi data pada baris ke-3.',
+            '3. Kolom yang dibaca importer: A, D, E, F, G, dan K. Kolom B, C, H, I, J diabaikan.',
+            '',
+            'PENENTUAN LEVEL (berdasarkan kolom E & F):',
+            '   • PROGRAM       : isi A & D. Kolom E dan F DIKOSONGKAN.',
+            '   • KEGIATAN      : isi E. Kolom F DIKOSONGKAN. (A & D boleh kosong, mewarisi program di atasnya)',
+            '   • SUB KEGIATAN  : isi E DAN F. (A & D boleh kosong, mewarisi di atasnya)',
+            '',
+            '4. Kolom G = nama Program/Kegiatan/Sub Kegiatan.',
+            '5. Kolom K = anggaran (angka saja, tanpa "Rp" / titik / koma).',
+            '6. Urutkan: Program diikuti Kegiatan-nya, lalu Sub Kegiatan-nya (seperti contoh di sheet "Data").',
+            '7. Tahun Anggaran, Jenis Anggaran, dan OPD dipilih di halaman Import (bukan di file ini).',
+            '8. Re-import pada tahun yang sama akan MEMPERBARUI data (berdasar kode), bukan menduplikasi.',
+        ];
+        $hr = 1;
+        foreach ($petunjuk as $line) {
+            $help->setCellValue("A{$hr}", $line);
+            $hr++;
+        }
+        $help->getStyle('A1')->getFont()->setBold(true)->setSize(13);
+        $help->getStyle('A7')->getFont()->setBold(true);
+        $help->getStyle("A1:A{$hr}")->getAlignment()->setWrapText(true);
+
+        $ss->setActiveSheetIndex(0);
+
+        $filename = 'Template_Import_Program_PK.xlsx';
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($ss);
+        $writer->save('php://output');
+        exit;
+    }
 
     public function processImport()
     {

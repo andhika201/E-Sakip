@@ -70,6 +70,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
     <?= $this->include('adminKabupaten/templates/header.php'); ?>
     <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
@@ -260,9 +261,13 @@
                                 } else {
                                     $sasKey = (string) ($r['sasaran'] ?? '');
                                 }
+                                // Nomor mengikuti SASARAN: satu nomor per sasaran (digabung rowspan).
+                                $sasFirst = empty($sasSeen[$sasKey]);
                                 ?>
                                 <tr>
-                                    <td><?= $no++ ?></td>
+                                    <?php if ($sasFirst): ?>
+                                        <td rowspan="<?= $sasCounts[$sasKey] ?? 1 ?>" class="align-middle"><?= $no++ ?></td>
+                                    <?php endif; ?>
 
                                     <?php if ($mode === 'opd'): ?>
                                         <?php if (empty($opdSeen[$opdKey])):
@@ -372,6 +377,7 @@
             }
         });
     </script>
+    </div>
 </body>
 
 </html>

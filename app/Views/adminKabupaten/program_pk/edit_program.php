@@ -9,6 +9,7 @@
 </head>
 
 <body class="bg-light d-flex flex-column min-vh-100">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <?= $this->include('adminKabupaten/templates/header.php'); ?>
   <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
@@ -83,6 +84,7 @@
     const programData = <?= json_encode($program, JSON_UNESCAPED_UNICODE) ?>;
   </script>
   <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js') ?>"></script>
+    </div>
 </body>
 
 </html>

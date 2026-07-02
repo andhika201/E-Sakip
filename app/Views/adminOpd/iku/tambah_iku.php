@@ -19,6 +19,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <!-- Navbar/Header -->
   <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
@@ -57,6 +58,29 @@
             <input type="text" name="definisi" id="definisi" class="form-control" required>
           </div>
         </div>
+        <!-- Formula/Rumusan Perhitungan & Sumber Data -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <label for="rumusan_perhitungan" class="form-label">Formula / Rumusan Perhitungan</label>
+            <textarea name="rumusan_perhitungan" id="rumusan_perhitungan" class="form-control" rows="2"
+              placeholder="Tulis formula / rumusan perhitungan indikator"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="sumber_data" class="form-label">Sumber Data</label>
+            <textarea name="sumber_data" id="sumber_data" class="form-control" rows="2"
+              placeholder="Sumber data indikator (mis. BPS, aplikasi, laporan OPD)"></textarea>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
+            <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
+              placeholder="Unit/jabatan penanggung jawab IKU (opsional)">
+          </div>
+        </div>
+
+        <!-- Program Pendukung dinonaktifkan sementara:
         <div class="row mb-3">
           <div class="col-md-12">
             <label for="program_pendukung" class="form-label">Program Pendukung</label>
@@ -87,6 +111,7 @@
             }
           });
         </script>
+        -->
 
         <div class="d-flex justify-content-between mt-4">
           <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-secondary">
@@ -101,6 +126,7 @@
   </main>
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
+  </div>
 </body>
 
 </html>

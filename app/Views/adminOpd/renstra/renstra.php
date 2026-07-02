@@ -11,6 +11,47 @@
         <meta name="csrf-token" content="<?= csrf_token() ?>">
         <meta name="csrf-hash" content="<?= csrf_hash() ?>">
     <?php endif; ?>
+    <style>
+        /* Rapikan tabel Renstra */
+        .renstra-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .renstra-table th,
+        .renstra-table td {
+            vertical-align: middle;
+        }
+        .renstra-table td.text-start {
+            min-width: 170px;
+        }
+        .renstra-table .col-tahun {
+            white-space: nowrap;
+            width: 60px;
+        }
+        .renstra-table tbody tr:hover {
+            background-color: #f3faf5;
+        }
+        .table-wrap {
+            max-height: 72vh;
+            overflow: auto;
+        }
+        /* Kode indikator (badge "IK" di depan nama) */
+        .ind-kode {
+            display: inline-block;
+            font-weight: 800;
+            font-size: .72em;
+            letter-spacing: .6px;
+            padding: 1px 6px;
+            margin-right: 5px;
+            border-radius: 5px;
+            background: #00743e;
+            color: #fff;
+            vertical-align: middle;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -52,53 +93,17 @@
                 <form id="filterForm" method="GET" action="<?= base_url('adminopd/renstra') ?>"
                     class="d-flex flex-column flex-md-row gap-2 mb-4 align-items-center">
 
-                    <!-- Misi RPJMD -->
-                    <select id="misiFilter" name="misi" class="form-select" style="flex:1;">
-                        <option value="">Semua Misi RPJMD</option>
-                        <?php
-                        $misiList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $row) {
-                                if (!empty($row['rpjmd_misi'])) {
-                                    $misiList[$row['rpjmd_misi']] = $row['rpjmd_misi'];
-                                }
-                            }
-                        }
-                        ksort($misiList);
-                        foreach ($misiList as $misiText): ?>
-                            <option value="<?= esc($misiText) ?>" <?= ($filters['misi'] === $misiText) ? 'selected' : '' ?>>
-                                <?= esc($misiText) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <!-- Tujuan Renstra -->
-                    <select id="tujuanFilter" name="tujuan" class="form-select" style="flex:1;">
-                        <option value="">Semua Tujuan Renstra</option>
-                        <?php
-                        $tujuanList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $d) {
-                                if (!empty($d['tujuan_renstra'])) {
-                                    $tujuanList[$d['tujuan_renstra']] = $d['tujuan_renstra'];
-                                }
-                            }
-                        }
-                        asort($tujuanList);
-                        foreach ($tujuanList as $t): ?>
-                            <option value="<?= esc($t) ?>" <?= ($filters['tujuan'] === $t) ? 'selected' : '' ?>>
-                                <?= esc($t) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php /* Filter "Misi RPJMD" & "Tujuan Renstra" dihapus (permintaan user) */ ?>
 
                     <!-- Sasaran RPJMD -->
-                    <select id="rpjmdFilter" name="rpjmd" class="form-select" style="flex:1;">
+                    <select id="rpjmdFilter" name="rpjmd" class="form-select select2-flt" style="flex:1;">
                         <option value="">Semua Sasaran RPJMD</option>
                         <?php
+                        // Opsi filter diambil dari data se-periode (bukan yang sudah terfilter) agar tidak menciut.
+                        $filterSrc = $filter_source ?? ($renstra_data ?? []);
                         $sList = [];
-                        if (!empty($renstra_data)) {
-                            foreach ($renstra_data as $d) {
+                        if (!empty($filterSrc)) {
+                            foreach ($filterSrc as $d) {
                                 if (!empty($d['sasaran_rpjmd'])) {
                                     $sList[$d['sasaran_rpjmd']] = $d['sasaran_rpjmd'];
                                 }
@@ -113,7 +118,7 @@
                     </select>
 
                     <!-- Periode -->
-                    <select id="periodeFilter" name="periode" class="form-select" style="flex:1;">
+                    <select id="periodeFilter" name="periode" class="form-select select2-flt" style="flex:1;">
                         <option value="">-- Pilih Periode --</option>
                         <?php
                         $periodeList = [];
@@ -138,7 +143,7 @@
                     </select>
 
                     <!-- Status -->
-                    <select id="statusFilter" name="status" class="form-select" style="flex:1;">
+                    <select id="statusFilter" name="status" class="form-select select2-flt" style="flex:1;">
                         <option value="">Semua Status</option>
                         <option value="draft" <?= ($filters['status'] === 'draft') ? 'selected' : '' ?>>Draft</option>
                         <option value="selesai" <?= ($filters['status'] === 'selesai') ? 'selected' : '' ?>>Selesai
@@ -150,9 +155,11 @@
                         <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-undo"></i> Reset
                         </a>
-                        <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
-                            <i class="fas fa-plus"></i> Tambah RENSTRA
-                        </a>
+                        <?php if (user_can('renstra.create')): ?>
+                            <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Tambah RENSTRA
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </form>
 
@@ -178,189 +185,175 @@
                     $yearCount = $end - $start + 1;
                     ?>
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center align-middle small">
+                    <div class="table-responsive table-wrap">
+                        <table class="table table-bordered text-center align-middle small renstra-table">
                             <thead class="table-success fw-bold text-dark text-center">
                                 <tr>
-                                    <th rowspan="2">Sasaran RPJMD</th>
-                                    <th rowspan="2">Tujuan RENSTRA</th>
+                                    <th rowspan="2">No</th>
+                                    <?php /* Kolom "Sasaran RPJMD" di-hide (permintaan user) */ ?>
+                                    <th rowspan="2">Tujuan</th>
                                     <th rowspan="2">Indikator Tujuan</th>
                                     <th colspan="<?= $yearCount ?>">TARGET TUJUAN PER TAHUN</th>
 
-                                    <th rowspan="2">Sasaran RENSTRA</th>
+                                    <th rowspan="2">Sasaran</th>
                                     <th rowspan="2">Indikator Sasaran</th>
                                     <th rowspan="2">Satuan</th>
+                                    <th rowspan="2">Kondisi Awal</th>
                                     <th colspan="<?= $yearCount ?>">TARGET SASARAN PER TAHUN</th>
+                                    <th rowspan="2">Kondisi Akhir</th>
+                                    <th rowspan="2">Jenis Indikator</th>
 
                                     <th rowspan="2">Status</th>
                                     <th rowspan="2">Aksi</th>
                                 </tr>
                                 <tr>
                                     <?php for ($y = $start; $y <= $end; $y++): ?>
-                                        <th><?= $y ?></th>
+                                        <th class="col-tahun"><?= $y ?></th>
                                     <?php endfor; ?>
 
                                     <?php for ($y = $start; $y <= $end; $y++): ?>
-                                        <th><?= $y ?></th>
+                                        <th class="col-tahun"><?= $y ?></th>
                                     <?php endfor; ?>
                                 </tr>
                             </thead>
                             <tbody>
+                                <?php
+                                $jenisLabel = static function ($v) {
+                                    $v = strtolower(trim((string) $v));
+                                    if ($v === 'positif') return 'Positif';
+                                    if ($v === 'negatif') return 'Negatif';
+                                    return $v !== '' ? ucfirst($v) : '';
+                                };
+                                $no = 1;
+                                ?>
                                 <?php foreach ($renstra_data as $tujuan): ?>
                                     <?php
                                     $tujuanId = $tujuan['tujuan_renstra_id'] ?? null;
 
+                                    // Flatten sasaran x indikator
                                     $flatSas = [];
                                     foreach ($tujuan['sasaran'] as $s) {
                                         foreach ($s['indikator'] as $is) {
                                             $flatSas[] = [
                                                 'sasaran_id' => $s['sasaran_id'],
-                                                'sasaran' => $s['sasaran'],
-                                                'status' => $s['status'],
-                                                'indikator' => $is['indikator'],
-                                                'satuan' => $is['satuan'],
-                                                'targets' => $is['targets']
+                                                'sasaran'    => $s['sasaran'],
+                                                'status'     => $s['status'],
+                                                'indikator'  => $is['indikator'],
+                                                'satuan'     => $is['satuan'],
+                                                'baseline'   => $is['baseline'] ?? '',
+                                                'jenis'      => $is['jenis_indikator'] ?? '',
+                                                'targets'    => $is['targets'],
                                             ];
                                         }
                                     }
 
-                                    $itCount = count($tujuan['indikator_tujuan']);
+                                    $itCount  = count($tujuan['indikator_tujuan']);
                                     $sasCount = count($flatSas);
+                                    $totalRow = max($itCount, $sasCount, 1);
 
-                                    $totalRow = max($itCount, $sasCount);
-                                    $rowPrinted = false;
-                                    ?>
-                                    <?php
-                                    $sasaranRowspan = [];
-
+                                    // Rowspan per sasaran = jumlah indikatornya
+                                    $sasRowspan = [];
                                     foreach ($flatSas as $fs) {
-                                        $sid = $fs['sasaran_id'];
-                                        $sasaranRowspan[$sid] = ($sasaranRowspan[$sid] ?? 0) + 1;
+                                        $rid = $fs['sasaran_id'];
+                                        $sasRowspan[$rid] = ($sasRowspan[$rid] ?? 0) + 1;
                                     }
-                                    $sasaranStatus = null;
-
-                                    if ($sasCount > 0) {
-                                        $sasaranStatus = $flatSas[0]['status'];
-                                    }
+                                    $sasPrinted = [];
+                                    $rowPrinted = false;
                                     ?>
 
                                     <?php for ($i = 0; $i < $totalRow; $i++): ?>
                                         <tr>
-
                                             <?php if (!$rowPrinted): ?>
-                                                <td rowspan="<?= $totalRow ?>">
-                                                    <?= esc($tujuan['sasaran_rpjmd']) ?>
-                                                </td>
-
-                                                <td rowspan="<?= $totalRow ?>">
-                                                    <?= esc($tujuan['tujuan']) ?>
-                                                </td>
+                                                <td rowspan="<?= $totalRow ?>" class="text-center align-middle"><?= $no++ ?></td>
+                                                <?php /* Kolom "Sasaran RPJMD" di-hide (permintaan user) */ ?>
+                                                <td rowspan="<?= $totalRow ?>" class="text-start"><?= esc($tujuan['tujuan']) ?></td>
                                             <?php endif; ?>
 
                                             <!-- ================= INDIKATOR TUJUAN ================= -->
-                                            <?php
-                                            if ($i < $itCount) {
-                                                $it = $tujuan['indikator_tujuan'][$i];
-                                                echo '<td>' . esc($it['indikator_tujuan']) . '</td>';
-                                                for ($y = $start; $y <= $end; $y++) {
-                                                    echo '<td>' . esc($it['targets'][$y] ?? '') . '</td>';
-                                                }
-                                            } else {
-                                                echo '<td></td>';
-                                                for ($y = $start; $y <= $end; $y++) {
-                                                    echo '<td></td>';
-                                                }
-                                            }
-                                            ?>
-                                            
+                                            <?php if ($i < $itCount): ?>
+                                                <?php $it = $tujuan['indikator_tujuan'][$i]; ?>
+                                                <td class="text-start"><span class="ind-kode">IK</span><?= esc($it['indikator_tujuan']) ?></td>
+                                                <?php for ($y = $start; $y <= $end; $y++): ?>
+                                                    <td class="col-tahun"><?= esc($it['targets'][$y] ?? '') ?></td>
+                                                <?php endfor; ?>
+                                            <?php else: ?>
+                                                <td></td>
+                                                <?php for ($y = $start; $y <= $end; $y++): ?><td></td><?php endfor; ?>
+                                            <?php endif; ?>
+
                                             <!-- ================= SASARAN ================= -->
-                                            <?php
-                                            if ($i < $sasCount) {
-
-                                                $ss = $flatSas[$i];
+                                            <?php if ($i < $sasCount): ?>
+                                                <?php
+                                                $ss  = $flatSas[$i];
                                                 $sid = $ss['sasaran_id'];
-
-                                                if (isset($sasaranRowspan[$sid])) {
-                                                    echo '<td rowspan="' . $sasaranRowspan[$sid] . '">'
-                                                        . esc($ss['sasaran']) . '</td>';
-                                                    unset($sasaranRowspan[$sid]);
+                                                $isFirstOfSasaran = !isset($sasPrinted[$sid]);
+                                                if ($isFirstOfSasaran) {
+                                                    $sasPrinted[$sid] = true;
                                                 }
+                                                $kondisiAkhir = $ss['targets'][$end] ?? '';
+                                                ?>
 
-                                            } else {
+                                                <?php if ($isFirstOfSasaran): ?>
+                                                    <td rowspan="<?= $sasRowspan[$sid] ?>" class="text-start"><?= esc($ss['sasaran']) ?></td>
+                                                <?php endif; ?>
 
-                                                echo '<td></td>'; // kosong TANPA "-"
-                                            }
+                                                <td class="text-start"><span class="ind-kode">IK</span><?= esc($ss['indikator']) ?></td>
+                                                <td><?= esc($ss['satuan']) ?></td>
+                                                <td><?= esc($ss['baseline']) ?></td>
+                                                <?php for ($y = $start; $y <= $end; $y++): ?>
+                                                    <td class="col-tahun"><?= esc($ss['targets'][$y] ?? '') ?></td>
+                                                <?php endfor; ?>
+                                                <td><?= esc($kondisiAkhir) ?></td>
+                                                <td><?= esc($jenisLabel($ss['jenis'])) ?></td>
 
-                                            if ($i < $sasCount) {
-                                                echo '<td>' . esc($ss['indikator']) . '</td>';
-                                            } else {
-                                                echo '<td></td>';
-                                            }
-
-                                            if ($i < $sasCount) {
-                                                echo '<td>' . esc($ss['satuan']) . '</td>';
-                                            } else {
-                                                echo '<td></td>';
-                                            }
-                                            if ($i < $sasCount) {
-
-                                                for ($y = $start; $y <= $end; $y++) {
-                                                    echo '<td>' . esc($ss['targets'][$y] ?? '') . '</td>';
-                                                }
-
-                                            } else {
-
-                                                for ($y = $start; $y <= $end; $y++) {
-                                                    echo '<td></td>';
-                                                }
-
-                                            }
-                                            ?>
-
-                                            <?php if (!$rowPrinted): ?>
-                                                <td rowspan="<?= $totalRow ?>">
-                                                    <?php
-                                                    $sStatus = strtolower($sasaranStatus ?? 'draft');
-                                                    $sBadge  = $sStatus === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
-                                                    $sLabel  = $sStatus === 'selesai' ? 'Selesai' : 'Draft';
-                                                    ?>
-                                                    <span class="badge <?= $sBadge ?>">
-                                                        <?= $sLabel ?>
-                                                    </span>
-                                                </td>
-
-                                                <td rowspan="<?= $totalRow ?>">
-
-                                                    <?php if (!empty($ss['sasaran_id'])): ?>
-
-                                                        <!-- DELETE -->
-                                                        <a href="<?= base_url('adminopd/renstra/delete/' . esc($ss['sasaran_id'])) ?>"
-                                                            onclick="return confirm('Yakin ingin menghapus data ini?')"
-                                                            class="btn btn-danger btn-sm mb-1">
+                                                <?php if ($isFirstOfSasaran): ?>
+                                                    <!-- STATUS (per sasaran) -->
+                                                    <td rowspan="<?= $sasRowspan[$sid] ?>">
+                                                        <?php
+                                                        $sStatus = strtolower($ss['status'] ?? 'draft');
+                                                        $sBadge  = $sStatus === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
+                                                        $sLabel  = $sStatus === 'selesai' ? 'Selesai' : 'Draft';
+                                                        ?>
+                                                        <span class="badge <?= $sBadge ?>"><?= $sLabel ?></span>
+                                                    </td>
+                                                    <!-- AKSI (per sasaran) -->
+                                                    <td rowspan="<?= $sasRowspan[$sid] ?>">
+                                                        <?php if (user_can('renstra.delete')): ?>
+                                                        <a href="<?= base_url('adminopd/renstra/delete/' . esc($sid)) ?>"
+                                                            onclick="return confirm('Yakin ingin menghapus sasaran ini?')"
+                                                            class="btn btn-danger btn-sm mb-1" title="Hapus Sasaran">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
-
-                                                        <!-- UBAH STATUS -->
+                                                        <?php endif; ?>
+                                                        <?php if (user_can('renstra.update')): ?>
                                                         <button type="button" class="btn btn-info btn-sm change-status-btn mb-1"
-                                                            data-id="<?= esc($ss['sasaran_id']) ?>">
+                                                            data-id="<?= esc($sid) ?>" title="Ubah Status">
                                                             <i class="fas fa-sync-alt"></i>
                                                         </button>
-
-                                                        <!-- EDIT TUJUAN -->
                                                         <?php if ($tujuanId): ?>
                                                             <a href="<?= base_url('adminopd/renstra/edit-tujuan/' . esc($tujuanId)) ?>"
-                                                                class="btn btn-warning btn-sm">
+                                                                class="btn btn-warning btn-sm" title="Edit Tujuan & Sasaran">
                                                                 <i class="fas fa-edit"></i>
                                                             </a>
                                                         <?php endif; ?>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                <?php endif; ?>
 
-                                                    <?php endif; ?>
-
-                                                </td>
+                                            <?php else: ?>
+                                                <!-- baris ekstra (indikator tujuan lebih banyak dari sasaran) -->
+                                                <td></td><!-- Sasaran -->
+                                                <td></td><!-- Indikator Sasaran -->
+                                                <td></td><!-- Satuan -->
+                                                <td></td><!-- Kondisi Awal -->
+                                                <?php for ($y = $start; $y <= $end; $y++): ?><td></td><?php endfor; ?>
+                                                <td></td><!-- Kondisi Akhir -->
+                                                <td></td><!-- Jenis Indikator -->
+                                                <td></td><!-- Status -->
+                                                <td></td><!-- Aksi -->
                                             <?php endif; ?>
 
                                         </tr>
-
                                         <?php $rowPrinted = true; ?>
                                     <?php endfor; ?>
 
@@ -383,18 +376,26 @@
             const form = document.getElementById('filterForm');
 
             const periodeSelect = document.getElementById('periodeFilter');
-            const misiSelect = document.getElementById('misiFilter');
-            const tujuanSelect = document.getElementById('tujuanFilter');
             const rpjmdSelect = document.getElementById('rpjmdFilter');
             const statusSelect = document.getElementById('statusFilter');
 
-            const otherFilters = [misiSelect, tujuanSelect, rpjmdSelect, statusSelect];
+            const otherFilters = [rpjmdSelect, statusSelect];
+
+            // Semua filter dropdown jadi Select2 (searchable)
+            const hasSelect2 = window.jQuery && $.fn.select2;
+            if (hasSelect2) {
+                $('.select2-flt').select2({ width: '100%', theme: 'bootstrap-5', dropdownParent: $('body') });
+            }
 
             function toggleFilters() {
                 const hasPeriode = (periodeSelect?.value || '').trim() !== '';
                 otherFilters.forEach(el => {
                     if (!el) return;
-                    el.disabled = !hasPeriode;
+                    if (hasSelect2) {
+                        $(el).prop('disabled', !hasPeriode);
+                    } else {
+                        el.disabled = !hasPeriode;
+                    }
                 });
             }
 
@@ -402,10 +403,11 @@
 
             [periodeSelect, ...otherFilters].forEach(el => {
                 if (!el) return;
-                el.addEventListener('change', function () {
-                    toggleFilters();
-                    form.submit();
-                });
+                const handler = function () { toggleFilters(); form.submit(); };
+                // Pakai jQuery .on agar perubahan dari Select2 (dipicu lewat jQuery) tertangkap;
+                // addEventListener native TIDAK menerima event yang dipicu Select2.
+                if (hasSelect2) { $(el).on('change', handler); }
+                else { el.addEventListener('change', handler); }
             });
 
             // ===================== UBAH STATUS (AJAX) =====================

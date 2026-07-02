@@ -1,10 +1,10 @@
 
 <!-- Header -->
-<header class="bg-success px-4 py-2 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
-  <div class="d-flex align-items-center justify-content-between">
+<header class="bg-success px-4 shadow-sm border-bottom border-success-subtle position-relative" style="z-index: 20;">
+  <div class="d-flex align-items-center justify-content-between" style="min-height: 104px;">
     <!-- Left Side -->
     <div class="d-flex align-items-center">
-      <img src="<?= base_url('assets/images/sakipLogo-light.png') ?>" alt="sakipLogo" width="auto" height="50" class="rounded me-2" />
+      <img src="<?= base_url('assets/images/logoHeader.png') ?>" alt="AKSARA" class="d-block" style="height: 88px; width: auto; object-fit: contain;" />
     </div>
 
     <!-- Right Side -->

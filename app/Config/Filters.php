@@ -36,6 +36,9 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         'auth'          => \App\Filters\AuthFilter::class,
         'api-token'     => \App\Filters\ApiTokenFilter::class,
+        'permission'    => \App\Filters\PermissionFilter::class,
+        'activitylog'   => \App\Filters\ActivityLogFilter::class,
+        'modperm'       => \App\Filters\ModulePermissionFilter::class,
     ];
 
     /**
@@ -78,6 +81,7 @@ class Filters extends BaseFilters
         'after' => [
             // 'honeypot',
             // 'secureheaders',
+            'activitylog', // Catat semua aksi pengubah data (POST/PUT/PATCH/DELETE) oleh user login
         ],
     ];
 
@@ -105,5 +109,8 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // Enforcement permission granular per modul (selain role string via grup rute)
+        'modperm' => ['before' => ['adminkab/*', 'adminopd/*']],
+    ];
 }

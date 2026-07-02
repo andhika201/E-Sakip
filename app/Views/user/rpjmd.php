@@ -46,7 +46,7 @@
           </div>
         <?php else: ?>
           <div class="table-responsive">
-            <table class="table table-bordered table-striped text-center small">
+            <table class="table table-bordered table-striped text-center small" data-no-paginate>
               <thead class="table-success">
                 <tr>
                   <th rowspan="2" class="border p-2 align-middle">MISI</th>

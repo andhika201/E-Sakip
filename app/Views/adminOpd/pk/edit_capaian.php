@@ -9,6 +9,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
     <?= $this->include(($jenis === 'bupati' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
     <main class="flex-fill p-4 mt-2">
@@ -104,6 +105,7 @@
     </script>
     <!-- PK page logic -->
     <script src="<?= base_url('assets/js/adminOpd/pk/pk.js') ?>"></script>
+    </div>
 </body>
 
 </html>

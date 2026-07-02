@@ -16,6 +16,7 @@ class TargetModel extends Model
         'opd_id',
         'renstra_target_id',
         'rpjmd_target_id',
+        'pk_indikator_id',
 
         'rencana_aksi',
         'capaian',
@@ -224,5 +225,185 @@ class TargetModel extends Model
             ->orderBy('rpj.tahun', 'ASC')
             ->get()
             ->getResultArray();
+    }
+
+    /* ===================== RENCANA AKSI DARI PK ===================== */
+    /*
+     * Jangkar baru: target_rencana.pk_indikator_id -> pk_indikator.id.
+     * Rantai: pk_indikator -> pk_sasaran -> pk (ambil tahun, opd_id, jenis).
+     * Alias dibuat seragam dengan list Renstra/RPJMD agar view bisa dipakai
+     * ulang (indikator_sasaran, satuan, indikator_target, indikator_tahun,
+     * sasaran_renstra, target_id, dsb).
+     */
+
+    /**
+     * Cek duplikasi Rencana Aksi per indikator PK.
+     * - ES3 (administrator): unik per (opd_id, pk_indikator_id)
+     * - Bupati: $opdId = pk.opd_id (OPD Bupati)
+     */
+    public function existsForPkIndikator(int $pkIndikatorId, ?int $opdId): ?array
+    {
+        $builder = $this->where('pk_indikator_id', $pkIndikatorId);
+        if ($opdId === null) {
+            $builder->where('opd_id IS NULL', null, false);
+        } else {
+            $builder->where('opd_id', $opdId);
+        }
+        return $builder->first();
+    }
+
+    /* ---------- LIST: PK BUPATI (pk.jenis='bupati') — admin_kab ---------- */
+    public function getTargetListByPkBupati(?string $tahun = null): array
+    {
+        $b = $this->db->table('pk_indikator pi')
+            ->select("
+                pi.id              AS pk_indikator_id,
+                pi.indikator       AS indikator_sasaran,
+                pi.target          AS indikator_target,
+                s.satuan           AS satuan,
+
+                pk.id              AS pk_id,
+                pk.tahun           AS indikator_tahun,
+                pk.opd_id          AS opd_id,
+
+                ps.id              AS pk_sasaran_id,
+                ps.sasaran         AS sasaran_renstra,
+
+                tr.id              AS target_id,
+                tr.rencana_aksi,
+                tr.capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab
+            ")
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            ->join('target_rencana tr', 'tr.pk_indikator_id = pi.id', 'left')
+            ->where('pk.jenis', 'bupati');
+
+        if (!empty($tahun)) {
+            $b->where('pk.tahun', $tahun);
+        }
+
+        return $b->orderBy('ps.id', 'ASC')
+            ->orderBy('pi.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /* ------ LIST: PK OPD / ESELON II-III-IV (jpt|administrator|pengawas) ------ */
+    /**
+     * Daftar indikator PK milik OPD untuk diturunkan jadi Rencana Aksi.
+     * Mencakup Eselon II (jpt), III (administrator), IV (pengawas).
+     *
+     * @param string|null $tahun     Filter tahun PK (null = semua).
+     * @param int|null    $opdId     Scope per OPD (null = semua OPD, untuk admin_kab).
+     * @param string|null $eselon    Filter satu eselon: 'jpt'|'administrator'|'pengawas' (null = semua).
+     * @param int|null    $pejabatId Filter pejabat penandatangan (pk.pihak_1) (null = semua).
+     */
+    public function getTargetListByPkOpd(
+        ?string $tahun = null,
+        ?int $opdId = null,
+        ?string $eselon = null,
+        ?int $pejabatId = null
+    ): array {
+        // Renaksi OPD di-scope per OPD (tr.opd_id = pk.opd_id)
+        $trJoin = 'tr.pk_indikator_id = pi.id';
+        if (!empty($opdId)) {
+            $trJoin .= ' AND tr.opd_id = ' . (int) $opdId;
+        }
+
+        $b = $this->db->table('pk_indikator pi')
+            ->select("
+                pi.id              AS pk_indikator_id,
+                pi.indikator       AS indikator_sasaran,
+                pi.target          AS indikator_target,
+                s.satuan           AS satuan,
+
+                pk.id              AS pk_id,
+                pk.tahun           AS indikator_tahun,
+                pk.opd_id          AS opd_id,
+                pk.jenis           AS pk_jenis,
+                o.nama_opd         AS nama_opd,
+
+                pj.id              AS pejabat_id,
+                pj.nama_pegawai    AS pejabat_nama,
+                jb.nama_jabatan    AS pejabat_jabatan,
+
+                ps.id              AS pk_sasaran_id,
+                ps.sasaran         AS sasaran_renstra,
+
+                tr.id              AS target_id,
+                tr.rencana_aksi,
+                tr.capaian,
+                tr.target_triwulan_1,
+                tr.target_triwulan_2,
+                tr.target_triwulan_3,
+                tr.target_triwulan_4,
+                tr.penanggung_jawab
+            ")
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->join('opd o', 'o.id = pk.opd_id', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
+            ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            ->join('target_rencana tr', $trJoin, 'left');
+
+        if (!empty($eselon) && in_array($eselon, ['jpt', 'administrator', 'pengawas'], true)) {
+            $b->where('pk.jenis', $eselon);
+        } else {
+            $b->whereIn('pk.jenis', ['jpt', 'administrator', 'pengawas']);
+        }
+        if (!empty($tahun)) {
+            $b->where('pk.tahun', $tahun);
+        }
+        if (!empty($opdId)) {
+            $b->where('pk.opd_id', (int) $opdId);
+        }
+        if (!empty($pejabatId)) {
+            $b->where('pk.pihak_1', (int) $pejabatId);
+        }
+
+        return $b->orderBy('pk.opd_id', 'ASC')
+            ->orderBy("FIELD(pk.jenis,'jpt','administrator','pengawas')", '', false)
+            ->orderBy('ps.id', 'ASC')
+            ->orderBy('pi.id', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Tahun PK Bupati (untuk dropdown mode bupati).
+     * $jenis: 'bupati'
+     */
+    public function getAvailableYearsPk(string $jenis): array
+    {
+        return $this->db->table('pk')
+            ->select('tahun')
+            ->where('jenis', $jenis)
+            ->distinct()
+            ->orderBy('tahun', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    /**
+     * Tahun PK level OPD (Eselon II/III/IV) untuk dropdown, opsional di-scope per OPD.
+     */
+    public function getAvailableYearsPkOpd(?int $opdId = null): array
+    {
+        $b = $this->db->table('pk')
+            ->select('tahun')
+            ->whereIn('jenis', ['jpt', 'administrator', 'pengawas'])
+            ->distinct()
+            ->orderBy('tahun', 'ASC');
+        if (!empty($opdId)) {
+            $b->where('opd_id', (int) $opdId);
+        }
+        return $b->get()->getResultArray();
     }
 }

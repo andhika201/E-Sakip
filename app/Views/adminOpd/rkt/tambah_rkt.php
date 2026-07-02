@@ -94,6 +94,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <?= $this->include(
     $role === 'admin_kab'
@@ -308,6 +309,7 @@
   <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js') ?>"></script>
 
 
+    </div>
 </body>
 
 </html>

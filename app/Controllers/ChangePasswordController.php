@@ -8,9 +8,18 @@ class ChangePasswordController extends BaseController
 {
     public function index()
     {
-        $role = session()->get('role');
+        $role   = session()->get('role');
         $prefix = $this->getPrefix($role);
-        return view($prefix . '/change_password', ['role' => $role]);
+
+        $user = \Config\Database::connect()->table('users')
+            ->select('two_factor_enabled')
+            ->where('user_id', session()->get('user_id'))
+            ->get()->getRowArray();
+
+        return view($prefix . '/change_password', [
+            'role'         => $role,
+            'twofaEnabled' => !empty($user['two_factor_enabled']),
+        ]);
     }
 
     public function update()

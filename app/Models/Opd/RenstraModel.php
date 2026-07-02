@@ -588,6 +588,7 @@ class RenstraModel extends Model
                     $namaIndikatorSasaran = trim($ind['indikator_sasaran'] ?? ($ind['indikator'] ?? ''));
                     $satuan = trim($ind['satuan'] ?? ($ind['satuan_id'] ?? ''));
                     $jenis = trim($ind['jenis_indikator'] ?? ($ind['jenis'] ?? ''));
+                    $baseline = trim($ind['baseline'] ?? '');
 
                     if (empty($namaIndikatorSasaran) || empty($satuan)) {
                         continue;
@@ -603,6 +604,7 @@ class RenstraModel extends Model
                             ->update([
                                 'indikator_sasaran' => $namaIndikatorSasaran,
                                 'satuan' => $satuan,
+                                'baseline' => $baseline,
                                 'jenis_indikator' => $jenis,
                                 'updated_at' => date('Y-m-d H:i:s')
                             ]);
@@ -612,6 +614,7 @@ class RenstraModel extends Model
                             'renstra_sasaran_id' => $sasaranId,
                             'indikator_sasaran' => $namaIndikatorSasaran,
                             'satuan' => $satuan,
+                            'baseline' => $baseline,
                             'jenis_indikator' => $jenis,
                             'created_at' => date('Y-m-d H:i:s'),
                             'updated_at' => date('Y-m-d H:i:s')
@@ -906,7 +909,9 @@ class RenstraModel extends Model
             rt.tujuan as tujuan_renstra,
             ris.id as indikator_id,
             ris.indikator_sasaran,
-            s.satuan as satuan 
+            ris.baseline,
+            ris.jenis_indikator,
+            s.satuan as satuan
             ')
             ->join('opd o', 'o.id = rs.opd_id')
 
@@ -1037,6 +1042,8 @@ class RenstraModel extends Model
                 $tree[$tid]['sasaran'][$sid]['indikator'][$iid] = [
                     'indikator' => $row['indikator_sasaran'],
                     'satuan' => $row['satuan'],
+                    'baseline' => $row['baseline'] ?? '',
+                    'jenis_indikator' => $row['jenis_indikator'] ?? '',
                     'targets' => $row['targets']
                 ];
             }
@@ -1309,7 +1316,7 @@ class RenstraModel extends Model
                             'renstra_sasaran_id' => $sasaranId,
                             'indikator_sasaran' => trim($indikator['indikator_sasaran']),
                             'satuan' => trim($indikator['satuan'] ?? ''),
-                            'basis_target' => trim($indikator['basis_target'] ?? ''),
+                            'baseline' => trim($indikator['baseline'] ?? ''),
                             'jenis_indikator' => trim($indikator['jenis_indikator'] ?? ''),
                         ];
 
@@ -1852,6 +1859,7 @@ class RenstraModel extends Model
                             $nama = $ind['indikator_sasaran'] ?? null;
                             $satuan = $ind['satuan'] ?? null;
                             $jenis = $ind['jenis_indikator'] ?? null;
+                            $baseline = trim($ind['baseline'] ?? '');
 
 
                             if (!empty($idInd)) {
@@ -1863,6 +1871,7 @@ class RenstraModel extends Model
                                     ->update([
                                         'indikator_sasaran' => $nama,
                                         'satuan' => $satuan,
+                                        'baseline' => $baseline,
                                         'jenis_indikator' => $jenis
                                     ]);
                             } else {
@@ -1872,6 +1881,7 @@ class RenstraModel extends Model
                                         'renstra_sasaran_id' => $sasaranId,
                                         'indikator_sasaran' => $nama,
                                         'satuan' => $satuan,
+                                        'baseline' => $baseline,
                                         'jenis_indikator' => $jenis
                                     ]);
 

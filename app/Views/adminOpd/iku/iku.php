@@ -6,6 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IKU - e-SAKIP</title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
+    <style>
+        /* Rapikan tabel IKU */
+        .iku-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .iku-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .iku-table th,
+        .iku-table td {
+            vertical-align: middle;
+        }
+        .iku-table td.text-start {
+            min-width: 160px;
+        }
+        .iku-table .col-tahun {
+            white-space: nowrap;
+            width: 64px;
+        }
+        .iku-table tbody tr:hover {
+            background-color: #f3faf5;
+        }
+        .table-wrap {
+            max-height: 70vh;
+            overflow: auto;
+        }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -61,13 +93,15 @@
 
                 <?php else: ?>
 
-                    <div class="table-responsive mt-3">
-                        <table class="table table-bordered table-striped align-middle small text-center">
+                    <div class="table-responsive table-wrap mt-3">
+                        <table class="table table-bordered table-striped align-middle small text-center iku-table">
                             <thead class="table-success text-dark">
                                 <tr>
                                     <th rowspan="2" class="align-middle">No</th>
                                     <th rowspan="2" class="align-middle">Sasaran</th>
                                     <th rowspan="2" class="align-middle">Indikator Sasaran</th>
+                                    <th rowspan="2" class="align-middle">Definisi Operasional</th>
+                                    <th rowspan="2" class="align-middle">Formula / Rumusan Perhitungan</th>
                                     <th rowspan="2" class="align-middle">Satuan</th>
 
                                     <?php if (!empty($grouped_data)): ?>
@@ -84,9 +118,12 @@
                                         <th colspan="5" class="align-middle">Target Capaian per Tahun</th>
                                     <?php endif; ?>
 
-                                    <th rowspan="2" class="align-middle">Definisi Operasional</th>
+                                    <th rowspan="2" class="align-middle">Sumber Data</th>
+                                    <th rowspan="2" class="align-middle">Penanggung Jawab</th>
                                     <th rowspan="2" class="align-middle">Status</th>
+                                    <!-- Program Pendukung dinonaktifkan sementara:
                                     <th rowspan="2" class="align-middle">Program Pendukung</th>
+                                    -->
                                     <th rowspan="2" class="align-middle">Aksi</th>
                                 </tr>
                                 <tr>
@@ -113,6 +150,9 @@
                                         : ($row['sasaran'] ?? '-');
 
                                     $indikators = $row['indikator_sasaran'] ?? [];
+                                    // Nomor mengikuti SASARAN: satu nomor per sasaran (digabung rowspan).
+                                    $sasRowspan = max(1, count($indikators));
+                                    $sasFirst   = true;
                                     ?>
 
                                     <?php foreach ($indikators as $indikator): ?>
@@ -148,128 +188,96 @@
                                                 }
                                             }
                                         }
-
-                                        // Program pendukung (bisa beberapa baris)
-                                        $programList = [];
-                                        if (!empty($iku['program_pendukung']) && is_array($iku['program_pendukung'])) {
-                                            $programList = $iku['program_pendukung'];
-                                        }
-
-                                        // Jika tidak ada program, tetap buat satu baris agar struktur tabel rapi
-                                        if (empty($programList)) {
-                                            $programList = [null];
-                                        }
-
-                                        $programCount = count($programList);
                                         ?>
+                                        <tr>
+                                            <!-- No + Sasaran: digabung & dinomori per Sasaran -->
+                                            <?php if ($sasFirst): ?>
+                                                <td rowspan="<?= $sasRowspan ?>" class="align-middle text-center"><?= $no++ ?></td>
+                                                <td rowspan="<?= $sasRowspan ?>" class="align-middle text-start"><?= esc($sasaranText) ?></td>
+                                                <?php $sasFirst = false; ?>
+                                            <?php endif; ?>
 
-                                        <?php foreach ($programList as $pIndex => $programName): ?>
-                                            <tr>
+                                            <!-- Indikator -->
+                                            <td class="text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
 
-                                                <?php if ($pIndex === 0): ?>
-                                                    <!-- No -->
-                                                    <td rowspan="<?= $programCount ?>" class="align-middle">
-                                                        <?= $no++ ?>
-                                                    </td>
+                                            <!-- Definisi Operasional -->
+                                            <td class="text-start"><?= esc($iku['definisi'] ?? '-') ?></td>
 
-                                                    <!-- Sasaran -->
-                                                    <td rowspan="<?= $programCount ?>" class="align-middle text-start">
-                                                        <?= esc($sasaranText) ?>
-                                                    </td>
+                                            <!-- Formula / Rumusan Perhitungan -->
+                                            <td class="text-start"><?= esc(trim((string)($iku['rumusan_perhitungan'] ?? '')) !== '' ? $iku['rumusan_perhitungan'] : '-') ?></td>
 
-                                                    <!-- Indikator -->
-                                                    <td rowspan="<?= $programCount ?>" class="text-start">
-                                                        <?= esc($indikator['indikator_sasaran']) ?>
-                                                    </td>
+                                            <!-- Satuan -->
+                                            <td><?= esc($indikator['satuan']) ?></td>
 
-                                                    <!-- Satuan -->
-                                                    <td rowspan="<?= $programCount ?>">
-                                                        <?= esc($indikator['satuan']) ?>
-                                                    </td>
+                                            <!-- Target per Tahun -->
+                                            <?php if (!empty($grouped_data)): ?>
+                                                <?php foreach ($grouped_data as $dataPeriod): ?>
+                                                    <?php foreach ($dataPeriod['years'] as $year): ?>
+                                                        <?php
+                                                        $y = (int) $year;
+                                                        $value = '-';
+                                                        if (isset($targetMap[$y]) && $targetMap[$y] !== '' && $targetMap[$y] !== null) {
+                                                            $value = $targetMap[$y];
+                                                        }
+                                                        ?>
+                                                        <td><?= esc($value) ?></td>
+                                                    <?php endforeach; ?>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
 
-                                                    <!-- Target per Tahun -->
-                                                    <?php if (!empty($grouped_data)): ?>
-                                                        <?php foreach ($grouped_data as $dataPeriod): ?>
-                                                            <?php foreach ($dataPeriod['years'] as $year): ?>
-                                                                <?php
-                                                                $y = (int) $year;
-                                                                $value = '-';
-                                                                if (isset($targetMap[$y]) && $targetMap[$y] !== '' && $targetMap[$y] !== null) {
-                                                                    $value = $targetMap[$y];
-                                                                }
-                                                                ?>
-                                                                <td rowspan="<?= $programCount ?>"><?= esc($value) ?></td>
-                                                            <?php endforeach; ?>
-                                                        <?php endforeach; ?>
-                                                    <?php endif; ?>
+                                            <!-- Sumber Data -->
+                                            <td class="text-start"><?= esc(trim((string)($iku['sumber_data'] ?? '')) !== '' ? $iku['sumber_data'] : '-') ?></td>
 
-                                                    <!-- Definisi Operasional -->
-                                                    <td rowspan="<?= $programCount ?>" class="text-start">
-                                                        <?= esc($iku['definisi'] ?? '-') ?>
-                                                    </td>
+                                            <!-- Penanggung Jawab -->
+                                            <td class="text-start"><?= esc(($iku['penanggung_jawab'] ?? '') !== '' ? $iku['penanggung_jawab'] : '-') ?></td>
 
-                                                    <!-- Status (badge) -->
-                                                        <td rowspan="<?= $programCount ?>" class="align-middle">
-                                                            <?php
-                                                            $rawStatus   = $iku['status'] ?? null;
-                                                            $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+                                            <!-- Status (badge) -->
+                                            <td class="align-middle">
+                                                <?php
+                                                $rawStatus   = $iku['status'] ?? null;
+                                                $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
+                                                if ($statusLower === 'selesai') {
+                                                    $badgeClass  = 'bg-success';
+                                                    $statusLabel = 'Selesai';
+                                                } else {
+                                                    $badgeClass  = 'bg-warning text-dark';
+                                                    $statusLabel = 'Draft';
+                                                }
+                                                ?>
+                                                <span class="badge <?= $badgeClass ?>"><?= esc($statusLabel) ?></span>
+                                            </td>
 
-                                                            if ($statusLower === 'selesai') {
-                                                                $badgeClass  = 'bg-success';
-                                                                $statusLabel = 'Selesai';
-                                                            } else {
-                                                                // default: Draft (baik null, kosong, atau nilai lain)
-                                                                $badgeClass  = 'bg-warning text-dark';
-                                                                $statusLabel = 'Draft';
-                                                            }
-                                                            ?>
-                                                            <span class="badge <?= $badgeClass ?>">
-                                                                <?= esc($statusLabel) ?>
-                                                            </span>
-                                                        </td>
-                                                <?php endif; ?>
+                                            <!-- Program Pendukung dinonaktifkan sementara -->
 
-                                                <!-- Program Pendukung (satu program per baris) -->
-                                                <td class="text-start">
-                                                    <?php if (!empty($programName)): ?>
-                                                        <?= esc($programName) ?>
+                                            <!-- Aksi -->
+                                            <td>
+                                                <?php $ikuPerm = ($role === 'admin_kab') ? 'iku_kab' : 'iku_opd'; ?>
+                                                <?php if (!empty($indikator['id'])): ?>
+                                                    <?php if (empty($iku['definisi'])): ?>
+                                                        <?php if (user_can($ikuPerm . '.create')): ?>
+                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
+                                                            class="btn btn-primary btn-sm" title="Tambah IKU">
+                                                            <i class="fas fa-plus"></i>
+                                                        </a>
+                                                        <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                     <?php else: ?>
-                                                        <span class="text-muted">-</span>
+                                                        <?php if (user_can($ikuPerm . '.update')): ?>
+                                                        <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
+                                                            class="btn btn-warning btn-sm" title="Edit IKU">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>"
+                                                           class="btn btn-info btn-sm change-status-btn"
+                                                            title="Ubah Status IKU">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </a>
+                                                        <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                     <?php endif; ?>
-                                                </td>
-
-                                                <?php if ($pIndex === 0): ?>
-                                                    <!-- Aksi -->
-                                                    <td rowspan="<?= $programCount ?>">
-                                                        <?php if (!empty($indikator['id'])): ?>
-                                                            <?php if (empty($iku['definisi'])): ?>
-                                                                <!-- Belum ada IKU: hanya tombol tambah -->
-                                                                <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
-                                                                    class="btn btn-primary btn-sm" title="Tambah IKU">
-                                                                    <i class="fas fa-plus"></i>
-                                                                </a>
-                                                            <?php else: ?>
-                                                                <!-- Sudah ada IKU: tombol edit + change status -->
-                                                                <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
-                                                                    class="btn btn-warning btn-sm" title="Edit IKU">
-                                                                    <i class="fas fa-edit"></i>
-                                                                </a>
-
-                                                                <a href="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>"
-                                                                   class="btn btn-info btn-sm change-status-btn"
-                                                                    title="Ubah Status IKU">
-                                                                    <i class="fas fa-sync-alt"></i>
-                                                                </a>
-                                                            <?php endif; ?>
-                                                        <?php else: ?>
-                                                            <span class="text-muted">-</span>
-                                                        <?php endif; ?>
-                                                    </td>
+                                                <?php else: ?>
+                                                    <span class="text-muted">-</span>
                                                 <?php endif; ?>
-
-                                            </tr>
-                                        <?php endforeach; ?>
-
+                                            </td>
+                                        </tr>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
                             </tbody>

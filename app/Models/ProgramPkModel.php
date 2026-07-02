@@ -63,11 +63,34 @@ class ProgramPkModel extends Model
     protected $afterDelete = [];
 
     /**
-     * Ambil semua program PK
+     * Ambil semua program PK (opsional difilter per tahun anggaran)
      */
-    public function getAllPrograms(): array
+    public function getAllPrograms(?int $tahun = null): array
     {
-        return $this->orderBy('created_at', 'DESC')->findAll();
+        $b = $this->orderBy('created_at', 'DESC');
+        if (!empty($tahun)) {
+            $b->where('tahun_anggaran', $tahun);
+        }
+        return $b->findAll();
+    }
+
+    /**
+     * Daftar tahun anggaran yang tersedia (gabungan program/kegiatan/sub).
+     * @return int[]
+     */
+    public function getAvailableYears(): array
+    {
+        $rows = $this->db->query(
+            "SELECT DISTINCT tahun_anggaran AS thn FROM (
+                SELECT tahun_anggaran FROM program_pk
+                UNION SELECT tahun_anggaran FROM kegiatan_pk
+                UNION SELECT tahun_anggaran FROM sub_kegiatan_pk
+             ) t
+             WHERE tahun_anggaran IS NOT NULL AND tahun_anggaran <> 0
+             ORDER BY thn DESC"
+        )->getResultArray();
+
+        return array_map(static fn ($r) => (int) $r['thn'], $rows);
     }
 
     /**
@@ -148,24 +171,30 @@ class ProgramPkModel extends Model
      * Tabel: kegiatan_pk
      * Kolom penting: id, program_id, kegiatan, anggaran
      */
-    public function getAllKegiatan()
+    public function getAllKegiatan(?int $tahun = null)
     {
-        return $this->db->table('kegiatan_pk k')
+        $b = $this->db->table('kegiatan_pk k')
             ->select('k.*, p.id as program_id')
-            ->join('program_pk p', 'p.id = k.program_id')
-            ->orderBy('k.kegiatan', 'ASC')
+            ->join('program_pk p', 'p.id = k.program_id');
+        if (!empty($tahun)) {
+            $b->where('k.tahun_anggaran', $tahun);
+        }
+        return $b->orderBy('k.kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }
 
-    
-    public function getAllSubKegiatan()
+
+    public function getAllSubKegiatan(?int $tahun = null)
     {
-        return $this->db->table('sub_kegiatan_pk s')
+        $b = $this->db->table('sub_kegiatan_pk s')
             ->select('s.*, p.id as program_id')
             ->join('kegiatan_pk k', 'k.id = s.kegiatan_id')
-            ->join('program_pk p', 'p.id = k.program_id')
-            ->orderBy('s.sub_kegiatan', 'ASC')
+            ->join('program_pk p', 'p.id = k.program_id');
+        if (!empty($tahun)) {
+            $b->where('s.tahun_anggaran', $tahun);
+        }
+        return $b->orderBy('s.sub_kegiatan', 'ASC')
             ->get()
             ->getResultArray();
     }

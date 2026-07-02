@@ -4,212 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pohon Kinerja Kabupaten</title>
-    <!-- Include Bootstrap for basic typography and modern reset -->
+    <!-- Bootstrap untuk tipografi & reset modern -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Gaya pohon bersama -->
+    <?= $this->include('adminKabupaten/cascading/_pohon_styles') ?>
+
+    <!-- html2canvas: ekspor pohon ke gambar (PNG) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF: bungkus gambar pohon ke PDF (unduh langsung) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: #eef1f4;
+            color: #2c3340;
             margin: 0;
-            padding: 20px;
+            padding: 24px 20px 40px;
         }
 
+        /* ===== Header dokumen ===== */
         .print-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 3px double #14532d;
         }
-
-        /* Tree Styles */
-        .tree-container {
-            overflow-x: auto;
-            padding-bottom: 30px;
+        /* Kop surat (letterhead) 2 logo — selaras dengan Cascading cetak */
+        .kop-surat { width: 100%; border-collapse: collapse; }
+        .kop-surat td { vertical-align: middle; padding: 0; }
+        .kop-logo-l { width: 96px; text-align: left; }
+        .kop-logo-r { width: 120px; text-align: right; }
+        .kop-logo-l img { height: 66px; width: auto; }
+        .kop-logo-r img { height: 52px; width: auto; }
+        .kop-teks { text-align: center; padding: 0 10px; }
+        .kop-inst { font-weight: 800; font-size: 17px; letter-spacing: .5px; text-transform: uppercase; color: #15311f; line-height: 1.25; }
+        .kop-addr { font-size: 11px; color: #5b6675; font-weight: 500; margin-top: 3px; line-height: 1.35; }
+        @media (max-width: 768px) {
+            .kop-logo-l img { height: 52px; }
+            .kop-logo-r img { height: 42px; }
+            .kop-inst { font-size: 14px; }
         }
-
-        .tree {
+        .print-header h2 {
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #1f2937;
+            margin: 0 0 4px;
+        }
+        .print-header .ph-sub {
+            font-size: 13px;
+            color: #5b6675;
+            font-weight: 500;
+            margin: 0;
+        }
+        .print-header .ph-meta {
             display: inline-block;
-            min-width: 100%;
-        }
-
-        .tree ul {
-            padding-top: 20px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            padding-left: 0;
-        }
-
-        .tree li {
-            text-align: center;
-            list-style-type: none;
-            position: relative;
-            padding: 20px 5px 0 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Connecting lines */
-        .tree li::before, .tree li::after {
-            content: '';
-            position: absolute; 
-            top: 0; 
-            right: 50%;
-            border-top: 2px solid #b0bec5;
-            width: 50%; 
-            height: 20px;
-        }
-        
-        .tree li::after {
-            right: auto; 
-            left: 50%;
-            border-left: 2px solid #b0bec5;
-        }
-
-        /* Edge formatting */
-        .tree li:only-child::after, .tree li:only-child::before {
-            display: none;
-        }
-
-        .tree li:only-child {
-            padding-top: 0;
-        }
-
-        .tree li:first-child::before, .tree li:last-child::after {
-            border: 0 none;
-        }
-
-        .tree li:last-child::before {
-            border-right: 2px solid #b0bec5;
-            border-radius: 0 5px 0 0;
-        }
-
-        .tree li:first-child::after {
-            border-radius: 5px 0 0 0;
-        }
-
-        /* Downward line from parents */
-        .tree ul ul::before {
-            content: '';
-            position: absolute; 
-            top: 0; 
-            left: 50%;
-            border-left: 2px solid #b0bec5;
-            width: 0; 
-            height: 20px;
-            transform: translateX(-50%);
-        }
-
-        /* Box Elements */
-        .tree-node {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 5px;
-            width: 200px;
-            transition: all 0.3s;
-        }
-
-        /* Box Visi - Deep Blue/Indigo */
-        .box-visi {
-            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-            color: #fff;
-            border-radius: 14px;
-            padding: 14px 18px;
-            font-weight: 700;
-            font-size: 15px;
-            box-shadow: 0 6px 12px rgba(26, 35, 126, 0.4);
-            border: 2px solid rgba(255,255,255,0.3);
-            letter-spacing: 0.3px;
-        }
-
-        /* Box Misi - Teal */
-        .box-misi {
-            background: linear-gradient(135deg, #00b8a9 0%, #008f83 100%);
-            color: #fff;
-            border-radius: 12px;
-            padding: 12px;
-            font-weight: 700;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0, 184, 169, 0.3);
-            border: 2px solid #fff;
-        }
-
-        /* Box Tujuan - Dark Green */
-        .box-tujuan {
-            background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
-            color: #fff;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 13px;
+            margin-top: 10px;
+            padding: 3px 16px;
+            font-size: 12px;
             font-weight: 600;
-            box-shadow: 0 3px 5px rgba(0, 137, 123, 0.3);
+            color: #356f4a;
+            background: #e9f3ed;
+            border: 1px solid #cce3d5;
+            border-radius: 20px;
         }
 
-        /* Box Indikator Tujuan - Light Green */
-        .box-ikt {
-            background: #43a047;
-            color: #fff;
-            border-radius: 6px;
-            padding: 6px;
-            font-size: 11px;
-            margin-top: -3px; 
-            box-shadow: 0 2px 4px rgba(67, 160, 71, 0.3);
-        }
-
-        /* Box Sasaran - Brown */
-        .box-sasaran {
-            background: linear-gradient(135deg, #6d4c41 0%, #4e342e 100%);
-            color: #fff;
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 13px;
-            
-            font-weight: 600;
-            box-shadow: 0 3px 5px rgba(109, 76, 65, 0.3);
-        }
-
-        /* Box Indikator Sasaran - Orange */
-        .box-iks {
-            background: #f57c00;
-            color: #fff;
-            border-radius: 6px;
-            padding: 6px;
-            font-size: 11px;
-            margin-top: -3px;
-            box-shadow: 0 2px 4px rgba(245, 124, 0, 0.3);
-        }
-
-        /* Box CSF - Yellow */
-        .box-csf {
-            background: #fff3e0;
-            color: #e65100;
-            border: 1px solid #ffb74d;
-            border-radius: 6px;
-            padding: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(255, 183, 77, 0.2);
-            margin-bottom: 2px;
-            text-align: left; /* Biar CSF lebih mudah dibaca jika panjang / banyak enter */
-        }
-
-        /* Root style to remove top connection if multiple Misi */
-        /* Baris antar Misi kita fungsikan agar terhubung, sehingga blok di atas ditiadakan */
-
-        /* Print Options */
+        /* ===== Panel pengaturan cetak ===== */
         .print-controls {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
-            background: white;
+            background: #fff;
             padding: 16px;
             border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, .15);
             width: 210px;
         }
         .print-controls label {
@@ -234,45 +110,40 @@
             margin-top: 4px;
         }
 
-        /* Dynamic @page – dioverride oleh JS */
+        /* ===== Penyesuaian cetak ===== */
         @media print {
+            /* Default landscape (pohon melebar); ditimpa dinamis bila user ganti orientasi */
+            @page { size: A4 landscape; margin: 6mm; }
             body {
                 background: #fff;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                padding-bottom: 14mm;
+                padding: 0 0 14mm;
             }
-            .print-controls {
-                display: none !important;
+            .print-controls { display: none !important; }
+            .tree-container { overflow: visible !important; width: 100%; text-align: center !important; }
+            .tree { min-width: 0 !important; display: inline-block; }
+            [class^="box-"], [class*=" box-"], .ind-kode, .pohon-legend .lg-swatch {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
-            .tree-container {
-                overflow: visible !important;
-                width: 100%;
-            }
-            .tree-node {
-                page-break-inside: avoid;
-            }
-            .tree li {
-                padding: 12px 3px 0 3px;
-            }
-            .box-visi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
-            .box-misi  { font-size: 12px; padding: 10px; border-width: 1px; box-shadow: none; }
-            .box-tujuan { font-size: 11px; padding: 8px; box-shadow: none;}
-            .box-sasaran { font-size: 11px; padding: 8px; box-shadow: none;}
-            .box-ikt, .box-iks, .box-csf { font-size: 9px; padding: 5px; box-shadow: none;}
-            .wm-footer {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                background: #fff;
-                border-top: 1px solid #ccc;
-            }
+            .tree-node { page-break-inside: avoid; }
+            .tree li { padding: 12px 3px 0 3px; }
+
+            .box-visi   { font-size: 12px; padding: 9px 11px; box-shadow: none; }
+            .box-misi   { font-size: 11.5px; padding: 8px 10px; box-shadow: none; }
+            .box-tujuan,
+            .box-sasaran { font-size: 10.5px; padding: 7px 9px; box-shadow: none; }
+            .box-opd    { font-size: 10px; padding: 7px 9px; box-shadow: none; }
+            .box-ikt,
+            .box-iks,
+            .box-csf,
+            .box-program { font-size: 9px; padding: 4px 6px; box-shadow: none; }
+            .node-label { font-size: 7.5px; margin-bottom: 1px; }
         }
 
-        /* ===== WATERMARK FOOTER ===== */
+        /* ===== Watermark footer ===== */
         .wm-footer { display: none; }
-
         @media print {
             .wm-footer {
                 display: flex;
@@ -291,8 +162,8 @@
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            .wm-footer .wm-left  { font-style: italic; }
-            .wm-footer .wm-right { font-weight: 600; color: #aaa; }
+            .wm-footer .wm-left  { font-weight: 500; color: #555; }
+            .wm-footer .wm-right { color: #888; }
         }
     </style>
 </head>
@@ -300,7 +171,7 @@
 
     <div class="print-controls">
         <div class="fw-bold mb-2" style="font-size:13px; color:#333;">
-            <i class="fas fa-print me-1 text-primary"></i> Pengaturan Cetak
+            <i class="fas fa-print me-1 text-success"></i> Pengaturan Cetak
         </div>
 
         <label for="selectKertas">Ukuran Kertas</label>
@@ -319,17 +190,24 @@
 
         <label for="selectZoom">Zoom Pohon</label>
         <select id="selectZoom" onchange="updateZoom()">
+            <option value="fit" selected>Fit — Sesuaikan Halaman</option>
             <option value="0.35">35% — Sangat Kecil</option>
             <option value="0.45">45% — Kecil</option>
             <option value="0.55">55% — Normal</option>
-            <option value="0.65" selected>65% — Agak Besar</option>
+            <option value="0.65">65% — Agak Besar</option>
             <option value="0.70">70% — Besar</option>
             <option value="0.85">85% — Sangat Besar</option>
             <option value="1.00">100% — Penuh</option>
         </select>
 
-        <button onclick="doCetak()" class="btn btn-primary btn-sm w-100 mb-2">
+        <button onclick="doCetak()" class="btn btn-success btn-sm w-100 mb-2">
             <i class="fas fa-print"></i> Cetak Sekarang
+        </button>
+        <button onclick="unduhPDF()" id="btnPDF" class="btn btn-danger btn-sm w-100 mb-2">
+            <i class="fas fa-file-pdf"></i> Unduh PDF
+        </button>
+        <button onclick="unduhGambar()" id="btnGambar" class="btn btn-outline-success btn-sm w-100 mb-2">
+            <i class="fas fa-image"></i> Unduh Gambar (PNG)
         </button>
         <button onclick="tutupHalaman()" class="btn btn-outline-secondary btn-sm w-100">
             <i class="fas fa-times"></i> Tutup
@@ -337,140 +215,44 @@
         <div class="zoom-info" id="zoomInfo">Zoom: 65%</div>
     </div>
 
+    <?php
+    helper('setting');
+    $kopLogo   = setting_asset('kab_logo', 'assets/images/logo.png');
+    $kopAksara = setting_asset('app_logo', 'assets/images/LogoTentang.png');
+    $kopInst   = setting('instansi', 'Pemerintah Kabupaten Pringsewu');
+    $kopAlamat = trim(setting('instansi_address', ''));
+    $kopTelp   = trim(setting('instansi_phone', ''));
+    $kopEmail  = trim(setting('instansi_email', ''));
+    $kopKontak = [];
+    if ($kopAlamat !== '') { $kopKontak[] = $kopAlamat; }
+    $kopTE = trim($kopTelp . (($kopTelp && $kopEmail) ? ' · ' : '') . $kopEmail);
+    if ($kopTE !== '') { $kopKontak[] = $kopTE; }
+    ?>
+    <div id="capture-area">
     <div class="print-header">
-        <h2 class="fw-bold mb-1">POHON KINERJA</h2>
-        <p class="text-muted mb-0" style="font-size: 16px;">Periode <?= esc($tahun_mulai) ?> - <?= esc($tahun_akhir) ?></p>
+        <table class="kop-surat">
+            <tr>
+                <td class="kop-logo-l">
+                    <?php if ($kopLogo): ?><img src="<?= esc($kopLogo) ?>" alt="Lambang Kabupaten"><?php endif; ?>
+                </td>
+                <td class="kop-teks"><!-- logo saja: teks instansi dihilangkan --></td>
+                <td class="kop-logo-r">
+                    <?php if ($kopAksara): ?><img src="<?= esc($kopAksara) ?>" alt="AKSARA"><?php endif; ?>
+                </td>
+            </tr>
+        </table>
+        <h2 style="margin-top:6px;">POHON KINERJA</h2>
+        <p class="ph-sub">Cascading RPJMD &mdash; Visi &middot; Misi &middot; Tujuan &middot; Sasaran &middot; Perangkat Daerah</p>
+        <div class="ph-meta">Periode <?= esc($tahun_mulai) ?> &ndash; <?= esc($tahun_akhir) ?></div>
     </div>
 
-    <!-- LEGENDA WARNA -->
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 24px; padding: 12px 20px; background: #f8f9fa; border-radius: 10px; border: 1px solid #dee2e6;">
-        <span style="font-size: 11px; font-weight: 700; color: #555; align-self: center; margin-right: 4px;">Keterangan:</span>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #1a237e, #283593);"></div>
-            <span style="font-size: 11px; color: #333;">Visi</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #00b8a9, #008f83);"></div>
-            <span style="font-size: 11px; color: #333;">Misi</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #00897b, #00695c);"></div>
-            <span style="font-size: 11px; color: #333;">Tujuan RPJMD</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: #43a047;"></div>
-            <span style="font-size: 11px; color: #333;">Indikator Tujuan</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: linear-gradient(135deg, #6d4c41, #4e342e);"></div>
-            <span style="font-size: 11px; color: #333;">Sasaran RPJMD</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: #f57c00;"></div>
-            <span style="font-size: 11px; color: #333;">Indikator Sasaran</span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 5px;">
-            <div style="width: 20px; height: 20px; border-radius: 5px; background: #fff3e0; border: 1px solid #ffb74d;"></div>
-            <span style="font-size: 11px; color: #333;">CSF (Critical Success Factor)</span>
-        </div>
+    <?= $this->include('adminKabupaten/cascading/_pohon_tree', ['showOpd' => $showOpd ?? true]) ?>
     </div>
-
-    <div class="tree-container text-center">
-        <div class="tree" id="tree-container">
-            <ul>
-                <!-- VISI NODE (root tunggal) -->
-                <li>
-                    <div class="tree-node" style="width:280px;">
-                        <div class="box-visi">
-                            <div class="mb-1 opacity-75 small">VISI</div>
-                            <?= !empty($visi) ? esc($visi) : '<em style="opacity:.6">Visi belum diisi</em>' ?>
-                        </div>
-                    </div>
-
-                    <!-- Misi sebagai anak dari Visi -->
-                    <?php if (!empty($tree)): ?>
-                    <ul>
-                        <?php $misiNo = 0; foreach ($tree as $misi): $misiNo++; ?>
-                        <li>
-                            <!-- MISI NODE -->
-                            <div class="tree-node">
-                                <div class="box-misi">
-                                    <div class="mb-1 opacity-75 small">Misi <?= $misiNo ?></div>
-                                    <?= esc($misi['misi']) ?>
-                                </div>
-                            </div>
-
-                            <?php if (!empty($misi['tujuan'])): ?>
-                                <ul>
-                                    <?php foreach ($misi['tujuan'] as $tujuan): ?>
-                                        <li>
-                                            <!-- TUJUAN NODE -->
-                                            <div class="tree-node">
-                                                <div class="box-tujuan">
-                                                    <?= esc($tujuan['tujuan_rpjmd']) ?>
-                                                </div>
-                                                <!-- INDIKATOR TUJUAN -->
-                                                <?php foreach ($tujuan['indikator_tujuan'] as $ikt): ?>
-                                                    <div class="box-ikt">
-                                                        <?= esc($ikt['indikator_tujuan']) ?>
-                                                    </div>
-                                                <?php endforeach; ?>
-                                            </div>
-
-                                            <?php if (!empty($tujuan['sasaran'])): ?>
-                                                <ul>
-                                                    <?php foreach ($tujuan['sasaran'] as $sasaran): ?>
-                                                        <li>
-                                                            <!-- SASARAN NODE -->
-                                                            <div class="tree-node">
-                                                                <!-- CSF -->
-                                                                <?php if (!empty($sasaran['csf'])): ?>
-                                                                    <div class="box-csf">
-                                                                        <div class="opacity-75 mb-1" style="font-size:9px;">Critical Success Factor</div>
-                                                                        <?= nl2br(esc($sasaran['csf'])) ?>
-                                                                    </div>
-                                                                <?php endif; ?>
-                                                                <div class="box-sasaran">
-                                                                    <?= nl2br(esc($sasaran['sasaran_rpjmd'])) ?>
-                                                                </div>
-                                                                <!-- INDIKATOR SASARAN -->
-                                                                <?php foreach ($sasaran['indikator_sasaran'] as $iks): ?>
-                                                                    <div class="box-iks">
-                                                                        <?= esc($iks['indikator_sasaran']) ?>
-                                                                    </div>
-                                                                <?php endforeach; ?>
-                                                            </div>
-                                                        </li>
-                                                    <?php endforeach; ?>
-                                                </ul>
-                                            <?php endif; ?>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <?php endif; ?>
-                </li>
-            </ul>
-        </div>
-    </div>
-
 
     <!-- WATERMARK FOOTER -->
     <div class="wm-footer">
-        <span class="wm-left">
-            &copy; Kabupaten Pringsewu &mdash; E-Sakip &bull; Dicetak: <?= date('d/m/Y H:i') ?>
-        </span>
-        <span class="wm-right">Print by Aksara</span>
+        <span class="wm-left">Print Document by AKSARA</span>
+        <span class="wm-right">Dicetak <?= date('d/m/Y H:i') ?></span>
     </div>
 
 </body>
@@ -493,53 +275,190 @@
         document.head.appendChild(dynamicStyle);
     }
 
-    function updatePrintStyle() {
-        const kertas    = document.getElementById('selectKertas').value;
-        const orientasi = document.getElementById('selectOrientasi').value;
-        const size      = pageSizes[kertas] || pageSizes['A4'];
+    const PAGE_MARGIN_MM = 6;
 
-        const pageSize = orientasi === 'landscape'
-            ? `${size.h} ${size.w}`
-            : `${size.w} ${size.h}`;
+    function selVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 
-        dynamicStyle.textContent = `
-            @media print {
-                @page {
-                    size: ${pageSize};
-                    margin: 6mm;
-                }
-            }
-        `;
+    // Lebar area cetak (px @96dpi): kertas + orientasi - margin.
+    function printableWidthPx() {
+        const size = pageSizes[selVal('selectKertas')] || pageSizes['A4'];
+        const wMm  = parseFloat(selVal('selectOrientasi') === 'landscape' ? size.h : size.w);
+        const mm   = Math.max(20, wMm - 2 * PAGE_MARGIN_MM);
+        return mm / 25.4 * 96;
+    }
+    // Tinggi area cetak (px @96dpi).
+    function printableHeightPx() {
+        const size = pageSizes[selVal('selectKertas')] || pageSizes['A4'];
+        const hMm  = parseFloat(selVal('selectOrientasi') === 'landscape' ? size.w : size.h);
+        const mm   = Math.max(20, hMm - 2 * PAGE_MARGIN_MM);
+        return mm / 25.4 * 96;
+    }
 
-        document.getElementById('zoomInfo').textContent =
-            `${kertas} | ${orientasi === 'landscape' ? 'Landscape' : 'Portrait'} | Zoom: ${Math.round(parseFloat(document.getElementById('selectZoom').value)*100)}%`;
+    // Ukur dimensi natural pohon (px) pada skala 1 & tanpa min-width (lebar KONTEN sebenarnya).
+    function treeNaturalSize() {
+        const t = document.getElementById('tree-container');
+        if (!t) return { w: 0, h: 0 };
+        const pz = t.style.zoom, pm = t.style.minWidth;
+        t.style.zoom = '1';
+        t.style.minWidth = '0';
+        const w = t.scrollWidth, h = t.scrollHeight;
+        t.style.zoom = pz;
+        t.style.minWidth = pm;
+        return { w, h };
+    }
+
+    // Skala: manual, atau "fit" = muat SATU halaman (lebar & tinggi), maks 100%, margin aman 3%.
+    function effectiveZoom() {
+        const sel = selVal('selectZoom');
+        if (sel === 'fit') {
+            const nat = treeNaturalSize();
+            if (!nat.w) return 1;
+            const sw = (printableWidthPx()  * 0.97) / nat.w;
+            const sh = nat.h ? (printableHeightPx() * 0.97) / nat.h : sw;
+            let s = Math.min(sw, sh);
+            if (!isFinite(s) || s <= 0) s = 1;
+            return Math.min(1, Math.max(0.10, s));
+        }
+        return parseFloat(sel) || 1;
+    }
+
+    // Ukuran standar -> sintaks "A4 landscape" (lebih andal memaksa orientasi di dialog cetak).
+    const NAMED_SIZE = { 'A4': 'A4', 'A3': 'A3' };
+    function applyPageStyle() {
+        const kertas = selVal('selectKertas');
+        const ori = selVal('selectOrientasi') === 'portrait' ? 'portrait' : 'landscape';
+        let decl;
+        if (NAMED_SIZE[kertas]) {
+            decl = `${NAMED_SIZE[kertas]} ${ori}`;
+        } else {
+            const size = pageSizes[kertas] || pageSizes['A4'];
+            decl = ori === 'landscape' ? `${size.h} ${size.w}` : `${size.w} ${size.h}`;
+        }
+        dynamicStyle.textContent =
+            `@media print { @page { size: ${decl}; margin: ${PAGE_MARGIN_MM}mm; } }`;
     }
 
     function updateZoom() {
-        const zoom = parseFloat(document.getElementById('selectZoom').value);
-        document.getElementById('tree-container').style.zoom = zoom;
-        updatePrintStyle();
+        applyPageStyle();
+        const z = effectiveZoom();
+        const t = document.getElementById('tree-container');
+        if (t) t.style.zoom = z;
+        const info = document.getElementById('zoomInfo');
+        if (info) {
+            const isFit = selVal('selectZoom') === 'fit';
+            info.textContent = `${selVal('selectKertas')} | ${selVal('selectOrientasi') === 'landscape' ? 'Landscape' : 'Portrait'} | Zoom: ${(isFit ? 'Fit ' : '')}${Math.round(z * 100)}%`;
+        }
     }
 
+    // Alias lama (onchange kertas/orientasi memanggil ini) -> hitung ulang fit.
+    function updatePrintStyle() { updateZoom(); }
+
     function tutupHalaman() {
-        // Coba tutup tab; jika gagal (dibuka langsung), kembali ke halaman sebelumnya
         window.close();
-        setTimeout(() => {
-            if (!window.closed) {
-                window.history.back();
-            }
-        }, 300);
+        setTimeout(() => { if (!window.closed) { window.history.back(); } }, 300);
     }
 
     function doCetak() {
-        updatePrintStyle();
-        setTimeout(() => window.print(), 100);
+        updateZoom();
+        setTimeout(() => window.print(), 150);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        updatePrintStyle();
-        updateZoom();
-    });
+    // ============================================================
+    // Render pohon ke <canvas> full-size (html2canvas) — dipakai bersama
+    // oleh unduh PNG & unduh PDF. Sembunyikan kontrol/footer sementara.
+    // ============================================================
+    async function captureTreeCanvas() {
+        const area     = document.getElementById('capture-area');
+        const treeEl   = document.getElementById('tree-container');
+        const wrap     = document.querySelector('.tree-container');
+        const controls = document.querySelector('.print-controls');
+        const footer   = document.querySelector('.wm-footer');
+        if (!area) return null;
+
+        const st = {
+            zoom: treeEl ? treeEl.style.zoom : '',
+            ov:   wrap ? wrap.style.overflow : '',
+            ctrl: controls ? controls.style.display : '',
+            ft:   footer ? footer.style.display : ''
+        };
+        if (treeEl) treeEl.style.zoom = '1';
+        if (wrap)   wrap.style.overflow = 'visible';
+        if (controls) controls.style.display = 'none';
+        if (footer)   footer.style.display = 'none';
+
+        try {
+            const w = area.scrollWidth, h = area.scrollHeight;
+            let scale = Math.min(2, 12000 / Math.max(w, h));   // jaga kanvas < ~12000px
+            if (!isFinite(scale) || scale < 1) scale = 1;
+            return await html2canvas(area, {
+                backgroundColor: '#ffffff',
+                scale: scale,
+                useCORS: true,
+                logging: false,
+                width: w, height: h, windowWidth: w, windowHeight: h
+            });
+        } finally {
+            if (treeEl) treeEl.style.zoom = st.zoom;
+            if (wrap)   wrap.style.overflow = st.ov;
+            if (controls) controls.style.display = st.ctrl;
+            if (footer)   footer.style.display = st.ft;
+            updateZoom();
+        }
+    }
+
+    async function withButtonBusy(id, task) {
+        const btn = document.getElementById(id);
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses…'; }
+        try { await task(); }
+        finally { if (btn) { btn.disabled = false; btn.innerHTML = orig; } }
+    }
+
+    // Ekspor pohon ke gambar PNG.
+    async function unduhGambar() {
+        if (typeof html2canvas === 'undefined') { alert('Pustaka gambar belum termuat, coba lagi sebentar.'); return; }
+        await withButtonBusy('btnGambar', async () => {
+            try {
+                const canvas = await captureTreeCanvas();
+                if (!canvas) return;
+                const link = document.createElement('a');
+                link.download = 'pohon-kinerja-<?= esc($tahun_mulai) ?>-<?= esc($tahun_akhir) ?>.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (e) {
+                alert('Gagal membuat gambar: ' + (e && e.message ? e.message : e));
+            }
+        });
+    }
+
+    // Unduh langsung sebagai PDF (gambar pohon dibungkus jsPDF, 1 halaman se-ukuran pohon).
+    async function unduhPDF() {
+        if (typeof html2canvas === 'undefined') { alert('Pustaka gambar belum termuat, coba lagi sebentar.'); return; }
+        const jsPDF = (window.jspdf || {}).jsPDF;
+        if (!jsPDF) { alert('Pustaka PDF belum termuat, coba lagi sebentar.'); return; }
+        await withButtonBusy('btnPDF', async () => {
+            try {
+                const canvas = await captureTreeCanvas();
+                if (!canvas) return;
+                const imgData = canvas.toDataURL('image/png');
+                const w = canvas.width, h = canvas.height;
+                const pdf = new jsPDF({
+                    orientation: w >= h ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [w, h],
+                    compress: true
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, w, h, undefined, 'FAST');
+                pdf.save('pohon-kinerja-<?= esc($tahun_mulai) ?>-<?= esc($tahun_akhir) ?>.pdf');
+            } catch (e) {
+                alert('Gagal membuat PDF: ' + (e && e.message ? e.message : e));
+            }
+        });
+    }
+
+    window.addEventListener('beforeprint', updateZoom);
+    window.addEventListener('resize', function () { if (selVal('selectZoom') === 'fit') updateZoom(); });
+    document.addEventListener('DOMContentLoaded', updateZoom);
 </script>
 
-</html>
+</html>

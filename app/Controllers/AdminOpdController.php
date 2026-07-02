@@ -27,4 +27,12 @@ class AdminOpdController extends BaseController
             'pkStats'      => $stats['pkStats'],
         ]);
     }
+
+    /**
+     * Tentang Kami — pakai view bersama (universal untuk semua role auth).
+     */
+    public function tentang_kami()
+    {
+        return view('adminKabupaten/tentang_kami');
+    }
 }

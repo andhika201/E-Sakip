@@ -98,6 +98,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
   <?= $this->include('adminOpd/templates/header.php'); ?>
   <?= $this->include('adminOpd/templates/sidebar.php'); ?>
@@ -124,7 +125,7 @@
             <!-- Sasaran RPJMD yang dituju -->
             <div class="col-md-8">
               <label class="form-label">Sasaran RPJMD yang Dituju</label>
-              <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select select23" required>
+              <select name="rpjmd_sasaran_id" id="rpjmd_sasaran_select" class="form-select select2" required>
                 <option value="">Pilih Sasaran RPJMD</option>
                 <?php if (!empty($rpjmd_sasaran)): ?>
                   <?php foreach ($rpjmd_sasaran as $s): ?>
@@ -136,9 +137,12 @@
                     ) {
                       $selected = 'selected';
                     }
+                    $labelS = $s['sasaran_rpjmd'] ?? $s['sasaran'] ?? '';
+                    $periodeS = (!empty($s['tahun_mulai']) && !empty($s['tahun_akhir']))
+                      ? ' (' . $s['tahun_mulai'] . ' - ' . $s['tahun_akhir'] . ')' : '';
                     ?>
                     <option value="<?= esc($s['id']) ?>" <?= $selected ?>>
-                      <?= esc($s['sasaran_rpjmd'] ?? $s['sasaran']) ?>
+                      <?= esc($labelS . $periodeS) ?>
                     </option>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -358,19 +362,6 @@
                               <?php endif; ?>
                             </select>
                           </div>
-                          <div class="col-md-6">
-                            <label class="form-label">Jenis Indikator</label>
-                            <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
-                              class="form-select select2" required>
-                              <option value="">Pilih Jenis Indikator</option>
-                              <option value="positif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'positif') ? 'selected' : '' ?>>
-                                Indikator Positif (naik = baik)
-                              </option>
-                              <option value="negatif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'negatif') ? 'selected' : '' ?>>
-                                Indikator Negatif (turun = baik)
-                              </option>
-                            </select>
-                          </div>
                         </div>
 
                         <!-- Target Tahunan -->
@@ -415,6 +406,30 @@
                             ?>
                           </div>
                         </div>
+
+                        <!-- Jenis Indikator & Kondisi Awal (setelah Target, mengikuti urutan tabel) -->
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label class="form-label">Jenis Indikator</label>
+                            <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
+                              class="form-select select2" required>
+                              <option value="">Pilih Jenis Indikator</option>
+                              <option value="positif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'positif') ? 'selected' : '' ?>>
+                                Indikator Positif (naik = baik)
+                              </option>
+                              <option value="negatif" <?= (isset($ind['jenis_indikator']) && $ind['jenis_indikator'] === 'negatif') ? 'selected' : '' ?>>
+                                Indikator Negatif (turun = baik)
+                              </option>
+                            </select>
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label">Kondisi Awal (Baseline)</label>
+                            <input type="text"
+                              name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][baseline]"
+                              class="form-control" value="<?= esc($ind['baseline'] ?? '') ?>"
+                              placeholder="Kondisi awal / baseline (opsional)">
+                          </div>
+                        </div>
                       </div>
                     <?php endforeach; ?>
                   <?php else: ?>
@@ -446,15 +461,6 @@
                             <?php endif; ?>
                           </select>
                         </div>
-                        <div class="col-md-6">
-                          <label class="form-label">Jenis Indikator</label>
-                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][jenis_indikator]"
-                            class="form-select" required>
-                            <option value="">Pilih Jenis Indikator</option>
-                            <option value="positif">Indikator Positif (naik = baik)</option>
-                            <option value="negatif">Indikator Negatif (turun = baik)</option>
-                          </select>
-                        </div>
                       </div>
 
                       <div class="target-section">
@@ -474,6 +480,25 @@
                               </div>
                             </div>
                           <?php endfor; ?>
+                        </div>
+                      </div>
+
+                      <!-- Jenis Indikator & Kondisi Awal (setelah Target, mengikuti urutan tabel) -->
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <label class="form-label">Jenis Indikator</label>
+                          <select name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][jenis_indikator]"
+                            class="form-select" required>
+                            <option value="">Pilih Jenis Indikator</option>
+                            <option value="positif">Indikator Positif (naik = baik)</option>
+                            <option value="negatif">Indikator Negatif (turun = baik)</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label class="form-label">Kondisi Awal (Baseline)</label>
+                          <input type="text"
+                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][0][baseline]"
+                            class="form-control" placeholder="Kondisi awal / baseline (opsional)">
                         </div>
                       </div>
                     </div>
@@ -687,18 +712,6 @@
 
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Jenis Indikator</label>
-            <select
-              name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][jenis_indikator]"
-              class="form-select"
-              required
-            >
-              <option value="">Pilih Jenis Indikator</option>
-              <option value="positif">Indikator Positif (naik = baik)</option>
-              <option value="negatif">Indikator Negatif (turun = baik)</option>
-            </select>
-          </div>
         </div>
 
         <div class="target-section">
@@ -722,6 +735,28 @@
                 </div>
               </div>
             `).join('')}
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Jenis Indikator</label>
+            <select
+              name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][jenis_indikator]"
+              class="form-select"
+              required
+            >
+              <option value="">Pilih Jenis Indikator</option>
+              <option value="positif">Indikator Positif (naik = baik)</option>
+              <option value="negatif">Indikator Negatif (turun = baik)</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Kondisi Awal (Baseline)</label>
+            <input type="text"
+              name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][baseline]"
+              class="form-control"
+              placeholder="Kondisi awal / baseline (opsional)">
           </div>
         </div>
       </div>
@@ -867,6 +902,7 @@
       updateTahunTarget();
     });
   </script>
+    </div>
 </body>
 
 </html>

@@ -46,6 +46,12 @@ class LoginController extends BaseController
 
         // Verifikasi password
         if ($user && password_verify($password, $user['password'])) {
+            // Bila 2FA aktif: tunda login, minta kode authenticator dulu
+            if (!empty($user['two_factor_enabled'])) {
+                session()->set('twofa_user_id', $user['user_id']);
+                return redirect()->to('2fa/verify');
+            }
+
             // Simpan data sesi — JANGAN simpan password
             session()->set([
                 'user_id'   => $user['user_id'],
@@ -55,8 +61,16 @@ class LoginController extends BaseController
                 'isLoggedIn' => true,
             ]);
 
+            log_activity('login', 'auth', 'Login berhasil');
+
             return $this->redirectByRole($user['role']);
         }
+
+        log_activity('login_gagal', 'auth', 'Login gagal untuk username: ' . $username, [
+            'user_id'  => null,
+            'username' => $username,
+            'role'     => null,
+        ]);
 
         return redirect()->back()
             ->withInput()
@@ -68,6 +82,7 @@ class LoginController extends BaseController
      */
     public function logout()
     {
+        log_activity('logout', 'auth', 'Logout');
         session()->destroy();
         return redirect()->to('/login')->with('message', 'Anda telah berhasil logout.');
     }

@@ -9,9 +9,23 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->get('/unauthorized', 'Home::unauthorized');
 
+// Profil pengguna (semua role yang sudah login)
+$routes->get('/profile', 'ProfileController::index', ['filter' => 'auth']);
+
 // Change Password (semua role yang sudah login)
 $routes->get('/change-password', 'ChangePasswordController::index', ['filter' => 'auth']);
 $routes->post('/change-password/update', 'ChangePasswordController::update', ['filter' => 'auth']);
+
+// 2FA (TOTP authenticator)
+$routes->get('/2fa/setup', 'TwoFactorController::setup', ['filter' => 'auth']);
+$routes->post('/2fa/enable', 'TwoFactorController::enable', ['filter' => 'auth']);
+$routes->post('/2fa/disable', 'TwoFactorController::disable', ['filter' => 'auth']);
+
+// Analisis AI (Gemini) — semua role admin yang login
+$routes->get('/analisis-ai', 'AiAnalysisController::index', ['filter' => 'auth']);
+$routes->post('/analisis-ai/run', 'AiAnalysisController::run', ['filter' => 'auth']);
+$routes->get('/2fa/verify', 'TwoFactorController::verify');   // langkah login (belum sesi penuh)
+$routes->post('/2fa/verify', 'TwoFactorController::verifyPost');
 
 // User Routes
 $routes->get('/dashboard', 'UserController::index');
@@ -69,6 +83,9 @@ $routes->group(
         $routes->get('dashboard', 'AdminKabupatenController::dashboard');
         $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData');
 
+        // Evaluasi Kinerja (Inspektorat) — placeholder
+        $routes->get('evaluasi_inspektorat', 'AdminKabupatenController::evaluasi_inspektorat');
+
         // Lakip
         $routes->get('lakip', 'AdminKab\LakipController::index');
         $routes->get('lakip/tambah/(:num)', 'AdminKab\LakipController::tambah/$1');
@@ -89,6 +106,9 @@ $routes->group(
         $routes->post('iku/update', 'AdminKab\IkuController::update');
         // route untuk ubah status IKU
         $routes->get('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
+
+        // Catatan: seluruh rute Pegawai (kelola + sinkron SIMPEG/SIKASN) dipindah
+        // ke grup khusus super admin (auth:admin) di bawah.
 
         // RPJMD
         $routes->get('rpjmd', 'RpjmdController::index');
@@ -126,13 +146,33 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminKab\RktController::delete/$1');
         $routes->post('rkt/update-status', 'AdminKab\RktController::updateStatus');
 
-        //MONEV
-        $routes->get('monev', 'AdminKab\MonevController::index');
-        $routes->get('monev/tambah', 'AdminKab\MonevController::tambah');
-        $routes->post('monev/save', 'AdminKab\MonevController::save');
-        $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
-        $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
-        $routes->get('monev/cetak', 'AdminKab\MonevController::cetak');
+        //MONEV -> dipakai modul PK Bupati (renaksi). URL bersih: adminkab/monev.
+        // RENSTRA monev lama (AdminKab\MonevController) dipensiunkan utk admin_kab.
+        $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/bupati/$1');
+        $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/bupati');
+        $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/bupati');
+        $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/bupati');
+        // $routes->get('monev/tambah', 'AdminKab\MonevController::tambah');
+        // $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
+        // $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
+
+        // Target & Rencana Aksi (PK Bupati) - URL bersih: adminkab/target_renaksi
+        $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/bupati');
+        $routes->post('target_renaksi/save', 'AdminOpd\PkRenaksiController::save/bupati');
+        $routes->get('target_renaksi/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/bupati/$1');
+        $routes->post('target_renaksi/update/(:num)', 'AdminOpd\PkRenaksiController::update/bupati/$1');
+        $routes->get('target_renaksi', 'AdminOpd\PkRenaksiController::index/bupati');
+
+        // Rencana Aksi & MONEV PK Bupati (jenis = bupati). Route spesifik sebelum (:any).
+        $routes->get('renaksi_pk/(:any)/tambah', 'AdminOpd\PkRenaksiController::tambah/$1');
+        $routes->post('renaksi_pk/(:any)/save', 'AdminOpd\PkRenaksiController::save/$1');
+        $routes->get('renaksi_pk/(:any)/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/$1/$2');
+        $routes->post('renaksi_pk/(:any)/update/(:num)', 'AdminOpd\PkRenaksiController::update/$1/$2');
+        $routes->get('renaksi_pk/(:any)', 'AdminOpd\PkRenaksiController::index/$1');
+        $routes->get('monev_pk/(:any)/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/$1/$2');
+        $routes->post('monev_pk/(:any)/save', 'AdminOpd\PkRenaksiController::monevSave/$1');
+        $routes->get('monev_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetak/$1');
+        $routes->get('monev_pk/(:any)', 'AdminOpd\PkRenaksiController::monev/$1');
 
 
         // target
@@ -153,15 +193,8 @@ $routes->group(
         $routes->post('lakip_kabupaten/update-status', 'LakipKabupatenController::updateStatus');
         $routes->match(['get', 'post', 'delete'], 'lakip_kabupaten/delete/(:num)', 'LakipKabupatenController::delete/$1');
 
-        // Program PK
-        $routes->get('program_pk', 'ProgramPkController::index');
-        $routes->get('program_pk/tambah', 'ProgramPkController::tambah');
-        $routes->get('program_pk/import', 'ProgramPkController::import');
-        $routes->post('program_pk/import/process', 'ProgramPkController::processImport');
-        $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
-        $routes->post('program_pk/save', 'ProgramPkController::save');
-        $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
-        $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
+        // Program PK (master) dipindah ke grup super admin (auth:admin) di bawah.
+
         // Tentang Kami
         $routes->get('tentang_kami', 'AdminKabupatenController::tentang_kami');
         $routes->get('tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
@@ -169,6 +202,65 @@ $routes->group(
     }
 );
 
+
+// ===== SUPER ADMIN: Master Data (satu tampilan tabbed) — khusus role 'admin' =====
+$routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
+    // Pengaturan Aplikasi — KHUSUS super admin
+    $routes->get('pengaturan', 'SettingController::index');
+    $routes->post('pengaturan/save', 'SettingController::save');
+
+    // Master Program / Kegiatan / Sub Kegiatan PK (per tahun) — KHUSUS super admin
+    $routes->get('program_pk', 'ProgramPkController::index');
+    $routes->get('program_pk/tambah', 'ProgramPkController::tambah');
+    $routes->get('program_pk/import', 'ProgramPkController::import');
+    $routes->get('program_pk/template', 'ProgramPkController::template');
+    $routes->post('program_pk/import/process', 'ProgramPkController::processImport');
+    $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
+    $routes->post('program_pk/save', 'ProgramPkController::save');
+    $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
+    $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
+
+    $routes->get('master', 'SuperAdmin\MasterController::index');
+    $routes->get('master/pegawai-data', 'SuperAdmin\MasterController::pegawaiData'); // DataTables server-side
+
+    // Kelola Pegawai (jabatan & OPD) — KHUSUS super admin
+    $routes->get('pegawai', 'AdminKab\PegawaiController::index');
+    $routes->get('pegawai/edit/(:num)', 'AdminKab\PegawaiController::edit/$1');
+    $routes->post('pegawai/update/(:num)', 'AdminKab\PegawaiController::update/$1');
+    $routes->get('pegawai/jabatan', 'AdminKab\PegawaiController::jabatan');
+    $routes->post('pegawai/jabatan/update/(:num)', 'AdminKab\PegawaiController::updateJabatan/$1');
+
+    // Sinkron SIMPEG/SIKASN — KHUSUS super admin (OPD, Pangkat, Jabatan, Pegawai)
+    $routes->get('pegawai/sync', 'AdminKab\PegawaiController::sync');
+    $routes->post('pegawai/sync/run', 'AdminKab\PegawaiController::runSync');
+
+    // Log Aktivitas Pengguna — KHUSUS super admin
+    $routes->get('log-aktivitas', 'AdminKab\ActivityLogController::index');
+    $routes->get('log-aktivitas/pdf', 'AdminKab\ActivityLogController::pdf');
+    $routes->post('log-aktivitas/clear', 'AdminKab\ActivityLogController::clearOld');
+
+    $routes->post('master/pegawai/save', 'SuperAdmin\MasterController::pegawaiSave');
+    $routes->match(['get', 'post', 'delete'], 'master/pegawai/delete/(:num)', 'SuperAdmin\MasterController::pegawaiDelete/$1');
+
+    $routes->post('master/pangkat/save', 'SuperAdmin\MasterController::pangkatSave');
+    $routes->match(['get', 'post', 'delete'], 'master/pangkat/delete/(:num)', 'SuperAdmin\MasterController::pangkatDelete/$1');
+
+    $routes->post('master/jabatan/save', 'SuperAdmin\MasterController::jabatanSave');
+    $routes->match(['get', 'post', 'delete'], 'master/jabatan/delete/(:num)', 'SuperAdmin\MasterController::jabatanDelete/$1');
+
+    $routes->post('master/opd/save', 'SuperAdmin\MasterController::opdSave');
+    $routes->match(['get', 'post', 'delete'], 'master/opd/delete/(:num)', 'SuperAdmin\MasterController::opdDelete/$1');
+
+    $routes->post('master/user/save', 'SuperAdmin\MasterController::userSave');
+    $routes->match(['get', 'post', 'delete'], 'master/user/delete/(:num)', 'SuperAdmin\MasterController::userDelete/$1');
+
+    $routes->post('master/role/save', 'SuperAdmin\MasterController::roleSave');
+    $routes->match(['get', 'post', 'delete'], 'master/role/delete/(:num)', 'SuperAdmin\MasterController::roleDelete/$1');
+    $routes->post('master/role/permissions', 'SuperAdmin\MasterController::rolePermSave');
+
+    $routes->post('master/satuan/save', 'SuperAdmin\MasterController::satuanSave');
+    $routes->match(['get', 'post', 'delete'], 'master/satuan/delete/(:num)', 'SuperAdmin\MasterController::satuanDelete/$1');
+});
 
 $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($routes) {
     // PK Generic Controller (slash-based, for compatibility with button href)
@@ -221,13 +313,33 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($rout
     $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
     $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
 
-    //MONEV
-    $routes->get('monev', 'AdminOpd\MonevController::index');
-    $routes->get('monev/tambah', 'AdminOpd\MonevController::tambah');
-    $routes->post('monev/save', 'AdminOpd\MonevController::save');
-    $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
-    $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
-    $routes->get('monev/cetak', 'AdminOpd\MonevController::cetak');
+    //MONEV -> dipakai modul PK Eselon II/III/IV (renaksi). URL bersih: adminopd/monev.
+    // RENSTRA monev lama (AdminOpd\MonevController) dipensiunkan utk admin_opd.
+    $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/es3/$1');
+    $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/es3');
+    $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/es3');
+    $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/es3');
+    // $routes->get('monev/tambah', 'AdminOpd\MonevController::tambah');
+    // $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
+    // $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
+
+    // Target & Rencana Aksi (PK Eselon II/III/IV) - URL bersih: adminopd/target_renaksi
+    $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/es3');
+    $routes->post('target_renaksi/save', 'AdminOpd\PkRenaksiController::save/es3');
+    $routes->get('target_renaksi/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/es3/$1');
+    $routes->post('target_renaksi/update/(:num)', 'AdminOpd\PkRenaksiController::update/es3/$1');
+    $routes->get('target_renaksi', 'AdminOpd\PkRenaksiController::index/es3');
+
+    // Rencana Aksi & MONEV PK Eselon III (jenis = es3). Route spesifik sebelum (:any).
+    $routes->get('renaksi_pk/(:any)/tambah', 'AdminOpd\PkRenaksiController::tambah/$1');
+    $routes->post('renaksi_pk/(:any)/save', 'AdminOpd\PkRenaksiController::save/$1');
+    $routes->get('renaksi_pk/(:any)/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/$1/$2');
+    $routes->post('renaksi_pk/(:any)/update/(:num)', 'AdminOpd\PkRenaksiController::update/$1/$2');
+    $routes->get('renaksi_pk/(:any)', 'AdminOpd\PkRenaksiController::index/$1');
+    $routes->get('monev_pk/(:any)/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/$1/$2');
+    $routes->post('monev_pk/(:any)/save', 'AdminOpd\PkRenaksiController::monevSave/$1');
+    $routes->get('monev_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetak/$1');
+    $routes->get('monev_pk/(:any)', 'AdminOpd\PkRenaksiController::monev/$1');
 
 
     // Lakip OPD

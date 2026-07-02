@@ -98,6 +98,7 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
     <?= $this->include('adminOpd/templates/header.php'); ?>
     <?= $this->include('adminOpd/templates/sidebar.php'); ?>
@@ -355,6 +356,13 @@
                                                     <option value="positif" <?= $ind['jenis_indikator']=='positif'?'selected':'' ?>>Positif</option>
                                                     <option value="negatif" <?= $ind['jenis_indikator']=='negatif'?'selected':'' ?>>Negatif</option>
                                                     </select>
+
+                                                <label class="form-label mt-2">Kondisi Awal (Baseline)</label>
+                                                <input type="text"
+                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][baseline]"
+                                                    class="form-control mb-2"
+                                                    value="<?= esc($ind['baseline'] ?? '') ?>"
+                                                    placeholder="Kondisi awal / baseline (opsional)">
 
                                                 <!-- ================= TARGET ================= -->
 
@@ -617,6 +625,16 @@
           </div>
         </div>
 
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Kondisi Awal (Baseline)</label>
+            <input type="text"
+              name="sasaran_renstra[${sIndex}][indikator_sasaran][${iIndex}][baseline]"
+              class="form-control"
+              placeholder="Kondisi awal / baseline (opsional)">
+          </div>
+        </div>
+
         <div class="target-section">
           <h5 class="fw-medium mb-3">Target Sasaran per Tahun</h5>
           <div class="target-container">
@@ -783,6 +801,7 @@
             updateTahunTarget();
         });
     </script>
+    </div>
 </body>
 
 </html>

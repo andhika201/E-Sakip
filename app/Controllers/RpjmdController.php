@@ -78,6 +78,19 @@ class RpjmdController extends BaseController
             $groupedData[$periodKey]['misi_data'][] = $misi;
         }
 
+        // Urutkan misi per periode berdasarkan VISI agar baris dengan visi sama
+        // berurutan/berdampingan (syarat untuk menggabungkan sel VISI via rowspan).
+        foreach ($groupedData as &$g) {
+            usort($g['misi_data'], static function ($a, $b) {
+                $va = (int) ($a['rpjmd_visi_id'] ?? 0);
+                $vb = (int) ($b['rpjmd_visi_id'] ?? 0);
+                return ($va === $vb)
+                    ? ((int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0))
+                    : ($va <=> $vb);
+            });
+        }
+        unset($g);
+
         // Urutkan key periode
         ksort($groupedData);
 
@@ -113,6 +126,10 @@ class RpjmdController extends BaseController
         $data['indikator_sasaran_list'] = $this->rpjmdModel->getAllIndikatorSasaran();
         $data['satuan_list'] = \Config\Database::connect()->table('satuan')->get()->getResultArray();
 
+        // Daftar VISI yang sudah ada — agar 1 visi bisa dipakai banyak misi
+        $data['visi_list'] = \Config\Database::connect()->table('rpjmd_visi')
+            ->orderBy('id', 'ASC')->get()->getResultArray();
+
         return view('adminKabupaten/rpjmd/tambah_rpjmd', $data);
     }
 
@@ -125,11 +142,23 @@ class RpjmdController extends BaseController
             $post = $this->request->getPost();
 
             /* =======================
-             |  SIMPAN VISI
+             |  SIMPAN / PILIH VISI
+             |  1 visi bisa dipakai banyak misi:
+             |  - visi_id terpilih  -> pakai visi lama (boleh perbarui teksnya)
+             |  - tanpa visi_id     -> buat visi baru dari teks
              ======================= */
-            $visiText = trim($post['visi'] ?? '');
-            $visiId   = null;
-            if ($visiText !== '') {
+            $visiSelectedId = (int) ($post['visi_id'] ?? 0);
+            $visiText       = trim($post['visi'] ?? '');
+            $visiId         = null;
+            if ($visiSelectedId > 0) {
+                $visiId = $visiSelectedId;
+                if ($visiText !== '') {
+                    $db->table('rpjmd_visi')->where('id', $visiId)->update([
+                        'visi'       => $visiText,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            } elseif ($visiText !== '') {
                 $db->table('rpjmd_visi')->insert([
                     'visi'       => $visiText,
                     'created_at' => date('Y-m-d H:i:s'),
@@ -198,7 +227,7 @@ class RpjmdController extends BaseController
                         $db->table('rpjmd_indikator_sasaran')->insert([
                             'sasaran_id' => $sasaranId,
                             'indikator_sasaran' => $is['indikator_sasaran'],
-                            'definisi_op' => $is['definisi_op'],
+                            'definisi_op' => $is['definisi_op'] ?? null,
                             'satuan' => $is['satuan'],
                             'jenis_indikator' => $is['jenis_indikator']
                         ]);
@@ -285,6 +314,10 @@ class RpjmdController extends BaseController
         $data['indikator_sasaran_list'] = $this->rpjmdModel->getAllIndikatorSasaran();
         $data['satuan_list'] = \Config\Database::connect()->table('satuan')->get()->getResultArray();
 
+        // Daftar VISI yang sudah ada — agar 1 visi bisa dipakai banyak misi
+        $data['visi_list'] = \Config\Database::connect()->table('rpjmd_visi')
+            ->orderBy('id', 'ASC')->get()->getResultArray();
+
         return view('adminKabupaten/rpjmd/edit_rpjmd', $data);
     }
 
@@ -319,13 +352,25 @@ class RpjmdController extends BaseController
             }
 
             /* =======================
-             |  UPDATE VISI
+             |  UPDATE / PILIH VISI
+             |  - visi_id terpilih -> arahkan misi ke visi itu (boleh perbarui teksnya)
+             |  - tanpa visi_id     -> perbarui visi lama / buat baru dari teks
              ======================= */
-            $visiText     = trim($post['visi'] ?? '');
+            $visiSelectedId = (int) ($post['visi_id'] ?? 0);
+            $visiText       = trim($post['visi'] ?? '');
             $currentMisiRow = $db->table('rpjmd_misi')->where('id', $misiId)->get()->getRowArray();
             $existingVisiId = $currentMisiRow['rpjmd_visi_id'] ?? null;
 
-            if ($visiText !== '') {
+            if ($visiSelectedId > 0) {
+                // Pakai visi yang dipilih (boleh berbeda dari sebelumnya)
+                $newVisiId = $visiSelectedId;
+                if ($visiText !== '') {
+                    $db->table('rpjmd_visi')->where('id', $newVisiId)->update([
+                        'visi'       => $visiText,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            } elseif ($visiText !== '') {
                 if ($existingVisiId) {
                     // update visi yang sudah ada
                     $db->table('rpjmd_visi')->where('id', $existingVisiId)->update([
@@ -455,18 +500,22 @@ class RpjmdController extends BaseController
                     foreach ($indikatorSasaran as $is) {
                         $isIdKey = !empty($is['id']) ? (int) $is['id'] : null;
                         if ($isIdKey) {
-                            $db->table('rpjmd_indikator_sasaran')->where('id', $isIdKey)->update([
+                            $updateIs = [
                                 'indikator_sasaran'   => $is['indikator_sasaran'],
-                                'definisi_op'         => $is['definisi_op'],
                                 'satuan'              => $is['satuan'],
                                 'jenis_indikator'     => $is['jenis_indikator'],
-                            ]);
+                            ];
+                            // Definisi Operasional dinonaktifkan di form — pertahankan nilai lama bila tidak dikirim
+                            if (isset($is['definisi_op'])) {
+                                $updateIs['definisi_op'] = $is['definisi_op'];
+                            }
+                            $db->table('rpjmd_indikator_sasaran')->where('id', $isIdKey)->update($updateIs);
                             $isId = $isIdKey;
                         } else {
                             $db->table('rpjmd_indikator_sasaran')->insert([
                                 'sasaran_id'          => $sasaranId,
                                 'indikator_sasaran'   => $is['indikator_sasaran'],
-                                'definisi_op'         => $is['definisi_op'],
+                                'definisi_op'         => $is['definisi_op'] ?? null,
                                 'satuan'              => $is['satuan'],
                                 'jenis_indikator'     => $is['jenis_indikator'],
                             ]);

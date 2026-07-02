@@ -193,6 +193,8 @@ class IkuController extends BaseController
             // ============================
             $rules = [
                 'definisi' => 'required|string|max_length[10000]|' . $rx,
+                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
                 'rpjmd_id' => 'permit_empty|integer',
                 'renstra_indikator_sasaran_id' => 'permit_empty|integer',
             ];
@@ -201,6 +203,12 @@ class IkuController extends BaseController
                 'definisi' => [
                     'required' => 'Definisi IKU wajib diisi.',
                     'regex_match' => 'Definisi IKU terdeteksi mengandung script / input berbahaya.',
+                ],
+                'rumusan_perhitungan' => [
+                    'regex_match' => 'Formula/Rumusan terdeteksi mengandung script / input berbahaya.',
+                ],
+                'sumber_data' => [
+                    'regex_match' => 'Sumber Data terdeteksi mengandung script / input berbahaya.',
                 ],
             ];
             if (!$this->validate($rules, $messages)) {
@@ -222,6 +230,9 @@ class IkuController extends BaseController
 
             $this->ikuModel->createCompleteIku([
                 'definisi'         => $data['definisi'],
+                'rumusan_perhitungan' => trim($data['rumusan_perhitungan'] ?? '') ?: null,
+                'sumber_data'      => trim($data['sumber_data'] ?? '') ?: null,
+                'penanggung_jawab' => trim($data['penanggung_jawab'] ?? '') ?: null,
                 'rpjmd_id'         => $data['rpjmd_id'] ?? null,
                 'renstra_id'       => $data['renstra_indikator_sasaran_id'] ?? null,
                 'status'           => 'draft',
@@ -308,12 +319,20 @@ class IkuController extends BaseController
             $rules = [
                 'iku_id' => 'required|integer',
                 'definisi' => 'required|string|max_length[10000]|' . $rx,
+                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
             ];
 
             $messages = [
                 'definisi' => [
                     'required' => 'Definisi IKU wajib diisi.',
                     'regex_match' => 'Definisi IKU terdeteksi mengandung script / input berbahaya.',
+                ],
+                'rumusan_perhitungan' => [
+                    'regex_match' => 'Formula/Rumusan terdeteksi mengandung script / input berbahaya.',
+                ],
+                'sumber_data' => [
+                    'regex_match' => 'Sumber Data terdeteksi mengandung script / input berbahaya.',
                 ],
             ];
 
@@ -334,14 +353,19 @@ class IkuController extends BaseController
             // Update definisi IKU
             $updateData = [
                 'definisi' => $data['definisi'] ?? null,
+                'rumusan_perhitungan' => trim($data['rumusan_perhitungan'] ?? '') ?: null,
+                'sumber_data' => trim($data['sumber_data'] ?? '') ?: null,
+                'penanggung_jawab' => trim($data['penanggung_jawab'] ?? '') ?: null,
             ];
             $this->ikuModel->updateIku($ikuId, $updateData, 'id');
 
-            // Update program pendukung (bisa tambah / edit / hapus)
-            $programs = $data['program_pendukung'] ?? [];
-            $programIds = $data['program_id'] ?? [];
-
-            $this->ikuModel->updateProgramPendukung($ikuId, $programs, $programIds);
+            // Update program pendukung — input dinonaktifkan di form, jadi hanya
+            // diproses bila benar-benar dikirim (pertahankan data lama).
+            $programs = $data['program_pendukung'] ?? null;
+            if ($programs !== null) {
+                $programIds = $data['program_id'] ?? [];
+                $this->ikuModel->updateProgramPendukung($ikuId, $programs, $programIds);
+            }
 
             session()->setFlashdata('success', 'Data IKU berhasil diperbarui');
         } catch (\Throwable $e) {

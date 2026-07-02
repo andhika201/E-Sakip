@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\DashboardKabupatenModel;
+use App\Models\Opd\MonevModel;
 
 class AdminKabupatenController extends BaseController
 {
@@ -14,10 +15,18 @@ class AdminKabupatenController extends BaseController
         $dashboard_data = $dash->getDashboardData(null, null);
         $summary_stats = $dash->getSummaryStats();
 
+        // Rollup realisasi PK (Bupati & Eselon III) lewat rencana aksi + MONEV
+        $monev = new MonevModel();
+        $pk_rollup = [
+            'bupati' => $monev->getPkRealisasiRollup('bupati'),
+            'es3'    => $monev->getPkRealisasiRollup('administrator'),
+        ];
+
         return view('adminKabupaten/dashboard', [
             'title' => 'Dashboard e-SAKIP',
             'dashboard_data' => $dashboard_data,
             'summary_stats' => $summary_stats,
+            'pk_rollup' => $pk_rollup,
         ]);
     }
 
@@ -72,6 +81,11 @@ class AdminKabupatenController extends BaseController
     public function save_pk_bupati()
     {
         return redirect()->to(base_url('adminkab/pk_bupati'));
+    }
+
+    public function evaluasi_inspektorat()
+    {
+        return view('adminKabupaten/evaluasi/evaluasi_inspektorat');
     }
 
     public function lakip_kabupaten()

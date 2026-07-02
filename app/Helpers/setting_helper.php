@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * Helper Pengaturan Aplikasi (app_settings).
+ * Membaca konfigurasi web (nama, instansi, logo, favicon, SEO, dll) dari DB
+ * dengan cache per-request. Defensif: jika tabel belum ada, kembalikan default.
+ */
+
+if (!function_exists('settings_all')) {
+    function settings_all(): array
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        $cache = [];
+        try {
+            $db = \Config\Database::connect();
+            if ($db->tableExists('app_settings')) {
+                foreach ($db->table('app_settings')->get()->getResultArray() as $row) {
+                    $cache[$row['skey']] = $row['svalue'];
+                }
+            }
+        } catch (\Throwable $e) {
+            $cache = [];
+        }
+        return $cache;
+    }
+}
+
+if (!function_exists('setting')) {
+    /**
+     * Ambil satu nilai pengaturan.
+     */
+    function setting(string $key, string $default = ''): string
+    {
+        $all = settings_all();
+        $val = $all[$key] ?? null;
+        return ($val === null || $val === '') ? $default : $val;
+    }
+}
+
+if (!function_exists('setting_asset')) {
+    /**
+     * URL aset dari pengaturan (logo/favicon). Kembalikan base_url(path) bila ada.
+     */
+    function setting_asset(string $key, string $default = ''): string
+    {
+        $path = setting($key, $default);
+        return $path ? base_url($path) : '';
+    }
+}
+
+if (!function_exists('pdf_footer_aksara')) {
+    /**
+     * Footer standar untuk semua dokumen cetak PDF (Mpdf): "Print Document by AKSARA"
+     * di kiri + nomor halaman di kanan. Placeholder {PAGENO}/{nbpg} diisi Mpdf.
+     */
+    function pdf_footer_aksara(): string
+    {
+        return '<table width="100%" style="font-size:8pt; color:#777; border-top:0.5px solid #bbb; padding-top:3px;">'
+            . '<tr><td>Print Document by AKSARA</td>'
+            . '<td style="text-align:right;">Halaman {PAGENO} dari {nbpg}</td></tr></table>';
+    }
+}

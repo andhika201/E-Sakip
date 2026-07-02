@@ -31,6 +31,7 @@ class CascadingController extends BaseController
 
         $rows = [];
         $years = [];
+        $tree = [];
 
         if ($periode) {
 
@@ -46,6 +47,9 @@ class CascadingController extends BaseController
 
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
+
+            // Pohon Kinerja OPD tampil inline (tidak harus klik cetak)
+            $tree = $this->buildOpdTree($rows);
         }
         $data = [
             'rows' => $rows,
@@ -53,6 +57,8 @@ class CascadingController extends BaseController
             'firstShow' => $firstShow ?? [],
             'periode_master' => $periodeList,
             'years' => $years,
+            'tree' => $tree,
+            'opd_missing' => empty($this->opdId),
             'filters' => [
                 'periode' => $periode
             ]
@@ -104,6 +110,8 @@ class CascadingController extends BaseController
             'margin_footer' => 0,
             'tempDir'       => sys_get_temp_dir()
         ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 
@@ -142,9 +150,13 @@ class CascadingController extends BaseController
             ->get()->getRowArray();
         $visi = $firstMisi['visi'] ?? '';
 
+        $o       = $this->db->table('opd')->select('nama_opd')->where('id', $this->opdId)->get()->getRowArray();
+        $namaOpd = $o['nama_opd'] ?? '';
+
         return view('adminOpd/cascading/pohon_kinerja_cetak', [
             'tree'        => $tree,
             'visi'        => $visi,
+            'nama_opd'    => $namaOpd,
             'tahun_mulai' => $start,
             'tahun_akhir' => $end,
             'periode'     => $periode

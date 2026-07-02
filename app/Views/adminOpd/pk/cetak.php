@@ -285,7 +285,7 @@
               <tr>
                 <td class="signature-meta">
                   <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
-                  <?php if (strtolower($jenis) !== 'jpt'): ?>
+                  <?php if (!in_array(strtolower($jenis), ['jpt', 'camat'], true)): ?>
                     <p>NIP. <?= esc($nip_pihak_2) ?></p>
                   <?php endif; ?>
                 </td>

@@ -30,8 +30,8 @@
             </div>
             <div class="table-responsive">
                 <?php if (isset($pk_data['jenis']) && $pk_data['jenis'] === $jenis): ?>
-                    <!-- Tabel Misi Bupati untuk jenis JPT -->
-                    <?php if (!empty($pk_data['id']) && strtolower($jenis) === 'jpt'): ?>
+                    <!-- Tabel Misi Bupati untuk jenis JPT / Camat -->
+                    <?php if (!empty($pk_data['id']) && in_array(strtolower($jenis), ['jpt', 'camat'], true)): ?>
                         <?php $misiBupati = model('App\\Models\\RpjmdModel')->getAllMisi(); ?>
                         <?php $pkMisiRows = model('App\\Models\\PkModel')->db->table('pk_misi')->where('pk_id', $pk_data['id'])->get()->getResultArray(); ?>
                         <?php if (!empty($pkMisiRows)): ?>
@@ -60,7 +60,7 @@
                         <?php endif; ?>
                     <?php endif; ?>
                     <!-- Tabel Indikator Acuan (Referensi) -->
-                    <?php if (!empty($pk_data['id']) && strtolower($jenis) !== 'jpt'): ?>
+                    <?php if (!empty($pk_data['id']) && !in_array(strtolower($jenis), ['jpt', 'camat'], true)): ?>
                         <?php $indikatorAcuan = model('App\\Models\\PkModel')->getIndikatorAcuanByPkId($pk_data['id']); ?>
                         <?php if (!empty($indikatorAcuan)): ?>
                             <h4 class="h5 fw-bold text-primary text-left mb-2">Indikator Acuan (Referensi)</h4>

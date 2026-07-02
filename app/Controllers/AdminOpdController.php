@@ -35,4 +35,12 @@ class AdminOpdController extends BaseController
     {
         return view('adminKabupaten/tentang_kami');
     }
+
+    /**
+     * Evaluasi Kinerja: Evaluasi Inspektorat (stub "Segera Hadir") — versi OPD/Kecamatan.
+     */
+    public function evaluasi_inspektorat()
+    {
+        return view('adminOpd/evaluasi/evaluasi_inspektorat');
+    }
 }

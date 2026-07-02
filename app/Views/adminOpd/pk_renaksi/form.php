@@ -65,8 +65,8 @@ $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
                     </div>
                 <?php endif; ?>
                 <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label class="form-label">Sasaran PK</label>
+                    <div class="col-md-12">S
+                        <label class="form-label">Sasaran</label>
                         <input type="text" class="form-control" value="<?= esc($ctx['sasaran_renstra'] ?? '-') ?>" readonly>
                     </div>
                 </div>

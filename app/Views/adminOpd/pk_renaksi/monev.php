@@ -161,7 +161,7 @@ $filterQs = http_build_query(array_filter([
                             <th rowspan="2">No</th>
                             <?php if ($showOpd): ?><th rowspan="2">OPD</th><?php endif; ?>
                             <?php if ($showPejabat): ?><th rowspan="2">Pejabat (Eselon)</th><?php endif; ?>
-                            <th rowspan="2">Sasaran PK</th>
+                            <th rowspan="2">Sasaran</th>
                             <th rowspan="2">Indikator</th>
                             <th rowspan="2">Satuan</th>
                             <th rowspan="2">Rencana Aksi</th>
@@ -181,19 +181,35 @@ $filterQs = http_build_query(array_filter([
                         <?php if (!empty($grouped)): ?>
                             <?php
                             $no = 1;
-                            // Total baris per OPD -> nomor & kolom OPD digabung (rowspan) per OPD (mode admin_kab).
+                            // Pisah teks rencana aksi menjadi daftar item (1 baris = 1 item) — samakan dgn Target Rencana Aksi.
+                            $splitAksi = function ($text) {
+                                $text = trim((string) $text);
+                                if ($text === '') return [];
+                                $lines = preg_split('/\r\n|\r|\n/', $text);
+                                return array_values(array_filter(array_map('trim', $lines), fn($l) => $l !== ''));
+                            };
+                            // Total baris (item renaksi) per OPD -> nomor & kolom OPD digabung (rowspan) per OPD (mode admin_kab).
                             $opdTotals = [];
                             if ($showOpd) {
                                 foreach ($grouped as $gr) {
                                     $ok = $gr[0]['opd_id'] ?? ($gr[0]['nama_opd'] ?? '-');
-                                    $opdTotals[$ok] = ($opdTotals[$ok] ?? 0) + count($gr);
+                                    $t  = 0;
+                                    foreach ($gr as $grRow) { $t += max(1, count($splitAksi($grRow['rencana_aksi'] ?? ''))); }
+                                    $opdTotals[$ok] = ($opdTotals[$ok] ?? 0) + $t;
                                 }
                             }
                             $curOpdKey = null;
                             ?>
                             <?php foreach ($grouped as $rows): ?>
                                 <?php
-                                $rowspan = count($rows);
+                                // jumlah baris per indikator = jumlah item renaksi (min 1); total utk rowspan sasaran/pejabat/PD
+                                $indCounts = [];
+                                $sasTotal  = 0;
+                                foreach ($rows as $ri => $r) {
+                                    $c = max(1, count($splitAksi($r['rencana_aksi'] ?? '')));
+                                    $indCounts[$ri] = $c;
+                                    $sasTotal += $c;
+                                }
                                 $printed = false;
                                 $pdPrinted = false;
                                 $sasaran = $rows[0]['sasaran_renstra'] ?? '-';
@@ -207,8 +223,10 @@ $filterQs = http_build_query(array_filter([
                                 $opdKey  = $rows[0]['opd_id'] ?? ($rows[0]['nama_opd'] ?? '-');
                                 $newOpd  = ($showOpd && $opdKey !== $curOpdKey);
                                 ?>
-                                <?php foreach ($rows as $row): ?>
+                                <?php foreach ($rows as $ri => $row): ?>
                                     <?php
+                                    $items  = $splitAksi($row['rencana_aksi'] ?? '');
+                                    $n      = $indCounts[$ri];
                                     $target = $toNum($row['indikator_target'] ?? null);
                                     $total  = $toNum($row['monev_total'] ?? null);
                                     $pct    = ($target && $total !== null) ? round($total / $target * 100, 1) : null;
@@ -217,84 +235,94 @@ $filterQs = http_build_query(array_filter([
                                         $badge = $pct >= 100 ? 'success' : ($pct >= 75 ? 'info' : ($pct >= 50 ? 'warning' : 'danger'));
                                     }
                                     ?>
-                                    <tr>
-                                        <?php if ($showOpd): ?>
-                                            <?php if ($newOpd): ?>
-                                                <td rowspan="<?= $opdTotals[$opdKey] ?? $rowspan ?>"><?= $no ?></td>
-                                                <td rowspan="<?= $opdTotals[$opdKey] ?? $rowspan ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
-                                                <?php $curOpdKey = $opdKey; $no++; $newOpd = false; ?>
+                                    <?php for ($k = 0; $k < $n; $k++): ?>
+                                        <tr>
+                                            <?php if ($showOpd): ?>
+                                                <?php if ($newOpd): ?>
+                                                    <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>"><?= $no ?></td>
+                                                    <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
+                                                    <?php $curOpdKey = $opdKey; $no++; $newOpd = false; ?>
+                                                <?php endif; ?>
+                                            <?php elseif ($k === 0): ?>
+                                                <td rowspan="<?= $n ?>"><?= $no++ ?></td>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <td><?= $no++ ?></td>
-                                        <?php endif; ?>
-                                        <?php if (!$printed): ?>
-                                            <?php if ($showPejabat): ?>
-                                                <td rowspan="<?= $rowspan ?>" class="text-start">
-                                                    <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></div>
-                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '')) ?></span>
+                                            <?php if (!$printed): ?>
+                                                <?php if ($showPejabat): ?>
+                                                    <td rowspan="<?= $sasTotal ?>" class="text-start">
+                                                        <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></div>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '')) ?></span>
+                                                    </td>
+                                                <?php endif; ?>
+                                                <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
+                                                <?php $printed = true; ?>
+                                            <?php endif; ?>
+                                            <?php if ($k === 0): ?>
+                                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['satuan'] ?? '-') ?></td>
+                                            <?php endif; ?>
+                                            <td class="text-start">
+                                                <?php $txt = $items[$k] ?? ''; echo ($txt !== '') ? esc($txt) : ($n === 1 ? '-' : ''); ?>
+                                            </td>
+                                            <?php if ($k === 0): ?>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['target_capaian'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['target_triwulan_4'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_1'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
+                                                <td rowspan="<?= $n ?>">
+                                                    <?= esc($row['monev_total'] ?? '-') ?>
+                                                    <?php if ($pct !== null): ?><br><span class="badge bg-<?= $badge ?>"><?= $pct ?>%</span><?php endif; ?>
                                                 </td>
                                             <?php endif; ?>
-                                            <td rowspan="<?= $rowspan ?>" class="text-start"><?= esc($sasaran) ?></td>
-                                            <?php $printed = true; ?>
-                                        <?php endif; ?>
-                                        <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                                        <td><?= esc($row['satuan'] ?? '-') ?></td>
-                                        <td class="text-start"><?= !empty($row['rencana_aksi']) ? nl2br(esc($row['rencana_aksi'])) : '-' ?></td>
-                                        <td><?= esc($row['target_capaian'] ?? '-') ?></td>
-                                        <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
-                                        <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
-                                        <td><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
-                                        <td><?= esc($row['target_triwulan_4'] ?? '-') ?></td>
-                                        <td><?= esc($row['capaian_triwulan_1'] ?? '-') ?></td>
-                                        <td><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
-                                        <td><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
-                                        <td><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
-                                        <td>
-                                            <?= esc($row['monev_total'] ?? '-') ?>
-                                            <?php if ($pct !== null): ?><br><span class="badge bg-<?= $badge ?>"><?= $pct ?>%</span><?php endif; ?>
-                                        </td>
-                                        <?php if ($isBupati): ?>
-                                            <?php if (!$pdPrinted): ?>
-                                                <td rowspan="<?= $rowspan ?>" class="text-start">
-                                                    <?php if (empty($autoOpds)): ?>
-                                                        <span class="text-muted">Belum ditetapkan</span>
+                                            <?php if ($isBupati): ?>
+                                                <?php if (!$pdPrinted): ?>
+                                                    <td rowspan="<?= $sasTotal ?>" class="text-start">
+                                                        <?php if (empty($autoOpds)): ?>
+                                                            <span class="text-muted">Belum ditetapkan</span>
+                                                        <?php else: ?>
+                                                            <?php $eselonLinks = ['jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
+                                                            <?php foreach ($autoOpds as $o): ?>
+                                                                <div class="mb-2">
+                                                                    <span class="fw-semibold text-success align-middle"><i class="fas fa-building me-1"></i><?= esc($o['nama']) ?></span>
+                                                                    <span class="ms-1">
+                                                                        <?php foreach ($eselonLinks as $ek => $elabel): ?>
+                                                                            <a href="<?= esc($es3Base . '?opd_id=' . (int) $o['id'] . '&eselon=' . $ek) ?>"
+                                                                               class="badge rounded-pill bg-success-subtle text-success border border-success-subtle text-decoration-none fw-normal"
+                                                                               title="Buka MONEV PK <?= esc($elabel) ?> &mdash; <?= esc($o['nama']) ?>"><?= esc($elabel) ?></a>
+                                                                        <?php endforeach; ?>
+                                                                    </span>
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <?php $pdPrinted = true; ?>
+                                                <?php endif; ?>
+                                            <?php elseif ($k === 0): ?>
+                                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
+                                            <?php endif; ?>
+                                            <?php if ($k === 0): ?>
+                                                <td rowspan="<?= $n ?>">
+                                                    <?php if ($canWrite ?? true): ?>
+                                                        <a href="<?= $baseUrl . '/input/' . (int) $row['target_id'] ?>"
+                                                           class="btn btn-<?= empty($row['monev_id']) ? 'primary' : 'warning' ?> btn-sm"
+                                                           title="<?= empty($row['monev_id']) ? 'Input Capaian' : 'Edit Capaian' ?>">
+                                                            <i class="fas fa-<?= empty($row['monev_id']) ? 'plus' : 'edit' ?>"></i>
+                                                        </a>
                                                     <?php else: ?>
-                                                        <?php $eselonLinks = ['jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
-                                                        <?php foreach ($autoOpds as $o): ?>
-                                                            <div class="mb-2">
-                                                                <span class="fw-semibold text-success align-middle"><i class="fas fa-building me-1"></i><?= esc($o['nama']) ?></span>
-                                                                <span class="ms-1">
-                                                                    <?php foreach ($eselonLinks as $ek => $elabel): ?>
-                                                                        <a href="<?= esc($es3Base . '?opd_id=' . (int) $o['id'] . '&eselon=' . $ek) ?>"
-                                                                           class="badge rounded-pill bg-success-subtle text-success border border-success-subtle text-decoration-none fw-normal"
-                                                                           title="Buka MONEV PK <?= esc($elabel) ?> &mdash; <?= esc($o['nama']) ?>"><?= esc($elabel) ?></a>
-                                                                    <?php endforeach; ?>
-                                                                </span>
-                                                            </div>
-                                                        <?php endforeach; ?>
+                                                        <?php if (empty($row['monev_id'])): ?>
+                                                            <span class="badge bg-light text-muted border">Belum</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Terisi</span>
+                                                        <?php endif; ?>
                                                     <?php endif; ?>
                                                 </td>
-                                                <?php $pdPrinted = true; ?>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <td class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
-                                        <?php endif; ?>
-                                        <td>
-                                            <?php if ($canWrite ?? true): ?>
-                                                <a href="<?= $baseUrl . '/input/' . (int) $row['target_id'] ?>"
-                                                   class="btn btn-<?= empty($row['monev_id']) ? 'primary' : 'warning' ?> btn-sm"
-                                                   title="<?= empty($row['monev_id']) ? 'Input Capaian' : 'Edit Capaian' ?>">
-                                                    <i class="fas fa-<?= empty($row['monev_id']) ? 'plus' : 'edit' ?>"></i>
-                                                </a>
-                                            <?php else: ?>
-                                                <?php if (empty($row['monev_id'])): ?>
-                                                    <span class="badge bg-light text-muted border">Belum</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Terisi</span>
-                                                <?php endif; ?>
-                                            <?php endif; ?>
-                                        </td>
-                                    </tr>
+                                        </tr>
+                                    <?php endfor; ?>
                                 <?php endforeach; ?>
                             <?php endforeach; ?>
                         <?php else: ?>

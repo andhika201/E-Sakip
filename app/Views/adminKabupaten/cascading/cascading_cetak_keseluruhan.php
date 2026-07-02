@@ -17,13 +17,13 @@ $rsKey  = fn($r) => $rtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x');
 </head>
 
 <body>
-    <?php $this->setData(['logoOnly' => true]); // kop logo saja (include options tak diteruskan CI4, harus via data share) ?>
-    <?= $this->include('templates/pdf_kop', [
-        'judul'    => 'Cascading Kinerja Keseluruhan',
-        'subjudul' => 'RPJMD Kabupaten → Renstra Perangkat Daerah · Periode ' . esc($periodeTxt),
-        'namaUnit' => 'Kabupaten Pringsewu',
-        'logoOnly' => true,
-    ]) ?>
+    <?php $this->setData([ // param kop via data-share (include options tak diteruskan CI4)
+        'judul'      => 'Cascading Kinerja Keseluruhan',
+        'subjudul'   => 'RPJMD Kabupaten → Renstra Perangkat Daerah · Periode ' . $periodeTxt,
+        'logoOnly'   => false,   // tampilkan teks instansi (kop profesional)
+        'hideAksara' => true,    // hanya lambang Kabupaten; AKSARA jadi watermark
+    ]); ?>
+    <?= $this->include('templates/pdf_kop') ?>
 
     <table class="pdf-table">
         <thead>

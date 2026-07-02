@@ -22,6 +22,10 @@ class CascadingController extends BaseController
     {
         $periode = $this->request->getGet('periode');
 
+        // Tampilan dipisah per menu: 'tabel' (Cascading) atau 'pohon' (Pohon Kinerja).
+        $view = $this->request->getGet('view');
+        $view = in_array($view, ['tabel', 'pohon'], true) ? $view : 'tabel';
+
         $periodeList = $this->db->table('rpjmd_misi')
             ->select('tahun_mulai, tahun_akhir')
             ->groupBy(['tahun_mulai', 'tahun_akhir'])
@@ -58,6 +62,8 @@ class CascadingController extends BaseController
             'periode_master' => $periodeList,
             'years' => $years,
             'tree' => $tree,
+            'view' => $view,
+            'title' => ($view === 'pohon' ? 'Pohon Kinerja' : 'Cascading'),
             'opd_missing' => empty($this->opdId),
             'filters' => [
                 'periode' => $periode

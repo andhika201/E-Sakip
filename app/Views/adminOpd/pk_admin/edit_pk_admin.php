@@ -112,7 +112,7 @@
                                             <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i class="fas fa-trash"></i></button>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Sasaran PK</label>
+                                            <label class="form-label">Sasaran</label>
                                             <textarea name="sasaran_pk[<?= $si ?>][sasaran]" class="form-control border-secondary" rows="2" required><?= esc($sasaran['sasaran']) ?></textarea>
                                         </div>
                                         <div class="indikator-section">

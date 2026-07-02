@@ -36,7 +36,7 @@ $pdfCols = $isOpd ? 12 : 11;
             <tr>
                 <th rowspan="2">No</th>
                 <?php if ($isOpd): ?><th rowspan="2">Pejabat (Eselon)</th><?php endif; ?>
-                <th rowspan="2">Sasaran PK</th>
+                <th rowspan="2">Sasaran</th>
                 <th rowspan="2">Indikator</th>
                 <th rowspan="2">Satuan</th>
                 <th rowspan="2">Target</th>

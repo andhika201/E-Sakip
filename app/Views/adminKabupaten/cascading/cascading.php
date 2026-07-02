@@ -221,12 +221,19 @@
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4 casc-paper">
 
+                <?php
+                // Tampilan dipisah per menu: 'tabel' (Cascading) atau 'pohon' (Pohon Kinerja).
+                $view    = in_array(($view ?? 'tabel'), ['tabel', 'pohon'], true) ? $view : 'tabel';
+                $isPohon = ($view === 'pohon');
+                ?>
                 <!-- HEADER -->
                 <div class="casc-head">
-                    <div class="casc-icon"><i class="fas fa-sitemap"></i></div>
+                    <div class="casc-icon"><i class="fas fa-<?= $isPohon ? 'sitemap' : 'table-cells' ?>"></i></div>
                     <div>
-                        <h2>Pohon Kinerja &amp; Cascading</h2>
-                        <p>Penjabaran Tujuan &amp; Sasaran RPJMD hingga Renstra Perangkat Daerah</p>
+                        <h2><?= $isPohon ? 'Pohon Kinerja' : 'Cascading' ?></h2>
+                        <p><?= $isPohon
+                            ? 'Visualisasi pohon kinerja: penjabaran Tujuan &amp; Sasaran RPJMD hingga Renstra Perangkat Daerah'
+                            : 'Matriks cascading: penjabaran Tujuan &amp; Sasaran RPJMD hingga Renstra Perangkat Daerah' ?></p>
                     </div>
                 </div>
 
@@ -257,11 +264,11 @@
                 <div class="casc-toolbar">
                     <div class="tb-label"><i class="fas fa-layer-group me-1"></i>Mode Tampilan</div>
                     <div class="mode-switch mb-3">
-                        <a href="<?= base_url('adminkab/cascading?mode=kabupaten&periode=' . urlencode($periode)) ?>"
+                        <a href="<?= base_url('adminkab/cascading?mode=kabupaten&view=' . $view . '&periode=' . urlencode($periode)) ?>"
                             class="<?= $mode === 'kabupaten' ? 'active' : '' ?>">
                             <i class="fas fa-landmark me-1"></i> Kabupaten
                         </a>
-                        <a href="<?= base_url('adminkab/cascading?mode=opd&periode=' . urlencode($periode) . (!empty($opd_id) ? '&opd_id=' . (int) $opd_id : '')) ?>"
+                        <a href="<?= base_url('adminkab/cascading?mode=opd&view=' . $view . '&periode=' . urlencode($periode) . (!empty($opd_id) ? '&opd_id=' . (int) $opd_id : '')) ?>"
                             class="<?= $mode === 'opd' ? 'active' : '' ?>">
                             <i class="fas fa-building me-1"></i> OPD (Renstra Lengkap)
                         </a>
@@ -275,6 +282,7 @@
                     <form id="filterForm" method="GET" action="<?= base_url('adminkab/cascading') ?>"
                         class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center">
                         <input type="hidden" name="mode" value="<?= esc($mode) ?>">
+                        <input type="hidden" name="view" value="<?= esc($view) ?>">
 
                         <!-- Periode -->
                         <select id="periodeFilter" name="periode" class="form-select" style="flex:1;"
@@ -306,7 +314,7 @@
                         <?php endif; ?>
 
                         <div class="d-flex gap-2">
-                            <a href="<?= base_url('adminkab/cascading?mode=' . $mode) ?>" class="btn btn-outline-secondary text-nowrap">
+                            <a href="<?= base_url('adminkab/cascading?mode=' . $mode . '&view=' . $view) ?>" class="btn btn-outline-secondary text-nowrap">
                                 <i class="fas fa-undo"></i> Reset
                             </a>
                         </div>
@@ -340,25 +348,17 @@
 
                 <?php else: ?>
 
-                    <!-- TOGGLE TAMPILAN -->
-                    <div class="casc-viewbar">
-                        <div class="casc-viewtoggle" role="tablist">
-                            <button type="button" class="vt-btn active" data-view="tabel">
-                                <i class="fas fa-table-cells me-1"></i> Tabel Cascading
-                            </button>
-                            <button type="button" class="vt-btn" data-view="pohon">
-                                <i class="fas fa-sitemap me-1"></i> Pohon Kinerja
-                            </button>
-                        </div>
+                    <!-- TOOLS TAMPILAN (dipisah per menu: Cascading / Pohon Kinerja) -->
+                    <div class="casc-viewbar" style="justify-content:flex-end;">
                         <!-- Tools tab Tabel Cascading -->
-                        <div class="casc-viewtools" id="tabelTools">
+                        <div class="casc-viewtools" id="tabelTools" <?= $isPohon ? 'hidden' : '' ?>>
                             <a href="<?= base_url('adminkab/cascading/cetak?' . $cetakQS) ?>"
                                 target="_blank" class="btn btn-sm btn-danger text-nowrap">
                                 <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
                             </a>
                         </div>
                         <!-- Tools tab Pohon Kinerja -->
-                        <div class="casc-viewtools" id="pohonTools" hidden>
+                        <div class="casc-viewtools" id="pohonTools" <?= $isPohon ? '' : 'hidden' ?>>
                             <button type="button" class="btn btn-sm btn-outline-secondary casc-act" onclick="pohonZoom(-1)" title="Perkecil">
                                 <i class="fas fa-magnifying-glass-minus"></i>
                             </button>
@@ -374,7 +374,7 @@
                     </div>
 
                     <!-- ============== VIEW: TABEL ============== -->
-                    <div id="view-tabel">
+                    <div id="view-tabel" <?= $isPohon ? 'hidden' : '' ?>>
                         <?php if ($mode === 'kabupaten'): ?>
                             <?= $this->include('adminKabupaten/cascading/_tabel_kabupaten') ?>
                         <?php elseif ($mode === 'opd'): ?>
@@ -385,7 +385,7 @@
                     </div>
 
                     <!-- ============== VIEW: POHON KINERJA ============== -->
-                    <div id="view-pohon" hidden>
+                    <div id="view-pohon" <?= $isPohon ? '' : 'hidden' ?>>
                         <?php if (empty($tree ?? [])): ?>
                             <div class="casc-empty">
                                 <div class="ce-icon"><i class="fas fa-diagram-project"></i></div>
@@ -449,14 +449,6 @@
             if (lbl) lbl.textContent = Math.round(_pohonZoom * 100) + '%';
         }
         document.addEventListener('DOMContentLoaded', () => pohonZoom(0));
-
-        // Deep-link dari menu: buka tab Pohon Kinerja bila URL berakhir #pohon
-        document.addEventListener('DOMContentLoaded', function () {
-            if (location.hash === '#pohon') {
-                var pb = document.querySelector('.vt-btn[data-view="pohon"]');
-                if (pb) pb.click();
-            }
-        });
     </script>
 
 </body>

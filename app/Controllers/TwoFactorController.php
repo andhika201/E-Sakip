@@ -21,7 +21,7 @@ class TwoFactorController extends BaseController
 
     private function tplPrefix(?string $role): string
     {
-        return $role === 'admin_opd' ? 'adminOpd' : 'adminKabupaten';
+        return in_array($role, ['admin_opd', 'admin_kecamatan'], true) ? 'adminOpd' : 'adminKabupaten';
     }
 
     /* ===================== KELOLA 2FA ===================== */
@@ -143,7 +143,7 @@ class TwoFactorController extends BaseController
         helper('activity');
         log_activity('login', 'auth', 'Login berhasil (2FA)');
 
-        return $user['role'] === 'admin_opd'
+        return in_array($user['role'], ['admin_opd', 'admin_kecamatan'], true)
             ? redirect()->to('/adminopd/dashboard')
             : redirect()->to('/adminkab/dashboard');
     }

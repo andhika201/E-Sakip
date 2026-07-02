@@ -17,7 +17,7 @@ class ProfileController extends BaseController
         }
 
         $role   = $user['role'] ?? session()->get('role');
-        $prefix = ($role === 'admin_opd') ? 'adminOpd' : 'adminKabupaten';
+        $prefix = in_array($role, ['admin_opd', 'admin_kecamatan'], true) ? 'adminOpd' : 'adminKabupaten';
 
         $roleLabel = match ($role) {
             'admin'                        => 'Super Admin',

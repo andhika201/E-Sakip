@@ -182,7 +182,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = (int) $session->get('opd_id');
 
-        if ($role !== 'admin_opd' || !$opdId) {
+        if (!in_array($role, ['admin_opd', 'admin_kecamatan'], true) || !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
@@ -251,7 +251,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = $session->get('opd_id');
 
-        if ($role === 'admin_opd' && !$opdId) {
+        if (in_array($role, ['admin_opd', 'admin_kecamatan'], true) && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
         $rx = $this->xssRule();
@@ -342,7 +342,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = $session->get('opd_id');
 
-        if ($role === 'admin_opd' && !$opdId) {
+        if (in_array($role, ['admin_opd', 'admin_kecamatan'], true) && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 
@@ -395,7 +395,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = $session->get('opd_id');
 
-        if ($role === 'admin_opd' && !$opdId) {
+        if (in_array($role, ['admin_opd', 'admin_kecamatan'], true) && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
         
@@ -493,7 +493,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = $session->get('opd_id');
 
-        if ($role === 'admin_opd' && !$opdId) {
+        if (in_array($role, ['admin_opd', 'admin_kecamatan'], true) && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
 

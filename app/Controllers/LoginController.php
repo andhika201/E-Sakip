@@ -95,9 +95,11 @@ class LoginController extends BaseController
     {
         switch ($role) {
             case 'admin_kab':
-            case 'admin':           // superadmin juga ke dashboard kab
+            case 'admin':               // superadmin juga ke dashboard kab
+            case 'admin_inspektorat':   // inspektorat: view read-only level kabupaten
                 return redirect()->to('/adminkab/dashboard');
             case 'admin_opd':
+            case 'admin_kecamatan':     // kecamatan pakai modul & dashboard OPD
                 return redirect()->to('/adminopd/dashboard');
             default:
                 session()->destroy();

@@ -17,6 +17,8 @@ $subjudul = $subjudul ?? '';
 $namaUnit = $namaUnit ?? '';
 // Kop "logo saja": sembunyikan teks instansi/unit/alamat, sisakan 2 logo (dipakai cascading cetak).
 $logoOnly = $logoOnly ?? false;
+// Sembunyikan logo AKSARA (kanan) -> kop resmi hanya lambang Kabupaten (mis. cascading cetak; AKSARA dipakai sbg watermark).
+$hideAksara = $hideAksara ?? false;
 
 // Kop dokumen resmi memakai LAMBANG KABUPATEN (bukan logo aplikasi/AKSARA).
 // Prioritas: 'kab_logo' yang di-upload super admin di Pengaturan
@@ -65,8 +67,8 @@ if ($te !== '') { $kontak[] = $te; }
                 <?php endif; ?>
             <?php endif; ?>
         </td>
-        <td style="width: 120px; text-align: right; vertical-align: middle;">
-            <?php if (is_file($aksaraAbs)): ?>
+        <td style="width: <?= $hideAksara ? '90' : '120' ?>px; text-align: right; vertical-align: middle;">
+            <?php if (!$hideAksara && is_file($aksaraAbs)): ?>
                 <img src="<?= $aksaraAbs ?>" alt="AKSARA" height="50" style="height:50px; width:auto;">
             <?php endif; ?>
         </td>

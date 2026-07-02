@@ -66,7 +66,7 @@ $routes->group('api', ['filter' => 'api-token'], static function ($routes) {
 
 $routes->group(
     'adminkab',
-    ['filter' => 'auth:admin_kab,admin'],
+    ['filter' => 'auth:admin_kab,admin,admin_inspektorat'],
     function ($routes) {
         $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
         $routes->get('pk/(:any)/tambah', 'AdminOpd\PkController::tambah/$1');
@@ -159,6 +159,9 @@ $routes->group(
         // Target & Rencana Aksi (PK Bupati) - URL bersih: adminkab/target_renaksi
         $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/bupati');
         $routes->post('target_renaksi/save', 'AdminOpd\PkRenaksiController::save/bupati');
+        // Kelola Perangkat Daerah pendukung PK Bupati (override manual) - spesifik sebelum edit/(:num)
+        $routes->post('target_renaksi/pd/save', 'AdminOpd\PkRenaksiController::savePd/bupati');
+        $routes->get('target_renaksi/pd/(:num)', 'AdminOpd\PkRenaksiController::kelolaPd/bupati/$1');
         $routes->get('target_renaksi/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/bupati/$1');
         $routes->post('target_renaksi/update/(:num)', 'AdminOpd\PkRenaksiController::update/bupati/$1');
         $routes->get('target_renaksi', 'AdminOpd\PkRenaksiController::index/bupati');
@@ -262,7 +265,7 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
     $routes->match(['get', 'post', 'delete'], 'master/satuan/delete/(:num)', 'SuperAdmin\MasterController::satuanDelete/$1');
 });
 
-$routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($routes) {
+$routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'], function ($routes) {
     // PK Generic Controller (slash-based, for compatibility with button href)
     $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
     $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');
@@ -356,6 +359,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin'], function ($rout
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');
+
+    // Evaluasi Kinerja: Evaluasi Inspektorat (stub)
+    $routes->get('evaluasi_inspektorat', 'AdminOpdController::evaluasi_inspektorat');
 
     // Cascading
     // $routes->get('cascading', 'AdminOpd\CascadingController::index');

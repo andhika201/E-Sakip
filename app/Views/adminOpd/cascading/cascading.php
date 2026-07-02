@@ -108,12 +108,19 @@
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow p-4">
 
+                <?php
+                // Tampilan dipisah per menu: 'tabel' (Cascading) atau 'pohon' (Pohon Kinerja).
+                $view    = in_array(($view ?? 'tabel'), ['tabel', 'pohon'], true) ? $view : 'tabel';
+                $isPohon = ($view === 'pohon');
+                ?>
                 <!-- HEADER -->
                 <div class="casc-head">
-                    <div class="casc-icon"><i class="fas fa-sitemap"></i></div>
+                    <div class="casc-icon"><i class="fas fa-<?= $isPohon ? 'sitemap' : 'table-cells' ?>"></i></div>
                     <div>
-                        <h2>Pohon Kinerja &amp; Cascading</h2>
-                        <p>Penjabaran Kinerja Renstra &rarr; Eselon II / III / IV Perangkat Daerah</p>
+                        <h2><?= $isPohon ? 'Pohon Kinerja' : 'Cascading' ?></h2>
+                        <p><?= $isPohon
+                            ? 'Visualisasi pohon kinerja Renstra &rarr; Eselon II / III / IV Perangkat Daerah'
+                            : 'Matriks cascading Renstra &rarr; Eselon II / III / IV Perangkat Daerah' ?></p>
                     </div>
                 </div>
 
@@ -140,6 +147,7 @@
                     <div class="tb-label"><i class="fas fa-filter me-1"></i>Filter Periode RPJMD</div>
                     <form method="GET" action="<?= base_url('adminopd/cascading') ?>"
                         class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center">
+                        <input type="hidden" name="view" value="<?= esc($view) ?>">
                         <select name="periode" class="form-select" style="flex:1;">
                             <option value="">-- Pilih Periode --</option>
                             <?php foreach ($periode_master ?? [] as $p): ?>
@@ -153,7 +161,7 @@
                             <button type="submit" class="btn btn-success text-nowrap">
                                 <i class="fas fa-search"></i> Tampilkan
                             </button>
-                            <a href="<?= base_url('adminopd/cascading') ?>" class="btn btn-outline-secondary text-nowrap">
+                            <a href="<?= base_url('adminopd/cascading?view=' . $view) ?>" class="btn btn-outline-secondary text-nowrap">
                                 <i class="fas fa-undo"></i> Reset
                             </a>
                         </div>
@@ -187,25 +195,17 @@
 
                 <?php else: ?>
 
-                    <!-- TOGGLE TAMPILAN -->
-                    <div class="casc-viewbar">
-                        <div class="casc-viewtoggle" role="tablist">
-                            <button type="button" class="vt-btn active" data-view="tabel">
-                                <i class="fas fa-table-cells me-1"></i> Tabel Cascading
-                            </button>
-                            <button type="button" class="vt-btn" data-view="pohon">
-                                <i class="fas fa-sitemap me-1"></i> Pohon Kinerja
-                            </button>
-                        </div>
+                    <!-- TOOLS TAMPILAN (dipisah per menu: Cascading / Pohon Kinerja) -->
+                    <div class="casc-viewbar" style="justify-content:flex-end;">
                         <!-- Tools tab Tabel Cascading -->
-                        <div class="casc-viewtools" id="tabelTools">
+                        <div class="casc-viewtools" id="tabelTools" <?= $isPohon ? 'hidden' : '' ?>>
                             <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>"
                                 target="_blank" class="btn btn-sm btn-danger text-nowrap">
                                 <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
                             </a>
                         </div>
                         <!-- Tools tab Pohon Kinerja -->
-                        <div class="casc-viewtools" id="pohonTools" hidden>
+                        <div class="casc-viewtools" id="pohonTools" <?= $isPohon ? '' : 'hidden' ?>>
                             <button type="button" class="btn btn-sm btn-outline-secondary casc-act" onclick="pohonZoom(-1)" title="Perkecil">
                                 <i class="fas fa-magnifying-glass-minus"></i>
                             </button>
@@ -221,7 +221,7 @@
                     </div>
 
                     <!-- ============== VIEW: TABEL ============== -->
-                    <div id="view-tabel">
+                    <div id="view-tabel" <?= $isPohon ? 'hidden' : '' ?>>
                         <div class="casc-table-wrap">
                             <div class="table-responsive">
                                 <table class="table table-bordered text-center align-middle casc-table mb-0">
@@ -364,7 +364,7 @@
                     </div>
 
                     <!-- ============== VIEW: POHON KINERJA ============== -->
-                    <div id="view-pohon" hidden>
+                    <div id="view-pohon" <?= $isPohon ? '' : 'hidden' ?>>
                         <?php if (empty($tree ?? [])): ?>
                             <div class="casc-empty">
                                 <div class="ce-icon"><i class="fas fa-diagram-project"></i></div>

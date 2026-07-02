@@ -18,13 +18,14 @@ $idk = $showKode ? '<b style="color:#00743e;">IK</b> ' : '';
 </head>
 
 <body>
-    <?php $this->setData(['logoOnly' => true]); // kop logo saja (include options tak diteruskan CI4, harus via data share) ?>
-    <?= $this->include('templates/pdf_kop', [
-        'judul'    => 'Cascading Kinerja Perangkat Daerah',
-        'subjudul' => 'Matriks Cascading RPJMD → Renstra OPD · Periode ' . esc($periodeTxt),
-        'namaUnit' => strtoupper($nama_opd ?? ''),
-        'logoOnly' => true,
-    ]) ?>
+    <?php $this->setData([ // param kop via data-share (include options tak diteruskan CI4)
+        'judul'      => 'Cascading Kinerja Perangkat Daerah',
+        'subjudul'   => 'Matriks Cascading RPJMD → Renstra OPD · Periode ' . $periodeTxt,
+        'namaUnit'   => strtoupper($nama_opd ?? ''),
+        'logoOnly'   => false,   // tampilkan teks instansi (kop profesional)
+        'hideAksara' => true,    // hanya lambang Kabupaten; AKSARA jadi watermark
+    ]); ?>
+    <?= $this->include('templates/pdf_kop') ?>
 
     <table class="pdf-table">
         <thead>

@@ -7,7 +7,9 @@
 $role   = session()->get('role');
 $rLabel = $role === 'admin' ? 'Super Admin'
         : ($role === 'admin_opd' ? 'Admin OPD'
-        : ($role === 'admin_kab' ? 'Admin Kabupaten' : 'Pengguna'));
+        : ($role === 'admin_kab' ? 'Admin Kabupaten'
+        : ($role === 'admin_kecamatan' ? 'Admin Kecamatan'
+        : ($role === 'admin_inspektorat' ? 'Inspektorat' : 'Pengguna'))));
 $rName  = session('username') ?: 'Pengguna';
 ?>
 <style>
@@ -175,5 +177,56 @@ $rName  = session('username') ?: 'Pengguna';
         if (e.content) e.content.classList.add('sidebar-open');
       }
     });
+  })();
+</script>
+
+<!-- ===== TOMBOL KEMBALI KE ATAS (semua halaman admin) ===== -->
+<button type="button" id="backToTop" class="btop-btn" title="Kembali ke atas" aria-label="Kembali ke atas">
+  <i class="fas fa-chevron-up"></i>
+</button>
+<style>
+  .btop-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: #00743e;
+    color: #fff;
+    font-size: 1.05rem;
+    line-height: 1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity .25s ease, transform .25s ease, visibility .25s, background .2s ease;
+    z-index: 1080;
+  }
+  .btop-btn.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  .btop-btn:hover { background: #005c31; }
+  @media (max-width: 768px) {
+    .btop-btn { right: 14px; bottom: 14px; width: 42px; height: 42px; }
+  }
+</style>
+<script>
+  (function () {
+    var btn = document.getElementById('backToTop');
+    if (!btn) return;
+    // Cari elemen yang benar-benar men-scroll (window atau kontainer konten).
+    var scroller = document.scrollingElement || document.documentElement;
+    function pos() { return window.pageYOffset || scroller.scrollTop || 0; }
+    function onScroll() {
+      if (pos() > 250) btn.classList.add('show');
+      else btn.classList.remove('show');
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    btn.addEventListener('click', function () {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      catch (e) { window.scrollTo(0, 0); }
+    });
+    onScroll();
   })();
 </script>

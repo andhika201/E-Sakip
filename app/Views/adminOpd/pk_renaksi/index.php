@@ -20,7 +20,7 @@ $eselonLabel = function ($pkJenis) {
 };
 
 // Jumlah kolom (untuk baris kosong)
-$cols = $isBupati ? 7 : (13 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0));
+$cols = $isBupati ? 8 : (13 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0));
 
 // Query string filter aktif (untuk tautan MONEV)
 $filterQs = http_build_query(array_filter([
@@ -146,19 +146,20 @@ $filterQs = http_build_query(array_filter([
                         <?php if ($isBupati): ?>
                         <tr>
                             <th>No</th>
-                            <th>Sasaran PK</th>
+                            <th>Sasaran</th>
                             <th>Indikator</th>
                             <th>Tahun</th>
                             <th>Satuan</th>
                             <th>Target</th>
                             <th>Perangkat Daerah Pendukung PK BUPATI</th>
+                            <th>Aksi</th>
                         </tr>
                         <?php else: ?>
                         <tr>
                             <th rowspan="2">No</th>
                             <?php if ($showOpd): ?><th rowspan="2">OPD</th><?php endif; ?>
                             <?php if ($showPejabat): ?><th rowspan="2">Pejabat (Eselon)</th><?php endif; ?>
-                            <th rowspan="2">Sasaran PK</th>
+                            <th rowspan="2">Sasaran</th>
                             <th rowspan="2">Indikator</th>
                             <th rowspan="2">Tahun</th>
                             <th rowspan="2">Satuan</th>
@@ -215,12 +216,21 @@ $filterQs = http_build_query(array_filter([
                                             if ($ik !== '' && !empty(($autoPd ?? [])[$ik])) { $autoOpds = $autoPd[$ik]; break; }
                                         }
                                     }
+                                    // Override MANUAL (kolom Aksi): bila ada, gantikan hasil otomatis.
+                                    $pkSasaranId = (int) ($rows[0]['pk_sasaran_id'] ?? 0);
+                                    $manualOpds  = ($manualPd ?? [])[$pkSasaranId] ?? [];
+                                    $isManual    = !empty($manualOpds);
+                                    $displayOpds = $isManual ? $manualOpds : $autoOpds;
                                     $sasPrinted = false;
                                     $pdPrinted  = false;
+                                    $noPrinted  = false;
                                     ?>
                                     <?php foreach ($rows as $row): ?>
                                         <tr>
-                                            <td><?= $no++ ?></td>
+                                            <?php if (!$noPrinted): ?>
+                                                <td rowspan="<?= $sasTotal ?>"><?= $no ?></td>
+                                                <?php $noPrinted = true; ?>
+                                            <?php endif; ?>
                                             <?php if (!$sasPrinted): ?>
                                                 <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
                                                 <?php $sasPrinted = true; ?>
@@ -231,11 +241,14 @@ $filterQs = http_build_query(array_filter([
                                             <td><?= esc($row['indikator_target'] ?? '-') ?></td>
                                             <?php if (!$pdPrinted): ?>
                                                 <td rowspan="<?= $sasTotal ?>" class="text-start">
-                                                    <?php if (empty($autoOpds)): ?>
+                                                    <?php if ($isManual): ?>
+                                                        <div class="mb-2"><span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="fas fa-hand-pointer me-1"></i>Diatur manual</span></div>
+                                                    <?php endif; ?>
+                                                    <?php if (empty($displayOpds)): ?>
                                                         <span class="text-muted">Belum ditetapkan</span>
                                                     <?php else: ?>
                                                         <?php $eselonLinks = ['jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
-                                                        <?php foreach ($autoOpds as $o): ?>
+                                                        <?php foreach ($displayOpds as $o): ?>
                                                             <div class="mb-2">
                                                                 <span class="fw-semibold text-success align-middle">
                                                                     <i class="fas fa-building me-1"></i><?= esc($o['nama']) ?>
@@ -251,10 +264,23 @@ $filterQs = http_build_query(array_filter([
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
                                                 </td>
+                                                <td rowspan="<?= $sasTotal ?>" class="text-center">
+                                                    <?php if ($canWrite ?? false): ?>
+                                                        <?php $hasPd = !empty($displayOpds); // ada PD (manual ATAU otomatis) -> Edit; kosong -> Tambah ?>
+                                                        <a href="<?= $baseUrl . '/pd/' . $pkSasaranId ?>"
+                                                           class="btn btn-<?= $hasPd ? 'warning' : 'primary' ?> btn-sm"
+                                                           title="<?= $hasPd ? 'Edit' : 'Tambah' ?> Perangkat Daerah Pendukung">
+                                                            <i class="fas fa-<?= $hasPd ? 'edit' : 'plus' ?>"></i>
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <span class="text-muted">&mdash;</span>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <?php $pdPrinted = true; ?>
                                             <?php endif; ?>
                                         </tr>
                                     <?php endforeach; ?>
+                                    <?php $no++; // nomor per Sasaran ?>
                                 <?php endforeach; ?>
                             <?php else: ?>
                             <?php foreach ($grouped as $rows): ?>
@@ -271,6 +297,7 @@ $filterQs = http_build_query(array_filter([
                                 }
                                 $newOpd = ($showOpd && $opdKey !== $curOpdKey); // awal blok OPD baru
                                 $sasPrinted = false;
+                                $noPrinted  = false;
                                 ?>
                                 <?php foreach ($rows as $ri => $row): ?>
                                     <?php
@@ -279,14 +306,13 @@ $filterQs = http_build_query(array_filter([
                                     ?>
                                     <?php for ($k = 0; $k < $n; $k++): ?>
                                         <tr>
-                                            <?php if ($showOpd): ?>
-                                                <?php if ($newOpd): ?>
-                                                    <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>"><?= $no ?></td>
-                                                    <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
-                                                    <?php $curOpdKey = $opdKey; $no++; $newOpd = false; ?>
-                                                <?php endif; ?>
-                                            <?php elseif ($k === 0): ?>
-                                                <td rowspan="<?= $n ?>"><?= $no ?></td>
+                                            <?php if (!$noPrinted): ?>
+                                                <td rowspan="<?= $sasTotal ?>"><?= $no ?></td>
+                                                <?php $noPrinted = true; ?>
+                                            <?php endif; ?>
+                                            <?php if ($showOpd && $newOpd): ?>
+                                                <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
+                                                <?php $curOpdKey = $opdKey; $newOpd = false; ?>
                                             <?php endif; ?>
                                             <?php if (!$sasPrinted): ?>
                                                 <?php if ($showPejabat): ?>
@@ -340,8 +366,8 @@ $filterQs = http_build_query(array_filter([
                                             <?php endif; ?>
                                         </tr>
                                     <?php endfor; ?>
-                                    <?php if (!$showOpd) { $no++; } // bupati/admin_opd: nomor per indikator ?>
                                 <?php endforeach; ?>
+                                <?php $no++; // nomor per Sasaran (semua role) ?>
                             <?php endforeach; ?>
                             <?php endif; // PK Bupati vs Eselon ?>
                         <?php else: ?>

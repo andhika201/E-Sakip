@@ -29,6 +29,11 @@ class CascadingController extends BaseController
         $periode = $this->request->getGet('periode');
         $opdId   = $this->request->getGet('opd_id');
 
+        // Tampilan aktif: 'tabel' (Cascading) atau 'pohon' (Pohon Kinerja).
+        // Dipisah per menu sidebar -> tiap menu punya halaman/judul sendiri.
+        $view = $this->request->getGet('view');
+        $view = in_array($view, ['tabel', 'pohon'], true) ? $view : 'tabel';
+
         // Periode RPJMD
         $periodeList = $this->db->table('rpjmd_misi')
             ->select('tahun_mulai, tahun_akhir')
@@ -87,6 +92,8 @@ class CascadingController extends BaseController
 
         $data = [
             'mode'           => $mode,
+            'view'           => $view,
+            'title'          => ($view === 'pohon' ? 'Pohon Kinerja' : 'Cascading'),
             // Pohon Kabupaten BERHENTI di Indikator Sasaran RPJMD (tanpa cabang Perangkat Daerah/Program).
             // Pohon OPD tanpa CSF; indikator OPD diberi kode "IDK".
             // Flag dikirim via DATA (bukan arg include options).
@@ -566,9 +573,9 @@ class CascadingController extends BaseController
 
         $mpdf = new \Mpdf\Mpdf([
             'mode'              => 'utf-8',
-            'format'            => 'A4-L',
-            'margin_left'       => 10,
-            'margin_right'      => 10,
+            'format'            => 'A3-L', // A3 landscape: matriks cascading lebar -> font besar tetap muat
+            'margin_left'       => 8,
+            'margin_right'      => 8,
             'margin_top'        => 12,
             'margin_bottom'     => 10,
             'margin_header'     => 0,
@@ -578,6 +585,17 @@ class CascadingController extends BaseController
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
         $mpdf->SetDisplayMode('fullpage');
+
+        // Watermark: logo AKSARA transparan 20% di tengah tiap halaman.
+        $aksaraWm = FCPATH . ltrim(setting('app_logo', 'assets/images/LogoTentang.png'), '/');
+        if (!is_file($aksaraWm)) {
+            $aksaraWm = FCPATH . 'assets/images/LogoTentang.png';
+        }
+        if (is_file($aksaraWm)) {
+            $mpdf->SetWatermarkImage($aksaraWm, 0.2, 'D', 'P'); // alpha 0.2 = opacity 20%
+            $mpdf->showWatermarkImage = true;
+        }
+
         $mpdf->WriteHTML($html);
 
         header('Content-Type: application/pdf');

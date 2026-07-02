@@ -60,9 +60,9 @@ class ChangePasswordController extends BaseController
     private function getPrefix(string $role): string
     {
         return match ($role) {
-            'admin_kabupaten', 'admin' => 'adminKabupaten',
-            'admin_opd'               => 'adminOpd',
-            default                   => 'adminKabupaten',
+            'admin_kabupaten', 'admin'    => 'adminKabupaten',
+            'admin_opd', 'admin_kecamatan' => 'adminOpd',
+            default                       => 'adminKabupaten',
         };
     }
 }

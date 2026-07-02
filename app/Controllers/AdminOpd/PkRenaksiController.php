@@ -183,6 +183,45 @@ class PkRenaksiController extends BaseController
         return $map;
     }
 
+    /** Mapping MANUAL Perangkat Daerah pendukung per Sasaran PK: pk_sasaran_id => [ ['id','nama'], ... ]. */
+    private function manualPdBySasaran(): array
+    {
+        if (!$this->db->tableExists('pk_sasaran_opd')) {
+            return [];
+        }
+        $rows = $this->db->table('pk_sasaran_opd pso')
+            ->select('pso.pk_sasaran_id, pso.opd_id, o.nama_opd')
+            ->join('opd o', 'o.id = pso.opd_id', 'inner')
+            ->orderBy('o.nama_opd', 'ASC')
+            ->get()->getResultArray();
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int) $r['pk_sasaran_id']][] = ['id' => (int) $r['opd_id'], 'nama' => $r['nama_opd']];
+        }
+        return $map;
+    }
+
+    /**
+     * Saran OTOMATIS OPD untuk sebuah Sasaran PK (dipakai sbg prefill form kelola PD).
+     * Meniru logika pencocokan di tampilan: cocokkan teks sasaran ke mapping cascading,
+     * bila kosong fallback lewat teks indikator sasaran tsb.
+     */
+    private function autoOpdsForSasaran(int $pkSasaranId, string $sasaranText): array
+    {
+        $map  = $this->autoPdBySasaran();
+        $norm = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) $s)));
+        $opds = $map[$norm($sasaranText)] ?? [];
+        if (empty($opds)) {
+            $inds = $this->db->table('pk_indikator')->select('indikator')
+                ->where('pk_sasaran_id', $pkSasaranId)->get()->getResultArray();
+            foreach ($inds as $ir) {
+                $k = $norm($ir['indikator']);
+                if ($k !== '' && !empty($map[$k])) { $opds = $map[$k]; break; }
+            }
+        }
+        return $opds;
+    }
+
     /**
      * Prefix route. Bupati -> adminkab. Untuk es3 tergantung peran:
      * admin_kab memantau lintas OPD (read-only) tetap di rute /adminkab,
@@ -193,7 +232,10 @@ class PkRenaksiController extends BaseController
         if ($jenis === 'bupati') {
             return 'adminkab';
         }
-        return ((string) session()->get('role') === 'admin_kab') ? 'adminkab' : 'adminopd';
+        // admin_kab & admin_inspektorat memantau lintas OPD lewat rute /adminkab (read-only);
+        // admin_opd & admin_kecamatan mengelola PK-nya sendiri lewat /adminopd.
+        $role = (string) session()->get('role');
+        return in_array($role, ['admin_kab', 'admin_inspektorat'], true) ? 'adminkab' : 'adminopd';
     }
 
     /** Regex angka Indonesia (1 atau 1,5) & teks bebas tag. */
@@ -202,20 +244,23 @@ class PkRenaksiController extends BaseController
 
     /**
      * Pastikan role berhak untuk modul ini.
-     * - bupati -> admin_kab
-     * - es3    -> admin_opd (untuk write); admin_kab boleh read.
+     * - bupati -> write: admin_kab; read: admin_kab + admin_inspektorat (evaluasi, read-only).
+     * - es3    -> write: admin_opd + admin_kecamatan; read: + admin_kab + admin_inspektorat (lintas OPD).
      */
     private function ensureRole(string $jenis, bool $write): bool
     {
         $role = (string) session()->get('role');
         if ($jenis === 'bupati') {
-            return $role === 'admin_kab';
+            if ($write) {
+                return $role === 'admin_kab';
+            }
+            return in_array($role, ['admin_kab', 'admin_inspektorat'], true);
         }
         // es3
         if ($write) {
-            return $role === 'admin_opd';
+            return in_array($role, ['admin_opd', 'admin_kecamatan'], true);
         }
-        return in_array($role, ['admin_opd', 'admin_kab'], true);
+        return in_array($role, ['admin_opd', 'admin_kecamatan', 'admin_kab', 'admin_inspektorat'], true);
     }
 
     /**
@@ -272,19 +317,21 @@ class PkRenaksiController extends BaseController
 
         $opdMap = []; // nama_opd => id : untuk tautan "Perangkat Daerah" -> PK Eselon OPD tsb
         $autoPd = []; // norm(sasaran) => [ ['id','nama'], ... ] : PJ Perangkat Daerah OTOMATIS via cascading
+        $manualPd = []; // pk_sasaran_id => [ ['id','nama'], ... ] : override MANUAL (kolom Aksi)
         if ($jenis === 'bupati') {
-            $rows   = $this->targets->getTargetListByPkBupati($tahun);
-            $opdMap = array_column($this->opdOptions(), 'id', 'nama_opd');
-            $autoPd = $this->autoPdBySasaran();
+            $rows     = $this->targets->getTargetListByPkBupati($tahun);
+            $opdMap   = array_column($this->opdOptions(), 'id', 'nama_opd');
+            $autoPd   = $this->autoPdBySasaran();
+            $manualPd = $this->manualPdBySasaran();
         } else {
             // es3 -> Eselon II/III/IV: filter eselon & pejabat
             $eselon    = $this->normEselon($this->request->getGet('eselon'));
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
 
-            if ($role === 'admin_opd') {
+            if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
                 $opdFilter = (int) $session->get('opd_id');
             } else {
-                // admin_kab: bisa filter OPD, default semua
+                // admin_kab / admin_inspektorat: bisa filter OPD, default semua (lintas OPD)
                 $opdRaw    = $this->request->getGet('opd_id');
                 $opdFilter = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
                 $opdList = $this->db->table('opd')->select('id, nama_opd')
@@ -316,6 +363,7 @@ class PkRenaksiController extends BaseController
         return view('adminOpd/pk_renaksi/index', [
             'opdMap'       => $opdMap,
             'autoPd'       => $autoPd,
+            'manualPd'     => $manualPd,
             'jenis'        => $jenis,
             'base'        => $this->base($jenis),
             'role'        => $role,
@@ -508,6 +556,85 @@ class PkRenaksiController extends BaseController
             ->with('success', 'Rencana aksi berhasil diperbarui.');
     }
 
+    /* =========== PERANGKAT DAERAH PENDUKUNG PK BUPATI: FORM KELOLA =========== */
+    /**
+     * Form pilih Perangkat Daerah pendukung untuk sebuah Sasaran PK Bupati.
+     * Bila belum pernah diatur manual, checkbox di-prefill dgn saran otomatis (cascading).
+     */
+    public function kelolaPd($jenis, $pkSasaranId)
+    {
+        $jenis = $this->normJenis((string) $jenis);
+        if ($jenis !== 'bupati' || !$this->ensureRole($jenis, true)) {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
+        }
+        $pkSasaranId = (int) $pkSasaranId;
+
+        $sasaran = $this->db->table('pk_sasaran ps')
+            ->select('ps.id, ps.sasaran, pk.tahun')
+            ->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->where('ps.id', $pkSasaranId)
+            ->where('pk.jenis', 'bupati')
+            ->get()->getRowArray();
+        if (!$sasaran) {
+            return redirect()->to(base_url($this->renaksiUrl($jenis)))
+                ->with('error', 'Sasaran PK Bupati tidak ditemukan.');
+        }
+
+        $manual   = $this->manualPdBySasaran()[$pkSasaranId] ?? [];
+        $isManual = !empty($manual);
+        $selectedIds = array_map(static fn($o) => (int) $o['id'], $manual);
+        if (empty($selectedIds)) { // prefill saran otomatis (cascading) saat pertama kali
+            $selectedIds = array_map(static fn($o) => (int) $o['id'],
+                $this->autoOpdsForSasaran($pkSasaranId, (string) $sasaran['sasaran']));
+        }
+
+        return view('adminOpd/pk_renaksi/pd_form', [
+            'jenis'       => $jenis,
+            'base'        => $this->base($jenis),
+            'sasaran'     => $sasaran,
+            'opdList'     => $this->opdOptions(),
+            'selectedIds' => $selectedIds,
+            'isManual'    => $isManual,
+        ]);
+    }
+
+    /* ========== PERANGKAT DAERAH PENDUKUNG PK BUPATI: SIMPAN ========== */
+    public function savePd($jenis)
+    {
+        $jenis = $this->normJenis((string) $jenis);
+        if ($jenis !== 'bupati' || !$this->ensureRole($jenis, true)) {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
+        }
+        if (!$this->db->tableExists('pk_sasaran_opd')) {
+            return redirect()->to(base_url($this->renaksiUrl($jenis)))
+                ->with('error', 'Tabel pk_sasaran_opd belum tersedia. Jalankan migrasi db/update_2026-07-02_pk_sasaran_opd.sql.');
+        }
+
+        $pkSasaranId = (int) $this->request->getPost('pk_sasaran_id');
+        $ok = $this->db->table('pk_sasaran ps')->join('pk', 'pk.id = ps.pk_id', 'left')
+            ->where('ps.id', $pkSasaranId)->where('pk.jenis', 'bupati')->countAllResults();
+        if ($pkSasaranId <= 0 || !$ok) {
+            return redirect()->to(base_url($this->renaksiUrl($jenis)))
+                ->with('error', 'Sasaran PK Bupati tidak valid.');
+        }
+
+        $opdIds = $this->request->getPost('opd_ids');
+        $opdIds = is_array($opdIds) ? $opdIds : [];
+        $opdIds = array_values(array_unique(array_filter(array_map('intval', $opdIds), static fn($v) => $v > 0)));
+
+        $tbl = $this->db->table('pk_sasaran_opd');
+        $tbl->where('pk_sasaran_id', $pkSasaranId)->delete();
+        if (!empty($opdIds)) {
+            $tbl->insertBatch(array_map(static fn($id) => [
+                'pk_sasaran_id' => $pkSasaranId,
+                'opd_id'        => $id,
+            ], $opdIds));
+        }
+
+        return redirect()->to(base_url($this->renaksiUrl($jenis)))
+            ->with('success', 'Perangkat Daerah pendukung PK Bupati berhasil disimpan.');
+    }
+
     /* ===================== MONEV: LIST (pantau realisasi) ===================== */
     public function monev($jenis)
     {
@@ -540,7 +667,7 @@ class PkRenaksiController extends BaseController
             $eselon    = $this->normEselon($this->request->getGet('eselon'));
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
 
-            if ($role === 'admin_opd') {
+            if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
                 $opdFilter = (int) $session->get('opd_id');
             } else {
                 $opdRaw    = $this->request->getGet('opd_id');
@@ -616,7 +743,7 @@ class PkRenaksiController extends BaseController
         } else {
             $eselon    = $this->normEselon($this->request->getGet('eselon'));
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
-            if ($role === 'admin_opd') {
+            if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
                 $opdId = (int) $session->get('opd_id');
             } else {
                 $opdRaw = $this->request->getGet('opd_id');

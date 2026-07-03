@@ -13,9 +13,9 @@
     .pdf-kop { width: 100%; border-collapse: collapse; }
     .pdf-kop td { vertical-align: middle; padding: 0; }
     .pdf-kop .kop-logo { height: 64px; width: auto; }
-    .pdf-kop .inst-name { font-size: 15px; font-weight: bold; letter-spacing: .4px; text-transform: uppercase; color: #15311f; }
-    .pdf-kop .inst-unit { font-size: 12px; font-weight: bold; color: #15311f; }
-    .pdf-kop .inst-addr { font-size: 8.2px; color: #555; margin-top: 2px; }
+    .pdf-kop .inst-name { font-size: 16.5px; font-weight: bold; letter-spacing: .6px; text-transform: uppercase; color: #15311f; }
+    .pdf-kop .inst-unit { font-size: 13px; font-weight: bold; letter-spacing: .3px; text-transform: uppercase; color: #15311f; }
+    .pdf-kop .inst-addr { font-size: 8.5px; color: #555; margin-top: 3px; }
     .pdf-kop-rule { border: 0; border-top: 2.5px solid #00743e; margin: 4px 0 0; }
     .pdf-kop-rule.thin { border-top: 0.8px solid #00743e; margin-top: 1.5px; }
 

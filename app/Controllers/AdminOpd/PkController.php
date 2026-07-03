@@ -169,6 +169,7 @@ class PkController extends BaseController
 
         helper('setting');
         $footerHtml = pdf_footer_aksara();
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
 
         $css = 'img { width: 70px; height: auto; }';
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);

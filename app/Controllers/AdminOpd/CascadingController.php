@@ -118,6 +118,7 @@ class CascadingController extends BaseController
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 

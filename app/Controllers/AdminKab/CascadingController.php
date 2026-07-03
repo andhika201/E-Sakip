@@ -573,9 +573,9 @@ class CascadingController extends BaseController
 
         $mpdf = new \Mpdf\Mpdf([
             'mode'              => 'utf-8',
-            'format'            => 'A3-L', // A3 landscape: matriks cascading lebar -> font besar tetap muat
-            'margin_left'       => 8,
-            'margin_right'      => 8,
+            'format'            => 'A3-L', // A3 landscape: 14 kolom cascading hanya terbaca di A3 (A4 -> disusutkan mpdf jd kecil)
+            'margin_left'       => 7,
+            'margin_right'      => 7,
             'margin_top'        => 12,
             'margin_bottom'     => 10,
             'margin_header'     => 0,
@@ -583,19 +583,10 @@ class CascadingController extends BaseController
             'tempDir'           => sys_get_temp_dir()
         ]);
         helper('setting');
+        $mpdf->shrink_tables_to_fit = false; // JANGAN susutkan tabel -> font tetap terbaca (bukan mengecil paksa)
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->SetDisplayMode('fullpage');
-
-        // Watermark: logo AKSARA transparan 20% di tengah tiap halaman.
-        $aksaraWm = FCPATH . ltrim(setting('app_logo', 'assets/images/LogoTentang.png'), '/');
-        if (!is_file($aksaraWm)) {
-            $aksaraWm = FCPATH . 'assets/images/LogoTentang.png';
-        }
-        if (is_file($aksaraWm)) {
-            $mpdf->SetWatermarkImage($aksaraWm, 0.2, 'D', 'P'); // alpha 0.2 = opacity 20%
-            $mpdf->showWatermarkImage = true;
-        }
-
         $mpdf->WriteHTML($html);
 
         header('Content-Type: application/pdf');

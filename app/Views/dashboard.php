@@ -206,10 +206,19 @@
           </a>
 
           <a class="quick-card" href="<?= base_url('cascading_kabupaten') ?>">
+            <div class="qc-icon qc-teal"><i class="fas fa-table-cells"></i></div>
+            <div>
+              <div class="qc-title">Cascading Kabupaten</div>
+              <p class="qc-sub">Tabel cascading kinerja pemerintah kabupaten</p>
+            </div>
+            <span class="qc-arrow">Buka <i class="fas fa-arrow-right"></i></span>
+          </a>
+
+          <a class="quick-card" href="<?= base_url('pohon_kinerja_kabupaten') ?>">
             <div class="qc-icon qc-teal"><i class="fas fa-sitemap"></i></div>
             <div>
-              <div class="qc-title">Pohon Kinerja &amp; Cascading</div>
-              <p class="qc-sub">Cascading kinerja pemerintah kabupaten</p>
+              <div class="qc-title">Pohon Kinerja Kabupaten</div>
+              <p class="qc-sub">Pohon kinerja pemerintah kabupaten</p>
             </div>
             <span class="qc-arrow">Buka <i class="fas fa-arrow-right"></i></span>
           </a>

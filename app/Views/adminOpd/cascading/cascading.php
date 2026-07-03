@@ -203,6 +203,10 @@
                                 target="_blank" class="btn btn-sm btn-danger text-nowrap">
                                 <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
                             </a>
+                            <a href="<?= base_url('adminopd/cascading/excel?periode=' . $filters['periode']) ?>"
+                                class="btn btn-sm btn-success text-nowrap">
+                                <i class="fas fa-file-excel me-1"></i> Excel
+                            </a>
                         </div>
                         <!-- Tools tab Pohon Kinerja -->
                         <div class="casc-viewtools" id="pohonTools" <?= $isPohon ? '' : 'hidden' ?>>

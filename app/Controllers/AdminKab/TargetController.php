@@ -184,6 +184,7 @@ class TargetController extends BaseController
 
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->WriteHTML($html);
         $this->response->setHeader('Content-Type', 'application/pdf');
         $mpdf->Output('Target_dan_Rencana_Aksi.pdf', 'I');

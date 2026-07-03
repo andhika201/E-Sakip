@@ -46,10 +46,16 @@ $routes->get('/tentang_kami', 'UserController::tentang_kami');
 // Public Cascading Routes
 $routes->get('/cascading_kabupaten', 'UserController::cascading_kabupaten');
 $routes->get('/cascading_kabupaten/cetak', 'UserController::cascading_kabupaten_cetak');
+$routes->get('/cascading_kabupaten/excel', 'UserController::cascading_kabupaten_excel');
 $routes->get('/cascading_kabupaten/cetak-pohon', 'UserController::cascading_kabupaten_pohon');
+$routes->get('/pohon_kinerja_kabupaten', 'UserController::pohon_kinerja_kabupaten');
+$routes->get('/pohon_kinerja_kabupaten/cetak', 'UserController::cascading_kabupaten_pohon');
 $routes->get('/cascading_opd', 'UserController::cascading_opd');
 $routes->get('/cascading_opd/cetak', 'UserController::cascading_opd_cetak');
+$routes->get('/cascading_opd/excel', 'UserController::cascading_opd_excel');
 $routes->get('/cascading_opd/cetak-pohon', 'UserController::cascading_opd_pohon');
+$routes->get('/pohon_kinerja_opd', 'UserController::pohon_kinerja_opd');
+$routes->get('/pohon_kinerja_opd/cetak', 'UserController::cascading_opd_pohon');
 
 $routes->get('/api-docs', 'ApiDocsController::index');
 
@@ -125,6 +131,7 @@ $routes->group(
         $routes->get('cascading/get-pk-program-by-opd', 'AdminKab\CascadingController::getPkProgramByOpd');
         $routes->post('cascading/save', 'AdminKab\CascadingController::save');
         $routes->get('cascading/cetak', 'AdminKab\CascadingController::cetak');
+        $routes->get('cascading/excel', 'AdminKab\CascadingController::excel');
         $routes->post('cascading/save-csf', 'AdminKab\CascadingController::saveCsf');
         $routes->get('cascading/cetak-pohon', 'AdminKab\CascadingController::cetakPohon');
 
@@ -389,6 +396,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->get('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
 
     $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
+    $routes->get('cascading/excel', 'AdminOpd\CascadingController::excel');
     $routes->get('cascading/cetakpohon', 'AdminOpd\CascadingController::cetakPohon');
     // Program PK Search
     $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');

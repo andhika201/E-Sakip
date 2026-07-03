@@ -170,6 +170,7 @@ class PkController extends BaseController
 
         helper('setting');
         $footerHtml = pdf_footer_aksara();
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
 
         $css = 'img { width: 70px; height: auto; }';
         $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
@@ -371,7 +372,7 @@ class PkController extends BaseController
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
-            'tahun' => $post['tahun'] ?? null,
+            'tahun' => !empty($post['tahun']) ? $post['tahun'] : date('Y'),
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
             'tanggal' => $tanggal,

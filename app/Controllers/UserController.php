@@ -271,8 +271,6 @@ class UserController extends BaseController
         $rowspan = [];
         $firstShow = [];
         $years = [];
-        $tree = [];
-        $visi = '';
         $tahunMulai = null;
         $tahunAkhir = null;
 
@@ -286,8 +284,49 @@ class UserController extends BaseController
             $rows = $cascadingModel->getMatrix($start, $end);
             $rowspan = $this->buildCascadingKabRowspan($rows);
             $firstShow = $this->buildCascadingKabFirstShow($rows);
+        }
 
-            // Pohon Kinerja tampil inline (tidak harus klik cetak)
+        $data = [
+            'rows' => $rows,
+            'rowspan' => $rowspan,
+            'firstShow' => $firstShow,
+            'periode_master' => $periodeList,
+            'years' => $years,
+            'tahun_mulai' => $tahunMulai,
+            'tahun_akhir' => $tahunAkhir,
+            'filters' => ['periode' => $periode]
+        ];
+
+        return view('user/cascading_kabupaten', $data);
+    }
+
+    // Halaman publik terpisah: Pohon Kinerja Kabupaten (tampilan pohon saja)
+    public function pohon_kinerja_kabupaten()
+    {
+        $cascadingModel = new \App\Models\CascadingModel();
+        $db = \Config\Database::connect();
+
+        $periode = $this->request->getGet('periode');
+
+        $periodeList = $db->table('rpjmd_misi')
+            ->select('tahun_mulai, tahun_akhir')
+            ->groupBy(['tahun_mulai', 'tahun_akhir'])
+            ->orderBy('tahun_mulai', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $tree = [];
+        $visi = '';
+        $tahunMulai = null;
+        $tahunAkhir = null;
+
+        if ($periode) {
+            [$start, $end] = explode('-', $periode);
+            $start = (int) $start;
+            $end = (int) $end;
+            $tahunMulai = $start;
+            $tahunAkhir = $end;
+
             $tree = $cascadingModel->getPohonKinerja($start, $end);
             $firstMisi = $db->table('rpjmd_misi m')
                 ->select('rv.visi')
@@ -300,11 +339,7 @@ class UserController extends BaseController
         }
 
         $data = [
-            'rows' => $rows,
-            'rowspan' => $rowspan,
-            'firstShow' => $firstShow,
             'periode_master' => $periodeList,
-            'years' => $years,
             'tree' => $tree,
             'visi' => $visi,
             'tahun_mulai' => $tahunMulai,
@@ -312,7 +347,39 @@ class UserController extends BaseController
             'filters' => ['periode' => $periode]
         ];
 
-        return view('user/cascading_kabupaten', $data);
+        return view('user/pohon_kinerja_kabupaten', $data);
+    }
+
+    public function cascading_kabupaten_excel()
+    {
+        $periode = $this->request->getGet('periode');
+        if (!$periode) {
+            return redirect()->back();
+        }
+        $cascadingModel = new \App\Models\CascadingModel();
+        [$start, $end] = explode('-', $periode);
+        $rows  = $cascadingModel->getMatrix((int) $start, (int) $end);
+        $years = range((int) $start, (int) $end);
+
+        helper('cascading_excel');
+        cascading_kab_excel($rows, $years, $periode);
+    }
+
+    public function cascading_opd_excel()
+    {
+        $periode = $this->request->getGet('periode');
+        $opd_id  = $this->request->getGet('opd_id');
+        if (!$periode || !$opd_id) {
+            return redirect()->back();
+        }
+        $cascadingModel = new \App\Models\CascadingModel();
+        $db = \Config\Database::connect();
+        [$start, $end] = explode('-', $periode);
+        $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, (int) $start, (int) $end);
+        $o = $db->table('opd')->select('nama_opd')->where('id', $opd_id)->get()->getRowArray();
+
+        helper('cascading_excel');
+        cascading_opd_excel($rows, $periode, $o['nama_opd'] ?? '');
     }
 
     public function cascading_kabupaten_cetak()
@@ -345,6 +412,7 @@ class UserController extends BaseController
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');
@@ -442,7 +510,6 @@ class UserController extends BaseController
         $years = [];
         $rowspan = [];
         $firstShow = [];
-        $tree = [];
 
         if ($periode && $opd_id) {
             [$start, $end] = explode('-', $periode);
@@ -453,9 +520,6 @@ class UserController extends BaseController
             $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, $start, $end);
             $rowspan = $this->buildCascadingOpdRowspan($rows);
             $firstShow = $this->buildCascadingOpdFirstShow($rows);
-
-            // Pohon Kinerja OPD tampil inline (tidak harus klik cetak)
-            $tree = $this->buildOpdTree($rows);
         }
 
         $data = [
@@ -465,7 +529,6 @@ class UserController extends BaseController
             'periode_master' => $periodeList,
             'opdList' => $opdList,
             'years' => $years,
-            'tree' => $tree,
             'filters' => [
                 'periode' => $periode,
                 'opd_id' => $opd_id
@@ -473,6 +536,48 @@ class UserController extends BaseController
         ];
 
         return view('user/cascading_opd', $data);
+    }
+
+    // Halaman publik terpisah: Pohon Kinerja Perangkat Daerah (tampilan pohon saja)
+    public function pohon_kinerja_opd()
+    {
+        $cascadingModel = new \App\Models\CascadingModel();
+        $db = \Config\Database::connect();
+
+        $periode = $this->request->getGet('periode');
+        $opd_id  = $this->request->getGet('opd_id');
+
+        $periodeList = $db->table('rpjmd_misi')
+            ->select('tahun_mulai, tahun_akhir')
+            ->groupBy(['tahun_mulai', 'tahun_akhir'])
+            ->orderBy('tahun_mulai', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+
+        $tree = [];
+
+        if ($periode && $opd_id) {
+            [$start, $end] = explode('-', $periode);
+            $start = (int) $start;
+            $end   = (int) $end;
+
+            $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, $start, $end);
+            $tree = $this->buildOpdTree($rows);
+        }
+
+        $data = [
+            'periode_master' => $periodeList,
+            'opdList' => $opdList,
+            'tree' => $tree,
+            'filters' => [
+                'periode' => $periode,
+                'opd_id' => $opd_id
+            ]
+        ];
+
+        return view('user/pohon_kinerja_opd', $data);
     }
 
     public function cascading_opd_cetak()
@@ -516,6 +621,7 @@ class UserController extends BaseController
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');

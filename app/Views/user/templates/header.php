@@ -31,8 +31,8 @@
 <?php
   $seg = service('uri')->getSegment(1);
   $isHome = ($seg === '' || $seg === 'dashboard');
-  $grpKab = ['rpjmd', 'rkpd', 'cascading_kabupaten', 'pk_bupati', 'lakip_kabupaten'];
-  $grpPd  = ['renstra', 'cascading_opd', 'rkt', 'lakip_opd', 'iku_opd', 'pk_pimpinan', 'pk_administrator', 'pk_pengawas'];
+  $grpKab = ['rpjmd', 'rkpd', 'cascading_kabupaten', 'pohon_kinerja_kabupaten', 'pk_bupati', 'lakip_kabupaten'];
+  $grpPd  = ['renstra', 'cascading_opd', 'pohon_kinerja_opd', 'rkt', 'lakip_opd', 'iku_opd', 'pk_pimpinan', 'pk_administrator', 'pk_pengawas'];
   $isKab = in_array($seg, $grpKab, true);
   $isPd  = in_array($seg, $grpPd, true);
 ?>
@@ -58,8 +58,8 @@
           <ul class="dropdown-menu" aria-labelledby="kabupatenDropdown">
             <li><a class="dropdown-item<?= $seg === 'rpjmd' ? ' active' : '' ?>" href="<?= base_url('rpjmd') ?>">RPJMD</a></li>
             <li><a class="dropdown-item<?= $seg === 'rkpd' ? ' active' : '' ?>" href="<?= base_url('rkpd') ?>">RKPD</a></li>
-            <li><a class="dropdown-item<?= $seg === 'cascading_kabupaten' ? ' active' : '' ?>" href="<?= base_url('cascading_kabupaten') ?>">POHON KINERJA & CASCADING</a>
-            </li>
+            <li><a class="dropdown-item<?= $seg === 'cascading_kabupaten' ? ' active' : '' ?>" href="<?= base_url('cascading_kabupaten') ?>">CASCADING KABUPATEN</a></li>
+            <li><a class="dropdown-item<?= $seg === 'pohon_kinerja_kabupaten' ? ' active' : '' ?>" href="<?= base_url('pohon_kinerja_kabupaten') ?>">POHON KINERJA KABUPATEN</a></li>
             <li><a class="dropdown-item<?= $seg === 'pk_bupati' ? ' active' : '' ?>" href="<?= base_url('pk_bupati') ?>">PK BUPATI</a></li>
             <li><a class="dropdown-item<?= $seg === 'lakip_kabupaten' ? ' active' : '' ?>" href="<?= base_url('lakip_kabupaten') ?>">LAKIP</a></li>
           </ul>
@@ -73,7 +73,8 @@
           </a>
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">
             <li><a class="dropdown-item<?= $seg === 'renstra' ? ' active' : '' ?>" href="<?= base_url('renstra') ?>">RENSTRA</a></li>
-            <li><a class="dropdown-item<?= $seg === 'cascading_opd' ? ' active' : '' ?>" href="<?= base_url('cascading_opd') ?>">POHON KINERJA & CASCADING</a></li>
+            <li><a class="dropdown-item<?= $seg === 'cascading_opd' ? ' active' : '' ?>" href="<?= base_url('cascading_opd') ?>">CASCADING PERANGKAT DAERAH</a></li>
+            <li><a class="dropdown-item<?= $seg === 'pohon_kinerja_opd' ? ' active' : '' ?>" href="<?= base_url('pohon_kinerja_opd') ?>">POHON KINERJA PERANGKAT DAERAH</a></li>
             <li><a class="dropdown-item<?= $seg === 'rkt' ? ' active' : '' ?>" href="<?= base_url('rkt') ?>">RKT</a></li>
             <li><a class="dropdown-item<?= $seg === 'lakip_opd' ? ' active' : '' ?>" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
             <li><a class="dropdown-item<?= $seg === 'iku_opd' ? ' active' : '' ?>" href="<?= base_url('iku_opd') ?>">IKU</a></li>

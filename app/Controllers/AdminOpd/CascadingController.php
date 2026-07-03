@@ -74,6 +74,28 @@ class CascadingController extends BaseController
         return view('adminOpd/cascading/cascading', $data);
     }
 
+    /**
+     * Render ULANG hanya tabel cascading (partial) untuk refresh via AJAX,
+     * sehingga update/delete Es3/Es4 tidak perlu reload seluruh halaman.
+     */
+    public function partialTable()
+    {
+        $periode = $this->request->getGet('periode');
+        if (!$periode || empty($this->opdId)) {
+            return ''; // tanpa periode/opd -> tabel kosong
+        }
+
+        [$start, $end] = explode('-', $periode);
+        $rows = $this->cascadingModel
+            ->getCascadingMatrixByOpd($this->opdId, (int) $start, (int) $end);
+
+        return view('adminOpd/cascading/_table', [
+            'rows'      => $rows,
+            'rowspan'   => $this->buildRowspanMeta($rows),
+            'firstShow' => $this->buildFirstShowMeta($rows),
+        ]);
+    }
+
     public function cetak()
     {
         ob_clean(); // BUANG OUTPUT SEBELUMNYA
@@ -565,15 +587,24 @@ class CascadingController extends BaseController
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
-        $indikator = $this->db->table('cascading_indikator_opd')
-            ->where('cascading_sasaran_id', $id)
+        // Sertakan id + jumlah anak Es4 (untuk konfirmasi hapus berantai di form).
+        $indikator = $this->db->table('cascading_indikator_opd i')
+            ->select('i.id, i.indikator, '
+                . '(SELECT COUNT(*) FROM cascading_sasaran_opd s '
+                . 'WHERE s.es3_indikator_id = i.id AND s.level = "es4") AS es4_count', false)
+            ->where('i.cascading_sasaran_id', $id)
             ->get()
             ->getResultArray();
 
-        return view('adminOpd/cascading/edit_es3', [
+        $data = [
             'sasaran' => $sasaran,
             'indikator' => $indikator
-        ]);
+        ];
+        // AJAX (modal) -> hanya form; navigasi biasa -> halaman penuh.
+        if ($this->request->isAJAX()) {
+            return view('adminOpd/cascading/_form_es3', $data);
+        }
+        return view('adminOpd/cascading/edit_es3', $data);
     }
 
     public function editEs4($id)
@@ -606,49 +637,89 @@ class CascadingController extends BaseController
             ->get()
             ->getRowArray();
 
-        return view('adminOpd/cascading/edit_es4', [
+        $data = [
             'sasaran' => $sasaran,
             'indikator' => $indikator,
             'es3' => $es3,
             'indikator_es3' => $indikatorEs3
-        ]);
+        ];
+        if ($this->request->isAJAX()) {
+            return view('adminOpd/cascading/_form_es4', $data);
+        }
+        return view('adminOpd/cascading/edit_es4', $data);
     }
 
     public function updateEs3($id)
     {
         $nama = $this->request->getPost('nama');
-        $indikator = $this->request->getPost('indikator');
+        $indikator = $this->request->getPost('indikator') ?? [];
 
         $this->db->transStart();
 
-        // update sasaran
+        // 1) Update nama sasaran (id sasaran tidak berubah).
         $this->db->table('cascading_sasaran_opd')
             ->where('id', $id)
-            ->update([
-                'nama_sasaran' => $nama
-            ]);
+            ->update(['nama_sasaran' => $nama]);
 
-        // hapus indikator lama
-        $this->db->table('cascading_indikator_opd')
-            ->where('cascading_sasaran_id', $id)
-            ->delete();
+        // 2) Kumpulkan id indikator lama milik sasaran ini.
+        $existingIds = array_map(
+            static fn($r) => (int) $r['id'],
+            $this->db->table('cascading_indikator_opd')
+                ->select('id')
+                ->where('cascading_sasaran_id', $id)
+                ->get()->getResultArray()
+        );
 
-        // insert indikator baru
-        if ($indikator) {
-            foreach ($indikator as $i) {
+        // 3) Proses baris terkirim: UPDATE in-place (id dipertahankan -> Es4 tetap tertaut)
+        //    atau INSERT untuk indikator baru (tanpa id).
+        $postedIds = [];   // semua id yang MASIH ada di form (tidak dihapus via trash)
+        foreach ($indikator as $ind) {
+            $namaInd = trim($ind['nama'] ?? '');
+            $indId   = (isset($ind['id']) && $ind['id'] !== '') ? (int) $ind['id'] : null;
 
-                if (empty($i['nama']))
-                    continue;
+            if ($indId) {
+                $postedIds[] = $indId;
+            }
+            if ($namaInd === '') {
+                // baris kosong: jangan diproses (biarkan data lama bila punya id).
+                continue;
+            }
 
+            if ($indId && in_array($indId, $existingIds, true)) {
+                $this->db->table('cascading_indikator_opd')
+                    ->where('id', $indId)
+                    ->update(['indikator' => $namaInd]);
+            } else {
                 $this->db->table('cascading_indikator_opd')->insert([
                     'cascading_sasaran_id' => $id,
-                    'indikator' => $i['nama']
+                    'indikator'            => $namaInd,
                 ]);
             }
         }
 
+        // 4) Indikator yang DIHAPUS user (trash) = ada di DB tapi tak lagi terkirim.
+        //    Cascade: hapus Es4 anaknya dulu (FK es3_indikator_id = SET NULL, jadi
+        //    Es4 harus dihapus manual agar tidak menjadi orphan), lalu indikatornya.
+        $removedIds = array_values(array_diff($existingIds, $postedIds));
+        if (!empty($removedIds)) {
+            $this->db->table('cascading_sasaran_opd')
+                ->where('level', 'es4')
+                ->whereIn('es3_indikator_id', $removedIds)
+                ->delete(); // indikator Es4 ikut terhapus via FK ON DELETE CASCADE
+
+            $this->db->table('cascading_indikator_opd')
+                ->whereIn('id', $removedIds)
+                ->delete();
+        }
+
         $this->db->transComplete();
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'success' => $this->db->transStatus() !== false,
+                'message' => 'Sasaran Eselon III berhasil diperbarui.',
+            ]);
+        }
         return redirect()->to('adminopd/cascading')
             ->with('success', 'Data berhasil diperbarui');
     }
@@ -690,6 +761,12 @@ class CascadingController extends BaseController
 
         $this->db->transComplete();
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'success' => $this->db->transStatus() !== false,
+                'message' => 'Sasaran Eselon IV berhasil diperbarui.',
+            ]);
+        }
         return redirect()->to('adminopd/cascading')
             ->with('success', 'Data ESS IV berhasil diperbarui');
     }
@@ -699,6 +776,9 @@ class CascadingController extends BaseController
             ->where('id', $id)
             ->delete();
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true, 'message' => 'Sasaran Eselon III berhasil dihapus.']);
+        }
         return redirect()->to('adminopd/cascading')
             ->with('success', 'Data berhasil dihapus');
     }
@@ -708,6 +788,9 @@ class CascadingController extends BaseController
             ->where('id', $id)
             ->delete();
 
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => true, 'message' => 'Sasaran Eselon IV berhasil dihapus.']);
+        }
         return redirect()->to('adminopd/cascading')
             ->with('success', 'Data berhasil dihapus');
     }

@@ -374,6 +374,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Cascading
     $routes->get('cascading', 'AdminOpd\CascadingController::index');
+    $routes->get('cascading/table', 'AdminOpd\CascadingController::partialTable'); // partial tabel utk refresh AJAX
     // ESS III
     $routes->get('cascading/tambah-es3/(:num)', 'AdminOpd\CascadingController::tambahEs3/$1');
     $routes->post('cascading/save-es3', 'AdminOpd\CascadingController::saveEs3');

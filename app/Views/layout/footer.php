@@ -110,7 +110,8 @@ $f_devname  = setting('dev_name', 'DevTech');
                     <div class="sf-links">
                         <a href="<?= base_url('dashboard') ?>"><i class="fas fa-chevron-right"></i> Beranda</a>
                         <a href="<?= base_url('rpjmd') ?>"><i class="fas fa-chevron-right"></i> RPJMD</a>
-                        <a href="<?= base_url('cascading_kabupaten') ?>"><i class="fas fa-chevron-right"></i> Pohon Kinerja &amp; Cascading</a>
+                        <a href="<?= base_url('cascading_kabupaten') ?>"><i class="fas fa-chevron-right"></i> Cascading Kabupaten</a>
+                        <a href="<?= base_url('pohon_kinerja_kabupaten') ?>"><i class="fas fa-chevron-right"></i> Pohon Kinerja Kabupaten</a>
                         <a href="<?= base_url('lakip_kabupaten') ?>"><i class="fas fa-chevron-right"></i> LAKIP</a>
                         <a href="<?= base_url('tentang_kami') ?>"><i class="fas fa-chevron-right"></i> Tentang Kami</a>
                     </div>

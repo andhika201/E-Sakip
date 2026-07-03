@@ -36,7 +36,7 @@ class PkModel extends Model
 
     // Validation
     protected $validationRules = [
-        'jenis' => 'required|in_list[jpt,administrator,pengawas,bupati]',
+        'jenis' => 'required|in_list[jpt,camat,administrator,pengawas,bupati]',
         'pihak_1' => 'permit_empty|integer',
         'pihak_2' => 'permit_empty|integer',
         'tanggal' => 'required|valid_date'
@@ -551,8 +551,8 @@ class PkModel extends Model
                             $pkProgramId = $db->insertID();
                         }
 
-                        // 🔥 JPT STOP DI PROGRAM
-                        if ($data['jenis'] === 'jpt') {
+                        // 🔥 JPT/CAMAT STOP DI PROGRAM
+                        if (in_array($data['jenis'], ['jpt', 'camat'], true)) {
                             continue;
                         }
 
@@ -744,7 +744,8 @@ class PkModel extends Model
             ->join('pk_indikator', 'pk_indikator.id = pk_program.pk_indikator_id')
             ->join('pk_sasaran', 'pk_sasaran.id = pk_indikator.pk_sasaran_id')
             ->join('pk', 'pk.id = pk_sasaran.pk_id')
-            ->where('pk_indikator.jenis', 'jpt')
+            // Program puncak OPD: Dinas 'jpt', Kecamatan 'camat' (satu OPD hanya salah satunya)
+            ->whereIn('pk_indikator.jenis', ['jpt', 'camat'])
             ->where('pk.opd_id', $opdId)
             ->orderBy('pk.created_at', 'DESC')
             ->get()
@@ -902,6 +903,7 @@ class PkModel extends Model
                 return $this->getProgramsForBupatiFromPkJpt(intval());
 
             case 'jpt':
+            case 'camat': // Camat = struktur identik JPT (indikator → program)
                 return $this->getProgramByPkId($pkId);
 
             case 'administrator':

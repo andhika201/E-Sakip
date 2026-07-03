@@ -63,3 +63,30 @@ if (!function_exists('pdf_footer_aksara')) {
             . '<td style="text-align:right;">Halaman {PAGENO} dari {nbpg}</td></tr></table>';
     }
 }
+
+if (!function_exists('pdf_watermark_aksara')) {
+    /**
+     * Terapkan watermark logo AKSARA (app_logo) yang HALUS & FORMAL ke instance Mpdf.
+     * Panggil SEBELUM $mpdf->WriteHTML(). Alpha kecil supaya tidak menutupi konten.
+     *
+     * @param \Mpdf\Mpdf $mpdf
+     */
+    function pdf_watermark_aksara($mpdf, float $alpha = 0.07): void
+    {
+        $rel = trim(setting('app_logo', 'assets/images/LogoTentang.png'));
+        $abs = FCPATH . ltrim($rel, '/');
+        if (!is_file($abs)) {
+            $abs = FCPATH . 'assets/images/LogoTentang.png';
+        }
+        if (!is_file($abs)) {
+            return;
+        }
+        try {
+            // 'D' = ukuran natural (proporsional, tidak penuh halaman), di tengah, transparan halus.
+            $mpdf->SetWatermarkImage($abs, $alpha, 'D', 'P');
+            $mpdf->showWatermarkImage = true;
+        } catch (\Throwable $e) {
+            // gambar tak valid -> lewati tanpa mengganggu cetak
+        }
+    }
+}

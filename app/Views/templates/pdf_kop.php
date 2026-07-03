@@ -32,12 +32,8 @@ if (!is_file($logoAbs)) {
     $logoAbs = FCPATH . ltrim(setting('app_logo', 'assets/images/LogoTentang.png'), '/');
 }
 
-// Logo sekunder (kanan): branding aplikasi AKSARA = app_logo.
-$aksaraRel = trim(setting('app_logo', 'assets/images/LogoTentang.png'));
-$aksaraAbs = FCPATH . ltrim($aksaraRel, '/');
-if (!is_file($aksaraAbs)) {
-    $aksaraAbs = FCPATH . 'assets/images/LogoTentang.png';
-}
+// Logo AKSARA TIDAK lagi ditaruh di kop -> dipakai sebagai watermark halaman
+// (lihat helper pdf_watermark_aksara()). Kop resmi cukup lambang Kabupaten + teks instansi.
 
 $instansi = setting('instansi', 'Pemerintah Kabupaten Pringsewu');
 $alamat   = trim(setting('instansi_address', ''));
@@ -51,9 +47,9 @@ if ($te !== '') { $kontak[] = $te; }
 ?>
 <table class="pdf-kop">
     <tr>
-        <td style="width: 90px; text-align: left; vertical-align: middle;">
+        <td style="width: 86px; text-align: center; vertical-align: middle;">
             <?php if (is_file($logoAbs)): ?>
-                <img src="<?= $logoAbs ?>" alt="Lambang Kabupaten" height="64" style="height:64px; width:auto;">
+                <img src="<?= $logoAbs ?>" alt="Lambang Kabupaten" height="72" style="height:72px; width:auto;">
             <?php endif; ?>
         </td>
         <td style="text-align: center; vertical-align: middle;">
@@ -67,11 +63,7 @@ if ($te !== '') { $kontak[] = $te; }
                 <?php endif; ?>
             <?php endif; ?>
         </td>
-        <td style="width: <?= $hideAksara ? '90' : '120' ?>px; text-align: right; vertical-align: middle;">
-            <?php if (!$hideAksara && is_file($aksaraAbs)): ?>
-                <img src="<?= $aksaraAbs ?>" alt="AKSARA" height="50" style="height:50px; width:auto;">
-            <?php endif; ?>
-        </td>
+        <td style="width: 86px;"></td><!-- penyeimbang: teks instansi benar-benar di tengah -->
     </tr>
 </table>
 <hr class="pdf-kop-rule">

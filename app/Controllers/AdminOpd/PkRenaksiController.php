@@ -73,8 +73,8 @@ class PkRenaksiController extends BaseController
             : ($this->base($jenis) . '/monev_pk/' . $jenis);
     }
 
-    /** Eselon level pada modul OPD (Eselon II/III/IV). */
-    private const OPD_JENIS = ['jpt', 'administrator', 'pengawas'];
+    /** Eselon level pada modul OPD (Eselon II/III/IV + Camat=Eselon III kecamatan). */
+    private const OPD_JENIS = ['jpt', 'camat', 'administrator', 'pengawas'];
 
     /** Label eselon manusiawi dari pk.jenis. */
     private function eselonLabel(string $pkJenis): string
@@ -82,6 +82,7 @@ class PkRenaksiController extends BaseController
         $map = [
             'bupati'        => 'Bupati',
             'jpt'           => 'Eselon II',
+            'camat'         => 'Camat (Eselon III)',
             'administrator' => 'Eselon III',
             'pengawas'      => 'Eselon IV',
         ];
@@ -780,6 +781,7 @@ class PkRenaksiController extends BaseController
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->WriteHTML($html);
         $this->response->setHeader('Content-Type', 'application/pdf');
         $mpdf->Output('MONEV-PK-' . $jenis . '-' . ($tahun ?? 'semua') . '.pdf', 'I');

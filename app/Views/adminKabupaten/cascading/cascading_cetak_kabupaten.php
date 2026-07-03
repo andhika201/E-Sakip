@@ -53,26 +53,32 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
     <style>
         td.center, th.center, td.c, th.c { text-align: center; }
         .nowrap { white-space: nowrap; }
-        .pdf-visi { font-weight: bold; font-size: 14px; margin: 4px 0 10px; color: #15311f; }
-        /* Ukuran dinaikkan agar terbaca saat dicetak fisik (kertas A3 landscape) */
-        table.pdf-table td, table.pdf-table th { font-size: 13px; padding: 6px 7px; }
-        table.pdf-table thead th { font-size: 12px; }
-        table.pdf-table td.c { vertical-align: middle; } /* angka (rowspan) di-tengah vertikal biar rapi */
+        .pdf-visi { font-weight: bold; font-size: 15px; margin: 4px 0 8px; color: #15311f; }
+        /* Kertas A3 landscape supaya 14 kolom terbaca.
+           table-layout: fixed -> lebar kolom ikut <colgroup> (persen) & tabel MENGISI PENUH lebar halaman */
+        table.pdf-table { table-layout: fixed; width: 100%; }
+        table.pdf-table td, table.pdf-table th { font-size: 14.5px; padding: 7px 7px; overflow-wrap: break-word; word-wrap: break-word; }
+        table.pdf-table thead th { font-size: 13px; }
+        /* Sel gabungan (angka/indikator/perangkat daerah/kolom induk) di-tengah vertikal */
+        table.pdf-table td.c, table.pdf-table td.vmid, table.pdf-table td.casc-parent { vertical-align: middle; }
+        table.pdf-table td .no { color: #d35400; font-weight: bold; } /* penomoran oranye spt contoh */
         /* Tampilan bersih & profesional: nonaktifkan zebra */
         table.pdf-table tbody tr:nth-child(even) td { background: #fff; }
         /* Kolom induk (Misi/Tujuan/Sasaran): garis dalam grup dibuat SAMAR (tipis)
            & pemisah antar-grup tegas -> terlihat "menyatu" TANPA rowspan besar
            (rowspan besar memicu halaman kosong di mpdf). Garis dibiarkan ADA
            (bukan none) supaya tidak hilang/terpotong saat pindah halaman. */
-        table.pdf-table td.casc-parent { border-top-color: #cfd8d1; border-bottom-color: #cfd8d1; }
-        table.pdf-table td.casc-parent.grp-start { border-top-color: #6b7a70; }
+        /* Kolom induk tampil MENYATU: hilangkan garis dalam grup (tak ada kotak kosong),
+           garis pemisah hanya di awal tiap grup (Misi/Tujuan/Sasaran baru). */
+        table.pdf-table td.casc-parent { border-top: none; border-bottom: none; }
+        table.pdf-table td.casc-parent.grp-start { border-top: 0.5px solid #6b7a70; }
     </style>
 </head>
 
 <body>
     <?php $this->setData([ // param kop via data-share (include options tak diteruskan CI4)
-        'judul'      => 'Cascading Kinerja Kabupaten',
-        'subjudul'   => 'Visi · Misi · Tujuan · Sasaran · Indikator · Program · Perangkat Daerah · Periode ' . $periodeTxt,
+        'judul'      => 'Cascading Kabupaten Pringsewu ' . (!empty($years) ? (min($years) . '-' . max($years)) : ''),
+        'subjudul'   => '',      // judul saja (samakan dgn contoh)
         'logoOnly'   => false,   // tampilkan teks instansi (kop profesional)
         'hideAksara' => true,    // hanya lambang Kabupaten; logo AKSARA dipakai sbg watermark
     ]); ?>
@@ -83,22 +89,34 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
     <?php endif; ?>
 
     <table class="pdf-table">
+        <colgroup>
+            <col style="width:7.5%">   <!-- Misi -->
+            <col style="width:7.5%">   <!-- Tujuan -->
+            <col style="width:7.5%">   <!-- Sasaran -->
+            <col style="width:8%">     <!-- Indikator -->
+            <col style="width:21%">    <!-- Program (konten padat -> paling lebar) -->
+            <col style="width:14%">    <!-- Perangkat Daerah -->
+            <col style="width:3.5%">   <!-- Satuan -->
+            <col style="width:4.5%">   <!-- Kondisi Awal -->
+            <?php $yw = 21 / max(1, count($years)); foreach ($years as $y): ?><col style="width:<?= round($yw, 2) ?>%"><?php endforeach; ?>
+            <col style="width:5%">     <!-- Kondisi Akhir -->
+        </colgroup>
         <thead>
             <tr>
-                <th rowspan="2" style="width:135px;">Misi</th>
-                <th rowspan="2" style="width:135px;">Tujuan</th>
-                <th rowspan="2" style="width:135px;">Sasaran</th>
-                <th rowspan="2" style="width:125px;">Indikator</th>
-                <th rowspan="2" style="width:210px;">Program</th>
-                <th rowspan="2" style="width:175px;">Perangkat Daerah Penanggung Jawab</th>
-                <th rowspan="2" style="width:48px;">Satuan</th>
-                <th rowspan="2" style="width:66px;">Kondisi Awal</th>
+                <th rowspan="2">Misi</th>
+                <th rowspan="2">Tujuan</th>
+                <th rowspan="2">Sasaran</th>
+                <th rowspan="2">Indikator</th>
+                <th rowspan="2">Program</th>
+                <th rowspan="2">Perangkat Daerah Penanggung Jawab</th>
+                <th rowspan="2">Satuan</th>
+                <th rowspan="2">Kondisi Awal</th>
                 <th colspan="<?= count($years) ?>">Target</th>
-                <th rowspan="2" style="width:66px;">Kondisi Akhir</th>
+                <th rowspan="2">Kondisi Akhir</th>
             </tr>
             <tr>
                 <?php foreach ($years as $y): ?>
-                    <th class="c nowrap" style="width:66px;"><?= esc($y) ?></th>
+                    <th class="c"><?= esc($y) ?></th>
                 <?php endforeach; ?>
             </tr>
         </thead>
@@ -106,9 +124,9 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
             <?php if (empty($tree)): ?>
                 <tr><td colspan="<?= $colCount ?>" class="c pdf-muted">Tidak ada data cascading.</td></tr>
             <?php else: ?>
-                <?php $miNo = 0; foreach ($tree as $m): $miNo++; $mSpan = $misiRows($m); $mPr = false; ?>
-                    <?php $tuNo = 0; foreach ($m['tujuan'] as $t): $tuNo++; $tSpan = $tujRows($t); $tPr = false; ?>
-                        <?php $saNo = 0; foreach ($t['sasaran'] as $s): $saNo++; $sSpan = $sasRows($s); $sPr = false; ?>
+                <?php $miNo = 0; foreach ($tree as $m): $miNo++; $mSpan = $misiRows($m); $mMid = intdiv($mSpan - 1, 2); $mRow = 0; ?>
+                    <?php $tuNo = 0; foreach ($m['tujuan'] as $t): $tuNo++; $tSpan = $tujRows($t); $tMid = intdiv($tSpan - 1, 2); $tRow = 0; ?>
+                        <?php $saNo = 0; foreach ($t['sasaran'] as $s): $saNo++; $sSpan = $sasRows($s); $sMid = intdiv($sSpan - 1, 2); $sRow = 0; ?>
                             <?php
                             $inNo = 0;
                             foreach ($s['indikator'] as $ind):
@@ -121,19 +139,19 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
                                     <?php $pNo = 0; foreach ($progs as $prog): $pNo++; ?>
                                         <tr>
                                             <?php // Misi/Tujuan/Sasaran: tulis SEKALI di baris pertama grup (tanpa rowspan) agar mpdf tak menghasilkan halaman kosong pada data besar. Indikator & Perangkat Daerah tetap di-merge (rowspan kecil, aman). ?>
-                                            <td class="text-start casc-parent<?= $mPr ? '' : ' grp-start' ?>"><?php if (!$mPr): ?><?= $miNo ?>. <?= nl2br(esc($m['misi'])) ?><?php $mPr = true; endif; ?></td>
-                                            <td class="text-start casc-parent<?= $tPr ? '' : ' grp-start' ?>"><?php if (!$tPr): ?><?= $tuNo ?>. <?= nl2br(esc($t['nama'])) ?><?php $tPr = true; endif; ?></td>
-                                            <td class="text-start casc-parent<?= $sPr ? '' : ' grp-start' ?>"><?php if (!$sPr): ?><?= $saNo ?>. <?= nl2br(esc($s['nama'])) ?><?php $sPr = true; endif; ?></td>
-                                            <?php if (!$iPr): ?><td rowspan="<?= $iSpan ?>" class="text-start"><?= $inNo ?>. <?= $ind['nama'] !== null ? nl2br(esc($ind['nama'])) : '-' ?></td><?php endif; ?>
-                                            <td class="text-start"><?= $prog !== null ? $pNo . '. ' . nl2br(esc($prog)) : '-' ?></td>
-                                            <?php if (!$oPr): ?><td rowspan="<?= $oSpan ?>" class="text-start"><?= $opd['nama'] !== '' ? nl2br(esc($opd['nama'])) : '-' ?></td><?php $oPr = true; endif; ?>
+                                            <td class="text-start casc-parent<?= $mRow === 0 ? ' grp-start' : '' ?>"><?php if ($mRow === $mMid): ?><span class="no"><?= $miNo ?>.</span> <?= nl2br(esc($m['misi'])) ?><?php endif; $mRow++; ?></td>
+                                            <td class="text-start casc-parent<?= $tRow === 0 ? ' grp-start' : '' ?>"><?php if ($tRow === $tMid): ?><span class="no"><?= $tuNo ?>.</span> <?= nl2br(esc($t['nama'])) ?><?php endif; $tRow++; ?></td>
+                                            <td class="text-start casc-parent<?= $sRow === 0 ? ' grp-start' : '' ?>"><?php if ($sRow === $sMid): ?><span class="no"><?= $saNo ?>.</span> <?= nl2br(esc($s['nama'])) ?><?php endif; $sRow++; ?></td>
+                                            <?php if (!$iPr): ?><td rowspan="<?= $iSpan ?>" class="text-start vmid"><span class="no"><?= $inNo ?>.</span> <?= $ind['nama'] !== null ? nl2br(esc($ind['nama'])) : '-' ?></td><?php endif; ?>
+                                            <td class="text-start"><?php if ($prog !== null): ?><span class="no"><?= $pNo ?>.</span> <?= nl2br(esc($prog)) ?><?php else: ?>-<?php endif; ?></td>
+                                            <?php if (!$oPr): ?><td rowspan="<?= $oSpan ?>" class="text-start vmid"><?= $opd['nama'] !== '' ? nl2br(esc($opd['nama'])) : '-' ?></td><?php $oPr = true; endif; ?>
                                             <?php if (!$iPr): ?>
-                                                <td class="c nowrap" rowspan="<?= $iSpan ?>"><?= esc($ind['satuan'] ?? '-') ?></td>
-                                                <td class="c nowrap" rowspan="<?= $iSpan ?>"><?= esc($ind['baseline'] ?? '-') ?></td>
+                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($ind['satuan'] ?? '-') ?></td>
+                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($ind['baseline'] ?? '-') ?></td>
                                                 <?php foreach ($years as $y): ?>
-                                                    <td class="c nowrap" rowspan="<?= $iSpan ?>"><?= esc($targets[$y] ?? '-') ?></td>
+                                                    <td class="c" rowspan="<?= $iSpan ?>"><?= esc($targets[$y] ?? '-') ?></td>
                                                 <?php endforeach; ?>
-                                                <td class="c nowrap" rowspan="<?= $iSpan ?>"><?= esc($kondisiAkhir ?? '-') ?></td>
+                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($kondisiAkhir ?? '-') ?></td>
                                                 <?php $iPr = true; ?>
                                             <?php endif; ?>
                                         </tr>

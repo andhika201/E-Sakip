@@ -74,6 +74,22 @@ class CascadingController extends BaseController
         return view('adminOpd/cascading/cascading', $data);
     }
 
+    public function excel()
+    {
+        $periode = $this->request->getGet('periode');
+        if (!$periode) {
+            return redirect()->back()->with('error', 'Periode wajib dipilih');
+        }
+        [$start, $end] = explode('-', $periode);
+        $rows = $this->cascadingModel->getCascadingMatrixByOpd($this->opdId, (int) $start, (int) $end);
+
+        $db = \Config\Database::connect();
+        $o  = $db->table('opd')->select('nama_opd')->where('id', $this->opdId)->get()->getRowArray();
+
+        helper('cascading_excel');
+        cascading_opd_excel($rows, $periode, $o['nama_opd'] ?? '');
+    }
+
     public function cetak()
     {
         ob_clean(); // BUANG OUTPUT SEBELUMNYA
@@ -118,6 +134,7 @@ class CascadingController extends BaseController
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 

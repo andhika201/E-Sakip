@@ -353,10 +353,10 @@ class TargetModel extends Model
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->join('target_rencana tr', $trJoin, 'left');
 
-        if (!empty($eselon) && in_array($eselon, ['jpt', 'administrator', 'pengawas'], true)) {
+        if (!empty($eselon) && in_array($eselon, ['jpt', 'camat', 'administrator', 'pengawas'], true)) {
             $b->where('pk.jenis', $eselon);
         } else {
-            $b->whereIn('pk.jenis', ['jpt', 'administrator', 'pengawas']);
+            $b->whereIn('pk.jenis', ['jpt', 'camat', 'administrator', 'pengawas']);
         }
         if (!empty($tahun)) {
             $b->where('pk.tahun', $tahun);
@@ -369,7 +369,7 @@ class TargetModel extends Model
         }
 
         return $b->orderBy('pk.opd_id', 'ASC')
-            ->orderBy("FIELD(pk.jenis,'jpt','administrator','pengawas')", '', false)
+            ->orderBy("FIELD(pk.jenis,'jpt','camat','administrator','pengawas')", '', false)
             ->orderBy('ps.id', 'ASC')
             ->orderBy('pi.id', 'ASC')
             ->get()
@@ -398,7 +398,7 @@ class TargetModel extends Model
     {
         $b = $this->db->table('pk')
             ->select('tahun')
-            ->whereIn('jenis', ['jpt', 'administrator', 'pengawas'])
+            ->whereIn('jenis', ['jpt', 'camat', 'administrator', 'pengawas'])
             ->distinct()
             ->orderBy('tahun', 'ASC');
         if (!empty($opdId)) {

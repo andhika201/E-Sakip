@@ -94,7 +94,8 @@ class PegawaiModel extends Model
             ->join('jabatan j', 'j.id = p.jabatan_id', 'left')
             ->orderBy('p.nama_pegawai', 'ASC');
 
-        if ($jenis === 'jpt') {
+        if (in_array($jenis, ['jpt', 'camat'], true)) {
+            // jpt/camat: sertakan pegawai OPD 46 (mis. Bupati/Sekda) sbg opsi pihak_2
             $builder->groupStart()
                 ->where('p.opd_id', $opdId)
                 ->orWhere('p.opd_id', 46)

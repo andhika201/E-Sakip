@@ -23,10 +23,11 @@ class PkController extends BaseController
 
     public function index($jenis)
     {
-        // 'kecamatan' = tampilan terpisah, tapi logika & data identik dgn 'jpt'.
+        // 'kecamatan' = segmen URL utk PK Camat. Disimpan sbg jenis 'camat'
+        // (klasifikasi Eselon III) namun STRUKTUR datanya identik dgn 'jpt'.
         $seg = $jenis;                                       // segmen URL (utk link/redirect/judul)
         $isKecamatan = ($jenis === 'kecamatan');
-        $jenis = $isKecamatan ? 'jpt' : $jenis;             // jenis data
+        $jenis = $isKecamatan ? 'camat' : $jenis;           // jenis data (disimpan/di-query)
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -62,7 +63,7 @@ class PkController extends BaseController
             // 🔥 DEDUP PROGRAM KHUSUS JPT
             // ==================================================
             if (
-                $jenis === 'jpt' &&
+                in_array($jenis, ['jpt', 'camat'], true) &&
                 !empty($pkData['sasaran']) &&
                 is_array($pkData['sasaran'])
             ) {
@@ -120,10 +121,10 @@ class PkController extends BaseController
     {
 
         helper('format');
-        // 'kecamatan' = tampilan terpisah, data identik dgn 'jpt'.
+        // 'kecamatan' = PK Camat; disimpan sbg jenis 'camat', struktur data spt 'jpt'.
         $seg = $jenis;
         $isKecamatan = ($jenis === 'kecamatan');
-        $jenis = $isKecamatan ? 'jpt' : $jenis;
+        $jenis = $isKecamatan ? 'camat' : $jenis;
 
         if (!$id) {
             return redirect()->to('/adminOpd/pk/' . $seg)->with('error', 'ID PK tidak ditemukan');
@@ -188,7 +189,7 @@ class PkController extends BaseController
     {
         $seg = $jenis;
         $isKecamatan = ($jenis === 'kecamatan');
-        $jenis = $isKecamatan ? 'jpt' : $jenis;
+        $jenis = $isKecamatan ? 'camat' : $jenis;
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -203,20 +204,28 @@ class PkController extends BaseController
         $subkegiatan = $this->pkModel->getSubKegiatan();
         $satuan = $this->pkModel->getAllSatuan();
         $kegiatanAdmin = $this->pkModel->getKegiatanAdmin($opdId);
-        // Dapatkan PK Pimpinan sebagai acuan sesuai jenis
+        // Dapatkan PK Pimpinan sebagai acuan sesuai jenis.
+        // administrator: acuan = puncak OPD → Dinas 'jpt', Kecamatan 'camat'.
+        // pengawas    : acuan = atasan → 'administrator' (Kabid/Sekcam) ATAU 'camat'
+        //               (Kasi langsung di bawah Camat). Satu OPD hanya memuat kombinasi
+        //               yang relevan, jadi whereIn aman.
         $referensiJenis = null;
         if ($jenis === 'administrator') {
-            $referensiJenis = 'jpt';
+            $referensiJenis = ['jpt', 'camat'];
         } elseif ($jenis === 'pengawas') {
-            $referensiJenis = 'administrator';
+            $referensiJenis = ['administrator', 'camat'];
         }
         $pkPimpinan = [];
         if ($referensiJenis) {
             $pkPimpinan = $this->pkModel
                 ->where('opd_id', $opdId)
-                ->where('jenis', $referensiJenis)
+                ->whereIn('jenis', (array) $referensiJenis)
                 ->findAll();
         }
+
+        // OPD kecamatan → pengawas memakai mode "program Camat + kegiatan bebas".
+        $isKecamatanOpd = (stripos((string) ($currentOpd['nama_opd'] ?? ''), 'kecamatan') !== false);
+
         // dd($kegiatanAdmin);
         return view('adminOpd/pk/tambah_pk', [
             'pegawaiOpd' => $pegawaiOpd,
@@ -232,6 +241,7 @@ class PkController extends BaseController
             'jenis' => $jenis,
             'seg' => $seg,
             'isKecamatan' => $isKecamatan,
+            'isKecamatanOpd' => $isKecamatanOpd,
         ]);
     }
 
@@ -239,7 +249,7 @@ class PkController extends BaseController
     {
         $seg = $jenis;
         $isKecamatan = ($jenis === 'kecamatan');
-        $jenis = $isKecamatan ? 'jpt' : $jenis;
+        $jenis = $isKecamatan ? 'camat' : $jenis;
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -262,6 +272,25 @@ class PkController extends BaseController
         $satuan = $this->pkModel->getAllSatuan();
         $kegiatanAdmin = $this->pkModel->getKegiatanAdmin($opdId);
 
+        // Acuan atasan (sama seperti tambah): administrator → jpt/camat (puncak OPD),
+        // pengawas → administrator ATAU camat (Kasi langsung di bawah Camat).
+        $referensiJenis = null;
+        if ($jenis === 'administrator') {
+            $referensiJenis = ['jpt', 'camat'];
+        } elseif ($jenis === 'pengawas') {
+            $referensiJenis = ['administrator', 'camat'];
+        }
+        $pkPimpinan = [];
+        if ($referensiJenis) {
+            $pkPimpinan = $this->pkModel
+                ->where('opd_id', $opdId)
+                ->whereIn('jenis', (array) $referensiJenis)
+                ->findAll();
+        }
+
+        $currentOpd = $this->opdModel->find($opdId);
+        $isKecamatanOpd = (stripos((string) ($currentOpd['nama_opd'] ?? ''), 'kecamatan') !== false);
+
         // dd($pk['sasaran_pk'][0]['indikator']);
 
         return view('adminOpd/pk/edit_pk', [
@@ -273,10 +302,12 @@ class PkController extends BaseController
             'satuan' => $satuan,
             'kegiatanAdmin' => $kegiatanAdmin,
             'jptProgram' => $jptProgram,
+            'pkPimpinan' => $pkPimpinan,
             'title' => 'Edit PK ',
             'jenis' => $jenis,
             'seg' => $seg,
             'isKecamatan' => $isKecamatan,
+            'isKecamatanOpd' => $isKecamatanOpd,
             'validation' => session()->getFlashdata('validation')
         ]);
     }
@@ -284,7 +315,7 @@ class PkController extends BaseController
     public function save($jenis)
     {
         $seg = $jenis;
-        $jenis = ($jenis === 'kecamatan') ? 'jpt' : $jenis;
+        $jenis = ($jenis === 'kecamatan') ? 'camat' : $jenis;
 
         $validation = \Config\Services::validation();
 
@@ -385,9 +416,10 @@ class PkController extends BaseController
                         ];
 
                         // ------------------------------------------------------
-                        // JENIS = JPT → indikator → program
+                        // JENIS = JPT / CAMAT → indikator → program
+                        // (Camat = puncak kecamatan, struktur identik JPT)
                         // ------------------------------------------------------
-                        if ($jenis === 'jpt') {
+                        if (in_array($jenis, ['jpt', 'camat'], true)) {
                             if (!empty($indikator['program'])) {
                                 foreach ($indikator['program'] as $p) {
                                     $indikatorData['program'][] = [
@@ -614,7 +646,7 @@ class PkController extends BaseController
                     // logging indikator
                     log_message('debug', "Parsing indikator [{$sIndex}][{$iIndex}]: " . json_encode($indikatorData));
 
-                    if ($jenis === 'jpt') {
+                    if (in_array($jenis, ['jpt', 'camat'], true)) {
                         foreach ($ind['program'] ?? [] as $p) {
                             $indikatorData['program'][] = [
                                 'program_id' => $p['program_id'] ?? null,

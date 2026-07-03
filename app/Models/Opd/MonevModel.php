@@ -437,10 +437,10 @@ class MonevModel extends Model
             )
             ->where('tr.pk_indikator_id IS NOT NULL', null, false);
 
-        if (!empty($eselon) && in_array($eselon, ['jpt', 'administrator', 'pengawas'], true)) {
+        if (!empty($eselon) && in_array($eselon, ['jpt', 'camat', 'administrator', 'pengawas'], true)) {
             $b->where('pk.jenis', $eselon);
         } else {
-            $b->whereIn('pk.jenis', ['jpt', 'administrator', 'pengawas']);
+            $b->whereIn('pk.jenis', ['jpt', 'camat', 'administrator', 'pengawas']);
         }
         if (!empty($tahun)) {
             $b->where('pk.tahun', $tahun);
@@ -453,7 +453,7 @@ class MonevModel extends Model
         }
 
         return $b->orderBy('tr.opd_id', 'ASC')
-            ->orderBy("FIELD(pk.jenis,'jpt','administrator','pengawas')", '', false)
+            ->orderBy("FIELD(pk.jenis,'jpt','camat','administrator','pengawas')", '', false)
             ->orderBy('ps.id', 'ASC')
             ->orderBy('pi.id', 'ASC')
             ->orderBy('tr.id', 'ASC')
@@ -535,7 +535,7 @@ class MonevModel extends Model
     {
         $b = $this->db->table('pk')
             ->select('tahun')
-            ->whereIn('jenis', ['jpt', 'administrator', 'pengawas'])
+            ->whereIn('jenis', ['jpt', 'camat', 'administrator', 'pengawas'])
             ->distinct()
             ->orderBy('tahun', 'ASC');
         if (!empty($opdId)) {

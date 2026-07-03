@@ -2,7 +2,7 @@
 $isBupati = ($jenis === 'bupati');
 $isOpd    = !$isBupati;
 $eselonLabel = function ($pkJenis) {
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     return $map[$pkJenis] ?? '-';
 };
 // Subjudul mengikuti filter eselon bila dipilih

@@ -14,7 +14,7 @@ $monevPath   = ($jenis === 'bupati') ? 'adminkab/monev'
 $baseUrl  = base_url($monevPath);
 
 $eselonLabel = function ($pkJenis) {
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     return $map[$pkJenis] ?? '-';
 };
 
@@ -126,6 +126,7 @@ $filterQs = http_build_query(array_filter([
                         <select name="eselon" class="form-select" onchange="this.form.submit()">
                             <option value="">Semua Eselon</option>
                             <option value="jpt" <?= (($eselon ?? '') === 'jpt') ? 'selected' : '' ?>>Eselon II</option>
+                            <option value="camat" <?= (($eselon ?? '') === 'camat') ? 'selected' : '' ?>>Camat (Eselon III)</option>
                             <option value="administrator" <?= (($eselon ?? '') === 'administrator') ? 'selected' : '' ?>>Eselon III</option>
                             <option value="pengawas" <?= (($eselon ?? '') === 'pengawas') ? 'selected' : '' ?>>Eselon IV</option>
                         </select>
@@ -284,7 +285,7 @@ $filterQs = http_build_query(array_filter([
                                                         <?php if (empty($autoOpds)): ?>
                                                             <span class="text-muted">Belum ditetapkan</span>
                                                         <?php else: ?>
-                                                            <?php $eselonLinks = ['jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
+                                                            <?php $eselonLinks = ['jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
                                                             <?php foreach ($autoOpds as $o): ?>
                                                                 <div class="mb-2">
                                                                     <span class="fw-semibold text-success align-middle"><i class="fas fa-building me-1"></i><?= esc($o['nama']) ?></span>

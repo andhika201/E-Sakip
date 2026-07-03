@@ -136,14 +136,15 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
       <?php if (user_can('pk_opd.view')): ?>
         <li><hr class="dropdown-divider"></li>
         <li><h6 class="dropdown-header">Perjanjian Kinerja</h6></li>
-        <?php if ($role !== 'admin_kecamatan'): // PK Eselon II/III/IV utk OPD (bukan kecamatan) ?>
+        <?php if ($role !== 'admin_kecamatan'): // PK JPT (Eselon II) tidak berlaku utk kecamatan ?>
           <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT (Eselon II)</a></li>
-          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator (Eselon III)</a></li>
-          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas (Eselon IV)</a></li>
         <?php endif; ?>
-        <?php if ($role === 'admin_kecamatan' || $role === 'admin'): // PK Kecamatan hanya utk admin kecamatan (+ super admin) ?>
-          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/kecamatan') ?>">PK Kecamatan</a></li>
+        <?php if ($role === 'admin_kecamatan' || $role === 'admin'): // PK Camat (puncak kecamatan) utk admin kecamatan (+ super admin) ?>
+          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/kecamatan') ?>">PK Kecamatan (Camat)</a></li>
         <?php endif; ?>
+        <?php /* PK Administrator & Pengawas: berlaku utk OPD Dinas maupun Kecamatan (Sekcam/Kasi) */ ?>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator (Eselon III)</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas (Eselon IV)</a></li>
       <?php endif; ?>
     </ul>
   </div>

@@ -171,7 +171,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
     <?php
     $head_table_sasaran = ($jenis === 'pengawas')
       ? 'KEGIATAN'
-      : (in_array($jenis, ['jpt', 'bupati']) ? 'STRATEGIS' : 'PROGRAM');
+      : (in_array($jenis, ['jpt', 'camat', 'bupati']) ? 'STRATEGIS' : 'PROGRAM');
     ?>
 
     <table class="table-bordered-custom table-header" style="width: 100%; margin-top: 10px;">
@@ -259,7 +259,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
            * SETTING STRUKTUR BERDASARKAN JENIS PK
            * ==============================
            */
-          if ($jenis === 'bupati' || $jenis === 'jpt') {
+          if ($jenis === 'bupati' || $jenis === 'jpt' || $jenis === 'camat') {
             $groupField = null;                 // tidak ada header
             $itemField = 'program_kegiatan';   // item = program
           } elseif ($jenis === 'administrator') {
@@ -398,7 +398,7 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
                 <tr>
                   <td class="signature-meta">
                     <p class="label"><strong><?= esc(strtoupper($nama_pihak_2)) ?></strong></p>
-                    <?php if (strtolower($jenis) !== 'jpt'): ?>
+                    <?php if (!in_array(strtolower($jenis), ['jpt', 'camat'], true)): ?>
                       <p>NIP. <?= esc($nip_pihak_2) ?></p>
                     <?php endif; ?>
                   </td>

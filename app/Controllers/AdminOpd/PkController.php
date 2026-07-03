@@ -372,7 +372,7 @@ class PkController extends BaseController
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
-            'tahun' => $post['tahun'] ?? null,
+            'tahun' => !empty($post['tahun']) ? $post['tahun'] : date('Y'),
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
             'tanggal' => $tanggal,

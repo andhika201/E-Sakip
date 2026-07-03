@@ -247,12 +247,18 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
+        background: rgba(255, 255, 255, .35);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+        backdrop-filter: blur(12px) saturate(120%);
+        border: 1px solid rgba(255, 255, 255, .45);
         border-radius: 16px;
         padding: 6px 16px;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, .18);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .25);
     }
-    .hdr-logo img { height: 78px; width: auto; object-fit: contain; display: block; }
+    .hdr-logo img {
+        height: 78px; width: auto; object-fit: contain; display: block;
+        filter: brightness(1.12) saturate(1.35) contrast(1.05) drop-shadow(0 2px 5px rgba(0, 0, 0, .45));
+    }
     .hdr-user {
         display: inline-flex;
         align-items: center;

@@ -510,6 +510,37 @@ class CascadingController extends BaseController
         )->with('success', 'Mapping Cascading berhasil disimpan');
     }
 
+    public function excel()
+    {
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        if (!in_array($mode, self::MODES, true)) {
+            $mode = 'kabupaten';
+        }
+        $periode = $this->request->getGet('periode');
+        $opdId   = $this->request->getGet('opd_id');
+        if (!$periode) {
+            return redirect()->back()->with('error', 'Periode wajib dipilih');
+        }
+        [$start, $end] = array_map('intval', explode('-', $periode));
+        $years = range($start, $end);
+
+        helper('cascading_excel');
+        if ($mode === 'opd') {
+            if (!$opdId) {
+                return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
+            }
+            $rows = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $o    = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
+            cascading_opd_excel($rows, $periode, $o['nama_opd'] ?? '');
+        } elseif ($mode === 'keseluruhan') {
+            $rows = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
+            cascading_keseluruhan_excel($rows, $periode);
+        } else {
+            $rows = $this->cascadingModel->getMatrix($start, $end);
+            cascading_kab_excel($rows, $years, $periode);
+        }
+    }
+
     public function cetak()
     {
         ob_clean(); // 🔥 BUANG OUTPUT SEBELUMNYA

@@ -180,9 +180,9 @@ class LakipController extends BaseController
         $selectedOpdId = $this->request->getPost('selected_opd_id') ?: '';
 
         $dataCommon = [
-            'target_lalu' => $this->request->getPost('target_lalu') ?: null,
-            'capaian_lalu' => $this->request->getPost('capaian_lalu') ?: null,
-            'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
+            'target_lalu' => $this->request->getPost('target_lalu') ?? '',
+            'capaian_lalu' => $this->request->getPost('capaian_lalu') ?? '',
+            'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?? '',
             'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
             'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
             'status' => 'draft',
@@ -337,9 +337,9 @@ class LakipController extends BaseController
             return redirect()->back()->with('error', 'ID LAKIP tidak ditemukan')->withInput();
 
         $updateData = [
-            'target_lalu' => $this->request->getPost('target_lalu') ?: null,
-            'capaian_lalu' => $this->request->getPost('capaian_lalu') ?: null,
-            'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?: null,
+            'target_lalu' => $this->request->getPost('target_lalu') ?? '',
+            'capaian_lalu' => $this->request->getPost('capaian_lalu') ?? '',
+            'capaian_tahun_ini' => $this->request->getPost('capaian_tahun_ini') ?? '',
             'target_hitung' => $this->request->getPost('target_hitung') !== '' ? $this->request->getPost('target_hitung') : null,
             'capaian_hitung' => $this->request->getPost('capaian_hitung') !== '' ? $this->request->getPost('capaian_hitung') : null,
             'status' => $this->request->getPost('status') ?: 'draft',

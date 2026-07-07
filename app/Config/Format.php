@@ -61,4 +61,17 @@ class Format extends BaseConfig
         'application/xml'  => 0,
         'text/xml'         => 0,
     ];
+
+    /**
+     * --------------------------------------------------------------------------
+     * JSON Encode Depth
+     * --------------------------------------------------------------------------
+     *
+     * Kedalaman maksimum saat meng-encode JSON (dipakai JSONFormatter/setJSON()).
+     * Properti ini wajib ada pada versi framework saat ini; tanpanya setJSON()
+     * melempar "Undefined property: Config\Format::$jsonEncodeDepth".
+     *
+     * @var int
+     */
+    public int $jsonEncodeDepth = 512;
 }

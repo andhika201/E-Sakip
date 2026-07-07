@@ -112,46 +112,7 @@
             <h4 class="text-success mb-4">
                 Edit Cascading Esselon III
             </h4>
-            <form action="<?= base_url('adminopd/cascading/update-es3/' . $sasaran['id']) ?>" method="post">
-
-                <?= csrf_field() ?>
-
-                <label>Sasaran ESS III</label>
-
-                <input type="text" name="nama" class="form-control mb-3" value="<?= esc($sasaran['nama_sasaran']) ?>"
-                    required>
-
-                <div class="indikator-container" id="indikator-container">
-                    <?php foreach ($indikator as $i): ?>
-                        <div class="indikator-es3">
-                            <input type="text" name="indikator[][nama]" class="form-control"
-                                value="<?= esc($i['indikator']) ?>" placeholder="Masukkan indikator ESS III">
-                            <button type="button" class="btn btn-delete btn-delete-indikator"
-                                onclick="this.parentElement.remove()">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikator()">
-
-                        + Tambah Indikator ESS III
-
-                    </button>
-                </div>
-
-                <button type="submit" class="btn btn-primary mt-3">
-                    Update
-                </button>
-
-                <a href="<?= base_url('adminopd/cascading') ?>" class="btn btn-secondary mt-3">
-                    Batal
-                </a>
-
-            </form>
+            <?= $this->include('adminOpd/cascading/_form_es3') ?>
 
         </div>
 
@@ -159,7 +120,7 @@
 
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3-edit.js') ?>"></script>
     </div>
 </body>
 

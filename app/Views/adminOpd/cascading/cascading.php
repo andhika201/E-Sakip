@@ -227,7 +227,15 @@
                     <!-- ============== VIEW: TABEL ============== -->
                     <div id="view-tabel" <?= $isPohon ? 'hidden' : '' ?>>
                         <div class="casc-table-wrap">
-                            <div class="table-responsive">
+                            <div class="table-responsive" id="cascTableWrap"
+                                data-table-url="<?= base_url('adminopd/cascading/table') ?>"
+                                data-periode="<?= esc($filters['periode'] ?? '', 'attr') ?>">
+                                <?= $this->include('adminOpd/cascading/_table') ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php if (false): // Tabel lama dinonaktifkan — render kini via partial _table di atas. ?>
+                    <div class="d-none">
                                 <table class="table table-bordered text-center align-middle casc-table mb-0">
                                     <thead class="text-center">
                                         <tr>
@@ -240,15 +248,26 @@
 
                                             <th>Sasaran ESS III</th>
                                             <th>Indikator ESS III</th>
+                                            <th width="90">Aksi ESS III</th>
 
                                             <th>Sasaran ESS IV / JF</th>
                                             <th>Indikator ESS IV</th>
 
-                                            <th width="90">Aksi</th>
+                                            <th width="90">Aksi ESS IV</th>
                                         </tr>
                                     </thead>
 
                                     <tbody>
+                                        <?php
+                                        // Es3 yang MASIH punya Es4 -> tombol Hapus Es3 disembunyikan
+                                        // (user harus menghapus Es4 di bawahnya lebih dulu).
+                                        $es3WithEs4 = [];
+                                        foreach ($rows as $__r) {
+                                            if (!empty($__r['es3_id']) && !empty($__r['es4_id'])) {
+                                                $es3WithEs4[$__r['es3_id']] = true;
+                                            }
+                                        }
+                                        ?>
                                         <?php foreach ($rows as $index => $r): ?>
                                             <tr>
                                                 <?php if ($firstShow['tujuan'][$r['tujuan_id']] == $index): ?>
@@ -286,12 +305,13 @@
                                                 <?php endif; ?>
                                                 <?php if (empty($r['es3_id'])): ?>
                                                     <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
-                                                        <td colspan="4" class="text-center">
+                                                        <td colspan="6" class="text-center">
                                                             <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
                                                                 class="btn btn-success btn-sm">
                                                                 <i class="fas fa-plus"></i> Tambah ESS III
                                                             </a>
                                                         </td>
+
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
@@ -310,55 +330,68 @@
                                                             <?php endif; ?>
                                                         </td>
                                                     <?php endif; ?>
+
+                                                    <?php // AKSI ESS III: satu sel per Es3 (rowspan penuh), muncul di baris pertama Es3. ?>
+                                                    <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
+                                                        <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="text-nowrap text-center">
+                                                            <a href="<?= base_url('adminopd/cascading/edit-es3/' . $r['es3_id']) ?>"
+                                                                class="btn btn-warning btn-sm casc-act" title="Edit ESS III">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <?php // Hapus Es3 hanya bila TIDAK ada Es4 di bawahnya (hapus Es4 dulu). ?>
+                                                            <?php if (empty($es3WithEs4[$r['es3_id']])): ?>
+                                                                <a href="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
+                                                                    onclick="return confirm('Hapus Sasaran Eselon III ini beserta seluruh indikatornya?');"
+                                                                    class="btn btn-danger btn-sm casc-act" title="Hapus ESS III">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
 
-                                                <?php if (!empty($r['es3_id']) && empty($r['es4_id'])): ?>
-                                                    <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
-                                                        <td colspan="2" class="text-center">
-                                                            <a href="<?= base_url('adminopd/cascading/tambah-es4/' . $r['es3_indikator_id']) ?>"
-                                                                class="btn btn-success btn-sm">
-                                                                <i class="fas fa-plus"></i>
-                                                            </a>
+                                                <?php // Blok Es4 (Sasaran/Indikator/Aksi ES IV) HANYA utk baris yang sudah punya Es3.
+                                                      // Saat Es3 kosong, sel "Tambah ESS III" (colspan=6) sudah menutup seluruh blok kanan. ?>
+                                                <?php if (!empty($r['es3_id'])): ?>
+                                                    <?php if (empty($r['es4_id'])): ?>
+                                                        <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
+                                                            <td colspan="2" class="text-center">
+                                                                <a href="<?= base_url('adminopd/cascading/tambah-es4/' . $r['es3_indikator_id']) ?>"
+                                                                    class="btn btn-success btn-sm">
+                                                                    <i class="fas fa-plus"></i>
+                                                                </a>
+                                                            </td>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
+                                                            <!-- Sasaran ES IV -->
+                                                            <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="text-start">
+                                                                <?= esc($r['es4_sasaran']) ?>
+                                                            </td>
+                                                        <?php endif; ?>
+                                                        <td class="text-start">
+                                                            <?php if (!empty($r['es4_indikator'])): ?>
+                                                                <span class="ind-kode">IK</span><?= esc($r['es4_indikator']) ?>
+                                                            <?php else: ?>
+                                                                -
+                                                            <?php endif; ?>
                                                         </td>
                                                     <?php endif; ?>
 
-                                                <?php else: ?>
-                                                    <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
-                                                        <!-- Sasaran ES IV -->
-                                                        <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="text-start">
-                                                            <?= esc($r['es4_sasaran']) ?>
-                                                        </td>
-                                                    <?php endif; ?>
-                                                    <td class="text-start">
-                                                        <?php if (!empty($r['es4_indikator'])): ?>
-                                                            <span class="ind-kode">IK</span><?= esc($r['es4_indikator']) ?>
-                                                        <?php else: ?>
-                                                            -
+                                                    <td class="text-nowrap">
+                                                        <?php if (!empty($r['es4_id'])): ?>
+                                                            <a href="<?= base_url('adminopd/cascading/edit-es4/' . $r['es4_id']) ?>"
+                                                                class="btn btn-warning btn-sm casc-act" title="Edit ESS IV">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            <a href="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
+                                                                onclick="return confirm('Hapus Sasaran Eselon IV ini beserta seluruh indikatornya?');"
+                                                                class="btn btn-danger btn-sm casc-act" title="Hapus ESS IV">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
                                                         <?php endif; ?>
                                                     </td>
                                                 <?php endif; ?>
-
-                                                <td class="text-nowrap">
-                                                    <?php if (!empty($r['es4_id'])): ?>
-                                                        <a href="<?= base_url('adminopd/cascading/edit-es4/' . $r['es4_id']) ?>"
-                                                            class="btn btn-warning btn-sm casc-act" title="Edit ESS IV">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
-                                                            class="btn btn-danger btn-sm casc-act" title="Hapus ESS IV">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
-                                                    <?php elseif (!empty($r['es3_id'])): ?>
-                                                        <a href="<?= base_url('adminopd/cascading/edit-es3/' . $r['es3_id']) ?>"
-                                                            class="btn btn-warning btn-sm casc-act" title="Edit ESS III">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
-                                                            class="btn btn-danger btn-sm casc-act" title="Hapus ESS III">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
-                                                    <?php endif; ?>
-                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -366,6 +399,7 @@
                             </div>
                         </div>
                     </div>
+                    <?php endif; // akhir tabel lama yang dinonaktifkan ?>
 
                     <!-- ============== VIEW: POHON KINERJA ============== -->
                     <div id="view-pohon" <?= $isPohon ? '' : 'hidden' ?>>
@@ -475,6 +509,39 @@
         }
         document.addEventListener('DOMContentLoaded', () => pohonZoom(0));
     </script>
+
+    <!-- Modal Edit Cascading (Es3/Es4) — diisi via AJAX -->
+    <div class="modal fade" id="cascEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cascEditTitle">Edit Cascading</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body" id="cascEditBody">
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Memuat…
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifikasi -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1090;">
+        <div id="cascToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="cascToastBody">Berhasil</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Tutup"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helper form edit (fungsi global dipakai form di dalam modal) -->
+    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3-edit.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es4.js') ?>"></script>
+    <!-- Orkestrasi AJAX: buka modal, submit, delete, refresh tabel tanpa reload -->
+    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-ajax.js') ?>"></script>
 </body>
 
 </html>

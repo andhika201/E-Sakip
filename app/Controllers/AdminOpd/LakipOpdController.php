@@ -55,7 +55,7 @@ class LakipOpdController extends BaseController
         $role = $session->get('role');
         $opdId = (int) $session->get('opd_id');
 
-        $tahun = $this->request->getGet('tahun') ?: date('Y');
+        $tahun = $this->request->getGet('tahun') ?: (date('Y') - 1);
         $status = $this->request->getGet('status');
 
         $availableYears = $this->lakipModel->getAvailableYears();
@@ -398,7 +398,7 @@ class LakipOpdController extends BaseController
         if (in_array($role, ['admin_opd', 'admin_kecamatan'], true) && !$opdId) {
             return redirect()->to('/login')->with('error', 'Session tidak valid');
         }
-        
+
         $rx = $this->xssRule();
 
         // ============================

@@ -139,7 +139,7 @@ class MasterController extends BaseController
         $orderCol = $orderable[$orderIdx] ?? 'p.nama_pegawai';
 
         $builder = $this->db->table('pegawai p')
-            ->select('p.id, p.nama_pegawai, p.nip_pegawai, p.opd_id, p.jabatan_id, p.pangkat_id, p.level, o.nama_opd, j.nama_jabatan, pk.nama_pangkat')
+            ->select('p.id, p.nama_pegawai, p.nip_pegawai, p.opd_id, p.jabatan_id, p.pangkat_id, p.level, p.is_plt, o.nama_opd, j.nama_jabatan, pk.nama_pangkat')
             ->join('opd o', 'o.id = p.opd_id', 'left')
             ->join('jabatan j', 'j.id = p.jabatan_id', 'left')
             ->join('pangkat pk', 'pk.id = p.pangkat_id', 'left');
@@ -170,6 +170,7 @@ class MasterController extends BaseController
                 'jabatan_id'   => $r['jabatan_id'],
                 'pangkat_id'   => $r['pangkat_id'],
                 'level'        => $r['level'],
+                'is_plt'       => $r['is_plt'],
             ], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE), ENT_QUOTES);
 
             $delUrl = base_url('adminkab/master/pegawai/delete/' . (int) $r['id']);
@@ -181,7 +182,7 @@ class MasterController extends BaseController
                 'nama'    => esc($r['nama_pegawai']),
                 'nip'     => esc($r['nip_pegawai']),
                 'opd'     => esc($r['nama_opd'] ?? '-'),
-                'jabatan' => esc($r['nama_jabatan'] ?? '-'),
+                'jabatan' => esc($r['nama_jabatan'] ?? '-') . ($r['is_plt'] == 1 ? ' (Plt.)' : ''),
                 'pangkat' => esc($r['nama_pangkat'] ?? '-'),
                 'level'   => esc($r['level'] ?? '-'),
                 'aksi'    => $aksi,
@@ -217,6 +218,7 @@ class MasterController extends BaseController
             'jabatan_id'   => (int) $this->request->getPost('jabatan_id'),
             'pangkat_id'   => (int) $this->request->getPost('pangkat_id'),
             'level'        => $this->request->getPost('level') ?: 'USER',
+            'is_plt'       => (int) $this->request->getPost('is_plt'),
         ];
 
         if ($id) {

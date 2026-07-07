@@ -969,42 +969,61 @@ class RenstraModel extends Model
             ->get()
             ->getResultArray();
 
-        foreach ($indikatorData as &$row) {
-            if (!empty($row['indikator_id'])) {
-                $targets = $this->getTargetTahunanByIndikatorId($row['indikator_id']);
-                $row['targets'] = [];
-                foreach ($targets as $t) {
-                    $row['targets'][$t['tahun']] = $t['target'];
-                }
-            } else {
-                $row['targets'] = [];
+        // Batch semua target indikator dalam 1 query (hindari N+1 per-baris).
+        // Output tetap identik: $row['targets'][tahun] = target (map, dikonsumsi by-key).
+        $indikatorIds = array_values(array_filter(array_column($indikatorData, 'indikator_id')));
+        $targetMap = [];
+        if (!empty($indikatorIds)) {
+            $targetRows = $this->db->table('renstra_target')
+                ->select('renstra_indikator_id, tahun, target')
+                ->whereIn('renstra_indikator_id', $indikatorIds)
+                ->orderBy('tahun', 'ASC')
+                ->get()
+                ->getResultArray();
+            foreach ($targetRows as $t) {
+                $targetMap[$t['renstra_indikator_id']][$t['tahun']] = $t['target'];
             }
+        }
+        foreach ($indikatorData as &$row) {
+            $row['targets'] = !empty($row['indikator_id']) ? ($targetMap[$row['indikator_id']] ?? []) : [];
         }
         unset($row);
 
+        // Batch indikator-tujuan + target-nya (hindari N+1: 2 query total menggantikan
+        // (#tujuan) + (#indikator_tujuan) query). Output identik: tiap baris punya
+        // 'indikator_tujuan_list' = daftar rit.* + 'targets'[tahun] = target_tahunan.
+        $tujuanIds = array_values(array_filter(array_column($indikatorData, 'tujuan_renstra_id')));
         $tujuanTargetsCache = [];
+        if (!empty($tujuanIds)) {
+            $itRows = $this->db->table('renstra_indikator_tujuan rit')
+                ->whereIn('rit.tujuan_id', array_unique($tujuanIds))
+                ->orderBy('rit.id', 'ASC')
+                ->get()
+                ->getResultArray();
 
-        foreach ($indikatorData as &$row) {
-
-            $tid = $row['tujuan_renstra_id'] ?? null;
-
-            if (!isset($tujuanTargetsCache[$tid])) {
-
-                $its = $this->getIndikatorTujuanByTujuanId($tid);
-
-                foreach ($its as &$it) {
-                    $targetsT = $this->getTargetTujuanByIndikatorId($it['id']);
-                    $it['targets'] = [];
-
-                    foreach ($targetsT as $t) {
-                        $it['targets'][$t['tahun']] = $t['target_tahunan'];
-                    }
+            $itIds = array_column($itRows, 'id');
+            $targetTMap = [];
+            if (!empty($itIds)) {
+                $targetTRows = $this->db->table('renstra_target_tujuan')
+                    ->select('indikator_tujuan_id, tahun, target_tahunan')
+                    ->whereIn('indikator_tujuan_id', $itIds)
+                    ->orderBy('tahun', 'ASC')
+                    ->get()
+                    ->getResultArray();
+                foreach ($targetTRows as $t) {
+                    $targetTMap[$t['indikator_tujuan_id']][$t['tahun']] = $t['target_tahunan'];
                 }
-
-                $tujuanTargetsCache[$tid] = $its;
             }
 
-            $row['indikator_tujuan_list'] = $tujuanTargetsCache[$tid];
+            foreach ($itRows as $it) {
+                $it['targets'] = $targetTMap[$it['id']] ?? [];
+                $tujuanTargetsCache[$it['tujuan_id']][] = $it;
+            }
+        }
+
+        foreach ($indikatorData as &$row) {
+            $tid = $row['tujuan_renstra_id'] ?? null;
+            $row['indikator_tujuan_list'] = $tujuanTargetsCache[$tid] ?? [];
         }
         unset($row);
 
@@ -1543,7 +1562,8 @@ class RenstraModel extends Model
 
         foreach ($sasaranList as &$sasaran) {
             $indikatorList = $this->db->table('renstra_indikator_sasaran ri')
-                ->select('ri.id, ri.indikator_sasaran, ri.satuan, ri.jenis_indikator')
+                ->select('ri.id, ri.indikator_sasaran, s.satuan, ri.jenis_indikator')
+                ->join('satuan s', 's.id = ri.satuan', 'left')
                 ->where('ri.renstra_sasaran_id', $sasaran['id'])
                 ->orderBy('ri.id', 'ASC')
                 ->get()

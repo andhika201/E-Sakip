@@ -84,7 +84,8 @@ $routes->group(
         $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
         $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
-        $routes->get('pk_bupati/cetak', 'AdminKab\PkBupatiController::view_cetak');
+        // (pk_bupati/cetak dihapus: controller AdminKab\PkBupatiController tidak ada & tidak ada link.
+        //  Cetak PK Bupati dilayani via pk/(:any)/cetak/(:num) dan AdminOpd\PkRenaksiController.)
 
         $routes->get('dashboard', 'AdminKabupatenController::dashboard');
         $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData');
@@ -111,7 +112,7 @@ $routes->group(
         $routes->post('iku/save', 'AdminKab\IkuController::save');
         $routes->post('iku/update', 'AdminKab\IkuController::update');
         // route untuk ubah status IKU
-        $routes->get('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
+        $routes->post('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
 
         // Catatan: seluruh rute Pegawai (kelola + sinkron SIMPEG/SIKASN) dipindah
         // ke grup khusus super admin (auth:admin) di bawah.
@@ -144,24 +145,15 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
-        // rkt
-        $routes->get('rkt', 'AdminKab\RktController::index');
-        $routes->get('rkt/tambah/(:num)', 'AdminKab\RktController::tambah/$1');
-        $routes->get('rkt/edit/(:num)', 'AdminKab\RktController::edit/$1');
-        $routes->post('rkt/save', 'AdminKab\RktController::save');
-        $routes->post('rkt/update', 'AdminKab\RktController::update');
-        $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminKab\RktController::delete/$1');
-        $routes->post('rkt/update-status', 'AdminKab\RktController::updateStatus');
+        // (rkt kabupaten dihapus: controller AdminKab\RktController tidak ada & tidak ada menu.
+        //  RKT hanya pada tingkat OPD -> lihat grup adminopd (adminopd/rkt).)
 
-        //MONEV -> dipakai modul PK Bupati (renaksi). URL bersih: adminkab/monev.
-        // RENSTRA monev lama (AdminKab\MonevController) dipensiunkan utk admin_kab.
+        // MONEV (PK Bupati / renaksi). URL bersih: adminkab/monev.
+        // Modul monev lama (AdminKab\MonevController) sudah dihapus; kini dilayani PkRenaksiController.
         $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/bupati/$1');
         $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/bupati');
         $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/bupati');
         $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/bupati');
-        // $routes->get('monev/tambah', 'AdminKab\MonevController::tambah');
-        // $routes->get('monev/edit/(:num)', 'AdminKab\MonevController::edit/$1');
-        // $routes->post('monev/update/(:num)', 'AdminKab\MonevController::update/$1');
 
         // Target & Rencana Aksi (PK Bupati) - URL bersih: adminkab/target_renaksi
         $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/bupati');
@@ -193,15 +185,8 @@ $routes->group(
         $routes->get('target/edit/(:num)', 'AdminKab\TargetController::edit/$1');
         $routes->post('target/update/(:num)', 'AdminKab\TargetController::update/$1');
 
-        // Lakip Kabupaten
-        $routes->get('lakip_kabupaten', 'LakipKabupatenController::index');
-        $routes->get('lakip_kabupaten/tambah', 'LakipKabupatenController::tambah');
-        $routes->post('lakip_kabupaten/save', 'LakipKabupatenController::save');
-        $routes->get('lakip_kabupaten/edit/(:num)', 'LakipKabupatenController::edit/$1');
-        $routes->post('lakip_kabupaten/update/(:num)', 'LakipKabupatenController::update/$1');
-        $routes->get('lakip_kabupaten/download/(:num)', 'LakipKabupatenController::download/$1');
-        $routes->post('lakip_kabupaten/update-status', 'LakipKabupatenController::updateStatus');
-        $routes->match(['get', 'post', 'delete'], 'lakip_kabupaten/delete/(:num)', 'LakipKabupatenController::delete/$1');
+        // (Lakip Kabupaten dihapus: controller LakipKabupatenController tidak ada & tidak ada menu.
+        //  LAKIP tingkat kabupaten dilayani AdminKab\LakipController -> adminkab/lakip.)
 
         // Program PK (master) dipindah ke grup super admin (auth:admin) di bawah.
 
@@ -228,7 +213,7 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
     $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
     $routes->post('program_pk/save', 'ProgramPkController::save');
     $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
-    $routes->get('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
+    $routes->post('program_pk/delete/(:num)', 'ProgramPkController::delete/$1');
 
     $routes->get('master', 'SuperAdmin\MasterController::index');
     $routes->get('master/pegawai-data', 'SuperAdmin\MasterController::pegawaiData'); // DataTables server-side
@@ -313,7 +298,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
-    $routes->get('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
+    $routes->post('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
 
 
     // target
@@ -323,15 +308,12 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->get('target/edit/(:num)', 'AdminOpd\TargetController::edit/$1');
     $routes->post('target/update/(:num)', 'AdminOpd\TargetController::update/$1');
 
-    //MONEV -> dipakai modul PK Eselon II/III/IV (renaksi). URL bersih: adminopd/monev.
-    // RENSTRA monev lama (AdminOpd\MonevController) dipensiunkan utk admin_opd.
+    // MONEV (PK Eselon II/III/IV / renaksi). URL bersih: adminopd/monev.
+    // Modul monev lama (AdminOpd\MonevController) sudah dihapus; kini dilayani PkRenaksiController.
     $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/es3/$1');
     $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/es3');
     $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/es3');
     $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/es3');
-    // $routes->get('monev/tambah', 'AdminOpd\MonevController::tambah');
-    // $routes->get('monev/edit/(:num)', 'AdminOpd\MonevController::edit/$1');
-    // $routes->post('monev/update/(:num)', 'AdminOpd\MonevController::update/$1');
 
     // Target & Rencana Aksi (PK Eselon II/III/IV) - URL bersih: adminopd/target_renaksi
     $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/es3');
@@ -376,7 +358,6 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     // $routes->get('cascading/get-pk-program-by-opd', 'AdminOpd\CascadingController::getPkProgramByOpd');
     $routes->post('cascading/save', 'AdminOpd\CascadingController::save');
     $routes->post('cascading/savecsf', 'AdminOpd\CascadingController::saveCsf');
-    $routes->post('cascading/save-es3', 'AdminOpd\CascadingController::saveEs3');
 
 
     // Cascading
@@ -387,19 +368,17 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('cascading/save-es3', 'AdminOpd\CascadingController::saveEs3');
     $routes->get('cascading/edit-es3/(:num)', 'AdminOpd\CascadingController::editEs3/$1');
     $routes->post('cascading/update-es3/(:num)', 'AdminOpd\CascadingController::updateEs3/$1');
-    $routes->get('cascading/delete-es3/(:num)', 'AdminOpd\CascadingController::deleteEs3/$1');
+    $routes->post('cascading/delete-es3/(:num)', 'AdminOpd\CascadingController::deleteEs3/$1');
     // ESS IV
     $routes->get('cascading/tambah-es4/(:num)', 'AdminOpd\CascadingController::tambahEs4/$1');
     $routes->post('cascading/save-es4', 'AdminOpd\CascadingController::saveEs4');
     $routes->get('cascading/edit-es4/(:num)', 'AdminOpd\CascadingController::editEs4/$1');
     $routes->post('cascading/update-es4/(:num)', 'AdminOpd\CascadingController::updateEs4/$1');
-    $routes->get('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
+    $routes->post('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
 
     $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
     $routes->get('cascading/excel', 'AdminOpd\CascadingController::excel');
     $routes->get('cascading/cetakpohon', 'AdminOpd\CascadingController::cetakPohon');
-    // Program PK Search
-    $routes->get('program-pk/search', 'AdminOpd\ProgramPkController::search');
 });
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login/authenticate', 'LoginController::authenticate');

@@ -55,7 +55,7 @@ class TargetController extends BaseController
         // Ambil daftar OPD
         $opdList = $this->db->table('opd')
             ->select('id, nama_opd')
-            ->whereNotIn('id', [1, 46, 209])
+            ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();

@@ -23,6 +23,7 @@ class PegawaiModel extends Model
         'pangkat_id',
         'atasan_id',
         'level',
+        'is_plt',
         'url_foto_pegawai',
         'no_whatsapp',
         'kategori',
@@ -119,7 +120,7 @@ class PegawaiModel extends Model
     {
         $builder = $this->db->table('pegawai p')
             ->select('
-                p.id, p.nama_pegawai, p.nip_pegawai, p.level,
+                p.id, p.nama_pegawai, p.nip_pegawai, p.level, p.is_plt,
                 p.opd_id, p.jabatan_id, p.pangkat_id,
                 o.nama_opd, o.singkatan,
                 j.nama_jabatan, j.eselon,

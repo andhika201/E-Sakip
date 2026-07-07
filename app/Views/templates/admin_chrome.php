@@ -4,13 +4,13 @@
  * Satu sumber untuk semua role (super admin / admin_kab / admin_opd)
  * agar formatnya konsisten. Dipanggil dari header.php tiap role.
  */
-$role   = session()->get('role');
+$role = session()->get('role');
 $rLabel = $role === 'admin' ? 'Super Admin'
-        : ($role === 'admin_opd' ? 'Admin OPD'
-        : ($role === 'admin_kab' ? 'Admin Kabupaten'
-        : ($role === 'admin_kecamatan' ? 'Admin Kecamatan'
+  : ($role === 'admin_opd' ? 'Admin OPD'
+    : ($role === 'admin_kab' ? 'Admin Kabupaten'
+      : ($role === 'admin_kecamatan' ? 'Admin Kecamatan'
         : ($role === 'admin_inspektorat' ? 'Inspektorat' : 'Pengguna'))));
-$rName  = session('username') ?: 'Pengguna';
+$rName = session('username') ?: 'Pengguna';
 ?>
 <style>
   /* ===== Sidebar + overlay (terpadu) ===== */
@@ -27,11 +27,23 @@ $rName  = session('username') ?: 'Pengguna';
     overflow: hidden;
     transition: margin-left .3s ease;
   }
-  .sidebar.sidebar-show { margin-left: 0; }
-  .sidebar nav { overflow-y: auto; }
 
-  .content-wrapper { transition: margin-left .3s ease; min-height: 100vh; }
-  .content-wrapper.sidebar-open { margin-left: 240px; }
+  .sidebar.sidebar-show {
+    margin-left: 0;
+  }
+
+  .sidebar nav {
+    overflow-y: auto;
+  }
+
+  .content-wrapper {
+    transition: margin-left .3s ease;
+    min-height: 100vh;
+  }
+
+  .content-wrapper.sidebar-open {
+    margin-left: 240px;
+  }
 
   .sidebar-overlay {
     position: fixed;
@@ -42,18 +54,39 @@ $rName  = session('username') ?: 'Pengguna';
     opacity: 0;
     transition: opacity .3s ease;
   }
-  .sidebar-overlay.show { display: block; opacity: 1; }
+
+  .sidebar-overlay.show {
+    display: block;
+    opacity: 1;
+  }
 
   @media (min-width: 769px) {
-    .sidebar-overlay { display: none !important; }
+    .sidebar-overlay {
+      display: none !important;
+    }
   }
+
   @media (max-width: 768px) {
-    .sidebar { width: 230px; margin-left: -230px; z-index: 1090; }
-    .sidebar-overlay { z-index: 1085; }
-    .content-wrapper.sidebar-open { margin-left: 0 !important; }
+    .sidebar {
+      width: 230px;
+      margin-left: -230px;
+      z-index: 1090;
+    }
+
+    .sidebar-overlay {
+      z-index: 1085;
+    }
+
+    .content-wrapper.sidebar-open {
+      margin-left: 0 !important;
+    }
   }
+
   @media (max-width: 360px) {
-    .sidebar { width: 200px; margin-left: -200px; }
+    .sidebar {
+      width: 200px;
+      margin-left: -200px;
+    }
   }
 </style>
 
@@ -66,11 +99,13 @@ $rName  = session('username') ?: 'Pengguna';
   <div class="d-flex align-items-center justify-content-between gap-2" style="min-height: 66px;">
     <!-- Kiri: toggle + judul -->
     <div class="d-flex align-items-center gap-2 gap-md-3 overflow-hidden">
-      <button type="button" onclick="toggleSidebar()" class="btn sidebar-burger flex-shrink-0" title="Buka/Tutup Sidebar">
+      <button type="button" onclick="toggleSidebar()" class="btn sidebar-burger flex-shrink-0"
+        title="Buka/Tutup Sidebar">
         <i class="fas fa-bars"></i>
       </button>
       <div class="overflow-hidden">
-        <h1 class="fw-bold text-white mb-0 text-truncate" style="font-size: clamp(.95rem, 2.5vw, 1.25rem); line-height: 1.2;">
+        <h1 class="fw-bold text-white mb-0 text-truncate"
+          style="font-size: clamp(.95rem, 2.5vw, 1.25rem); line-height: 1.2;">
           Dashboard Admin
         </h1>
         <p class="text-white-50 mb-0 d-none d-sm-block text-truncate" style="font-size: clamp(.65rem, 1.5vw, .8rem);">
@@ -85,7 +120,8 @@ $rName  = session('username') ?: 'Pengguna';
         <p class="small fw-semibold text-white mb-0" style="line-height: 1.2;"><?= esc($rName) ?></p>
         <p class="text-white-50 mb-0" style="font-size: .7rem; line-height: 1.2;"><?= esc($rLabel) ?></p>
       </div>
-      <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+      <div class="bg-white rounded-circle d-flex align-items-center justify-content-center"
+        style="width: 38px; height: 38px;">
         <i class="fas fa-user text-success"></i>
       </div>
     </div>
@@ -112,10 +148,14 @@ $rName  = session('username') ?: 'Pengguna';
       class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded d-flex align-items-center mb-2 sidebar-nav-link">
       <i class="fas fa-user-circle me-2"></i><span>Profil Saya</span>
     </a>
-    <a href="<?= base_url('change-password') ?>"
-      class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded d-flex align-items-center mb-2 sidebar-nav-link">
-      <i class="fas fa-lock me-2"></i><span>Ganti Password</span>
-    </a>
+
+    <?php if ($role === 'admin'): ?>
+      <a href="<?= base_url('change-password') ?>"
+        class="btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded d-flex align-items-center mb-2 sidebar-nav-link">
+        <i class="fas fa-lock me-2"></i><span>Ganti Password</span>
+      </a>
+    <?php endif; ?>
+    
     <a href="<?= base_url('logout') ?>"
       class="btn btn-outline-danger text-start px-3 py-2 text-danger border-0 rounded d-flex align-items-center sidebar-logout-link">
       <i class="fas fa-sign-out-alt me-2"></i><span>Keluar</span>
@@ -205,10 +245,24 @@ $rName  = session('username') ?: 'Pengguna';
     transition: opacity .25s ease, transform .25s ease, visibility .25s, background .2s ease;
     z-index: 1080;
   }
-  .btop-btn.show { opacity: 1; visibility: visible; transform: translateY(0); }
-  .btop-btn:hover { background: #005c31; }
+
+  .btop-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .btop-btn:hover {
+    background: #005c31;
+  }
+
   @media (max-width: 768px) {
-    .btop-btn { right: 14px; bottom: 14px; width: 42px; height: 42px; }
+    .btop-btn {
+      right: 14px;
+      bottom: 14px;
+      width: 42px;
+      height: 42px;
+    }
   }
 </style>
 <script>

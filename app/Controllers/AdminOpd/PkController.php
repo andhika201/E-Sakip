@@ -570,6 +570,11 @@ class PkController extends BaseController
             return redirect()->back()->with('error', 'Data PK tidak ditemukan.');
         }
 
+        // Otorisasi objek: cegah ubah PK milik OPD lain (IDOR).
+        if (!$this->canAccessOpd($pk['opd_id'] ?? null)) {
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengubah PK OPD lain.');
+        }
+
         $post = $this->request->getPost();
         log_message('debug', "POST DATA: " . json_encode($post));
         $session = session();
@@ -765,6 +770,15 @@ class PkController extends BaseController
                 return $this->response->setJSON(['success' => false, 'error' => 'Data PK tidak ditemukan.']);
             }
             return redirect()->back()->with('error', 'Data PK tidak ditemukan.');
+        }
+
+        // Otorisasi objek: cegah hapus PK milik OPD lain (IDOR).
+        if (!$this->canAccessOpd($pk['opd_id'] ?? null)) {
+            if ($isAjax) {
+                return $this->response->setStatusCode(403)
+                    ->setJSON(['success' => false, 'error' => 'Anda tidak memiliki akses untuk menghapus PK OPD lain.']);
+            }
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk menghapus PK OPD lain.');
         }
 
         $jenis = $pk['jenis'];

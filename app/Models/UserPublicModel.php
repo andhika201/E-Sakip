@@ -17,9 +17,10 @@ class UserPublicModel extends Model
     public function getRenstraData($opd_id)
     {
         $query = $this->db->table('renstra_sasaran rs')
-            ->select('rs.id as sasaran_id, o.id as opd_id_val, o.nama_opd, rs.sasaran, ris.indikator_sasaran, ris.id as indikator_id, ris.satuan')
+            ->select('rs.id as sasaran_id, o.id as opd_id_val, o.nama_opd, rs.sasaran, ris.indikator_sasaran, ris.id as indikator_id, s.satuan')
             ->join('opd o', 'o.id = rs.opd_id')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->where('rs.status', 'selesai');
 
         if ($opd_id !== 'all') {
@@ -63,8 +64,9 @@ class UserPublicModel extends Model
     public function getIkuOpdData($opd_id)
     {
         $query = $this->db->table('iku')
-            ->select('iku.id as iku_id, o.id as opd_id_val, o.nama_opd, iku.definisi, rs.sasaran, ris.indikator_sasaran as indikator, ris.satuan, iku.renstra_id')
+            ->select('iku.id as iku_id, o.id as opd_id_val, o.nama_opd, iku.definisi, rs.sasaran, ris.indikator_sasaran as indikator, s.satuan, iku.renstra_id')
             ->join('renstra_indikator_sasaran ris', 'ris.id = iku.renstra_id')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id')
             ->join('opd o', 'o.id = rs.opd_id')
             ->where('iku.status', 'selesai')

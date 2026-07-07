@@ -64,7 +64,7 @@ class UserController extends BaseController
         sort($available_years);
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/rkpd', [
             'rkpd_data' => $rktDataRaw,
@@ -140,7 +140,7 @@ class UserController extends BaseController
         $opd_id = $this->request->getGet('opd_id') ?? 'all';
         $data = $model->getRenstraData($opd_id);
 
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/renstra', [
             'tahunList' => $data['tahunList'],
@@ -179,7 +179,7 @@ class UserController extends BaseController
         sort($available_years);
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/rkt', [
             'rktData' => $rktData,
@@ -220,7 +220,7 @@ class UserController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/lakip_opd', [
             'lakipOpdData' => $lakipOpdData,
@@ -239,7 +239,7 @@ class UserController extends BaseController
         $opd_id = $this->request->getGet('opd_id') ?? 'all';
         $data = $model->getIkuOpdData($opd_id);
 
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return view('user/iku_opd', [
             'ikuOpdData' => $data['ikuOpdData'],
@@ -504,7 +504,7 @@ class UserController extends BaseController
             ->get()
             ->getResultArray();
 
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         $rows = [];
         $years = [];
@@ -554,7 +554,7 @@ class UserController extends BaseController
             ->get()
             ->getResultArray();
 
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         $tree = [];
 
@@ -780,7 +780,7 @@ class UserController extends BaseController
 
         $pkData = $model->getPkDataByJenis($jenis, $tahun, $opd_id);
 
-        $opdList = $db->table('opd')->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->get()->getResultArray();
+        $opdList = $db->table('opd')->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->get()->getResultArray();
 
         return [
             'pkData' => $pkData,

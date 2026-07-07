@@ -360,6 +360,10 @@
                 <div class="mb-2"><label class="form-label">NIP</label><input type="text" name="nip_pegawai" class="form-control" required></div>
                 <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select"><option value="">- Pilih -</option><?= $optOpd() ?></select></div>
                 <div class="mb-2"><label class="form-label">Jabatan</label><select name="jabatan_id" class="form-select"><option value="">- Pilih -</option><?= $optJab() ?></select></div>
+                <div class="mb-2 form-check">
+                    <input type="checkbox" name="is_plt" id="pegawai-is-plt" class="form-check-input" value="1">
+                    <label class="form-check-label" for="pegawai-is-plt">Jabatan Plt (Pelaksana Tugas)</label>
+                </div>
                 <div class="mb-2"><label class="form-label">Pangkat</label><select name="pangkat_id" class="form-select"><option value="">- Pilih -</option><?= $optPangkat() ?></select></div>
                 <div class="mb-2"><label class="form-label">Level</label><select name="level" class="form-select"><option value="USER">USER</option><option value="ADMIN">ADMIN</option><option value="PERMITOR">PERMITOR</option><option value="VERIFIKATOR">VERIFIKATOR</option></select></div>
                 <small class="text-muted">Pegawai baru: password awal = NIP.</small>

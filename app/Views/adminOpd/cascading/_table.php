@@ -110,7 +110,7 @@
                             </a>
                             <?php // Hapus Es3 hanya bila TIDAK ada Es4 di bawahnya (hapus Es4 dulu). ?>
                             <?php if (empty($es3WithEs4[$r['es3_id']])): ?>
-                                <a href="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
+                                <a href="#"
                                     class="btn btn-danger btn-sm casc-act casc-del"
                                     data-url="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
                                     data-confirm="Hapus Sasaran Eselon III ini beserta seluruh indikatornya?"
@@ -159,7 +159,7 @@
                                 title="Edit ESS IV">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
+                            <a href="#"
                                 class="btn btn-danger btn-sm casc-act casc-del"
                                 data-url="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
                                 data-confirm="Hapus Sasaran Eselon IV ini beserta seluruh indikatornya?"

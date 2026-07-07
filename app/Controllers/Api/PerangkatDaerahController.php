@@ -7,7 +7,7 @@ use App\Models\CascadingModel;
 
 class PerangkatDaerahController extends BaseController
 {
-    private const EXCLUDED_OPD_IDS = [1, 46, 209];
+    private const EXCLUDED_OPD_IDS = \App\Models\OpdModel::EXCLUDED_OPD_IDS;
 
     protected $db;
     protected $cascadingModel;

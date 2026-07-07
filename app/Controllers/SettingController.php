@@ -62,7 +62,9 @@ class SettingController extends BaseController
         $this->set('ai_dashboard_enabled', $this->request->getPost('ai_dashboard_enabled') ? '1' : '0');
 
         // --- File (logo, favicon, logo pengembang) ---
-        $allowed = ['png', 'jpg', 'jpeg', 'webp', 'svg', 'ico', 'gif'];
+        // 'svg' sengaja TIDAK diizinkan: SVG adalah XML yang bisa memuat <script> (vektor stored-XSS
+        // jika file dibuka langsung dari web root). Gunakan format raster untuk logo/favicon.
+        $allowed = ['png', 'jpg', 'jpeg', 'webp', 'ico', 'gif'];
         $uploadDir = FCPATH . 'uploads';
         if (!is_dir($uploadDir)) {
             @mkdir($uploadDir, 0775, true);

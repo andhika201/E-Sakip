@@ -3,7 +3,7 @@
  *
  * - Klik Edit (.casc-edit)  -> muat form (partial) ke modal via AJAX.
  * - Submit form di modal     -> POST via AJAX -> tutup modal -> refresh tabel.
- * - Klik Hapus (.casc-del)   -> konfirmasi -> GET via AJAX -> refresh tabel.
+ * - Klik Hapus (.casc-del)   -> konfirmasi -> POST via AJAX -> refresh tabel.
  * - Refresh tabel            -> ambil ulang partial _table & ganti #cascTableWrap.
  *
  * Butuh jQuery + Bootstrap 5 (dimuat via footer.php).
@@ -109,7 +109,7 @@
             var msg = this.getAttribute("data-confirm") || "Yakin menghapus data ini?";
             if (!confirm(msg)) return;
 
-            $.ajax({ url: url, method: "GET", dataType: "json" })
+            $.ajax({ url: url, method: "POST", dataType: "json" })
                 .done(function (res) {
                     if (res && res.success) {
                         refreshTable();

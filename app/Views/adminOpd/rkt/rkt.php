@@ -310,12 +310,6 @@
                         // === BELUM ADA RKT UNTUK INDIKATOR INI ===
                         if (empty($ind['rkts'])): ?>
                             <tr>
-                                <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
-                                    <td rowspan="<?= $totalRowsAll ?>" class="col-opd">
-                                        <?= esc($currentOpd['nama_opd'] ?? '-') ?>
-                                    </td>
-                                    <?php $firstOpdRow = false; ?>
-                                <?php endif; ?>
 
                                 <td rowspan="<?= $totalSubRows ?>" class="col-no"><?= $no++ ?></td>
                                 <td rowspan="<?= $totalSubRows ?>" class="col-thn">
@@ -378,12 +372,6 @@
                                         if (!empty($keg['subkegiatan'])):
                                             foreach ($keg['subkegiatan'] as $sub): ?>
                                                 <tr>
-                                                    <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
-                                                        <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
-                                                            <?= esc($currentOpd['nama_opd'] ?? '-') ?>
-                                                        </td>
-                                                        <?php $firstOpdRow = false; ?>
-                                                    <?php endif; ?>
 
                                                     <?php if ($firstIndicatorRow): ?>
                                                         <td rowspan="<?= $totalSubRows ?>" class="align-middle">
@@ -502,12 +490,6 @@
                                         // --- Kegiatan tanpa subkegiatan ---
                                         else: ?>
                                             <tr>
-                                                <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
-                                                    <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
-                                                        <?= esc($currentOpd['nama_opd'] ?? '-') ?>
-                                                    </td>
-                                                    <?php $firstOpdRow = false; ?>
-                                                <?php endif; ?>
 
                                                 <?php if ($firstIndicatorRow): ?>
                                                     <td rowspan="<?= $totalSubRows ?>" class="align-middle">
@@ -594,12 +576,6 @@
                                 // --- Program tanpa kegiatan ---
                                 else: ?>
                                     <tr>
-                                        <?php if (false): /* kolom Satuan Kerja di-hide */ ?>
-                                            <td rowspan="<?= $totalRowsAll ?>" class="align-middle">
-                                                <?= esc($currentOpd['nama_opd'] ?? '-') ?>
-                                            </td>
-                                            <?php $firstOpdRow = false; ?>
-                                        <?php endif; ?>
 
                                         <?php if ($firstIndicatorRow): ?>
                                             <td rowspan="<?= $totalSubRows ?>" class="align-middle">

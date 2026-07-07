@@ -7,13 +7,6 @@ use Config\Database;
  * Role pengguna diambil dari session('role') (slug yang sama dgn roles.name).
  */
 
-if (!function_exists('user_role')) {
-    function user_role(): ?string
-    {
-        return session()->get('role');
-    }
-}
-
 if (!function_exists('user_permissions')) {
     /**
      * Daftar nama permission milik role user yang login (di-cache per request).

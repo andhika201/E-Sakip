@@ -157,7 +157,12 @@
         // Function to confirm delete
         function confirmDelete(id) {
             if (confirm('Apakah Anda yakin ingin menghapus program ini?')) {
-                window.location.href = '<?= base_url('adminkab/program_pk/delete/') ?>' + id;
+                // POST (bukan GET) agar delete tidak bisa dipicu prefetch/crawler/link/<img>.
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '<?= base_url('adminkab/program_pk/delete/') ?>' + id;
+                document.body.appendChild(form);
+                form.submit();
             }
         }
 

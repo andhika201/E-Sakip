@@ -44,7 +44,7 @@ class CascadingController extends BaseController
 
         // Daftar OPD untuk dropdown mode OPD
         $opdList = $this->db->table('opd')
-            ->whereNotIn('id', [1, 46, 209])
+            ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();
@@ -383,7 +383,7 @@ class CascadingController extends BaseController
         }
 
         $opdList = $this->db->table('opd')
-            ->whereNotIn('id', [1, 46, 209])
+            ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
             ->orderBy('nama_opd', 'ASC')
             ->get()
             ->getResultArray();

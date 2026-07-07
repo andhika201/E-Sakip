@@ -258,6 +258,23 @@ class IkuModel extends Model
         }
     }
 
+    /**
+     * Ambil opd_id pemilik sebuah IKU (via renstra_sasaran) untuk cek otorisasi.
+     * Mengembalikan null bila IKU tingkat RPJMD/kabupaten atau tidak ditemukan.
+     */
+    public function getOwnerOpdId($ikuId): ?int
+    {
+        $row = $this->db->table('iku')
+            ->select('rs.opd_id')
+            ->join('renstra_indikator_sasaran ris', 'ris.id = iku.renstra_id', 'left')
+            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->where('iku.id', $ikuId)
+            ->get()
+            ->getRowArray();
+
+        return isset($row['opd_id']) && $row['opd_id'] !== null ? (int) $row['opd_id'] : null;
+    }
+
     public function deleteIkuComplete($id)
     {
         $db = \Config\Database::connect();

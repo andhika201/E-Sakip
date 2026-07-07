@@ -55,4 +55,23 @@ abstract class BaseController extends Controller
 
         // E.g.: $this->session = service('session');
     }
+
+    /**
+     * Otorisasi tingkat-objek untuk mencegah IDOR lintas-OPD.
+     *
+     * Role tingkat OPD (admin_opd, admin_kecamatan) memiliki opd_id pada sesi dan
+     * hanya boleh mengakses record milik OPD-nya sendiri. Role tingkat kabupaten
+     * (admin, admin_kab, admin_inspektorat) tidak terikat satu OPD (opd_id = null)
+     * sehingga diizinkan mengakses lintas-OPD.
+     *
+     * @param int|string|null $recordOpdId opd_id milik record yang diakses
+     */
+    protected function canAccessOpd($recordOpdId): bool
+    {
+        $sessionOpdId = session()->get('opd_id');
+        if (empty($sessionOpdId)) {
+            return true; // role tingkat kabupaten — akses lintas-OPD diizinkan
+        }
+        return (string) $recordOpdId === (string) $sessionOpdId;
+    }
 }

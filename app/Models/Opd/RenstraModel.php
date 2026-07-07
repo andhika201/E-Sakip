@@ -1543,7 +1543,8 @@ class RenstraModel extends Model
 
         foreach ($sasaranList as &$sasaran) {
             $indikatorList = $this->db->table('renstra_indikator_sasaran ri')
-                ->select('ri.id, ri.indikator_sasaran, ri.satuan, ri.jenis_indikator')
+                ->select('ri.id, ri.indikator_sasaran, s.satuan, ri.jenis_indikator')
+                ->join('satuan s', 's.id = ri.satuan', 'left')
                 ->where('ri.renstra_sasaran_id', $sasaran['id'])
                 ->orderBy('ri.id', 'ASC')
                 ->get()

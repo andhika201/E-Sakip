@@ -1507,7 +1507,8 @@ class RpjmdModel extends Model
 
         foreach ($sasaranList as &$sasaran) {
             $indikatorList = $this->db->table('rpjmd_indikator_sasaran i')
-                ->select('i.id, i.indikator_sasaran, i.satuan')
+                ->select('i.id, i.indikator_sasaran, s.satuan')
+                ->join('satuan s', 's.id = i.satuan', 'left')
                 ->where('i.sasaran_id', $sasaran['id'])
                 ->get()
                 ->getResultArray();

@@ -84,12 +84,17 @@ class IkuModel extends Model
             ->select("
                 iku.*,
                 renstra_indikator_sasaran.indikator_sasaran AS renstra_indikator,
-                renstra_indikator_sasaran.satuan           AS renstra_satuan,
+                s.satuan                                    AS renstra_satuan,
                 renstra_sasaran.sasaran                    AS sasaran_renstra
             ", false)
             ->join(
                 'renstra_indikator_sasaran',
                 'renstra_indikator_sasaran.id = iku.renstra_id',
+                'left'
+            )
+            ->join(
+                'satuan s',
+                's.id = renstra_indikator_sasaran.satuan',
                 'left'
             )
             ->join(
@@ -128,7 +133,7 @@ class IkuModel extends Model
             ->select("
                 iku.*,
                 COALESCE(rpjmd_indikator_sasaran.indikator_sasaran, renstra_indikator_sasaran.indikator_sasaran) AS indikator_sasaran,
-                COALESCE(rpjmd_indikator_sasaran.satuan, renstra_indikator_sasaran.satuan)                       AS satuan
+                s.satuan                                                                                        AS satuan
             ", false)
             ->join(
                 'rpjmd_indikator_sasaran',
@@ -138,6 +143,11 @@ class IkuModel extends Model
             ->join(
                 'renstra_indikator_sasaran',
                 'renstra_indikator_sasaran.id = iku.renstra_id',
+                'left'
+            )
+            ->join(
+                'satuan s',
+                's.id = COALESCE(rpjmd_indikator_sasaran.satuan, renstra_indikator_sasaran.satuan)',
                 'left'
             )
             ->where('(iku.rpjmd_id IS NOT NULL OR iku.renstra_id IS NOT NULL)', null, false)
@@ -372,12 +382,13 @@ class IkuModel extends Model
                 o.nama_opd AS nama_opd,
                 ris.id     AS indikator_id,
                 ris.indikator_sasaran,
-                ris.satuan,
+                s.satuan   AS satuan,
                 rt.tahun,
                 rt.target AS target_tahunan
             ')
             ->join('opd o', 'o.id = rs.opd_id', 'left')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->join('renstra_target rt', 'rt.renstra_indikator_id = ris.id', 'left');
 
         if (!empty($yearsFilter)) {
@@ -453,7 +464,7 @@ class IkuModel extends Model
                 rs.sasaran_rpjmd  AS sasaran_rpjmd,
                 ris.id            AS indikator_id,
                 ris.indikator_sasaran,
-                ris.satuan,
+                s.satuan          AS satuan,
                 ris.definisi_op,
                 rt.tahun,
                 rt.target_tahunan AS target_tahunan
@@ -461,6 +472,7 @@ class IkuModel extends Model
             ->join('rpjmd_tujuan rtuj', 'rtuj.id = rs.tujuan_id', 'left')
             ->join('rpjmd_misi rmis', 'rmis.id = rtuj.misi_id', 'left')
             ->join('rpjmd_indikator_sasaran ris', 'ris.sasaran_id = rs.id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->join('rpjmd_target rt', 'rt.indikator_sasaran_id = ris.id', 'left');
 
         if (!empty($yearsFilter)) {

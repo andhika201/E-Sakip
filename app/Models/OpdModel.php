@@ -6,6 +6,12 @@ use CodeIgniter\Model;
 
 class OpdModel extends Model
 {
+    /**
+     * ID OPD yang dikecualikan dari daftar/dropdown OPD (mis. Pemda induk / entitas non-OPD).
+     * Sumber tunggal — jangan hardcode ulang angka ini di controller/query lain.
+     */
+    public const EXCLUDED_OPD_IDS = [1, 46, 209];
+
     protected $table = 'opd';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
@@ -51,7 +57,7 @@ class OpdModel extends Model
 
     public function getAllOpd()
     {
-        return $this->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')->findAll();
+        return $this->whereNotIn('id', self::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')->findAll();
     }
     public function getOpdById(int $opdId)
     {

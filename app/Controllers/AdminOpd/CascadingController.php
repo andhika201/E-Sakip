@@ -789,11 +789,29 @@ class CascadingController extends BaseController
     }
     public function deleteEs3($id)
     {
+        $isAjax = $this->request->isAJAX();
+
+        // Otorisasi objek: pastikan sasaran milik OPD user sebelum dihapus (IDOR).
+        $row = $this->db->table('cascading_sasaran_opd')->where('id', $id)->get()->getRowArray();
+        if (!$row) {
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Data tidak ditemukan.');
+        }
+        if (!$this->canAccessOpd($row['opd_id'] ?? null)) {
+            if ($isAjax) {
+                return $this->response->setStatusCode(403)
+                    ->setJSON(['success' => false, 'message' => 'Anda tidak memiliki akses ke data OPD lain.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+
         $this->db->table('cascading_sasaran_opd')
             ->where('id', $id)
             ->delete();
 
-        if ($this->request->isAJAX()) {
+        if ($isAjax) {
             return $this->response->setJSON(['success' => true, 'message' => 'Sasaran Eselon III berhasil dihapus.']);
         }
         return redirect()->to('adminopd/cascading')
@@ -801,11 +819,29 @@ class CascadingController extends BaseController
     }
     public function deleteEs4($id)
     {
+        $isAjax = $this->request->isAJAX();
+
+        // Otorisasi objek: pastikan sasaran milik OPD user sebelum dihapus (IDOR).
+        $row = $this->db->table('cascading_sasaran_opd')->where('id', $id)->get()->getRowArray();
+        if (!$row) {
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Data tidak ditemukan.');
+        }
+        if (!$this->canAccessOpd($row['opd_id'] ?? null)) {
+            if ($isAjax) {
+                return $this->response->setStatusCode(403)
+                    ->setJSON(['success' => false, 'message' => 'Anda tidak memiliki akses ke data OPD lain.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+
         $this->db->table('cascading_sasaran_opd')
             ->where('id', $id)
             ->delete();
 
-        if ($this->request->isAJAX()) {
+        if ($isAjax) {
             return $this->response->setJSON(['success' => true, 'message' => 'Sasaran Eselon IV berhasil dihapus.']);
         }
         return redirect()->to('adminopd/cascading')

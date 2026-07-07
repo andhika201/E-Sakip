@@ -310,6 +310,12 @@ class IkuController extends BaseController
             return redirect()->back()->withInput();
         }
 
+        // Otorisasi objek: pastikan IKU milik OPD user (IDOR).
+        if (!$this->canAccessOpd($this->ikuModel->getOwnerOpdId($ikuId))) {
+            session()->setFlashdata('error', 'Anda tidak memiliki akses ke IKU OPD lain.');
+            return redirect()->back();
+        }
+
         try {
             $rx = $this->xssRule();
 
@@ -381,6 +387,12 @@ class IkuController extends BaseController
      */
     public function delete($id)
     {
+        // Otorisasi objek: cegah hapus IKU milik OPD lain (IDOR).
+        if (!$this->canAccessOpd($this->ikuModel->getOwnerOpdId($id))) {
+            session()->setFlashdata('error', 'Anda tidak memiliki akses untuk menghapus IKU OPD lain.');
+            return redirect()->to(base_url('adminopd/iku'));
+        }
+
         try {
             $this->ikuModel->deleteIkuComplete($id);
             session()->setFlashdata('success', 'Data IKU berhasil dihapus.');

@@ -235,7 +235,7 @@
                                 <th class="border p-2">SASARAN</th>
                                 <th class="border p-2">INDIKATOR</th>
                                 <th class="border p-2">SATUAN</th>
-                                <th class="border p-2">JENIS INDIKATOR</th>
+                                <!-- <th class="border p-2">JENIS INDIKATOR</th> -->
                                 <th class="border p-2">TAHUN</th>
                                 <th class="border p-2">TARGET TAHUN SEBELUMNYA</th>
                                 <th class="border p-2">CAPAIAN TAHUN SEBELUMNYA</th>
@@ -360,7 +360,7 @@
                                         <td><?= esc($indikator['indikator_sasaran'] ?? '-') ?></td>
                                         <td><?= esc($indikator['satuan'] ?? '-') ?></td>
 
-                                        <td><?= esc(ucwords((string) $jenisIndikator)) ?></td>
+                                        <!-- <td><?= esc(ucwords((string) $jenisIndikator)) ?></td> -->
 
                                         <td><?= esc($tahunRow) ?></td>
 

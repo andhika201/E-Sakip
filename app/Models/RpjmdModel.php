@@ -297,78 +297,116 @@ class RpjmdModel extends Model
 
     public function getCompleteRpjmdStructure()
     {
-        $misiList = $this->getAllMisi();
-
-        foreach ($misiList as &$misi) {
-            $misi['tujuan'] = $this->getTujuanByMisiId($misi['id']);
-
-            if (!empty($misi['tujuan'])) {
-                foreach ($misi['tujuan'] as &$tujuan) {
-                    // indikator_tujuan + target_tahunan_tujuan
-                    $tujuan['indikator_tujuan'] = $this->getIndikatorTujuanByTujuanId($tujuan['id']) ?? [];
-                    if (!empty($tujuan['indikator_tujuan'])) {
-                        foreach ($tujuan['indikator_tujuan'] as &$it) {
-                            $it['target_tahunan_tujuan'] = $this->getTargetTahunanTujuanByIndikatorId($it['id']) ?? [];
-                        }
-                    }
-
-                    // sasaran -> indikator_sasaran -> target_tahunan (sasaran)
-                    $tujuan['sasaran'] = $this->getSasaranByTujuanId($tujuan['id']);
-                    if (!empty($tujuan['sasaran'])) {
-                        foreach ($tujuan['sasaran'] as &$sasaran) {
-                            $sasaran['indikator_sasaran'] = $this->getIndikatorSasaranBySasaranId($sasaran['id']);
-                            if (!empty($sasaran['indikator_sasaran'])) {
-                                foreach ($sasaran['indikator_sasaran'] as &$indikator) {
-                                    $indikator['target_tahunan'] = $this->getTargetTahunanByIndikatorId($indikator['id']);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $misiList;
+        return $this->buildRpjmdTreeBatched($this->getAllMisi());
     }
 
     public function getRpjmdByYear($tahun)
     {
-        $misiList = $this->getMisiByYear($tahun);
+        return $this->buildRpjmdTreeBatched($this->getMisiByYear($tahun), $tahun);
+    }
 
-        foreach ($misiList as &$misi) {
-            $misi['tujuan'] = $this->getTujuanByMisiId($misi['id']);
+    /**
+     * Rakit pohon RPJMD lengkap (misi -> tujuan -> {indikator_tujuan+target} & {sasaran -> indikator_sasaran+target})
+     * dengan batch whereIn per level, menggantikan pola N+1 satu-query-per-node.
+     *
+     * Output IDENTIK dengan versi lama getCompleteRpjmdStructure()/getRpjmdByYear():
+     * semua helper lama memakai SELECT * sehingga seluruh kolom (termasuk FK) tetap ada,
+     * jadi tidak ada key yang di-strip. Urutan level intermediate dibuat deterministik id ASC
+     * (sama dgn urutan PK default yang dikembalikan query per-parent lama).
+     *
+     * @param array    $misiList daftar misi (sudah diambil pemanggil: getAllMisi / getMisiByYear)
+     * @param int|null $tahun    bila diisi, target (tujuan & sasaran) difilter tahun tsb (mode getRpjmdByYear)
+     */
+    private function buildRpjmdTreeBatched(array $misiList, $tahun = null): array
+    {
+        if (empty($misiList)) {
+            return $misiList;
+        }
 
-            if (!empty($misi['tujuan'])) {
-                foreach ($misi['tujuan'] as &$tujuan) {
-                    // indikator_tujuan: filter target tahun spesifik
-                    $tujuan['indikator_tujuan'] = $this->getIndikatorTujuanByTujuanId($tujuan['id']) ?? [];
-                    if (!empty($tujuan['indikator_tujuan'])) {
-                        foreach ($tujuan['indikator_tujuan'] as &$it) {
-                            $it['target_tahunan_tujuan'] = $this->db->table('rpjmd_target_tujuan')
-                                ->where('indikator_tujuan_id', $it['id'])
-                                ->where('tahun', $tahun)
-                                ->get()->getResultArray();
-                        }
-                    }
+        $misiIds = array_column($misiList, 'id');
 
-                    // sasaran -> indikator_sasaran: filter target tahun spesifik
-                    $tujuan['sasaran'] = $this->getSasaranByTujuanId($tujuan['id']);
-                    if (!empty($tujuan['sasaran'])) {
-                        foreach ($tujuan['sasaran'] as &$sasaran) {
-                            $sasaran['indikator_sasaran'] = $this->getIndikatorSasaranBySasaranId($sasaran['id']);
-                            if (!empty($sasaran['indikator_sasaran'])) {
-                                foreach ($sasaran['indikator_sasaran'] as &$indikator) {
-                                    $indikator['target_tahunan'] = $this->db->table('rpjmd_target')
-                                        ->where('indikator_sasaran_id', $indikator['id'])
-                                        ->where('tahun', $tahun)
-                                        ->get()->getResultArray();
-                                }
-                            }
-                        }
-                    }
-                }
+        // TUJUAN per misi
+        $tujuanRows = $this->db->table('rpjmd_tujuan')
+            ->whereIn('misi_id', $misiIds)
+            ->orderBy('id', 'ASC')
+            ->get()->getResultArray();
+        $tujuanIds = array_column($tujuanRows, 'id');
+
+        // INDIKATOR TUJUAN per tujuan
+        $itRows = !empty($tujuanIds) ? $this->db->table('rpjmd_indikator_tujuan')
+            ->whereIn('tujuan_id', $tujuanIds)
+            ->orderBy('id', 'ASC')
+            ->get()->getResultArray() : [];
+        $itIds = array_column($itRows, 'id');
+
+        // TARGET TAHUNAN TUJUAN per indikator_tujuan (list penuh, spt versi lama)
+        $ttMap = [];
+        if (!empty($itIds)) {
+            $b = $this->db->table('rpjmd_target_tujuan')->whereIn('indikator_tujuan_id', $itIds);
+            if ($tahun !== null) {
+                $b->where('tahun', $tahun);
+            }
+            foreach ($b->orderBy('tahun', 'ASC')->get()->getResultArray() as $r) {
+                $ttMap[$r['indikator_tujuan_id']][] = $r;
             }
         }
+
+        // SASARAN per tujuan
+        $sasaranRows = !empty($tujuanIds) ? $this->db->table('rpjmd_sasaran')
+            ->whereIn('tujuan_id', $tujuanIds)
+            ->orderBy('id', 'ASC')
+            ->get()->getResultArray() : [];
+        $sasaranIds = array_column($sasaranRows, 'id');
+
+        // INDIKATOR SASARAN per sasaran
+        $isRows = !empty($sasaranIds) ? $this->db->table('rpjmd_indikator_sasaran')
+            ->whereIn('sasaran_id', $sasaranIds)
+            ->orderBy('id', 'ASC')
+            ->get()->getResultArray() : [];
+        $isIds = array_column($isRows, 'id');
+
+        // TARGET TAHUNAN (sasaran) per indikator_sasaran
+        $tsMap = [];
+        if (!empty($isIds)) {
+            $b = $this->db->table('rpjmd_target')->whereIn('indikator_sasaran_id', $isIds);
+            if ($tahun !== null) {
+                $b->where('tahun', $tahun);
+            }
+            foreach ($b->orderBy('tahun', 'ASC')->get()->getResultArray() as $r) {
+                $tsMap[$r['indikator_sasaran_id']][] = $r;
+            }
+        }
+
+        // ---- Rakit dari bawah ke atas ----
+        $isBySasaran = [];
+        foreach ($isRows as $is) {
+            $is['target_tahunan'] = $tsMap[$is['id']] ?? [];
+            $isBySasaran[$is['sasaran_id']][] = $is;
+        }
+
+        $sasaranByTujuan = [];
+        foreach ($sasaranRows as $s) {
+            $s['indikator_sasaran'] = $isBySasaran[$s['id']] ?? [];
+            $sasaranByTujuan[$s['tujuan_id']][] = $s;
+        }
+
+        $itByTujuan = [];
+        foreach ($itRows as $it) {
+            $it['target_tahunan_tujuan'] = $ttMap[$it['id']] ?? [];
+            $itByTujuan[$it['tujuan_id']][] = $it;
+        }
+
+        $tujuanByMisi = [];
+        foreach ($tujuanRows as $t) {
+            $t['indikator_tujuan'] = $itByTujuan[$t['id']] ?? [];
+            $t['sasaran'] = $sasaranByTujuan[$t['id']] ?? [];
+            $tujuanByMisi[$t['misi_id']][] = $t;
+        }
+
+        foreach ($misiList as &$misi) {
+            $misi['tujuan'] = $tujuanByMisi[$misi['id']] ?? [];
+        }
+        unset($misi);
 
         return $misiList;
     }

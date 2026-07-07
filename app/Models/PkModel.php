@@ -160,88 +160,93 @@ class PkModel extends Model
             ->get()
             ->getResultArray();
 
-        foreach ($sasaranList as &$sasaran) {
-
-            // ======================
-            // INDIKATOR
-            // ======================
-            $indikatorList = $this->db->table('pk_indikator pi')
-                ->select('pi.*, satuan.satuan as satuan_nama')
-                ->join('satuan', 'satuan.id = pi.id_satuan', 'left')
-                ->where('pi.pk_sasaran_id', $sasaran['id'])
-                ->orderBy('pi.id', 'ASC')
-                ->get()
-                ->getResultArray();
-
-            foreach ($indikatorList as &$indikator) {
-
-                // ======================
-                // PROGRAM (PER INDIKATOR)
-                // ======================
-                $programList = $this->db->table('pk_program pp')
-                    ->select('
-                    pp.id as pk_program_id,
-                    pr.program_kegiatan,
-                    pr.anggaran,
-                    pp.program_id
-                ')
-                    ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
-                    ->where('pp.pk_indikator_id', $indikator['id'])
-                    ->orderBy('pp.id', 'ASC')
-                    ->get()
-                    ->getResultArray();
-
-                foreach ($programList as &$program) {
-
-                    // ======================
-                    // KEGIATAN (PER PROGRAM)
-                    // ======================
-                    $kegiatanList = $this->db->table('pk_kegiatan pkeg')
-                        ->select('
-                        pkeg.id as pk_kegiatan_id,
-                        keg.kegiatan,
-                        keg.anggaran,
-                        pkeg.kegiatan_id
-                    ')
-                        ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
-                        ->where('pkeg.pk_program_id', $program['pk_program_id'])
-                        ->orderBy('pkeg.id', 'ASC')
-                        ->get()
-                        ->getResultArray();
-
-                    // ======================
-                    // SUBKEGIATAN (PER KEGIATAN)
-                    // ======================
-                    foreach ($kegiatanList as &$kegiatan) {
-
-                        $subkegiatanList = $this->db->table('pk_subkegiatan pksub')
-                            ->select('
-                            pksub.id as pk_subkegiatan_id,
-                            sub.sub_kegiatan,
-                            sub.anggaran,
-                            pksub.subkegiatan_id
-                        ')
-                            ->join('sub_kegiatan_pk sub', 'sub.id = pksub.subkegiatan_id', 'left')
-                            ->where('pksub.pk_kegiatan_id', $kegiatan['pk_kegiatan_id'])
-                            ->orderBy('pksub.id', 'ASC')
-                            ->get()
-                            ->getResultArray();
-
-                        // 🔑 masukkan subkegiatan ke kegiatan
-                        $kegiatan['subkegiatan'] = $subkegiatanList;
-                    }
-
-                    // masukkan kegiatan (lengkap dengan subkegiatan) ke program
-                    $program['kegiatan'] = $kegiatanList;
-                }
-
-                // masukkan program ke indikator
-                $indikator['program'] = $programList;
-            }
-
-            // masukkan indikator ke sasaran
-            $sasaran['indikator'] = $indikatorList;
+        if (empty($sasaranList)) {
+            return $sasaranList;
         }
+
+        // ============================================================
+        // Batch-load semua level sekaligus untuk menghindari N+1.
+        // Query per-level di-orderBy id ASC: karena urutan id ASC secara
+        // global identik dengan urutan id ASC di dalam tiap parent, hasil
+        // pengelompokan di PHP sama persis dgn versi query-per-baris lama.
+        // FK parent ikut di-SELECT hanya utk grouping lalu di-unset() agar
+        // struktur baris yang dikembalikan tetap identik.
+        // ============================================================
+        $sasaranIds = array_column($sasaranList, 'id');
+
+        // INDIKATOR (pi.* sudah memuat pk_sasaran_id, jadi tak perlu tambahan)
+        $indikatorList = $this->db->table('pk_indikator pi')
+            ->select('pi.*, satuan.satuan as satuan_nama')
+            ->join('satuan', 'satuan.id = pi.id_satuan', 'left')
+            ->whereIn('pi.pk_sasaran_id', $sasaranIds)
+            ->orderBy('pi.id', 'ASC')
+            ->get()
+            ->getResultArray();
+        $indikatorIds = array_column($indikatorList, 'id');
+
+        // PROGRAM (per indikator)
+        $programList = !empty($indikatorIds) ? $this->db->table('pk_program pp')
+            ->select('pp.id as pk_program_id, pp.pk_indikator_id, pr.program_kegiatan, pr.anggaran, pp.program_id')
+            ->join('program_pk pr', 'pr.id = pp.program_id', 'left')
+            ->whereIn('pp.pk_indikator_id', $indikatorIds)
+            ->orderBy('pp.id', 'ASC')
+            ->get()
+            ->getResultArray() : [];
+        $programIds = array_column($programList, 'pk_program_id');
+
+        // KEGIATAN (per program)
+        $kegiatanList = !empty($programIds) ? $this->db->table('pk_kegiatan pkeg')
+            ->select('pkeg.id as pk_kegiatan_id, pkeg.pk_program_id, keg.kegiatan, keg.anggaran, pkeg.kegiatan_id')
+            ->join('kegiatan_pk keg', 'keg.id = pkeg.kegiatan_id', 'left')
+            ->whereIn('pkeg.pk_program_id', $programIds)
+            ->orderBy('pkeg.id', 'ASC')
+            ->get()
+            ->getResultArray() : [];
+        $kegiatanIds = array_column($kegiatanList, 'pk_kegiatan_id');
+
+        // SUBKEGIATAN (per kegiatan)
+        $subkegiatanList = !empty($kegiatanIds) ? $this->db->table('pk_subkegiatan pksub')
+            ->select('pksub.id as pk_subkegiatan_id, pksub.pk_kegiatan_id, sub.sub_kegiatan, sub.anggaran, pksub.subkegiatan_id')
+            ->join('sub_kegiatan_pk sub', 'sub.id = pksub.subkegiatan_id', 'left')
+            ->whereIn('pksub.pk_kegiatan_id', $kegiatanIds)
+            ->orderBy('pksub.id', 'ASC')
+            ->get()
+            ->getResultArray() : [];
+
+        // ---- Rakit tree dari bawah ke atas (group by FK parent) ----
+        $subByKegiatan = [];
+        foreach ($subkegiatanList as $row) {
+            $parent = $row['pk_kegiatan_id'];
+            unset($row['pk_kegiatan_id']); // strip kunci grouping -> baris identik versi lama
+            $subByKegiatan[$parent][] = $row;
+        }
+
+        $kegByProgram = [];
+        foreach ($kegiatanList as $row) {
+            $parent = $row['pk_program_id'];
+            unset($row['pk_program_id']);
+            $row['subkegiatan'] = $subByKegiatan[$row['pk_kegiatan_id']] ?? [];
+            $kegByProgram[$parent][] = $row;
+        }
+
+        $progByIndikator = [];
+        foreach ($programList as $row) {
+            $parent = $row['pk_indikator_id'];
+            unset($row['pk_indikator_id']);
+            $row['kegiatan'] = $kegByProgram[$row['pk_program_id']] ?? [];
+            $progByIndikator[$parent][] = $row;
+        }
+
+        $indBySasaran = [];
+        foreach ($indikatorList as $row) {
+            $row['program'] = $progByIndikator[$row['id']] ?? [];
+            $indBySasaran[$row['pk_sasaran_id']][] = $row;
+        }
+
+        foreach ($sasaranList as &$sasaran) {
+            $sasaran['indikator'] = $indBySasaran[$sasaran['id']] ?? [];
+        }
+        unset($sasaran);
 
         return $sasaranList;
     }

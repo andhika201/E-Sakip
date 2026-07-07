@@ -138,7 +138,7 @@ class PkRenaksiController extends BaseController
     private function opdOptions(): array
     {
         return $this->db->table('opd')->select('id, nama_opd')
-            ->whereNotIn('id', [1, 46, 209])
+            ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
             ->orderBy('nama_opd', 'ASC')
             ->get()->getResultArray();
     }
@@ -336,7 +336,7 @@ class PkRenaksiController extends BaseController
                 $opdRaw    = $this->request->getGet('opd_id');
                 $opdFilter = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
                 $opdList = $this->db->table('opd')->select('id, nama_opd')
-                    ->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')
+                    ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')
                     ->get()->getResultArray();
             }
 
@@ -674,7 +674,7 @@ class PkRenaksiController extends BaseController
                 $opdRaw    = $this->request->getGet('opd_id');
                 $opdFilter = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
                 $opdList = $this->db->table('opd')->select('id, nama_opd')
-                    ->whereNotIn('id', [1, 46, 209])->orderBy('nama_opd', 'ASC')
+                    ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')
                     ->get()->getResultArray();
             }
 

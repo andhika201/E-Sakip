@@ -266,11 +266,11 @@
                                                             class="btn btn-warning btn-sm" title="Edit IKU">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>"
-                                                           class="btn btn-info btn-sm change-status-btn"
-                                                            title="Ubah Status IKU">
-                                                            <i class="fas fa-sync-alt"></i>
-                                                        </a>
+                                                        <form method="post" action="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>" class="d-inline">
+                                                            <button type="submit" class="btn btn-info btn-sm change-status-btn" title="Ubah Status IKU">
+                                                                <i class="fas fa-sync-alt"></i>
+                                                            </button>
+                                                        </form>
                                                         <?php else: ?><span class="text-muted">-</span><?php endif; ?>
                                                     <?php endif; ?>
                                                 <?php else: ?>

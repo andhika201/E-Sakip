@@ -276,7 +276,7 @@ class RktController extends BaseController
 
         $data = [
             'title' => 'Tambah RENJA (RKT)',
-            'role' => 'admin_opd',
+            'role' => session()->get('role'),
             'indikator' => $indikator,
             'tahun' => $tahun,
             'program' => $programPk,
@@ -661,17 +661,48 @@ class RktController extends BaseController
             return redirect()->back()->with('error', 'Indikator tidak valid.');
         }
 
-        try {
+        $db->transStart();
 
-            $db->table('rkt')
+        try {
+            // Ambil semua ID RKT untuk indikator dan OPD ini
+            $rkts = $db->table('rkt')
+                ->select('id')
                 ->where('indikator_id', $indikatorId)
                 ->where('opd_id', $opdId)
-                ->delete();
+                ->get()
+                ->getResultArray();
+            $rktIds = array_column($rkts, 'id');
+
+            if (!empty($rktIds)) {
+                // Ambil semua ID kegiatan untuk RKT ini
+                $kegs = $db->table('rkt_kegiatan')
+                    ->select('id')
+                    ->whereIn('rkt_id', $rktIds)
+                    ->get()
+                    ->getResultArray();
+                $kegIds = array_column($kegs, 'id');
+
+                if (!empty($kegIds)) {
+                    // Hapus subkegiatan terlebih dahulu
+                    $db->table('rkt_subkegiatan')->whereIn('rkt_kegiatan_id', $kegIds)->delete();
+                    // Hapus kegiatan
+                    $db->table('rkt_kegiatan')->whereIn('id', $kegIds)->delete();
+                }
+
+                // Hapus RKT utama
+                $db->table('rkt')->whereIn('id', $rktIds)->delete();
+            }
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new \Exception('Transaksi database gagal.');
+            }
 
             return redirect()->back()->with('success', 'Seluruh RKT indikator berhasil dihapus.');
 
         } catch (\Throwable $e) {
-
+            $db->transRollback();
             return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }

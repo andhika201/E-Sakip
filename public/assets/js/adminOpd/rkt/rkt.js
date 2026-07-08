@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const qs = (s, c = document) => c.querySelector(s);
     const qsa = (s, c = document) => Array.from(c.querySelectorAll(s));
+    const form = document.getElementById('renja-form');
 
 
     function formatRupiahNumber(val) {
@@ -202,14 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         /* REMOVE ITEM */
-        ['program', 'kegiatan', 'subkegiatan'].forEach(type => {
+        ['program', 'kegiatan', 'subkeg'].forEach(type => {
             if (e.target.closest(`.remove-${type}`)) {
                 e.preventDefault();
                 const item = e.target.closest(`.${type}-item`);
                 const parent = item.parentElement;
 
                 if (parent.children.length > 1) item.remove();
-                else clearControls(item);
+                else clearFormControls(item);
 
                 updateNameRkt();
             }

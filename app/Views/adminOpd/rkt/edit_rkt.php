@@ -283,7 +283,7 @@
   <?= $this->include('adminOpd/templates/footer.php'); ?>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js?v=' . time()) ?>"></script>
 
     </div>
 </body>

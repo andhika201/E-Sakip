@@ -472,8 +472,8 @@
                                                                     <?= csrf_field() ?>
                                                                     <input type="hidden" name="indikator_id"
                                                                            value="<?= esc($ind['id']) ?>">
-                                                                    <input type="hidden" name="tahun"
-                                                                           value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
+                                                                     <input type="hidden" name="tahun"
+                                                                            value="<?= esc($rkt['tahun'] ?? '') ?>">
                                                                     <button type="submit"
                                                                             class="btn btn-info btn-sm"
                                                                             title="Ubah Status Draft/Selesai">
@@ -557,8 +557,8 @@
                                                                 <?= csrf_field() ?>
                                                                 <input type="hidden" name="indikator_id"
                                                                        value="<?= esc($ind['id']) ?>">
-                                                                <input type="hidden" name="tahun"
-                                                                       value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
+                                                                 <input type="hidden" name="tahun"
+                                                                        value="<?= esc($rkt['tahun'] ?? '') ?>">
                                                                 <button type="submit"
                                                                         class="btn btn-info btn-sm"
                                                                         title="Ubah Status Draft/Selesai">
@@ -636,8 +636,8 @@
                                                         <?= csrf_field() ?>
                                                         <input type="hidden" name="indikator_id"
                                                                value="<?= esc($ind['id']) ?>">
-                                                        <input type="hidden" name="tahun"
-                                                               value="<?= esc($selectedYear === 'all' ? '' : $selectedYear) ?>">
+                                                         <input type="hidden" name="tahun"
+                                                                value="<?= esc($rkt['tahun'] ?? '') ?>">
                                                         <button type="submit"
                                                                 class="btn btn-info btn-sm"
                                                                 title="Ubah Status Draft/Selesai">

@@ -231,7 +231,7 @@
 
                               <div class="col-md-2">
                                 <label class="form-label">Anggaran</label>
-                                <input type="text" class="form-control margin-bottom-3 border-secondary anggaran-input"
+                                <input type="text" class="form-control mb-3 border-secondary anggaran-input"
                                   value="<?= number_format($sub['anggaran'], 0, ',', '.') ?>" readonly>
                               </div>
 

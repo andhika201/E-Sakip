@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const t = el.tagName.toLowerCase();
             if (t === "select") {
                 el.selectedIndex = 0;
+                if (window.jQuery && jQuery(el).hasClass('select2-hidden-accessible')) {
+                    jQuery(el).trigger('change');
+                }
             } else if (el.type === "hidden") {
                 // biarkan hidden (id) tetap, kecuali ingin direset
                 // jika mau reset: el.value = '';

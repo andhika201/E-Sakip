@@ -11,7 +11,7 @@
 (function () {
     "use strict";
 
-    document.addEventListener("DOMContentLoaded", function () {
+    function init() {
         if (!window.jQuery || !window.bootstrap) {
             console.warn("[cascading-ajax] jQuery / Bootstrap tidak tersedia.");
             return;
@@ -80,9 +80,17 @@
             var $submit = $(form).find('button[type="submit"]');
             $submit.prop("disabled", true).attr("data-orig", $submit.html()).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan…');
 
+            var csrfName = $('meta[name="csrf-name"]').attr('content');
+            var csrfHash = $('meta[name="csrf-hash"]').attr('content') || $('meta[name="csrf-token"]').attr('content');
+            var headers = {};
+            if (csrfName && csrfHash) {
+                headers['X-CSRF-TOKEN'] = csrfHash;
+            }
+
             $.ajax({
                 url: form.action,
                 method: "POST",
+                headers: headers,
                 data: $(form).serialize(),
                 dataType: "json",
             })
@@ -109,7 +117,19 @@
             var msg = this.getAttribute("data-confirm") || "Yakin menghapus data ini?";
             if (!confirm(msg)) return;
 
-            $.ajax({ url: url, method: "POST", dataType: "json" })
+            var csrfName = $('meta[name="csrf-name"]').attr('content');
+            var csrfHash = $('meta[name="csrf-hash"]').attr('content') || $('meta[name="csrf-token"]').attr('content');
+            var headers = {};
+            if (csrfName && csrfHash) {
+                headers['X-CSRF-TOKEN'] = csrfHash;
+            }
+
+            $.ajax({
+                url: url,
+                method: "POST",
+                headers: headers,
+                dataType: "json"
+            })
                 .done(function (res) {
                     if (res && res.success) {
                         refreshTable();
@@ -122,5 +142,11 @@
                     toast("Gagal menghapus (kesalahan server).", false);
                 });
         });
-    });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
 })();

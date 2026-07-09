@@ -139,6 +139,43 @@
                 .getElementById("indikator-container")
                 .insertAdjacentHTML("beforeend", html);
         }
+
+        let sasaranBaruIndex = 0;
+        function addSasaranBaruEs4() {
+            let html = `
+                <div class="es4-group mb-3 p-3 border rounded bg-light">
+                    <label class="fw-bold mb-2">Sasaran ESS IV (Baru)</label>
+                    <input type="text" name="sasaran_baru[${sasaranBaruIndex}][nama]" class="form-control mb-2" placeholder="Masukkan Sasaran ESS IV" required>
+                    
+                    <div class="indikator-container" id="indikator-baru-container-${sasaranBaruIndex}">
+                    </div>
+                    
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorBaruEs4(${sasaranBaruIndex})">
+                            + Tambah Indikator ESS IV
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.es4-group').remove()">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('sasaran-baru-container').insertAdjacentHTML('beforeend', html);
+            sasaranBaruIndex++;
+        }
+
+        function addIndikatorBaruEs4(idx) {
+            let indIdx = Date.now();
+            let html = `
+                <div class="indikator-es4 d-flex gap-2 mt-2">
+                    <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="Masukkan indikator ESS IV">
+                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="this.parentElement.remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            document.getElementById(`indikator-baru-container-${idx}`).insertAdjacentHTML('beforeend', html);
+        }
     </script>
     </div>
 </body>

@@ -41,6 +41,14 @@
         </button>
     </div>
 
+    <hr class="my-4">
+
+    <div id="sasaran-baru-container"></div>
+    
+    <button type="button" class="btn btn-sm btn-success mt-2" onclick="addSasaranBaruEs4()">
+        + Tambah Sasaran ESS IV
+    </button>
+
     <div class="mt-3">
         <button type="submit" class="btn btn-primary">Update</button>
         <a href="<?= base_url('adminopd/cascading') ?>" class="btn btn-secondary casc-cancel">Batal</a>

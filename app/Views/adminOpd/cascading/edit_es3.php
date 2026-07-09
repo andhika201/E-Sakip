@@ -147,6 +147,43 @@
             }
             btn.closest('.indikator-es3').remove();
         }
+
+        let sasaranBaruIndex = 0;
+        function addSasaranBaruEs3() {
+            let html = `
+                <div class="es3-group mb-3 p-3 border rounded bg-light">
+                    <label class="fw-bold mb-2">Sasaran ESS III (Baru)</label>
+                    <input type="text" name="sasaran_baru[${sasaranBaruIndex}][nama]" class="form-control mb-2" placeholder="Masukkan Sasaran ESS III" required>
+                    
+                    <div class="indikator-container" id="indikator-baru-container-${sasaranBaruIndex}">
+                    </div>
+                    
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorBaruEs3(${sasaranBaruIndex})">
+                            + Tambah Indikator ESS III
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.es3-group').remove()">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('sasaran-baru-container').insertAdjacentHTML('beforeend', html);
+            sasaranBaruIndex++;
+        }
+
+        function addIndikatorBaruEs3(idx) {
+            let indIdx = Date.now();
+            let html = `
+                <div class="indikator-es3 d-flex gap-2 mt-2">
+                    <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="Masukkan indikator ESS III">
+                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="this.parentElement.remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            document.getElementById(`indikator-baru-container-${idx}`).insertAdjacentHTML('beforeend', html);
+        }
     </script>
     </div>
 </body>

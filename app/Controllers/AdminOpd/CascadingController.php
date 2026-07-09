@@ -731,6 +731,39 @@ class CascadingController extends BaseController
 
         $this->db->transComplete();
 
+        // insert sasaran baru (jika ada)
+        $sasaranBaru = $this->request->getPost('sasaran_baru');
+        if (!empty($sasaranBaru)) {
+            $currentSasaran = $this->db->table('cascading_sasaran_opd')
+                ->where('id', $id)
+                ->get()->getRowArray();
+                
+            if ($currentSasaran) {
+                foreach ($sasaranBaru as $es3) {
+                    if (empty($es3['nama'])) continue;
+
+                    $this->db->table('cascading_sasaran_opd')->insert([
+                        'opd_id' => $currentSasaran['opd_id'],
+                        'renstra_indikator_sasaran_id' => $currentSasaran['renstra_indikator_sasaran_id'],
+                        'parent_id' => null,
+                        'level' => 'es3',
+                        'nama_sasaran' => $es3['nama']
+                    ]);
+                    $newId = $this->db->insertID();
+
+                    if (!empty($es3['indikator'])) {
+                        foreach ($es3['indikator'] as $ind) {
+                            if (empty($ind['nama'])) continue;
+                            $this->db->table('cascading_indikator_opd')->insert([
+                                'cascading_sasaran_id' => $newId,
+                                'indikator' => $ind['nama']
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([
                 'success' => $this->db->transStatus() !== false,
@@ -761,9 +794,7 @@ class CascadingController extends BaseController
 
         // insert indikator baru
         if ($indikator) {
-
             foreach ($indikator as $i) {
-
                 if (empty($i['nama']))
                     continue;
 
@@ -771,9 +802,41 @@ class CascadingController extends BaseController
                     'cascading_sasaran_id' => $id,
                     'indikator' => $i['nama']
                 ]);
-
             }
+        }
 
+        // insert sasaran baru (jika ada)
+        $sasaranBaru = $this->request->getPost('sasaran_baru');
+        if (!empty($sasaranBaru)) {
+            $currentSasaran = $this->db->table('cascading_sasaran_opd')
+                ->where('id', $id)
+                ->get()->getRowArray();
+                
+            if ($currentSasaran) {
+                foreach ($sasaranBaru as $es4) {
+                    if (empty($es4['nama'])) continue;
+
+                    $this->db->table('cascading_sasaran_opd')->insert([
+                        'opd_id' => $currentSasaran['opd_id'],
+                        'renstra_indikator_sasaran_id' => $currentSasaran['renstra_indikator_sasaran_id'],
+                        'parent_id' => $currentSasaran['parent_id'],
+                        'es3_indikator_id' => $currentSasaran['es3_indikator_id'],
+                        'level' => 'es4',
+                        'nama_sasaran' => $es4['nama']
+                    ]);
+                    $newId = $this->db->insertID();
+
+                    if (!empty($es4['indikator'])) {
+                        foreach ($es4['indikator'] as $ind) {
+                            if (empty($ind['nama'])) continue;
+                            $this->db->table('cascading_indikator_opd')->insert([
+                                'cascading_sasaran_id' => $newId,
+                                'indikator' => $ind['nama']
+                            ]);
+                        }
+                    }
+                }
+            }
         }
 
         $this->db->transComplete();

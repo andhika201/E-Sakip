@@ -205,7 +205,7 @@
     });
     </script>
 
-  <script src="<?= base_url('/assets/js/adminOpd/renja/renja-form.js')?>"></script>
+  <script src="<?= base_url('/assets/js/adminopd/renja/renja-form.js')?>"></script>
     </div>
 </body>
 </html>

@@ -464,7 +464,7 @@
         window.roleBase = "<?= service('uri')->getSegment(1) ?>";
     </script>
 
-    <script src="<?= base_url('assets/js/adminOpd/pk/pk_detail.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/pk/pk_detail.js') ?>"></script>
     </div>
 </body>
 

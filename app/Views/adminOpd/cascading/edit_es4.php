@@ -120,7 +120,26 @@
 
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es4.js') ?>"></script>
+    <script>
+        function addIndikatorEditEs4() {
+            let html = `
+                <div class="indikator-es4">
+                    <input type="text"
+                        name="indikator[][nama]"
+                        class="form-control"
+                        placeholder="Masukkan indikator ESS IV">
+                    <button type="button"
+                        class="btn btn-delete btn-delete-indikator"
+                        onclick="this.parentElement.remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            document
+                .getElementById("indikator-container")
+                .insertAdjacentHTML("beforeend", html);
+        }
+    </script>
     </div>
 </body>
 

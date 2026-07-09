@@ -306,10 +306,424 @@
       const SUBS = <?= json_encode($subKegiatanPk) ?>;
     </script>
 
+<<<<<<< HEAD
     <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js?v=' . time()) ?>"></script>
+=======
+  <!-- Data master dikirim ke JS -->
+  <script>
+  ); ?>
 
+  <main class="flex-fill d-flex justify-content-center p-4 mt-4">
+    <div class="bg-white rounded shadow-sm p-4" style="width:100%;max-width:1200px;">
+      <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;">Tambah RENJA (RKT)</h2>
 
+      <?php if (session()->getFlashdata('error')): ?>
+        <div class="alert alert-danger"><?= session()->getFlashdata('error') ?></div>
+      <?php endif; ?>
+
+      <?php if (session()->getFlashdata('success')): ?>
+        <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
+      <?php endif; ?>
+
+      <form id="renja-form" method="POST" action="<?= base_url('adminopd/rkt/save') ?>">
+        <?= csrf_field() ?>
+        <input type="hidden" name="indikator_id" value="<?= esc($indikator['id']) ?>">
+
+        <!-- INDIKATOR & TAHUN -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-8">
+            <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Indikator</label>
+            <div class="input-group shadow-sm rounded-3">
+              <span class="input-group-text bg-success text-white border-0">
+                <i class="fas fa-bullseye"></i>
+              </span>
+              <input type="text" class="form-control border-0 bg-light"
+                value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Tahun Rencana</label>
+            <div class="input-group shadow-sm rounded-3">
+              <span class="input-group-text bg-primary text-white border-0">
+                <i class="fas fa-calendar-alt"></i>
+              </span>
+              <input type="number" name="tahun" class="form-control border-0 bg-light"
+                value="<?= esc($tahun ?? date('Y')) ?>" readonly>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PROGRAM ================= -->
+        <section>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-semibold mb-0">Daftar Program</h2>
+          </div>
+
+          <div class="program-container">
+            <div class="program-item border rounded p-3 mb-4">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Program</label>
+                  <select class="form-select select2 program-select border-secondary" required>
+                    <option value="">Pilih Program</option>
+                    <?php foreach ($program as $programItem): ?>
+                      <option value="<?= $programItem['id'] ?>">
+                        <?= esc($programItem['program_kegiatan']) ?> — Rp
+                        <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                  <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="kegiatan-container">
+                <div class="kegiatan-item border rounded  p-3">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="form-label">Kegiatan</label>
+                      <select class="form-select select2 kegiatan-select border-secondary" required>
+                        <option value="">Pilih Kegiatan</option>
+                        <?php foreach ($kegiatanPk as $kegiatanItem): ?>
+                          <option value="<?= $kegiatanItem['id'] ?>" data-anggaran="<?= $kegiatanItem['anggaran'] ?>">
+                            <?= esc($kegiatanItem['kegiatan']) ?> —
+                            Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex align-items-end">
+                      <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="subkeg-container">
+                    <div class="subkeg-item border rounded p-3 mb-3">
+                      <div class="row">
+                        <div class="col-md-3">
+                          <label class="form-label">Sub Kegiatan</label>
+
+                          <select class="form-select select2 subkeg-select border-secondary" required>
+                            <option value="">Pilih Sub Kegiatan</option>
+                            <?php foreach ($subKegiatanPk as $sk): ?>
+                              <option value="<?= $sk['id'] ?>" data-anggaran="<?= $sk['anggaran'] ?>">
+                                <?= esc($sk['sub_kegiatan']) ?> —
+                                Rp
+                                <?= number_format($sk['anggaran'], 0, ',', '.') ?>
+                              </option>`
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+
+                        <div class="col-md-4">
+                          <label class="form-label">Indikator Sasaran Sub Kegiatan</label>
+                          <input type="text" name="indikator_sasaran_sub_kegiatan" class="form-control mb-3 border-secondary id_indikator_sasaran_sub_kegiatan_input">
+                        </div>
+
+                        <div class="col-md-2">
+                          <label class="form-label">Target</label>
+                          <input type="text" name="target" class="form-control mb-3 border-secondary target_input">
+                        </div>
+
+                        <div class="col-md-2">
+                          <label class="form-label">Anggaran</label>
+                          <input type="text" class="form-control mb-3 border-secondary anggaran-input" readonly>
+                        </div>
+
+                        <div class="col-md-1 d-flex align-items-end">
+                          <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm mb-3">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-end mt-2">
+                    <button type="button" class="add-subkeg btn btn-success btn-sm">
+                      <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                  <i class="fas fa-plus me-1"></i> Tambah Kegiatan
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-2">
+            <button type="button" class="add-program btn btn-primary btn-sm">
+              <i class="fas fa-plus me-1"></i> Tambah Program
+            </button>
+          </div>
+        </section>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="<?= base_url('adminopd/rkt') ?>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Kembali
+          </a>
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i> Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <?= $this->include('adminOpd/templates/footer.php'); ?>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script>
+    const PROGRAMS = <?= json_encode($program) ?>;
+    const KEGIATAN = <?= json_encode($kegiatanPk) ?>;
+    const SUBS = <?= json_encode($subKegiatanPk) ?>;
+  </script>
+
+  <script>
+    // assets/js/adminopd/rkt/rkt.js
+    (function () {
+      "use strict";
+>>>>>>> bc1dd1c202bd69c771860c64dd74695a45c69498
+
+      const qs = (s, c = document) => c.querySelector(s);
+      const qsa = (s, c = document) => Array.from(c.querySelectorAll(s));
+      const form = document.getElementById('renja-form');
+
+<<<<<<< HEAD
   </div>
+=======
+      function formatRupiahNumber(val) {
+        if (!val) return "";
+        let n = parseInt(val, 10);
+        if (isNaN(n)) return "";
+        return "Rp " + n.toLocaleString("id-ID");
+      }
+
+      function initSelect2(context = document) {
+        if (!window.jQuery || !jQuery.fn.select2) return;
+        jQuery(context)
+          .find("select.select2")
+          .each(function () {
+            if (jQuery(this).hasClass("select2-hidden-accessible")) {
+              jQuery(this).select2("destroy");
+            }
+            jQuery(this).select2({
+              width: "100%",
+              dropdownParent: jQuery(this).parent(),
+            });
+          });
+      }
+
+      function clearFormControls(root) {
+        qsa("input, textarea, select", root).forEach((el) => {
+          const t = el.tagName.toLowerCase();
+          if (t === "select") {
+            el.selectedIndex = 0;
+            if (window.jQuery && jQuery(el).hasClass('select2-hidden-accessible')) {
+              jQuery(el).trigger('change');
+            }
+          } else if (el.type === "hidden") {
+            // biarkan hidden (id) tetap
+          } else {
+            el.value = "";
+          }
+        });
+      }
+
+      $(document).on(
+        "select2:select",
+        ".subkeg-select",
+        function () {
+          const selected = this.options[this.selectedIndex];
+          if (!selected) return;
+
+          const subkegItem = this.closest(".subkeg-item");
+          if (!subkegItem) return;
+
+          const anggaranInput = subkegItem.querySelector(".anggaran-input");
+          if (!anggaranInput) return;
+
+          const anggaran = selected.dataset.anggaran || "";
+          anggaranInput.value = anggaran
+            ? "Rp " + parseInt(anggaran).toLocaleString("id-ID")
+            : "";
+        }
+      );
+
+      /* =======================
+       * BASIC GUARD
+       * ======================= */
+      const baseProgram = document.querySelector(".program-item");
+      const baseKegiatan = document.querySelector(".kegiatan-item");
+      const baseSubkeg = document.querySelector(".subkeg-item");
+
+      if (baseProgram && baseKegiatan && baseSubkeg) {
+        const templateProgram = baseProgram.cloneNode(true);
+        const templateKegiatan = baseKegiatan.cloneNode(true);
+        const templateSubkeg = baseSubkeg.cloneNode(true);
+
+        // bersihkan isi dinamis
+        templateProgram.querySelectorAll(".kegiatan-item").forEach((e, i) => {
+          if (i > 0) e.remove();
+        });
+        templateProgram.querySelectorAll(".subkeg-item").forEach((e, i) => {
+          if (i > 0) e.remove();
+        });
+
+        templateKegiatan.querySelectorAll(".subkeg-item").forEach((e, i) => {
+          if (i > 0) e.remove();
+        });
+
+        clearFormControls(templateProgram);
+        clearFormControls(templateKegiatan);
+        clearFormControls(templateSubkeg);
+
+        /* =======================
+         * UPDATE NAME (PENTING!)
+         * ======================= */
+        function updateNameRkt() {
+          document.querySelectorAll(".program-item").forEach((programItem, pi) => {
+            const programSelect = programItem.querySelector(".program-select");
+            if (programSelect) {
+              programSelect.name = `program[${pi}][program_id]`;
+            }
+
+            programItem.querySelectorAll(".kegiatan-item").forEach((kegiatanItem, ki) => {
+              const kegiatanSelect = kegiatanItem.querySelector(".kegiatan-select");
+              if (kegiatanSelect) {
+                kegiatanSelect.name = `program[${pi}][kegiatan][${ki}][kegiatan_id]`;
+              }
+
+              const anggaranKegiatan = kegiatanItem.querySelector(".anggaran-input");
+              if (anggaranKegiatan) {
+                anggaranKegiatan.name = `program[${pi}][kegiatan][${ki}][anggaran]`;
+              }
+
+              kegiatanItem.querySelectorAll(".subkeg-item").forEach((subItem, si) => {
+                const subSelect = subItem.querySelector(".subkeg-select");
+                if (subSelect) {
+                  subSelect.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][subkegiatan_id]`;
+                }
+
+                const anggaranSub = subItem.querySelector(".anggaran-input");
+                if (anggaranSub) {
+                  anggaranSub.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][anggaran]`;
+                }
+
+                const indikatorSubkeg = subItem.querySelector(".id_indikator_sasaran_sub_kegiatan_input");
+                if (indikatorSubkeg) {
+                  indikatorSubkeg.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][indikator_sasaran_sub_kegiatan]`;
+                }
+
+                const targetSubkeg = subItem.querySelector(".target_input");
+                if (targetSubkeg) {
+                  targetSubkeg.name = `program[${pi}][kegiatan][${ki}][subkegiatan][${si}][target]`;
+                }
+              });
+            });
+          });
+        }
+
+        updateNameRkt();
+
+        /* =======================
+         * DELEGATED CLICK
+         * ======================= */
+        document.body.addEventListener('click', e => {
+          /* ================= ADD PROGRAM ================= */
+          if (e.target.closest(".add-program")) {
+            e.preventDefault();
+            const container = document.querySelector(".program-container");
+            if (container) {
+              const clone = templateProgram.cloneNode(true);
+              container.appendChild(clone);
+              initSelect2(clone);
+              updateNameRkt();
+            }
+          }
+
+          /* ================= ADD KEGIATAN ================= */
+          if (e.target.closest(".add-kegiatan")) {
+            e.preventDefault();
+            const programItem = e.target.closest(".program-item");
+            const container = programItem ? programItem.querySelector(".kegiatan-container") : null;
+            if (container) {
+              const clone = templateKegiatan.cloneNode(true);
+              container.appendChild(clone);
+              initSelect2(clone);
+              updateNameRkt();
+            }
+          }
+
+          /* ================= ADD SUBKEGIATAN ================= */
+          if (e.target.closest(".add-subkeg")) {
+            e.preventDefault();
+            const kegiatanItem = e.target.closest(".kegiatan-item");
+            const container = kegiatanItem ? kegiatanItem.querySelector(".subkeg-container") : null;
+            if (container) {
+              const clone = templateSubkeg.cloneNode(true);
+              container.appendChild(clone);
+              initSelect2(clone);
+              updateNameRkt();
+            }
+          }
+
+          /* REMOVE ITEM */
+          ['program', 'kegiatan', 'subkeg'].forEach(type => {
+            if (e.target.closest(`.remove-${type}`)) {
+              e.preventDefault();
+              const item = e.target.closest(`.${type}-item`);
+              const parent = item ? item.parentElement : null;
+              if (item && parent) {
+                if (parent.children.length > 1) item.remove();
+                else clearFormControls(item);
+                updateNameRkt();
+              }
+            }
+          });
+        });
+
+        // initial
+        updateNameRkt();
+        initSelect2();
+
+        qsa(".kegiatan-select").forEach((sel) => {
+          const selected = sel.options[sel.selectedIndex];
+          if (selected && selected.dataset && selected.dataset.anggaran) {
+            const angInput = sel
+              .closest(".kegiatan-item")
+              ?.querySelector('input[name*="[anggaran]"]');
+            if (angInput)
+              angInput.value = formatRupiahNumber(selected.dataset.anggaran);
+          }
+        });
+
+        window.addEventListener("load", () => {
+          initSelect2(document);
+          updateNameRkt();
+        });
+
+        if (form) {
+          form.addEventListener("submit", (e) => {
+            updateNameRkt();
+          });
+        }
+      }
+    })();
+  </script>
+    </div>
+>>>>>>> bc1dd1c202bd69c771860c64dd74695a45c69498
 </body>
 
 </html>

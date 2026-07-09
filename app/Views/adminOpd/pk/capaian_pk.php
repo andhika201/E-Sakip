@@ -143,7 +143,7 @@
         window.jenis = '<?= $jenis ?>';
     </script>
     <!-- PK page logic -->
-    <script src="<?= base_url('assets/js/adminOpd/pk/pk.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/pk/pk.js') ?>"></script>
     </div>
 </body>
 

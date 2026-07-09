@@ -24,9 +24,9 @@ function formatTanggal($tanggal)
 if (! function_exists('formatRupiah')) {
     function formatRupiah($nilai)
     {
-        if ($nilai === null || $nilai === '' || (is_numeric($nilai) && (float)$nilai == 0)) {
+        if ($nilai === null || $nilai === '') {
             return '-';
         }
-        return 'Rp ' . number_format($nilai, 0, ',', '.');
+        return 'Rp ' . number_format((float)$nilai, 0, ',', '.');
     }
 }

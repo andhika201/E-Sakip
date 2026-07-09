@@ -212,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // REMOVE GENERIC
-    ["sasaran", "indikator", "kegiatan", "subkeg"].forEach((type) => {
+    ["sasaran", "indikator", "program", "kegiatan", "subkeg"].forEach((type) => {
       if (t.closest(`.remove-${type}`)) {
         ev.preventDefault();
         const item = t.closest(`.${type}-item`);
@@ -304,4 +304,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // no preventDefault -> let submit proceed
     });
   }
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPkForm);
+} else {
+  initPkForm();
+}

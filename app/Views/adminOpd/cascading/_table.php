@@ -102,9 +102,7 @@
                     <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
                         <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="text-nowrap text-center">
                             <a href="<?= base_url('adminopd/cascading/edit-es3/' . $r['es3_id']) ?>"
-                                class="btn btn-warning btn-sm casc-act casc-edit"
-                                data-url="<?= base_url('adminopd/cascading/edit-es3/' . $r['es3_id']) ?>"
-                                data-title="Edit Cascading Eselon III"
+                                class="btn btn-warning btn-sm casc-act"
                                 title="Edit ESS III">
                                 <i class="fas fa-edit"></i>
                             </a>
@@ -153,9 +151,7 @@
                     <td class="text-nowrap">
                         <?php if (!empty($r['es4_id'])): ?>
                             <a href="<?= base_url('adminopd/cascading/edit-es4/' . $r['es4_id']) ?>"
-                                class="btn btn-warning btn-sm casc-act casc-edit"
-                                data-url="<?= base_url('adminopd/cascading/edit-es4/' . $r['es4_id']) ?>"
-                                data-title="Edit Cascading Eselon IV"
+                                class="btn btn-warning btn-sm casc-act"
                                 title="Edit ESS IV">
                                 <i class="fas fa-edit"></i>
                             </a>

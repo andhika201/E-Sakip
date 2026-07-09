@@ -305,15 +305,20 @@
 
                         <?php foreach ($sasaran as $sIndex => $sr): ?>
 
-                            <div class="sasaran-renstra-item border rounded p-3 mb-3" data-sasaran-index="<?= $sIndex ?>">
+                            <div class="sasaran-renstra-item bg-light border rounded p-3 mb-3" data-sasaran-index="<?= $sIndex ?>">
 
                                 <input type="hidden" name="sasaran_renstra[<?= $sIndex ?>][id]"
                                     value="<?= esc($sr['id']) ?>">
 
-                                <label class="form-label">Sasaran Renstra</label>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <label class="fw-medium sasaran-title">Sasaran Renstra <?= $sIndex + 1 ?></label>
+                                    <button type="button" class="remove-sasaran-renstra btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
 
                                 <textarea name="sasaran_renstra[<?= $sIndex ?>][sasaran]" class="form-control mb-3"
-                                    rows="2"><?= esc($sr['sasaran']) ?></textarea>
+                                    rows="2" required><?= esc($sr['sasaran']) ?></textarea>
 
                                 <!-- ================= INDIKATOR ================= -->
 
@@ -326,43 +331,65 @@
 
                                         <?php foreach ($sr['indikator'] as $iIdx => $ind): ?>
 
-                                            <div class="indikator-sasaran-item border p-3 mb-3">
+                                            <div class="indikator-sasaran-item border rounded p-3 bg-white mb-3" data-indeks="<?= $iIdx ?>">
 
                                                 <input type="hidden"
                                                     name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][id]"
                                                     value="<?= $ind['id'] ?>">
 
-                                                <label>Indikator Sasaran</label>
+                                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <label class="fw-medium indikator-title">
+                                                        Indikator Sasaran <?= ($sIndex + 1) . '.' . ($iIdx + 1) ?>
+                                                    </label>
+                                                    <button type="button" class="remove-indikator-sasaran btn btn-outline-danger btn-sm">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
 
-                                                <textarea
-                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][indikator_sasaran]"
-                                                    class="form-control"
-                                                    required><?= esc($ind['indikator_sasaran']) ?></textarea>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Indikator Sasaran</label>
+                                                    <textarea
+                                                        name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][indikator_sasaran]"
+                                                        class="form-control"
+                                                        rows="2" required><?= esc($ind['indikator_sasaran']) ?></textarea>
+                                                </div>
 
-                                                <select
-                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
-                                                    class="form-select" required>
-                                                    <?php foreach ($satuan_options as $s): ?>
-                                                        <option value="<?= $s['id'] ?>" <?= ($ind['satuan'] == $s['id']) ? 'selected' : '' ?>>
-                                                            <?= $s['satuan'] ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Satuan</label>
+                                                        <select
+                                                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][satuan]"
+                                                            class="form-select" required>
+                                                            <option value="">Pilih Satuan</option>
+                                                            <?php foreach ($satuan_options as $s): ?>
+                                                                <option value="<?= $s['id'] ?>" <?= ($ind['satuan'] == $s['id']) ? 'selected' : '' ?>>
+                                                                    <?= $s['satuan'] ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Jenis Indikator</label>
+                                                        <select
+                                                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
+                                                            class="form-select" required>
+                                                            <option value="">Pilih Jenis Indikator</option>
+                                                            <option value="positif" <?= $ind['jenis_indikator']=='positif'?'selected':'' ?>>Indikator Positif (naik = baik)</option>
+                                                            <option value="negatif" <?= $ind['jenis_indikator']=='negatif'?'selected':'' ?>>Indikator Negatif (turun = baik)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
 
-                                                <select
-                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][jenis_indikator]"
-                                                    class="form-select"
-                                                    required>
-                                                    <option value="positif" <?= $ind['jenis_indikator']=='positif'?'selected':'' ?>>Positif</option>
-                                                    <option value="negatif" <?= $ind['jenis_indikator']=='negatif'?'selected':'' ?>>Negatif</option>
-                                                    </select>
-
-                                                <label class="form-label mt-2">Kondisi Awal (Baseline)</label>
-                                                <input type="text"
-                                                    name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][baseline]"
-                                                    class="form-control mb-2"
-                                                    value="<?= esc($ind['baseline'] ?? '') ?>"
-                                                    placeholder="Kondisi awal / baseline (opsional)">
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Kondisi Awal (Baseline)</label>
+                                                        <input type="text"
+                                                            name="sasaran_renstra[<?= $sIndex ?>][indikator_sasaran][<?= $iIdx ?>][baseline]"
+                                                            class="form-control"
+                                                            value="<?= esc($ind['baseline'] ?? '') ?>"
+                                                            placeholder="Kondisi awal / baseline (opsional)">
+                                                    </div>
+                                                </div>
 
                                                 <!-- ================= TARGET ================= -->
 

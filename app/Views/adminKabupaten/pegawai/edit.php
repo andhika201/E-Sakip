@@ -38,7 +38,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">OPD <span class="text-danger">*</span></label>
-                        <select name="opd_id" class="form-select" required>
+                        <select name="opd_id" class="form-select select2" required>
                             <option value="">Pilih OPD</option>
                             <?php foreach ($opdList as $opd): ?>
                                 <option value="<?= (int) $opd['id'] ?>"
@@ -51,7 +51,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                        <select name="jabatan_id" class="form-select" required>
+                        <select name="jabatan_id" class="form-select select2" required>
                             <option value="">Pilih Jabatan</option>
                             <?php foreach ($jabatanList as $j): ?>
                                 <option value="<?= (int) $j['id'] ?>"
@@ -68,7 +68,7 @@
 
                     <div class="mb-3">
                         <label class="form-label">Pangkat / Golongan</label>
-                        <select name="pangkat_id" class="form-select">
+                        <select name="pangkat_id" class="form-select select2">
                             <option value="">- Tidak diubah / kosong -</option>
                             <?php foreach ($pangkatOptions as $pk): ?>
                                 <option value="<?= (int) $pk['id'] ?>"
@@ -93,6 +93,17 @@
 
         <?= $this->include('adminKabupaten/templates/footer.php'); ?>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            if ($.fn.select2) {
+                $('.select2').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%'
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

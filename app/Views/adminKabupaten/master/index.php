@@ -358,14 +358,14 @@
             <div class="modal-body">
                 <div class="mb-2"><label class="form-label">Nama</label><input type="text" name="nama_pegawai" class="form-control" required></div>
                 <div class="mb-2"><label class="form-label">NIP</label><input type="text" name="nip_pegawai" class="form-control" required></div>
-                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select"><option value="">- Pilih -</option><?= $optOpd() ?></select></div>
-                <div class="mb-2"><label class="form-label">Jabatan</label><select name="jabatan_id" class="form-select"><option value="">- Pilih -</option><?= $optJab() ?></select></div>
+                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select select2-modal"><option value="">- Pilih -</option><?= $optOpd() ?></select></div>
+                <div class="mb-2"><label class="form-label">Jabatan</label><select name="jabatan_id" class="form-select select2-modal"><option value="">- Pilih -</option><?= $optJab() ?></select></div>
                 <div class="mb-2 form-check">
                     <input type="checkbox" name="is_plt" id="pegawai-is-plt" class="form-check-input" value="1">
                     <label class="form-check-label" for="pegawai-is-plt">Jabatan Plt (Pelaksana Tugas)</label>
                 </div>
-                <div class="mb-2"><label class="form-label">Pangkat</label><select name="pangkat_id" class="form-select"><option value="">- Pilih -</option><?= $optPangkat() ?></select></div>
-                <div class="mb-2"><label class="form-label">Level</label><select name="level" class="form-select"><option value="USER">USER</option><option value="ADMIN">ADMIN</option><option value="PERMITOR">PERMITOR</option><option value="VERIFIKATOR">VERIFIKATOR</option></select></div>
+                <div class="mb-2"><label class="form-label">Pangkat</label><select name="pangkat_id" class="form-select select2-modal"><option value="">- Pilih -</option><?= $optPangkat() ?></select></div>
+                <div class="mb-2"><label class="form-label">Level</label><select name="level" class="form-select select2-modal"><option value="USER">USER</option><option value="ADMIN">ADMIN</option><option value="PERMITOR">PERMITOR</option><option value="VERIFIKATOR">VERIFIKATOR</option></select></div>
                 <small class="text-muted">Pegawai baru: password awal = NIP.</small>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-success">Simpan</button></div>
@@ -392,7 +392,7 @@
             <div class="modal-header"><h5 class="modal-title">Data Jabatan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-2"><label class="form-label">Nama Jabatan</label><input type="text" name="nama_jabatan" class="form-control" required></div>
-                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select"><option value="">- Tanpa OPD -</option><?= $optOpd() ?></select></div>
+                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select select2-modal"><option value="">- Tanpa OPD -</option><?= $optOpd() ?></select></div>
                 <div class="mb-2"><label class="form-label">Eselon</label><input type="number" name="eselon" class="form-control" min="0"></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-success">Simpan</button></div>
@@ -421,8 +421,8 @@
             <div class="modal-body">
                 <div class="mb-2"><label class="form-label">Username</label><input type="text" name="username" class="form-control" required></div>
                 <div class="mb-2"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required></div>
-                <div class="mb-2"><label class="form-label">Role</label><select name="role" class="form-select" required><?= $optRole() ?></select></div>
-                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select"><option value="">- Tanpa OPD (kabupaten) -</option><?= $optOpd() ?></select></div>
+                <div class="mb-2"><label class="form-label">Role</label><select name="role" class="form-select select2-modal" required><?= $optRole() ?></select></div>
+                <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select select2-modal"><option value="">- Tanpa OPD (kabupaten) -</option><?= $optOpd() ?></select></div>
                 <div class="mb-2"><label class="form-label">Password</label><input type="password" name="password" class="form-control" autocomplete="new-password"><small class="text-muted">Kosongkan bila tidak ingin mengubah (saat edit). Minimal 6 karakter.</small></div>
                 <div class="form-check"><input type="checkbox" class="form-check-input" name="is_active" id="user-active" value="1" checked><label class="form-check-label" for="user-active">Aktif</label></div>
             </div>
@@ -461,6 +461,9 @@
                 const form = modal.querySelector('form');
                 if (!form) return;
                 form.reset();
+                if (window.jQuery && jQuery.fn.select2) {
+                    jQuery(form).find('select.select2-modal').trigger('change.select2');
+                }
                 const idEl = form.querySelector('[name="id"]');
                 if (idEl) idEl.value = '';
                 if (!json) return;
@@ -473,6 +476,9 @@
                         el.checked = Number(data[k]) === 1;
                     } else {
                         el.value = (data[k] === null || data[k] === undefined) ? '' : data[k];
+                    }
+                    if (window.jQuery && jQuery.fn.select2 && jQuery(el).hasClass('select2-hidden-accessible')) {
+                        jQuery(el).trigger('change.select2');
                     }
                 });
             }
@@ -508,6 +514,20 @@
                         history.replaceState(null, '', url);
                     }
                 });
+            });
+
+            // Inisialisasi Select2 untuk select di dalam modal
+            document.addEventListener('DOMContentLoaded', function () {
+                if (window.jQuery && jQuery.fn.select2) {
+                    jQuery('.modal').each(function () {
+                        var $modal = jQuery(this);
+                        $modal.find('select.select2-modal').select2({
+                            theme: 'bootstrap-5',
+                            dropdownParent: $modal,
+                            width: '100%'
+                        });
+                    });
+                }
             });
         })();
     </script>

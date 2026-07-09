@@ -94,198 +94,198 @@
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
+  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
-  <?= $this->include('adminOpd/templates/header.php'); ?>
-  <?= $this->include('adminOpd/templates/sidebar.php'); ?>
+    <?= $this->include('adminOpd/templates/header.php'); ?>
+    <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
-  <main class="flex-fill d-flex justify-content-center p-4 mt-4">
-    <div class="bg-white rounded shadow-sm p-4" style="width:100%;max-width:1200px;">
-      <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;">Edit RENJA (RKT)</h2>
+    <main class="flex-fill d-flex justify-content-center p-4 mt-4">
+      <div class="bg-white rounded shadow-sm p-4" style="width:100%;max-width:1200px;">
+        <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;">Edit RENJA (RKT)</h2>
 
-      <!-- Flash -->
-      <?php if (session()->getFlashdata('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          <?= session()->getFlashdata('error') ?>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      <?php endif; ?>
+        <!-- Flash -->
+        <?php if (session()->getFlashdata('error')): ?>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('error') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endif; ?>
 
-      <?php if (session()->getFlashdata('success')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          <?= session()->getFlashdata('success') ?>
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      <?php endif; ?>
+        <?php if (session()->getFlashdata('success')): ?>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?= session()->getFlashdata('success') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endif; ?>
 
-      <form id="renja-form" method="POST" action="<?= base_url('adminopd/rkt/update') ?>">
-        <?= csrf_field() ?>
-        <input type="hidden" name="indikator_id" value="<?= esc($indikator['id']) ?>">
-        <input type="hidden" name="tahun" value="<?= esc($tahun) ?>">
+        <form id="renja-form" method="POST" action="<?= base_url('adminopd/rkt/update') ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="indikator_id" value="<?= esc($indikator['id']) ?>">
+          <input type="hidden" name="tahun" value="<?= esc($tahun) ?>">
 
-        <!-- INDIKATOR & TAHUN (SAMA DENGAN TAMBAH) -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-8">
-            <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Indikator</label>
-            <div class="input-group shadow-sm rounded-3">
-              <span class="input-group-text bg-success text-white border-0">
-                <i class="fas fa-bullseye"></i>
-              </span>
-              <input type="text" class="form-control border-0 bg-light"
-                value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
+          <!-- INDIKATOR & TAHUN (SAMA DENGAN TAMBAH) -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-8">
+              <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Indikator</label>
+              <div class="input-group shadow-sm rounded-3">
+                <span class="input-group-text bg-success text-white border-0">
+                  <i class="fas fa-bullseye"></i>
+                </span>
+                <input type="text" class="form-control border-0 bg-light"
+                  value="<?= esc($indikator['indikator_sasaran']) ?>" readonly>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Tahun Rencana</label>
+              <div class="input-group shadow-sm rounded-3">
+                <span class="input-group-text bg-primary text-white border-0">
+                  <i class="fas fa-calendar-alt"></i>
+                </span>
+                <input type="number" class="form-control border-0 bg-light" value="<?= esc($tahun) ?>" readonly>
+              </div>
             </div>
           </div>
 
-          <div class="col-md-4">
-            <label class="form-label text-uppercase small fw-semibold text-muted mb-1">Tahun Rencana</label>
-            <div class="input-group shadow-sm rounded-3">
-              <span class="input-group-text bg-primary text-white border-0">
-                <i class="fas fa-calendar-alt"></i>
-              </span>
-              <input type="number" class="form-control border-0 bg-light" value="<?= esc($tahun) ?>" readonly>
-            </div>
-          </div>
-        </div>
+          <!-- ================= PROGRAM ================= -->
+          <section>
+            <h2 class="h5 fw-semibold mb-3">Daftar Program</h2>
 
-        <!-- ================= PROGRAM ================= -->
-        <section>
-          <h2 class="h5 fw-semibold mb-3">Daftar Program</h2>
+            <div class="program-container">
 
-          <div class="program-container">
+              <?php foreach ($rktPrograms as $pIndex => $prog): ?>
+                <div class="program-item border rounded p-3 mb-4">
+                  <div class="row mb-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Program</label>
+                      <select class="form-select select2 program-select border-secondary">
+                        <option value="">Pilih Program</option>
+                        <?php foreach ($program as $p): ?>
+                          <option value="<?= $p['id'] ?>" <?= $p['id'] == $prog['program_id'] ? 'selected' : '' ?>>
+                            <?= esc($p['program_kegiatan']) ?> - Rp
+                            <?= number_format($p['anggaran'], 0, ',', '.') ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
 
-            <?php foreach ($rktPrograms as $pIndex => $prog): ?>
-              <div class="program-item border rounded p-3 mb-4">
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Program</label>
-                    <select class="form-select select2 program-select border-secondary">
-                      <option value="">Pilih Program</option>
-                      <?php foreach ($program as $p): ?>
-                        <option value="<?= $p['id'] ?>" <?= $p['id'] == $prog['program_id'] ? 'selected' : '' ?>>
-                          <?= esc($p['program_kegiatan']) ?> - Rp
-                          <?= number_format($p['anggaran'], 0, ',', '.') ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                    <div class="col-md-3 d-flex align-items-end">
+                      <button type="button" class="remove-program btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
 
-                  <div class="col-md-3 d-flex align-items-end">
-                    <button type="button" class="remove-program btn btn-outline-danger btn-sm">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
+                  <div class="kegiatan-container">
+                    <?php foreach ($prog['kegiatan'] as $keg): ?>
+                      <div class="kegiatan-item border rounded p-3 mb-3">
+                        <div class="row">
+                          <div class="col-md-6">
+                            <label class="form-label">Kegiatan</label>
+                            <select class="form-select select2 kegiatan-select border-secondary">
+                              <option value="">Pilih Kegiatan</option>
+                              <?php foreach ($kegiatanPk as $k): ?>
+                                <option value="<?= $k['id'] ?>" data-anggaran="<?= $k['anggaran'] ?>"
+                                  <?= $k['id'] == $keg['kegiatan_id'] ? 'selected' : '' ?>>
+                                  <?= esc($k['kegiatan']) ?> - Rp
+                                  <?= number_format($k['anggaran'], 0, ',', '.') ?>
+                                </option>
+                              <?php endforeach; ?>
+                            </select>
+                          </div>
 
-                <div class="kegiatan-container">
-                  <?php foreach ($prog['kegiatan'] as $keg): ?>
-                    <div class="kegiatan-item border rounded p-3 mb-3">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <label class="form-label">Kegiatan</label>
-                          <select class="form-select select2 kegiatan-select border-secondary">
-                            <option value="">Pilih Kegiatan</option>
-                            <?php foreach ($kegiatanPk as $k): ?>
-                              <option value="<?= $k['id'] ?>" data-anggaran="<?= $k['anggaran'] ?>"
-                                <?= $k['id'] == $keg['kegiatan_id'] ? 'selected' : '' ?>>
-                                <?= esc($k['kegiatan']) ?> - Rp 
-                                <?= number_format($k['anggaran'], 0, ',', '.') ?>
-                              </option>
-                            <?php endforeach; ?>
-                          </select>
+                          <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
                         </div>
 
-                        <div class="col-md-3 d-flex align-items-end">
-                          <button type="button" class="remove-kegiatan btn btn-outline-danger btn-sm">
-                            <i class="fas fa-trash"></i>
+                        <div class="subkeg-container">
+                          <?php foreach ($keg['subkegiatan'] as $sub): ?>
+                            <div class="subkeg-item border rounded p-3 mb-3">
+                              <div class="row">
+                                <div class="col-md-3">
+                                  <label class="form-label">Sub Kegiatan</label>
+                                  <select class="form-select select2 subkeg-select border-secondary">
+                                    <option value="">Pilih Sub Kegiatan</option>
+                                    <?php foreach ($subKegiatanPk as $sk): ?>
+                                      <option value="<?= $sk['id'] ?>" data-anggaran="<?= $sk['anggaran'] ?>"
+                                        <?= $sk['id'] == $sub['sub_kegiatan_id'] ? 'selected' : '' ?>>
+                                        <?= esc($sk['sub_kegiatan']) ?> - Rp
+                                        <?= number_format($sk['anggaran'], 0, ',', '.') ?>
+                                      </option>
+                                    <?php endforeach; ?>
+                                  </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                  <label class="form-label">Indikator Sasaran Sub Kegiatan</label>
+                                  <input type="text" name="indikator_sasaran_sub_kegiatan" class="form-control mb-3 border-secondary id_indikator_sasaran_sub_kegiatan_input" value="<?= esc($sub['indikator_sasaran_sub_kegiatan'] ?? '') ?>">
+                                </div>
+
+                                <div class="col-md-2">
+                                  <label class="form-label">Target</label>
+                                  <input type="text" name="target" class="form-control mb-3 border-secondary target_input" value="<?= esc($sub['target'] ?? '') ?>">
+                                </div>
+
+                                <div class="col-md-2">
+                                  <label class="form-label">Anggaran</label>
+                                  <input type="text" class="form-control mb-3 border-secondary anggaran-input"
+                                    value="<?= number_format($sub['anggaran'], 0, ',', '.') ?>" readonly>
+                                </div>
+
+                                <div class="col-md-1 d-flex align-items-end">
+                                  <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm mb-3">
+                                    <i class="fas fa-trash"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          <?php endforeach; ?>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                          <button type="button" class="add-subkeg btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Tambah Sub Kegiatan
                           </button>
                         </div>
                       </div>
+                    <?php endforeach; ?>
+                  </div>
 
-                      <div class="subkeg-container">
-                        <?php foreach ($keg['subkegiatan'] as $sub): ?>
-                          <div class="subkeg-item border rounded p-3 mb-3">
-                            <div class="row">
-                              <div class="col-md-3">
-                                <label class="form-label">Sub Kegiatan</label>
-                                <select class="form-select select2 subkeg-select border-secondary">
-                                  <option value="">Pilih Sub Kegiatan</option>
-                                  <?php foreach ($subKegiatanPk as $sk): ?>
-                                    <option value="<?= $sk['id'] ?>" data-anggaran="<?= $sk['anggaran'] ?>"
-                                      <?= $sk['id'] == $sub['sub_kegiatan_id'] ? 'selected' : '' ?>>
-                                      <?= esc($sk['sub_kegiatan']) ?> - Rp
-                                      <?= number_format($sk['anggaran'], 0, ',', '.') ?>
-                                    </option>
-                                  <?php endforeach; ?>
-                                </select>
-                              </div>
-
-                              <div class="col-md-4">
-                                <label class="form-label">Indikator Sasaran Sub Kegiatan</label>
-                                <input type="text" name="indikator_sasaran_sub_kegiatan" class="form-control mb-3 border-secondary id_indikator_sasaran_sub_kegiatan_input" value="<?= esc($sub['indikator_sasaran_sub_kegiatan'] ?? '') ?>">
-                              </div>
-
-                              <div class="col-md-2">
-                                <label class="form-label">Target</label>
-                                <input type="text" name="target" class="form-control mb-3 border-secondary target_input" value="<?= esc($sub['target'] ?? '') ?>">
-                              </div>
-
-                              <div class="col-md-2">
-                                <label class="form-label">Anggaran</label>
-                                <input type="text" class="form-control mb-3 border-secondary anggaran-input"
-                                  value="<?= number_format($sub['anggaran'], 0, ',', '.') ?>" readonly>
-                              </div>
-
-                              <div class="col-md-1 d-flex align-items-end">
-                                <button type="button" class="remove-subkeg btn btn-outline-danger btn-sm mb-3">
-                                  <i class="fas fa-trash"></i>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        <?php endforeach; ?>
-                      </div>
-
-                      <div class="d-flex justify-content-end">
-                        <button type="button" class="add-subkeg btn btn-success btn-sm">
-                          <i class="fas fa-plus"></i> Tambah Sub Kegiatan
-                        </button>
-                      </div>
-                    </div>
-                  <?php endforeach; ?>
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="add-kegiatan btn btn-success btn-sm">
+                      <i class="fas fa-plus"></i> Tambah Kegiatan
+                    </button>
+                  </div>
                 </div>
+              <?php endforeach; ?>
 
-                <div class="d-flex justify-content-end">
-                  <button type="button" class="add-kegiatan btn btn-success btn-sm">
-                    <i class="fas fa-plus"></i> Tambah Kegiatan
-                  </button>
-                </div>
-              </div>
-            <?php endforeach; ?>
+            </div>
 
+            <div class="d-flex justify-content-end">
+              <button type="button" class="add-program btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Tambah Program
+              </button>
+            </div>
+          </section>
+
+          <div class="d-flex justify-content-between mt-4">
+            <a href="<?= base_url('adminopd/rkt') ?>" class="btn btn-secondary">Kembali</a>
+            <button type="submit" class="btn btn-success">Simpan Perubahan</button>
           </div>
+        </form>
 
-          <div class="d-flex justify-content-end">
-            <button type="button" class="add-program btn btn-primary btn-sm">
-              <i class="fas fa-plus"></i> Tambah Program
-            </button>
-          </div>
-        </section>
+      </div>
+    </main>
 
-        <div class="d-flex justify-content-between mt-4">
-          <a href="<?= base_url('adminopd/rkt') ?>" class="btn btn-secondary">Kembali</a>
-          <button type="submit" class="btn btn-success">Simpan Perubahan</button>
-        </div>
-      </form>
+    <?= $this->include('adminOpd/templates/footer.php'); ?>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js?v=' . time()) ?>"></script>
 
-    </div>
-  </main>
-
-  <?= $this->include('adminOpd/templates/footer.php'); ?>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-  <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js?v=' . time()) ?>"></script>
-
-    </div>
+  </div>
 </body>
 
 </html>

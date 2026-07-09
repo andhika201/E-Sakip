@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="card-body">
         <textarea name="program[${p}][nama]" class="form-control mb-2" placeholder="Nama Program" required></textarea>
-        <input type="text" name="program[${p}][anggaran]" class="form-control mb-3 rupiah" placeholder="Anggaran Program" required>
+        <input type="text" name="program[${p}][anggaran]" class="form-control mb-3 rupiah" placeholder="Anggaran Program (contoh: 1.500.000)" required>
 
         <div class="kegiatan-container"></div>
 
@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="card-body">
         <textarea name="program[${p}][kegiatan][${k}][nama]" class="form-control mb-2" placeholder="Nama Kegiatan" required></textarea>
-        <input type="text" name="program[${p}][kegiatan][${k}][anggaran]" class="form-control mb-2 rupiah" placeholder="Anggaran Kegiatan" required>
+        <input type="text" name="program[${p}][kegiatan][${k}][anggaran]" class="form-control mb-2 rupiah" placeholder="Anggaran Kegiatan (contoh: 1.500.000)" required>
 
         <div class="sub-container"></div>
 
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <input type="text"
             name="program[${p}][kegiatan][${k}][sub][${s}][anggaran]"
             class="form-control form-control-sm rupiah"
-            placeholder="Anggaran Sub Kegiatan"
+            placeholder="Anggaran Sub Kegiatan (contoh: 1.500.000)"
             required>
         </div>
 
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const programItem = programContainer.querySelector(".program-item");
 
     programItem.querySelector("textarea").value = data.program_kegiatan;
-    programItem.querySelector(".rupiah").value = data.anggaran;
+    programItem.querySelector(".rupiah").value = formatRupiah(String(data.anggaran || ''));
 
     if (data.kegiatan) {
 
@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const kegiatanItem = kegiatanWrap.querySelectorAll(".kegiatan-item")[k];
 
         kegiatanItem.querySelector("textarea").value = kegiatan.kegiatan;
-        kegiatanItem.querySelector(".rupiah").value = kegiatan.anggaran;
+        kegiatanItem.querySelector(".rupiah").value = formatRupiah(String(kegiatan.anggaran || ''));
 
         if (kegiatan.sub_kegiatan) {
 
@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const subItem = subWrap.querySelectorAll(".sub-item")[s];
 
             subItem.querySelector("input[type='text']").value = sub.sub_kegiatan;
-            subItem.querySelector(".rupiah").value = sub.anggaran;
+            subItem.querySelector(".rupiah").value = formatRupiah(String(sub.anggaran || ''));
 
           });
 

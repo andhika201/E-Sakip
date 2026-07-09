@@ -83,7 +83,7 @@
   <script>
     const programData = <?= json_encode($program, JSON_UNESCAPED_UNICODE) ?>;
   </script>
-  <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js?v=' . time()) ?>"></script>
     </div>
 </body>
 

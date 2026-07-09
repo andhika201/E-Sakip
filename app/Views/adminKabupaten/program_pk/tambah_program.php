@@ -77,7 +77,7 @@
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
-  <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js') ?>"></script>
+  <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js?v=' . time()) ?>"></script>
     </div>
 </body>
 

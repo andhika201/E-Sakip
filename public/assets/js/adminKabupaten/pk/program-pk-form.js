@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const programItem = programContainer.querySelector(".program-item");
 
     programItem.querySelector("textarea").value = data.program_kegiatan;
-    programItem.querySelector(".rupiah").value = formatRupiah(String(data.anggaran || ''));
+    programItem.querySelector(".rupiah").value = formatRupiah(String(parseInt(data.anggaran || 0, 10)));
 
     if (data.kegiatan) {
 
@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const kegiatanItem = kegiatanWrap.querySelectorAll(".kegiatan-item")[k];
 
         kegiatanItem.querySelector("textarea").value = kegiatan.kegiatan;
-        kegiatanItem.querySelector(".rupiah").value = formatRupiah(String(kegiatan.anggaran || ''));
+        kegiatanItem.querySelector(".rupiah").value = formatRupiah(String(parseInt(kegiatan.anggaran || 0, 10)));
 
         if (kegiatan.sub_kegiatan) {
 
@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const subItem = subWrap.querySelectorAll(".sub-item")[s];
 
             subItem.querySelector("input[type='text']").value = sub.sub_kegiatan;
-            subItem.querySelector(".rupiah").value = formatRupiah(String(sub.anggaran || ''));
+            subItem.querySelector(".rupiah").value = formatRupiah(String(parseInt(sub.anggaran || 0, 10)));
 
           });
 

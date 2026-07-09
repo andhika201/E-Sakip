@@ -214,7 +214,7 @@
                                 <?= esc($sk['sub_kegiatan']) ?> —
                                 Rp
                                 <?= number_format($sk['anggaran'], 0, ',', '.') ?>
-                              </option>`
+                              </option>
                             <?php endforeach; ?>
                           </select>
                         </div>

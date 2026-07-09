@@ -64,6 +64,7 @@ function addIndikatorEs3(es3) {
         onclick="addEs4(${es3}, ${indikatorIndex})">
 
         + Tambah Sasaran ESS IV
+        </button>
 
         <button type="button"
         class="btn btn-sm btn-danger btn-delete"
@@ -104,6 +105,7 @@ function addEs4(es3, indikator) {
         onclick="addIndikatorEs4(${es3}, ${indikator}, ${es4Index})">
 
         + Tambah Indikator ESS IV
+        </button>
 
         <button type="button"
         class="btn btn-sm btn-danger btn-delete"

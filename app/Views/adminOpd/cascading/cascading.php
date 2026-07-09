@@ -372,10 +372,153 @@
     </div>
 
     <!-- Helper form edit (fungsi global dipakai form di dalam modal) -->
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3-edit.js') ?>"></script>
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es4.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/cascading/cascading-es3-edit.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/cascading/cascading-es4.js') ?>"></script>
     <!-- Orkestrasi AJAX: buka modal, submit, delete, refresh tabel tanpa reload -->
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-ajax.js') ?>"></script>
+    <script>
+        (function () {
+            "use strict";
+
+            function init() {
+                if (!window.jQuery || !window.bootstrap) {
+                    console.warn("[cascading-ajax] jQuery / Bootstrap tidak tersedia.");
+                    return;
+                }
+
+                var $ = window.jQuery;
+                var modalEl = document.getElementById("cascEditModal");
+                var wrap = document.getElementById("cascTableWrap");
+                if (!modalEl || !wrap) return;
+
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                var $body = $("#cascEditBody");
+                var $title = $("#cascEditTitle");
+
+                function toast(message, ok) {
+                    var el = document.getElementById("cascToast");
+                    if (!el) {
+                        alert(message);
+                        return;
+                    }
+                    el.classList.remove("text-bg-success", "text-bg-danger");
+                    el.classList.add(ok === false ? "text-bg-danger" : "text-bg-success");
+                    document.getElementById("cascToastBody").textContent = message;
+                    bootstrap.Toast.getOrCreateInstance(el, { delay: 3000 }).show();
+                }
+
+                function refreshTable() {
+                    var url = wrap.getAttribute("data-table-url");
+                    var periode = wrap.getAttribute("data-periode") || "";
+                    return $.get(url, { periode: periode })
+                        .done(function (html) {
+                            wrap.innerHTML = html;
+                        })
+                        .fail(function () {
+                            toast("Gagal memuat ulang tabel. Silakan refresh halaman.", false);
+                        });
+                }
+
+                // ---------- BUKA MODAL EDIT ----------
+                $(document).on("click", ".casc-edit", function (e) {
+                    e.preventDefault();
+                    var url = this.getAttribute("data-url") || this.getAttribute("href");
+                    var title = this.getAttribute("data-title") || "Edit Cascading";
+                    $title.text(title);
+                    $body.html('<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-1"></i> Memuat…</div>');
+                    modal.show();
+                    $.get(url)
+                        .done(function (html) {
+                            $body.html(html);
+                        })
+                        .fail(function () {
+                            $body.html('<div class="alert alert-danger mb-0">Gagal memuat form. Coba lagi.</div>');
+                        });
+                });
+
+                // ---------- BATAL DI MODAL ----------
+                $(document).on("click", "#cascEditBody .casc-cancel", function (e) {
+                    e.preventDefault();
+                    modal.hide();
+                });
+
+                // ---------- SUBMIT UPDATE (AJAX) ----------
+                $(document).on("submit", "#cascEditBody form.casc-form", function (e) {
+                    e.preventDefault();
+                    var form = this;
+                    var $submit = $(form).find('button[type="submit"]');
+                    $submit.prop("disabled", true).attr("data-orig", $submit.html()).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan…');
+
+                    var csrfName = $('meta[name="csrf-name"]').attr('content');
+                    var csrfHash = $('meta[name="csrf-hash"]').attr('content') || $('meta[name="csrf-token"]').attr('content');
+                    var headers = {};
+                    if (csrfName && csrfHash) {
+                        headers['X-CSRF-TOKEN'] = csrfHash;
+                    }
+
+                    $.ajax({
+                        url: form.action,
+                        method: "POST",
+                        headers: headers,
+                        data: $(form).serialize(),
+                        dataType: "json",
+                    })
+                        .done(function (res) {
+                            if (res && res.success) {
+                                modal.hide();
+                                refreshTable();
+                                toast((res.message) || "Perubahan berhasil disimpan.", true);
+                            } else {
+                                toast((res && res.message) || "Gagal menyimpan.", false);
+                                $submit.prop("disabled", false).html($submit.attr("data-orig") || "Update");
+                            }
+                        })
+                        .fail(function () {
+                            toast("Gagal menyimpan (kesalahan server).", false);
+                            $submit.prop("disabled", false).html($submit.attr("data-orig") || "Update");
+                        });
+                });
+
+                // ---------- DELETE (AJAX) ----------
+                $(document).on("click", ".casc-del", function (e) {
+                    e.preventDefault();
+                    var url = this.getAttribute("data-url") || this.getAttribute("href");
+                    var msg = this.getAttribute("data-confirm") || "Yakin menghapus data ini?";
+                    if (!confirm(msg)) return;
+
+                    var csrfName = $('meta[name="csrf-name"]').attr('content');
+                    var csrfHash = $('meta[name="csrf-hash"]').attr('content') || $('meta[name="csrf-token"]').attr('content');
+                    var headers = {};
+                    if (csrfName && csrfHash) {
+                        headers['X-CSRF-TOKEN'] = csrfHash;
+                    }
+
+                    $.ajax({
+                        url: url,
+                        method: "POST",
+                        headers: headers,
+                        dataType: "json"
+                    })
+                        .done(function (res) {
+                            if (res && res.success) {
+                                refreshTable();
+                                toast((res.message) || "Data berhasil dihapus.", true);
+                            } else {
+                                toast((res && res.error) || "Gagal menghapus.", false);
+                            }
+                        })
+                        .fail(function () {
+                            toast("Gagal menghapus (kesalahan server).", false);
+                        });
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </body>
 
 </html>

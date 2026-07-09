@@ -306,7 +306,7 @@
     const SUBS = <?= json_encode($subKegiatanPk) ?>;
   </script>
 
-  <script src="<?= base_url('assets/js/adminOpd/rkt/rkt.js?v=' . time()) ?>"></script>
+  <script src="<?= base_url('assets/js/adminopd/rkt/rkt.js?v=' . time()) ?>"></script>
 
 
     </div>

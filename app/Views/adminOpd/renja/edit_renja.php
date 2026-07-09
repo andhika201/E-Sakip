@@ -277,7 +277,7 @@
 
   <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-  <script src="<?= base_url('/assets/js/adminOpd/renja/renja-form.js')?>"></script>
+  <script src="<?= base_url('/assets/js/adminopd/renja/renja-form.js')?>"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {

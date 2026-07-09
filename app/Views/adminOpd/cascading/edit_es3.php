@@ -120,7 +120,7 @@
 
     <?= $this->include('adminOpd/templates/footer.php'); ?>
 
-    <script src="<?= base_url('assets/js/adminOpd/cascading/cascading-es3-edit.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/cascading/cascading-es3-edit.js') ?>"></script>
     </div>
 </body>
 

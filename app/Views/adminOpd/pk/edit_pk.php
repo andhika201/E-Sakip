@@ -730,14 +730,14 @@
     </script>
 
     <?php if (in_array($jenis, ['jpt', 'camat'], true)): ?>
-        <script src="<?= base_url('assets/js/adminOpd/pk/pk-form.js') ?>"></script>
+        <script src="<?= base_url('assets/js/adminopd/pk/pk-form.js') ?>"></script>
     <?php elseif ($jenis === 'administrator'): ?>
-        <script src="<?= base_url('assets/js/adminOpd/pk/pk-admin-form.js') ?>"></script>
+        <script src="<?= base_url('assets/js/adminopd/pk/pk-admin-form.js') ?>"></script>
     <?php elseif ($jenis === 'pengawas'): ?>
         <?php if ($isKecamatanOpd ?? false): ?>
-            <script src="<?= base_url('assets/js/adminOpd/pk/pk-pengawas-camat-form.js') ?>"></script>
+            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-camat-form.js') ?>"></script>
         <?php else: ?>
-            <script src="<?= base_url('assets/js/adminOpd/pk/pk-pengawas-form.js') ?>"></script>
+            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-form.js') ?>"></script>
         <?php endif; ?>
     <?php elseif ($jenis === 'bupati'): ?>
         <script src="<?= base_url('assets/js/adminKabupaten/pk/pk-bupati-form.js') ?>"></script>

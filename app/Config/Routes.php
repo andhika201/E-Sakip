@@ -272,6 +272,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Renstra
     $routes->get('renstra', 'AdminOpd\RenstraController::index');
+    $routes->get('renstra/cetak', 'AdminOpd\RenstraController::cetak');
     $routes->get('renstra/tambah', 'AdminOpd\RenstraController::tambah_renstra');
     $routes->get('renstra/edit/(:num)', 'AdminOpd\RenstraController::edit/$1');
     $routes->post('renstra/save', 'AdminOpd\RenstraController::save');
@@ -293,6 +294,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // IKU
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->get('iku/cetak', 'AdminOpd\IkuController::cetak');
     $routes->get('iku', 'AdminOpd\IkuController::index');
     $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');

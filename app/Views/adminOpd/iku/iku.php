@@ -81,6 +81,15 @@
                                 <i class="bi bi-arrow-repeat me-1"></i> Reset
                             </a>
                         </div>
+                        <?php if (!empty($selected_periode)): ?>
+                            <div class="col-md-3">
+                                <a href="<?= base_url('adminopd/iku/cetak?' . http_build_query(array_filter([
+                                    'periode' => $selected_periode ?? '',
+                                ], static fn($v) => $v !== ''))) ?>" target="_blank" class="btn btn-outline-danger w-100">
+                                    <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </form>
 

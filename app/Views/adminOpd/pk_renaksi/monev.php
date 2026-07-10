@@ -228,13 +228,6 @@ $filterQs = http_build_query(array_filter([
                                     <?php
                                     $items  = $splitAksi($row['rencana_aksi'] ?? '');
                                     $n      = $indCounts[$ri];
-                                    $target = $toNum($row['indikator_target'] ?? null);
-                                    $total  = $toNum($row['monev_total'] ?? null);
-                                    $pct    = ($target && $total !== null) ? round($total / $target * 100, 1) : null;
-                                    $badge  = 'secondary';
-                                    if ($pct !== null) {
-                                        $badge = $pct >= 100 ? 'success' : ($pct >= 75 ? 'info' : ($pct >= 50 ? 'warning' : 'danger'));
-                                    }
                                     ?>
                                     <?php for ($k = 0; $k < $n; $k++): ?>
                                         <tr>
@@ -274,10 +267,7 @@ $filterQs = http_build_query(array_filter([
                                                 <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
                                                 <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
                                                 <td rowspan="<?= $n ?>"><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
-                                                <td rowspan="<?= $n ?>">
-                                                    <?= esc($row['monev_total'] ?? '-') ?>
-                                                    <?php if ($pct !== null): ?><br><span class="badge bg-<?= $badge ?>"><?= $pct ?>%</span><?php endif; ?>
-                                                </td>
+                                                <td rowspan="<?= $n ?>"><?= esc($row['monev_total'] ?? '-') ?></td>
                                             <?php endif; ?>
                                             <?php if ($isBupati): ?>
                                                 <?php if (!$pdPrinted): ?>

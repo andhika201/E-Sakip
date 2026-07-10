@@ -74,7 +74,7 @@ $mv = function (string $k) use ($monev) {
                         <div class="col"><input type="text" name="capaian_triwulan_3" class="form-control" placeholder="Capaian III" value="<?= esc($mv('capaian_triwulan_3')) ?>"></div>
                         <div class="col"><input type="text" name="capaian_triwulan_4" class="form-control" placeholder="Capaian IV" value="<?= esc($mv('capaian_triwulan_4')) ?>"></div>
                     </div>
-                    <small class="text-muted">Gunakan koma untuk desimal (mis. 1,5).</small>
+                    <small class="text-muted">Bisa diisi angka atau teks sesuai kebutuhan.</small>
                 </div>
 
                 <div class="mb-3" style="max-width:240px;">

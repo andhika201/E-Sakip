@@ -2,7 +2,7 @@
  * pk-form.js
  * Versi yang stabil — sesuai HTML yang kamu kirim.
  */
-document.addEventListener("DOMContentLoaded", () => {
+function initPkForm() {
   const form = document.getElementById("pk-form");
   const sasaranContainer = document.querySelector(".sasaran-container");
   if (!sasaranContainer) return; // tidak ada form, hentikan

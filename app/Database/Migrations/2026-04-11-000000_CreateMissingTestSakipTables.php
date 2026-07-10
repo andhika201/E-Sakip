@@ -96,7 +96,7 @@ class CreateMissingTestSakipTables extends Migration
             'capaian_triwulan_2' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'capaian_triwulan_3' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'capaian_triwulan_4' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
-            'total' => ['type' => 'INT', 'constraint' => 11],
+            'total' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
             'created_at' => ['type' => 'TIMESTAMP', 'null' => true],
             'updated_at' => ['type' => 'TIMESTAMP', 'null' => true],
         ]);

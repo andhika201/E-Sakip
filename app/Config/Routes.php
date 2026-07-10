@@ -284,6 +284,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // RKT
     $routes->get('rkt', 'AdminOpd\RktController::index');
+    $routes->get('rkt/cetak', 'AdminOpd\RktController::cetak');
     $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
     $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
     $routes->post('rkt/save', 'AdminOpd\RktController::save');

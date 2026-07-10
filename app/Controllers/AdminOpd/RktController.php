@@ -197,6 +197,173 @@ class RktController extends BaseController
         ]);
     }
 
+    public function cetak()
+    {
+        ob_clean();
+        ob_start();
+
+        $db = Database::connect();
+        $role = session()->get('role');
+        $opdId = session()->get('opd_id');
+
+        $filterSasaran = $this->request->getGet('sasaran') ?? 'all';
+        $filterTahun = $this->request->getGet('tahun') ?? 'all';
+        $filterStatus = $this->request->getGet('status') ?? 'all';
+
+        $currentOpd = $db->table('opd')
+            ->where('id', $opdId)
+            ->get()
+            ->getRowArray();
+
+        $indikators = $db->table('renstra_indikator_sasaran i')
+            ->select('i.*, s.sasaran, s.opd_id')
+            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+            ->where('s.opd_id', $opdId)
+            ->orderBy('i.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $targetYearsByInd = [];
+        $availableYears = [];
+
+        if (!empty($indikators)) {
+            $indikatorIds = array_column($indikators, 'id');
+
+            $rowsTarget = $db->table('renstra_target t')
+                ->select('t.renstra_indikator_id AS indikator_id, t.tahun', false)
+                ->whereIn('t.renstra_indikator_id', $indikatorIds)
+                ->orderBy('t.tahun', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($rowsTarget as $row) {
+                $id = (int) $row['indikator_id'];
+                $thn = (int) $row['tahun'];
+
+                if (!isset($targetYearsByInd[$id])) {
+                    $targetYearsByInd[$id] = [];
+                }
+
+                $targetYearsByInd[$id][] = $thn;
+                $availableYears[] = $thn;
+            }
+
+            foreach ($targetYearsByInd as $id => $years) {
+                $years = array_values(array_unique($years));
+                sort($years);
+                $targetYearsByInd[$id] = $years;
+            }
+
+            $availableYears = array_values(array_unique($availableYears));
+            sort($availableYears);
+        }
+
+        if ($filterTahun === '' || $filterTahun === null) {
+            $filterTahun = 'all';
+        }
+
+        $rktdata = [];
+
+        foreach ($indikators as $ind) {
+            $indikatorId = $ind['id'];
+
+            if ($filterSasaran !== 'all' && (string) $filterSasaran !== (string) $indikatorId) {
+                continue;
+            }
+
+            $builderRkt = $db->table('rkt r')
+                ->select('r.*, p.program_kegiatan AS program_nama')
+                ->join('program_pk p', 'p.id = r.program_id', 'left')
+                ->where('r.indikator_id', $indikatorId)
+                ->where('r.opd_id', $opdId);
+
+            if ($filterTahun !== 'all') {
+                $builderRkt->where('r.tahun', $filterTahun);
+            }
+
+            if ($filterStatus !== 'all') {
+                $builderRkt->where('r.status', $filterStatus);
+            }
+
+            $rkts = $builderRkt
+                ->orderBy('r.id', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($rkts as &$rkt) {
+                $kegiatans = $db->table('rkt_kegiatan rk')
+                    ->select('rk.id, rk.kegiatan_id, k.kegiatan')
+                    ->join('kegiatan_pk k', 'k.id = rk.kegiatan_id', 'left')
+                    ->where('rk.rkt_id', $rkt['id'])
+                    ->orderBy('rk.id', 'ASC')
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($kegiatans as &$keg) {
+                    $subs = $db->table('rkt_subkegiatan rs')
+                        ->select('rs.id, rs.sub_kegiatan_id, rs.indikator_sasaran_sub_kegiatan, rs.target, sk.sub_kegiatan, sk.anggaran')
+                        ->join('sub_kegiatan_pk sk', 'sk.id = rs.sub_kegiatan_id', 'left')
+                        ->where('rs.rkt_kegiatan_id', $keg['id'])
+                        ->orderBy('rs.id', 'ASC')
+                        ->get()
+                        ->getResultArray();
+
+                    $keg['subkegiatan'] = $subs ?: [];
+                }
+                unset($keg);
+
+                $rkt['kegiatan'] = $kegiatans ?: [];
+            }
+            unset($rkt);
+
+            $ind['rkts'] = $rkts;
+            $ind['target_years'] = $targetYearsByInd[$indikatorId] ?? [];
+            $rktdata[] = $ind;
+        }
+
+        $sasaranList = $db->table('renstra_indikator_sasaran')
+            ->select('id, indikator_sasaran')
+            ->orderBy('indikator_sasaran', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $html = view('adminOpd/rkt/rkt_cetak', [
+            'title' => 'RENJA (RKT)',
+            'role' => $role,
+            'rktdata' => $rktdata,
+            'sasaranList' => $sasaranList,
+            'available_years' => $availableYears,
+            'filter_sasaran' => $filterSasaran,
+            'filter_tahun' => $filterTahun,
+            'filter_status' => $filterStatus,
+            'currentOpd' => $currentOpd,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $namaOpd = trim((string) ($currentOpd['nama_opd'] ?? ''));
+        $namaFile = $namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '';
+        $filterLabel = ($filterTahun !== 'all' ? $filterTahun : 'semua-tahun');
+        $mpdf->Output('RKT-OPD-' . $namaFile . $filterLabel . '.pdf', 'I');
+        exit;
+    }
+
 
     // /**
     //  * Toggle status draft <-> selesai untuk semua RKT

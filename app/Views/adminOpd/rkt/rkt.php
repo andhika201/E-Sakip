@@ -156,6 +156,15 @@
                         </option>
                     </select>
                 </div>
+                <div class="d-flex gap-2">
+                    <a href="<?= base_url('adminopd/rkt/cetak?' . http_build_query(array_filter([
+                        'sasaran' => ($filter_sasaran ?? 'all') !== 'all' ? ($filter_sasaran ?? 'all') : null,
+                        'tahun' => ($filter_tahun ?? 'all') !== 'all' ? ($filter_tahun ?? 'all') : null,
+                        'status' => ($filter_status ?? 'all') !== 'all' ? ($filter_status ?? 'all') : null,
+                    ]))) ?>" target="_blank" class="btn btn-outline-danger">
+                        <i class="fas fa-file-pdf"></i> Cetak PDF
+                    </a>
+                </div>
             </div>
 
             <!-- Info ringkas -->

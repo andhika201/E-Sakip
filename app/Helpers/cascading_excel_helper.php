@@ -3,9 +3,9 @@
 /**
  * Helper ekspor Cascading ke Excel (.xlsx) memakai PhpSpreadsheet.
  * Dipakai bersama oleh publik (UserController) & admin (AdminKab/AdminOpd CascadingController).
- * Tiga struktur mengikuti view cetak (flat, tanpa rowspan):
+ * Tiga struktur mengikuti view cetak; export OPD memakai merge cell seperti rowspan view:
  *   - Kabupaten   : cascading_cetak (getMatrix)
- *   - OPD         : cascading_cetak (getCascadingMatrixByOpd)
+ *   - OPD         : cascading_cetak (getCascadingMatrixByOpd, dengan merge/rowspan)
  *   - Keseluruhan : cascading_cetak_keseluruhan (getKeseluruhanMatrix)
  */
 
@@ -38,8 +38,9 @@ if (!function_exists('cascading_excel_stream')) {
      * @param string[] $headers   label kolom
      * @param array    $dataRows  array of array (baris data, sudah dibersihkan)
      * @param string   $filename  nama file unduhan
+     * @param string[] $mergeRanges range merge Excel, contoh A5:A8
      */
-    function cascading_excel_stream(string $title, string $subtitle, array $headers, array $dataRows, string $filename): void
+    function cascading_excel_stream(string $title, string $subtitle, array $headers, array $dataRows, string $filename, array $mergeRanges = []): void
     {
         $ss    = new Spreadsheet();
         $sheet = $ss->getActiveSheet();
@@ -83,6 +84,10 @@ if (!function_exists('cascading_excel_stream')) {
             $r++;
         }
         $lastRow = max($hRow, $r - 1);
+
+        foreach ($mergeRanges as $range) {
+            $sheet->mergeCells($range);
+        }
 
         // --- Border, wrap, lebar kolom ---
         $sheet->getStyle("A{$hRow}:{$lastCol}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
@@ -148,12 +153,128 @@ if (!function_exists('cascading_kab_excel')) {
     }
 }
 
+if (!function_exists('_casc_opd_merge_ranges')) {
+    /**
+     * Hitung merge cell untuk export OPD agar mengikuti rowspan tampilan Cascading.
+     *
+     * @param array $rows data asli dari getCascadingMatrixByOpd()
+     * @return string[] range merge Excel
+     */
+    function _casc_opd_merge_ranges(array $rows, int $dataStartRow): array
+    {
+        $count = count($rows);
+        if ($count < 1) {
+            return [];
+        }
+
+        $ranges = [];
+        $filled = static function ($value): bool {
+            return $value !== null && $value !== '';
+        };
+        $rowKey = static function (
+            array $row,
+            string $field,
+            int $index,
+            string $emptyPrefix,
+            string $parent = '',
+            bool $groupEmpty = false
+        ) use ($filled): string {
+            $value = $row[$field] ?? null;
+            $part = $filled($value) ? (string) $value : ($groupEmpty ? $emptyPrefix : $emptyPrefix . $index);
+
+            return $parent !== '' ? $parent . '|' . $part : $part;
+        };
+
+        $keys = [];
+        foreach ($rows as $index => $row) {
+            $tujuan = $rowKey($row, 'tujuan_id', $index, 'empty_tujuan_');
+            $sasaran = $rowKey($row, 'sasaran_id', $index, 'empty_sasaran_', $tujuan);
+            $renstraTujuan = $rowKey($row, 'renstra_tujuan_id', $index, 'empty_rt_', $sasaran);
+            $indikatorTujuan = $rowKey($row, 'indikator_tujuan_id', $index, 'empty_it', $renstraTujuan, true);
+            $renstraSasaran = $rowKey($row, 'renstra_sasaran_id', $index, 'empty_rs_', $renstraTujuan);
+            $indikatorEss2 = $rowKey($row, 'indikator_id', $index, 'empty_ris_', $renstraSasaran);
+            $sasaranEss3 = $rowKey($row, 'es3_id', $index, 'empty_es3_', $indikatorEss2);
+            $indikatorEss3 = $rowKey($row, 'es3_indikator_id', $index, 'empty_i3_', $sasaranEss3);
+            $sasaranEss4 = $rowKey($row, 'es4_id', $index, 'empty_es4_', $indikatorEss3);
+
+            $hasEss3 = $filled($row['es3_id'] ?? null);
+            $hasIndikatorEss3 = $filled($row['es3_indikator_id'] ?? null);
+            $hasEss4 = $filled($row['es4_id'] ?? null);
+
+            $keys[$index] = [
+                1 => $tujuan,
+                2 => $sasaran,
+                3 => $renstraTujuan,
+                4 => $indikatorTujuan,
+                5 => $renstraSasaran,
+                6 => $indikatorEss2,
+                7 => $hasEss3 ? $sasaranEss3 : null,
+                8 => $hasIndikatorEss3 ? $indikatorEss3 : null,
+                9 => $hasEss4 ? $sasaranEss4 : null,
+                'no_es3' => $hasEss3 ? null : $indikatorEss2,
+                'no_es4' => ($hasIndikatorEss3 && !$hasEss4) ? $indikatorEss3 : null,
+            ];
+        }
+
+        $addMerge = static function (int $fromCol, int $toCol, int $startIndex, int $endIndex) use (&$ranges, $dataStartRow): void {
+            if ($endIndex < $startIndex) {
+                return;
+            }
+
+            $from = Coordinate::stringFromColumnIndex($fromCol) . ($dataStartRow + $startIndex);
+            $to = Coordinate::stringFromColumnIndex($toCol) . ($dataStartRow + $endIndex);
+            if ($from !== $to) {
+                $ranges[] = $from . ':' . $to;
+            }
+        };
+
+        $mergeByKey = static function ($keyName, int $fromCol, ?int $toCol = null) use ($keys, $count, $addMerge): void {
+            $toCol = $toCol ?? $fromCol;
+            $start = null;
+            $current = null;
+
+            for ($index = 0; $index < $count; $index++) {
+                $key = $keys[$index][$keyName] ?? null;
+                if ($key === null) {
+                    if ($start !== null) {
+                        $addMerge($fromCol, $toCol, $start, $index - 1);
+                    }
+                    $start = null;
+                    $current = null;
+                    continue;
+                }
+
+                if ($start === null || $key !== $current) {
+                    if ($start !== null) {
+                        $addMerge($fromCol, $toCol, $start, $index - 1);
+                    }
+                    $start = $index;
+                    $current = $key;
+                }
+            }
+
+            if ($start !== null) {
+                $addMerge($fromCol, $toCol, $start, $count - 1);
+            }
+        };
+
+        foreach ([1, 2, 3, 4, 5, 6, 7, 8, 9] as $column) {
+            $mergeByKey($column, $column);
+        }
+
+        $mergeByKey('no_es3', 7, 10);
+        $mergeByKey('no_es4', 9, 10);
+
+        return $ranges;
+    }
+}
+
 if (!function_exists('cascading_opd_excel')) {
     /** Cascading Perangkat Daerah (getCascadingMatrixByOpd): RPJMD → Renstra → Eselon II/III/IV. */
     function cascading_opd_excel(array $rows, string $periode, string $namaOpd = ''): void
     {
         $headers = [
-            'Tujuan RPJMD', 'Sasaran RPJMD', 'Tujuan Renstra',
+            'Tujuan RPJMD', 'Sasaran RPJMD', 'Tujuan Renstra', 'Indikator Tujuan',
             'Sasaran ESS II', 'Indikator ESS II',
             'Sasaran ESS III', 'Indikator ESS III',
             'Sasaran ESS IV/JF', 'Indikator ESS IV',
@@ -164,6 +285,7 @@ if (!function_exists('cascading_opd_excel')) {
                 _casc_txt($rw['tujuan_rpjmd'] ?? '-'),
                 _casc_txt($rw['sasaran_rpjmd'] ?? '-'),
                 _casc_txt($rw['renstra_tujuan'] ?? '-'),
+                _casc_txt(!empty($rw['indikator_tujuan']) ? $rw['indikator_tujuan'] : '-'),
                 _casc_txt($rw['renstra_sasaran'] ?? '-'),
                 _casc_txt(!empty($rw['indikator_sasaran']) ? $rw['indikator_sasaran'] : '-'),
                 _casc_txt(!empty($rw['es3_sasaran']) ? $rw['es3_sasaran'] : '-'),
@@ -174,8 +296,9 @@ if (!function_exists('cascading_opd_excel')) {
         }
         $sub   = 'Perangkat Daerah: ' . ($namaOpd !== '' ? $namaOpd : '-') . ' · Periode ' . $periode;
         $fname = 'Cascading-OPD-' . ($namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '') . $periode . '.xlsx';
+        $mergeRanges = _casc_opd_merge_ranges($rows, 5);
 
-        cascading_excel_stream('Cascading Kinerja Perangkat Daerah', $sub, $headers, $data, $fname);
+        cascading_excel_stream('Cascading Kinerja Perangkat Daerah', $sub, $headers, $data, $fname, $mergeRanges);
     }
 }
 

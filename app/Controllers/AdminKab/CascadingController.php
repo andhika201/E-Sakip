@@ -74,6 +74,7 @@ class CascadingController extends BaseController
             } elseif ($mode === 'opd') {
                 if ($opdId) {
                     $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+                    $this->preprocessEmptyIds($rows);
                     $rowspan   = $this->opdRowspanMeta($rows);
                     $firstShow = $this->opdFirstShowMeta($rows);
                     $tree      = $this->buildOpdTree($rows);
@@ -82,6 +83,7 @@ class CascadingController extends BaseController
                 }
             } else { // keseluruhan
                 $rows      = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
+                $this->preprocessEmptyIds($rows);
                 $rowspan   = $this->keseluruhanRowspanMeta($rows);
                 $firstShow = $this->keseluruhanFirstShowMeta($rows);
                 // Pohon Keseluruhan ringkas: mulai dari Perangkat Daerah (tanpa Visi/Misi/Tujuan/Sasaran RPJMD).
@@ -184,19 +186,45 @@ class CascadingController extends BaseController
         return $s;
     }
 
-    // ================= META + TREE: MODE OPD (renstra lengkap, read-only) ===
-    // Disalin dari AdminOpd\CascadingController agar admin_kab bisa menampilkan
-    // cascade renstra OPD mana pun (tanpa terikat session opd_id).
+    private function preprocessEmptyIds(array &$rows): void
+    {
+        foreach ($rows as $index => &$r) {
+            if (empty($r['tujuan_id'])) {
+                $r['tujuan_id'] = 'empty_tujuan_' . $index;
+            }
+            if (empty($r['sasaran_id'])) {
+                $r['sasaran_id'] = 'empty_sasaran_' . $index;
+            }
+            if (empty($r['renstra_tujuan_id'])) {
+                $r['renstra_tujuan_id'] = 'empty_rt_' . $index;
+            }
+            if (empty($r['indikator_tujuan_id'])) {
+                $r['indikator_tujuan_id'] = 'empty_it_' . $r['renstra_tujuan_id'];
+            }
+            if (empty($r['renstra_sasaran_id'])) {
+                $r['renstra_sasaran_id'] = 'empty_rs_' . $index;
+            }
+            if (isset($r['indikator_id']) && empty($r['indikator_id'])) {
+                $r['indikator_id'] = 'empty_ris_' . $index;
+            }
+            if (isset($r['renstra_indikator_id']) && empty($r['renstra_indikator_id'])) {
+                $r['renstra_indikator_id'] = 'empty_ri_' . $index;
+            }
+        }
+        unset($r);
+    }
+
     private function opdRowspanMeta($rows): array
     {
         $meta = [
             'tujuan' => [], 'sasaran' => [], 'tujuan_renstra' => [], 'sasaran_renstra' => [],
-            'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
+            'indikator_tujuan' => [], 'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
         ];
         foreach ($rows as $r) {
             $meta['tujuan'][$r['tujuan_id']]                 = ($meta['tujuan'][$r['tujuan_id']] ?? 0) + 1;
             $meta['sasaran'][$r['sasaran_id']]               = ($meta['sasaran'][$r['sasaran_id']] ?? 0) + 1;
             $meta['tujuan_renstra'][$r['renstra_tujuan_id']] = ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
+            $meta['indikator_tujuan'][$r['indikator_tujuan_id']] = ($meta['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 0) + 1;
             $meta['sasaran_renstra'][$r['renstra_sasaran_id']] = ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
             $meta['indikator'][$r['indikator_id']]           = ($meta['indikator'][$r['indikator_id']] ?? 0) + 1;
             if ($r['es3_id']) {
@@ -214,12 +242,13 @@ class CascadingController extends BaseController
     {
         $shown = [
             'tujuan' => [], 'sasaran' => [], 'tujuan_renstra' => [], 'sasaran_renstra' => [],
-            'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
+            'indikator_tujuan' => [], 'indikator' => [], 'es3' => [], 'es3_indikator' => [], 'es4' => [],
         ];
         foreach ($rows as $index => $r) {
             if (!isset($shown['tujuan'][$r['tujuan_id']]))                 $shown['tujuan'][$r['tujuan_id']] = $index;
             if (!isset($shown['sasaran'][$r['sasaran_id']]))               $shown['sasaran'][$r['sasaran_id']] = $index;
             if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']])) $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
+            if (!isset($shown['indikator_tujuan'][$r['indikator_tujuan_id']])) $shown['indikator_tujuan'][$r['indikator_tujuan_id']] = $index;
             if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']])) $shown['sasaran_renstra'][$r['renstra_sasaran_id']] = $index;
             if (!isset($shown['indikator'][$r['indikator_id']]))           $shown['indikator'][$r['indikator_id']] = $index;
             if ($r['es3_id'] && !isset($shown['es3'][$r['es3_id']]))       $shown['es3'][$r['es3_id']] = $index;
@@ -243,7 +272,15 @@ class CascadingController extends BaseController
             }
             $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
             if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = ['nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)', 'es2s' => []];
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
+                    'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
+                    'indikator_tujuan' => [],
+                    'es2s' => [],
+                ];
+            }
+            $itId = $r['indikator_tujuan_id'] ?? null;
+            if (!empty($itId) && !empty($r['indikator_tujuan'])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['indikator_tujuan'][$itId] = $r['indikator_tujuan'];
             }
             $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
             if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran'])) {
@@ -566,6 +603,7 @@ class CascadingController extends BaseController
                 return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
             }
             $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $this->preprocessEmptyIds($rows);
             $rowspan   = $this->opdRowspanMeta($rows);
             $firstShow = $this->opdFirstShowMeta($rows);
             $o         = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
@@ -579,6 +617,7 @@ class CascadingController extends BaseController
             $filename = 'Cascading-OPD-' . preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' . $periode . '.pdf';
         } elseif ($mode === 'keseluruhan') {
             $rows      = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
+            $this->preprocessEmptyIds($rows);
             $rowspan   = $this->keseluruhanRowspanMeta($rows);
             $firstShow = $this->keseluruhanFirstShowMeta($rows);
 

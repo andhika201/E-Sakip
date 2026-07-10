@@ -80,8 +80,15 @@
             font-size: .68rem; letter-spacing: .3px; text-transform: uppercase;
             border-color: rgba(255, 255, 255, .18);
         }
-        .casc-table tbody td { vertical-align: middle; color: #344039; border-color: #e8ede9; line-height: 1.4; }
-        .casc-table tbody tr:hover td { background: #f1f8f3; }
+        .casc-table tbody td { vertical-align: top; color: #344039; border-color: #e8ede9; line-height: 1.4; }
+        /* Sel hierarki (rowspan) diberi latar lembut agar mudah dibaca */
+        .casc-table tbody td[rowspan] {
+            background: #f7faf8;
+            font-weight: 500;
+            border-left: 1px solid #e2ebe5;
+        }
+        .casc-table tbody tr:hover td { background: #eef7f1; }
+        .casc-table tbody tr:hover td[rowspan] { background: #e7f3ec; }
 
         .csf-input {
             border: 1px solid #dbe5de; border-radius: 8px; background: #fffdf6;

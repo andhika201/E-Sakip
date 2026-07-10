@@ -386,6 +386,9 @@ class CascadingModel extends Model
             rt.id as renstra_tujuan_id,
             rt.tujuan as renstra_tujuan,
 
+            rit.id as indikator_tujuan_id,
+            rit.indikator_tujuan,
+
             rs.csf as csf_es2,
             rs.id as renstra_sasaran_id,
             rs.sasaran as renstra_sasaran,
@@ -409,6 +412,7 @@ class CascadingModel extends Model
             i4.indikator as es4_indikator
         ")
             ->join('renstra_tujuan rt', 'rt.id=rs.renstra_tujuan_id', 'left')
+            ->join('renstra_indikator_tujuan rit', 'rit.tujuan_id=rt.id', 'left')
             ->join('rpjmd_sasaran s', 's.id=rt.rpjmd_sasaran_id', 'left')
             ->join('rpjmd_tujuan t', 't.id=s.tujuan_id', 'left')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id=rs.id', 'left')
@@ -441,7 +445,7 @@ class CascadingModel extends Model
             $builder->where('rs.tahun_akhir', $endYear);
         }
 
-        return $builder
+        $rows = $builder
             ->orderBy('t.id', 'ASC')
             ->orderBy('s.id', 'ASC')
             ->orderBy('rt.id', 'ASC')
@@ -451,8 +455,128 @@ class CascadingModel extends Model
             ->orderBy('i3.id', 'ASC')
             ->orderBy('es4.id', 'ASC')
             ->orderBy('i4.id', 'ASC')
+            ->orderBy('rit.id', 'ASC')
             ->get()
             ->getResultArray();
+
+        return $this->alignIndikatorTujuanRows($rows);
+    }
+
+    private function alignIndikatorTujuanRows(array $rows): array
+    {
+        if (empty($rows)) {
+            return [];
+        }
+
+        $groups = [];
+        $groupOrder = [];
+
+        foreach ($rows as $row) {
+            $groupKey = !empty($row['renstra_tujuan_id'])
+                ? 'rt_' . $row['renstra_tujuan_id']
+                : 'row_' . $this->cascadeMatrixRowKey($row);
+
+            if (!isset($groups[$groupKey])) {
+                $groups[$groupKey] = [
+                    'base' => $row,
+                    'indikator_tujuan' => [],
+                    'cascade_rows' => [],
+                ];
+                $groupOrder[] = $groupKey;
+            }
+
+            if (!empty($row['indikator_tujuan_id'])) {
+                $indikatorKey = (string) $row['indikator_tujuan_id'];
+                $groups[$groupKey]['indikator_tujuan'][$indikatorKey] = [
+                    'indikator_tujuan_id' => $row['indikator_tujuan_id'],
+                    'indikator_tujuan' => $row['indikator_tujuan'],
+                ];
+            }
+
+            $cascadeKey = $this->cascadeMatrixRowKey($row);
+            if (!isset($groups[$groupKey]['cascade_rows'][$cascadeKey])) {
+                $cascadeRow = $row;
+                $cascadeRow['indikator_tujuan_id'] = null;
+                $cascadeRow['indikator_tujuan'] = null;
+                $groups[$groupKey]['cascade_rows'][$cascadeKey] = $cascadeRow;
+            }
+        }
+
+        $aligned = [];
+
+        foreach ($groupOrder as $groupKey) {
+            $group = $groups[$groupKey];
+            $indikatorTujuan = array_values($group['indikator_tujuan']);
+            $cascadeRows = array_values($group['cascade_rows']);
+            $totalRows = max(count($indikatorTujuan), count($cascadeRows), 1);
+            $indikatorTujuanCount = count($indikatorTujuan);
+
+            for ($i = 0; $i < $totalRows; $i++) {
+                $row = $cascadeRows[$i] ?? $this->blankCascadeMatrixRow($group['base']);
+
+                if ($indikatorTujuanCount > 0) {
+                    $indikatorIndex = min(
+                        $indikatorTujuanCount - 1,
+                        (int) floor($i * $indikatorTujuanCount / $totalRows)
+                    );
+
+                    $row['indikator_tujuan_id'] = $indikatorTujuan[$indikatorIndex]['indikator_tujuan_id'];
+                    $row['indikator_tujuan'] = $indikatorTujuan[$indikatorIndex]['indikator_tujuan'];
+                } else {
+                    $row['indikator_tujuan_id'] = null;
+                    $row['indikator_tujuan'] = null;
+                }
+
+                $aligned[] = $row;
+            }
+        }
+
+        return $aligned;
+    }
+
+    private function cascadeMatrixRowKey(array $row): string
+    {
+        $fields = [
+            'renstra_sasaran_id',
+            'indikator_id',
+            'es3_id',
+            'es3_indikator_id',
+            'es4_id',
+            'es4_indikator_id',
+        ];
+
+        $parts = [];
+        foreach ($fields as $field) {
+            $parts[] = (string) ($row[$field] ?? '');
+        }
+
+        return implode('|', $parts);
+    }
+
+    private function blankCascadeMatrixRow(array $base): array
+    {
+        foreach ([
+            'csf_es2',
+            'renstra_sasaran_id',
+            'renstra_sasaran',
+            'indikator_id',
+            'indikator_sasaran',
+            'satuan',
+            'csf_es3',
+            'es3_id',
+            'es3_sasaran',
+            'es3_indikator_id',
+            'es3_indikator',
+            'csf_es4',
+            'es4_id',
+            'es4_sasaran',
+            'es4_indikator_id',
+            'es4_indikator',
+        ] as $field) {
+            $base[$field] = null;
+        }
+
+        return $base;
     }
     public function getCascadingTree($renstraIndikatorId, $opdId)
     {

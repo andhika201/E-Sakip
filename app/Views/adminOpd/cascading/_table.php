@@ -10,6 +10,7 @@
             <th>Tujuan RPJMD</th>
             <th>Sasaran RPJMD</th>
             <th>Tujuan RENSTRA</th>
+            <th>Indikator Tujuan</th>
 
             <th>Sasaran ESS II</th>
             <th>Indikator ESS II</th>
@@ -37,28 +38,40 @@
         }
         ?>
         <?php foreach ($rows as $index => $r): ?>
+            <?php $hasIndikatorEss2 = is_numeric($r['indikator_id'] ?? null); ?>
             <tr>
                 <?php if ($firstShow['tujuan'][$r['tujuan_id']] == $index): ?>
                     <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?>" class="text-start">
-                        <?= esc($r['tujuan_rpjmd']) ?>
+                        <?= !empty($r['tujuan_rpjmd']) ? esc($r['tujuan_rpjmd']) : '<span class="text-muted">-</span>' ?>
                     </td>
                 <?php endif; ?>
 
                 <?php if ($firstShow['sasaran'][$r['sasaran_id']] == $index): ?>
                     <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?>" class="text-start">
-                        <?= esc($r['sasaran_rpjmd']) ?>
+                        <?= !empty($r['sasaran_rpjmd']) ? esc($r['sasaran_rpjmd']) : '<span class="text-muted">-</span>' ?>
                     </td>
                 <?php endif; ?>
 
                 <?php if ($firstShow['tujuan_renstra'][$r['renstra_tujuan_id']] == $index): ?>
                     <td rowspan="<?= $rowspan['tujuan_renstra'][$r['renstra_tujuan_id']] ?>" class="text-start">
-                        <?= esc($r['renstra_tujuan']) ?>
+                        <?= !empty($r['renstra_tujuan']) ? esc($r['renstra_tujuan']) : '<span class="text-muted">-</span>' ?>
                     </td>
                 <?php endif; ?>
 
+                <?php if (($firstShow['indikator_tujuan'][$r['indikator_tujuan_id']] ?? null) == $index): ?>
+                    <td rowspan="<?= $rowspan['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 1 ?>" class="text-start">
+                        <?php if (!empty($r['indikator_tujuan'])): ?>
+                            <span class="ind-kode">IK</span><?= esc($r['indikator_tujuan']) ?>
+                        <?php else: ?>
+                            <span class="text-muted">-</span>
+                        <?php endif; ?>
+                    </td>
+                <?php endif; ?>
+
+
                 <?php if ($firstShow['sasaran_renstra'][$r['renstra_sasaran_id']] == $index): ?>
                     <td rowspan="<?= $rowspan['sasaran_renstra'][$r['renstra_sasaran_id']] ?>" class="text-start">
-                        <?= esc($r['renstra_sasaran']) ?>
+                        <?= !empty($r['renstra_sasaran']) ? esc($r['renstra_sasaran']) : '<span class="text-muted">-</span>' ?>
                     </td>
                 <?php endif; ?>
 
@@ -74,16 +87,20 @@
                 <?php if (empty($r['es3_id'])): ?>
                     <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
                         <td colspan="6" class="text-center">
-                            <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
-                                class="btn btn-success btn-sm">
-                                <i class="fas fa-plus"></i> Tambah ESS III
-                            </a>
+                            <?php if ($hasIndikatorEss2): ?>
+                                <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
+                                    class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Tambah ESS III
+                                </a>
+                            <?php else: ?>
+                                <span class="text-muted">-</span>
+                            <?php endif; ?>
                         </td>
                     <?php endif; ?>
                 <?php else: ?>
                     <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
                         <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="text-start">
-                            <?= esc($r['es3_sasaran']) ?>
+                            <?= !empty($r['es3_sasaran']) ? esc($r['es3_sasaran']) : '<span class="text-muted">-</span>' ?>
                         </td>
                     <?php endif; ?>
 
@@ -136,7 +153,7 @@
                         <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
                             <!-- Sasaran ES IV -->
                             <td rowspan="<?= $rowspan['es4'][$r['es4_id']] ?? 1 ?>" class="text-start">
-                                <?= esc($r['es4_sasaran']) ?>
+                                <?= !empty($r['es4_sasaran']) ? esc($r['es4_sasaran']) : '<span class="text-muted">-</span>' ?>
                             </td>
                         <?php endif; ?>
                         <td class="text-start">

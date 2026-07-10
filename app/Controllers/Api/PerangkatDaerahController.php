@@ -284,6 +284,7 @@ class PerangkatDaerahController extends BaseController
                 'tujuan_id',
                 'sasaran_id',
                 'renstra_tujuan_id',
+                'indikator_tujuan_id',
                 'renstra_sasaran_id',
                 'indikator_id',
                 'es3_id',
@@ -338,12 +339,23 @@ class PerangkatDaerahController extends BaseController
                 $sasaran['tujuan_renstra'][] = [
                     'id' => $this->intOrNull($row['renstra_tujuan_id'] ?? null),
                     'nama' => $row['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
+                    'indikator_tujuan' => [],
                     'es2' => [],
+                    '_indikator_tujuan_index' => [],
                     '_es2_index' => [],
                 ];
             }
 
             $renstraTujuan =& $sasaran['tujuan_renstra'][$sasaran['_tujuan_renstra_index'][$renstraTujuanKey]];
+
+            $indikatorTujuanId = $this->intOrNull($row['indikator_tujuan_id'] ?? null);
+            if ($indikatorTujuanId && !isset($renstraTujuan['_indikator_tujuan_index'][$indikatorTujuanId])) {
+                $renstraTujuan['_indikator_tujuan_index'][$indikatorTujuanId] = true;
+                $renstraTujuan['indikator_tujuan'][] = [
+                    'id' => $indikatorTujuanId,
+                    'nama' => $row['indikator_tujuan'],
+                ];
+            }
 
             if (empty($row['renstra_sasaran_id']) && empty($row['renstra_sasaran'])) {
                 unset($tujuan, $sasaran, $renstraTujuan);

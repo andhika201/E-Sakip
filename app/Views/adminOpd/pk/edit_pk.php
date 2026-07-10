@@ -69,7 +69,7 @@
                                     <div id="selected-indikator-container" class="mt-2"></div>
                                     <script>
                                         // JS untuk menampilkan indikator acuan yang dipilih dari checkbox
-                                        document.addEventListener('DOMContentLoaded', function () {
+                                        document.addEventListener('DOMContentLoaded', function() {
                                             const checkboxes = document.querySelectorAll('input[name="referensi_indikator_id[]"]');
                                             const container = document.getElementById('selected-indikator-container');
                                             checkboxes.forEach(cb => {
@@ -177,7 +177,7 @@
                                 <?php
                                 $sasaranList = isset($pk['sasaran_pk']) && is_array($pk['sasaran_pk']) && count($pk['sasaran_pk']) > 0 ? $pk['sasaran_pk'] : [['sasaran' => '', 'indikator' => [['indikator' => '', 'target' => '']]]];
                                 foreach ($sasaranList as $si => $sasaran) {
-                                    ?>
+                                ?>
                                     <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3"
                                         data-sasaran-index="<?= $si ?>">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -196,7 +196,7 @@
                                                 <?php
                                                 $indikatorList = isset($sasaran['indikator']) && is_array($sasaran['indikator']) && count($sasaran['indikator']) > 0 ? $sasaran['indikator'] : [['indikator' => '', 'target' => '']];
                                                 foreach ($indikatorList as $ii => $indikator) {
-                                                    ?>
+                                                ?>
                                                     <div class="indikator-item border rounded p-3 bg-light mb-3">
                                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                                             <label class="fw-medium">Indikator</label>
@@ -262,59 +262,59 @@
 
                                                                 <?php foreach ($programList as $pi => $prog): ?>
 
-                                                                <div class="row program-item border rounded p-3 bg-light mb-3">
-                                                                    <!-- PROGRAM -->
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label">Program</label>
-                                                                        <select
-                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
-                                                                            class="form-select select2 program-select border-secondary"
-                                                                            required>
+                                                                    <div class="row program-item border rounded p-3 bg-light mb-3">
+                                                                        <!-- PROGRAM -->
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label">Program</label>
+                                                                            <select
+                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
+                                                                                class="form-select select2 program-select border-secondary"
+                                                                                required>
 
-                                                                            <option value="">Pilih Program</option>
+                                                                                <option value="">Pilih Program</option>
 
-                                                                            <?php foreach ($program as $programItem): ?>
-                                                                                <option value="<?= $programItem['id'] ?>"
-                                                                                    data-anggaran="<?= $programItem['anggaran'] ?>"
-                                                                                    <?= (!empty($prog['program_id']) && $prog['program_id'] == $programItem['id']) ? 'selected' : '' ?>>
-                                                                                    <?= esc($programItem['program_kegiatan']) ?> — Rp
-                                                                                    <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
+                                                                                <?php foreach ($program as $programItem): ?>
+                                                                                    <option value="<?= $programItem['id'] ?>"
+                                                                                        data-anggaran="<?= $programItem['anggaran'] ?>"
+                                                                                        <?= (!empty($prog['program_id']) && $prog['program_id'] == $programItem['id']) ? 'selected' : '' ?>>
+                                                                                        <?= esc($programItem['program_kegiatan']) ?> — Rp
+                                                                                        <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
+                                                                                    </option>
+                                                                                <?php endforeach; ?>
 
-                                                                        </select>
+                                                                            </select>
+                                                                        </div>
+
+                                                                        <!-- ANGGARAN (LEVEL PROGRAM) -->
+                                                                        <div class="col-md-3">
+                                                                            <label class="form-label">Anggaran</label>
+                                                                            <input type="text"
+                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][anggaran]"
+                                                                                class="form-control anggaran-input border-secondary"
+                                                                                value="<?= esc($prog['anggaran'] ?? '') ?>"
+                                                                                placeholder="Anggaran"
+                                                                                readonly>
+                                                                        </div>
+
+                                                                        <!-- ACTION -->
+                                                                        <div class="col-md-3 d-flex align-items-end">
+                                                                            <button type="button"
+                                                                                class="remove-program btn btn-outline-danger btn-sm">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
-
-                                                                    <!-- ANGGARAN (LEVEL PROGRAM) -->
-                                                                    <div class="col-md-3">
-                                                                        <label class="form-label">Anggaran</label>
-                                                                        <input type="text"
-                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][anggaran]"
-                                                                            class="form-control anggaran-input border-secondary"
-                                                                            value="<?= esc($prog['anggaran'] ?? '') ?>"
-                                                                            placeholder="Anggaran"
-                                                                            readonly>
-                                                                    </div>
-
-                                                                    <!-- ACTION -->
-                                                                    <div class="col-md-3 d-flex align-items-end">
-                                                                        <button type="button"
-                                                                            class="remove-program btn btn-outline-danger btn-sm">
-                                                                            <i class="fas fa-trash"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
 
                                                                 <?php endforeach; ?>
 
-                                                                </div>
+                                                            </div>
 
-                                                                <div class="d-flex justify-content-end mt-2">
-                                                                    <button type="button"
-                                                                        class="add-program btn btn-success btn-sm">
-                                                                        <i class="fas fa-plus me-1"></i> Tambah Program
-                                                                    </button>
-                                                                </div>
+                                                            <div class="d-flex justify-content-end mt-2">
+                                                                <button type="button"
+                                                                    class="add-program btn btn-success btn-sm">
+                                                                    <i class="fas fa-plus me-1"></i> Tambah Program
+                                                                </button>
+                                                            </div>
 
                                                         <?php elseif ($jenis === 'administrator'): ?>
                                                             <div class="program-container">
@@ -442,175 +442,175 @@
                                                             <!-- PENGAWAS: Kegiatan (dari admin) -> Sub Kegiatan -->
                                                             <div class="kegiatan-container">
 
-                                                            <?php
-                                                            // Struktur default
-                                                            $programList = !empty($indikator['program'])
-                                                                ? $indikator['program']
-                                                                : [['program_id' => '', 'kegiatan' => []]];
-                                                            ?>
-
-                                                            <?php foreach ($programList as $pi => $prog): ?>
-
-                                                            <div class="kegiatan-item border rounded p-3 bg-white mb-4">
-
-                                                                <!-- KEGIATAN -->
                                                                 <?php
-                                                                $kegiatanList = !empty($prog['kegiatan'])
-                                                                    ? $prog['kegiatan']
-                                                                    : [['kegiatan_id' => '', 'subkegiatan' => []]];
+                                                                // Struktur default
+                                                                $programList = !empty($indikator['program'])
+                                                                    ? $indikator['program']
+                                                                    : [['program_id' => '', 'kegiatan' => []]];
                                                                 ?>
 
-                                                                <?php foreach ($kegiatanList as $ke => $keg): ?>
+                                                                <?php foreach ($programList as $pi => $prog): ?>
 
-                                                                <div class="row mb-3">
-                                                                    <?php if ($isKecamatanOpd ?? false): ?>
-                                                                        <!-- KECAMATAN: Program Camat eksplisit + Kegiatan bebas (master) -->
-                                                                        <div class="col-md-6">
-                                                                            <label class="form-label">Program (Camat)</label>
-                                                                            <select
-                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
-                                                                                class="form-select select2 program-select border-secondary"
-                                                                                required>
-                                                                                <option value="">Pilih Program Camat</option>
-                                                                                <?php foreach ($jptProgram as $camatProg): ?>
-                                                                                    <option value="<?= $camatProg['id'] ?>"
-                                                                                        <?= (!empty($prog['program_id']) && $prog['program_id'] == $camatProg['id']) ? 'selected' : '' ?>>
-                                                                                        <?= esc($camatProg['program_kegiatan']) ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div class="col-md-5">
-                                                                            <label class="form-label">Kegiatan</label>
-                                                                            <select
-                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][kegiatan_id]"
-                                                                                class="form-select select2 kegiatan-select border-secondary"
-                                                                                required>
-                                                                                <option value="">Pilih Kegiatan</option>
-                                                                                <?php foreach ($kegiatan as $kegiatanItem): ?>
-                                                                                    <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                        <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
-                                                                                        <?= esc($kegiatanItem['kegiatan']) ?> — Rp
-                                                                                        <?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div class="col-md-1 d-flex align-items-end">
-                                                                            <button type="button"
-                                                                                class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                                                                <i class="fas fa-trash"></i>
-                                                                            </button>
-                                                                        </div>
-                                                                    <?php else: ?>
-                                                                        <div class="col-md-6">
-                                                                            <label class="form-label">Kegiatan</label>
+                                                                    <div class="kegiatan-item border rounded p-3 bg-white mb-4">
 
-                                                                            <!-- PROGRAM_ID diisi via JS dari data-program -->
-                                                                            <input type="hidden"
-                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
-                                                                                class="program-id-hidden"
-                                                                                value="<?= esc($prog['program_id'] ?? '') ?>">
+                                                                        <!-- KEGIATAN -->
+                                                                        <?php
+                                                                        $kegiatanList = !empty($prog['kegiatan'])
+                                                                            ? $prog['kegiatan']
+                                                                            : [['kegiatan_id' => '', 'subkegiatan' => []]];
+                                                                        ?>
 
-                                                                            <select
-                                                                                name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][kegiatan_id]"
-                                                                                class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown"
-                                                                                required>
+                                                                        <?php foreach ($kegiatanList as $ke => $keg): ?>
 
-                                                                                <option value="">Pilih Kegiatan</option>
+                                                                            <div class="row mb-3">
+                                                                                <?php if ($isKecamatanOpd ?? false): ?>
+                                                                                    <!-- KECAMATAN: Program Camat eksplisit + Kegiatan bebas (master) -->
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label">Program (Camat)</label>
+                                                                                        <select
+                                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
+                                                                                            class="form-select select2 program-select border-secondary"
+                                                                                            required>
+                                                                                            <option value="">Pilih Program Camat</option>
+                                                                                            <?php foreach ($jptProgram as $camatProg): ?>
+                                                                                                <option value="<?= $camatProg['id'] ?>"
+                                                                                                    <?= (!empty($prog['program_id']) && $prog['program_id'] == $camatProg['id']) ? 'selected' : '' ?>>
+                                                                                                    <?= esc($camatProg['program_kegiatan']) ?>
+                                                                                                </option>
+                                                                                            <?php endforeach; ?>
+                                                                                        </select>
+                                                                                    </div>
+                                                                                    <div class="col-md-5">
+                                                                                        <label class="form-label">Kegiatan</label>
+                                                                                        <select
+                                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][kegiatan_id]"
+                                                                                            class="form-select select2 kegiatan-select border-secondary"
+                                                                                            required>
+                                                                                            <option value="">Pilih Kegiatan</option>
+                                                                                            <?php foreach ($kegiatan as $kegiatanItem): ?>
+                                                                                                <option value="<?= $kegiatanItem['id'] ?>"
+                                                                                                    <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
+                                                                                                    <?= esc($kegiatanItem['kegiatan']) ?> — Rp
+                                                                                                    <?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
+                                                                                                </option>
+                                                                                            <?php endforeach; ?>
+                                                                                        </select>
+                                                                                    </div>
+                                                                                    <div class="col-md-1 d-flex align-items-end">
+                                                                                        <button type="button"
+                                                                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                                                            <i class="fas fa-trash"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                <?php else: ?>
+                                                                                    <div class="col-md-6">
+                                                                                        <label class="form-label">Kegiatan</label>
 
-                                                                                <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
-                                                                                    <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                        data-program="<?= $kegiatanItem['program_id'] ?>"
-                                                                                        <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
-                                                                                        <?= esc($kegiatanItem['kegiatan']) ?> — Rp
-                                                                                        <?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
+                                                                                        <!-- PROGRAM_ID diisi via JS dari data-program -->
+                                                                                        <input type="hidden"
+                                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][program_id]"
+                                                                                            class="program-id-hidden"
+                                                                                            value="<?= esc($prog['program_id'] ?? '') ?>">
 
-                                                                            </select>
-                                                                        </div>
+                                                                                        <select
+                                                                                            name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][kegiatan_id]"
+                                                                                            class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown"
+                                                                                            required>
 
-                                                                        <div class="col-md-3 d-flex align-items-end">
-                                                                            <button type="button"
-                                                                                class="remove-kegiatan btn btn-outline-danger btn-sm">
-                                                                                <i class="fas fa-trash"></i>
-                                                                            </button>
-                                                                        </div>
-                                                                    <?php endif; ?>
-                                                                </div>
+                                                                                            <option value="">Pilih Kegiatan</option>
 
-                                                                <!-- SUB KEGIATAN -->
-                                                                <div class="subkeg-container">
+                                                                                            <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
+                                                                                                <option value="<?= $kegiatanItem['id'] ?>"
+                                                                                                    data-program="<?= $kegiatanItem['program_id'] ?>"
+                                                                                                    <?= (!empty($keg['kegiatan_id']) && $keg['kegiatan_id'] == $kegiatanItem['id']) ? 'selected' : '' ?>>
+                                                                                                    <?= esc($kegiatanItem['kegiatan']) ?> — Rp
+                                                                                                    <?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
+                                                                                                </option>
+                                                                                            <?php endforeach; ?>
 
-                                                                    <?php
-                                                                    $subList = !empty($keg['subkegiatan'])
-                                                                        ? $keg['subkegiatan']
-                                                                        : [['subkegiatan_id' => '', 'anggaran' => '']];
-                                                                    ?>
+                                                                                        </select>
+                                                                                    </div>
 
-                                                                    <?php foreach ($subList as $sk => $sub): ?>
-
-                                                                    <div class="subkeg-item border rounded bg-light p-3 mb-3">
-                                                                        <div class="row">
-                                                                            <!-- DROPDOWN SUB KEGIATAN -->
-                                                                            <div class="col-md-5">
-                                                                                <label class="form-label">Sub Kegiatan</label>
-                                                                                <select
-                                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][subkegiatan][<?= $sk ?>][subkegiatan_id]"
-                                                                                    class="form-select select2 subkeg-select border-secondary"
-                                                                                    required>
-
-                                                                                    <option value="">Pilih Sub Kegiatan</option>
-
-                                                                                    <?php foreach ($subkegiatan as $skItem): ?>
-                                                                                        <option value="<?= $skItem['id'] ?>"
-                                                                                            data-anggaran="<?= $skItem['anggaran'] ?>"
-                                                                                            <?= (!empty($sub['subkegiatan_id']) && $sub['subkegiatan_id'] == $skItem['id']) ? 'selected' : '' ?>>
-                                                                                            <?= esc($skItem['sub_kegiatan']) ?> — Rp
-                                                                                            <?= number_format($skItem['anggaran'], 0, ',', '.') ?>
-                                                                                        </option>
-                                                                                    <?php endforeach; ?>
-
-                                                                                </select>
+                                                                                    <div class="col-md-3 d-flex align-items-end">
+                                                                                        <button type="button"
+                                                                                            class="remove-kegiatan btn btn-outline-danger btn-sm">
+                                                                                            <i class="fas fa-trash"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                <?php endif; ?>
                                                                             </div>
 
-                                                                            <!-- ANGGARAN (LEVEL SUB KEGIATAN) -->
-                                                                            <div class="col-md-3">
-                                                                                <label class="form-label">Anggaran</label>
-                                                                                <input type="text"
-                                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][subkegiatan][<?= $sk ?>][anggaran]"
-                                                                                    class="form-control anggaran-input border-secondary"
-                                                                                    value="<?= esc($sub['anggaran'] ?? '') ?>"
-                                                                                    placeholder="Anggaran"
-                                                                                    readonly>
+                                                                            <!-- SUB KEGIATAN -->
+                                                                            <div class="subkeg-container">
+
+                                                                                <?php
+                                                                                $subList = !empty($keg['subkegiatan'])
+                                                                                    ? $keg['subkegiatan']
+                                                                                    : [['subkegiatan_id' => '', 'anggaran' => '']];
+                                                                                ?>
+
+                                                                                <?php foreach ($subList as $sk => $sub): ?>
+
+                                                                                    <div class="subkeg-item border rounded bg-light p-3 mb-3">
+                                                                                        <div class="row">
+                                                                                            <!-- DROPDOWN SUB KEGIATAN -->
+                                                                                            <div class="col-md-5">
+                                                                                                <label class="form-label">Sub Kegiatan</label>
+                                                                                                <select
+                                                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][subkegiatan][<?= $sk ?>][subkegiatan_id]"
+                                                                                                    class="form-select select2 subkeg-select border-secondary"
+                                                                                                    required>
+
+                                                                                                    <option value="">Pilih Sub Kegiatan</option>
+
+                                                                                                    <?php foreach ($subkegiatan as $skItem): ?>
+                                                                                                        <option value="<?= $skItem['id'] ?>"
+                                                                                                            data-anggaran="<?= $skItem['anggaran'] ?>"
+                                                                                                            <?= (!empty($sub['subkegiatan_id']) && $sub['subkegiatan_id'] == $skItem['id']) ? 'selected' : '' ?>>
+                                                                                                            <?= esc($skItem['sub_kegiatan']) ?> — Rp
+                                                                                                            <?= number_format($skItem['anggaran'], 0, ',', '.') ?>
+                                                                                                        </option>
+                                                                                                    <?php endforeach; ?>
+
+                                                                                                </select>
+                                                                                            </div>
+
+                                                                                            <!-- ANGGARAN (LEVEL SUB KEGIATAN) -->
+                                                                                            <div class="col-md-3">
+                                                                                                <label class="form-label">Anggaran</label>
+                                                                                                <input type="text"
+                                                                                                    name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][subkegiatan][<?= $sk ?>][anggaran]"
+                                                                                                    class="form-control anggaran-input border-secondary"
+                                                                                                    value="<?= esc($sub['anggaran'] ?? '') ?>"
+                                                                                                    placeholder="Anggaran"
+                                                                                                    readonly>
+                                                                                            </div>
+
+                                                                                            <!-- ACTION -->
+                                                                                            <div class="col-md-3 d-flex align-items-end">
+                                                                                                <button type="button"
+                                                                                                    class="remove-subkeg btn btn-outline-danger btn-sm">
+                                                                                                    <i class="fas fa-trash"></i>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                <?php endforeach; ?>
+
                                                                             </div>
 
-                                                                            <!-- ACTION -->
-                                                                            <div class="col-md-3 d-flex align-items-end">
+                                                                            <div class="d-flex justify-content-end">
                                                                                 <button type="button"
-                                                                                    class="remove-subkeg btn btn-outline-danger btn-sm">
-                                                                                    <i class="fas fa-trash"></i>
+                                                                                    class="add-subkeg btn btn-success btn-sm">
+                                                                                    <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
                                                                                 </button>
                                                                             </div>
-                                                                        </div>
+
+                                                                        <?php endforeach; ?>
+
                                                                     </div>
-
-                                                                    <?php endforeach; ?>
-
-                                                                </div>
-
-                                                                <div class="d-flex justify-content-end">
-                                                                    <button type="button"
-                                                                        class="add-subkeg btn btn-success btn-sm">
-                                                                        <i class="fas fa-plus me-1"></i> Tambah Sub Kegiatan
-                                                                    </button>
-                                                                </div>
-
                                                                 <?php endforeach; ?>
-
-                                                            </div>
-                                                            <?php endforeach; ?>
                                                             </div>
 
                                                             <div class="d-flex justify-content-end mt-2">
@@ -632,7 +632,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <?php
+                                <?php
                                 } // end foreach sasaranList
                                 ?>
 
@@ -664,84 +664,91 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-        if (isset($satuan) && !empty($satuan)) {
-            foreach ($satuan as $s) {
-                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada satuan</option>';
-        }
-        ?>`;
+                                            if (isset($satuan) && !empty($satuan)) {
+                                                foreach ($satuan as $s) {
+                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada satuan</option>';
+                                            }
+                                            ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-        if (isset($program) && !empty($program)) {
-            foreach ($program as $programItem) {
-                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?>`;
+                                            if (isset($program) && !empty($program)) {
+                                                foreach ($program as $programItem) {
+                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $programItem['anggaran'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada program</option>';
+                                            }
+                                            ?>`;
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-        if (isset($jptProgram) && !empty($jptProgram)) {
-            foreach ($jptProgram as $programItem) {
-                echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?>`;
+                                                if (isset($jptProgram) && !empty($jptProgram)) {
+                                                    foreach ($jptProgram as $programItem) {
+                                                        echo '<option value="' . $programItem['id'] . '">' . esc($programItem['program_kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada program</option>';
+                                                }
+                                                ?>`;
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-        if (isset($kegiatan) && !empty($kegiatan)) {
-            foreach ($kegiatan as $kegiatanItem) {
-                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada kegiatan</option>';
-        }
-        ?>`;
+                                            if (isset($kegiatan) && !empty($kegiatan)) {
+                                                foreach ($kegiatan as $kegiatanItem) {
+                                                    echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                            }
+                                            ?>`;
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-        if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
-            foreach ($kegiatanAdmin as $kegiatanItem) {
-                echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada kegiatan</option>';
-        }
-        ?>`;
+                                                if (isset($kegiatanAdmin) && !empty($kegiatanAdmin)) {
+                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
+                                                        echo '<option value="' . $kegiatanItem['id'] . '">' . esc($kegiatanItem['kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                                }
+                                                ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-        if (isset($subkegiatan) && !empty($subkegiatan)) {
-            foreach ($subkegiatan as $sk) {
-                echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-        }
-        ?>`;
+                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
+                                                    foreach ($subkegiatan as $sk) {
+                                                        echo '<option value="' . $sk['id'] . '">' . esc($sk['sub_kegiatan']) . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+                                                }
+                                                ?>`;
     </script>
 
-    <?php if (in_array($jenis, ['jpt', 'camat'], true)): ?>
-        <script src="<?= base_url('assets/js/adminopd/pk/pk-form.js') ?>"></script>
-    <?php elseif ($jenis === 'administrator'): ?>
-        <script src="<?= base_url('assets/js/adminopd/pk/pk-admin-form.js') ?>"></script>
-    <?php elseif ($jenis === 'pengawas'): ?>
-        <?php if ($isKecamatanOpd ?? false): ?>
-            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-camat-form.js') ?>"></script>
-        <?php else: ?>
-            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-form.js') ?>"></script>
-        <?php endif; ?>
-    <?php elseif ($jenis === 'bupati'): ?>
-        <script src="<?= base_url('assets/js/adminKabupaten/pk/pk-bupati-form.js') ?>"></script>
-    <?php endif; ?>
+    <?php
+    $jsFile = '';
+    if (in_array($jenis, ['jpt', 'camat'], true)) {
+        $jsFile = 'assets/js/adminopd/pk/pk-form.js';
+    } elseif ($jenis === 'administrator') {
+        $jsFile = 'assets/js/adminopd/pk/pk-admin-form.js';
+    } elseif ($jenis === 'pengawas') {
+        $jsFile = ($isKecamatanOpd ?? false) 
+            ? 'assets/js/adminopd/pk/pk-pengawas-camat-form.js' 
+            : 'assets/js/adminopd/pk/pk-pengawas-form.js';
+    } elseif ($jenis === 'bupati') {
+        $jsFile = 'assets/js/adminKabupaten/pk/pk-bupati-form.js';
+    }
+
+    if (!empty($jsFile)) {
+        $fullPath = FCPATH . $jsFile;
+        $version = file_exists($fullPath) ? filemtime($fullPath) : time();
+        echo '<script src="' . base_url($jsFile . '?v=' . $version) . '"></script>';
+    }
+    ?>
 </body>
 
 </html>

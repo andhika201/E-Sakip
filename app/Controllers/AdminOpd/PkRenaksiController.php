@@ -726,6 +726,9 @@ class PkRenaksiController extends BaseController
     /* ===================== MONEV: CETAK PDF ===================== */
     public function cetak($jenis)
     {
+        ob_clean();
+        ob_start();
+
         $jenis = $this->normJenis((string) $jenis);
         if (!$jenis || !$this->ensureRole($jenis, false)) {
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
@@ -737,22 +740,38 @@ class PkRenaksiController extends BaseController
         $tahun = trim((string) ($this->request->getGet('tahun') ?? ''));
         $tahun = ($tahun === '' || strtolower($tahun) === 'all') ? null : (string) (int) $tahun;
 
-        $namaUnit = 'Kabupaten Pringsewu';
-        $eselon   = null;
+        $opdList     = [];
+        $opdFilter   = null;
+        $eselon      = null;
+        $pejabatId   = null;
+        $pejabatList = [];
+        $tahunList   = $this->monev->getAvailableYearsPk('bupati');
+        $autoPd      = [];
+        $namaUnit    = 'Kabupaten Pringsewu';
+
         if ($jenis === 'bupati') {
             $rows = $this->monev->getIndexDataPkBupati($tahun);
+            $autoPd = $this->autoPdBySasaran();
         } else {
             $eselon    = $this->normEselon($this->request->getGet('eselon'));
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
             if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
-                $opdId = (int) $session->get('opd_id');
+                $opdFilter = (int) $session->get('opd_id');
             } else {
                 $opdRaw = $this->request->getGet('opd_id');
-                $opdId  = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
+                $opdFilter  = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
+                $opdList = $this->db->table('opd')->select('id, nama_opd')
+                    ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')
+                    ->get()->getResultArray();
             }
-            $rows = $this->monev->getIndexDataPkOpd($tahun, $opdId, $eselon, $pejabatId);
-            if ($opdId) {
-                $opd = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
+            $rows = $this->monev->getIndexDataPkOpd($tahun, $opdFilter, $eselon, $pejabatId);
+            $pejabatList = $this->pejabatOptions($opdFilter, $eselon);
+            $tahunList   = $this->monev->getAvailableYearsPkOpd($opdFilter);
+            if ($opdFilter) {
+                $opd = $this->db->table('opd')->select('nama_opd')->where('id', $opdFilter)->get()->getRowArray();
+                $namaUnit = $opd['nama_opd'] ?? $namaUnit;
+            } elseif (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
+                $opd = $this->db->table('opd')->select('nama_opd')->where('id', (int) $session->get('opd_id'))->get()->getRowArray();
                 $namaUnit = $opd['nama_opd'] ?? $namaUnit;
             } else {
                 $namaUnit = 'Seluruh OPD';
@@ -760,31 +779,183 @@ class PkRenaksiController extends BaseController
         }
 
         $grouped = [];
+        $withCapaian = 0;
+        $pctSum = 0.0;
+        $pctN   = 0;
         foreach ($rows as $row) {
             $grouped[$row['pk_sasaran_id'] ?? '-'][] = $row;
+            if (!empty($row['monev_id'])) {
+                $withCapaian++;
+            }
+            $target = $this->pkNum($row['indikator_target'] ?? null);
+            $total  = $this->pkNum($row['monev_total'] ?? null);
+            if ($target && $total !== null) {
+                $pctSum += ($total / $target * 100);
+                $pctN++;
+            }
         }
+        $summary = [
+            'renaksi'      => count($rows),
+            'with_capaian' => $withCapaian,
+            'avg_pct'      => $pctN > 0 ? round($pctSum / $pctN, 1) : null,
+        ];
 
         $html = view('adminOpd/pk_renaksi/cetak', [
-            'jenis'    => $jenis,
-            'grouped'  => $grouped,
-            'tahun'    => $tahun,
-            'eselon'   => $eselon,
-            'namaUnit' => $namaUnit,
-            'logo_url' => FCPATH . 'assets/images/logo.png',
+            'jenis'       => $jenis,
+            'grouped'     => $grouped,
+            'tahun'       => $tahun ?? 'all',
+            'tahunList'   => $tahunList,
+            'eselon'      => $eselon,
+            'opdFilter'   => $opdFilter,
+            'opdList'     => $opdList,
+            'pejabatId'   => $pejabatId,
+            'pejabatList' => $pejabatList,
+            'role'        => $role,
+            'base'        => $this->base($jenis),
+            'autoPd'      => $autoPd,
+            'summary'     => $summary,
+            'nama_opd'    => $namaUnit,
         ]);
 
         $mpdf = new \Mpdf\Mpdf([
-            'mode'              => 'utf-8',
-            'format'            => 'FOLIO-L',
-            'default_font_size' => 10,
-            'tempDir'           => sys_get_temp_dir(),
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
-        pdf_watermark_aksara($mpdf); // watermark AKSARA halus di latar
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         $this->response->setHeader('Content-Type', 'application/pdf');
         $mpdf->Output('MONEV-PK-' . $jenis . '-' . ($tahun ?? 'semua') . '.pdf', 'I');
+        exit;
+    }
+
+    public function cetakRenaksi($jenis)
+    {
+        ob_clean();
+        ob_start();
+
+        $jenis = $this->normJenis((string) $jenis);
+        if (!$jenis) {
+            return redirect()->to(base_url('/'))->with('error', 'Modul tidak dikenal.');
+        }
+        if (!$this->ensureRole($jenis, false)) {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak mengakses halaman ini.');
+        }
+
+        $session = session();
+        $role    = (string) $session->get('role');
+
+        $tahun = trim((string) ($this->request->getGet('tahun') ?? ''));
+        $tahun = ($tahun === '' || strtolower($tahun) === 'all') ? null : (string) (int) $tahun;
+
+        $opdList     = [];
+        $opdFilter   = null;
+        $eselon      = null;
+        $pejabatId   = null;
+        $pejabatList = [];
+        $tahunList   = $this->targets->getAvailableYearsPk('bupati');
+
+        $opdMap = [];
+        $autoPd = [];
+        $manualPd = [];
+        $namaUnit = 'Kabupaten Pringsewu';
+
+        if ($jenis === 'bupati') {
+            $rows     = $this->targets->getTargetListByPkBupati($tahun);
+            $opdMap   = array_column($this->opdOptions(), 'id', 'nama_opd');
+            $autoPd   = $this->autoPdBySasaran();
+            $manualPd = $this->manualPdBySasaran();
+        } else {
+            $eselon    = $this->normEselon($this->request->getGet('eselon'));
+            $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
+
+            if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
+                $opdFilter = (int) $session->get('opd_id');
+            } else {
+                $opdRaw    = $this->request->getGet('opd_id');
+                $opdFilter = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
+                $opdList = $this->db->table('opd')->select('id, nama_opd')
+                    ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')
+                    ->get()->getResultArray();
+            }
+
+            $rows        = $this->targets->getTargetListByPkOpd($tahun, $opdFilter, $eselon, $pejabatId);
+            $pejabatList = $this->pejabatOptions($opdFilter, $eselon);
+            $tahunList   = $this->targets->getAvailableYearsPkOpd($opdFilter);
+
+            if ($opdFilter) {
+                $opd = $this->db->table('opd')->select('nama_opd')->where('id', $opdFilter)->get()->getRowArray();
+                $namaUnit = $opd['nama_opd'] ?? $namaUnit;
+            } elseif (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
+                $opd = $this->db->table('opd')->select('nama_opd')->where('id', (int) $session->get('opd_id'))->get()->getRowArray();
+                $namaUnit = $opd['nama_opd'] ?? $namaUnit;
+            } else {
+                $namaUnit = 'Seluruh OPD';
+            }
+        }
+
+        $grouped = [];
+        $withRenaksi = 0;
+        foreach ($rows as $row) {
+            $grouped[$row['pk_sasaran_id'] ?? '-'][] = $row;
+            if (!empty($row['target_id'])) {
+                $withRenaksi++;
+            }
+        }
+        $summary = [
+            'indikator'    => count($rows),
+            'with_renaksi' => $withRenaksi,
+            'belum'        => count($rows) - $withRenaksi,
+        ];
+
+        $html = view('adminOpd/pk_renaksi/target_rencana_aksi_cetak', [
+            'opdMap'       => $opdMap,
+            'autoPd'       => $autoPd,
+            'manualPd'     => $manualPd,
+            'jenis'        => $jenis,
+            'base'         => $this->base($jenis),
+            'role'         => $role,
+            'tahun'        => $tahun ?? 'all',
+            'tahunList'    => $tahunList,
+            'opdList'      => $opdList,
+            'opdFilter'    => $opdFilter,
+            'eselon'       => $eselon,
+            'pejabatId'    => $pejabatId,
+            'pejabatList'  => $pejabatList,
+            'grouped'      => $grouped,
+            'summary'      => $summary,
+            'nama_opd'     => $namaUnit,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $safeName = trim((string) $namaUnit) !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaUnit) . '-' : '';
+        $mpdf->Output('Target-Rencana-Aksi-' . $safeName . ($tahun ?? 'semua') . '.pdf', 'I');
         exit;
     }
 

@@ -836,17 +836,23 @@ class PkRenaksiController extends BaseController
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
         }
 
-        // angka boleh desimal koma
-        $rxN = 'regex_match[/^\d+(,\d+)?$/]';
+        $rxT = $this->rxText();
         $rules = [
             'target_rencana_id'  => 'required|integer',
-            'capaian_triwulan_1' => 'permit_empty|' . $rxN,
-            'capaian_triwulan_2' => 'permit_empty|' . $rxN,
-            'capaian_triwulan_3' => 'permit_empty|' . $rxN,
-            'capaian_triwulan_4' => 'permit_empty|' . $rxN,
-            'total'              => 'permit_empty|' . $rxN,
+            'capaian_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'capaian_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'capaian_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'capaian_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'total'              => 'permit_empty|string|max_length[255]|' . $rxT,
         ];
-        if (!$this->validate($rules)) {
+        $messages = [
+            'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan I mengandung karakter yang tidak diizinkan.'],
+            'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan II mengandung karakter yang tidak diizinkan.'],
+            'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan III mengandung karakter yang tidak diizinkan.'],
+            'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan IV mengandung karakter yang tidak diizinkan.'],
+            'total'              => ['regex_match' => 'Total capaian mengandung karakter yang tidak diizinkan.'],
+        ];
+        if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
@@ -864,13 +870,13 @@ class PkRenaksiController extends BaseController
 
         $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
 
-        $num = fn ($v) => ($v === null || $v === '') ? null : (float) str_replace(',', '.', $v);
+        $txt = fn ($v) => ($v === null || $v === '') ? null : trim((string) $v);
         $payload = [
-            'capaian_triwulan_1' => $num($this->request->getPost('capaian_triwulan_1')),
-            'capaian_triwulan_2' => $num($this->request->getPost('capaian_triwulan_2')),
-            'capaian_triwulan_3' => $num($this->request->getPost('capaian_triwulan_3')),
-            'capaian_triwulan_4' => $num($this->request->getPost('capaian_triwulan_4')),
-            'total'              => $num($this->request->getPost('total')),
+            'capaian_triwulan_1' => $txt($this->request->getPost('capaian_triwulan_1')),
+            'capaian_triwulan_2' => $txt($this->request->getPost('capaian_triwulan_2')),
+            'capaian_triwulan_3' => $txt($this->request->getPost('capaian_triwulan_3')),
+            'capaian_triwulan_4' => $txt($this->request->getPost('capaian_triwulan_4')),
+            'total'              => $txt($this->request->getPost('total')),
         ];
 
         $this->monev->upsertForTarget($targetId, $monevOpdId, $payload);

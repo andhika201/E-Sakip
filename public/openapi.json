@@ -633,6 +633,22 @@
             "type": "string",
             "nullable": true
           },
+          "renstra_tujuan_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "renstra_tujuan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikator_tujuan_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "indikator_tujuan": {
+            "type": "string",
+            "nullable": true
+          },
           "renstra_sasaran_id": {
             "type": "integer",
             "nullable": true

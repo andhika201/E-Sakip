@@ -255,10 +255,11 @@ class AiAnalysisController extends BaseController
 
             if (++$n <= 250) {
                 $lines[] = sprintf(
-                    "- Tujuan RPJMD: %s | Sasaran RPJMD: %s | Tujuan Renstra: %s | Sasaran ES II: %s | Indikator ES II: %s | Sasaran ES III: %s | Indikator ES III: %s | Sasaran ES IV: %s | Indikator ES IV: %s",
+                    "- Tujuan RPJMD: %s | Sasaran RPJMD: %s | Tujuan Renstra: %s | Indikator Tujuan: %s | Sasaran ES II: %s | Indikator ES II: %s | Sasaran ES III: %s | Indikator ES III: %s | Sasaran ES IV: %s | Indikator ES IV: %s",
                     $this->cut($r['tujuan_rpjmd'] ?? '-', 70),
                     $this->cut($r['sasaran_rpjmd'] ?? '-', 70),
                     $this->cut($r['renstra_tujuan'] ?? '-', 70),
+                    $this->cut($r['indikator_tujuan'] ?? '-', 80),
                     $this->cut($r['renstra_sasaran'] ?? '-', 70),
                     $this->cut($r['indikator_sasaran'] ?? '-', 80),
                     $this->cut($r['es3_sasaran'] ?? '-', 70),

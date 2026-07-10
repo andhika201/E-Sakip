@@ -518,6 +518,7 @@ class UserController extends BaseController
             $years = range($start, $end);
 
             $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, $start, $end);
+            $this->preprocessCascadingOpdEmptyIds($rows);
             $rowspan = $this->buildCascadingOpdRowspan($rows);
             $firstShow = $this->buildCascadingOpdFirstShow($rows);
         }
@@ -596,8 +597,17 @@ class UserController extends BaseController
         $end = (int) $end;
 
         $rows = $cascadingModel->getCascadingMatrixByOpd($opd_id, $start, $end);
+        $this->preprocessCascadingOpdEmptyIds($rows);
         $rowspan = $this->buildCascadingOpdRowspan($rows);
         $firstShow = $this->buildCascadingOpdFirstShow($rows);
+
+        $db = \Config\Database::connect();
+        $opd = $db->table('opd')
+            ->select('nama_opd')
+            ->where('id', $opd_id)
+            ->get()
+            ->getRowArray();
+        $namaOpd = $opd['nama_opd'] ?? '';
 
         $html = view('adminOpd/cascading/cascading_cetak', [
             'rows' => $rows,
@@ -605,7 +615,8 @@ class UserController extends BaseController
             'firstShow' => $firstShow,
             'tahun_mulai' => $start,
             'tahun_akhir' => $end,
-            'periode' => $periode
+            'periode' => $periode,
+            'nama_opd' => $namaOpd,
         ]);
 
         $mpdf = new \Mpdf\Mpdf([
@@ -625,7 +636,8 @@ class UserController extends BaseController
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
         header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Cascading-OPD-' . $periode . '.pdf"');
+        $namaFile = $namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '';
+        header('Content-Disposition: inline; filename="Cascading-OPD-' . $namaFile . $periode . '.pdf"');
         $mpdf->Output();
         exit;
     }
@@ -654,12 +666,38 @@ class UserController extends BaseController
         ]);
     }
 
+    private function preprocessCascadingOpdEmptyIds(array &$rows): void
+    {
+        foreach ($rows as $index => &$r) {
+            if (empty($r['tujuan_id'])) {
+                $r['tujuan_id'] = 'empty_tujuan_' . $index;
+            }
+            if (empty($r['sasaran_id'])) {
+                $r['sasaran_id'] = 'empty_sasaran_' . $index;
+            }
+            if (empty($r['renstra_tujuan_id'])) {
+                $r['renstra_tujuan_id'] = 'empty_rt_' . $index;
+            }
+            if (empty($r['indikator_tujuan_id'])) {
+                $r['indikator_tujuan_id'] = 'empty_it_' . $r['renstra_tujuan_id'];
+            }
+            if (empty($r['renstra_sasaran_id'])) {
+                $r['renstra_sasaran_id'] = 'empty_rs_' . $index;
+            }
+            if (empty($r['indikator_id'])) {
+                $r['indikator_id'] = 'empty_ris_' . $index;
+            }
+        }
+        unset($r);
+    }
+
     private function buildCascadingOpdRowspan($rows)
     {
         $meta = [
             'tujuan' => [],
             'sasaran' => [],
             'tujuan_renstra' => [],
+            'indikator_tujuan' => [],
             'sasaran_renstra' => [],
             'indikator' => [],
             'es3' => [],
@@ -670,6 +708,7 @@ class UserController extends BaseController
             $meta['tujuan'][$r['tujuan_id']] = ($meta['tujuan'][$r['tujuan_id']] ?? 0) + 1;
             $meta['sasaran'][$r['sasaran_id']] = ($meta['sasaran'][$r['sasaran_id']] ?? 0) + 1;
             $meta['tujuan_renstra'][$r['renstra_tujuan_id']] = ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
+            $meta['indikator_tujuan'][$r['indikator_tujuan_id']] = ($meta['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 0) + 1;
             $meta['sasaran_renstra'][$r['renstra_sasaran_id']] = ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
             $meta['indikator'][$r['indikator_id']] = ($meta['indikator'][$r['indikator_id']] ?? 0) + 1;
             if ($r['es3_id'])
@@ -688,6 +727,7 @@ class UserController extends BaseController
             'tujuan' => [],
             'sasaran' => [],
             'tujuan_renstra' => [],
+            'indikator_tujuan' => [],
             'sasaran_renstra' => [],
             'indikator' => [],
             'es3' => [],
@@ -701,6 +741,8 @@ class UserController extends BaseController
                 $shown['sasaran'][$r['sasaran_id']] = $index;
             if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']]))
                 $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
+            if (!isset($shown['indikator_tujuan'][$r['indikator_tujuan_id']]))
+                $shown['indikator_tujuan'][$r['indikator_tujuan_id']] = $index;
             if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']]))
                 $shown['sasaran_renstra'][$r['renstra_sasaran_id']] = $index;
             if (!isset($shown['indikator'][$r['indikator_id']]))
@@ -730,7 +772,15 @@ class UserController extends BaseController
             }
             $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
             if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = ['nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)', 'es2s' => []];
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
+                    'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
+                    'indikator_tujuan' => [],
+                    'es2s' => []
+                ];
+            }
+            $itId = $r['indikator_tujuan_id'] ?? null;
+            if (!empty($itId) && !empty($r['indikator_tujuan'])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['indikator_tujuan'][$itId] = $r['indikator_tujuan'];
             }
             $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
             if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran']))

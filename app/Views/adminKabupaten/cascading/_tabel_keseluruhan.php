@@ -26,14 +26,14 @@ $rsKey  = fn($r) => $rtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x');
                         <!-- TUJUAN RPJMD -->
                         <?php if (($firstShow['tujuan'][$r['tujuan_id']] ?? -1) == $index): ?>
                             <td rowspan="<?= $rowspan['tujuan'][$r['tujuan_id']] ?? 1 ?>" class="text-start">
-                                <?= esc($r['tujuan_rpjmd'] ?? '-') ?>
+                                <?= !empty($r['tujuan_rpjmd']) ? esc($r['tujuan_rpjmd']) : '<span class="text-muted">-</span>' ?>
                             </td>
                         <?php endif; ?>
 
                         <!-- SASARAN RPJMD -->
                         <?php if (($firstShow['sasaran'][$r['sasaran_id']] ?? -1) == $index): ?>
                             <td rowspan="<?= $rowspan['sasaran'][$r['sasaran_id']] ?? 1 ?>" class="text-start">
-                                <?= esc($r['sasaran_rpjmd'] ?? '-') ?>
+                                <?= !empty($r['sasaran_rpjmd']) ? esc($r['sasaran_rpjmd']) : '<span class="text-muted">-</span>' ?>
                             </td>
                         <?php endif; ?>
 
@@ -50,6 +50,8 @@ $rsKey  = fn($r) => $rtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x');
                                 <?= !empty($r['renstra_tujuan']) ? esc($r['renstra_tujuan']) : '<span class="text-muted">-</span>' ?>
                             </td>
                         <?php endif; ?>
+
+
 
                         <!-- SASARAN RENSTRA -->
                         <?php if (($firstShow['renstra_sasaran'][$rsKey($r)] ?? -1) == $index): ?>

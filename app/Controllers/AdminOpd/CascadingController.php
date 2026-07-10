@@ -49,6 +49,8 @@ class CascadingController extends BaseController
             $rows = $this->cascadingModel
                 ->getCascadingMatrixByOpd($this->opdId, $start, $end);
 
+            $this->preprocessEmptyIds($rows);
+
             $rowspan = $this->buildRowspanMeta($rows);
             $firstShow = $this->buildFirstShowMeta($rows);
 
@@ -105,6 +107,8 @@ class CascadingController extends BaseController
         $rows = $this->cascadingModel
             ->getCascadingMatrixByOpd($this->opdId, (int) $start, (int) $end);
 
+        $this->preprocessEmptyIds($rows);
+
         return view('adminOpd/cascading/_table', [
             'rows'      => $rows,
             'rowspan'   => $this->buildRowspanMeta($rows),
@@ -131,8 +135,17 @@ class CascadingController extends BaseController
         $rows = $this->cascadingModel
             ->getCascadingMatrixByOpd($this->opdId, $start, $end);
 
+        $this->preprocessEmptyIds($rows);
+
         $rowspan = $this->buildRowspanMeta($rows);
         $firstShow = $this->buildFirstShowMeta($rows);
+
+        $opd = $this->db->table('opd')
+            ->select('nama_opd')
+            ->where('id', $this->opdId)
+            ->get()
+            ->getRowArray();
+        $namaOpd = $opd['nama_opd'] ?? '';
 
         $html = view('adminOpd/cascading/cascading_cetak', [
             'rows' => $rows,
@@ -140,7 +153,8 @@ class CascadingController extends BaseController
             'firstShow' => $firstShow,
             'tahun_mulai' => $start,
             'tahun_akhir' => $end,
-            'periode' => $periode
+            'periode' => $periode,
+            'nama_opd' => $namaOpd,
         ]);
 
         $mpdf = new \Mpdf\Mpdf([
@@ -161,7 +175,8 @@ class CascadingController extends BaseController
         $mpdf->WriteHTML($html);
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Cascading-OPD-' . $periode . '.pdf"');
+        $namaFile = $namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '';
+        header('Content-Disposition: inline; filename="Cascading-OPD-' . $namaFile . $periode . '.pdf"');
 
         $mpdf->Output();
         exit;
@@ -236,8 +251,14 @@ class CascadingController extends BaseController
             if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
                 $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
                     'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
+                    'indikator_tujuan' => [],
                     'es2s' => []
                 ];
+            }
+
+            $itId = $r['indikator_tujuan_id'] ?? null;
+            if (!empty($itId) && !empty($r['indikator_tujuan'])) {
+                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['indikator_tujuan'][$itId] = $r['indikator_tujuan'];
             }
             
             $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
@@ -934,12 +955,38 @@ class CascadingController extends BaseController
         return $this->response->setJSON($data);
     }
 
+    private function preprocessEmptyIds(array &$rows): void
+    {
+        foreach ($rows as $index => &$r) {
+            if (empty($r['tujuan_id'])) {
+                $r['tujuan_id'] = 'empty_tujuan_' . $index;
+            }
+            if (empty($r['sasaran_id'])) {
+                $r['sasaran_id'] = 'empty_sasaran_' . $index;
+            }
+            if (empty($r['renstra_tujuan_id'])) {
+                $r['renstra_tujuan_id'] = 'empty_rt_' . $index;
+            }
+            if (empty($r['indikator_tujuan_id'])) {
+                $r['indikator_tujuan_id'] = 'empty_it_' . $r['renstra_tujuan_id'];
+            }
+            if (empty($r['renstra_sasaran_id'])) {
+                $r['renstra_sasaran_id'] = 'empty_rs_' . $index;
+            }
+            if (empty($r['indikator_id'])) {
+                $r['indikator_id'] = 'empty_ris_' . $index;
+            }
+        }
+        unset($r);
+    }
+
     private function buildRowspanMeta($rows)
     {
         $meta = [
             'tujuan' => [],
             'sasaran' => [],
             'tujuan_renstra' => [],
+            'indikator_tujuan' => [],
             'sasaran_renstra' => [],
             'indikator' => [],
             'es3' => [],
@@ -957,6 +1004,9 @@ class CascadingController extends BaseController
 
             $meta['tujuan_renstra'][$r['renstra_tujuan_id']] =
                 ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
+
+            $meta['indikator_tujuan'][$r['indikator_tujuan_id']] =
+                ($meta['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 0) + 1;
 
             $meta['sasaran_renstra'][$r['renstra_sasaran_id']] =
                 ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
@@ -990,6 +1040,7 @@ class CascadingController extends BaseController
             'tujuan' => [],
             'sasaran' => [],
             'tujuan_renstra' => [],
+            'indikator_tujuan' => [],
             'sasaran_renstra' => [],
             'indikator' => [],
             'es3' => [],
@@ -1009,6 +1060,10 @@ class CascadingController extends BaseController
 
             if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']])) {
                 $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
+            }
+
+            if (!isset($shown['indikator_tujuan'][$r['indikator_tujuan_id']])) {
+                $shown['indikator_tujuan'][$r['indikator_tujuan_id']] = $index;
             }
 
             if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']])) {

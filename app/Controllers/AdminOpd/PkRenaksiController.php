@@ -239,8 +239,8 @@ class PkRenaksiController extends BaseController
         return in_array($role, ['admin_kab', 'admin_inspektorat'], true) ? 'adminkab' : 'adminopd';
     }
 
-    /** Regex angka Indonesia (1 atau 1,5) & teks bebas tag. */
-    private function rxNumber(): string { return 'regex_match[/^\d+(,\d+)?$/]'; }
+    /** Teks bebas tag. */
+    private function rxNumber(): string { return 'regex_match[/^[^<>]*$/]'; }
     private function rxText(): string   { return 'regex_match[/^[^<>]*$/]'; }
 
     /**
@@ -836,7 +836,11 @@ class PkRenaksiController extends BaseController
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
         }
 
+<<<<<<< HEAD
+        $rxN = $this->rxText();
+=======
         $rxT = $this->rxText();
+>>>>>>> eb29c5e3cc393204fd61da2060d03effeba680fc
         $rules = [
             'target_rencana_id'  => 'required|integer',
             'capaian_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
@@ -870,6 +874,15 @@ class PkRenaksiController extends BaseController
 
         $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
 
+<<<<<<< HEAD
+        $cleanStr = fn ($v) => ($v === null || $v === '') ? null : trim((string) $v);
+        $payload = [
+            'capaian_triwulan_1' => $cleanStr($this->request->getPost('capaian_triwulan_1')),
+            'capaian_triwulan_2' => $cleanStr($this->request->getPost('capaian_triwulan_2')),
+            'capaian_triwulan_3' => $cleanStr($this->request->getPost('capaian_triwulan_3')),
+            'capaian_triwulan_4' => $cleanStr($this->request->getPost('capaian_triwulan_4')),
+            'total'              => $cleanStr($this->request->getPost('total')),
+=======
         $txt = fn ($v) => ($v === null || $v === '') ? null : trim((string) $v);
         $payload = [
             'capaian_triwulan_1' => $txt($this->request->getPost('capaian_triwulan_1')),
@@ -877,6 +890,7 @@ class PkRenaksiController extends BaseController
             'capaian_triwulan_3' => $txt($this->request->getPost('capaian_triwulan_3')),
             'capaian_triwulan_4' => $txt($this->request->getPost('capaian_triwulan_4')),
             'total'              => $txt($this->request->getPost('total')),
+>>>>>>> eb29c5e3cc393204fd61da2060d03effeba680fc
         ];
 
         $this->monev->upsertForTarget($targetId, $monevOpdId, $payload);
@@ -923,7 +937,11 @@ class PkRenaksiController extends BaseController
         return [
             'rencana_aksi'      => ['regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.'],
             'penanggung_jawab'  => ['regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.'],
+<<<<<<< HEAD
+            'capaian'           => ['regex_match' => 'Baseline mengandung karakter yang tidak diizinkan.'],
+=======
             'capaian'           => ['regex_match' => 'Baseline harus berupa angka (contoh: 1 atau 1,5).'],
+>>>>>>> eb29c5e3cc393204fd61da2060d03effeba680fc
             'target_triwulan_1' => ['regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.'],
             'target_triwulan_2' => ['regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.'],
             'target_triwulan_3' => ['regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.'],

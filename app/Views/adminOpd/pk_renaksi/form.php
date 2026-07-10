@@ -113,7 +113,7 @@ $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
                         <div class="col"><input type="text" name="target_triwulan_3" class="form-control" placeholder="Triwulan III" value="<?= esc($val('target_triwulan_3')) ?>"></div>
                         <div class="col"><input type="text" name="target_triwulan_4" class="form-control" placeholder="Triwulan IV" value="<?= esc($val('target_triwulan_4')) ?>"></div>
                     </div>
-                    <small class="text-muted">Gunakan koma untuk desimal (mis. 1,5).</small>
+                    <small class="text-muted">Dapat berupa angka desimal (mis. 1,5) maupun teks predikat (mis. A, Baik, Cukup).</small>
                 </div>
 
                 <div class="mb-3">

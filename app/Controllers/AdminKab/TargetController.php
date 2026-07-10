@@ -347,15 +347,13 @@ class TargetController extends BaseController
                 'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
                 'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
 
-                // ANGKA (PAKAI KOMA)
-                'capaian' => 'permit_empty|' . $rxNumber,
-
-                'target_triwulan_1' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_2' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_3' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+                // TEXT/ALPHANUMERIC
+                'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxText,
             ];
-
 
             $messages = [
                 'rencana_aksi' => [
@@ -364,22 +362,20 @@ class TargetController extends BaseController
                 'penanggung_jawab' => [
                     'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
                 ],
-
                 'capaian' => [
-                    'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
                 ],
-
                 'target_triwulan_1' => [
-                    'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_2' => [
-                    'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_3' => [
-                    'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_4' => [
-                    'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan IV mengandung karakter yang tidak diizinkan.',
                 ],
             ];
 
@@ -433,13 +429,12 @@ class TargetController extends BaseController
             'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
             'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
 
-            // ANGKA (PAKAI KOMA)
-            'capaian' => 'permit_empty|' . $rxNumber,
-
-            'target_triwulan_1' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_2' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_3' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+            // TEXT/ALPHANUMERIC
+            'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxText,
 
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
@@ -454,20 +449,20 @@ class TargetController extends BaseController
             ],
 
             'capaian' => [
-                'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
             ],
 
             'target_triwulan_1' => [
-                'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_2' => [
-                'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_3' => [
-                'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_4' => [
-                'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan IV mengandung karakter yang tidak diizinkan.',
             ],
         ];
 
@@ -659,13 +654,12 @@ class TargetController extends BaseController
                 'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
                 'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
 
-                // ANGKA
-                'capaian' => 'permit_empty|' . $rxNumber,
-
-                'target_triwulan_1' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_2' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_3' => 'permit_empty|' . $rxNumber,
-                'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+                // TEXT/ALPHANUMERIC
+                'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxText,
 
                 'rpjmd_target_id' => 'permit_empty|integer',
             ];
@@ -678,19 +672,19 @@ class TargetController extends BaseController
                     'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
                 ],
                 'capaian' => [
-                    'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_1' => [
-                    'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_2' => [
-                    'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_3' => [
-                    'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_4' => [
-                    'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                    'regex_match' => 'Target Triwulan IV mengandung karakter yang tidak diizinkan.',
                 ],
             ];
             if (!$this->validate($rules, $messages)) {
@@ -725,13 +719,12 @@ class TargetController extends BaseController
             'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
             'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
 
-            // ANGKA
-            'capaian' => 'permit_empty|' . $rxNumber,
-
-            'target_triwulan_1' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_2' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_3' => 'permit_empty|' . $rxNumber,
-            'target_triwulan_4' => 'permit_empty|' . $rxNumber,
+            // TEXT/ALPHANUMERIC
+            'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxText,
 
             'rpjmd_target_id' => 'permit_empty|integer',
         ];
@@ -744,19 +737,19 @@ class TargetController extends BaseController
                 'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
             ],
             'capaian' => [
-                'regex_match' => 'Capaian harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_1' => [
-                'regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_2' => [
-                'regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_3' => [
-                'regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_4' => [
-                'regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).',
+                'regex_match' => 'Target Triwulan IV mengandung karakter yang tidak diizinkan.',
             ],
         ];
 

@@ -61,6 +61,9 @@ $showKode = $showKode ?? true;
                                                             <div class="node-label">Tujuan Renstra</div>
                                                             <?= nl2br(esc($tujuanRenstra['nama'])) ?>
                                                         </div>
+                                                        <?php foreach (($tujuanRenstra['indikator_tujuan'] ?? []) as $indikatorTujuan): ?>
+                                                            <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorTujuan)) ?></div>
+                                                        <?php endforeach; ?>
                                                     </div>
 
                                                     <?php if (!empty($tujuanRenstra['es2s'])): ?>

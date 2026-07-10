@@ -610,7 +610,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         function initSelect2(context = document) {
-            $(context).find('.select2').each(function () {
+            $(context).find('.select2').each(function() {
                 if ($(this).hasClass('select2-hidden-accessible')) {
                     $(this).select2('destroy');
                 }
@@ -623,7 +623,7 @@
             });
         }
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             initSelect2();
         });
     </script>
@@ -631,107 +631,107 @@
     <script>
         // satuan dropdown
         window.satuanDropdownTemplate = `<?php
-        if (isset($satuan) && !empty($satuan)) {
-            foreach ($satuan as $s) {
-                echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada satuan</option>';
-        }
-        ?>`;
+                                            if (isset($satuan) && !empty($satuan)) {
+                                                foreach ($satuan as $s) {
+                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada satuan</option>';
+                                            }
+                                            ?>`;
 
         // program dropdown
         window.programDropdownTemplate = `<?php
-        if (isset($program) && !empty($program)) {
-            foreach ($program as $programItem) {
+                                            if (isset($program) && !empty($program)) {
+                                                foreach ($program as $programItem) {
 
-                $anggaran = isset($programItem['anggaran'])
-                    ? (int) $programItem['anggaran']
-                    : 0;
+                                                    $anggaran = isset($programItem['anggaran'])
+                                                        ? (int) $programItem['anggaran']
+                                                        : 0;
 
-                echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
-                    . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
-                    . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?>`;
+                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
+                                                        . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
+                                                        . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada program</option>';
+                                            }
+                                            ?>`;
 
 
         //program jpt dropdown
         window.jptProgramDropdownTemplate = `<?php
-        if (isset($jptProgram) && !empty($jptProgram)) {
-            foreach ($jptProgram as $programItem) {
+                                                if (isset($jptProgram) && !empty($jptProgram)) {
+                                                    foreach ($jptProgram as $programItem) {
 
-                $anggaran = isset($programItem['anggaran'])
-                    ? number_format($programItem['anggaran'], 0, ',', '.')
-                    : '0';
+                                                        $anggaran = isset($programItem['anggaran'])
+                                                            ? number_format($programItem['anggaran'], 0, ',', '.')
+                                                            : '0';
 
-                echo '<option value="' . $programItem['id'] . '">'
-                    . esc($programItem['program_kegiatan'])
-                    . ' - Rp ' . $anggaran
-                    . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada program</option>';
-        }
-        ?>`;
+                                                        echo '<option value="' . $programItem['id'] . '">'
+                                                            . esc($programItem['program_kegiatan'])
+                                                            . ' - Rp ' . $anggaran
+                                                            . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada program</option>';
+                                                }
+                                                ?>`;
 
 
         // kegiatan dropdown
         window.kegiatanDropdownTemplate = `<?php
-        if (isset($kegiatan) && !empty($kegiatan)) {
-            foreach ($kegiatan as $kegiatanItem) {
+                                            if (isset($kegiatan) && !empty($kegiatan)) {
+                                                foreach ($kegiatan as $kegiatanItem) {
 
-                $anggaran = isset($kegiatanItem['anggaran'])
-                    ? (int) $kegiatanItem['anggaran']
-                    : 0;
+                                                    $anggaran = isset($kegiatanItem['anggaran'])
+                                                        ? (int) $kegiatanItem['anggaran']
+                                                        : 0;
 
-                echo '<option value="' . $kegiatanItem['id'] . '" '
-                    . 'data-anggaran="' . $anggaran . '">'
-                    . esc($kegiatanItem['kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
-                    . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada kegiatan</option>';
-        }
-        ?>`;
+                                                    echo '<option value="' . $kegiatanItem['id'] . '" '
+                                                        . 'data-anggaran="' . $anggaran . '">'
+                                                        . esc($kegiatanItem['kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
+                                                        . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
+                                            }
+                                            ?>`;
 
         // kegiatan admin dropdown
         window.kegiatanAdminDropdownTemplate = `<?php
-        if (!empty($kegiatanAdmin)) {
-            foreach ($kegiatanAdmin as $kegiatanItem) {
-                echo '<option value="' . $kegiatanItem['id'] . '" '
-                    . 'data-program="' . $kegiatanItem['program_id'] . '">'
-                    . esc($kegiatanItem['kegiatan'])
-                    . '</option>';
-            }
-        }
-        ?>`;
+                                                if (!empty($kegiatanAdmin)) {
+                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
+                                                        echo '<option value="' . $kegiatanItem['id'] . '" '
+                                                            . 'data-program="' . $kegiatanItem['program_id'] . '">'
+                                                            . esc($kegiatanItem['kegiatan'])
+                                                            . '</option>';
+                                                    }
+                                                }
+                                                ?>`;
 
         // subkegiatan dropdown
         window.subkegiatanDropdownTemplate = `<?php
-        if (isset($subkegiatan) && !empty($subkegiatan)) {
-            foreach ($subkegiatan as $sk) {
+                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
+                                                    foreach ($subkegiatan as $sk) {
 
-                $anggaran = isset($sk['anggaran'])
-                    ? (int) $sk['anggaran']
-                    : 0;
+                                                        $anggaran = isset($sk['anggaran'])
+                                                            ? (int) $sk['anggaran']
+                                                            : 0;
 
-                echo '<option value="' . $sk['id'] . '" '
-                    . 'data-anggaran="' . $anggaran . '">'
-                    . esc($sk['sub_kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
-                    . '</option>';
-            }
-        } else {
-            echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-        }
-        ?>`;
+                                                        echo '<option value="' . $sk['id'] . '" '
+                                                            . 'data-anggaran="' . $anggaran . '">'
+                                                            . esc($sk['sub_kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
+                                                            . '</option>';
+                                                    }
+                                                } else {
+                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
+                                                }
+                                                ?>`;
     </script>
 
     <script>
-        document.addEventListener('change', function (e) {
+        document.addEventListener('change', function(e) {
             if (e.target.classList.contains('kegiatan-dropdown')) {
                 const selected = e.target.options[e.target.selectedIndex];
                 const programId = selected?.dataset.program || '';
@@ -744,10 +744,10 @@
         });
 
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             // Fungsi untuk mengupdate NIP berdasarkan pilihan pegawai
             document.querySelectorAll('.pegawai-select').forEach(select => {
-                select.addEventListener('change', function () {
+                select.addEventListener('change', function() {
                     const targetField = document.querySelector(`input[name="${this.dataset.target}"]`);
                     if (targetField && this.selectedOptions[0]) {
                         targetField.value = this.selectedOptions[0].dataset.nip || '';
@@ -811,19 +811,26 @@
     </script>
 
 
-    <?php if (in_array($jenis, ['jpt', 'camat'], true)): ?>
-        <script src="<?= base_url('assets/js/adminopd/pk/pk-form.js') ?>"></script>
-    <?php elseif ($jenis === 'administrator'): ?>
-        <script src="<?= base_url('assets/js/adminopd/pk/pk-admin-form.js') ?>"></script>
-    <?php elseif ($jenis === 'pengawas'): ?>
-        <?php if ($isKecamatanOpd ?? false): ?>
-            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-camat-form.js') ?>"></script>
-        <?php else: ?>
-            <script src="<?= base_url('assets/js/adminopd/pk/pk-pengawas-form.js') ?>"></script>
-        <?php endif; ?>
-    <?php elseif ($jenis === 'bupati'): ?>
-        <script src="<?= base_url('assets/js/adminKabupaten/pk/pk-bupati-form.js') ?>"></script>
-    <?php endif; ?>
+    <?php
+    $jsFile = '';
+    if (in_array($jenis, ['jpt', 'camat'], true)) {
+        $jsFile = 'assets/js/adminopd/pk/pk-form.js';
+    } elseif ($jenis === 'administrator') {
+        $jsFile = 'assets/js/adminopd/pk/pk-admin-form.js';
+    } elseif ($jenis === 'pengawas') {
+        $jsFile = ($isKecamatanOpd ?? false) 
+            ? 'assets/js/adminopd/pk/pk-pengawas-camat-form.js' 
+            : 'assets/js/adminopd/pk/pk-pengawas-form.js';
+    } elseif ($jenis === 'bupati') {
+        $jsFile = 'assets/js/adminKabupaten/pk/pk-bupati-form.js';
+    }
+
+    if (!empty($jsFile)) {
+        $fullPath = FCPATH . $jsFile;
+        $version = file_exists($fullPath) ? filemtime($fullPath) : time();
+        echo '<script src="' . base_url($jsFile . '?v=' . $version) . '"></script>';
+    }
+    ?>
 
 </body>
 

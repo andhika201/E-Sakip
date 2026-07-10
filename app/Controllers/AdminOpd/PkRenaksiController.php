@@ -439,10 +439,10 @@ class PkRenaksiController extends BaseController
             'rencana_aksi'      => 'required|string|max_length[10000]|' . $rxT,
             'penanggung_jawab'  => 'permit_empty|string|max_length[255]|' . $rxT,
             'capaian'           => 'permit_empty|' . $rxN,
-            'target_triwulan_1' => 'permit_empty|' . $rxN,
-            'target_triwulan_2' => 'permit_empty|' . $rxN,
-            'target_triwulan_3' => 'permit_empty|' . $rxN,
-            'target_triwulan_4' => 'permit_empty|' . $rxN,
+            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
         ];
         if (!$this->validate($rules, $this->triwulanMessages())) {
             return redirect()->back()->withInput()
@@ -533,10 +533,10 @@ class PkRenaksiController extends BaseController
             'rencana_aksi'      => 'required|string|max_length[10000]|' . $rxT,
             'penanggung_jawab'  => 'permit_empty|string|max_length[255]|' . $rxT,
             'capaian'           => 'permit_empty|' . $rxN,
-            'target_triwulan_1' => 'permit_empty|' . $rxN,
-            'target_triwulan_2' => 'permit_empty|' . $rxN,
-            'target_triwulan_3' => 'permit_empty|' . $rxN,
-            'target_triwulan_4' => 'permit_empty|' . $rxN,
+            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
+            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
         ];
         if (!$this->validate($rules, $this->triwulanMessages())) {
             return redirect()->back()->withInput()
@@ -918,10 +918,10 @@ class PkRenaksiController extends BaseController
             'rencana_aksi'      => ['regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.'],
             'penanggung_jawab'  => ['regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.'],
             'capaian'           => ['regex_match' => 'Baseline harus berupa angka (contoh: 1 atau 1,5).'],
-            'target_triwulan_1' => ['regex_match' => 'Target Triwulan I harus berupa angka (contoh: 1 atau 1,5).'],
-            'target_triwulan_2' => ['regex_match' => 'Target Triwulan II harus berupa angka (contoh: 1 atau 1,5).'],
-            'target_triwulan_3' => ['regex_match' => 'Target Triwulan III harus berupa angka (contoh: 1 atau 1,5).'],
-            'target_triwulan_4' => ['regex_match' => 'Target Triwulan IV harus berupa angka (contoh: 1 atau 1,5).'],
+            'target_triwulan_1' => ['regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.'],
+            'target_triwulan_2' => ['regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.'],
+            'target_triwulan_3' => ['regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.'],
+            'target_triwulan_4' => ['regex_match' => 'Target Triwulan IV mengandung karakter yang tidak diizinkan.'],
         ];
     }
 }

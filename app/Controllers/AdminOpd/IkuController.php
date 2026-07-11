@@ -133,6 +133,125 @@ class IkuController extends BaseController
         ]);
     }
 
+    public function cetak()
+    {
+        ob_clean();
+        ob_start();
+
+        $session = session();
+        $opdId = $session->get('opd_id');
+        $role = $session->get('role');
+
+        if (!$opdId && $role !== 'admin_kab') {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        $periode = trim((string) ($this->request->getGet('periode') ?? ''));
+
+        $periodeList = $this->db->table('renstra_sasaran')
+            ->select('tahun_mulai, tahun_akhir')
+            ->groupBy('tahun_mulai, tahun_akhir')
+            ->orderBy('tahun_mulai', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $groupedData = [];
+        foreach ($periodeList as $p) {
+            $years = range($p['tahun_mulai'], $p['tahun_akhir']);
+            $key = "{$p['tahun_mulai']}-{$p['tahun_akhir']}";
+            $groupedData[$key] = [
+                'period' => $key,
+                'years' => $years,
+            ];
+        }
+
+        $currentYear = (int) date('Y');
+        if (empty($periode) && !empty($groupedData)) {
+            foreach ($groupedData as $key => $p) {
+                $start = (int) min($p['years']);
+                $end = (int) max($p['years']);
+                if ($currentYear >= $start && $currentYear <= $end) {
+                    $periode = $key;
+                    break;
+                }
+            }
+            if (empty($periode)) {
+                $periode = array_key_first($groupedData);
+            }
+        }
+
+        if (empty($periode)) {
+            return redirect()->to(base_url('adminopd/iku'))
+                ->with('error', 'Periode wajib dipilih untuk cetak PDF IKU.');
+        }
+
+        $renstraData = $this->renstraModel->getAllSasaranWithIndikatorAndTarget($opdId);
+        $rpjmdData = $this->rpjmdModel->getSasaranWithIndikatorAndTarget();
+
+        if (strpos($periode, '-') !== false) {
+            [$tahunMulai, $tahunAkhir] = explode('-', $periode);
+
+            $renstraData = array_filter($renstraData, function ($sasaran) use ($tahunMulai, $tahunAkhir) {
+                return (
+                    (int) $sasaran['tahun_mulai'] === (int) $tahunMulai &&
+                    (int) $sasaran['tahun_akhir'] === (int) $tahunAkhir
+                );
+            });
+
+            $groupedData = [
+                $periode => [
+                    'period' => $periode,
+                    'years' => range((int) $tahunMulai, (int) $tahunAkhir),
+                ],
+            ];
+        } else {
+            $tahunMulai = null;
+            $tahunAkhir = null;
+        }
+
+        $ikuData = ($role === 'admin_kab')
+            ? $this->ikuModel->getRPJMDWithPrograms()
+            : $this->ikuModel->getRenstraWithPrograms($opdId);
+
+        $currentOpd = $opdId ? $this->opdModel->find($opdId) : null;
+
+        $html = view('adminOpd/iku/iku_cetak', [
+            'title' => 'Indikator Kinerja Utama',
+            'renstra_data' => $renstraData,
+            'rpjmd_data' => $rpjmdData,
+            'iku_data' => $ikuData,
+            'grouped_data' => $groupedData,
+            'selected_periode' => $periode,
+            'role' => $role,
+            'nama_opd' => $currentOpd['nama_opd'] ?? '',
+            'tahun_mulai' => isset($tahunMulai) ? (int) $tahunMulai : null,
+            'tahun_akhir' => isset($tahunAkhir) ? (int) $tahunAkhir : null,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $namaOpd = trim((string) ($currentOpd['nama_opd'] ?? ''));
+        $namaFile = $namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '';
+        $mpdf->Output('IKU-OPD-' . $namaFile . $periode . '.pdf', 'I');
+        exit;
+    }
+
     /**
      * FORM TAMBAH IKU
      */

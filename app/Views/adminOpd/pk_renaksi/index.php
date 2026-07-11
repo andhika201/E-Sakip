@@ -135,6 +135,9 @@ $filterQs = http_build_query(array_filter([
                     <?php endif; ?>
                 <?php endif; ?>
                 <div class="col text-end">
+                    <a href="<?= base_url($renaksiPath . '/cetak') . ($filterQs ? '?' . $filterQs : '') ?>" target="_blank" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                    </a>
                     <a href="<?= base_url($monevPath) . ($filterQs ? '?' . $filterQs : '') ?>" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-chart-line me-1"></i> Lihat MONEV (Realisasi)
                     </a>

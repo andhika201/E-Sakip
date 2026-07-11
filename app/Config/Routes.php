@@ -156,6 +156,7 @@ $routes->group(
         $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/bupati');
 
         // Target & Rencana Aksi (PK Bupati) - URL bersih: adminkab/target_renaksi
+        $routes->get('target_renaksi/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/bupati');
         $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/bupati');
         $routes->post('target_renaksi/save', 'AdminOpd\PkRenaksiController::save/bupati');
         // Kelola Perangkat Daerah pendukung PK Bupati (override manual) - spesifik sebelum edit/(:num)
@@ -167,6 +168,7 @@ $routes->group(
 
         // Rencana Aksi & MONEV PK Bupati (jenis = bupati). Route spesifik sebelum (:any).
         $routes->get('renaksi_pk/(:any)/tambah', 'AdminOpd\PkRenaksiController::tambah/$1');
+        $routes->get('renaksi_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/$1');
         $routes->post('renaksi_pk/(:any)/save', 'AdminOpd\PkRenaksiController::save/$1');
         $routes->get('renaksi_pk/(:any)/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/$1/$2');
         $routes->post('renaksi_pk/(:any)/update/(:num)', 'AdminOpd\PkRenaksiController::update/$1/$2');
@@ -272,6 +274,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Renstra
     $routes->get('renstra', 'AdminOpd\RenstraController::index');
+    $routes->get('renstra/cetak', 'AdminOpd\RenstraController::cetak');
     $routes->get('renstra/tambah', 'AdminOpd\RenstraController::tambah_renstra');
     $routes->get('renstra/edit/(:num)', 'AdminOpd\RenstraController::edit/$1');
     $routes->post('renstra/save', 'AdminOpd\RenstraController::save');
@@ -283,6 +286,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // RKT
     $routes->get('rkt', 'AdminOpd\RktController::index');
+    $routes->get('rkt/cetak', 'AdminOpd\RktController::cetak');
     $routes->get('rkt/tambah/(:num)', 'AdminOpd\RktController::tambah/$1');
     $routes->get('rkt/edit/(:num)', 'AdminOpd\RktController::edit/$1');
     $routes->post('rkt/save', 'AdminOpd\RktController::save');
@@ -293,6 +297,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // IKU
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
+    $routes->get('iku/cetak', 'AdminOpd\IkuController::cetak');
     $routes->get('iku', 'AdminOpd\IkuController::index');
     $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
@@ -316,6 +321,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/es3');
 
     // Target & Rencana Aksi (PK Eselon II/III/IV) - URL bersih: adminopd/target_renaksi
+    $routes->get('target_renaksi/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/es3');
     $routes->get('target_renaksi/tambah', 'AdminOpd\PkRenaksiController::tambah/es3');
     $routes->post('target_renaksi/save', 'AdminOpd\PkRenaksiController::save/es3');
     $routes->get('target_renaksi/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/es3/$1');
@@ -324,6 +330,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Rencana Aksi & MONEV PK Eselon III (jenis = es3). Route spesifik sebelum (:any).
     $routes->get('renaksi_pk/(:any)/tambah', 'AdminOpd\PkRenaksiController::tambah/$1');
+    $routes->get('renaksi_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/$1');
     $routes->post('renaksi_pk/(:any)/save', 'AdminOpd\PkRenaksiController::save/$1');
     $routes->get('renaksi_pk/(:any)/edit/(:num)', 'AdminOpd\PkRenaksiController::edit/$1/$2');
     $routes->post('renaksi_pk/(:any)/update/(:num)', 'AdminOpd\PkRenaksiController::update/$1/$2');

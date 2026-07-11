@@ -155,6 +155,17 @@
                         <a href="<?= base_url('adminopd/renstra') ?>" class="btn btn-outline-secondary">
                             <i class="fas fa-undo"></i> Reset
                         </a>
+                        <?php if (!empty($filters['periode'])): ?>
+                            <a href="<?= base_url('adminopd/renstra/cetak?' . http_build_query(array_filter([
+                                'misi' => $filters['misi'] ?? '',
+                                'tujuan' => $filters['tujuan'] ?? '',
+                                'rpjmd' => $filters['rpjmd'] ?? '',
+                                'periode' => $filters['periode'] ?? '',
+                                'status' => $filters['status'] ?? '',
+                            ], static fn($v) => $v !== ''))) ?>" target="_blank" class="btn btn-outline-danger">
+                                <i class="fas fa-file-pdf"></i> Cetak PDF
+                            </a>
+                        <?php endif; ?>
                         <?php if (user_can('renstra.create')): ?>
                             <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
                                 <i class="fas fa-plus"></i> Tambah RENSTRA

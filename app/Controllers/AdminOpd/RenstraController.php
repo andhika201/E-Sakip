@@ -114,6 +114,80 @@ class RenstraController extends BaseController
         return view('adminOpd/renstra/renstra', $data);
     }
 
+    public function cetak()
+    {
+        ob_clean();
+        ob_start();
+
+        $session = session();
+        $opdId = $session->get('opd_id');
+
+        if (!$opdId) {
+            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
+        }
+
+        $misi = trim($this->request->getGet('misi') ?? '');
+        $tujuan = trim($this->request->getGet('tujuan') ?? '');
+        $rpjmd = trim($this->request->getGet('rpjmd') ?? '');
+        $periode = trim($this->request->getGet('periode') ?? '');
+        $status = trim($this->request->getGet('status') ?? '');
+
+        if ($periode === '') {
+            return redirect()->to(base_url('adminopd/renstra'))
+                ->with('error', 'Periode wajib dipilih untuk cetak PDF Renstra.');
+        }
+
+        $renstraData = $this->renstraModel->getFilteredRenstra(
+            $opdId,
+            $misi ?: null,
+            $tujuan ?: null,
+            $rpjmd ?: null,
+            $status ?: null,
+            $periode ?: null
+        );
+
+        $currentOpd = $this->opdModel->find($opdId);
+        [$tahunMulai, $tahunAkhir] = array_map('trim', explode('-', $periode));
+
+        $html = view('adminOpd/renstra/renstra_cetak', [
+            'renstra_data' => $renstraData,
+            'filters' => [
+                'misi' => $misi,
+                'tujuan' => $tujuan,
+                'rpjmd' => $rpjmd,
+                'periode' => $periode,
+                'status' => $status,
+            ],
+            'periode' => $periode,
+            'tahun_mulai' => (int) $tahunMulai,
+            'tahun_akhir' => (int) $tahunAkhir,
+            'nama_opd' => $currentOpd['nama_opd'] ?? '',
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $namaOpd = trim((string) ($currentOpd['nama_opd'] ?? ''));
+        $namaFile = $namaOpd !== '' ? preg_replace('/[^A-Za-z0-9]+/', '-', $namaOpd) . '-' : '';
+        $mpdf->Output('Renstra-OPD-' . $namaFile . $periode . '.pdf', 'I');
+        exit;
+    }
+
     public function tambah_renstra()
     {
         // Get OPD ID from session

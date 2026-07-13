@@ -15,16 +15,25 @@ $baseUrl  = base_url($renaksiPath);
 
 // Label eselon dari pk.jenis
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
-    $jabatanText = strtolower(trim((string) $jabatanNama));
-    if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true)) {
-        return 'Eselon II';
+    $formatNamaEselon = static function ($value) {
+        $value = trim((string) $value);
+        if ($value === '' || ctype_digit($value)) {
+            return null;
+        }
+        if (preg_match('/^eselon\s+/i', $value)) {
+            return $value;
+        }
+        return 'Eselon ' . $value;
+    };
+
+    $label = $formatNamaEselon($jabatanEselon);
+    if ($label !== null) {
+        return $label;
     }
 
-    if ($jabatanEselon !== null && $jabatanEselon !== '') {
-        $n = (int) $jabatanEselon;
-        if ($n > 0) {
-            return 'Eselon ' . str_repeat('I', $n);
-        }
+    $jabatanText = strtolower(trim((string) $jabatanNama));
+    if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true) || strpos($jabatanText, 'kepala dinas') === 0) {
+        return 'Eselon II';
     }
 
     $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];

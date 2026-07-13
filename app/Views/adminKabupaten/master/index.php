@@ -187,7 +187,7 @@
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
-                                <?php if (empty($opd)): ?><tr><td colspan="5" class="text-center text-muted py-3">Belum ada data.</td></tr><?php endif; ?>
+                                <?php if (empty($opd)): ?><tr><td colspan="6" class="text-center text-muted py-3">Belum ada data.</td></tr><?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -393,7 +393,7 @@
             <div class="modal-body">
                 <div class="mb-2"><label class="form-label">Nama Jabatan</label><input type="text" name="nama_jabatan" class="form-control" required></div>
                 <div class="mb-2"><label class="form-label">OPD</label><select name="opd_id" class="form-select select2-modal"><option value="">- Tanpa OPD -</option><?= $optOpd() ?></select></div>
-                <div class="mb-2"><label class="form-label">Eselon</label><input type="number" name="eselon" class="form-control" min="0"></div>
+                <div class="mb-2"><label class="form-label">Eselon</label><input type="text" name="eselon" class="form-control" placeholder="II.b"></div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-success">Simpan</button></div>
         </form>

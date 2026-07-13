@@ -65,7 +65,7 @@ class CreateMissingTestSakipTables extends Migration
             'kode_kegiatan' => ['type' => 'INT', 'constraint' => 11],
             'kegiatan' => ['type' => 'TEXT'],
             'tahun_anggaran' => ['type' => 'YEAR'],
-            'anggaran' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'default' => '0.00'],
+            'anggaran' => ['type' => 'DECIMAL', 'constraint' => '15,0', 'default' => '0'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
@@ -227,7 +227,7 @@ class CreateMissingTestSakipTables extends Migration
             'kode_sub_kegiatan' => ['type' => 'INT', 'constraint' => 11],
             'sub_kegiatan' => ['type' => 'TEXT'],
             'tahun_anggaran' => ['type' => 'YEAR'],
-            'anggaran' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'default' => '0.00'],
+            'anggaran' => ['type' => 'DECIMAL', 'constraint' => '15,0', 'default' => '0'],
             'created_at' => ['type' => 'DATETIME', 'null' => true],
             'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);

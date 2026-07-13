@@ -876,7 +876,7 @@ class PkModel extends Model
      */
     public function formatAnggaran($anggaran)
     {
-        return 'Rp ' . number_format((float) $anggaran, 2, ',', '.');
+        return 'Rp ' . number_format((float) $anggaran, 0, ',', '.');
     }
 
     /**

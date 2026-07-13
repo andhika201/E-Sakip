@@ -82,7 +82,7 @@ class PkRenaksiController extends BaseController
         $map = [
             'bupati'        => 'Bupati',
             'jpt'           => 'Eselon II',
-            'camat'         => 'Camat (Eselon III)',
+            'camat'         => 'Kecamatan (Eselon III)',
             'administrator' => 'Eselon III',
             'pengawas'      => 'Eselon IV',
         ];

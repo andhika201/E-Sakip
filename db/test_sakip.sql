@@ -103,7 +103,7 @@ CREATE TABLE `kegiatan_pk` (
   `kode_kegiatan` int NOT NULL,
   `kegiatan` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `tahun_anggaran` year NOT NULL,
-  `anggaran` decimal(15,2) DEFAULT '0.00',
+  `anggaran` decimal(15,0) DEFAULT '0',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -369,7 +369,7 @@ CREATE TABLE `program_pk` (
   `kode_program` int NOT NULL,
   `program_kegiatan` text COLLATE utf8mb4_general_ci NOT NULL,
   `tahun_anggaran` year NOT NULL,
-  `anggaran` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `anggaran` decimal(15,0) NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -637,7 +637,7 @@ CREATE TABLE `sub_kegiatan_pk` (
   `kode_sub_kegiatan` int NOT NULL,
   `sub_kegiatan` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `tahun_anggaran` year NOT NULL,
-  `anggaran` decimal(15,2) DEFAULT '0.00',
+  `anggaran` decimal(15,0) DEFAULT '0',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

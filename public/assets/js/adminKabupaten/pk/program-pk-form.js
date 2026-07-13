@@ -11,7 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function formatRupiah(angka) {
-    angka = String(angka || "").replace(/[^\d]/g, "");
+    angka = String(angka || "")
+      .trim()
+      .replace(/[,.]\d{1,2}$/, "")
+      .replace(/[^\d]/g, "");
 
     const sisa = angka.length % 3;
     let rupiah = angka.substr(0, sisa);

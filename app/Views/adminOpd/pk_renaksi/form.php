@@ -2,7 +2,7 @@
 $isBupati = ($jenis === 'bupati');
 $isEdit   = ($mode === 'edit');
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Kecamatan (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Eselon III', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     $pkJenis = strtolower(trim((string) $pkJenis));
     if ($pkJenis !== '' && isset($map[$pkJenis])) {
         return $map[$pkJenis];

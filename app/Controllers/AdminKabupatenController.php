@@ -15,11 +15,19 @@ class AdminKabupatenController extends BaseController
         $dashboard_data = $dash->getDashboardData(null, null);
         $summary_stats = $dash->getSummaryStats();
 
-        // Rollup realisasi PK (Bupati & Eselon III) lewat rencana aksi + MONEV
+        // Rollup realisasi PK lewat rencana aksi + MONEV.
         $monev = new MonevModel();
+        $rollupAdmin = $monev->getPkRealisasiRollup('administrator');
+        $rollupCamat = $monev->getPkRealisasiRollup('camat');
         $pk_rollup = [
             'bupati' => $monev->getPkRealisasiRollup('bupati'),
-            'es3'    => $monev->getPkRealisasiRollup('administrator'),
+            'es2'    => $monev->getPkRealisasiRollup('jpt'),
+            'es3'    => [
+                'indikator' => ($rollupAdmin['indikator'] ?? 0) + ($rollupCamat['indikator'] ?? 0),
+                'renaksi'   => ($rollupAdmin['renaksi'] ?? 0) + ($rollupCamat['renaksi'] ?? 0),
+                'capaian'   => ($rollupAdmin['capaian'] ?? 0) + ($rollupCamat['capaian'] ?? 0),
+            ],
+            'es4'    => $monev->getPkRealisasiRollup('pengawas'),
         ];
 
         return view('adminKabupaten/dashboard', [

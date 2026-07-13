@@ -13,8 +13,18 @@ $monevPath   = ($jenis === 'bupati') ? 'adminkab/monev'
              : (($base === 'adminopd') ? 'adminopd/monev' : ($base . '/monev_pk/' . $jenis));
 $baseUrl  = base_url($monevPath);
 
+$pkFilterOptions = [];
+if ($isOpd) {
+    $roleName = (string) ($role ?? '');
+    if ($roleName !== 'admin_kecamatan') {
+        $pkFilterOptions['jpt'] = 'Eselon II';
+    }
+    $pkFilterOptions['administrator'] = 'Eselon III';
+    $pkFilterOptions['pengawas'] = 'Eselon IV';
+}
+
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Kecamatan (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Eselon III', 'kecamatan' => 'Eselon III', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     $pkJenis = strtolower(trim((string) $pkJenis));
     if ($pkJenis !== '' && isset($map[$pkJenis])) {
         return $map[$pkJenis];
@@ -132,7 +142,7 @@ $filterQs = http_build_query(array_filter([
                     <div class="col-md-3">
                         <select class="form-select fw-semibold" onchange="if(this.value){window.location.href=this.value;}">
                             <?php // Mode PK Bupati disembunyikan (sementara) di MONEV admin_kab — tidak dikunci, hanya tidak ditampilkan. ?>
-                            <option value="<?= base_url($base . '/monev_pk/es3') ?>" <?= $isOpd ? 'selected' : '' ?>>Mode: PK OPD (Eselon II/III/IV)</option>
+                            <option value="<?= base_url($base . '/monev_pk/es3') ?>" <?= $isOpd ? 'selected' : '' ?>>Mode: PK OPD/Kecamatan</option>
                         </select>
                     </div>
                 <?php endif; ?>
@@ -162,10 +172,11 @@ $filterQs = http_build_query(array_filter([
                     <div class="col-md-2">
                         <select name="eselon" class="form-select" onchange="this.form.submit()">
                             <option value="">Semua Eselon</option>
-                            <option value="jpt" <?= (($eselon ?? '') === 'jpt') ? 'selected' : '' ?>>Eselon II</option>
-                            <option value="camat" <?= (($eselon ?? '') === 'camat') ? 'selected' : '' ?>>Kecamatan (Eselon III)</option>
-                            <option value="administrator" <?= (($eselon ?? '') === 'administrator') ? 'selected' : '' ?>>Eselon III</option>
-                            <option value="pengawas" <?= (($eselon ?? '') === 'pengawas') ? 'selected' : '' ?>>Eselon IV</option>
+                            <?php foreach ($pkFilterOptions as $pkKey => $pkLabel): ?>
+                                <option value="<?= esc($pkKey) ?>" <?= (($eselon ?? '') === $pkKey) ? 'selected' : '' ?>>
+                                    <?= esc($pkLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <?php if (!empty($pejabatList)): ?>
@@ -281,7 +292,7 @@ $filterQs = http_build_query(array_filter([
                                                 <?php if ($showPejabat): ?>
                                                     <td rowspan="<?= $sasTotal ?>" class="text-start">
                                                         <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></div>
-                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '', $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
                                                     </td>
                                                 <?php endif; ?>
                                                 <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
@@ -312,8 +323,13 @@ $filterQs = http_build_query(array_filter([
                                                         <?php if (empty($autoOpds)): ?>
                                                             <span class="text-muted">Belum ditetapkan</span>
                                                         <?php else: ?>
-                                                            <?php $eselonLinks = ['jpt' => 'Eselon II', 'camat' => 'Kecamatan (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']; ?>
                                                             <?php foreach ($autoOpds as $o): ?>
+                                                                <?php
+                                                                $isKecamatanPd = stripos((string) ($o['nama'] ?? ''), 'kecamatan') !== false;
+                                                                $eselonLinks = $isKecamatanPd
+                                                                    ? ['administrator' => 'Eselon III', 'pengawas' => 'Eselon IV']
+                                                                    : ['jpt' => 'Eselon II', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+                                                                ?>
                                                                 <div class="mb-2">
                                                                     <span class="fw-semibold text-success align-middle"><i class="fas fa-building me-1"></i><?= esc($o['nama']) ?></span>
                                                                     <span class="ms-1">
@@ -356,7 +372,7 @@ $filterQs = http_build_query(array_filter([
                         <?php else: ?>
                             <tr>
                                 <td colspan="<?= $cols ?>" class="text-muted">
-                                    Belum ada Rencana Aksi PK <?= $isBupati ? 'Bupati' : 'Eselon II/III/IV' ?>.
+                                    Belum ada Rencana Aksi PK <?= $isBupati ? 'Bupati' : 'OPD/Kecamatan' ?>.
                                     Buat dulu di menu <em>Rencana Aksi</em> sebelum mengisi capaian.
                                 </td>
                             </tr>

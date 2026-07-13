@@ -162,7 +162,9 @@
             <?php
             $pkCards = [
               ['key' => 'bupati', 'label' => 'PK Bupati', 'url' => base_url('adminkab/monev')],
-              ['key' => 'es3', 'label' => 'PK Eselon III (Administrator)', 'url' => base_url('adminkab/monev_pk/es3')],
+              ['key' => 'es2', 'label' => 'Eselon II', 'url' => base_url('adminkab/monev_pk/es3?eselon=jpt')],
+              ['key' => 'es3', 'label' => 'Eselon III', 'url' => base_url('adminkab/monev_pk/es3?eselon=administrator')],
+              ['key' => 'es4', 'label' => 'Eselon IV', 'url' => base_url('adminkab/monev_pk/es3?eselon=pengawas')],
             ];
             ?>
             <?php foreach ($pkCards as $c): ?>

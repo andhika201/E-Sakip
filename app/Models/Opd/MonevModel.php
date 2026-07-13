@@ -407,7 +407,8 @@ class MonevModel extends Model
             ->select('
                 pj.id           AS pejabat_id,
                 pj.nama_pegawai AS pejabat_nama,
-                jb.nama_jabatan AS pejabat_jabatan
+                jb.nama_jabatan AS pejabat_jabatan,
+                jb.eselon AS pejabat_eselon
             ')
             ->select('
                 ps.id      AS pk_sasaran_id,
@@ -451,6 +452,7 @@ class MonevModel extends Model
         if (!empty($pejabatId)) {
             $b->where('pk.pihak_2', (int) $pejabatId);
         }
+        $b->where("(COALESCE(LOWER(jb.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(pj.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
 
         return $b->orderBy('tr.opd_id', 'ASC')
             ->orderBy("FIELD(pk.jenis,'jpt','camat','administrator','pengawas')", '', false)

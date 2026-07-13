@@ -1,11 +1,23 @@
 <?php
 $isBupati = ($jenis === 'bupati');
 $isEdit   = ($mode === 'edit');
-$eselonLabel = function ($pkJenis) {
+$eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
+    $jabatanText = strtolower(trim((string) $jabatanNama));
+    if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true)) {
+        return 'Eselon II';
+    }
+
+    if ($jabatanEselon !== null && $jabatanEselon !== '') {
+        $n = (int) $jabatanEselon;
+        if ($n > 0) {
+            return 'Eselon ' . str_repeat('I', $n);
+        }
+    }
+
     $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     return $map[$pkJenis] ?? '-';
 };
-$ctxEselon = $eselonLabel($ctx['pk_jenis'] ?? '');
+$ctxEselon = $eselonLabel($ctx['pk_jenis'] ?? '', $ctx['pejabat_eselon'] ?? null, $ctx['pejabat_jabatan'] ?? '');
 $judul    = ($isEdit ? 'Edit' : 'Tambah') . ' Rencana Aksi';
 $renaksiPath = ($jenis === 'bupati') ? 'adminkab/target_renaksi'
              : (($base === 'adminopd') ? 'adminopd/target_renaksi' : ($base . '/renaksi_pk/' . $jenis));

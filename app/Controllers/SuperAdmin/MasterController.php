@@ -284,11 +284,14 @@ class MasterController extends BaseController
         }
 
         $opdId  = $this->request->getPost('opd_id');
-        $eselon = $this->request->getPost('eselon');
+        $eselon = trim((string) $this->request->getPost('eselon'));
+        if (!$this->isSafeText($eselon)) {
+            return $this->back('jabatan', 'error', 'Eselon mengandung input berbahaya.');
+        }
         $payload = [
             'nama_jabatan' => $nama,
             'opd_id'       => ($opdId === '' || $opdId === null) ? null : (int) $opdId,
-            'eselon'       => ($eselon === '' || $eselon === null) ? null : (int) $eselon,
+            'eselon'       => $eselon === '' ? null : $eselon,
             'updated_at'   => date('Y-m-d H:i:s'),
         ];
 

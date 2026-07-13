@@ -72,7 +72,7 @@
                                 <th style="width:50px;">No</th>
                                 <th>Nama Jabatan</th>
                                 <th style="width:280px;">OPD</th>
-                                <th style="width:100px;">Eselon</th>
+                                <th style="width:130px;">Eselon</th>
                                 <th style="width:90px;">Aksi</th>
                             </tr>
                         </thead>
@@ -102,9 +102,10 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <input type="number" form="<?= $fid ?>" name="eselon"
+                                            <input type="text" form="<?= $fid ?>" name="eselon"
                                                 class="form-control form-control-sm"
-                                                value="<?= esc($j['eselon'] ?? '') ?>" min="0">
+                                                value="<?= esc($j['eselon'] ?? '') ?>"
+                                                placeholder="II.b">
                                         </td>
                                         <td class="text-center">
                                             <button type="submit" form="<?= $fid ?>" class="btn btn-success btn-sm" title="Simpan">

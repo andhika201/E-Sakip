@@ -181,13 +181,15 @@ class PegawaiSyncService
             $rid  = (string) ($j['id_jabatan'] ?? '');
             $nama = trim((string) ($j['nama_jabatan'] ?? ''));
             if ($rid === '' || $nama === '') { continue; }
-            $eselon = isset($j['eselon_id']) && $j['eselon_id'] !== null ? (int) $j['eselon_id'] : null;
+            $namaEselon = trim((string) ($j['nama_eselon'] ?? ''));
+            $eselon = $namaEselon !== '' ? $namaEselon : null;
+            $payload = ['simpeg_id' => $rid, 'nama_jabatan' => $nama, 'eselon' => $eselon, 'updated_at' => $now];
             $local  = $this->resolveLocalId($rid, $nama, $bySimpeg, $byName);
             if ($local) {
-                $this->db->table('jabatan')->where('id', $local)->update(['simpeg_id' => $rid, 'nama_jabatan' => $nama, 'eselon' => $eselon, 'updated_at' => $now]);
+                $this->db->table('jabatan')->where('id', $local)->update($payload);
                 $update++;
             } else {
-                $this->db->table('jabatan')->insert(['simpeg_id' => $rid, 'nama_jabatan' => $nama, 'eselon' => $eselon, 'created_at' => $now, 'updated_at' => $now]);
+                $this->db->table('jabatan')->insert($payload + ['created_at' => $now]);
                 $local = (int) $this->db->insertID();
                 $baru++;
             }

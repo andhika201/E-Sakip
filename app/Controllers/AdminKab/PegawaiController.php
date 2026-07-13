@@ -138,12 +138,15 @@ class PegawaiController extends BaseController
         }
 
         $opdId  = $this->request->getPost('opd_id');
-        $eselon = $this->request->getPost('eselon');
+        $eselon = trim((string) $this->request->getPost('eselon'));
+        if (!$this->isSafeText($eselon)) {
+            return redirect()->back()->with('error', 'Eselon mengandung input berbahaya.');
+        }
 
         $set = [
             'nama_jabatan' => $namaJabatan,
             'opd_id'       => ($opdId === '' || $opdId === null) ? null : (int) $opdId,
-            'eselon'       => ($eselon === '' || $eselon === null) ? null : (int) $eselon,
+            'eselon'       => $eselon === '' ? null : $eselon,
             'edited_by'    => session()->get('user_id') ?? session()->get('id_pegawai'),
         ];
 

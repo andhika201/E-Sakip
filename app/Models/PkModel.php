@@ -16,8 +16,15 @@ class PkModel extends Model
     protected $allowedFields = [
         'opd_id',
         'jenis',
+        'tahun',
         'pihak_1',
+        'is_plt_pihak_1',
+        'is_plh_pihak_1',
+        'jabatan_pihak_1_manual',
         'pihak_2',
+        'is_plt_pihak_2',
+        'is_plh_pihak_2',
+        'jabatan_pihak_2_manual',
         'tanggal'
     ];
 
@@ -74,6 +81,78 @@ class PkModel extends Model
     protected $afterFind = [];
     protected $beforeDelete = [];
     protected $afterDelete = [];
+
+    private ?array $pkFieldNames = null;
+
+    private function pkHasField(string $field): bool
+    {
+        if ($this->pkFieldNames === null) {
+            try {
+                $this->pkFieldNames = $this->db->getFieldNames('pk');
+            } catch (\Throwable $e) {
+                $this->pkFieldNames = [];
+            }
+        }
+
+        return in_array($field, $this->pkFieldNames, true);
+    }
+
+    private function pkPltPayload(array $data): array
+    {
+        $payload = [];
+        foreach (['is_plt_pihak_1', 'is_plh_pihak_1', 'is_plt_pihak_2', 'is_plh_pihak_2'] as $field) {
+            if ($this->pkHasField($field)) {
+                $payload[$field] = !empty($data[$field]) ? 1 : 0;
+            }
+        }
+
+        foreach (['jabatan_pihak_1_manual', 'jabatan_pihak_2_manual'] as $field) {
+            if ($this->pkHasField($field)) {
+                $value = trim((string) ($data[$field] ?? ''));
+                $payload[$field] = $value !== '' ? $value : null;
+            }
+        }
+
+        return $payload;
+    }
+
+    private function pkFieldSelect(string $alias, string $field, string $fallback = 'NULL'): string
+    {
+        return $this->pkHasField($field)
+            ? "{$alias}.{$field} AS {$field}"
+            : "{$fallback} AS {$field}";
+    }
+
+    private function pkPltSelect(string $alias, string $field): string
+    {
+        return $this->pkFieldSelect($alias, $field, '0');
+    }
+
+    private function jabatanPkPltExpr(string $pkAlias, string $field, string $jabatanAlias): string
+    {
+        $side = str_replace('is_plt_', '', $field);
+        $plhField = 'is_plh_' . $side;
+        $manualField = 'jabatan_' . $side . '_manual';
+        $jabatanExpr = "{$jabatanAlias}.nama_jabatan";
+
+        if ($this->pkHasField($manualField)) {
+            $jabatanExpr = "COALESCE(NULLIF({$pkAlias}.{$manualField}, ''), {$jabatanExpr})";
+        }
+
+        if ($this->pkHasField($field) && $this->pkHasField($plhField)) {
+            return "CASE WHEN {$pkAlias}.{$field} = 1 THEN CONCAT('Plt. ', {$jabatanExpr}) WHEN {$pkAlias}.{$plhField} = 1 THEN CONCAT('Plh. ', {$jabatanExpr}) ELSE {$jabatanExpr} END";
+        }
+
+        if ($this->pkHasField($field)) {
+            return "IF({$pkAlias}.{$field} = 1, CONCAT('Plt. ', {$jabatanExpr}), {$jabatanExpr})";
+        }
+
+        if ($this->pkHasField($plhField)) {
+            return "IF({$pkAlias}.{$plhField} = 1, CONCAT('Plh. ', {$jabatanExpr}), {$jabatanExpr})";
+        }
+
+        return $jabatanExpr;
+    }
 
     /**
      * Get all program entries (pk_program) for a given PK id
@@ -292,6 +371,7 @@ class PkModel extends Model
                 'created_at' => $now,
                 'updated_at' => $now
             ];
+            $pkData = array_merge($pkData, $this->pkPltPayload($data));
 
             $db->table('pk')->insert($pkData);
             $this->logDbError($db, 'INSERT PK');
@@ -458,13 +538,16 @@ class PkModel extends Model
             // =====================================================
             // 1. UPDATE PK
             // =====================================================
-            $db->table('pk')->where('id', $pkId)->update([
+            $pkUpdate = [
                 'pihak_1' => $data['pihak_1'],
                 'pihak_2' => $data['pihak_2'],
                 'tahun' => $data['tahun'],
                 'tanggal' => $data['tanggal'],
                 'updated_at' => $now
-            ]);
+            ];
+            $pkUpdate = array_merge($pkUpdate, $this->pkPltPayload($data));
+
+            $db->table('pk')->where('id', $pkId)->update($pkUpdate);
 
             // =====================================================
             // 2. SYNC SASARAN
@@ -929,27 +1012,42 @@ class PkModel extends Model
      */
     public function getCompletePkByOpdId($opdId)
     {
+        $pihak1Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_1', 'j1');
+        $pihak2Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_2', 'j2');
+        $pihak1Plt     = $this->pkPltSelect('p', 'is_plt_pihak_1');
+        $pihak2Plt     = $this->pkPltSelect('p', 'is_plt_pihak_2');
+        $pihak1Plh     = $this->pkPltSelect('p', 'is_plh_pihak_1');
+        $pihak2Plh     = $this->pkPltSelect('p', 'is_plh_pihak_2');
+        $pihak1Manual  = $this->pkFieldSelect('p', 'jabatan_pihak_1_manual');
+        $pihak2Manual  = $this->pkFieldSelect('p', 'jabatan_pihak_2_manual');
+
         $query = $this->db->table('pk p')
             ->select("
                 p.id as pk_id,
                 p.opd_id,
                 p.jenis,
                 p.tanggal,
+                {$pihak1Plt},
+                {$pihak2Plt},
+                {$pihak1Plh},
+                {$pihak2Plh},
+                {$pihak1Manual},
+                {$pihak2Manual},
                 o.nama_opd,
 
                 peg1.id as pihak_1_id,
                 peg1.nama_pegawai as pihak_1_nama,
                 peg1.nip_pegawai as pihak_1_nip,
-                IF(peg1.is_plt = 1, CONCAT('Plt. ', j1.nama_jabatan), j1.nama_jabatan) as pihak_1_jabatan,
+                {$pihak1Jabatan} as pihak_1_jabatan,
                 pang1.nama_pangkat as pihak_1_pangkat,
                 pang1.golongan as pihak_1_golongan,
 
                 peg2.id as pihak_2_id,
                 peg2.nama_pegawai as pihak_2_nama,
                 peg2.nip_pegawai as pihak_2_nip,
-                IF(peg2.is_plt = 1, CONCAT('Plt. ', j2.nama_jabatan), j2.nama_jabatan) as pihak_2_jabatan,
-                pang2.nama_pangkat as pangkat_pihak_2,
-                pang2.golongan as golongan_pihak_2,
+                {$pihak2Jabatan} as pihak_2_jabatan,
+                pang2.nama_pangkat as pihak_2_pangkat,
+                pang2.golongan as pihak_2_golongan,
 
                 ps.id as sasaran_id,
                 ps.sasaran,
@@ -998,6 +1096,9 @@ class PkModel extends Model
                 'jabatan' => $first['pihak_1_jabatan'],
                 'pangkat' => $first['pihak_1_pangkat'],
                 'golongan' => $first['pihak_1_golongan'],
+                'is_plt' => (int) ($first['is_plt_pihak_1'] ?? 0),
+                'is_plh' => (int) ($first['is_plh_pihak_1'] ?? 0),
+                'jabatan_manual' => $first['jabatan_pihak_1_manual'] ?? null,
             ],
             'pihak_2' => [
                 'id' => $first['pihak_2_id'],
@@ -1006,6 +1107,9 @@ class PkModel extends Model
                 'jabatan' => $first['pihak_2_jabatan'],
                 'pangkat' => $first['pihak_2_pangkat'],
                 'golongan' => $first['pihak_2_golongan'],
+                'is_plt' => (int) ($first['is_plt_pihak_2'] ?? 0),
+                'is_plh' => (int) ($first['is_plh_pihak_2'] ?? 0),
+                'jabatan_manual' => $first['jabatan_pihak_2_manual'] ?? null,
             ],
             'sasaran' => [],
             'program' => [],
@@ -1056,17 +1160,20 @@ class PkModel extends Model
 
     public function getPkRelasiByOpdJenisTahun($opdId, $jenis, $tahun)
     {
+        $pihak1Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_1', 'jab1');
+        $pihak2Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_2', 'jab2');
+
         return $this->db->table('pk p')
             ->select("
             p.id,
             CASE 
                 WHEN p.jenis = 'bupati' THEN 
-                    CONCAT(peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')')
+                    CONCAT(peg1.nama_pegawai, ' (', {$pihak1Jabatan}, ')')
                 ELSE
                     CONCAT(
-                        peg1.nama_pegawai, ' (', jab1.nama_jabatan, ')',
+                        peg1.nama_pegawai, ' (', {$pihak1Jabatan}, ')',
                         ' ↔ ',
-                        peg2.nama_pegawai, ' (', jab2.nama_jabatan, ')'
+                        peg2.nama_pegawai, ' (', {$pihak2Jabatan}, ')'
                     )
             END AS relasi
         ")
@@ -1089,6 +1196,15 @@ class PkModel extends Model
      */
     public function getPkById($id)
     {
+        $pihak1Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_1', 'jab1');
+        $pihak2Jabatan = $this->jabatanPkPltExpr('p', 'is_plt_pihak_2', 'jab2');
+        $pihak1Plt     = $this->pkPltSelect('p', 'is_plt_pihak_1');
+        $pihak2Plt     = $this->pkPltSelect('p', 'is_plt_pihak_2');
+        $pihak1Plh     = $this->pkPltSelect('p', 'is_plh_pihak_1');
+        $pihak2Plh     = $this->pkPltSelect('p', 'is_plh_pihak_2');
+        $pihak1Manual  = $this->pkFieldSelect('p', 'jabatan_pihak_1_manual');
+        $pihak2Manual  = $this->pkFieldSelect('p', 'jabatan_pihak_2_manual');
+
         $builder = $this->db->table('pk p')
             ->select("
             p.id as pk_id,
@@ -1098,18 +1214,24 @@ class PkModel extends Model
             p.pihak_2,
             p.opd_id,
             p.tanggal,
+            {$pihak1Plt},
+            {$pihak2Plt},
+            {$pihak1Plh},
+            {$pihak2Plh},
+            {$pihak1Manual},
+            {$pihak2Manual},
             o.nama_opd,
             o.singkatan,
 
             peg1.nama_pegawai as nama_pihak_1,
             peg1.nip_pegawai as nip_pihak_1,
-            IF(peg1.is_plt = 1, CONCAT('Plt. ', jab1.nama_jabatan), jab1.nama_jabatan) as jabatan_pihak_1,
+            {$pihak1Jabatan} as jabatan_pihak_1,
             pang1.nama_pangkat as pangkat_pihak_1,
             pang1.golongan as golongan_pihak_1,
 
             peg2.nama_pegawai as nama_pihak_2,
             peg2.nip_pegawai as nip_pihak_2,
-            IF(peg2.is_plt = 1, CONCAT('Plt. ', jab2.nama_jabatan), jab2.nama_jabatan) as jabatan_pihak_2,
+            {$pihak2Jabatan} as jabatan_pihak_2,
             pang2.nama_pangkat as pangkat_pihak_2,
             pang2.golongan as golongan_pihak_2
         ", false)
@@ -1194,7 +1316,9 @@ class PkModel extends Model
 
                         $subList = $this->db->table('pk_subkegiatan psub')
                             ->select('psub.id as sub_id,
+                                    psub.id as pk_subkegiatan_id,
                                     sub.sub_kegiatan,
+                                    sub.anggaran,
                                     psub.pk_kegiatan_id,
                                     psub.subkegiatan_id
                                 ')

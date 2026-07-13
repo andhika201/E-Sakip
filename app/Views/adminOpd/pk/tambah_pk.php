@@ -151,6 +151,28 @@
                                                 <option value="" disabled>Tidak Pegawai yang tersedia</option>
                                             <?php endif; ?>
                                         </select>
+                                        <?php
+                                        $statusJabatanP1 = old('status_jabatan_pihak_1');
+                                        if ($statusJabatanP1 === null) {
+                                            $statusJabatanP1 = old('is_plt_pihak_1') ? 'plt' : '';
+                                        }
+                                        ?>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Status Jabatan</label>
+                                                <select name="status_jabatan_pihak_1" class="form-select border-secondary">
+                                                    <option value="" <?= $statusJabatanP1 === '' ? 'selected' : '' ?>>Definitif</option>
+                                                    <option value="plt" <?= $statusJabatanP1 === 'plt' ? 'selected' : '' ?>>Plt.</option>
+                                                    <option value="plh" <?= $statusJabatanP1 === 'plh' ? 'selected' : '' ?>>Plh.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label">Jabatan Manual</label>
+                                                <input type="text" name="jabatan_pihak_1_manual" class="form-control border-secondary"
+                                                    maxlength="255" value="<?= esc(old('jabatan_pihak_1_manual') ?? '') ?>"
+                                                    placeholder="Kosongkan jika pakai jabatan pegawai">
+                                            </div>
+                                        </div>
                                     </div>
                                     <?php if ($jenis !== 'bupati'): ?>
                                         <div class="col-md-4">
@@ -181,6 +203,28 @@
                                                     <option value="" disabled>Tidak Pegawai yang tersedia</option>
                                                 <?php endif; ?>
                                             </select>
+                                            <?php
+                                            $statusJabatanP2 = old('status_jabatan_pihak_2');
+                                            if ($statusJabatanP2 === null) {
+                                                $statusJabatanP2 = old('is_plt_pihak_2') ? 'plt' : '';
+                                            }
+                                            ?>
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Status Jabatan</label>
+                                                    <select name="status_jabatan_pihak_2" class="form-select border-secondary">
+                                                        <option value="" <?= $statusJabatanP2 === '' ? 'selected' : '' ?>>Definitif</option>
+                                                        <option value="plt" <?= $statusJabatanP2 === 'plt' ? 'selected' : '' ?>>Plt.</option>
+                                                        <option value="plh" <?= $statusJabatanP2 === 'plh' ? 'selected' : '' ?>>Plh.</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Jabatan Manual</label>
+                                                    <input type="text" name="jabatan_pihak_2_manual" class="form-control border-secondary"
+                                                        maxlength="255" value="<?= esc(old('jabatan_pihak_2_manual') ?? '') ?>"
+                                                        placeholder="Kosongkan jika pakai jabatan pegawai">
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">NIP Pegawai</label>

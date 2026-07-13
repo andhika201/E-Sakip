@@ -302,7 +302,7 @@ class TargetModel extends Model
      * @param string|null $tahun     Filter tahun PK (null = semua).
      * @param int|null    $opdId     Scope per OPD (null = semua OPD, untuk admin_kab).
      * @param string|null $eselon    Filter satu eselon: 'jpt'|'administrator'|'pengawas' (null = semua).
-     * @param int|null    $pejabatId Filter pejabat penandatangan (pk.pihak_1) (null = semua).
+     * @param int|null    $pejabatId Filter pejabat pelaksana (pk.pihak_2) (null = semua).
      */
     public function getTargetListByPkOpd(
         ?string $tahun = null,
@@ -348,7 +348,7 @@ class TargetModel extends Model
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('opd o', 'o.id = pk.opd_id', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->join('target_rencana tr', $trJoin, 'left');
@@ -365,7 +365,7 @@ class TargetModel extends Model
             $b->where('pk.opd_id', (int) $opdId);
         }
         if (!empty($pejabatId)) {
-            $b->where('pk.pihak_1', (int) $pejabatId);
+            $b->where('pk.pihak_2', (int) $pejabatId);
         }
 
         return $b->orderBy('pk.opd_id', 'ASC')

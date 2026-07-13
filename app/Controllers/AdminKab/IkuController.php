@@ -26,14 +26,26 @@ class IkuController extends BaseController
     }
     private function xssRule(): string
     {
-        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*(?<!\w)on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
     }
 
     private function isSafeText($val): bool
     {
         if ($val === null || $val === '')
             return true;
-        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*(?<!\w)on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+    }
+
+    
+    private function safeTextError(array $fields): ?string
+    {
+        foreach ($fields as $label => $value) {
+            if (!$this->isSafeText($value)) {
+                return $label . ' terdeteksi mengandung script / input berbahaya.';
+            }
+        }
+
+        return null;
     }
 
     /* =========================================================
@@ -172,10 +184,11 @@ class IkuController extends BaseController
         // VALIDASI (ANTI XSS/SCRIPT)
         // ============================
         $rules = [
-            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
-            'definisi' => 'required|string|max_length[10000]|' . $rx,
-            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
-            'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
+            'mode' => 'permit_empty|string|max_length[20]',
+            'definisi' => 'required|string|max_length[10000]',
+            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]',
+            'sumber_data' => 'permit_empty|string|max_length[10000]',
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]',
             'rpjmd_id' => 'permit_empty|integer',
             'renstra_id' => 'permit_empty|integer',
         ];
@@ -199,6 +212,16 @@ class IkuController extends BaseController
         if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+        
+        if ($error = $this->safeTextError([
+            'Definisi' => $this->request->getPost('definisi'),
+            'Formula/Rumusan' => $this->request->getPost('rumusan_perhitungan'),
+            'Sumber Data' => $this->request->getPost('sumber_data'),
+            'Penanggung Jawab' => $this->request->getPost('penanggung_jawab'),
+            'Mode' => $this->request->getPost('mode'),
+        ])) {
+            return redirect()->back()->withInput()->with('error', $error);
         }
         $mode = $this->request->getPost('mode') ?: 'opd';
         $definisi = trim($this->request->getPost('definisi') ?? '');
@@ -298,12 +321,11 @@ class IkuController extends BaseController
         // ============================
         $rules = [
             'iku_id' => 'required|integer',
-            'mode' => 'permit_empty|string|max_length[20]|' . $rx,
-            'definisi' => 'required|string|max_length[10000]|' . $rx,
-            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
-            'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
-
-            // id indikator (opsional)
+            'mode' => 'permit_empty|string|max_length[20]',
+            'definisi' => 'required|string|max_length[10000]',
+            'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]',
+            'sumber_data' => 'permit_empty|string|max_length[10000]',
+            'penanggung_jawab' => 'permit_empty|string|max_length[255]',
             'renstra_indikator_sasaran_id' => 'permit_empty|integer',
             'rpjmd_id' => 'permit_empty|integer',
         ];
@@ -320,6 +342,16 @@ class IkuController extends BaseController
         if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
+        }
+        
+        if ($error = $this->safeTextError([
+            'Definisi' => $request->getPost('definisi'),
+            'Formula/Rumusan' => $request->getPost('rumusan_perhitungan'),
+            'Sumber Data' => $request->getPost('sumber_data'),
+            'Penanggung Jawab' => $request->getPost('penanggung_jawab'),
+            'Mode' => $request->getPost('mode'),
+        ])) {
+            return redirect()->back()->withInput()->with('error', $error);
         }
         $ikuId = (int) $request->getPost('iku_id');
         $definisi = trim($request->getPost('definisi') ?? '');

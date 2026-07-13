@@ -136,6 +136,29 @@
                             </select>
                         </div>
                     <?php endif; ?>
+
+                    <?php
+                    $cetakParams = [];
+                    if (!empty($mode)) {
+                        $cetakParams['mode'] = $mode;
+                    }
+                    if (!empty($selectedOpdId)) {
+                        $cetakParams['opd_id'] = $selectedOpdId;
+                    }
+                    if (!empty($filters['tahun'])) {
+                        $cetakParams['tahun'] = $filters['tahun'];
+                    }
+                    if (!empty($filters['status'])) {
+                        $cetakParams['status'] = $filters['status'];
+                    }
+                    $cetakBase = (($role ?? '') === 'admin_kab') ? 'adminkab/lakip/cetak' : 'adminopd/lakip/cetak';
+                    $cetakUrl = base_url($cetakBase) . (!empty($cetakParams) ? ('?' . http_build_query($cetakParams)) : '');
+                    ?>
+                    <div class="d-flex align-items-start">
+                        <a href="<?= $cetakUrl ?>" target="_blank" class="btn btn-outline-danger">
+                            <i class="fas fa-print me-1"></i> Cetak
+                        </a>
+                    </div>
                 </div>
 
                 <?php

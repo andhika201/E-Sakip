@@ -123,6 +123,25 @@
                         <option value="selesai" <?= (($filters['status'] ?? '') === 'selesai') ? 'selected' : '' ?>>Selesai</option>
                     </select>
                 </div>
+
+                <?php
+                $cetakParams = [
+                    'mode' => $mode,
+                    'tahun' => $filters['tahun'] ?? date('Y'),
+                ];
+                if (!empty($filters['status'])) {
+                    $cetakParams['status'] = $filters['status'];
+                }
+                if ($mode === 'opd' && !empty($selectedOpdId)) {
+                    $cetakParams['opd_id'] = $selectedOpdId;
+                }
+                ?>
+                <div class="col-md-auto">
+                    <a href="<?= base_url('adminkab/lakip/cetak') . '?' . http_build_query($cetakParams) ?>"
+                        target="_blank" class="btn btn-outline-danger">
+                        <i class="fas fa-print me-1"></i> Cetak
+                    </a>
+                </div>
             </div>
 
             <?php

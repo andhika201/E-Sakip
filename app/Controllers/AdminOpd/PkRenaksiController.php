@@ -112,24 +112,24 @@ class PkRenaksiController extends BaseController
         }
     }
 
-    /** Opsi dropdown pejabat (pk.pihak_1) untuk filter nama, di-scope per OPD. */
+    /** Opsi dropdown pejabat (pk.pihak_2) untuk filter nama, di-scope per OPD. */
     private function pejabatOptions(?int $opdId, ?string $eselon = null): array
     {
         if (empty($opdId)) {
             return [];
         }
         $b = $this->db->table('pk')
-            ->select('pk.pihak_1 AS id, peg.nama_pegawai AS nama, jab.nama_jabatan AS jabatan')
-            ->join('pegawai peg', 'peg.id = pk.pihak_1', 'left')
+            ->select('pk.pihak_2 AS id, peg.nama_pegawai AS nama, jab.nama_jabatan AS jabatan')
+            ->join('pegawai peg', 'peg.id = pk.pihak_2', 'left')
             ->join('jabatan jab', 'jab.id = peg.jabatan_id', 'left')
             ->where('pk.opd_id', (int) $opdId)
-            ->where('pk.pihak_1 IS NOT NULL', null, false);
+            ->where('pk.pihak_2 IS NOT NULL', null, false);
         if (!empty($eselon)) {
             $b->where('pk.jenis', $eselon);
         } else {
             $b->whereIn('pk.jenis', self::OPD_JENIS);
         }
-        return $b->groupBy('pk.pihak_1, peg.nama_pegawai, jab.nama_jabatan')
+        return $b->groupBy('pk.pihak_2, peg.nama_pegawai, jab.nama_jabatan')
             ->orderBy('jab.nama_jabatan', 'ASC')
             ->get()->getResultArray();
     }
@@ -281,11 +281,13 @@ class PkRenaksiController extends BaseController
                 pk.opd_id    AS opd_id,
                 pk.jenis     AS pk_jenis,
                 pj.nama_pegawai AS pejabat_nama,
+                jb.nama_jabatan AS pejabat_jabatan,
                 ps.sasaran   AS sasaran_renstra
             ')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
+            ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->where('pi.id', $pkIndikatorId);
         $this->applyJenisScope($b, $jenis);
@@ -312,7 +314,7 @@ class PkRenaksiController extends BaseController
         $opdList     = [];
         $opdFilter   = null;
         $eselon      = null;            // filter eselon (jpt|administrator|pengawas) — modul es3
-        $pejabatId   = null;           // filter nama pejabat (pk.pihak_1)
+        $pejabatId   = null;           // filter nama pejabat (pk.pihak_2)
         $pejabatList = [];
         $tahunList   = $this->targets->getAvailableYearsPk('bupati');
 
@@ -1075,13 +1077,15 @@ class PkRenaksiController extends BaseController
                 pk.jenis     AS pk_jenis,
                 ps.sasaran   AS sasaran_renstra,
                 pj.nama_pegawai AS pejabat_nama,
+                jb.nama_jabatan AS pejabat_jabatan,
                 o.nama_opd   AS nama_opd
             ')
             ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
+            ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('opd o', 'o.id = tr.opd_id', 'left')
             ->where('tr.id', $id)
             ->where('tr.pk_indikator_id IS NOT NULL', null, false);

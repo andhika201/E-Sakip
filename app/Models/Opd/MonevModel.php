@@ -371,7 +371,7 @@ class MonevModel extends Model
      *  @param string|null $tahun     Filter tahun PK (null = semua).
      *  @param int|null    $opdId     Scope per OPD (null = semua, untuk admin_kab).
      *  @param string|null $eselon    'jpt'|'administrator'|'pengawas' (null = semua).
-     *  @param int|null    $pejabatId Filter pejabat penandatangan (pk.pihak_1).
+     *  @param int|null    $pejabatId Filter pejabat pelaksana (pk.pihak_2).
      * =======================================================*/
     public function getIndexDataPkOpd(
         ?string $tahun = null,
@@ -427,7 +427,7 @@ class MonevModel extends Model
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('opd o', 'o.id = tr.opd_id', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->join(
@@ -449,7 +449,7 @@ class MonevModel extends Model
             $b->where('tr.opd_id', (int) $opdId);
         }
         if (!empty($pejabatId)) {
-            $b->where('pk.pihak_1', (int) $pejabatId);
+            $b->where('pk.pihak_2', (int) $pejabatId);
         }
 
         return $b->orderBy('tr.opd_id', 'ASC')

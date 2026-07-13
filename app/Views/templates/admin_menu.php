@@ -91,8 +91,13 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
     <button class="<?= $ddBtn ?>" type="button" id="ddUkurKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-chart-line"></i> Pengukuran Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddUkurKab">
       <?php if (user_can('pk_bupati.view')): ?>
-        <li><a class="dropdown-item" href="<?= base_url('adminkab/target_renaksi') ?>">Target Rencana Aksi</a></li>
-        <li><a class="dropdown-item" href="<?= base_url('adminkab/monev_pk/es3') ?>">Monitoring Capaian Rencana Aksi</a></li>
+        <li><h6 class="dropdown-header">Target Rencana Aksi</h6></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/target_renaksi') ?>">PK Bupati</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/renaksi_pk/es3') ?>">PK OPD / Kecamatan</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><h6 class="dropdown-header">Monitoring Rencana Aksi</h6></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/monev') ?>">PK Bupati</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/monev_pk/es3') ?>">PK OPD / Kecamatan</a></li>
       <?php endif; ?>
     </ul>
   </div>
@@ -140,7 +145,7 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
           <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/jpt') ?>">PK JPT (Eselon II)</a></li>
         <?php endif; ?>
         <?php if ($role === 'admin_kecamatan' || $role === 'admin'): // PK Camat (puncak kecamatan) utk admin kecamatan (+ super admin) ?>
-          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/kecamatan') ?>">PK Kecamatan (Camat)</a></li>
+          <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/kecamatan') ?>">PK Kecamatan (Eselon III)</a></li>
         <?php endif; ?>
         <?php /* PK Administrator & Pengawas: berlaku utk OPD Dinas maupun Kecamatan (Sekcam/Kasi) */ ?>
         <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator (Eselon III)</a></li>
@@ -154,8 +159,8 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
     <button class="<?= $ddBtn ?>" type="button" id="ddUkurOpd" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-chart-line"></i> Pengukuran Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddUkurOpd">
       <?php if (user_can('pk_opd.view')): ?>
-        <li><a class="dropdown-item" href="<?= base_url('adminopd/target_renaksi') ?>">Target dan Rencana Aksi</a></li>
-        <li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">Monitoring Capaian Rencana Aksi</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/target_renaksi') ?>">Target Rencana Aksi</a></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminopd/monev') ?>">Monitoring Rencana Aksi</a></li>
       <?php endif; ?>
     </ul>
   </div>

@@ -18,7 +18,7 @@ use Config\Database;
  *
  * $jenis:
  *   'bupati' -> PK Bupati (pk.jenis='bupati'),  input oleh admin_kab,  monev.opd_id = NULL
- *   'es3'    -> PK Administrator/Eselon III (pk.jenis='administrator'),
+ *   'es3'    -> PK OPD/Kecamatan (jpt, camat, administrator, pengawas),
  *               input oleh admin_opd (per OPD), monev.opd_id = target_rencana.opd_id
  */
 class PkRenaksiController extends BaseController
@@ -43,7 +43,10 @@ class PkRenaksiController extends BaseController
         if ($j === 'kabupaten') {
             return 'bupati';
         }
-        return in_array($j, ['bupati', 'es3'], true) ? $j : null;
+        if (in_array($j, ['es3', 'camat', 'kecamatan', 'administrator', 'pengawas', 'jpt'], true)) {
+            return 'es3';
+        }
+        return $j === 'bupati' ? 'bupati' : null;
     }
 
     /**
@@ -54,35 +57,41 @@ class PkRenaksiController extends BaseController
      */
     private function renaksiUrl(string $jenis): string
     {
-        if ($jenis === 'bupati') {
+        $norm = $this->normJenis($jenis) ?? 'es3';
+        if ($norm === 'bupati') {
             return 'adminkab/target_renaksi';
         }
-        return $this->base($jenis) === 'adminopd'
+        return $this->base($norm) === 'adminopd'
             ? 'adminopd/target_renaksi'
-            : ($this->base($jenis) . '/renaksi_pk/' . $jenis);
+            : ($this->base($norm) . '/renaksi_pk/es3');
     }
 
     /** Path dasar route MONEV. bupati -> adminkab/monev; es3 admin_opd -> adminopd/monev; es3 admin_kab -> renaksi_pk style. */
     private function monevUrl(string $jenis): string
     {
-        if ($jenis === 'bupati') {
+        $norm = $this->normJenis($jenis) ?? 'es3';
+        if ($norm === 'bupati') {
             return 'adminkab/monev';
         }
-        return $this->base($jenis) === 'adminopd'
+        return $this->base($norm) === 'adminopd'
             ? 'adminopd/monev'
-            : ($this->base($jenis) . '/monev_pk/' . $jenis);
+            : ($this->base($norm) . '/monev_pk/es3');
     }
 
-    /** Eselon level pada modul OPD (Eselon II/III/IV + Camat=Eselon III kecamatan). */
-    private const OPD_JENIS = ['jpt', 'camat', 'administrator', 'pengawas'];
+    /** Nilai filter eselon pada modul OPD/Kecamatan. */
+    private const OPD_JENIS = ['jpt', 'administrator', 'pengawas'];
 
-    /** Label eselon manusiawi dari pk.jenis. */
+    /** Scope data PK OPD/Kecamatan. */
+    private const OPD_SCOPE_JENIS = ['jpt', 'camat', 'administrator', 'pengawas'];
+
+    /** Label eselon manusiawi dari pk.jenis/filter. */
     private function eselonLabel(string $pkJenis): string
     {
         $map = [
             'bupati'        => 'Bupati',
             'jpt'           => 'Eselon II',
-            'camat'         => 'Kecamatan (Eselon III)',
+            'camat'         => 'Eselon III',
+            'kecamatan'     => 'Eselon III',
             'administrator' => 'Eselon III',
             'pengawas'      => 'Eselon IV',
         ];
@@ -93,44 +102,75 @@ class PkRenaksiController extends BaseController
     private function normEselon($e): ?string
     {
         $e = strtolower(trim((string) $e));
+        if (in_array($e, ['camat', 'kecamatan'], true)) {
+            return 'administrator';
+        }
         return in_array($e, self::OPD_JENIS, true) ? $e : null;
+    }
+
+    private function jenisScopeForEselon(?string $eselon): array
+    {
+        return match ($eselon) {
+            'jpt'           => ['jpt'],
+            'administrator' => ['administrator', 'camat'],
+            'pengawas'      => ['pengawas'],
+            default         => self::OPD_SCOPE_JENIS,
+        };
+    }
+
+    private function resolvePkFilter(string $role, string $origJenis): ?string
+    {
+        $raw = $this->request->getGet('eselon');
+        if ($raw !== null) {
+            return $this->normEselon($raw);
+        }
+
+        $origJenis = strtolower(trim($origJenis));
+        if (in_array($origJenis, ['camat', 'kecamatan'], true)) {
+            return 'administrator';
+        }
+        if (in_array($origJenis, self::OPD_JENIS, true)) {
+            return $origJenis;
+        }
+        if ($role === 'admin_kecamatan') {
+            return 'administrator';
+        }
+        if ($role === 'admin_opd') {
+            return 'jpt';
+        }
+
+        return null;
     }
 
     /**
      * Batasi builder pada jenis PK sesuai modul:
      * - bupati -> hanya 'bupati'
-     * - es3    -> Eselon II/III/IV (opsional dipersempit ke 1 eselon)
+     * - es3    -> Eselon II/III/IV (Eselon III mencakup administrator + camat)
      */
     private function applyJenisScope($builder, string $jenis, ?string $eselon = null): void
     {
         if ($jenis === 'bupati') {
             $builder->where('pk.jenis', 'bupati');
-        } elseif (!empty($eselon) && in_array($eselon, self::OPD_JENIS, true)) {
-            $builder->where('pk.jenis', $eselon);
         } else {
-            $builder->whereIn('pk.jenis', self::OPD_JENIS);
+            $builder->whereIn('pk.jenis', $this->jenisScopeForEselon($eselon));
         }
     }
 
-    /** Opsi dropdown pejabat (pk.pihak_2) untuk filter nama, di-scope per OPD. */
+    /** Opsi dropdown pejabat (pk.pihak_1) untuk filter nama, di-scope per OPD. */
     private function pejabatOptions(?int $opdId, ?string $eselon = null): array
     {
         if (empty($opdId)) {
             return [];
         }
         $b = $this->db->table('pk')
-            ->select('pk.pihak_2 AS id, peg.nama_pegawai AS nama, jab.nama_jabatan AS jabatan')
-            ->join('pegawai peg', 'peg.id = pk.pihak_2', 'left')
+            ->select('pk.pihak_1 AS id, peg.nama_pegawai AS nama, jab.nama_jabatan AS jabatan')
+            ->join('pegawai peg', 'peg.id = pk.pihak_1', 'left')
             ->join('jabatan jab', 'jab.id = peg.jabatan_id', 'left')
             ->where('pk.opd_id', (int) $opdId)
-            ->where('pk.pihak_2 IS NOT NULL', null, false);
+            ->where('pk.pihak_1 IS NOT NULL', null, false);
         $b->where("(COALESCE(LOWER(jab.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(peg.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
-        if (!empty($eselon)) {
-            $b->where('pk.jenis', $eselon);
-        } else {
-            $b->whereIn('pk.jenis', self::OPD_JENIS);
-        }
-        return $b->groupBy('pk.pihak_2, peg.nama_pegawai, jab.nama_jabatan')
+        $b->whereIn('pk.jenis', $this->jenisScopeForEselon($eselon));
+        return $b->groupBy('pk.pihak_1, peg.nama_pegawai, jab.nama_jabatan')
             ->orderBy('jab.nama_jabatan', 'ASC')
             ->get()->getResultArray();
     }
@@ -288,7 +328,7 @@ class PkRenaksiController extends BaseController
             ')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->where('pi.id', $pkIndikatorId);
@@ -302,6 +342,7 @@ class PkRenaksiController extends BaseController
     /* ===================== RENCANA AKSI: LIST ===================== */
     public function index($jenis)
     {
+        $origJenis = strtolower(trim((string) $jenis));
         $jenis = $this->normJenis((string) $jenis);
         if (!$jenis) {
             return redirect()->to(base_url('/'))->with('error', 'Modul tidak dikenal.');
@@ -319,11 +360,11 @@ class PkRenaksiController extends BaseController
         $opdList     = [];
         $opdFilter   = null;
         $eselon      = null;            // filter eselon (jpt|administrator|pengawas) — modul es3
-        $pejabatId   = null;           // filter nama pejabat (pk.pihak_2)
+        $pejabatId   = null;           // filter nama pejabat (pk.pihak_1)
         $pejabatList = [];
         $tahunList   = $this->targets->getAvailableYearsPk('bupati');
 
-        $opdMap = []; // nama_opd => id : untuk tautan "Perangkat Daerah" -> PK Eselon OPD tsb
+        $opdMap = []; // nama_opd => id : untuk tautan "Perangkat Daerah" -> PK OPD/Kecamatan tsb
         $autoPd = []; // norm(sasaran) => [ ['id','nama'], ... ] : PJ Perangkat Daerah OTOMATIS via cascading
         $manualPd = []; // pk_sasaran_id => [ ['id','nama'], ... ] : override MANUAL (kolom Aksi)
         if ($jenis === 'bupati') {
@@ -332,8 +373,8 @@ class PkRenaksiController extends BaseController
             $autoPd   = $this->autoPdBySasaran();
             $manualPd = $this->manualPdBySasaran();
         } else {
-            // es3 -> Eselon II/III/IV: filter eselon & pejabat
-            $eselon    = $this->normEselon($this->request->getGet('eselon'));
+            // es3 -> PK OPD/Kecamatan: filter jenis PK & pejabat
+            $eselon    = $this->resolvePkFilter($role, $origJenis);
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
 
             if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
@@ -646,6 +687,7 @@ class PkRenaksiController extends BaseController
     /* ===================== MONEV: LIST (pantau realisasi) ===================== */
     public function monev($jenis)
     {
+        $origJenis = strtolower(trim((string) $jenis));
         $jenis = $this->normJenis((string) $jenis);
         if (!$jenis) {
             return redirect()->to(base_url('/'))->with('error', 'Modul tidak dikenal.');
@@ -672,7 +714,7 @@ class PkRenaksiController extends BaseController
             $rows   = $this->monev->getIndexDataPkBupati($tahun);
             $autoPd = $this->autoPdBySasaran();
         } else {
-            $eselon    = $this->normEselon($this->request->getGet('eselon'));
+            $eselon    = $this->resolvePkFilter($role, $origJenis);
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
 
             if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
@@ -736,6 +778,7 @@ class PkRenaksiController extends BaseController
         ob_clean();
         ob_start();
 
+        $origJenis = strtolower(trim((string) $jenis));
         $jenis = $this->normJenis((string) $jenis);
         if (!$jenis || !$this->ensureRole($jenis, false)) {
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
@@ -760,20 +803,23 @@ class PkRenaksiController extends BaseController
             $rows = $this->monev->getIndexDataPkBupati($tahun);
             $autoPd = $this->autoPdBySasaran();
         } else {
-            $eselon    = $this->normEselon($this->request->getGet('eselon'));
+            $eselon    = $this->resolvePkFilter($role, $origJenis);
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
+
             if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
                 $opdFilter = (int) $session->get('opd_id');
             } else {
                 $opdRaw = $this->request->getGet('opd_id');
-                $opdFilter  = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
+                $opdFilter = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
                 $opdList = $this->db->table('opd')->select('id, nama_opd')
                     ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)->orderBy('nama_opd', 'ASC')
                     ->get()->getResultArray();
             }
+
             $rows = $this->monev->getIndexDataPkOpd($tahun, $opdFilter, $eselon, $pejabatId);
             $pejabatList = $this->pejabatOptions($opdFilter, $eselon);
             $tahunList   = $this->monev->getAvailableYearsPkOpd($opdFilter);
+
             if ($opdFilter) {
                 $opd = $this->db->table('opd')->select('nama_opd')->where('id', $opdFilter)->get()->getRowArray();
                 $namaUnit = $opd['nama_opd'] ?? $namaUnit;
@@ -850,6 +896,7 @@ class PkRenaksiController extends BaseController
         ob_clean();
         ob_start();
 
+        $origJenis = strtolower(trim((string) $jenis));
         $jenis = $this->normJenis((string) $jenis);
         if (!$jenis) {
             return redirect()->to(base_url('/'))->with('error', 'Modul tidak dikenal.');
@@ -882,7 +929,7 @@ class PkRenaksiController extends BaseController
             $autoPd   = $this->autoPdBySasaran();
             $manualPd = $this->manualPdBySasaran();
         } else {
-            $eselon    = $this->normEselon($this->request->getGet('eselon'));
+            $eselon    = $this->resolvePkFilter($role, $origJenis);
             $pejabatId = (int) ($this->request->getGet('pejabat_id') ?? 0) ?: null;
 
             if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
@@ -1090,7 +1137,7 @@ class PkRenaksiController extends BaseController
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('opd o', 'o.id = tr.opd_id', 'left')
             ->where('tr.id', $id)

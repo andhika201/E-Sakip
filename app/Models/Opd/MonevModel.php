@@ -364,14 +364,14 @@ class MonevModel extends Model
     }
 
     /* =========================================================
-     *  MONEV PK OPD / ESELON II-III-IV (jpt|administrator|pengawas)
+     *  MONEV PK OPD / KECAMATAN (Eselon II/III/IV)
      *  Renaksi: target_rencana.pk_indikator_id; monev.opd_id = tr.opd_id
      *  (mengikuti pola mode OPD). Bisa difilter per OPD, eselon, & pejabat.
      *
      *  @param string|null $tahun     Filter tahun PK (null = semua).
      *  @param int|null    $opdId     Scope per OPD (null = semua, untuk admin_kab).
      *  @param string|null $eselon    'jpt'|'administrator'|'pengawas' (null = semua).
-     *  @param int|null    $pejabatId Filter pejabat pelaksana (pk.pihak_2).
+     *  @param int|null    $pejabatId Filter pejabat pelaksana (pk.pihak_1).
      * =======================================================*/
     public function getIndexDataPkOpd(
         ?string $tahun = null,
@@ -428,7 +428,7 @@ class MonevModel extends Model
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('opd o', 'o.id = tr.opd_id', 'left')
-            ->join('pegawai pj', 'pj.id = pk.pihak_2', 'left')
+            ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->join(
@@ -438,11 +438,14 @@ class MonevModel extends Model
             )
             ->where('tr.pk_indikator_id IS NOT NULL', null, false);
 
-        if (!empty($eselon) && in_array($eselon, ['jpt', 'camat', 'administrator', 'pengawas'], true)) {
-            $b->where('pk.jenis', $eselon);
-        } else {
-            $b->whereIn('pk.jenis', ['jpt', 'camat', 'administrator', 'pengawas']);
-        }
+        $jenisScope = match ($eselon) {
+            'jpt'           => ['jpt'],
+            'administrator',
+            'camat'         => ['administrator', 'camat'],
+            'pengawas'      => ['pengawas'],
+            default         => ['jpt', 'administrator', 'camat', 'pengawas'],
+        };
+        $b->whereIn('pk.jenis', $jenisScope);
         if (!empty($tahun)) {
             $b->where('pk.tahun', $tahun);
         }
@@ -450,12 +453,12 @@ class MonevModel extends Model
             $b->where('tr.opd_id', (int) $opdId);
         }
         if (!empty($pejabatId)) {
-            $b->where('pk.pihak_2', (int) $pejabatId);
+            $b->where('pk.pihak_1', (int) $pejabatId);
         }
         $b->where("(COALESCE(LOWER(jb.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(pj.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
 
         return $b->orderBy('tr.opd_id', 'ASC')
-            ->orderBy("FIELD(pk.jenis,'jpt','camat','administrator','pengawas')", '', false)
+            ->orderBy("FIELD(pk.jenis,'jpt','administrator','camat','pengawas')", '', false)
             ->orderBy('ps.id', 'ASC')
             ->orderBy('pi.id', 'ASC')
             ->orderBy('tr.id', 'ASC')
@@ -465,7 +468,7 @@ class MonevModel extends Model
 
     /**
      * Rollup ringkas realisasi PK (untuk kartu dashboard).
-     * $jenis = 'bupati' | 'administrator'.
+     * $jenis = 'bupati' | 'jpt' | 'camat' | 'administrator' | 'pengawas'.
      * Mengembalikan: indikator (total), renaksi (sudah punya rencana aksi),
      * capaian (renaksi yang sudah ada baris monev).
      */
@@ -531,7 +534,7 @@ class MonevModel extends Model
     }
 
     /**
-     * Daftar tahun PK level OPD (Eselon II/III/IV), opsional di-scope per OPD.
+     * Daftar tahun PK OPD/Kecamatan, opsional di-scope per OPD.
      */
     public function getAvailableYearsPkOpd(?int $opdId = null): array
     {

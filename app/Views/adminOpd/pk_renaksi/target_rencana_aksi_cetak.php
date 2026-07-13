@@ -7,7 +7,7 @@ $showOpd  = ($isOpd && ($role ?? '') === 'admin_kab');
 $showPejabat = $isOpd;
 
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Kecamatan (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Eselon III', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     $pkJenis = strtolower(trim((string) $pkJenis));
     if ($pkJenis !== '' && isset($map[$pkJenis])) {
         return $map[$pkJenis];
@@ -318,7 +318,7 @@ $splitAksi = function ($text) {
                                 <?php if ($showPejabat): ?>
                                     <td rowspan="<?= $sasTotal ?>" class="text-start">
                                         <div><strong><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></strong></div>
-                                        <span class="badge-lite"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '', $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
+                                        <span class="badge-lite"><?= esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
                                     </td>
                                 <?php endif; ?>
                                 <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
@@ -345,7 +345,7 @@ $splitAksi = function ($text) {
         <?php else: ?>
             <tr>
                 <td colspan="<?= 11 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0) ?>" class="c pdf-muted">
-                    Belum ada indikator PK Eselon II/III/IV untuk filter ini.
+                    Belum ada indikator PK OPD/Kecamatan untuk filter ini.
                 </td>
             </tr>
         <?php endif; ?>

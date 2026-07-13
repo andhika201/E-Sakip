@@ -424,7 +424,14 @@ class ProgramPkController extends BaseController
 
     private function normalizeMoney($value): int
     {
+        $value = trim((string) $value);
+        $value = preg_replace('/[,.]\d{1,2}$/', '', $value);
         return (int) preg_replace('/\D/', '', (string) $value);
+    }
+
+    private function hasMoneyValue($value): bool
+    {
+        return preg_match('/\d/', (string) $value) === 1;
     }
 
     private function normalizeProgramPayload($programs): array
@@ -438,12 +445,13 @@ class ProgramPkController extends BaseController
 
         foreach ($programs as $pIndex => $p) {
             $namaProgram = trim((string) ($p['nama'] ?? ''));
-            $anggaranProgram = $this->normalizeMoney($p['anggaran'] ?? 0);
+            $rawAnggaranProgram = $p['anggaran'] ?? '';
+            $anggaranProgram = $this->normalizeMoney($rawAnggaranProgram);
 
             if ($namaProgram === '') {
                 throw new \InvalidArgumentException('Nama program wajib diisi');
             }
-            if ($anggaranProgram <= 0) {
+            if (!$this->hasMoneyValue($rawAnggaranProgram)) {
                 throw new \InvalidArgumentException('Anggaran program tidak valid');
             }
 
@@ -460,12 +468,13 @@ class ProgramPkController extends BaseController
 
             foreach ($kegiatanPayload as $k) {
                 $namaKegiatan = trim((string) ($k['nama'] ?? ''));
-                $anggaranKegiatan = $this->normalizeMoney($k['anggaran'] ?? 0);
+                $rawAnggaranKegiatan = $k['anggaran'] ?? '';
+                $anggaranKegiatan = $this->normalizeMoney($rawAnggaranKegiatan);
 
                 if ($namaKegiatan === '') {
                     throw new \InvalidArgumentException('Nama kegiatan wajib diisi');
                 }
-                if ($anggaranKegiatan <= 0) {
+                if (!$this->hasMoneyValue($rawAnggaranKegiatan)) {
                     throw new \InvalidArgumentException('Anggaran kegiatan tidak valid');
                 }
 
@@ -477,12 +486,13 @@ class ProgramPkController extends BaseController
 
                 foreach (($k['sub'] ?? []) as $s) {
                     $namaSub = trim((string) ($s['nama'] ?? ''));
-                    $anggaranSub = $this->normalizeMoney($s['anggaran'] ?? 0);
+                    $rawAnggaranSub = $s['anggaran'] ?? '';
+                    $anggaranSub = $this->normalizeMoney($rawAnggaranSub);
 
                     if ($namaSub === '') {
                         throw new \InvalidArgumentException('Nama sub kegiatan wajib diisi');
                     }
-                    if ($anggaranSub <= 0) {
+                    if (!$this->hasMoneyValue($rawAnggaranSub)) {
                         throw new \InvalidArgumentException('Anggaran sub kegiatan tidak valid');
                     }
 

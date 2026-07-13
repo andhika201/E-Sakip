@@ -153,6 +153,24 @@
 
             <div class="program-container">
 
+              <?php
+              $emptySubkegiatan = [
+                'sub_kegiatan_id' => '',
+                'indikator_sasaran_sub_kegiatan' => '',
+                'target' => '',
+                'anggaran' => '',
+              ];
+              $emptyKegiatan = [
+                'kegiatan_id' => '',
+                'subkegiatan' => [$emptySubkegiatan],
+              ];
+              $rktPrograms = !empty($rktPrograms)
+                ? $rktPrograms
+                : [[
+                  'program_id' => '',
+                  'kegiatan' => [$emptyKegiatan],
+                ]];
+              ?>
               <?php foreach ($rktPrograms as $pIndex => $prog): ?>
                 <div class="program-item border rounded p-3 mb-4">
                   <div class="row mb-3">
@@ -177,7 +195,10 @@
                   </div>
 
                   <div class="kegiatan-container">
-                    <?php foreach ($prog['kegiatan'] as $keg): ?>
+                    <?php
+                    $kegiatanList = !empty($prog['kegiatan']) ? $prog['kegiatan'] : [$emptyKegiatan];
+                    foreach ($kegiatanList as $keg):
+                    ?>
                       <div class="kegiatan-item border rounded p-3 mb-3">
                         <div class="row">
                           <div class="col-md-6">
@@ -202,7 +223,10 @@
                         </div>
 
                         <div class="subkeg-container">
-                          <?php foreach ($keg['subkegiatan'] as $sub): ?>
+                          <?php
+                          $subList = !empty($keg['subkegiatan']) ? $keg['subkegiatan'] : [$emptySubkegiatan];
+                          foreach ($subList as $sub):
+                          ?>
                             <div class="subkeg-item border rounded p-3 mb-3">
                               <div class="row">
                                 <div class="col-md-3">
@@ -232,7 +256,7 @@
                                 <div class="col-md-2">
                                   <label class="form-label">Anggaran</label>
                                   <input type="text" class="form-control mb-3 border-secondary anggaran-input"
-                                    value="<?= number_format($sub['anggaran'], 0, ',', '.') ?>" readonly>
+                                    value="<?= isset($sub['anggaran']) && $sub['anggaran'] !== '' ? number_format((float) $sub['anggaran'], 0, ',', '.') : '' ?>" readonly>
                                 </div>
 
                                 <div class="col-md-1 d-flex align-items-end">

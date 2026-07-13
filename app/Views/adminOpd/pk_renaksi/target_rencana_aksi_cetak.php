@@ -7,6 +7,12 @@ $showOpd  = ($isOpd && ($role ?? '') === 'admin_kab');
 $showPejabat = $isOpd;
 
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
+    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Kecamatan (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
+    $pkJenis = strtolower(trim((string) $pkJenis));
+    if ($pkJenis !== '' && isset($map[$pkJenis])) {
+        return $map[$pkJenis];
+    }
+
     $formatNamaEselon = static function ($value) {
         $value = trim((string) $value);
         if ($value === '' || ctype_digit($value)) {
@@ -23,13 +29,23 @@ $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
         return $label;
     }
 
-    $jabatanText = strtolower(trim((string) $jabatanNama));
-    if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true) || strpos($jabatanText, 'kepala dinas') === 0) {
-        return 'Eselon II';
+    $jabatanText = strtolower(trim(preg_replace('/\s+/', ' ', (string) $jabatanNama)));
+    if ($jabatanText !== '') {
+        if (strpos($jabatanText, 'kepala sub') === 0) {
+            return 'Eselon IV';
+        }
+        if (strpos($jabatanText, 'kepala bidang') === 0) {
+            return 'Eselon III';
+        }
+        if ($jabatanText === 'sekretaris' || strpos($jabatanText, 'sekretaris dinas') === 0 || strpos($jabatanText, 'sekretaris badan') === 0) {
+            return 'Eselon III';
+        }
+        if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true) || strpos($jabatanText, 'kepala dinas') === 0 || strpos($jabatanText, 'kepala bagian') === 0) {
+            return 'Eselon II';
+        }
     }
 
-    $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
-    return $map[$pkJenis] ?? '-';
+    return '-';
 };
 
 $subjudulParts = [];

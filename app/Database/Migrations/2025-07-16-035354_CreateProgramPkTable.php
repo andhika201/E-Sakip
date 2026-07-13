@@ -21,7 +21,7 @@ class CreateProgramPkTable extends Migration
             ],
             'anggaran'         => [
                 'type'       => 'DECIMAL',
-                'constraint' => '15,2',
+                'constraint' => '15,0',
                 'null'       => false,
                 'default'    => 0,
             ],

@@ -1,5 +1,13 @@
 SET @db_name := DATABASE();
 
+UPDATE `jabatan`
+SET `created_at` = NOW()
+WHERE CAST(`created_at` AS CHAR) = '0000-00-00 00:00:00';
+
+UPDATE `jabatan`
+SET `updated_at` = NOW()
+WHERE CAST(`updated_at` AS CHAR) = '0000-00-00 00:00:00';
+
 SET @sql := (
     SELECT IF(
         COUNT(*) = 0,

@@ -21,6 +21,29 @@ class PkController extends BaseController
         $this->opdModel = new OpdModel();
     }
 
+    private function jabatanPkPayload(array $post, string $side): array
+    {
+        $statusKey = 'status_jabatan_' . $side;
+        $oldPltKey = 'is_plt_' . $side;
+        $manualKey = 'jabatan_' . $side . '_manual';
+
+        $status = strtolower(trim((string) ($post[$statusKey] ?? '')));
+        if ($status === '' && !empty($post[$oldPltKey])) {
+            $status = 'plt';
+        }
+        if (!in_array($status, ['plt', 'plh'], true)) {
+            $status = '';
+        }
+
+        $manualJabatan = trim((string) ($post[$manualKey] ?? ''));
+
+        return [
+            'is_plt_' . $side => $status === 'plt' ? 1 : 0,
+            'is_plh_' . $side => $status === 'plh' ? 1 : 0,
+            $manualKey => $manualJabatan !== '' ? $manualJabatan : null,
+        ];
+    }
+
     public function index($jenis)
     {
         // 'kecamatan' = segmen URL utk PK Camat. Disimpan sbg jenis 'camat'
@@ -369,18 +392,25 @@ class PkController extends BaseController
         // ------------------------------
         // STRUKTUR DATA FINAL
         // ------------------------------
+        $jabatanPkPayload = array_merge(
+            $this->jabatanPkPayload($post, 'pihak_1'),
+            $this->jabatanPkPayload($post, 'pihak_2')
+        );
+
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
             'tahun' => !empty($post['tahun']) ? $post['tahun'] : date('Y'),
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
+
             'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []
 
         ];
+        $saveData = array_merge($saveData, $jabatanPkPayload);
 
         // ------------------------------
         // PARSE SASARAN
@@ -559,6 +589,7 @@ class PkController extends BaseController
      * UPDATE: gunakan model updateCompletePk untuk konsistensi (replace seluruh struktur)
      * signature: update($id)
      */
+
     public function update($jenis, $id)
     {
         $seg = $jenis; // segmen URL utk redirect (mis. 'kecamatan'); $jenis data diambil dari record
@@ -609,17 +640,24 @@ class PkController extends BaseController
         // ============================
         // Data Utama PK
         // ============================
+        $jabatanPkPayload = array_merge(
+            $this->jabatanPkPayload($post, 'pihak_1'),
+            $this->jabatanPkPayload($post, 'pihak_2')
+        );
+
         $saveData = [
             'opd_id' => $opdId,
             'jenis' => $jenis,
             'tahun' => $tahun,
             'pihak_1' => $post['pegawai_1_id'] ?? null,
             'pihak_2' => $post['pegawai_2_id'] ?? null,
+
             'tanggal' => $tanggal,
             'sasaran_pk' => [],
             'referensi_acuan' => $referensiAcuanArr,
             'misi_bupati_id' => $post['misi_bupati_id'] ?? []
         ];
+        $saveData = array_merge($saveData, $jabatanPkPayload);
 
         // --------------------------
         // LOG: After basic structure
@@ -633,6 +671,7 @@ class PkController extends BaseController
             foreach ($post['sasaran_pk'] as $sIndex => $s) {
 
                 $sasaranData = [
+                    'pk_sasaran_id' => $s['pk_sasaran_id'] ?? null,
                     'sasaran' => $s['sasaran'] ?? '',
                     'indikator' => []
                 ];
@@ -640,6 +679,7 @@ class PkController extends BaseController
                 foreach (($s['indikator'] ?? []) as $iIndex => $ind) {
 
                     $indikatorData = [
+                        'pk_indikator_id' => $ind['pk_indikator_id'] ?? null,
                         'indikator' => $ind['indikator'] ?? '',
                         'target' => $ind['target'] ?? '',
                         'id_satuan' => $ind['id_satuan'] ?? null,
@@ -654,6 +694,7 @@ class PkController extends BaseController
                     if (in_array($jenis, ['jpt', 'camat'], true)) {
                         foreach ($ind['program'] ?? [] as $p) {
                             $indikatorData['program'][] = [
+                                'pk_program_id' => $p['pk_program_id'] ?? null,
                                 'program_id' => $p['program_id'] ?? null,
                                 'anggaran' => $p['anggaran'] ?? 0
                             ];
@@ -663,11 +704,13 @@ class PkController extends BaseController
                     if ($jenis === 'administrator') {
                         foreach ($ind['program'] ?? [] as $p) {
                             $programData = [
+                                'pk_program_id' => $p['pk_program_id'] ?? null,
                                 'program_id' => $p['program_id'] ?? null,
                                 'kegiatan' => []
                             ];
                             foreach ($p['kegiatan'] ?? [] as $k) {
                                 $programData['kegiatan'][] = [
+                                    'pk_kegiatan_id' => $k['pk_kegiatan_id'] ?? null,
                                     'kegiatan_id' => $k['kegiatan_id'] ?? null,
                                     'anggaran' => $k['anggaran'] ?? 0
                                 ];
@@ -679,18 +722,21 @@ class PkController extends BaseController
                     if ($jenis === 'pengawas') {
                         foreach ($ind['program'] ?? [] as $p) {
                             $programData = [
+                                'pk_program_id' => $p['pk_program_id'] ?? null,
                                 'program_id' => $p['program_id'] ?? null,
                                 'kegiatan' => []
                             ];
 
                             foreach ($p['kegiatan'] ?? [] as $k) {
                                 $kegiatanData = [
+                                    'pk_kegiatan_id' => $k['pk_kegiatan_id'] ?? null,
                                     'kegiatan_id' => $k['kegiatan_id'] ?? null,
                                     'subkegiatan' => []
                                 ];
 
                                 foreach ($k['subkegiatan'] ?? [] as $sk) {
                                     $kegiatanData['subkegiatan'][] = [
+                                        'pk_subkegiatan_id' => $sk['pk_subkegiatan_id'] ?? null,
                                         'subkegiatan_id' => $sk['subkegiatan_id'] ?? null,
                                         'anggaran' => $sk['anggaran'] ?? 0
                                     ];

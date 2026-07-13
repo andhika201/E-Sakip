@@ -95,6 +95,7 @@ $routes->group(
 
         // Lakip
         $routes->get('lakip', 'AdminKab\LakipController::index');
+        $routes->get('lakip/cetak', 'AdminKab\LakipController::cetak');
         $routes->get('lakip/tambah/(:num)', 'AdminKab\LakipController::tambah/$1');
         $routes->post('lakip/save', 'AdminKab\LakipController::save');
         $routes->get('lakip/edit/(:num)', 'AdminKab\LakipController::edit/$1');
@@ -343,6 +344,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Lakip OPD
     $routes->get('lakip', 'AdminOpd\LakipOpdController::index');
+    $routes->get('lakip/cetak', 'AdminOpd\LakipOpdController::cetak');
     $routes->get('lakip/tambah/(:num)', 'AdminOpd\LakipOpdController::tambah/$1');
     $routes->post('lakip/save', 'AdminOpd\LakipOpdController::save');
     $routes->get('lakip/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');

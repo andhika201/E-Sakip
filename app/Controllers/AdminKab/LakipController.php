@@ -66,6 +66,80 @@ class LakipController extends BaseController
         ]);
     }
 
+    public function cetak()
+    {
+        if (ob_get_level() > 0) {
+            @ob_clean();
+        }
+
+        helper(['number', 'lakip', 'setting']);
+
+        $session = session();
+        $role = $session->get('role');
+        if ($role !== 'admin_kab') {
+            return redirect()->to('/login')->with('error', 'Akses ditolak');
+        }
+
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        $tahun = $this->request->getGet('tahun') ?: date('Y');
+        $status = $this->request->getGet('status') ?: '';
+        $opdId = $this->request->getGet('opd_id');
+
+        $opdList = $this->opdModel->orderBy('nama_opd', 'ASC')->findAll();
+        $opdInfo = null;
+
+        if ($mode === 'opd') {
+            $opdIdInt = (!empty($opdId) ? (int) $opdId : null);
+            $rows = $this->lakipModel->getIndexRenstraTargets((string) $tahun, $opdIdInt);
+            $lakipMap = $this->lakipModel->getLakipMapRenstra((string) $tahun, ($status ?: null), $opdIdInt);
+
+            if ($opdIdInt) {
+                $opdInfo = $this->opdModel->find($opdIdInt);
+            }
+        } else {
+            $rows = $this->lakipModel->getIndexRpjmdTargets((string) $tahun);
+            $lakipMap = $this->lakipModel->getLakipMapRpjmd((string) $tahun, ($status ?: null));
+        }
+
+        $unitName = $opdInfo['nama_opd'] ?? (($mode === 'opd') ? 'Seluruh OPD' : 'Kabupaten Pringsewu');
+        $html = view('adminKabupaten/lakip/lakip_cetak', [
+            'title' => 'Cetak LAKIP - Admin Kabupaten',
+            'role' => $role,
+            'mode' => $mode,
+            'opdList' => $opdList,
+            'opdInfo' => $opdInfo,
+            'selectedOpdId' => $opdId,
+            'filters' => [
+                'tahun' => $tahun,
+                'status' => $status,
+            ],
+            'rows' => $rows,
+            'lakipMap' => $lakipMap,
+            'unitName' => $unitName,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4-L',
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'margin_top' => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir' => sys_get_temp_dir(),
+        ]);
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $safeUnit = preg_replace('/[^A-Za-z0-9]+/', '-', (string) $unitName);
+        $mpdf->Output('LAKIP-' . trim($safeUnit, '-') . '-' . $tahun . '.pdf', 'I');
+        exit;
+    }
+
     public function tambah($targetId = null)
     {
         $session = session();

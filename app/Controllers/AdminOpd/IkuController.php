@@ -26,14 +26,26 @@ class IkuController extends BaseController
     }
     private function xssRule(): string
     {
-        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+        return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*(?<!\w)on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
     }
 
     private function isSafeText($val): bool
     {
         if ($val === null || $val === '')
             return true;
-        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+        return (bool) preg_match('/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*(?<!\w)on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is', (string) $val);
+    }
+
+    
+    private function safeTextError(array $fields): ?string
+    {
+        foreach ($fields as $label => $value) {
+            if (!$this->isSafeText($value)) {
+                return $label . ' terdeteksi mengandung script / input berbahaya.';
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -311,9 +323,10 @@ class IkuController extends BaseController
             // VALIDASI (ANTI XSS/SCRIPT)
             // ============================
             $rules = [
-                'definisi' => 'required|string|max_length[10000]|' . $rx,
-                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
-                'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'definisi' => 'required|string|max_length[10000]',
+                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]',
+                'sumber_data' => 'permit_empty|string|max_length[10000]',
+                'penanggung_jawab' => 'permit_empty|string|max_length[255]',
                 'rpjmd_id' => 'permit_empty|integer',
                 'renstra_indikator_sasaran_id' => 'permit_empty|integer',
             ];
@@ -335,6 +348,15 @@ class IkuController extends BaseController
                     ->with('error', implode(' ', $this->validator->getErrors()));
             }
 
+            
+            if ($error = $this->safeTextError([
+                'Definisi' => $data['definisi'] ?? null,
+                'Formula/Rumusan' => $data['rumusan_perhitungan'] ?? null,
+                'Sumber Data' => $data['sumber_data'] ?? null,
+                'Penanggung Jawab' => $data['penanggung_jawab'] ?? null,
+            ])) {
+                return redirect()->back()->withInput()->with('error', $error);
+            }
             // validasi manual untuk program_pendukung[] karena array
             $programs = $data['program_pendukung'] ?? [];
             if (!empty($programs) && is_array($programs)) {
@@ -443,9 +465,10 @@ class IkuController extends BaseController
             // ============================
             $rules = [
                 'iku_id' => 'required|integer',
-                'definisi' => 'required|string|max_length[10000]|' . $rx,
-                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]|' . $rx,
-                'sumber_data' => 'permit_empty|string|max_length[10000]|' . $rx,
+                'definisi' => 'required|string|max_length[10000]',
+                'rumusan_perhitungan' => 'permit_empty|string|max_length[10000]',
+                'sumber_data' => 'permit_empty|string|max_length[10000]',
+                'penanggung_jawab' => 'permit_empty|string|max_length[255]',
             ];
 
             $messages = [
@@ -465,6 +488,16 @@ class IkuController extends BaseController
                 return redirect()->back()->withInput()
                     ->with('error', implode(' ', $this->validator->getErrors()));
             }
+
+            if ($error = $this->safeTextError([
+                'Definisi' => $data['definisi'] ?? null,
+                'Formula/Rumusan' => $data['rumusan_perhitungan'] ?? null,
+                'Sumber Data' => $data['sumber_data'] ?? null,
+                'Penanggung Jawab' => $data['penanggung_jawab'] ?? null,
+            ])) {
+                return redirect()->back()->withInput()->with('error', $error);
+            }
+
             // validasi manual array program_pendukung[] karena array
             $programs = $data['program_pendukung'] ?? [];
             if (!empty($programs) && is_array($programs)) {

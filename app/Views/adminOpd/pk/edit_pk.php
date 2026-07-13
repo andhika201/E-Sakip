@@ -108,6 +108,29 @@
                                             }
                                             ?>
                                         </select>
+                                        <?php
+                                        $statusJabatanP1 = old('status_jabatan_pihak_1');
+                                        if ($statusJabatanP1 === null) {
+                                            $statusJabatanP1 = !empty($pk['is_plh_pihak_1']) ? 'plh' : (!empty($pk['is_plt_pihak_1']) ? 'plt' : '');
+                                        }
+                                        $jabatanManualP1 = old('jabatan_pihak_1_manual') ?? ($pk['jabatan_pihak_1_manual'] ?? '');
+                                        ?>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Status Jabatan</label>
+                                                <select name="status_jabatan_pihak_1" class="form-select border-secondary">
+                                                    <option value="" <?= $statusJabatanP1 === '' ? 'selected' : '' ?>>Definitif</option>
+                                                    <option value="plt" <?= $statusJabatanP1 === 'plt' ? 'selected' : '' ?>>Plt.</option>
+                                                    <option value="plh" <?= $statusJabatanP1 === 'plh' ? 'selected' : '' ?>>Plh.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label">Jabatan Manual</label>
+                                                <input type="text" name="jabatan_pihak_1_manual" class="form-control border-secondary"
+                                                    maxlength="255" value="<?= esc($jabatanManualP1) ?>"
+                                                    placeholder="Kosongkan jika pakai jabatan pegawai">
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">NIP Pegawai</label>
@@ -138,6 +161,29 @@
                                                 }
                                                 ?>
                                             </select>
+                                            <?php
+                                            $statusJabatanP2 = old('status_jabatan_pihak_2');
+                                            if ($statusJabatanP2 === null) {
+                                                $statusJabatanP2 = !empty($pk['is_plh_pihak_2']) ? 'plh' : (!empty($pk['is_plt_pihak_2']) ? 'plt' : '');
+                                            }
+                                            $jabatanManualP2 = old('jabatan_pihak_2_manual') ?? ($pk['jabatan_pihak_2_manual'] ?? '');
+                                            ?>
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Status Jabatan</label>
+                                                    <select name="status_jabatan_pihak_2" class="form-select border-secondary">
+                                                        <option value="" <?= $statusJabatanP2 === '' ? 'selected' : '' ?>>Definitif</option>
+                                                        <option value="plt" <?= $statusJabatanP2 === 'plt' ? 'selected' : '' ?>>Plt.</option>
+                                                        <option value="plh" <?= $statusJabatanP2 === 'plh' ? 'selected' : '' ?>>Plh.</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <label class="form-label">Jabatan Manual</label>
+                                                    <input type="text" name="jabatan_pihak_2_manual" class="form-control border-secondary"
+                                                        maxlength="255" value="<?= esc($jabatanManualP2) ?>"
+                                                        placeholder="Kosongkan jika pakai jabatan pegawai">
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">NIP Pegawai</label>
@@ -180,6 +226,7 @@
                                 ?>
                                     <div class="sasaran-item border border-secondary rounded p-3 bg-white mb-3"
                                         data-sasaran-index="<?= $si ?>">
+                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][pk_sasaran_id]" value="<?= esc($sasaran['id'] ?? '') ?>">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <label class="fw-medium h5">Sasaran</label>
                                             <button type="button" class="remove-sasaran btn btn-outline-danger btn-sm"><i
@@ -198,6 +245,7 @@
                                                 foreach ($indikatorList as $ii => $indikator) {
                                                 ?>
                                                     <div class="indikator-item border rounded p-3 bg-light mb-3">
+                                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][pk_indikator_id]" value="<?= esc($indikator['id'] ?? '') ?>">
                                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                                             <label class="fw-medium">Indikator</label>
                                                             <button type="button"
@@ -263,6 +311,7 @@
                                                                 <?php foreach ($programList as $pi => $prog): ?>
 
                                                                     <div class="row program-item border rounded p-3 bg-light mb-3">
+                                                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][pk_program_id]" value="<?= esc($prog['pk_program_id'] ?? '') ?>">
                                                                         <!-- PROGRAM -->
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Program</label>
@@ -328,6 +377,7 @@
                                                                 <?php foreach ($programList as $pi => $prog): ?>
 
                                                                     <div class="program-item border rounded p-3 bg-white mb-4">
+                                                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][pk_program_id]" value="<?= esc($prog['pk_program_id'] ?? '') ?>">
 
                                                                         <!-- PROGRAM -->
                                                                         <div class="row mb-3">
@@ -371,6 +421,7 @@
                                                                             <?php foreach ($kegiatanList as $ke => $keg): ?>
 
                                                                                 <div class="kegiatan-item border rounded bg-light p-3 mb-3">
+                                                                                    <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][pk_kegiatan_id]" value="<?= esc($keg['pk_kegiatan_id'] ?? '') ?>">
                                                                                     <div class="row">
                                                                                         <!-- DROPDOWN KEGIATAN -->
                                                                                         <div class="col-md-5">
@@ -452,6 +503,7 @@
                                                                 <?php foreach ($programList as $pi => $prog): ?>
 
                                                                     <div class="kegiatan-item border rounded p-3 bg-white mb-4">
+                                                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][pk_program_id]" value="<?= esc($prog['pk_program_id'] ?? '') ?>">
 
                                                                         <!-- KEGIATAN -->
                                                                         <?php
@@ -462,6 +514,7 @@
 
                                                                         <?php foreach ($kegiatanList as $ke => $keg): ?>
 
+                                                                            <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][pk_kegiatan_id]" value="<?= esc($keg['pk_kegiatan_id'] ?? '') ?>">
                                                                             <div class="row mb-3">
                                                                                 <?php if ($isKecamatanOpd ?? false): ?>
                                                                                     <!-- KECAMATAN: Program Camat eksplisit + Kegiatan bebas (master) -->
@@ -552,6 +605,7 @@
                                                                                 <?php foreach ($subList as $sk => $sub): ?>
 
                                                                                     <div class="subkeg-item border rounded bg-light p-3 mb-3">
+                                                                                        <input type="hidden" name="sasaran_pk[<?= $si ?>][indikator][<?= $ii ?>][program][<?= $pi ?>][kegiatan][<?= $ke ?>][subkegiatan][<?= $sk ?>][pk_subkegiatan_id]" value="<?= esc($sub['pk_subkegiatan_id'] ?? '') ?>">
                                                                                         <div class="row">
                                                                                             <!-- DROPDOWN SUB KEGIATAN -->
                                                                                             <div class="col-md-5">

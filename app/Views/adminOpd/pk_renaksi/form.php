@@ -15,11 +15,17 @@ $action   = $isEdit
     : $baseUrl . '/save';
 
 // Nilai prefill (edit pakai $detail, tambah pakai old())
-$val = function (string $k) use ($isEdit, $detail) {
+$val = function (string $k) use ($isEdit, $detail, $ctx) {
     if ($isEdit) {
-        return old($k, $detail[$k] ?? '');
+        $default = $detail[$k] ?? '';
+        if ($k === 'penanggung_jawab' && $default === '') {
+            $default = $ctx['pejabat_jabatan'] ?? '';
+        }
+        return old($k, $default);
     }
-    return old($k);
+
+    $default = ($k === 'penanggung_jawab') ? ($ctx['pejabat_jabatan'] ?? '') : '';
+    return old($k, $default);
 };
 $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
 ?>
@@ -60,12 +66,18 @@ $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Pejabat (PK)</label>
-                            <input type="text" class="form-control" value="<?= esc($ctx['pejabat_nama'] ?? '-') ?>" readonly>
+                            <?php
+                            $pejabatPk = trim((string) ($ctx['pejabat_nama'] ?? ''));
+                            if (!empty($ctx['pejabat_jabatan'])) {
+                                $pejabatPk .= ' (' . $ctx['pejabat_jabatan'] . ')';
+                            }
+                            ?>
+                            <input type="text" class="form-control" value="<?= esc($pejabatPk !== '' ? $pejabatPk : '-') ?>" readonly>
                         </div>
                     </div>
                 <?php endif; ?>
                 <div class="row mb-3">
-                    <div class="col-md-12">S
+                    <div class="col-md-12">
                         <label class="form-label">Sasaran</label>
                         <input type="text" class="form-control" value="<?= esc($ctx['sasaran_renstra'] ?? '-') ?>" readonly>
                     </div>

@@ -20,6 +20,18 @@
 
         <h3 class="text-center fw-bold text-success mb-4">Edit Program PK</h3>
 
+        <?php if (session()->getFlashdata('error')): ?>
+          <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
+        <?php endif; ?>
+
+        <?php
+        $oldOpdId = old('opd_id', $program['opd_id'] ?? '');
+        $oldTahun = old('tahun_anggaran', $program['tahun_anggaran'] ?? '');
+        $oldJenisAnggaran = old('jenis_anggaran', $program['jenis_anggaran'] ?? '');
+        $oldProgramData = old('program');
+        $programDataForJs = is_array($oldProgramData) ? array_values($oldProgramData) : $program;
+        ?>
+
         <form method="post" action="<?= base_url('adminkab/program_pk/update/' . $program['id']) ?>">
           <?= csrf_field() ?>
           <input type="hidden" name="program_id" value="<?= $program['id'] ?>">
@@ -28,7 +40,7 @@
             <select name="opd_id" class="form-select" required>
               <option value="">-- Pilih OPD --</option>
               <?php foreach ($opds as $opd): ?>
-                <option value="<?= $opd['id'] ?>" <?= $opd['id'] == $program['opd_id'] ? 'selected' : '' ?>>
+                <option value="<?= $opd['id'] ?>" <?= ((string) $oldOpdId === (string) $opd['id']) ? 'selected' : '' ?>>
                   <?= esc($opd['nama_opd']) ?>
                 </option>
               <?php endforeach; ?>
@@ -41,7 +53,7 @@
             <select name="tahun_anggaran" class="form-select" required>
               <option value="">-- Pilih Tahun --</option>
               <?php for ($y = date('Y') - 1; $y <= date('Y') + 3; $y++): ?>
-                <option value="<?= $y ?>" <?= $y == $program['tahun_anggaran'] ? 'selected' : '' ?>>
+                <option value="<?= $y ?>" <?= ((string) $oldTahun === (string) $y) ? 'selected' : '' ?>>
                   <?= $y ?>
                 </option>
               <?php endfor; ?>
@@ -52,8 +64,8 @@
             <label class="form-label fw-semibold">Jenis Anggaran</label>
             <select name="jenis_anggaran" class="form-select" required>
               <option value="">-- Pilih Jenis Anggaran --</option>
-              <option value="murni" <?= $program['jenis_anggaran'] == 'murni' ? 'selected' : '' ?>>APBD Murni</option>
-              <option value="perubahan" <?= $program['jenis_anggaran'] == 'perubahan' ? 'selected' : '' ?>>APBD Perubahan
+              <option value="murni" <?= ($oldJenisAnggaran === 'murni') ? 'selected' : '' ?>>APBD Murni</option>
+              <option value="perubahan" <?= ($oldJenisAnggaran === 'perubahan') ? 'selected' : '' ?>>APBD Perubahan
               </option>
             </select>
           </div>
@@ -81,7 +93,7 @@
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
   <script>
-    const programData = <?= json_encode($program, JSON_UNESCAPED_UNICODE) ?>;
+    const programData = <?= json_encode($programDataForJs, JSON_UNESCAPED_UNICODE) ?>;
   </script>
   <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js?v=' . time()) ?>"></script>
     </div>

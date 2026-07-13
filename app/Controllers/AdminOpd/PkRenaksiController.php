@@ -124,6 +124,7 @@ class PkRenaksiController extends BaseController
             ->join('jabatan jab', 'jab.id = peg.jabatan_id', 'left')
             ->where('pk.opd_id', (int) $opdId)
             ->where('pk.pihak_2 IS NOT NULL', null, false);
+        $b->where("(COALESCE(LOWER(jab.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(peg.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
         if (!empty($eselon)) {
             $b->where('pk.jenis', $eselon);
         } else {
@@ -282,6 +283,7 @@ class PkRenaksiController extends BaseController
                 pk.jenis     AS pk_jenis,
                 pj.nama_pegawai AS pejabat_nama,
                 jb.nama_jabatan AS pejabat_jabatan,
+                jb.eselon AS pejabat_eselon,
                 ps.sasaran   AS sasaran_renstra
             ')
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
@@ -291,6 +293,9 @@ class PkRenaksiController extends BaseController
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
             ->where('pi.id', $pkIndikatorId);
         $this->applyJenisScope($b, $jenis);
+        if ($jenis !== 'bupati') {
+            $b->where("(COALESCE(LOWER(jb.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(pj.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
+        }
         return $b->get()->getRowArray();
     }
 
@@ -1078,6 +1083,7 @@ class PkRenaksiController extends BaseController
                 ps.sasaran   AS sasaran_renstra,
                 pj.nama_pegawai AS pejabat_nama,
                 jb.nama_jabatan AS pejabat_jabatan,
+                jb.eselon AS pejabat_eselon,
                 o.nama_opd   AS nama_opd
             ')
             ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'left')
@@ -1090,6 +1096,9 @@ class PkRenaksiController extends BaseController
             ->where('tr.id', $id)
             ->where('tr.pk_indikator_id IS NOT NULL', null, false);
         $this->applyJenisScope($b, $jenis);
+        if ($jenis !== 'bupati') {
+            $b->where("(COALESCE(LOWER(jb.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(pj.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
+        }
         return $b->get()->getRowArray();
     }
 

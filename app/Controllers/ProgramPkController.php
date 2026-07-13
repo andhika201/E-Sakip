@@ -422,81 +422,165 @@ class ProgramPkController extends BaseController
             ->with('success', 'Import Program, Kegiatan, dan Sub Kegiatan berhasil');
     }
 
+    private function normalizeMoney($value): int
+    {
+        return (int) preg_replace('/\D/', '', (string) $value);
+    }
+
+    private function normalizeProgramPayload($programs): array
+    {
+        if (empty($programs) || !is_array($programs)) {
+            throw new \InvalidArgumentException('Program tidak boleh kosong');
+        }
+
+        $programs = array_values($programs);
+        $normalized = [];
+
+        foreach ($programs as $pIndex => $p) {
+            $namaProgram = trim((string) ($p['nama'] ?? ''));
+            $anggaranProgram = $this->normalizeMoney($p['anggaran'] ?? 0);
+
+            if ($namaProgram === '') {
+                throw new \InvalidArgumentException('Nama program wajib diisi');
+            }
+            if ($anggaranProgram <= 0) {
+                throw new \InvalidArgumentException('Anggaran program tidak valid');
+            }
+
+            $kegiatanPayload = $p['kegiatan'] ?? [];
+            if (empty($kegiatanPayload) || !is_array($kegiatanPayload)) {
+                throw new \InvalidArgumentException('Minimal harus ada 1 kegiatan');
+            }
+
+            $programData = [
+                'nama' => $namaProgram,
+                'anggaran' => $anggaranProgram,
+                'kegiatan' => [],
+            ];
+
+            foreach ($kegiatanPayload as $k) {
+                $namaKegiatan = trim((string) ($k['nama'] ?? ''));
+                $anggaranKegiatan = $this->normalizeMoney($k['anggaran'] ?? 0);
+
+                if ($namaKegiatan === '') {
+                    throw new \InvalidArgumentException('Nama kegiatan wajib diisi');
+                }
+                if ($anggaranKegiatan <= 0) {
+                    throw new \InvalidArgumentException('Anggaran kegiatan tidak valid');
+                }
+
+                $kegiatanData = [
+                    'nama' => $namaKegiatan,
+                    'anggaran' => $anggaranKegiatan,
+                    'sub' => [],
+                ];
+
+                foreach (($k['sub'] ?? []) as $s) {
+                    $namaSub = trim((string) ($s['nama'] ?? ''));
+                    $anggaranSub = $this->normalizeMoney($s['anggaran'] ?? 0);
+
+                    if ($namaSub === '') {
+                        throw new \InvalidArgumentException('Nama sub kegiatan wajib diisi');
+                    }
+                    if ($anggaranSub <= 0) {
+                        throw new \InvalidArgumentException('Anggaran sub kegiatan tidak valid');
+                    }
+
+                    $kegiatanData['sub'][] = [
+                        'nama' => $namaSub,
+                        'anggaran' => $anggaranSub,
+                    ];
+                }
+
+                $programData['kegiatan'][] = $kegiatanData;
+            }
+
+            $normalized[] = $programData;
+        }
+
+        return $normalized;
+    }
+
     public function save()
     {
         $db = \Config\Database::connect();
-        $db->transStart();
+        $transactionStarted = false;
 
-        $tahun = $this->request->getPost('tahun_anggaran');
-        $opdId = $this->request->getPost('opd_id');
-        $jenisAnggaran = $this->request->getPost('jenis_anggaran');
-        $programs = $this->request->getPost('program');
-        // dd($this->request->getPost());
+        try {
+            $tahun = (int) $this->request->getPost('tahun_anggaran');
+            $opdId = (int) $this->request->getPost('opd_id');
+            $jenisAnggaran = trim((string) $this->request->getPost('jenis_anggaran'));
+            $programs = $this->normalizeProgramPayload($this->request->getPost('program'));
 
-        if (!$programs) {
-            return redirect()->back()->with('error', 'Program tidak boleh kosong');
-        }
-        foreach ($programs as $p) {
-
-
-            $anggaran = (int) $p['anggaran'];
-
-            if ($anggaran <= 0) {
-                throw new \Exception("Anggaran program tidak valid");
+            if ($tahun <= 0) {
+                throw new \InvalidArgumentException('Tahun anggaran wajib diisi');
+            }
+            if ($opdId <= 0) {
+                throw new \InvalidArgumentException('OPD wajib dipilih');
+            }
+            if ($jenisAnggaran === '') {
+                throw new \InvalidArgumentException('Jenis anggaran wajib dipilih');
             }
 
-            $db->table('program_pk')->insert([
-                'kode_program' => uniqid('PRG-'),
-                'opd_id' => $opdId,
-                'program_kegiatan' => $p['nama'],
-                'tahun_anggaran' => $tahun,
-                'anggaran' => $p['anggaran'],
-                'jenis_anggaran' => $jenisAnggaran,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            $db->transException(true)->transBegin();
+            $transactionStarted = true;
 
-            $programId = $db->insertID();
-
-            foreach ($p['kegiatan'] ?? [] as $k) {
-
-                $db->table('kegiatan_pk')->insert([
-                    'program_id' => $programId,
-                    'kode_kegiatan' => uniqid('KEG-'),
-                    'kegiatan' => $k['nama'],
+            foreach ($programs as $p) {
+                $db->table('program_pk')->insert([
+                    'kode_program' => uniqid('PRG-'),
+                    'opd_id' => $opdId,
+                    'program_kegiatan' => $p['nama'],
                     'tahun_anggaran' => $tahun,
-                    'anggaran' => $k['anggaran'],
+                    'anggaran' => $p['anggaran'],
                     'jenis_anggaran' => $jenisAnggaran,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ]);
 
-                $kegiatanId = $db->insertID();
+                $programId = $db->insertID();
 
-                foreach ($k['sub'] ?? [] as $s) {
-                    $db->table('sub_kegiatan_pk')->insert([
-                        'kegiatan_id' => $kegiatanId,
-                        'kode_sub_kegiatan' => uniqid('SUB-'),
-                        'sub_kegiatan' => $s['nama'],
+                foreach ($p['kegiatan'] as $k) {
+                    $db->table('kegiatan_pk')->insert([
+                        'program_id' => $programId,
+                        'kode_kegiatan' => uniqid('KEG-'),
+                        'kegiatan' => $k['nama'],
                         'tahun_anggaran' => $tahun,
-                        'anggaran' => $s['anggaran'],
+                        'anggaran' => $k['anggaran'],
                         'jenis_anggaran' => $jenisAnggaran,
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s')
                     ]);
+
+                    $kegiatanId = $db->insertID();
+
+                    foreach ($k['sub'] as $s) {
+                        $db->table('sub_kegiatan_pk')->insert([
+                            'kegiatan_id' => $kegiatanId,
+                            'kode_sub_kegiatan' => uniqid('SUB-'),
+                            'sub_kegiatan' => $s['nama'],
+                            'tahun_anggaran' => $tahun,
+                            'anggaran' => $s['anggaran'],
+                            'jenis_anggaran' => $jenisAnggaran,
+                            'created_at' => date('Y-m-d H:i:s'),
+                            'updated_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
                 }
             }
+
+            $db->transCommit();
+            $transactionStarted = false;
+
+            return redirect()->to('/adminkab/program_pk')->with('success', 'Data berhasil disimpan');
+        } catch (\Throwable $e) {
+            if ($transactionStarted) {
+                $db->transRollback();
+            }
+
+            log_message('error', 'Gagal menyimpan Program PK: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            return redirect()->back()->with('error', 'Gagal menyimpan data');
-        }
-
-        return redirect()->to('/adminkab/program_pk')->with('success', 'Data berhasil disimpan');
     }
-
 
     /**
      * Show form for editing program
@@ -528,86 +612,105 @@ class ProgramPkController extends BaseController
     public function update($id)
     {
         $db = \Config\Database::connect();
-        $db->transStart();
+        $transactionStarted = false;
 
-        $programs = $this->request->getPost('program');
-        $tahun = $this->request->getPost('tahun_anggaran');
-        $opdId = $this->request->getPost('opd_id');
-        $jenisAnggaran = $this->request->getPost('jenis_anggaran');
+        try {
+            $program = $this->programPkModel->getProgramById($id);
+            if (!$program) {
+                throw new \InvalidArgumentException('Program PK tidak ditemukan');
+            }
 
-        // dd($this->request->getPost());
-        if (!$programs) {
-            return redirect()->back()->with('error', 'Program tidak boleh kosong');
-        }
+            $programs = $this->normalizeProgramPayload($this->request->getPost('program'));
+            $programData = $programs[0];
+            $tahun = (int) $this->request->getPost('tahun_anggaran');
+            $opdId = (int) $this->request->getPost('opd_id');
+            $jenisAnggaran = trim((string) $this->request->getPost('jenis_anggaran'));
 
-        // update program utama
-        $programData = $programs[0];
+            if ($tahun <= 0) {
+                throw new \InvalidArgumentException('Tahun anggaran wajib diisi');
+            }
+            if ($opdId <= 0) {
+                throw new \InvalidArgumentException('OPD wajib dipilih');
+            }
+            if ($jenisAnggaran === '') {
+                throw new \InvalidArgumentException('Jenis anggaran wajib dipilih');
+            }
 
-        $db->table('program_pk')
-            ->where('id', $id)
-            ->update([
-                'program_kegiatan' => $programData['nama'],
-                'anggaran' => $programData['anggaran'],
-                'opd_id' => $opdId,
-                'tahun_anggaran' => $tahun,
-                'jenis_anggaran' => $jenisAnggaran
-            ]);
+            $oldKegiatanIds = array_column(
+                $db->table('kegiatan_pk')
+                    ->select('id')
+                    ->where('program_id', $id)
+                    ->get()
+                    ->getResultArray(),
+                'id'
+            );
 
-        // hapus kegiatan lama
-        $kegiatanIds = $db->table('kegiatan_pk')
-            ->select('id')
-            ->where('program_id', $id)
-            ->get()
-            ->getResultArray();
+            $db->transException(true)->transBegin();
+            $transactionStarted = true;
 
-        $kegiatanIds = array_column($kegiatanIds, 'id');
-
-        if (!empty($kegiatanIds)) {
-            $db->table('sub_kegiatan_pk')
-                ->whereIn('kegiatan_id', $kegiatanIds)
-                ->delete();
-
-            $db->table('kegiatan_pk')
-                ->where('program_id', $id)
-                ->delete();
-        }
-
-        // insert ulang kegiatan
-        foreach ($programData['kegiatan'] ?? [] as $k) {
-
-            $db->table('kegiatan_pk')->insert([
-                'program_id' => $id,
-                'kode_kegiatan' => uniqid('KEG-'),
-                'kegiatan' => $k['nama'],
-                'anggaran' => $k['anggaran'],
-                'tahun_anggaran' => $tahun,
-                'jenis_anggaran' => $jenisAnggaran
-            ]);
-
-            $kegiatanId = $db->insertID();
-
-            foreach ($k['sub'] ?? [] as $s) {
-
-                $db->table('sub_kegiatan_pk')->insert([
-                    'kegiatan_id' => $kegiatanId,
-                    'kode_sub_kegiatan' => uniqid('SUB-'),
-                    'sub_kegiatan' => $s['nama'],
-                    'anggaran' => $s['anggaran'],
+            // Insert data kegiatan baru lebih dulu. Data lama baru dihapus setelah semua insert berhasil.
+            foreach ($programData['kegiatan'] as $k) {
+                $db->table('kegiatan_pk')->insert([
+                    'program_id' => $id,
+                    'kode_kegiatan' => uniqid('KEG-'),
+                    'kegiatan' => $k['nama'],
+                    'anggaran' => $k['anggaran'],
                     'tahun_anggaran' => $tahun,
-                    'jenis_anggaran' => $jenisAnggaran
+                    'jenis_anggaran' => $jenisAnggaran,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
                 ]);
 
+                $kegiatanId = $db->insertID();
+
+                foreach ($k['sub'] as $s) {
+                    $db->table('sub_kegiatan_pk')->insert([
+                        'kegiatan_id' => $kegiatanId,
+                        'kode_sub_kegiatan' => uniqid('SUB-'),
+                        'sub_kegiatan' => $s['nama'],
+                        'anggaran' => $s['anggaran'],
+                        'tahun_anggaran' => $tahun,
+                        'jenis_anggaran' => $jenisAnggaran,
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
             }
+
+            $db->table('program_pk')
+                ->where('id', $id)
+                ->update([
+                    'program_kegiatan' => $programData['nama'],
+                    'anggaran' => $programData['anggaran'],
+                    'opd_id' => $opdId,
+                    'tahun_anggaran' => $tahun,
+                    'jenis_anggaran' => $jenisAnggaran,
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+
+            if (!empty($oldKegiatanIds)) {
+                $db->table('sub_kegiatan_pk')
+                    ->whereIn('kegiatan_id', $oldKegiatanIds)
+                    ->delete();
+
+                $db->table('kegiatan_pk')
+                    ->whereIn('id', $oldKegiatanIds)
+                    ->delete();
+            }
+
+            $db->transCommit();
+            $transactionStarted = false;
+
+            return redirect()->to('/adminkab/program_pk')
+                ->with('success', 'Program berhasil diperbarui');
+        } catch (\Throwable $e) {
+            if ($transactionStarted) {
+                $db->transRollback();
+            }
+
+            log_message('error', 'Gagal memperbarui Program PK ID ' . $id . ': ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
         }
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            return redirect()->back()->with('error', 'Gagal memperbarui data');
-        }
-
-        return redirect()->to('/adminkab/program_pk')
-            ->with('success', 'Program berhasil diperbarui');
     }
 
     /**

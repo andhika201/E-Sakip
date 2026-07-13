@@ -13,7 +13,19 @@ $monevPath   = ($jenis === 'bupati') ? 'adminkab/monev'
              : (($base === 'adminopd') ? 'adminopd/monev' : ($base . '/monev_pk/' . $jenis));
 $baseUrl  = base_url($monevPath);
 
-$eselonLabel = function ($pkJenis) {
+$eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
+    $jabatanText = strtolower(trim((string) $jabatanNama));
+    if (in_array($jabatanText, ['inspektur', 'inspektur kabupaten', 'inspektur daerah', 'inspektur kabupaten pringsewu'], true)) {
+        return 'Eselon II';
+    }
+
+    if ($jabatanEselon !== null && $jabatanEselon !== '') {
+        $n = (int) $jabatanEselon;
+        if ($n > 0) {
+            return 'Eselon ' . str_repeat('I', $n);
+        }
+    }
+
     $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Camat (Eselon III)', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     return $map[$pkJenis] ?? '-';
 };
@@ -244,7 +256,7 @@ $filterQs = http_build_query(array_filter([
                                                 <?php if ($showPejabat): ?>
                                                     <td rowspan="<?= $sasTotal ?>" class="text-start">
                                                         <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></div>
-                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '')) ?></span>
+                                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><?= esc($eselonLabel($rows[0]['pk_jenis'] ?? '', $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
                                                     </td>
                                                 <?php endif; ?>
                                                 <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>

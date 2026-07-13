@@ -20,6 +20,18 @@
 
         <h3 class="text-center fw-bold text-success mb-4">Tambah Program PK</h3>
 
+        <?php if (session()->getFlashdata('error')): ?>
+          <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
+        <?php endif; ?>
+
+        <?php
+        $oldOpdId = old('opd_id');
+        $oldTahun = old('tahun_anggaran');
+        $oldJenisAnggaran = old('jenis_anggaran');
+        $oldProgramData = old('program');
+        $oldProgramData = is_array($oldProgramData) ? array_values($oldProgramData) : [];
+        ?>
+
         <form method="post" action="<?= base_url('adminkab/program_pk/save') ?>">
           <?= csrf_field() ?>
           <div class="mb-4">
@@ -27,7 +39,7 @@
             <select name="opd_id" class="form-select" required>
               <option value="">-- Pilih OPD --</option>
               <?php foreach ($opds as $opd): ?>
-                <option value="<?= $opd['id'] ?>">
+                <option value="<?= $opd['id'] ?>" <?= ((string) $oldOpdId === (string) $opd['id']) ? 'selected' : '' ?>>
                   <?= esc($opd['nama_opd']) ?>
                 </option>
               <?php endforeach; ?>
@@ -40,7 +52,7 @@
             <select name="tahun_anggaran" class="form-select" required>
               <option value="">-- Pilih Tahun --</option>
               <?php for ($y = date('Y') - 1; $y <= date('Y') + 3; $y++): ?>
-                <option value="<?= $y ?>"><?= $y ?></option>
+                <option value="<?= $y ?>" <?= ((string) $oldTahun === (string) $y) ? 'selected' : '' ?>><?= $y ?></option>
               <?php endfor; ?>
             </select>
           </div>
@@ -49,8 +61,8 @@
             <label class="form-label fw-semibold">Jenis Anggaran</label>
             <select name="jenis_anggaran" class="form-select" required>
               <option value="">-- Pilih Jenis Anggaran --</option>
-              <option value="murni">APBD Murni</option>
-              <option value="perubahan">APBD Perubahan</option>
+              <option value="murni" <?= ($oldJenisAnggaran === 'murni') ? 'selected' : '' ?>>APBD Murni</option>
+              <option value="perubahan" <?= ($oldJenisAnggaran === 'perubahan') ? 'selected' : '' ?>>APBD Perubahan</option>
             </select>
           </div>
 
@@ -77,6 +89,11 @@
 
   <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
+  <?php if (!empty($oldProgramData)): ?>
+    <script>
+      const programData = <?= json_encode($oldProgramData, JSON_UNESCAPED_UNICODE) ?>;
+    </script>
+  <?php endif; ?>
   <script src="<?= base_url('assets/js/adminKabupaten/pk/program-pk-form.js?v=' . time()) ?>"></script>
     </div>
 </body>

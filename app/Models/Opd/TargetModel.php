@@ -332,6 +332,7 @@ class TargetModel extends Model
                 pj.id              AS pejabat_id,
                 pj.nama_pegawai    AS pejabat_nama,
                 jb.nama_jabatan    AS pejabat_jabatan,
+                jb.eselon          AS pejabat_eselon,
 
                 ps.id              AS pk_sasaran_id,
                 ps.sasaran         AS sasaran_renstra,
@@ -367,6 +368,7 @@ class TargetModel extends Model
         if (!empty($pejabatId)) {
             $b->where('pk.pihak_2', (int) $pejabatId);
         }
+        $b->where("(COALESCE(LOWER(jb.nama_jabatan), '') NOT LIKE '%bupati%' AND COALESCE(LOWER(pj.nama_pegawai), '') NOT LIKE '%bupati%')", null, false);
 
         return $b->orderBy('pk.opd_id', 'ASC')
             ->orderBy("FIELD(pk.jenis,'jpt','camat','administrator','pengawas')", '', false)

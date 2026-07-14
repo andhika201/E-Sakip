@@ -60,7 +60,9 @@
             Kinerja Perangkat Daerah
           </a>
           <ul class="dropdown-menu" aria-labelledby="perangkatDropdown">
-            <li><a class="dropdown-item" href="<?= base_url('renja') ?>">RENJA</a></li>
+            <?php /* RENJA disembunyikan sementara: belum ada sumber data (tabel renja +
+                     UserController::renja). Link lama memicu 404. Aktifkan kembali (tambah
+                     <li> RENJA) setelah fitur RENJA diimplementasi. */ ?>
             <li><a class="dropdown-item" href="<?= base_url('renstra') ?>">RENSTRA</a></li>
             <li><a class="dropdown-item" href="<?= base_url('lakip_opd') ?>">LAKIP</a></li>
             <li><a class="dropdown-item" href="<?= base_url('iku_opd') ?>">IKU</a></li>

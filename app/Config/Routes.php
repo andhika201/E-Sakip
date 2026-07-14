@@ -33,7 +33,9 @@ $routes->get('/rkpd', 'UserController::rkpd');
 $routes->get('/rpjmd', 'UserController::rpjmd');
 $routes->get('/lakip_kabupaten', 'UserController::lakip_kabupaten');
 $routes->get('/pk_bupati', 'UserController::pk_bupati');
-$routes->get('/renja', 'UserController::renja');
+// RENJA publik dinonaktifkan: UserController::renja belum ada & belum ada sumber data (tabel renja).
+// Menu RENJA di header juga disembunyikan. Aktifkan kembali setelah fitur diimplementasi.
+// $routes->get('/renja', 'UserController::renja');
 $routes->get('/renstra', 'UserController::renstra');
 $routes->get('/rkt', 'UserController::rkt');
 $routes->get('/lakip_opd', 'UserController::lakip_opd');
@@ -76,13 +78,15 @@ $routes->group(
     function ($routes) {
         $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
         $routes->get('pk/(:any)/tambah', 'AdminOpd\PkController::tambah/$1');
-        $routes->get('capaian_pk/(:any)/(:num)', 'AdminOpd\PkController::edit_capaian/$1/$2');
-        $routes->post('capaian_pk/(:any)/setcapaian/(:num)', 'AdminOpd\PkController::update_capaian/$1/$2');
+        // capaian_pk = fitur lama yang sudah tidak ada method-nya (digantikan PkRenaksiController/monev).
+        // Rute dinonaktifkan agar tidak memicu error "method not found" bila di-hit langsung.
+        // $routes->get('capaian_pk/(:any)/(:num)', 'AdminOpd\PkController::edit_capaian/$1/$2');
+        // $routes->post('capaian_pk/(:any)/setcapaian/(:num)', 'AdminOpd\PkController::update_capaian/$1/$2');
         $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');
         $routes->get('pk/(:any)/cetak/(:num)', 'AdminOpd\PkController::cetak/$1/$2');
         $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
         $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
-        $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
+        // $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
         $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
         // (pk_bupati/cetak dihapus: controller AdminKab\PkBupatiController tidak ada & tidak ada link.
         //  Cetak PK Bupati dilayani via pk/(:any)/cetak/(:num) dan AdminOpd\PkRenaksiController.)
@@ -100,8 +104,9 @@ $routes->group(
         $routes->post('lakip/save', 'AdminKab\LakipController::save');
         $routes->get('lakip/edit/(:num)', 'AdminKab\LakipController::edit/$1');
         $routes->post('lakip/update/', 'AdminKab\LakipController::update');
-        $routes->get('lakip/download/(:num)', 'AdminKab\LakipController::download/$1');
-        $routes->post('lakip/update-status', 'AdminKab\LakipController::updateStatus');
+        // download & update-status: method tidak ada; ubah status LAKIP dilayani lakip/status/(:num)/(:segment)
+        // $routes->get('lakip/download/(:num)', 'AdminKab\LakipController::download/$1');
+        // $routes->post('lakip/update-status', 'AdminKab\LakipController::updateStatus');
         $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
         // ubah status lakip
         $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
@@ -137,14 +142,16 @@ $routes->group(
         $routes->post('cascading/save-csf', 'AdminKab\CascadingController::saveCsf');
         $routes->get('cascading/cetak-pohon', 'AdminKab\CascadingController::cetakPohon');
 
-        // RKPD
+        // RKPD (read-only: turunan RKT). Hanya index yang aktif.
+        // Rute tulis di bawah dinonaktifkan karena method controllernya tidak ada
+        // (RkpdController hanya punya index()); view tambah/edit RKPD adalah orphan.
         $routes->get('rkpd', 'RkpdController::index');
-        $routes->get('rkpd/tambah', 'RkpdController::tambah');
-        $routes->get('rkpd/edit/(:num)', 'RkpdController::edit/$1');
-        $routes->post('rkpd/save', 'RkpdController::save');
-        $routes->post('rkpd/update', 'RkpdController::update');
-        $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
-        $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
+        // $routes->get('rkpd/tambah', 'RkpdController::tambah');
+        // $routes->get('rkpd/edit/(:num)', 'RkpdController::edit/$1');
+        // $routes->post('rkpd/save', 'RkpdController::save');
+        // $routes->post('rkpd/update', 'RkpdController::update');
+        // $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
+        // $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
         // (rkt kabupaten dihapus: controller AdminKab\RktController tidak ada & tidak ada menu.
         //  RKT hanya pada tingkat OPD -> lihat grup adminopd (adminopd/rkt).)
@@ -269,7 +276,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
     $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
     $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
-    $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
+    // capaian_pk = fitur lama tanpa method (digantikan monev/PkRenaksiController)
+    // $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
 
     $routes->get('dashboard', 'AdminOpdController::index');
 
@@ -293,7 +301,8 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('rkt/save', 'AdminOpd\RktController::save');
     $routes->post('rkt/update', 'AdminOpd\RktController::update');
     $routes->post('rkt/delete-indikator', 'AdminOpd\RktController::deleteByIndicator');
-    $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
+    // rkt/delete/(:num): method delete() tidak ada; hapus RKT dilakukan via rkt/delete-indikator (deleteByIndicator)
+    // $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
     $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 
     // IKU
@@ -349,8 +358,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('lakip/save', 'AdminOpd\LakipOpdController::save');
     $routes->get('lakip/edit/(:num)', 'AdminOpd\LakipOpdController::edit/$1');
     $routes->post('lakip/update/', 'AdminOpd\LakipOpdController::update');
-    $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
-    $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
+    // download & update-status: method tidak ada; ubah status LAKIP dilayani lakip/status/(:num)/(:segment)
+    // $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
+    // $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
     $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
     // ubah status lakip
     $routes->get('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');

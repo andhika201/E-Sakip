@@ -153,10 +153,10 @@ class PkController extends BaseController
             return redirect()->to('/adminOpd/pk/' . $seg)->with('error', 'ID PK tidak ditemukan');
         }
         $data = $this->pkModel->getPkById($id);
-        $tahun = $data['tahun'];
         if (!$data) {
             return redirect()->to('/adminOpd/pk/' . $seg)->with('error', 'Data PK tidak ditemukan');
         }
+        $tahun = $data['tahun'];
         $data['logo_url'] = FCPATH . 'assets/images/logo.png';
         $data['isKecamatan'] = $isKecamatan;
 
@@ -773,8 +773,8 @@ class PkController extends BaseController
         // EXECUTE UPDATE
         // ============================
         try {
-            log_message('debug', "CALLING updateCompletePk($id)");
-            $ok = $this->pkModel->updateCompletePk($id, $saveData);
+            log_message('debug', "CALLING syncCompletePk($id)");
+            $ok = $this->pkModel->syncCompletePk($id, $saveData);
 
             // Setelah query
             $db = \Config\Database::connect();
@@ -786,7 +786,7 @@ class PkController extends BaseController
                 return redirect()->to($base . $seg)->with('success', 'Data PK berhasil diperbarui.');
             }
 
-            log_message('error', "updateCompletePk gagal untuk ID {$id}");
+            log_message('error', "syncCompletePk gagal untuk ID {$id}");
             return redirect()->back()->with('error', 'Gagal memperbarui PK');
         } catch (\Exception $e) {
             log_message('error', "EXCEPTION UPDATE PK: {$e->getMessage()}");
@@ -828,27 +828,8 @@ class PkController extends BaseController
         }
 
         $jenis = $pk['jenis'];
-        $db = \Config\Database::connect();
-        $db->transStart();
-
         try {
-
-            // --- semua proses delete ---
-            // (tidak saya ulang supaya pesan ini fokus pada perbaikan saja)
-            // --------------------------------------------------------------
-
-            $this->pkModel->delete($id);
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                $db->transRollback();
-
-                if ($isAjax) {
-                    return $this->response->setJSON(['success' => false, 'error' => 'Gagal menghapus PK.']);
-                }
-
-                return redirect()->back()->with('error', 'Gagal menghapus PK.');
-            }
+            $this->pkModel->deleteCompletePk((int) $id);
 
             // === RETURN SUCCESS ===
             if ($isAjax) {
@@ -860,7 +841,6 @@ class PkController extends BaseController
             return redirect()->to($redirectBase . $seg)
                 ->with('success', 'Data PK berhasil dihapus.');
         } catch (\Exception $e) {
-            $db->transRollback();
             log_message('error', 'DELETE ERROR: ' . $e->getMessage());
 
             if ($isAjax) {

@@ -345,7 +345,7 @@ class TargetController extends BaseController
 
                 // TEKS
                 'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
-                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
                 // TEXT/ALPHANUMERIC
                 'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -427,7 +427,7 @@ class TargetController extends BaseController
 
             // TEKS
             'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
-            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
             // TEXT/ALPHANUMERIC
             'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -652,7 +652,7 @@ class TargetController extends BaseController
         if ($mode === 'kabupaten') {
             $rules = [
                 'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
-                'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+                'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
                 // TEXT/ALPHANUMERIC
                 'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -717,7 +717,7 @@ class TargetController extends BaseController
         /* ===================== UPDATE MODE OPD (RENSTRA) ===================== */
         $rules = [
             'rencana_aksi' => 'required|string|max_length[10000]|' . $rxText,
-            'penanggung_jawab' => 'permit_empty|string|max_length[255]|' . $rxText,
+            'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
             // TEXT/ALPHANUMERIC
             'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,

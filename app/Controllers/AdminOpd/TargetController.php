@@ -191,7 +191,7 @@ class TargetController extends BaseController
 
             // TEKS
             'rencana_aksi' => 'permit_empty|string|max_length[500]|' . $noScript,
-            'penanggung_jawab' => 'permit_empty|string|max_length[500]|' . $noScript,
+            'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $noScript,
 
             // TEXT/ALPHANUMERIC
             'capaian' => 'permit_empty|string|max_length[255]|' . $noScript,
@@ -371,7 +371,7 @@ class TargetController extends BaseController
         $rules = [
             // TEKS
             'rencana_aksi' => 'permit_empty|string|max_length[500]|' . $noScript,
-            'penanggung_jawab' => 'permit_empty|string|max_length[500]|' . $noScript,
+            'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $noScript,
 
             // TEXT/ALPHANUMERIC
             'capaian' => 'permit_empty|string|max_length[255]|' . $noScript,

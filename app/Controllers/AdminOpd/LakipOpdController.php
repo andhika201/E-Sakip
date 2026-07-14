@@ -549,9 +549,10 @@ class LakipOpdController extends BaseController
 
         try {
             $updateData = [
-                'target_lalu' => $data['target_lalu'] ?? null,
-                'capaian_lalu' => $data['capaian_lalu'] ?? null,
-                'capaian_tahun_ini' => $data['capaian_tahun_ini'] ?? null,
+                // kolom NOT NULL: pakai '' bukan null agar konsisten dgn save() & tak melanggar constraint
+                'target_lalu' => $data['target_lalu'] ?? '',
+                'capaian_lalu' => $data['capaian_lalu'] ?? '',
+                'capaian_tahun_ini' => $data['capaian_tahun_ini'] ?? '',
                 'target_hitung' => ($data['target_hitung'] ?? '') !== '' ? $data['target_hitung'] : null,
                 'capaian_hitung' => ($data['capaian_hitung'] ?? '') !== '' ? $data['capaian_hitung'] : null,
             ];

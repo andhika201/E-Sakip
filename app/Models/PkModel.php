@@ -83,6 +83,7 @@ class PkModel extends Model
     protected $afterDelete = [];
 
     private ?array $pkFieldNames = null;
+    private array $fieldNamesByTable = [];
 
     private function pkHasField(string $field): bool
     {
@@ -95,6 +96,29 @@ class PkModel extends Model
         }
 
         return in_array($field, $this->pkFieldNames, true);
+    }
+
+    private function tableHasField(string $table, string $field): bool
+    {
+        if (!array_key_exists($table, $this->fieldNamesByTable)) {
+            try {
+                $this->fieldNamesByTable[$table] = $this->db->tableExists($table)
+                    ? $this->db->getFieldNames($table)
+                    : [];
+            } catch (\Throwable $e) {
+                $this->fieldNamesByTable[$table] = [];
+            }
+        }
+
+        return in_array($field, $this->fieldNamesByTable[$table], true);
+    }
+
+    private function normalizeIds(array $ids): array
+    {
+        $ids = array_map(static fn ($id) => (int) $id, $ids);
+        $ids = array_filter($ids, static fn ($id) => $id > 0);
+
+        return array_values(array_unique($ids));
     }
 
     private function pkPltPayload(array $data): array
@@ -522,6 +546,175 @@ class PkModel extends Model
         }
     }
 
+    private function deletePkSubkegiatanByKegiatanIds(array $pkKegiatanIds): void
+    {
+        $pkKegiatanIds = $this->normalizeIds($pkKegiatanIds);
+        if (empty($pkKegiatanIds)) {
+            return;
+        }
+
+        $this->db->table('pk_subkegiatan')
+            ->whereIn('pk_kegiatan_id', $pkKegiatanIds)
+            ->delete();
+    }
+
+    private function deletePkKegiatanBranches(array $pkKegiatanIds): void
+    {
+        $pkKegiatanIds = $this->normalizeIds($pkKegiatanIds);
+        if (empty($pkKegiatanIds)) {
+            return;
+        }
+
+        $this->deletePkSubkegiatanByKegiatanIds($pkKegiatanIds);
+        $this->db->table('pk_kegiatan')
+            ->whereIn('id', $pkKegiatanIds)
+            ->delete();
+    }
+
+    private function deletePkKegiatanByProgramIds(array $pkProgramIds): void
+    {
+        $pkProgramIds = $this->normalizeIds($pkProgramIds);
+        if (empty($pkProgramIds)) {
+            return;
+        }
+
+        $rows = $this->db->table('pk_kegiatan')
+            ->select('id')
+            ->whereIn('pk_program_id', $pkProgramIds)
+            ->get()
+            ->getResultArray();
+
+        $this->deletePkKegiatanBranches(array_column($rows, 'id'));
+    }
+
+    private function deletePkProgramBranches(array $pkProgramIds): void
+    {
+        $pkProgramIds = $this->normalizeIds($pkProgramIds);
+        if (empty($pkProgramIds)) {
+            return;
+        }
+
+        $this->deletePkKegiatanByProgramIds($pkProgramIds);
+        $this->db->table('pk_program')
+            ->whereIn('id', $pkProgramIds)
+            ->delete();
+    }
+
+    private function deleteTargetRencanaByIndikatorIds(array $pkIndikatorIds): void
+    {
+        $pkIndikatorIds = $this->normalizeIds($pkIndikatorIds);
+        if (empty($pkIndikatorIds) || !$this->tableHasField('target_rencana', 'pk_indikator_id')) {
+            return;
+        }
+
+        $targetRows = $this->db->table('target_rencana')
+            ->select('id')
+            ->whereIn('pk_indikator_id', $pkIndikatorIds)
+            ->get()
+            ->getResultArray();
+        $targetIds = $this->normalizeIds(array_column($targetRows, 'id'));
+
+        if (!empty($targetIds) && $this->tableHasField('monev', 'target_rencana_id')) {
+            $this->db->table('monev')
+                ->whereIn('target_rencana_id', $targetIds)
+                ->delete();
+        }
+
+        $this->db->table('target_rencana')
+            ->whereIn('pk_indikator_id', $pkIndikatorIds)
+            ->delete();
+    }
+
+    private function deletePkIndikatorBranches(array $pkIndikatorIds, bool $deleteIndikatorRows = true): void
+    {
+        $pkIndikatorIds = $this->normalizeIds($pkIndikatorIds);
+        if (empty($pkIndikatorIds)) {
+            return;
+        }
+
+        $programRows = $this->db->table('pk_program')
+            ->select('id')
+            ->whereIn('pk_indikator_id', $pkIndikatorIds)
+            ->get()
+            ->getResultArray();
+
+        $this->deletePkProgramBranches(array_column($programRows, 'id'));
+        $this->deleteTargetRencanaByIndikatorIds($pkIndikatorIds);
+
+        if ($this->tableHasField('pk_referensi', 'referensi_indikator_id')) {
+            $this->db->table('pk_referensi')
+                ->whereIn('referensi_indikator_id', $pkIndikatorIds)
+                ->delete();
+        }
+
+        if ($deleteIndikatorRows) {
+            $this->db->table('pk_indikator')
+                ->whereIn('id', $pkIndikatorIds)
+                ->delete();
+        }
+    }
+
+    private function deletePkSasaranBranches(array $pkSasaranIds): void
+    {
+        $pkSasaranIds = $this->normalizeIds($pkSasaranIds);
+        if (empty($pkSasaranIds)) {
+            return;
+        }
+
+        $indicatorRows = $this->db->table('pk_indikator')
+            ->select('id')
+            ->whereIn('pk_sasaran_id', $pkSasaranIds)
+            ->get()
+            ->getResultArray();
+
+        $this->deletePkIndikatorBranches(array_column($indicatorRows, 'id'), true);
+        $this->db->table('pk_sasaran')
+            ->whereIn('id', $pkSasaranIds)
+            ->delete();
+    }
+
+    public function deleteCompletePk(int $pkId): bool
+    {
+        $db = \Config\Database::connect();
+        $db->transException(true)->transBegin();
+
+        try {
+            $sasaranRows = $db->table('pk_sasaran')
+                ->select('id')
+                ->where('pk_id', $pkId)
+                ->get()
+                ->getResultArray();
+
+            $this->deletePkSasaranBranches(array_column($sasaranRows, 'id'));
+
+            if ($this->tableHasField('pk_referensi', 'pk_id')) {
+                $refBuilder = $db->table('pk_referensi');
+                if ($this->tableHasField('pk_referensi', 'referensi_pk_id')) {
+                    $refBuilder
+                        ->groupStart()
+                        ->where('pk_id', $pkId)
+                        ->orWhere('referensi_pk_id', $pkId)
+                        ->groupEnd()
+                        ->delete();
+                } else {
+                    $refBuilder->where('pk_id', $pkId)->delete();
+                }
+            }
+
+            if ($this->tableHasField('pk_misi', 'pk_id')) {
+                $db->table('pk_misi')->where('pk_id', $pkId)->delete();
+            }
+
+            $db->table('pk')->where('id', $pkId)->delete();
+            $db->transCommit();
+
+            return true;
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
     /**
      * Update PK and related data (clean & re-insert approach)
      * - This function removes all related rows for the given pk id and inserts fresh ones according to $data
@@ -735,6 +928,258 @@ class PkModel extends Model
             $db->transComplete();
             return true;
         } catch (\Exception $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
+
+    /**
+     * Sinkronisasi penuh struktur PK berdasarkan payload form edit.
+     * Baris yang tidak lagi dikirim dari form dihapus manual sampai cabang terdalam
+     * agar tidak tertinggal orphan saat FK memakai ON DELETE SET NULL.
+     */
+    public function syncCompletePk($pkId, $data): bool
+    {
+        $db = \Config\Database::connect();
+        $db->transException(true)->transBegin();
+        $now = date('Y-m-d H:i:s');
+
+        try {
+            $pkUpdate = [
+                'pihak_1' => $data['pihak_1'],
+                'pihak_2' => $data['pihak_2'],
+                'tahun' => $data['tahun'],
+                'tanggal' => $data['tanggal'],
+                'updated_at' => $now
+            ];
+            $pkUpdate = array_merge($pkUpdate, $this->pkPltPayload($data));
+
+            $db->table('pk')->where('id', $pkId)->update($pkUpdate);
+
+            $db->table('pk_referensi')->where('pk_id', $pkId)->delete();
+            foreach (($data['referensi_acuan'] ?? []) as $ref) {
+                $refPkId = (int) ($ref['referensi_pk_id'] ?? 0);
+                $refIndId = (int) ($ref['referensi_indikator_id'] ?? 0);
+                if ($refPkId <= 0 || $refIndId <= 0) {
+                    continue;
+                }
+
+                $db->table('pk_referensi')->insert([
+                    'pk_id' => $pkId,
+                    'referensi_pk_id' => $refPkId,
+                    'referensi_indikator_id' => $refIndId,
+                ]);
+            }
+
+            if ($this->tableHasField('pk_misi', 'pk_id')) {
+                $db->table('pk_misi')->where('pk_id', $pkId)->delete();
+                foreach (($data['misi_bupati_id'] ?? []) as $misiId) {
+                    $misiId = (int) $misiId;
+                    if ($misiId <= 0) {
+                        continue;
+                    }
+
+                    $db->table('pk_misi')->insert([
+                        'pk_id' => $pkId,
+                        'rpjmd_misi_id' => $misiId,
+                    ]);
+                }
+            }
+
+            $existingSasaran = $db->table('pk_sasaran')->where('pk_id', $pkId)->get()->getResultArray();
+            $existingSasaranIds = $this->normalizeIds(array_column($existingSasaran, 'id'));
+            $usedSasaranIds = [];
+
+            foreach (($data['sasaran_pk'] ?? []) as $s) {
+                $postedSasaranId = (int) ($s['pk_sasaran_id'] ?? 0);
+                $sasaranText = trim((string) ($s['sasaran'] ?? ''));
+                if ($sasaranText === '') {
+                    continue;
+                }
+
+                if ($postedSasaranId > 0 && in_array($postedSasaranId, $existingSasaranIds, true)) {
+                    $db->table('pk_sasaran')->where('id', $postedSasaranId)->update([
+                        'sasaran' => $sasaranText,
+                        'updated_at' => $now
+                    ]);
+                    $pkSasaranId = $postedSasaranId;
+                } else {
+                    $db->table('pk_sasaran')->insert([
+                        'pk_id' => $pkId,
+                        'jenis' => $data['jenis'],
+                        'sasaran' => $sasaranText,
+                        'created_at' => $now,
+                        'updated_at' => $now
+                    ]);
+                    $pkSasaranId = (int) $db->insertID();
+                }
+                $usedSasaranIds[] = $pkSasaranId;
+
+                $existingInd = $db->table('pk_indikator')->where('pk_sasaran_id', $pkSasaranId)->get()->getResultArray();
+                $existingIndIds = $this->normalizeIds(array_column($existingInd, 'id'));
+                $usedIndIds = [];
+
+                foreach (($s['indikator'] ?? []) as $ind) {
+                    $postedIndId = (int) ($ind['pk_indikator_id'] ?? 0);
+                    $indikatorText = trim((string) ($ind['indikator'] ?? ''));
+                    if ($indikatorText === '') {
+                        continue;
+                    }
+
+                    $indicatorPayload = [
+                        'indikator' => $indikatorText,
+                        'target' => $ind['target'] ?? '',
+                        'id_satuan' => $ind['id_satuan'] ?? null,
+                        'jenis_indikator' => $ind['jenis_indikator'] ?? null,
+                        'updated_at' => $now
+                    ];
+
+                    if ($postedIndId > 0 && in_array($postedIndId, $existingIndIds, true)) {
+                        $db->table('pk_indikator')->where('id', $postedIndId)->update($indicatorPayload);
+                        $pkIndId = $postedIndId;
+                    } else {
+                        $indicatorPayload['pk_sasaran_id'] = $pkSasaranId;
+                        $indicatorPayload['jenis'] = $data['jenis'];
+                        $indicatorPayload['created_at'] = $now;
+                        $db->table('pk_indikator')->insert($indicatorPayload);
+                        $pkIndId = (int) $db->insertID();
+                    }
+                    $usedIndIds[] = $pkIndId;
+
+                    $existingProgramRows = $db->table('pk_program')
+                        ->select('id')
+                        ->where('pk_indikator_id', $pkIndId)
+                        ->get()
+                        ->getResultArray();
+                    $existingProgramIds = $this->normalizeIds(array_column($existingProgramRows, 'id'));
+                    $usedProgramIds = [];
+
+                    foreach (($ind['program'] ?? []) as $p) {
+                        $programId = (int) ($p['program_id'] ?? 0);
+                        if ($programId <= 0) {
+                            continue;
+                        }
+
+                        $postedProgramId = (int) ($p['pk_program_id'] ?? 0);
+                        if ($postedProgramId > 0 && in_array($postedProgramId, $existingProgramIds, true)) {
+                            $db->table('pk_program')->where('id', $postedProgramId)->update([
+                                'pk_indikator_id' => $pkIndId,
+                                'program_id' => $programId,
+                                'updated_at' => $now
+                            ]);
+                            $pkProgramId = $postedProgramId;
+                        } else {
+                            $db->table('pk_program')->insert([
+                                'pk_indikator_id' => $pkIndId,
+                                'program_id' => $programId,
+                                'created_at' => $now,
+                                'updated_at' => $now
+                            ]);
+                            $pkProgramId = (int) $db->insertID();
+                        }
+                        $usedProgramIds[] = $pkProgramId;
+
+                        if (in_array($data['jenis'], ['jpt', 'camat'], true)) {
+                            $this->deletePkKegiatanByProgramIds([$pkProgramId]);
+                            continue;
+                        }
+
+                        $existingKegRows = $db->table('pk_kegiatan')
+                            ->select('id')
+                            ->where('pk_program_id', $pkProgramId)
+                            ->get()
+                            ->getResultArray();
+                        $existingKegIds = $this->normalizeIds(array_column($existingKegRows, 'id'));
+                        $usedKegIds = [];
+
+                        foreach (($p['kegiatan'] ?? []) as $k) {
+                            $kegiatanId = (int) ($k['kegiatan_id'] ?? 0);
+                            if ($kegiatanId <= 0) {
+                                continue;
+                            }
+
+                            $postedKegId = (int) ($k['pk_kegiatan_id'] ?? 0);
+                            if ($postedKegId > 0 && in_array($postedKegId, $existingKegIds, true)) {
+                                $db->table('pk_kegiatan')->where('id', $postedKegId)->update([
+                                    'pk_program_id' => $pkProgramId,
+                                    'kegiatan_id' => $kegiatanId,
+                                    'updated_at' => $now
+                                ]);
+                                $pkKegId = $postedKegId;
+                            } else {
+                                $db->table('pk_kegiatan')->insert([
+                                    'pk_program_id' => $pkProgramId,
+                                    'kegiatan_id' => $kegiatanId,
+                                    'created_at' => $now,
+                                    'updated_at' => $now
+                                ]);
+                                $pkKegId = (int) $db->insertID();
+                            }
+                            $usedKegIds[] = $pkKegId;
+
+                            if ($data['jenis'] === 'pengawas' && !empty($k['subkegiatan']) && is_array($k['subkegiatan'])) {
+                                $existingSub = $db->table('pk_subkegiatan')
+                                    ->where('pk_kegiatan_id', $pkKegId)
+                                    ->get()
+                                    ->getResultArray();
+                                $existingSubIds = $this->normalizeIds(array_column($existingSub, 'id'));
+                                $usedSubIds = [];
+
+                                foreach ($k['subkegiatan'] as $sk) {
+                                    $subkegiatanId = (int) ($sk['subkegiatan_id'] ?? 0);
+                                    if ($subkegiatanId <= 0) {
+                                        continue;
+                                    }
+
+                                    $postedSubId = (int) ($sk['pk_subkegiatan_id'] ?? 0);
+                                    if ($postedSubId > 0 && in_array($postedSubId, $existingSubIds, true)) {
+                                        $db->table('pk_subkegiatan')->where('id', $postedSubId)->update([
+                                            'pk_kegiatan_id' => $pkKegId,
+                                            'subkegiatan_id' => $subkegiatanId,
+                                            'updated_at' => $now
+                                        ]);
+                                        $pkSubId = $postedSubId;
+                                    } else {
+                                        $db->table('pk_subkegiatan')->insert([
+                                            'pk_kegiatan_id' => $pkKegId,
+                                            'subkegiatan_id' => $subkegiatanId,
+                                            'created_at' => $now,
+                                            'updated_at' => $now
+                                        ]);
+                                        $pkSubId = (int) $db->insertID();
+                                    }
+
+                                    $usedSubIds[] = $pkSubId;
+                                }
+
+                                $deleteSub = array_diff($existingSubIds, $usedSubIds);
+                                if (!empty($deleteSub)) {
+                                    $db->table('pk_subkegiatan')->whereIn('id', $deleteSub)->delete();
+                                }
+                            } else {
+                                $this->deletePkSubkegiatanByKegiatanIds([$pkKegId]);
+                            }
+                        }
+
+                        $deleteKegiatan = array_diff($existingKegIds, $usedKegIds);
+                        $this->deletePkKegiatanBranches($deleteKegiatan);
+                    }
+
+                    $deletePrograms = array_diff($existingProgramIds, $usedProgramIds);
+                    $this->deletePkProgramBranches($deletePrograms);
+                }
+
+                $deleteIndikator = array_diff($existingIndIds, $usedIndIds);
+                $this->deletePkIndikatorBranches($deleteIndikator, true);
+            }
+
+            $deleteSasaran = array_diff($existingSasaranIds, $usedSasaranIds);
+            $this->deletePkSasaranBranches($deleteSasaran);
+
+            $db->transCommit();
+            return true;
+        } catch (\Throwable $e) {
             $db->transRollback();
             throw $e;
         }
@@ -988,7 +1433,8 @@ class PkModel extends Model
     {
         switch (strtolower($jenis)) {
             case 'bupati':
-                return $this->getProgramsForBupatiFromPkJpt(intval());
+                $pk = $this->select('tahun')->find($pkId);
+                return $pk ? $this->getProgramsForBupatiFromPkJpt((int) $pk['tahun']) : [];
 
             case 'jpt':
             case 'camat': // Camat = struktur identik JPT (indikator → program)

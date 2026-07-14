@@ -117,12 +117,22 @@ document.addEventListener("DOMContentLoaded", () => {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
       // SASARAN
       const sasaranTxt = sasaran.querySelector("textarea");
+      const sasaranId = sasaran.querySelector('input[name*="[pk_sasaran_id]"]');
+      if (sasaranId) {
+        sasaranId.name = `sasaran_pk[${si}][pk_sasaran_id]`;
+      }
       if (sasaranTxt) {
         sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
       }
 
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
         // INDIKATOR
+        indikator
+          .querySelector('input[name*="[pk_indikator_id]"]')
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][pk_indikator_id]`,
+          );
         
         indikator
           .querySelector(".indikator-input")
@@ -152,6 +162,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // PROGRAM (IMPLICIT, DARI KEGIATAN)
         qsa(".kegiatan-item", indikator).forEach((kegiatan, ki) => {
+          kegiatan
+            .querySelector('input[name*="[pk_program_id]"]')
+            ?.setAttribute(
+              "name",
+              `sasaran_pk[${si}][indikator][${ii}][program][${ki}][pk_program_id]`,
+            );
+
+          kegiatan
+            .querySelector('input[name*="[pk_kegiatan_id]"]')
+            ?.setAttribute(
+              "name",
+              `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][pk_kegiatan_id]`,
+            );
+
           const programHidden = kegiatan.querySelector(".program-id-hidden");
           const kegiatanSelect = kegiatan.querySelector(".kegiatan-select");
 
@@ -165,6 +189,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // SUBKEGIATAN
           qsa(".subkeg-item", kegiatan).forEach((sub, sk) => {
+            sub
+              .querySelector('input[name*="[pk_subkegiatan_id]"]')
+              ?.setAttribute(
+                "name",
+                `sasaran_pk[${si}][indikator][${ii}][program][${ki}][kegiatan][0][subkegiatan][${sk}][pk_subkegiatan_id]`,
+              );
+
             sub
               .querySelector(".subkeg-select")
               ?.setAttribute(

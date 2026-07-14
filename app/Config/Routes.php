@@ -76,6 +76,8 @@ $routes->group(
     'adminkab',
     ['filter' => 'auth:admin_kab,admin,admin_inspektorat'],
     function ($routes) {
+        // Pencarian pegawai (Pihak 1/2 PK) — Select2 AJAX, lintas OPD untuk Plt./Plh.
+        $routes->get('pk-pegawai-search', 'AdminOpd\PkController::pegawaiSearch');
         $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
         $routes->get('pk/(:any)/tambah', 'AdminOpd\PkController::tambah/$1');
         // capaian_pk = fitur lama yang sudah tidak ada method-nya (digantikan PkRenaksiController/monev).
@@ -268,6 +270,8 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
 });
 
 $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'], function ($routes) {
+    // Pencarian pegawai (Pihak 1/2 PK) — Select2 AJAX, lintas OPD untuk Plt./Plh.
+    $routes->get('pk-pegawai-search', 'AdminOpd\PkController::pegawaiSearch');
     // PK Generic Controller (slash-based, for compatibility with button href)
     $routes->get('pk/(:any)/edit/(:num)', 'AdminOpd\PkController::edit/$1/$2');
     $routes->post('pk/(:any)/update/(:num)', 'AdminOpd\PkController::update/$1/$2');

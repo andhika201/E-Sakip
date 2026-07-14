@@ -335,6 +335,38 @@ class PkController extends BaseController
         ]);
     }
 
+    /**
+     * Pencarian pegawai untuk dropdown Pihak 1 / Pihak 2 (Select2 AJAX).
+     * - Tanpa kata kunci  -> pegawai OPD sendiri (kasus umum, definitif).
+     * - Ada kata kunci     -> cari ke SELURUH OPD (mendukung Plt./Plh. dari luar dinas).
+     * Mengembalikan JSON { results: [{ id, text, nip }] } sesuai format Select2.
+     */
+    public function pegawaiSearch()
+    {
+        $q = trim((string) $this->request->getGet('q'));
+        $ownOpd = session()->get('opd_id');
+
+        $opdFilter = ($q === '') ? ($ownOpd ? (int) $ownOpd : null) : null;
+        $rows = $this->pegawaiModel->getPegawaiList($opdFilter, $q !== '' ? $q : null);
+
+        $results = [];
+        foreach (array_slice($rows, 0, 50) as $r) {
+            $jab = trim((string) ($r['nama_jabatan'] ?? ''));
+            $opd = trim((string) (($r['singkatan'] ?? '') !== '' ? $r['singkatan'] : ($r['nama_opd'] ?? '')));
+            $text = trim($r['nama_pegawai'] . ($jab !== '' ? ' - ' . $jab : ''));
+            if ($opd !== '') {
+                $text .= ' (' . $opd . ')';
+            }
+            $results[] = [
+                'id'   => $r['id'],
+                'text' => strtoupper($text),
+                'nip'  => $r['nip_pegawai'],
+            ];
+        }
+
+        return $this->response->setJSON(['results' => $results]);
+    }
+
     public function save($jenis)
     {
         $seg = $jenis;

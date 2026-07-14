@@ -138,18 +138,10 @@
                                         <label class="form-label fw-bold">Pihak Kesatu</label>
                                         <select name="pegawai_1_id" id="p1_select"
                                             class="form-select mb-3 border-secondary pegawai-select"
-                                            data-target="nip-p1" required>
-                                            <option value="">Pilih Pihak Kesatu</option>
-                                            <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
-                                                <?php foreach ($pegawaiOpd as $pegawai): ?>
-                                                    <option value="<?= $pegawai['id'] ?>"
-                                                        data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                        <?= esc(strtoupper($pegawai['nama_pegawai'] . ' - ' . $pegawai['nama_jabatan'])) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <option value="" disabled>Tidak Pegawai yang tersedia</option>
-                                            <?php endif; ?>
+                                            data-target="nip-p1"
+                                            data-search-url="<?= base_url((($jenis === 'bupati') ? 'adminkab' : 'adminopd') . '/pk-pegawai-search') ?>"
+                                            required>
+                                            <option value="">Pilih Pihak Kesatu (ketik nama untuk cari lintas OPD)</option>
                                         </select>
                                         <?php
                                         $statusJabatanP1 = old('status_jabatan_pihak_1');
@@ -190,18 +182,10 @@
                                             <label class="form-label fw-bold">Pihak Kedua</label>
                                             <select name="pegawai_2_id" id="p2_select"
                                                 class="form-select mb-3 border-secondary pegawai-select"
-                                                data-target="nip-p2" required>
-                                                <option value="">Pilih Pihak Kedua</option>
-                                                <?php if (isset($pegawaiOpd) && !empty($pegawaiOpd)): ?>
-                                                    <?php foreach ($pegawaiOpd as $pegawai): ?>
-                                                        <option value="<?= $pegawai['id'] ?>"
-                                                            data-nip="<?= $pegawai['nip_pegawai'] ?>">
-                                                            <?= esc(strtoupper($pegawai['nama_pegawai'] . ' - ' . $pegawai['nama_jabatan'])) ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                <?php else: ?>
-                                                    <option value="" disabled>Tidak Pegawai yang tersedia</option>
-                                                <?php endif; ?>
+                                                data-target="nip-p2"
+                                                data-search-url="<?= base_url((($jenis === 'bupati') ? 'adminkab' : 'adminopd') . '/pk-pegawai-search') ?>"
+                                                required>
+                                                <option value="">Pilih Pihak Kedua (ketik nama untuk cari lintas OPD)</option>
                                             </select>
                                             <?php
                                             $statusJabatanP2 = old('status_jabatan_pihak_2');
@@ -669,6 +653,48 @@
 
         $(document).ready(function() {
             initSelect2();
+        });
+    </script>
+
+    <script>
+        // Pihak 1 & 2: Select2 dengan pencarian AJAX.
+        // Default menampilkan pegawai OPD sendiri; ketik nama untuk mencari lintas OPD
+        // (mendukung penunjukan Plt./Plh. dari luar dinas). NIP terisi otomatis saat memilih.
+        jQuery(function($) {
+            if (!$.fn || !$.fn.select2) return;
+            $('.pegawai-select').each(function() {
+                var $s = $(this);
+                if ($s.hasClass('select2-hidden-accessible')) return;
+                var url = $s.data('search-url');
+                if (!url) return;
+                $s.select2({
+                    width: '100%',
+                    theme: 'bootstrap-5',
+                    dropdownParent: $s.parent(),
+                    allowClear: true,
+                    placeholder: 'Pilih / ketik nama pegawai…',
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: url,
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) { return { q: params.term || '' }; },
+                        processResults: function(data) { return { results: (data && data.results) || [] }; },
+                        cache: true
+                    }
+                });
+                $s.on('select2:select', function(e) {
+                    var d = (e.params && e.params.data) || {};
+                    var opt = this.querySelector('option[value="' + String(d.id) + '"]');
+                    if (opt) opt.setAttribute('data-nip', d.nip || '');
+                    var nip = document.querySelector('input[name="' + $s.data('target') + '"]');
+                    if (nip) nip.value = d.nip || '';
+                });
+                $s.on('select2:clear', function() {
+                    var nip = document.querySelector('input[name="' + $s.data('target') + '"]');
+                    if (nip) nip.value = '';
+                });
+            });
         });
     </script>
 

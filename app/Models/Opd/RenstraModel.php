@@ -445,7 +445,8 @@ class RenstraModel extends Model
             if (!empty($data['indikator_tujuan']) && is_array($data['indikator_tujuan'])) {
                 foreach ($data['indikator_tujuan'] as $ind) {
                     $namaIndikator = trim($ind['indikator_tujuan'] ?? ($ind['indikator'] ?? ''));
-                    $satuan = $ind['satuan'] ?? null;
+                    // Catatan: tabel renstra_indikator_tujuan TIDAK punya kolom `satuan`
+                    // (satuan hanya ada di renstra_indikator_sasaran). Jangan ditulis.
 
                     if ($namaIndikator === '') {
                         continue;
@@ -459,9 +460,6 @@ class RenstraModel extends Model
                     if (!empty($ind['id'])) {
                         $indikatorTujuanId = (int) $ind['id'];
                         $updateData = ['indikator_tujuan' => $namaIndikator];
-                        if ($satuan !== null) {
-                            $updateData['satuan'] = $satuan;
-                        }
 
                         $this->db->table('renstra_indikator_tujuan')
                             ->where('id', $indikatorTujuanId)
@@ -475,9 +473,6 @@ class RenstraModel extends Model
                             'tujuan_id' => $tujuanId,
                             'indikator_tujuan' => $namaIndikator,
                         ];
-                        if ($satuan !== null) {
-                            $insertData['satuan'] = $satuan;
-                        }
 
                         $this->db->table('renstra_indikator_tujuan')->insert($insertData);
                         $indikatorTujuanId = $this->db->insertID();
@@ -1198,6 +1193,8 @@ class RenstraModel extends Model
             'renstra_sasaran_id' => $data['renstra_sasaran_id'],
             'indikator_sasaran' => $data['indikator_sasaran'],
             'satuan' => $data['satuan'],
+            // baseline = NOT NULL tanpa default; wajib disertakan agar tidak ERROR 1364
+            'baseline' => trim((string) ($data['baseline'] ?? '')),
             'jenis_indikator' => $data['jenis_indikator'] ?? '',
         ];
 

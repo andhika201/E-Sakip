@@ -461,6 +461,7 @@ class ProgramPkController extends BaseController
             }
 
             $programData = [
+                'id' => isset($p['id']) ? (int) $p['id'] : null,
                 'nama' => $namaProgram,
                 'anggaran' => $anggaranProgram,
                 'kegiatan' => [],
@@ -479,6 +480,7 @@ class ProgramPkController extends BaseController
                 }
 
                 $kegiatanData = [
+                    'id' => isset($k['id']) ? (int) $k['id'] : null,
                     'nama' => $namaKegiatan,
                     'anggaran' => $anggaranKegiatan,
                     'sub' => [],
@@ -497,6 +499,7 @@ class ProgramPkController extends BaseController
                     }
 
                     $kegiatanData['sub'][] = [
+                        'id' => isset($s['id']) ? (int) $s['id'] : null,
                         'nama' => $namaSub,
                         'anggaran' => $anggaranSub,
                     ];
@@ -509,6 +512,119 @@ class ProgramPkController extends BaseController
         }
 
         return $normalized;
+    }
+
+    private function normalizeIds(array $ids): array
+    {
+        $ids = array_map(static fn ($id) => (int) $id, $ids);
+        $ids = array_filter($ids, static fn ($id) => $id > 0);
+
+        return array_values(array_unique($ids));
+    }
+
+    private function deletePkSubkegiatanUsageBySubIds($db, array $subIds): void
+    {
+        $subIds = $this->normalizeIds($subIds);
+        if (empty($subIds)) {
+            return;
+        }
+
+        $db->table('pk_subkegiatan')
+            ->whereIn('subkegiatan_id', $subIds)
+            ->delete();
+    }
+
+    private function deletePkKegiatanUsageByKegiatanIds($db, array $kegiatanIds): void
+    {
+        $kegiatanIds = $this->normalizeIds($kegiatanIds);
+        if (empty($kegiatanIds)) {
+            return;
+        }
+
+        $pkKegiatanRows = $db->table('pk_kegiatan')
+            ->select('id')
+            ->whereIn('kegiatan_id', $kegiatanIds)
+            ->get()
+            ->getResultArray();
+        $pkKegiatanIds = $this->normalizeIds(array_column($pkKegiatanRows, 'id'));
+
+        if (!empty($pkKegiatanIds)) {
+            $db->table('pk_subkegiatan')
+                ->whereIn('pk_kegiatan_id', $pkKegiatanIds)
+                ->delete();
+            $db->table('pk_kegiatan')
+                ->whereIn('id', $pkKegiatanIds)
+                ->delete();
+        }
+    }
+
+    private function deletePkProgramUsageByProgramIds($db, array $programIds): void
+    {
+        $programIds = $this->normalizeIds($programIds);
+        if (empty($programIds)) {
+            return;
+        }
+
+        $pkProgramRows = $db->table('pk_program')
+            ->select('id')
+            ->whereIn('program_id', $programIds)
+            ->get()
+            ->getResultArray();
+        $pkProgramIds = $this->normalizeIds(array_column($pkProgramRows, 'id'));
+
+        if (!empty($pkProgramIds)) {
+            $pkKegiatanRows = $db->table('pk_kegiatan')
+                ->select('id')
+                ->whereIn('pk_program_id', $pkProgramIds)
+                ->get()
+                ->getResultArray();
+            $pkKegiatanIds = $this->normalizeIds(array_column($pkKegiatanRows, 'id'));
+
+            if (!empty($pkKegiatanIds)) {
+                $db->table('pk_subkegiatan')
+                    ->whereIn('pk_kegiatan_id', $pkKegiatanIds)
+                    ->delete();
+                $db->table('pk_kegiatan')
+                    ->whereIn('id', $pkKegiatanIds)
+                    ->delete();
+            }
+
+            $db->table('pk_program')
+                ->whereIn('id', $pkProgramIds)
+                ->delete();
+        }
+    }
+
+    private function deleteProgramPkTree($db, int $programId): void
+    {
+        $kegiatanRows = $db->table('kegiatan_pk')
+            ->select('id')
+            ->where('program_id', $programId)
+            ->get()
+            ->getResultArray();
+        $kegiatanIds = $this->normalizeIds(array_column($kegiatanRows, 'id'));
+
+        if (!empty($kegiatanIds)) {
+            $subRows = $db->table('sub_kegiatan_pk')
+                ->select('id')
+                ->whereIn('kegiatan_id', $kegiatanIds)
+                ->get()
+                ->getResultArray();
+            $subIds = $this->normalizeIds(array_column($subRows, 'id'));
+
+            $this->deletePkSubkegiatanUsageBySubIds($db, $subIds);
+            $this->deletePkKegiatanUsageByKegiatanIds($db, $kegiatanIds);
+
+            $db->table('sub_kegiatan_pk')
+                ->whereIn('kegiatan_id', $kegiatanIds)
+                ->delete();
+            $db->table('kegiatan_pk')
+                ->whereIn('id', $kegiatanIds)
+                ->delete();
+        }
+
+        $this->deletePkProgramUsageByProgramIds($db, [$programId]);
+        $db->table('program_pk')->where('id', $programId)->delete();
     }
 
     public function save()
@@ -646,46 +762,9 @@ class ProgramPkController extends BaseController
                 throw new \InvalidArgumentException('Jenis anggaran wajib dipilih');
             }
 
-            $oldKegiatanIds = array_column(
-                $db->table('kegiatan_pk')
-                    ->select('id')
-                    ->where('program_id', $id)
-                    ->get()
-                    ->getResultArray(),
-                'id'
-            );
-
             $db->transException(true)->transBegin();
             $transactionStarted = true;
-
-            // Insert data kegiatan baru lebih dulu. Data lama baru dihapus setelah semua insert berhasil.
-            foreach ($programData['kegiatan'] as $k) {
-                $db->table('kegiatan_pk')->insert([
-                    'program_id' => $id,
-                    'kode_kegiatan' => uniqid('KEG-'),
-                    'kegiatan' => $k['nama'],
-                    'anggaran' => $k['anggaran'],
-                    'tahun_anggaran' => $tahun,
-                    'jenis_anggaran' => $jenisAnggaran,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
-                ]);
-
-                $kegiatanId = $db->insertID();
-
-                foreach ($k['sub'] as $s) {
-                    $db->table('sub_kegiatan_pk')->insert([
-                        'kegiatan_id' => $kegiatanId,
-                        'kode_sub_kegiatan' => uniqid('SUB-'),
-                        'sub_kegiatan' => $s['nama'],
-                        'anggaran' => $s['anggaran'],
-                        'tahun_anggaran' => $tahun,
-                        'jenis_anggaran' => $jenisAnggaran,
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
+            $now = date('Y-m-d H:i:s');
 
             $db->table('program_pk')
                 ->where('id', $id)
@@ -695,16 +774,96 @@ class ProgramPkController extends BaseController
                     'opd_id' => $opdId,
                     'tahun_anggaran' => $tahun,
                     'jenis_anggaran' => $jenisAnggaran,
-                    'updated_at' => date('Y-m-d H:i:s')
+                    'updated_at' => $now
                 ]);
 
-            if (!empty($oldKegiatanIds)) {
-                $db->table('sub_kegiatan_pk')
-                    ->whereIn('kegiatan_id', $oldKegiatanIds)
-                    ->delete();
+            $existingKegiatanRows = $db->table('kegiatan_pk')
+                ->select('id')
+                ->where('program_id', $id)
+                ->get()
+                ->getResultArray();
+            $existingKegiatanIds = $this->normalizeIds(array_column($existingKegiatanRows, 'id'));
+            $usedKegiatanIds = [];
 
+            foreach ($programData['kegiatan'] as $k) {
+                $kegiatanId = (int) ($k['id'] ?? 0);
+                $kegiatanPayload = [
+                    'kegiatan' => $k['nama'],
+                    'anggaran' => $k['anggaran'],
+                    'tahun_anggaran' => $tahun,
+                    'jenis_anggaran' => $jenisAnggaran,
+                    'updated_at' => $now
+                ];
+
+                if ($kegiatanId > 0 && in_array($kegiatanId, $existingKegiatanIds, true)) {
+                    $db->table('kegiatan_pk')
+                        ->where('id', $kegiatanId)
+                        ->update($kegiatanPayload);
+                } else {
+                    $kegiatanPayload['program_id'] = $id;
+                    $kegiatanPayload['kode_kegiatan'] = uniqid('KEG-');
+                    $kegiatanPayload['created_at'] = $now;
+                    $db->table('kegiatan_pk')->insert($kegiatanPayload);
+                    $kegiatanId = (int) $db->insertID();
+                }
+                $usedKegiatanIds[] = $kegiatanId;
+
+                $existingSubRows = $db->table('sub_kegiatan_pk')
+                    ->select('id')
+                    ->where('kegiatan_id', $kegiatanId)
+                    ->get()
+                    ->getResultArray();
+                $existingSubIds = $this->normalizeIds(array_column($existingSubRows, 'id'));
+                $usedSubIds = [];
+
+                foreach ($k['sub'] as $s) {
+                    $subId = (int) ($s['id'] ?? 0);
+                    $subPayload = [
+                        'sub_kegiatan' => $s['nama'],
+                        'anggaran' => $s['anggaran'],
+                        'tahun_anggaran' => $tahun,
+                        'jenis_anggaran' => $jenisAnggaran,
+                        'updated_at' => $now
+                    ];
+
+                    if ($subId > 0 && in_array($subId, $existingSubIds, true)) {
+                        $db->table('sub_kegiatan_pk')
+                            ->where('id', $subId)
+                            ->update($subPayload);
+                    } else {
+                        $subPayload['kegiatan_id'] = $kegiatanId;
+                        $subPayload['kode_sub_kegiatan'] = uniqid('SUB-');
+                        $subPayload['created_at'] = $now;
+                        $db->table('sub_kegiatan_pk')->insert($subPayload);
+                        $subId = (int) $db->insertID();
+                    }
+                    $usedSubIds[] = $subId;
+                }
+
+                $deleteSubIds = array_diff($existingSubIds, $usedSubIds);
+                if (!empty($deleteSubIds)) {
+                    $this->deletePkSubkegiatanUsageBySubIds($db, $deleteSubIds);
+                    $db->table('sub_kegiatan_pk')
+                        ->whereIn('id', $deleteSubIds)
+                        ->delete();
+                }
+            }
+
+            $deleteKegiatanIds = array_diff($existingKegiatanIds, $usedKegiatanIds);
+            if (!empty($deleteKegiatanIds)) {
+                $subRows = $db->table('sub_kegiatan_pk')
+                    ->select('id')
+                    ->whereIn('kegiatan_id', $deleteKegiatanIds)
+                    ->get()
+                    ->getResultArray();
+                $this->deletePkSubkegiatanUsageBySubIds($db, array_column($subRows, 'id'));
+                $this->deletePkKegiatanUsageByKegiatanIds($db, $deleteKegiatanIds);
+
+                $db->table('sub_kegiatan_pk')
+                    ->whereIn('kegiatan_id', $deleteKegiatanIds)
+                    ->delete();
                 $db->table('kegiatan_pk')
-                    ->whereIn('id', $oldKegiatanIds)
+                    ->whereIn('id', $deleteKegiatanIds)
                     ->delete();
             }
 
@@ -735,10 +894,16 @@ class ProgramPkController extends BaseController
             return redirect()->to('/adminkab/program_pk');
         }
 
-        if ($this->programPkModel->delete($id)) {
+        $db = \Config\Database::connect();
+        try {
+            $db->transException(true)->transBegin();
+            $this->deleteProgramPkTree($db, (int) $id);
+            $db->transCommit();
             session()->setFlashdata('success', 'Program PK berhasil dihapus');
-        } else {
-            session()->setFlashdata('error', 'Gagal menghapus program PK');
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Gagal menghapus Program PK ID ' . $id . ': ' . $e->getMessage());
+            session()->setFlashdata('error', 'Gagal menghapus program PK: ' . $e->getMessage());
         }
 
         return redirect()->to('/adminkab/program_pk');

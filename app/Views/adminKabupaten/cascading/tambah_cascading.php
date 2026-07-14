@@ -39,6 +39,7 @@
                 <?= csrf_field() ?>
 
                 <input type="hidden" name="indikator_id" value="<?= $indikator['id'] ?>">
+                <input type="hidden" name="periode" value="<?= esc($periode ?? '') ?>">
 
                 <div class="mb-3">
                     <label>Indikator</label>

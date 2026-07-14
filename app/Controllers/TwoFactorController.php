@@ -130,6 +130,18 @@ class TwoFactorController extends BaseController
             return redirect()->to('2fa/verify')->with('error', 'Kode 2FA salah.');
         }
 
+        // Tolak akun yang dinonaktifkan (pertahanan berlapis; cek utama di LoginController)
+        if (empty($user['is_active'])) {
+            session()->remove('twofa_user_id');
+            helper('activity');
+            log_activity('login_gagal', 'auth', 'Login 2FA ditolak (akun nonaktif)', [
+                'user_id'  => $user['user_id'],
+                'username' => $user['username'] ?? null,
+                'role'     => $user['role'] ?? null,
+            ]);
+            return redirect()->to('/login')->with('error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
+        }
+
         // selesaikan login
         session()->remove('twofa_user_id');
         session()->set([

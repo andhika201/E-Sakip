@@ -41,8 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (t === "select") {
         el.selectedIndex = 0;
       } else if (el.type === "hidden") {
-        // biarkan hidden (id) tetap, kecuali ingin direset
-        // jika mau reset: el.value = '';
+        el.value = "";
       } else {
         el.value = "";
       }
@@ -113,11 +112,22 @@ document.addEventListener("DOMContentLoaded", () => {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaran, si) => {
       // ===== SASARAN =====
       sasaran
+        .querySelector('input[name*="[pk_sasaran_id]"]')
+        ?.setAttribute("name", `sasaran_pk[${si}][pk_sasaran_id]`);
+
+      sasaran
         .querySelector("textarea")
         ?.setAttribute("name", `sasaran_pk[${si}][sasaran]`);
 
       // ===== INDIKATOR =====
       qsa(".indikator-item", sasaran).forEach((indikator, ii) => {
+        indikator
+          .querySelector('input[name*="[pk_indikator_id]"]')
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][pk_indikator_id]`
+          );
+
         indikator
           .querySelector(".indikator-input")
           ?.setAttribute(
@@ -149,6 +159,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // ===== PROGRAM =====
         qsa(".program-item", indikator).forEach((program, pi) => {
           program
+            .querySelector('input[name*="[pk_program_id]"]')
+            ?.setAttribute(
+              "name",
+              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][pk_program_id]`
+            );
+
+          program
             .querySelector(".program-select")
             ?.setAttribute(
               "name",
@@ -157,6 +174,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // ===== KEGIATAN =====
           qsa(".kegiatan-item", program).forEach((kegiatan, ki) => {
+            kegiatan
+              .querySelector('input[name*="[pk_kegiatan_id]"]')
+              ?.setAttribute(
+                "name",
+                `sasaran_pk[${si}][indikator][${ii}][program][${pi}][kegiatan][${ki}][pk_kegiatan_id]`
+              );
+
             kegiatan
               .querySelector(".kegiatan-select")
               ?.setAttribute(

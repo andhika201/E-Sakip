@@ -14,7 +14,11 @@ class ProgramPkModel extends Model
     protected $protectFields = true;
 
     protected $allowedFields = [
+        'opd_id',
+        'kode_program',
         'program_kegiatan',
+        'tahun_anggaran',
+        'jenis_anggaran',
         'anggaran',
     ];
 

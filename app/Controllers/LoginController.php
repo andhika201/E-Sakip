@@ -46,6 +46,18 @@ class LoginController extends BaseController
 
         // Verifikasi password
         if ($user && password_verify($password, $user['password'])) {
+            // Tolak akun yang dinonaktifkan (cek SEBELUM alur 2FA agar tidak bisa dilanjutkan)
+            if (empty($user['is_active'])) {
+                log_activity('login_gagal', 'auth', 'Login ditolak (akun nonaktif): ' . $username, [
+                    'user_id'  => $user['user_id'],
+                    'username' => $username,
+                    'role'     => $user['role'] ?? null,
+                ]);
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
+            }
+
             // Bila 2FA aktif: tunda login, minta kode authenticator dulu
             if (!empty($user['two_factor_enabled'])) {
                 session()->set('twofa_user_id', $user['user_id']);

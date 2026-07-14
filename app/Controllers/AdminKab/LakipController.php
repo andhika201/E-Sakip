@@ -28,7 +28,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab') {
+        // Baca LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only lintas OPD)
+        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 
@@ -76,7 +77,8 @@ class LakipController extends BaseController
 
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab') {
+        // Cetak LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only)
+        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 
@@ -144,7 +146,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab')
+        // Aksi tulis LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true))
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
         $mode = $this->request->getGet('mode') ?: 'kabupaten';
@@ -207,7 +210,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab')
+        // Aksi tulis LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true))
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
         $rx = $this->xssRule();
@@ -303,7 +307,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab')
+        // Aksi tulis LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true))
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
         $mode = $this->request->getGet('mode') ?: 'kabupaten';
@@ -363,7 +368,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab')
+        // Aksi tulis LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true))
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
         $rx = $this->xssRule();
@@ -432,7 +438,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab')
+        // Aksi tulis LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true))
             return redirect()->to('/login')->with('error', 'Akses ditolak');
 
         $allowed = ['draft', 'selesai'];
@@ -447,7 +454,8 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        if ($role !== 'admin_kab') {
+        // Hapus LAKIP kabupaten: admin_kab & super admin (inspektorat read-only)
+        if (!in_array($role, ['admin_kab', 'admin'], true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 

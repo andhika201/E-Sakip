@@ -34,6 +34,7 @@ function initPkForm() {
       if (t === "select") {
         el.selectedIndex = 0;
       } else if (el.type === "hidden") {
+        el.value = "";
       } else {
         el.value = "";
       }
@@ -87,12 +88,23 @@ function initPkForm() {
     qsa(".sasaran-item", sasaranContainer).forEach((sasaranItem, si) => {
       // SASARAN
       const sasaranTxt = sasaranItem.querySelector("textarea");
+      const sasaranId = sasaranItem.querySelector('input[name*="[pk_sasaran_id]"]');
+      if (sasaranId) {
+        sasaranId.name = `sasaran_pk[${si}][pk_sasaran_id]`;
+      }
       if (sasaranTxt) {
         sasaranTxt.name = `sasaran_pk[${si}][sasaran]`;
       }
 
       // INDIKATOR
       qsa(".indikator-item", sasaranItem).forEach((indikatorItem, ii) => {
+        indikatorItem
+          .querySelector('input[name*="[pk_indikator_id]"]')
+          ?.setAttribute(
+            "name",
+            `sasaran_pk[${si}][indikator][${ii}][pk_indikator_id]`,
+          );
+
         indikatorItem
           .querySelector(".indikator-input")
           ?.setAttribute(
@@ -120,6 +132,13 @@ function initPkForm() {
 
         // PROGRAM (JPT: 1 indikator → banyak program)
         qsa(".program-item", indikatorItem).forEach((programItem, pi) => {
+          programItem
+            .querySelector('input[name*="[pk_program_id]"]')
+            ?.setAttribute(
+              "name",
+              `sasaran_pk[${si}][indikator][${ii}][program][${pi}][pk_program_id]`,
+            );
+
           const programSelect = programItem.querySelector(".program-select");
           const anggaranInput = programItem.querySelector(".anggaran-input");
 

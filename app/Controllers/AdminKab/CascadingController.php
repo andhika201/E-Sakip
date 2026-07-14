@@ -541,9 +541,11 @@ class CascadingController extends BaseController
         $this->db->transComplete();
 
 
+        // periode dikirim via hidden field form (POST); fallback ke query string
+        $periode = $this->request->getPost('periode') ?: $this->request->getGet('periode');
+
         return redirect()->to(
-            base_url('adminkab/cascading?periode=' .
-                $this->request->getGet('periode'))
+            base_url('adminkab/cascading?periode=' . $periode)
         )->with('success', 'Mapping Cascading berhasil disimpan');
     }
 

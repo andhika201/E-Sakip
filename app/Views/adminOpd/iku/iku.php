@@ -170,9 +170,10 @@
                                         $iku = null;
                                         if (!empty($iku_data)) {
                                             foreach ($iku_data as $item) {
+                                                // Non admin_kab (admin_opd, admin_kecamatan, dst) memakai renstra_id.
                                                 if (
                                                     ($role === 'admin_kab' && ($item['rpjmd_id'] ?? null) == $indikator['id']) ||
-                                                    ($role === 'admin_opd' && ($item['renstra_id'] ?? null) == $indikator['id'])
+                                                    ($role !== 'admin_kab' && ($item['renstra_id'] ?? null) == $indikator['id'])
                                                 ) {
                                                     $iku = $item;
                                                     break;

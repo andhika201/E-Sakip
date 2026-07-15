@@ -7,7 +7,7 @@
 <form action="<?= base_url('adminopd/cascading/update-es3/' . $sasaran['id']) ?>" method="post" class="casc-form">
     <?= csrf_field() ?>
 
-    <label>Sasaran ESS III</label>
+    <label><?= casc_relabel('Sasaran ESS III') ?></label>
     <input type="text" name="nama" class="form-control mb-3" value="<?= esc($sasaran['nama_sasaran']) ?>" required>
 
     <div class="indikator-container" id="indikator-container">
@@ -16,7 +16,7 @@
                 <!-- id lama dipertahankan agar Es4 anak tetap tertaut -->
                 <input type="hidden" name="indikator[<?= $idx ?>][id]" value="<?= esc($i['id']) ?>">
                 <input type="text" name="indikator[<?= $idx ?>][nama]" class="form-control"
-                    value="<?= esc($i['indikator']) ?>" placeholder="Masukkan indikator ESS III">
+                    value="<?= esc($i['indikator']) ?>" placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                 <button type="button" class="btn btn-delete btn-delete-indikator"
                     data-es4-count="<?= (int) ($i['es4_count'] ?? 0) ?>"
                     onclick="hapusIndikatorEs3(this)">
@@ -28,7 +28,7 @@
 
     <div class="mt-2">
         <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorEs3Edit()">
-            + Tambah Indikator ESS III
+            + <?= casc_relabel('Tambah Indikator ESS III') ?>
         </button>
     </div>
 
@@ -37,7 +37,7 @@
     <div id="sasaran-baru-container"></div>
     
     <button type="button" class="btn btn-sm btn-success mt-2" onclick="addSasaranBaruEs3()">
-        + Tambah Sasaran ESS III
+        + <?= casc_relabel('Tambah Sasaran ESS III') ?>
     </button>
 
     <div class="mt-3">

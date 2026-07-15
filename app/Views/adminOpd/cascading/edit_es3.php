@@ -127,7 +127,7 @@
             const html = `
                 <div class="indikator-es3">
                     <input type="text" name="indikator[${key}][nama]" class="form-control"
-                        placeholder="Masukkan indikator ESS III">
+                        placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button" class="btn btn-delete btn-delete-indikator"
                         data-es4-count="0" onclick="hapusIndikatorEs3(this)">
                         <i class="fas fa-trash"></i>
@@ -140,7 +140,7 @@
             const cnt = parseInt(btn.getAttribute('data-es4-count') || '0', 10);
             if (cnt > 0) {
                 const ok = confirm(
-                    'Indikator ini memiliki ' + cnt + ' Sasaran Eselon IV di bawahnya.\n' +
+                    'Indikator ini memiliki ' + cnt + ' <?= casc_relabel('Sasaran Eselon IV') ?> di bawahnya.\n' +
                     'Menghapus indikator ini akan MENGHAPUS seluruh Es4 tersebut saat Anda menekan Update.\n\nLanjutkan?'
                 );
                 if (!ok) return;
@@ -152,15 +152,15 @@
         function addSasaranBaruEs3() {
             let html = `
                 <div class="es3-group mb-3 p-3 border rounded bg-light">
-                    <label class="fw-bold mb-2">Sasaran ESS III (Baru)</label>
-                    <input type="text" name="sasaran_baru[${sasaranBaruIndex}][nama]" class="form-control mb-2" placeholder="Masukkan Sasaran ESS III" required>
+                    <label class="fw-bold mb-2"><?= casc_relabel('Sasaran ESS III') ?> (Baru)</label>
+                    <input type="text" name="sasaran_baru[${sasaranBaruIndex}][nama]" class="form-control mb-2" placeholder="<?= casc_relabel('Masukkan Sasaran ESS III') ?>" required>
                     
                     <div class="indikator-container" id="indikator-baru-container-${sasaranBaruIndex}">
                     </div>
                     
                     <div class="mt-2 d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorBaruEs3(${sasaranBaruIndex})">
-                            + Tambah Indikator ESS III
+                            + <?= casc_relabel('Tambah Indikator ESS III') ?>
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.es3-group').remove()">
                             <i class="fas fa-trash"></i> Hapus
@@ -176,7 +176,7 @@
             let indIdx = Date.now();
             let html = `
                 <div class="indikator-es3 d-flex gap-2 mt-2">
-                    <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="Masukkan indikator ESS III">
+                    <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button" class="btn btn-delete btn-delete-indikator" onclick="this.parentElement.remove()">
                         <i class="fas fa-trash"></i>
                     </button>

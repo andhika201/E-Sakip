@@ -218,6 +218,9 @@
         <select id="selectKertas" onchange="updatePrintStyle()">
             <option value="A4">A4 (210 × 297 mm)</option>
             <option value="A3">A3 (297 × 420 mm)</option>
+            <option value="A2">A2 (420 × 594 mm)</option>
+            <option value="A1">A1 (594 × 841 mm)</option>
+            <option value="A0">A0 (841 × 1189 mm) — poster</option>
             <option value="F4">F4 / Folio (215 × 330 mm)</option>
             <option value="legal">Legal (216 × 356 mm)</option>
         </select>
@@ -303,6 +306,9 @@
     const pageSizes = {
         'A4':    { w: '210mm', h: '297mm' },
         'A3':    { w: '297mm', h: '420mm' },
+        'A2':    { w: '420mm', h: '594mm' },
+        'A1':    { w: '594mm', h: '841mm' },
+        'A0':    { w: '841mm', h: '1189mm' },
         'F4':    { w: '215mm', h: '330mm' },
         'legal': { w: '216mm', h: '356mm' },
     };
@@ -421,6 +427,51 @@
     // Render pohon ke <canvas> full-size (html2canvas) — dipakai bersama
     // oleh unduh PNG & unduh PDF. Sembunyikan kontrol/footer sementara.
     // ============================================================
+    // Pangkas kanvas ke kotak-isi: buang ruang putih di tepi agar gambar/PDF padat.
+    // (analisis di kanvas kecil dulu agar cepat, lalu potong pada resolusi penuh)
+    function cropCanvasToContent(src, pad) {
+        try {
+            const MAXA = 1400;
+            const ratio = Math.min(1, MAXA / Math.max(src.width, src.height));
+            const aw = Math.max(1, Math.round(src.width * ratio));
+            const ah = Math.max(1, Math.round(src.height * ratio));
+            const a = document.createElement('canvas');
+            a.width = aw; a.height = ah;
+            const actx = a.getContext('2d');
+            actx.fillStyle = '#ffffff'; actx.fillRect(0, 0, aw, ah);
+            actx.drawImage(src, 0, 0, aw, ah);
+            const d = actx.getImageData(0, 0, aw, ah).data;
+            let minX = aw, minY = ah, maxX = -1, maxY = -1;
+            for (let y = 0; y < ah; y++) {
+                for (let x = 0; x < aw; x++) {
+                    const i = (y * aw + x) * 4;
+                    if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX < 0) return src;                       // kanvas kosong
+            const p = pad || 10;
+            const sx = Math.max(0, Math.floor(minX / ratio) - p);
+            const sy = Math.max(0, Math.floor(minY / ratio) - p);
+            const sw = Math.min(src.width  - sx, Math.ceil((maxX - minX + 1) / ratio) + 2 * p);
+            const sh = Math.min(src.height - sy, Math.ceil((maxY - minY + 1) / ratio) + 2 * p);
+            if (sw <= 0 || sh <= 0) return src;
+            if (sx === 0 && sy === 0 && sw >= src.width - 2 && sh >= src.height - 2) return src;
+            const out = document.createElement('canvas');
+            out.width = Math.round(sw); out.height = Math.round(sh);
+            const octx = out.getContext('2d');
+            octx.fillStyle = '#ffffff'; octx.fillRect(0, 0, out.width, out.height);
+            octx.drawImage(src, sx, sy, sw, sh, 0, 0, out.width, out.height);
+            return out;
+        } catch (e) {
+            return src;   // getImageData gagal (mis. kanvas ter-taint) -> pakai asli
+        }
+    }
+
     async function captureTreeCanvas() {
         const area     = document.getElementById('capture-area');
         const treeEl   = document.getElementById('tree-container');
@@ -442,15 +493,31 @@
 
         try {
             const w = area.scrollWidth, h = area.scrollHeight;
+
+            // Skala ideal untuk ketajaman (perbesar pohon kecil, jangan kekecilan).
             let scale = Math.min(2, 12000 / Math.max(w, h));
-            if (!isFinite(scale) || scale < 1) scale = 1;
-            return await html2canvas(area, {
+            if (!isFinite(scale) || scale <= 0) scale = 1;
+
+            // WAJIB: jaga kanvas hasil di bawah batas browser. Bila terlampaui,
+            // kanvas menjadi HITAM/kosong — inilah penyebab cetak pohon besar rusak.
+            // (Chrome ~268 jt px luas & 65 rb px sisi; Safari sisi 16.384 px.)
+            const CANVAS_MAX_DIM  = 16384;
+            const CANVAS_MAX_AREA = 200000000;
+            scale = Math.min(
+                scale,
+                CANVAS_MAX_DIM / Math.max(w, h),
+                Math.sqrt(CANVAS_MAX_AREA / (w * h))
+            );
+            if (!isFinite(scale) || scale <= 0) scale = 0.1;
+
+            const canvas = await html2canvas(area, {
                 backgroundColor: '#ffffff',
                 scale: scale,
                 useCORS: true,
                 logging: false,
                 width: w, height: h, windowWidth: w, windowHeight: h
             });
+            return cropCanvasToContent(canvas, 12);   // buang ruang putih di tepi
         } finally {
             if (treeEl) treeEl.style.zoom = st.zoom;
             if (wrap)   wrap.style.overflow = st.ov;
@@ -485,7 +552,9 @@
         });
     }
 
-    // Unduh langsung sebagai PDF (gambar pohon dibungkus jsPDF, 1 halaman se-ukuran pohon).
+    // Unduh sebagai PDF: seluruh pohon dimuat rapi ke SATU halaman (dipangkas
+    // dari ruang kosong, lalu diperbesar sepenuh halaman). Untuk pohon besar &
+    // lebar, pilih kertas lebih besar (A3/A2/A1/A0) agar hasilnya tetap terbaca.
     async function unduhPDF() {
         if (typeof html2canvas === 'undefined') { alert('Pustaka gambar belum termuat, coba lagi sebentar.'); return; }
         const jsPDF = (window.jspdf || {}).jsPDF;
@@ -494,15 +563,21 @@
             try {
                 const canvas = await captureTreeCanvas();
                 if (!canvas) return;
-                const imgData = canvas.toDataURL('image/png');
-                const w = canvas.width, h = canvas.height;
-                const pdf = new jsPDF({
-                    orientation: w >= h ? 'landscape' : 'portrait',
-                    unit: 'px',
-                    format: [w, h],
-                    compress: true
-                });
-                pdf.addImage(imgData, 'PNG', 0, 0, w, h, undefined, 'FAST');
+
+                const DIMS_MM = { A0:[841,1189], A1:[594,841], A2:[420,594], A3:[297,420], A4:[210,297], F4:[215,330], legal:[216,356] };
+                const base = DIMS_MM[selVal('selectKertas')] || DIMS_MM.A4;
+                const land = selVal('selectOrientasi') !== 'portrait';
+                const pw = land ? Math.max(base[0], base[1]) : Math.min(base[0], base[1]);
+                const ph = land ? Math.min(base[0], base[1]) : Math.max(base[0], base[1]);
+                const margin = 6, availW = pw - 2 * margin, availH = ph - 2 * margin;
+
+                const cw = canvas.width, ch = canvas.height;
+                const s  = Math.min(availW / cw, availH / ch);   // mm per px: muat 1 halaman
+                const iw = cw * s, ih = ch * s;
+
+                const pdf = new jsPDF({ orientation: land ? 'landscape' : 'portrait', unit: 'mm', format: [pw, ph], compress: true });
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG',
+                    margin + (availW - iw) / 2, margin + (availH - ih) / 2, iw, ih, undefined, 'FAST');
                 pdf.save('pohon-kinerja-<?= esc($tahun_mulai) ?>-<?= esc($tahun_akhir) ?>.pdf');
             } catch (e) {
                 alert('Gagal membuat PDF: ' + (e && e.message ? e.message : e));

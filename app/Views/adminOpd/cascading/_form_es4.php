@@ -8,18 +8,18 @@
     <?= csrf_field() ?>
 
     <div class="mb-3">
-        <label>Sasaran ESS III</label>
+        <label><?= casc_relabel('Sasaran ESS III') ?></label>
         <input type="text" class="form-control" value="<?= esc($es3['nama_sasaran'] ?? '') ?>" readonly>
     </div>
 
     <div class="mb-3">
-        <label>Indikator ESS III</label>
+        <label><?= casc_relabel('Indikator ESS III') ?></label>
         <input type="text" class="form-control" value="<?= esc($indikator_es3['indikator'] ?? '') ?>" readonly>
     </div>
 
     <hr>
 
-    <label>Sasaran ESS IV</label>
+    <label><?= casc_relabel('Sasaran ESS IV') ?></label>
     <input type="text" name="nama" class="form-control mb-3" value="<?= esc($sasaran['nama_sasaran']) ?>" required>
 
     <div class="indikator-container" id="indikator-container">
@@ -37,7 +37,7 @@
 
     <div class="mt-2">
         <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorEditEs4()">
-            + Tambah Indikator ESS IV
+            + <?= casc_relabel('Tambah Indikator ESS IV') ?>
         </button>
     </div>
 
@@ -46,7 +46,7 @@
     <div id="sasaran-baru-container"></div>
     
     <button type="button" class="btn btn-sm btn-success mt-2" onclick="addSasaranBaruEs4()">
-        + Tambah Sasaran ESS IV
+        + <?= casc_relabel('Tambah Sasaran ESS IV') ?>
     </button>
 
     <div class="mt-3">

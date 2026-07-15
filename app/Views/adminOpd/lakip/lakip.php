@@ -152,11 +152,17 @@
                         $cetakParams['status'] = $filters['status'];
                     }
                     $cetakBase = (($role ?? '') === 'admin_kab') ? 'adminkab/lakip/cetak' : 'adminopd/lakip/cetak';
-                    $cetakUrl = base_url($cetakBase) . (!empty($cetakParams) ? ('?' . http_build_query($cetakParams)) : '');
+                    $excelBase = (($role ?? '') === 'admin_kab') ? 'adminkab/lakip/cetak-excel' : 'adminopd/lakip/cetak-excel';
+                    $qsCetak = !empty($cetakParams) ? ('?' . http_build_query($cetakParams)) : '';
+                    $cetakUrl = base_url($cetakBase) . $qsCetak;
+                    $excelUrl = base_url($excelBase) . $qsCetak;
                     ?>
-                    <div class="d-flex align-items-start">
+                    <div class="d-flex align-items-start gap-2">
                         <a href="<?= $cetakUrl ?>" target="_blank" class="btn btn-outline-danger">
-                            <i class="fas fa-print me-1"></i> Cetak
+                            <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                        </a>
+                        <a href="<?= $excelUrl ?>" class="btn btn-outline-success">
+                            <i class="fas fa-file-excel me-1"></i> Cetak Excel
                         </a>
                     </div>
                 </div>

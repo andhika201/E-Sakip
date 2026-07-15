@@ -287,6 +287,85 @@ class LakipOpdController extends BaseController
         $mpdf->Output('LAKIP-' . trim($safeUnit, '-') . '-' . $tahun . '.pdf', 'I');
         exit;
     }
+
+    public function cetakExcel()
+    {
+        helper(['number', 'lakip', 'setting', 'lakip_excel']);
+
+        $session = session();
+        $role = $session->get('role');
+        $opdId = (int) $session->get('opd_id');
+
+        if (!in_array($role, ['admin_opd', 'admin_kecamatan', 'admin_kab'], true)) {
+            return redirect()->to('/login')->with('error', 'Akses ditolak');
+        }
+
+        $tahun = $this->request->getGet('tahun') ?: (date('Y') - 1);
+        $status = $this->request->getGet('status');
+
+        $mode = 'opd';
+        $selectedOpdId = null;
+        $opdInfo = null;
+        $dataSource = [];
+        $lakipMap = [];
+
+        if ($role === 'admin_kab') {
+            $mode = $this->request->getGet('mode') ?: 'kabupaten';
+            $selectedOpdId = $this->request->getGet('opd_id') ? (int) $this->request->getGet('opd_id') : null;
+
+            if ($mode === 'kabupaten') {
+                $rows = $this->lakipModel->getIndexRpjmdTargets((string) $tahun);
+                $lakipMapTarget = $this->lakipModel->getLakipMapRpjmd((string) $tahun, $status ?: null);
+
+                foreach ($lakipMapTarget as $l) {
+                    if (!empty($l['indikator_id'])) {
+                        $lakipMap[(int) $l['indikator_id']] = $l;
+                    }
+                }
+
+                $dataSource = $this->lakipModel->groupIndexRowsBySasaran($rows, 'kabupaten');
+            } else {
+                if (!empty($selectedOpdId)) {
+                    $opdInfo = $this->opdModel->find($selectedOpdId);
+                    $rows = $this->lakipModel->getIndexRenstraTargets((string) $tahun, $selectedOpdId);
+                    $lakipMapTarget = $this->lakipModel->getLakipMapRenstra((string) $tahun, $status ?: null, $selectedOpdId);
+
+                    foreach ($lakipMapTarget as $l) {
+                        if (!empty($l['indikator_id'])) {
+                            $lakipMap[(int) $l['indikator_id']] = $l;
+                        }
+                    }
+
+                    $dataSource = $this->lakipModel->groupIndexRowsBySasaran($rows, 'opd');
+                }
+            }
+        } else {
+            if (!$opdId) {
+                return redirect()->to('/login')->with('error', 'Session tidak valid');
+            }
+
+            $opdInfo = $this->opdModel->find($opdId);
+            $rows = $this->lakipModel->getIndexRenstraTargets((string) $tahun, $opdId);
+            $lakipMapTarget = $this->lakipModel->getLakipMapRenstra((string) $tahun, $status ?: null, $opdId);
+
+            foreach ($lakipMapTarget as $l) {
+                if (!empty($l['indikator_id'])) {
+                    $lakipMap[(int) $l['indikator_id']] = $l;
+                }
+            }
+
+            $dataSource = $this->lakipModel->groupIndexRowsBySasaran($rows, 'opd');
+        }
+
+        $unitName = $opdInfo['nama_opd'] ?? (($mode === 'kabupaten') ? 'Kabupaten Pringsewu' : 'Seluruh OPD');
+
+        lakip_opd_excel($dataSource, $lakipMap, [
+            'unit' => $unitName,
+            'mode' => $mode,
+            'tahun' => (string) $tahun,
+            'status' => (string) ($status ?? ''),
+        ]);
+    }
     /* =========================================================
      * FORM TAMBAH (FIX redirect back)
      * =======================================================*/

@@ -43,7 +43,7 @@
                                 <option value="" disabled <?= empty($tahun) ? 'selected' : '' ?>>
                                     Pilih Tahun
                                 </option>
-                                <?php for ($i = 2020; $i <= 2030; $i++): ?>
+                                <?php for ($i = 2025; $i <= 2030; $i++): ?>
                                     <option value="<?= $i ?>" <?= ($tahun == $i) ? 'selected' : '' ?>>
                                         <?= $i ?>
                                     </option>

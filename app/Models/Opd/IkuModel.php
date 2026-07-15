@@ -103,6 +103,10 @@ class IkuModel extends Model
                 'left'
             )
             ->where('renstra_sasaran.opd_id', $opd_id)
+            ->orderBy("(iku.definisi IS NULL OR iku.definisi = '')", 'ASC', false)
+            ->orderBy("(iku.rumusan_perhitungan IS NULL OR iku.rumusan_perhitungan = '')", 'ASC', false)
+            ->orderBy("(iku.sumber_data IS NULL OR iku.sumber_data = '')", 'ASC', false)
+            ->orderBy("(iku.penanggung_jawab IS NULL OR iku.penanggung_jawab = '')", 'ASC', false)
             ->orderBy('iku.id', 'ASC')
             ->get()
             ->getResultArray();
@@ -151,6 +155,10 @@ class IkuModel extends Model
                 'left'
             )
             ->where('(iku.rpjmd_id IS NOT NULL OR iku.renstra_id IS NOT NULL)', null, false)
+            ->orderBy("(iku.definisi IS NULL OR iku.definisi = '')", 'ASC', false)
+            ->orderBy("(iku.rumusan_perhitungan IS NULL OR iku.rumusan_perhitungan = '')", 'ASC', false)
+            ->orderBy("(iku.sumber_data IS NULL OR iku.sumber_data = '')", 'ASC', false)
+            ->orderBy("(iku.penanggung_jawab IS NULL OR iku.penanggung_jawab = '')", 'ASC', false)
             ->orderBy('iku.id', 'ASC')
             ->get()
             ->getResultArray();

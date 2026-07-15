@@ -136,10 +136,14 @@
                     $cetakParams['opd_id'] = $selectedOpdId;
                 }
                 ?>
-                <div class="col-md-auto">
+                <div class="col-md-auto d-flex gap-2">
                     <a href="<?= base_url('adminkab/lakip/cetak') . '?' . http_build_query($cetakParams) ?>"
                         target="_blank" class="btn btn-outline-danger">
-                        <i class="fas fa-print me-1"></i> Cetak
+                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                    </a>
+                    <a href="<?= base_url('adminkab/lakip/cetak-excel') . '?' . http_build_query($cetakParams) ?>"
+                        class="btn btn-outline-success">
+                        <i class="fas fa-file-excel me-1"></i> Cetak Excel
                     </a>
                 </div>
             </div>

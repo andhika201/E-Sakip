@@ -142,6 +142,46 @@ class LakipController extends BaseController
         exit;
     }
 
+    public function cetakExcel()
+    {
+        helper(['number', 'lakip', 'setting', 'lakip_excel']);
+
+        $session = session();
+        $role = $session->get('role');
+        // Cetak LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only)
+        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
+            return redirect()->to('/login')->with('error', 'Akses ditolak');
+        }
+
+        $mode = $this->request->getGet('mode') ?: 'kabupaten';
+        $tahun = $this->request->getGet('tahun') ?: date('Y');
+        $status = $this->request->getGet('status') ?: '';
+        $opdId = $this->request->getGet('opd_id');
+
+        $opdInfo = null;
+
+        if ($mode === 'opd') {
+            $opdIdInt = (!empty($opdId) ? (int) $opdId : null);
+            $rows = $this->lakipModel->getIndexRenstraTargets((string) $tahun, $opdIdInt);
+            $lakipMap = $this->lakipModel->getLakipMapRenstra((string) $tahun, ($status ?: null), $opdIdInt);
+
+            if ($opdIdInt) {
+                $opdInfo = $this->opdModel->find($opdIdInt);
+            }
+        } else {
+            $rows = $this->lakipModel->getIndexRpjmdTargets((string) $tahun);
+            $lakipMap = $this->lakipModel->getLakipMapRpjmd((string) $tahun, ($status ?: null));
+        }
+
+        $unitName = $opdInfo['nama_opd'] ?? (($mode === 'opd') ? 'Seluruh OPD' : 'Kabupaten Pringsewu');
+
+        lakip_kab_excel($rows, $lakipMap, $mode, [
+            'unit' => $unitName,
+            'tahun' => (string) $tahun,
+            'status' => (string) $status,
+        ]);
+    }
+
     public function tambah($targetId = null)
     {
         $session = session();

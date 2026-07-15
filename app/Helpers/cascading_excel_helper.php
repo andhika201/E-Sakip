@@ -273,12 +273,13 @@ if (!function_exists('cascading_opd_excel')) {
     /** Cascading Perangkat Daerah (getCascadingMatrixByOpd): RPJMD → Renstra → Eselon II/III/IV. */
     function cascading_opd_excel(array $rows, string $periode, string $namaOpd = ''): void
     {
-        $headers = [
+        helper('cascading_label');
+        $headers = array_map('casc_relabel', [
             'Tujuan RPJMD', 'Sasaran RPJMD', 'Tujuan Renstra', 'Indikator Tujuan',
             'Sasaran ESS II', 'Indikator ESS II',
             'Sasaran ESS III', 'Indikator ESS III',
             'Sasaran ESS IV/JF', 'Indikator ESS IV',
-        ];
+        ]);
         $data = [];
         foreach ($rows as $rw) {
             $data[] = [

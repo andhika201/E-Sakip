@@ -131,7 +131,7 @@
 
                 <div class="mb-3">
 
-                    <label>Sasaran ESS II</label>
+                    <label><?= casc_relabel('Sasaran ESS II') ?></label>
 
                     <input type="text" class="form-control" value="<?= esc($indikator['sasaran_es2']) ?>" readonly>
 
@@ -141,7 +141,7 @@
 
                 <div class="mb-3">
 
-                    <label>Indikator ESS II</label>
+                    <label><?= casc_relabel('Indikator ESS II') ?></label>
 
                     <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran']) ?>"
                         readonly>
@@ -153,14 +153,14 @@
                 <div class="mb-3">
 
                     <label class="fw-bold">
-                        Sasaran ESS III
+                        <?= casc_relabel('Sasaran ESS III') ?>
                     </label>
 
                     <div id="es3-container"></div>
 
                     <button type="button" class="btn btn-sm btn-success mt-2" onclick="addEs3()">
 
-                        + Tambah Sasaran ESS III
+                        + <?= casc_relabel('Tambah Sasaran ESS III') ?>
 
                     </button>
 
@@ -196,11 +196,11 @@
         function addEs3() {
             let html = `
                 <div class="es3-group">
-                    <div class="level-title">Sasaran ESS III</div>
+                    <div class="level-title"><?= casc_relabel('Sasaran ESS III') ?></div>
                     <input type="text"
                         name="sasaran[${es3Index}][nama]"
                         class="form-control mb-2"
-                        placeholder="Masukkan Sasaran ESS III"
+                        placeholder="<?= casc_relabel('Masukkan Sasaran ESS III') ?>"
                         required>
                     <div class="indikator-container"
                         id="indikator-container-${es3Index}">
@@ -209,7 +209,7 @@
                         <button type="button"
                             class="btn btn-sm btn-outline-success"
                             onclick="addIndikatorEs3(${es3Index})">
-                            + Tambah Indikator ESS III
+                            + <?= casc_relabel('Tambah Indikator ESS III') ?>
                         </button>
                         <button type="button"
                             class="btn btn-delete btn-delete-sasaran"
@@ -232,7 +232,7 @@
                     <input type="text"
                         name="sasaran[${es3}][indikator][${indikatorIndex}][nama]"
                         class="form-control"
-                        placeholder="Masukkan indikator ESS III">
+                        placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button"
                         class="btn btn-delete btn-delete-indikator"
                         onclick="this.parentElement.remove()">
@@ -251,7 +251,7 @@
                     <input type="text"
                         name="indikator[][nama]"
                         class="form-control"
-                        placeholder="Masukkan indikator ESS III">
+                        placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button"
                         class="btn btn-delete btn-delete-indikator"
                         onclick="this.parentElement.remove()">

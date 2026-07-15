@@ -197,12 +197,12 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
                     <th>Sasaran RPJMD</th>
                     <th>Tujuan Renstra</th>
                     <th>Indikator Tujuan</th>
-                    <th>Sasaran ESS II</th>
-                    <th>Indikator ESS II</th>
-                    <th>Sasaran ESS III</th>
-                    <th>Indikator ESS III</th>
-                    <th>Sasaran ESS IV/JF</th>
-                    <th>Indikator ESS IV</th>
+                    <th><?= casc_relabel('Sasaran ESS II') ?></th>
+                    <th><?= casc_relabel('Indikator ESS II') ?></th>
+                    <th><?= casc_relabel('Sasaran ESS III') ?></th>
+                    <th><?= casc_relabel('Indikator ESS III') ?></th>
+                    <th><?= casc_relabel('Sasaran ESS IV/JF') ?></th>
+                    <th><?= casc_relabel('Indikator ESS IV') ?></th>
                 </tr>
             </thead>
             <tbody>

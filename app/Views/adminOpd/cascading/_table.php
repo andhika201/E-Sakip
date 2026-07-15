@@ -12,17 +12,17 @@
             <th>Tujuan RENSTRA</th>
             <th>Indikator Tujuan</th>
 
-            <th>Sasaran ESS II</th>
-            <th>Indikator ESS II</th>
+            <th><?= casc_relabel('Sasaran ESS II') ?></th>
+            <th><?= casc_relabel('Indikator ESS II') ?></th>
 
-            <th>Sasaran ESS III</th>
-            <th>Indikator ESS III</th>
-            <th width="90">Aksi ESS III</th>
+            <th><?= casc_relabel('Sasaran ESS III') ?></th>
+            <th><?= casc_relabel('Indikator ESS III') ?></th>
+            <th width="90"><?= casc_relabel('Aksi ESS III') ?></th>
 
-            <th>Sasaran ESS IV / JF</th>
-            <th>Indikator ESS IV</th>
+            <th><?= casc_relabel('Sasaran ESS IV / JF') ?></th>
+            <th><?= casc_relabel('Indikator ESS IV') ?></th>
 
-            <th width="90">Aksi ESS IV</th>
+            <th width="90"><?= casc_relabel('Aksi ESS IV') ?></th>
         </tr>
     </thead>
 
@@ -90,7 +90,7 @@
                             <?php if ($hasIndikatorEss2): ?>
                                 <a href="<?= base_url('adminopd/cascading/tambah-es3/' . $r['indikator_id']) ?>"
                                     class="btn btn-success btn-sm">
-                                    <i class="fas fa-plus"></i> Tambah ESS III
+                                    <i class="fas fa-plus"></i> <?= casc_relabel('Tambah ESS III') ?>
                                 </a>
                             <?php else: ?>
                                 <span class="text-muted">-</span>
@@ -120,7 +120,7 @@
                         <td rowspan="<?= $rowspan['es3'][$r['es3_id']] ?? 1 ?>" class="text-nowrap text-center">
                             <a href="<?= base_url('adminopd/cascading/edit-es3/' . $r['es3_id']) ?>"
                                 class="btn btn-warning btn-sm casc-act"
-                                title="Edit ESS III">
+                                title="<?= casc_relabel('Edit ESS III') ?>">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <?php // Hapus Es3 hanya bila TIDAK ada Es4 di bawahnya (hapus Es4 dulu). ?>
@@ -128,8 +128,8 @@
                                 <a href="#"
                                     class="btn btn-danger btn-sm casc-act casc-del"
                                     data-url="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
-                                    data-confirm="Hapus Sasaran Eselon III ini beserta seluruh indikatornya?"
-                                    title="Hapus ESS III">
+                                    data-confirm="<?= casc_relabel('Hapus Sasaran Eselon III ini beserta seluruh indikatornya?') ?>"
+                                    title="<?= casc_relabel('Hapus ESS III') ?>">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             <?php endif; ?>
@@ -169,14 +169,14 @@
                         <?php if (!empty($r['es4_id'])): ?>
                             <a href="<?= base_url('adminopd/cascading/edit-es4/' . $r['es4_id']) ?>"
                                 class="btn btn-warning btn-sm casc-act"
-                                title="Edit ESS IV">
+                                title="<?= casc_relabel('Edit ESS IV') ?>">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <a href="#"
                                 class="btn btn-danger btn-sm casc-act casc-del"
                                 data-url="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
-                                data-confirm="Hapus Sasaran Eselon IV ini beserta seluruh indikatornya?"
-                                title="Hapus ESS IV">
+                                data-confirm="<?= casc_relabel('Hapus Sasaran Eselon IV ini beserta seluruh indikatornya?') ?>"
+                                title="<?= casc_relabel('Hapus ESS IV') ?>">
                                 <i class="fas fa-trash"></i>
                             </a>
                         <?php endif; ?>

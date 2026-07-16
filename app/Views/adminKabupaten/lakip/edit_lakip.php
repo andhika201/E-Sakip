@@ -108,12 +108,12 @@
         <div class="row g-3 mb-3">
           <div class="col-md-7">
             <label class="form-label fw-bold">Indikator</label>
-            <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran'] ?? '-') ?>" readonly>
+            <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran'] ?? $target['indikator_sasaran'] ?? '-') ?>" readonly>
           </div>
 
           <div class="col-md-3">
             <label class="form-label fw-bold">Satuan</label>
-            <input type="text" class="form-control" value="<?= esc($indikator['satuan'] ?? '-') ?>" readonly>
+            <input type="text" class="form-control" value="<?= esc($indikator['satuan'] ?? $target['satuan'] ?? '-') ?>" readonly>
           </div>
 
           <div class="col-md-2">

@@ -244,6 +244,11 @@
                     <button type="button"
                             onclick="window.location.href='<?= base_url('adminkab/rkpd') ?>'"
                             class="btn btn-outline-secondary">Reset</button>
+
+                    <button type="button" onclick="cetakRkpd()"
+                            class="btn btn-outline-danger d-flex align-items-center">
+                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                    </button>
                 </div>
             </div>
 
@@ -351,6 +356,16 @@
         if (tahun !== 'all') params.set('tahun', tahun);
         const qs = params.toString();
         window.location.search = qs.length ? '?' + qs : '';
+    }
+
+    function cetakRkpd() {
+        const opd   = document.getElementById('opdFilter')?.value || 'all';
+        const tahun = document.getElementById('yearFilter')?.value || 'all';
+        const params = new URLSearchParams();
+        if (opd   !== 'all') params.set('opd_id', opd);
+        if (tahun !== 'all') params.set('tahun', tahun);
+        const qs = params.toString();
+        window.open('<?= base_url('adminkab/rkpd/cetak') ?>' + (qs ? '?' + qs : ''), '_blank');
     }
 </script>
 

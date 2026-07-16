@@ -233,6 +233,9 @@ class LakipController extends BaseController
             }
         }
 
+        // Kolom `satuan` pada indikator menyimpan id -> resolve ke nama satuan.
+        $indikator['satuan'] = $this->lakipModel->resolveSatuanName($indikator['satuan'] ?? null);
+
         return view('adminKabupaten/lakip/tambah_lakip', [
             'title' => 'Tambah LAKIP',
             'role' => $role,

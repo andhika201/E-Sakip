@@ -140,9 +140,10 @@ $yearColWidth = max(4.8, (100 - $fixedColsWidth) / $targetYearCols);
                         $iku = null;
                         if (!empty($iku_data)) {
                             foreach ($iku_data as $item) {
+                                // Non admin_kab (admin_opd, admin_kecamatan, dst) memakai renstra_id.
                                 if (
                                     (($role ?? '') === 'admin_kab' && ($item['rpjmd_id'] ?? null) == ($indikator['id'] ?? null)) ||
-                                    (($role ?? '') === 'admin_opd' && ($item['renstra_id'] ?? null) == ($indikator['id'] ?? null))
+                                    (($role ?? '') !== 'admin_kab' && ($item['renstra_id'] ?? null) == ($indikator['id'] ?? null))
                                 ) {
                                     $iku = $item;
                                     break;

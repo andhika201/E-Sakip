@@ -83,6 +83,63 @@ class RkpdController extends BaseController
     }
 
     /**
+     * CETAK PDF RKPD (filter: opd_id + tahun; hanya RKT status 'selesai').
+     */
+    public function cetak()
+    {
+        if (ob_get_level() > 0) {
+            @ob_clean();
+        }
+
+        $opdId = $this->request->getGet('opd_id') ?? 'all';
+        $tahun = $this->request->getGet('tahun') ?? date('Y');
+
+        $allOpd = $this->opdModel->getAllOpd();
+
+        // RKPD: HANYA RKT status 'selesai' (flat rows, urutan sudah siap untuk rowspan).
+        $rows = $this->rktModel->getIndicatorsForRkpd($opdId, $tahun, 'selesai');
+
+        $currentOpdName = 'SEMUA OPD';
+        if ($opdId !== 'all') {
+            foreach ($allOpd as $o) {
+                if ((string) $o['id'] === (string) $opdId) {
+                    $currentOpdName = $o['nama_opd'];
+                    break;
+                }
+            }
+        }
+
+        $html = view('adminKabupaten/rkpd/rkpd_cetak', [
+            'rows' => $rows,
+            'filter_opd' => $opdId,
+            'filter_tahun' => $tahun,
+            'currentOpdName' => $currentOpdName,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A3-L',
+            'margin_left'   => 8,
+            'margin_right'  => 8,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $safeOpd = ($opdId === 'all') ? 'SEMUA-OPD' : trim(preg_replace('/[^A-Za-z0-9]+/', '-', (string) $currentOpdName), '-');
+        $mpdf->Output('RKPD-' . $safeOpd . '-' . $tahun . '.pdf', 'I');
+        exit;
+    }
+
+    /**
      * Show form to add new RKPD entries.
      * Admin Kabupaten can select target OPD and indikator.
      */

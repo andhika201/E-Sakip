@@ -136,6 +136,95 @@ class IkuController extends BaseController
         ]);
     }
 
+    /**
+     * CETAK PDF IKU Admin Kabupaten (mode opd/kabupaten + periode + filter OPD).
+     */
+    public function cetak()
+    {
+        if (ob_get_level() > 0) {
+            @ob_clean();
+        }
+
+        $request = service('request');
+        $mode = $request->getGet('mode') ?: 'opd';
+        $opdFilter = $request->getGet('opd_id');
+        $opdFilter = ($opdFilter === '') ? null : $opdFilter;
+
+        $grouped_data = $this->ikuModel->getPeriodeOptions($mode);
+
+        // Pilih periode (default: mengandung tahun berjalan, lalu periode pertama).
+        $currentYear = (int) date('Y');
+        $selected_periode = $request->getGet('periode') ?: null;
+        if (empty($selected_periode) && !empty($grouped_data)) {
+            foreach ($grouped_data as $key => $periode) {
+                if (in_array($currentYear, $periode['years'] ?? [], true)) {
+                    $selected_periode = $key;
+                    break;
+                }
+            }
+            if (empty($selected_periode)) {
+                $keys = array_keys($grouped_data);
+                $selected_periode = $keys[0] ?? null;
+            }
+        }
+
+        if (empty($selected_periode)) {
+            return redirect()->to(base_url('adminkab/iku'))
+                ->with('error', 'Periode wajib dipilih untuk cetak PDF IKU.');
+        }
+
+        $yearsForSelected = $grouped_data[$selected_periode]['years'] ?? [];
+
+        $iku_data = $this->ikuModel->getAllIkuWithPrograms();
+        $renstra_data = $this->ikuModel->getRenstraMatrix($yearsForSelected);
+        $rpjmd_data = $this->ikuModel->getRpjmdMatrix($yearsForSelected);
+
+        $opdNameTxt = '';
+        if ($mode === 'opd' && $opdFilter !== null) {
+            $renstra_data = array_values(array_filter(
+                $renstra_data,
+                static function ($row) use ($opdFilter) {
+                    return (int) ($row['opd_id'] ?? 0) === (int) $opdFilter;
+                }
+            ));
+            $opd = $this->opdModel->find((int) $opdFilter);
+            $opdNameTxt = $opd['nama_opd'] ?? '';
+        }
+
+        $html = view('adminKabupaten/iku/iku_cetak', [
+            'mode' => $mode,
+            'opdFilter' => $opdFilter,
+            'grouped_data' => $grouped_data,
+            'selected_periode' => $selected_periode,
+            'renstra_data' => $renstra_data,
+            'rpjmd_data' => $rpjmd_data,
+            'iku_data' => $iku_data,
+            'opd_name' => $opdNameTxt,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A4-L',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $safeMode = ($mode === 'kabupaten') ? 'KAB' : 'OPD';
+        $mpdf->Output('IKU-' . $safeMode . '-' . $selected_periode . '.pdf', 'I');
+        exit;
+    }
+
     /* =========================================================
      * TAMBAH IKU
      * route contoh:

@@ -555,6 +555,9 @@ class LakipOpdController extends BaseController
             return redirect()->back()->with('error', 'Indikator tidak ditemukan.');
         }
 
+        // Kolom `satuan` pada indikator menyimpan id -> resolve ke nama satuan.
+        $indikator['satuan'] = $this->lakipModel->resolveSatuanName($indikator['satuan'] ?? null);
+
         // target tahun berjalan
         $tableTarget = ($role === 'admin_kab') ? 'rpjmd_target' : 'renstra_target';
         $byColumn = ($role === 'admin_kab') ? 'indikator_sasaran_id' : 'renstra_indikator_id';

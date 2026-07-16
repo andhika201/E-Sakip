@@ -76,12 +76,18 @@
                         </select>
                     </div>
 
-                    <?php if (user_can('rpjmd.create')): ?>
-                    <a href="<?= base_url('adminkab/rpjmd/tambah') ?>"
-                        class="btn btn-success d-flex align-items-center">
-                        <i class="fas fa-plus me-1"></i> TAMBAH
-                    </a>
-                    <?php endif; ?>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btnCetakRpjmd" onclick="cetakRpjmd()"
+                            class="btn btn-outline-danger d-flex align-items-center">
+                            <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                        </button>
+                        <?php if (user_can('rpjmd.create')): ?>
+                        <a href="<?= base_url('adminkab/rpjmd/tambah') ?>"
+                            class="btn btn-success d-flex align-items-center">
+                            <i class="fas fa-plus me-1"></i> TAMBAH
+                        </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <div class="table-responsive">
@@ -514,6 +520,16 @@
             if (filtersEl) filtersEl.textContent = 'Semua Data';
             filterByPeriode();
         });
+
+        function cetakRpjmd() {
+            const periode = document.getElementById('periodFilter')?.value || '';
+            const status = document.getElementById('statusFilter')?.value || 'all';
+            const params = new URLSearchParams();
+            if (periode) params.set('periode', periode);
+            if (status && status !== 'all') params.set('status', status);
+            const qs = params.toString();
+            window.open('<?= base_url('adminkab/rpjmd/cetak') ?>' + (qs ? '?' + qs : ''), '_blank');
+        }
 
         function toggleStatus(misiId) {
             if (!confirm('Apakah Anda yakin ingin mengubah status RPJMD ini?')) return;

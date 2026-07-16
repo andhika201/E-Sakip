@@ -24,48 +24,62 @@ $statusLabel = static function ($status) {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <?= $this->include('templates/pdf_style') ?>
     <style>
-        body { font-family: sans-serif; font-size: 9pt; color: #222; }
-        h1 { margin: 0; text-align: center; font-size: 14pt; }
-        .meta { margin: 10px 0 12px; width: 100%; font-size: 9pt; }
-        .meta td { padding: 2px 4px; border: 0; }
-        table.report { width: 100%; border-collapse: collapse; }
-        table.report th, table.report td { border: 0.6px solid #666; padding: 4px; vertical-align: middle; }
-        table.report th { background: #d9ead3; text-align: center; font-weight: bold; }
+        body { font-size: 9px; }
+        .filter-note {
+            margin: 0 0 8px;
+            font-size: 8.6px;
+            color: #526158;
+            text-align: right;
+        }
+        table.lakip-print-table {
+            font-size: 8px;
+            line-height: 1.18;
+        }
+        table.lakip-print-table thead { display: table-header-group; }
+        table.lakip-print-table tr { page-break-inside: avoid; }
+        table.lakip-print-table th,
+        table.lakip-print-table td {
+            padding: 3px 4px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            vertical-align: middle;
+        }
+        table.lakip-print-table thead th {
+            font-size: 7.4px;
+            line-height: 1.12;
+            padding: 3px 3px;
+        }
         .text-center { text-align: center; }
         .text-start { text-align: left; }
     </style>
 </head>
 <body>
-    <h1>LAPORAN AKUNTABILITAS KINERJA INSTANSI PEMERINTAH DAERAH</h1>
+    <?php
+    $subjudulParts = [];
+    $unitTxt = trim((string) ($unitName ?? ''));
+    if ($unitTxt !== '') {
+        $subjudulParts[] = (($mode ?? 'opd') === 'kabupaten') ? $unitTxt : 'Perangkat Daerah: ' . $unitTxt;
+    }
+    $subjudulParts[] = 'Tahun ' . ($tahunAktif !== '' ? $tahunAktif : '-');
+    $subjudulParts[] = $modeLabel;
+    ?>
+    <?php $this->setData([
+        'judul'      => 'Laporan Akuntabilitas Kinerja Instansi Pemerintah Daerah',
+        'subjudul'   => implode(' - ', $subjudulParts),
+        'namaUnit'   => (($mode ?? 'opd') === 'kabupaten') ? '' : strtoupper($unitTxt),
+        'logoOnly'   => false,
+        'hideAksara' => true,
+    ]); ?>
+    <?= $this->include('templates/pdf_kop') ?>
 
-    <table class="meta">
-        <tr>
-            <td style="width: 90px;">Unit</td>
-            <td style="width: 8px;">:</td>
-            <td><?= esc($unitName) ?></td>
-        </tr>
-        <tr>
-            <td>Mode</td>
-            <td>:</td>
-            <td><?= esc($modeLabel) ?></td>
-        </tr>
-        <tr>
-            <td>Tahun</td>
-            <td>:</td>
-            <td><?= esc($tahunAktif !== '' ? $tahunAktif : '-') ?></td>
-        </tr>
-        <tr>
-            <td>Status</td>
-            <td>:</td>
-            <td><?= esc($statusFilter !== '' ? $statusLabel($statusFilter) : 'Semua Status') ?></td>
-        </tr>
-    </table>
+    <div class="filter-note">Status: <?= esc($statusFilter !== '' ? $statusLabel($statusFilter) : 'Semua Status') ?></div>
 
-    <table class="report">
+    <table class="pdf-table lakip-print-table">
         <thead>
             <tr>
-                <th style="width: 28px;">NO</th>
+                <th style="width: 3%;">NO</th>
                 <th style="width: 18%;">SASARAN</th>
                 <th style="width: 22%;">INDIKATOR</th>
                 <th style="width: 7%;">SATUAN</th>
@@ -75,7 +89,6 @@ $statusLabel = static function ($status) {
                 <th style="width: 8%;">TARGET</th>
                 <th style="width: 8%;">CAPAIAN TAHUN INI</th>
                 <th style="width: 7%;">CAPAIAN (%)</th>
-                <th style="width: 7%;">STATUS</th>
             </tr>
         </thead>
         <tbody>
@@ -146,14 +159,13 @@ $statusLabel = static function ($status) {
                         <td class="text-center"><?= ($targetTahun !== null && $targetTahun !== '') ? esc((string) $targetTahun) : '-' ?></td>
                         <td class="text-center"><?= $realisasiNow !== null ? esc((string) $realisasiNow) : '-' ?></td>
                         <td class="text-center"><?= $capaianPersen === null ? '-' : formatAngkaID($capaianPersen, 2) . '%' ?></td>
-                        <td class="text-center"><?= esc($statusLabel($lakipItem['status'] ?? null)) ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endforeach; ?>
 
             <?php if (empty($dataSource)): ?>
                 <tr>
-                    <td colspan="11" class="text-center">Belum ada data sasaran / indikator pada filter ini.</td>
+                    <td colspan="10" class="text-center">Belum ada data sasaran / indikator pada filter ini.</td>
                 </tr>
             <?php endif; ?>
         </tbody>

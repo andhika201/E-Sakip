@@ -226,13 +226,14 @@ class LakipModel extends Model
             ->select("
                 rt.*,
                 ris.indikator_sasaran,
-                ris.satuan,
+                COALESCE(s.satuan, ris.satuan) AS satuan,
                 ris.jenis_indikator,
                 rs.sasaran,
                 o.nama_opd
             ")
             ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'left')
             ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->join('opd o', 'o.id = rs.opd_id', 'left')
             ->where('rt.renstra_indikator_id', $indikatorId)
             ->where('rt.tahun', $tahun)
@@ -246,16 +247,39 @@ class LakipModel extends Model
             ->select("
                 rpj.*,
                 ris.indikator_sasaran,
-                ris.satuan,
+                COALESCE(s.satuan, ris.satuan) AS satuan,
                 ris.jenis_indikator,
                 rs.sasaran_rpjmd AS sasaran
             ")
             ->join('rpjmd_indikator_sasaran ris', 'ris.id = rpj.indikator_sasaran_id', 'left')
             ->join('rpjmd_sasaran rs', 'rs.id = ris.sasaran_id', 'left')
+            ->join('satuan s', 's.id = ris.satuan', 'left')
             ->where('rpj.indikator_sasaran_id', $indikatorId)
             ->where('rpj.tahun', $tahun)
             ->get()
             ->getRowArray();
+    }
+
+    /**
+     * Resolve nilai kolom `satuan` (menyimpan id ke tabel satuan) menjadi nama satuan.
+     * Kalau nilainya bukan id valid (mis. teks lama seperti "%"), kembalikan apa adanya.
+     */
+    public function resolveSatuanName($satuan): string
+    {
+        if ($satuan === null || $satuan === '') {
+            return '';
+        }
+        if (is_numeric($satuan)) {
+            $row = $this->db->table('satuan')
+                ->select('satuan')
+                ->where('id', (int) $satuan)
+                ->get()
+                ->getRowArray();
+            if (!empty($row['satuan'])) {
+                return (string) $row['satuan'];
+            }
+        }
+        return (string) $satuan;
     }
 
     /* =========================================================

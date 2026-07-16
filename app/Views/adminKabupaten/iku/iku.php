@@ -109,6 +109,19 @@
                 <?php endif; ?>
             </form>
 
+            <?php if (!empty($selected_periode)): ?>
+                <div class="mb-3 text-end">
+                    <a href="<?= base_url('adminkab/iku/cetak?' . http_build_query(array_filter([
+                        'mode' => $mode ?? 'opd',
+                        'opd_id' => $opdFilter ?? '',
+                        'periode' => $selected_periode ?? '',
+                    ], static fn($v) => $v !== '' && $v !== null))) ?>"
+                        target="_blank" class="btn btn-outline-danger">
+                        <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <?php if (empty($selected_periode)): ?>
 
                 <div class="text-center py-5 my-4">

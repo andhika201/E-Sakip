@@ -117,6 +117,89 @@ class RpjmdController extends BaseController
         return view('adminKabupaten/rpjmd/rpjmd', $data);
     }
 
+    /**
+     * CETAK PDF RPJMD (per periode + filter status opsional).
+     */
+    public function cetak()
+    {
+        if (ob_get_level() > 0) {
+            @ob_clean();
+        }
+
+        $allMisi = $this->rpjmdModel->getCompleteRpjmdStructure();
+
+        // Kelompokkan per periode: tahun_mulai - tahun_akhir (sama seperti index()).
+        $groupedData = [];
+        foreach ($allMisi as $misi) {
+            $periodKey = $misi['tahun_mulai'] . '-' . $misi['tahun_akhir'];
+            if (!isset($groupedData[$periodKey])) {
+                $groupedData[$periodKey] = [
+                    'period' => $periodKey,
+                    'tahun_mulai' => (int) $misi['tahun_mulai'],
+                    'tahun_akhir' => (int) $misi['tahun_akhir'],
+                    'years' => range((int) $misi['tahun_mulai'], (int) $misi['tahun_akhir']),
+                    'misi_data' => [],
+                ];
+            }
+            $groupedData[$periodKey]['misi_data'][] = $misi;
+        }
+        foreach ($groupedData as &$g) {
+            usort($g['misi_data'], static function ($a, $b) {
+                $va = (int) ($a['rpjmd_visi_id'] ?? 0);
+                $vb = (int) ($b['rpjmd_visi_id'] ?? 0);
+                return ($va === $vb)
+                    ? ((int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0))
+                    : ($va <=> $vb);
+            });
+        }
+        unset($g);
+        ksort($groupedData);
+
+        if (empty($groupedData)) {
+            return redirect()->to(base_url('adminkab/rpjmd'))
+                ->with('error', 'Belum ada data RPJMD untuk dicetak.');
+        }
+
+        // Pilih periode (default: periode terbaru, mengikuti default index).
+        $periode = trim((string) ($this->request->getGet('periode') ?? ''));
+        if ($periode === '' || !isset($groupedData[$periode])) {
+            $periodKeys = array_keys($groupedData);
+            $periode = end($periodKeys);
+        }
+        $status = trim((string) ($this->request->getGet('status') ?? ''));
+
+        $periodData = $groupedData[$periode];
+
+        $html = view('adminKabupaten/rpjmd/rpjmd_cetak', [
+            'period_data' => $periodData,
+            'periode' => $periode,
+            'status_filter' => $status,
+            'tahun_mulai' => $periodData['tahun_mulai'] ?? null,
+            'tahun_akhir' => $periodData['tahun_akhir'] ?? null,
+        ]);
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'          => 'utf-8',
+            'format'        => 'A3-L',
+            'margin_left'   => 8,
+            'margin_right'  => 8,
+            'margin_top'    => 12,
+            'margin_bottom' => 10,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+            'tempDir'       => sys_get_temp_dir(),
+        ]);
+        helper('setting');
+        $mpdf->SetHTMLFooter(pdf_footer_aksara());
+        pdf_watermark_aksara($mpdf);
+        $mpdf->SetDisplayMode('fullpage');
+        $mpdf->WriteHTML($html);
+
+        $this->response->setHeader('Content-Type', 'application/pdf');
+        $mpdf->Output('RPJMD-' . $periode . '.pdf', 'I');
+        exit;
+    }
+
     public function tambah()
     {
         // (Opsional) data dropdown; form sudah dinamis

@@ -115,6 +115,7 @@ $routes->group(
         $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
 
         // iku
+        $routes->get('iku/cetak', 'AdminKab\IkuController::cetak');
         $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');
         $routes->get('iku', 'AdminKab\IkuController::index');
         $routes->get('iku/tambah/(:num)', 'AdminKab\IkuController::tambah/$1');
@@ -127,6 +128,7 @@ $routes->group(
         // ke grup khusus super admin (auth:admin) di bawah.
 
         // RPJMD
+        $routes->get('rpjmd/cetak', 'RpjmdController::cetak');
         $routes->get('rpjmd', 'RpjmdController::index');
         $routes->get('rpjmd/tambah', 'RpjmdController::tambah');
         $routes->get('rpjmd/edit/(:num)', 'RpjmdController::edit/$1');
@@ -148,6 +150,7 @@ $routes->group(
         // RKPD (read-only: turunan RKT). Hanya index yang aktif.
         // Rute tulis di bawah dinonaktifkan karena method controllernya tidak ada
         // (RkpdController hanya punya index()); view tambah/edit RKPD adalah orphan.
+        $routes->get('rkpd/cetak', 'RkpdController::cetak');
         $routes->get('rkpd', 'RkpdController::index');
         // $routes->get('rkpd/tambah', 'RkpdController::tambah');
         // $routes->get('rkpd/edit/(:num)', 'RkpdController::edit/$1');

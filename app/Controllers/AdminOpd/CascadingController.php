@@ -3,10 +3,14 @@
 namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
+use App\Controllers\Concerns\CascadingOpdMetaTrait;
 use App\Models\CascadingModel;
 
 class CascadingController extends BaseController
 {
+    /** Rowspan/firstShow/pohon matriks cascading OPD (termasuk jenjang Pelaksana). */
+    use CascadingOpdMetaTrait;
+
     protected $cascadingModel;
     protected $db;
     protected $opdId;
@@ -157,16 +161,21 @@ class CascadingController extends BaseController
             'nama_opd' => $namaOpd,
         ]);
 
+        // A3 landscape sejak kolom bertambah jadi 12 (ada jenjang Pelaksana);
+        // A4-L membuat tabel terpotong. shrink_tables_to_fit=false supaya mPDF
+        // TIDAK menyusutkan font sampai tak terbaca — lebar kolom sudah diatur
+        // persen lewat colgroup di view cetaknya.
         $mpdf = new \Mpdf\Mpdf([
-            'mode'          => 'utf-8',
-            'format'        => 'A4-L',
-            'margin_left'   => 10,
-            'margin_right'  => 10,
-            'margin_top'    => 12,
-            'margin_bottom' => 10,
-            'margin_header' => 0,
-            'margin_footer' => 0,
-            'tempDir'       => sys_get_temp_dir()
+            'mode'                 => 'utf-8',
+            'format'               => 'A3-L',
+            'margin_left'          => 8,
+            'margin_right'         => 8,
+            'margin_top'           => 12,
+            'margin_bottom'        => 10,
+            'margin_header'        => 0,
+            'margin_footer'        => 0,
+            'shrink_tables_to_fit' => false,
+            'tempDir'              => sys_get_temp_dir()
         ]);
         helper('setting');
         $mpdf->SetHTMLFooter(pdf_footer_aksara());
@@ -223,98 +232,10 @@ class CascadingController extends BaseController
         ]);
     }
 
+    /** Pohon Kinerja OPD — implementasi bersama di CascadingOpdMetaTrait. */
     private function buildOpdTree($rows)
     {
-        $tree = [];
-        foreach ($rows as $r) {
-            // Handle possibility of unlinked data (null IDs)
-            $tId = rtrim('_' . ($r['tujuan_id'] ?? 'none'), '_');
-            
-            if (!isset($tree[$tId])) {
-                $tree[$tId] = [
-                    'nama' => $r['tujuan_rpjmd'] ?: '(Tanpa Tujuan RPJMD)',
-                    'sasarans' => []
-                ];
-            }
-            
-            $sId = rtrim('_' . ($r['sasaran_id'] ?? 'none'), '_');
-            
-            if (!isset($tree[$tId]['sasarans'][$sId])) {
-                $tree[$tId]['sasarans'][$sId] = [
-                    'nama' => $r['sasaran_rpjmd'] ?: '(Tanpa Sasaran RPJMD)',
-                    'tujuan_renstras' => []
-                ];
-            }
-            
-            $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
-            
-            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
-                    'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
-                    'indikator_tujuan' => [],
-                    'es2s' => []
-                ];
-            }
-
-            $itId = $r['indikator_tujuan_id'] ?? null;
-            if (!empty($itId) && !empty($r['indikator_tujuan'])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['indikator_tujuan'][$itId] = $r['indikator_tujuan'];
-            }
-            
-            $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
-            
-            // if there's no ES2 at all, skip rendering the deeper tree for this specific row
-            if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran'])) {
-                continue;
-            }
-            
-            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId] = [
-                    'nama' => $r['renstra_sasaran'] ?: '(Tanpa Sasaran ES.II)',
-                    'csf' => $r['csf_es2'],
-                    'indikators' => [],
-                    'es3s' => []
-                ];
-            }
-            
-            $risId = $r['indikator_id'];
-            if ($risId) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['indikators'][$risId] = $r['indikator_sasaran'];
-            }
-            
-            $es3Id = $r['es3_id'];
-            if ($es3Id) {
-                if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id])) {
-                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id] = [
-                        'nama' => $r['es3_sasaran'],
-                        'csf' => $r['csf_es3'],
-                        'indikators' => [],
-                        'es4s' => []
-                    ];
-                }
-                
-                $es3IndId = $r['es3_indikator_id'];
-                if ($es3IndId) {
-                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['indikators'][$es3IndId] = $r['es3_indikator'];
-                }
-
-                $es4Id = $r['es4_id'];
-                if ($es4Id) {
-                    if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id])) {
-                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id] = [
-                            'nama'      => $r['es4_sasaran'],
-                            'csf'       => $r['csf_es4'],
-                            'indikators' => []
-                        ];
-                    }
-                    $es4IndId = $r['es4_indikator_id'];
-                    if ($es4IndId) {
-                        $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['es4s'][$es4Id]['indikators'][$es4IndId] = $r['es4_indikator'];
-                    }
-                }
-            }
-        }
-        return $tree;
+        return $this->cascOpdTree($rows);
     }
 
     public function tambah($indikatorId = null)
@@ -442,6 +363,10 @@ class CascadingController extends BaseController
             if (!empty($es3['indikator'])) {
 
                 foreach ($es3['indikator'] as $indikatorEs3) {
+
+                    // Reset per iterasi agar tidak memakai id indikator dari indikator ES3 sebelumnya
+                    // (atau variabel tak terdefinisi) saat indikator ini tanpa nama.
+                    $indikatorEs3Id = null;
 
                     if (!empty($indikatorEs3['nama'])) {
 
@@ -657,9 +582,12 @@ class CascadingController extends BaseController
             return redirect()->back()->with('error', 'Data tidak ditemukan');
         }
 
-        // indikator es4
-        $indikator = $this->db->table('cascading_indikator_opd')
-            ->where('cascading_sasaran_id', $id)
+        // Indikator es4 + jumlah anak Pelaksana (untuk konfirmasi hapus berantai).
+        $indikator = $this->db->table('cascading_indikator_opd i')
+            ->select('i.id, i.indikator, '
+                . '(SELECT COUNT(*) FROM cascading_sasaran_opd s '
+                . 'WHERE s.es3_indikator_id = i.id AND s.level = "pelaksana") AS pelaksana_count', false)
+            ->where('i.cascading_sasaran_id', $id)
             ->get()
             ->getResultArray();
 
@@ -799,6 +727,8 @@ class CascadingController extends BaseController
         $nama = $this->request->getPost('nama');
         $indikator = $this->request->getPost('indikator');
 
+        $indikator = $indikator ?? [];
+
         $this->db->transStart();
 
         // update sasaran
@@ -808,22 +738,55 @@ class CascadingController extends BaseController
                 'nama_sasaran' => $nama
             ]);
 
-        // hapus indikator lama
-        $this->db->table('cascading_indikator_opd')
-            ->where('cascading_sasaran_id', $id)
-            ->delete();
+        // Indikator ES IV di-UPDATE DI TEMPAT (id dipertahankan), bukan
+        // dihapus-lalu-disisipkan-ulang. Sejak ada jenjang Pelaksana, baris
+        // Pelaksana menempel ke id indikator ES IV — kalau id-nya berubah tiap
+        // kali disunting, seluruh Pelaksana di bawahnya jadi yatim.
+        // Pola ini sama dengan updateEs3().
+        $existingIds = array_map(
+            static fn ($r) => (int) $r['id'],
+            $this->db->table('cascading_indikator_opd')
+                ->select('id')
+                ->where('cascading_sasaran_id', $id)
+                ->get()->getResultArray()
+        );
 
-        // insert indikator baru
-        if ($indikator) {
-            foreach ($indikator as $i) {
-                if (empty($i['nama']))
-                    continue;
+        $postedIds = [];
+        foreach ($indikator as $i) {
+            $namaInd = trim($i['nama'] ?? '');
+            $indId   = (isset($i['id']) && $i['id'] !== '') ? (int) $i['id'] : null;
 
+            if ($indId) {
+                $postedIds[] = $indId;
+            }
+            if ($namaInd === '') {
+                continue;
+            }
+
+            if ($indId && in_array($indId, $existingIds, true)) {
+                $this->db->table('cascading_indikator_opd')
+                    ->where('id', $indId)
+                    ->update(['indikator' => $namaInd]);
+            } else {
                 $this->db->table('cascading_indikator_opd')->insert([
                     'cascading_sasaran_id' => $id,
-                    'indikator' => $i['nama']
+                    'indikator'            => $namaInd,
                 ]);
             }
+        }
+
+        // Indikator yang dihapus user: buang Pelaksana anaknya lebih dulu
+        // (FK es3_indikator_id = ON DELETE SET NULL, jadi tidak otomatis ikut).
+        $removedIds = array_values(array_diff($existingIds, $postedIds));
+        if (!empty($removedIds)) {
+            $this->db->table('cascading_sasaran_opd')
+                ->where('level', 'pelaksana')
+                ->whereIn('es3_indikator_id', $removedIds)
+                ->delete(); // indikator Pelaksana ikut lewat FK ON DELETE CASCADE
+
+            $this->db->table('cascading_indikator_opd')
+                ->whereIn('id', $removedIds)
+                ->delete();
         }
 
         // insert sasaran baru (jika ada)
@@ -931,6 +894,307 @@ class CascadingController extends BaseController
         return redirect()->to('adminopd/cascading')
             ->with('success', 'Data berhasil dihapus');
     }
+    /* =========================================================
+     * PELAKSANA — jenjang di bawah Eselon IV / JF
+     *
+     * Strukturnya persis pola Es3 -> Es4: baris `cascading_sasaran_opd`
+     * dengan level='pelaksana', menempel ke INDIKATOR ES IV lewat kolom
+     * `es3_indikator_id` (kolom "indikator induk"). Indikatornya tetap di
+     * `cascading_indikator_opd`.
+     * =======================================================*/
+
+    /**
+     * Konteks satu indikator ES IV + pemeriksaan kepemilikan OPD.
+     * Dipakai semua aksi Pelaksana supaya id dari URL tidak pernah dipercaya.
+     */
+    private function konteksIndikatorEs4(int $indikatorEs4Id): ?array
+    {
+        return $this->db->table('cascading_indikator_opd i')
+            ->select('
+                i.id  as es4_indikator_id,
+                i.indikator as indikator_es4,
+                s.id  as es4_id,
+                s.opd_id,
+                s.nama_sasaran as sasaran_es4,
+                s.renstra_indikator_sasaran_id
+            ')
+            ->join('cascading_sasaran_opd s', 's.id = i.cascading_sasaran_id')
+            ->where('i.id', $indikatorEs4Id)
+            ->where('s.level', 'es4')
+            ->get()
+            ->getRowArray() ?: null;
+    }
+
+    public function tambahPelaksana($indikatorEs4Id = null)
+    {
+        $indikator = $this->konteksIndikatorEs4((int) $indikatorEs4Id);
+
+        if (!$indikator) {
+            return redirect()->back()->with('error', 'Indikator Eselon IV tidak ditemukan');
+        }
+        if (!$this->canAccessOpd($indikator['opd_id'] ?? null)) {
+            return redirect()->to('adminopd/cascading')
+                ->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+
+        return view('adminOpd/cascading/tambah_pelaksana', [
+            'indikator' => $indikator,
+            'periode'   => $this->request->getGet('periode'),
+        ]);
+    }
+
+    public function savePelaksana()
+    {
+        $indikatorEs4Id = (int) $this->request->getPost('es4_indikator_id');
+        $sasaranData    = $this->request->getPost('sasaran');
+
+        $indikator = $this->konteksIndikatorEs4($indikatorEs4Id);
+        if (!$indikator) {
+            return redirect()->back()->with('error', 'Indikator Eselon IV tidak valid.');
+        }
+        if (!$this->canAccessOpd($indikator['opd_id'] ?? null)) {
+            return redirect()->to('adminopd/cascading')
+                ->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+        if (empty($sasaranData) || !is_array($sasaranData)) {
+            return redirect()->back()->with('error', 'Data sasaran kosong');
+        }
+
+        // opd_id, parent, dan renstra indikator SELALU diturunkan dari induk di
+        // database — tidak satu pun diambil dari request.
+        $this->db->transStart();
+
+        foreach ($sasaranData as $pel) {
+            $namaSasaran = trim($pel['nama'] ?? '');
+            if ($namaSasaran === '') {
+                continue;
+            }
+
+            $this->db->table('cascading_sasaran_opd')->insert([
+                'opd_id'                       => $indikator['opd_id'],
+                'renstra_indikator_sasaran_id' => $indikator['renstra_indikator_sasaran_id'],
+                'parent_id'                    => $indikator['es4_id'],
+                'es3_indikator_id'             => $indikator['es4_indikator_id'],
+                'level'                        => 'pelaksana',
+                'nama_sasaran'                 => $namaSasaran,
+            ]);
+
+            $pelId = $this->db->insertID();
+
+            foreach ($pel['indikator'] ?? [] as $ind) {
+                $namaInd = trim($ind['nama'] ?? '');
+                if ($namaInd === '') {
+                    continue;
+                }
+                $this->db->table('cascading_indikator_opd')->insert([
+                    'cascading_sasaran_id' => $pelId,
+                    'indikator'            => $namaInd,
+                ]);
+            }
+        }
+
+        $this->db->transComplete();
+
+        return redirect()->to('adminopd/cascading')
+            ->with('success', 'Sasaran Pelaksana berhasil disimpan');
+    }
+
+    public function editPelaksana($id)
+    {
+        $sasaran = $this->db->table('cascading_sasaran_opd')
+            ->where('id', $id)
+            ->where('level', 'pelaksana')
+            ->get()
+            ->getRowArray();
+
+        if (!$sasaran) {
+            return redirect()->back()->with('error', 'Data tidak ditemukan');
+        }
+        if (!$this->canAccessOpd($sasaran['opd_id'] ?? null)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode(403)
+                    ->setJSON(['success' => false, 'message' => 'Anda tidak memiliki akses ke data OPD lain.']);
+            }
+            return redirect()->to('adminopd/cascading')
+                ->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+
+        $data = [
+            'sasaran'   => $sasaran,
+            'indikator' => $this->db->table('cascading_indikator_opd')
+                ->where('cascading_sasaran_id', $id)
+                ->get()->getResultArray(),
+            'es4' => $this->db->table('cascading_sasaran_opd')
+                ->where('id', $sasaran['parent_id'])
+                ->get()->getRowArray(),
+            'indikator_es4' => $this->db->table('cascading_indikator_opd')
+                ->where('id', $sasaran['es3_indikator_id'])
+                ->get()->getRowArray(),
+        ];
+
+        if ($this->request->isAJAX()) {
+            return view('adminOpd/cascading/_form_pelaksana', $data);
+        }
+        return view('adminOpd/cascading/edit_pelaksana', $data);
+    }
+
+    public function updatePelaksana($id)
+    {
+        $isAjax = $this->request->isAJAX();
+
+        $sasaran = $this->db->table('cascading_sasaran_opd')
+            ->where('id', $id)->where('level', 'pelaksana')
+            ->get()->getRowArray();
+
+        if (!$sasaran || !$this->canAccessOpd($sasaran['opd_id'] ?? null)) {
+            $pesan = $sasaran ? 'Anda tidak memiliki akses ke data OPD lain.' : 'Data tidak ditemukan.';
+            if ($isAjax) {
+                return $this->response->setStatusCode($sasaran ? 403 : 404)
+                    ->setJSON(['success' => false, 'message' => $pesan]);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', $pesan);
+        }
+
+        $nama = trim((string) $this->request->getPost('nama'));
+        if ($nama === '') {
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Nama Sasaran Pelaksana wajib diisi.']);
+            }
+            return redirect()->back()->with('error', 'Nama Sasaran Pelaksana wajib diisi.');
+        }
+
+        $indikator = $this->request->getPost('indikator') ?? [];
+
+        $this->db->transStart();
+
+        $this->db->table('cascading_sasaran_opd')
+            ->where('id', $id)
+            ->update(['nama_sasaran' => $nama]);
+
+        // Pelaksana adalah jenjang terakhir (tidak punya anak), tapi id
+        // indikator tetap dipertahankan agar konsisten dengan jenjang di atas.
+        $existingIds = array_map(
+            static fn ($r) => (int) $r['id'],
+            $this->db->table('cascading_indikator_opd')
+                ->select('id')->where('cascading_sasaran_id', $id)
+                ->get()->getResultArray()
+        );
+
+        $postedIds = [];
+        foreach ($indikator as $ind) {
+            $namaInd = trim($ind['nama'] ?? '');
+            $indId   = (isset($ind['id']) && $ind['id'] !== '') ? (int) $ind['id'] : null;
+
+            if ($indId) {
+                $postedIds[] = $indId;
+            }
+            if ($namaInd === '') {
+                continue;
+            }
+
+            if ($indId && in_array($indId, $existingIds, true)) {
+                $this->db->table('cascading_indikator_opd')
+                    ->where('id', $indId)->update(['indikator' => $namaInd]);
+            } else {
+                $this->db->table('cascading_indikator_opd')->insert([
+                    'cascading_sasaran_id' => $id,
+                    'indikator'            => $namaInd,
+                ]);
+            }
+        }
+
+        $removedIds = array_values(array_diff($existingIds, $postedIds));
+        if (!empty($removedIds)) {
+            $this->db->table('cascading_indikator_opd')->whereIn('id', $removedIds)->delete();
+        }
+
+        // ============================================================
+        // SASARAN PELAKSANA BARU (sejenis) — pola kembar updateEs3/updateEs4.
+        //
+        // Ini pengganti tombol "+" yang dulu ada di kolom Aksi Pelaksana pada
+        // tabel Cascading: tombol itu tetap tampil walau data sudah ada dan
+        // berulang di setiap Sasaran Pelaksana, sehingga tidak konsisten dengan
+        // Aksi ESS III / ESS IV yang hanya berisi edit + hapus.
+        //
+        // INDUK (opd_id, renstra_indikator_sasaran_id, parent_id, es3_indikator_id)
+        // SELALU disalin dari baris Pelaksana yang sedang disunting — tidak
+        // satu pun diambil dari request, sehingga tidak bisa dipakai
+        // menggantungkan Pelaksana ke OPD / indikator ES IV lain.
+        // ============================================================
+        $sasaranBaru = $this->request->getPost('sasaran_baru');
+        if (!empty($sasaranBaru) && is_array($sasaranBaru)) {
+            foreach ($sasaranBaru as $pel) {
+                $namaBaru = trim($pel['nama'] ?? '');
+                if ($namaBaru === '') {
+                    continue;
+                }
+
+                $this->db->table('cascading_sasaran_opd')->insert([
+                    'opd_id'                       => $sasaran['opd_id'],
+                    'renstra_indikator_sasaran_id' => $sasaran['renstra_indikator_sasaran_id'],
+                    'parent_id'                    => $sasaran['parent_id'],
+                    'es3_indikator_id'             => $sasaran['es3_indikator_id'],
+                    'level'                        => 'pelaksana',
+                    'nama_sasaran'                 => $namaBaru,
+                ]);
+                $pelBaruId = $this->db->insertID();
+
+                foreach ($pel['indikator'] ?? [] as $ind) {
+                    $namaInd = trim($ind['nama'] ?? '');
+                    if ($namaInd === '') {
+                        continue;
+                    }
+                    $this->db->table('cascading_indikator_opd')->insert([
+                        'cascading_sasaran_id' => $pelBaruId,
+                        'indikator'            => $namaInd,
+                    ]);
+                }
+            }
+        }
+
+        $this->db->transComplete();
+
+        if ($isAjax) {
+            return $this->response->setJSON([
+                'success' => $this->db->transStatus() !== false,
+                'message' => 'Sasaran Pelaksana berhasil diperbarui.',
+            ]);
+        }
+        return redirect()->to('adminopd/cascading')
+            ->with('success', 'Sasaran Pelaksana berhasil diperbarui');
+    }
+
+    public function deletePelaksana($id)
+    {
+        $isAjax = $this->request->isAJAX();
+
+        $row = $this->db->table('cascading_sasaran_opd')
+            ->where('id', $id)->where('level', 'pelaksana')
+            ->get()->getRowArray();
+
+        if (!$row) {
+            if ($isAjax) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Data tidak ditemukan.');
+        }
+        if (!$this->canAccessOpd($row['opd_id'] ?? null)) {
+            if ($isAjax) {
+                return $this->response->setStatusCode(403)
+                    ->setJSON(['success' => false, 'message' => 'Anda tidak memiliki akses ke data OPD lain.']);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+
+        // Indikator Pelaksana ikut terhapus lewat FK ON DELETE CASCADE.
+        $this->db->table('cascading_sasaran_opd')->where('id', $id)->delete();
+
+        if ($isAjax) {
+            return $this->response->setJSON(['success' => true, 'message' => 'Sasaran Pelaksana berhasil dihapus.']);
+        }
+        return redirect()->to('adminopd/cascading')->with('success', 'Sasaran Pelaksana berhasil dihapus');
+    }
+
     public function getRenstraIndikator()
     {
         $renstraSasaranId = $this->request->getGet('renstra_sasaran_id');
@@ -955,141 +1219,22 @@ class CascadingController extends BaseController
         return $this->response->setJSON($data);
     }
 
+    /* Meta tabel cascading: implementasi bersama di CascadingOpdMetaTrait
+       (dipakai juga admin_kab mode OPD & halaman publik). */
+
     private function preprocessEmptyIds(array &$rows): void
     {
-        foreach ($rows as $index => &$r) {
-            if (empty($r['tujuan_id'])) {
-                $r['tujuan_id'] = 'empty_tujuan_' . $index;
-            }
-            if (empty($r['sasaran_id'])) {
-                $r['sasaran_id'] = 'empty_sasaran_' . $index;
-            }
-            if (empty($r['renstra_tujuan_id'])) {
-                $r['renstra_tujuan_id'] = 'empty_rt_' . $index;
-            }
-            if (empty($r['indikator_tujuan_id'])) {
-                $r['indikator_tujuan_id'] = 'empty_it_' . $r['renstra_tujuan_id'];
-            }
-            if (empty($r['renstra_sasaran_id'])) {
-                $r['renstra_sasaran_id'] = 'empty_rs_' . $index;
-            }
-            if (empty($r['indikator_id'])) {
-                $r['indikator_id'] = 'empty_ris_' . $index;
-            }
-        }
-        unset($r);
+        $this->cascOpdPreprocessEmptyIds($rows);
     }
 
     private function buildRowspanMeta($rows)
     {
-        $meta = [
-            'tujuan' => [],
-            'sasaran' => [],
-            'tujuan_renstra' => [],
-            'indikator_tujuan' => [],
-            'sasaran_renstra' => [],
-            'indikator' => [],
-            'es3' => [],
-            'es3_indikator' => [],
-            'es4' => [],
-        ];
-
-        foreach ($rows as $r) {
-
-            $meta['tujuan'][$r['tujuan_id']] =
-                ($meta['tujuan'][$r['tujuan_id']] ?? 0) + 1;
-
-            $meta['sasaran'][$r['sasaran_id']] =
-                ($meta['sasaran'][$r['sasaran_id']] ?? 0) + 1;
-
-            $meta['tujuan_renstra'][$r['renstra_tujuan_id']] =
-                ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
-
-            $meta['indikator_tujuan'][$r['indikator_tujuan_id']] =
-                ($meta['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 0) + 1;
-
-            $meta['sasaran_renstra'][$r['renstra_sasaran_id']] =
-                ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
-
-            $meta['indikator'][$r['indikator_id']] =
-                ($meta['indikator'][$r['indikator_id']] ?? 0) + 1;
-
-            if ($r['es3_id']) {
-                $meta['es3'][$r['es3_id']] =
-                    ($meta['es3'][$r['es3_id']] ?? 0) + 1;
-            }
-
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
-
-            $meta['es3_indikator'][$key] =
-                ($meta['es3_indikator'][$key] ?? 0) + 1;
-
-            if ($r['es4_id']) {
-                $meta['es4'][$r['es4_id']] =
-                    ($meta['es4'][$r['es4_id']] ?? 0) + 1;
-            }
-
-        }
-
-        return $meta;
+        return $this->cascOpdRowspanMeta($rows);
     }
 
     private function buildFirstShowMeta($rows)
     {
-        $shown = [
-            'tujuan' => [],
-            'sasaran' => [],
-            'tujuan_renstra' => [],
-            'indikator_tujuan' => [],
-            'sasaran_renstra' => [],
-            'indikator' => [],
-            'es3' => [],
-            'es3_indikator' => [],
-            'es4' => [],
-        ];
-
-        foreach ($rows as $index => $r) {
-
-            if (!isset($shown['tujuan'][$r['tujuan_id']])) {
-                $shown['tujuan'][$r['tujuan_id']] = $index;
-            }
-
-            if (!isset($shown['sasaran'][$r['sasaran_id']])) {
-                $shown['sasaran'][$r['sasaran_id']] = $index;
-            }
-
-            if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']])) {
-                $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
-            }
-
-            if (!isset($shown['indikator_tujuan'][$r['indikator_tujuan_id']])) {
-                $shown['indikator_tujuan'][$r['indikator_tujuan_id']] = $index;
-            }
-
-            if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']])) {
-                $shown['sasaran_renstra'][$r['renstra_sasaran_id']] = $index;
-            }
-
-            if (!isset($shown['indikator'][$r['indikator_id']])) {
-                $shown['indikator'][$r['indikator_id']] = $index;
-            }
-
-            if ($r['es3_id'] && !isset($shown['es3'][$r['es3_id']])) {
-                $shown['es3'][$r['es3_id']] = $index;
-            }
-
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
-
-            if (!isset($shown['es3_indikator'][$key])) {
-                $shown['es3_indikator'][$key] = $index;
-            }
-
-            if ($r['es4_id'] && !isset($shown['es4'][$r['es4_id']])) {
-                $shown['es4'][$r['es4_id']] = $index;
-            }
-        }
-
-        return $shown;
+        return $this->cascOpdFirstShowMeta($rows);
     }
 
     public function saveCsf()
@@ -1107,10 +1252,10 @@ class CascadingController extends BaseController
                 ->where('id', $id)
                 ->where('level', 'es3')
                 ->update(['csf' => $csfVal]);
-        } elseif ($level === 'es4') {
+        } elseif ($level === 'es4' || $level === 'pelaksana') {
             $this->db->table('cascading_sasaran_opd')
                 ->where('id', $id)
-                ->where('level', 'es4')
+                ->where('level', $level)
                 ->update(['csf' => $csfVal]);
         }
 

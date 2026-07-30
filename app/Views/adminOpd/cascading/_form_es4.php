@@ -23,12 +23,16 @@
     <input type="text" name="nama" class="form-control mb-3" value="<?= esc($sasaran['nama_sasaran']) ?>" required>
 
     <div class="indikator-container" id="indikator-container">
-        <?php foreach ($indikator as $i): ?>
+        <?php foreach ($indikator as $idx => $i): ?>
             <div class="indikator-es4">
-                <input type="text" name="indikator[][nama]" class="form-control"
+                <?php // id lama DIPERTAHANKAN agar Pelaksana anaknya tetap tertaut
+                      // (Pelaksana menempel ke id indikator ES IV ini). ?>
+                <input type="hidden" name="indikator[<?= $idx ?>][id]" value="<?= esc($i['id']) ?>">
+                <input type="text" name="indikator[<?= $idx ?>][nama]" class="form-control"
                     value="<?= esc($i['indikator']) ?>">
                 <button type="button" class="btn btn-delete btn-delete-indikator"
-                    onclick="this.parentElement.remove()">
+                    data-pelaksana-count="<?= (int) ($i['pelaksana_count'] ?? 0) ?>"
+                    onclick="hapusIndikatorEs4(this)">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>

@@ -65,24 +65,19 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <label class="form-label">
                                 Tahun (<?= $mode === 'kabupaten' ? 'RPJMD' : 'Renstra' ?>)
                             </label>
                             <input type="text" class="form-control" value="<?= esc($detail['indikator_tahun'] ?? '-') ?>"
                                 readonly>
                         </div>
-                        <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="col-md-6">
                             <label class="form-label">
                                 Target <?= $mode === 'kabupaten' ? 'Tahunan (RPJMD)' : '(Renstra)' ?>
                             </label>
                             <input type="text" class="form-control" value="<?= esc($detail['indikator_target'] ?? '-') ?>"
                                 readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="capaian">Baseline (Capaian)</label>
-                            <input type="text" class="form-control" id="capaian" name="capaian"
-                                value="<?= old('capaian', $detail['capaian'] ?? '') ?>">
                         </div>
                     </div>
 

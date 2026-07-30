@@ -83,7 +83,9 @@
             .tree-node { page-break-inside: avoid; }
             .tree li { padding: 12px 3px 0 3px; }
             .box-visi, .box-misi, .box-tujuan, .box-sasaran, .box-opd,
-            .box-l3, .box-es2 { box-shadow: none; }
+            .box-l3, .box-es2, .box-sasaran-renstra,
+            /* jenjang cascade internal OPD (termasuk Pelaksana) */
+            .box-es3, .box-es4, .box-pelaksana { box-shadow: none; }
             .box-ikt, .box-iks, .box-csf { box-shadow: none; }
         }
 

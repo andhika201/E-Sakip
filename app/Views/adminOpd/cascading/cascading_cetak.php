@@ -27,6 +27,8 @@ $estimatePdfRowWeight = static function (array $row) use ($cleanPdfText): int {
         ['es3_indikator', 38],
         ['es4_sasaran', 52],
         ['es4_indikator', 46],
+        ['pelaksana_sasaran', 48],
+        ['pelaksana_indikator', 44],
     ];
 
     $maxLines = 1;
@@ -83,6 +85,8 @@ $buildPdfMeta = static function (array $pageRows): array {
         'es3',
         'es3_indikator',
         'es4',
+        'es4_indikator',
+        'pelaksana',
     ];
     $rowspan = [];
     $firstShow = [];
@@ -105,6 +109,8 @@ $buildPdfMeta = static function (array $pageRows): array {
             'es3' => $es3Key,
             'es3_indikator' => $es3IndikatorKey,
             'es4' => $es4Key,
+            'es4_indikator' => !empty($r['es4_id']) ? $r['es4_id'] . '_' . ($r['es4_indikator_id'] ?? null) : null,
+            'pelaksana' => !empty($r['pelaksana_id']) ? $r['pelaksana_id'] : null,
         ];
 
         foreach ($keys as $name => $key) {
@@ -179,17 +185,21 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
         <?php endif; ?>
         <?php [$pageRowspan, $pageFirstShow] = $buildPdfMeta($pageRows); ?>
         <table class="pdf-table cascading-print-table">
+            <?php // 12 kolom: lebar dipersen-kan (table-layout fixed) agar mPDF
+                  // tidak menyusutkan font — lihat catatan cetak cascading. ?>
             <colgroup>
-                <col style="width:7%;">
-                <col style="width:7%;">
+                <col style="width:6%;">
+                <col style="width:6%;">
+                <col style="width:6.5%;">
+                <col style="width:6%;">
+                <col style="width:6.5%;">
+                <col style="width:6.5%;">
                 <col style="width:8%;">
-                <col style="width:7%;">
-                <col style="width:8%;">
-                <col style="width:8%;">
-                <col style="width:10%;">
+                <col style="width:9%;">
                 <col style="width:12%;">
-                <col style="width:18%;">
-                <col style="width:15%;">
+                <col style="width:10.5%;">
+                <col style="width:12%;">
+                <col style="width:11%;">
             </colgroup>
             <thead>
                 <tr>
@@ -203,12 +213,14 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
                     <th><?= casc_relabel('Indikator ESS III') ?></th>
                     <th><?= casc_relabel('Sasaran ESS IV/JF') ?></th>
                     <th><?= casc_relabel('Indikator ESS IV') ?></th>
+                    <th><?= esc(casc_pelaksana_label('Sasaran ')) ?></th>
+                    <th><?= esc(casc_pelaksana_label('Indikator ')) ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($rows)): ?>
                     <tr>
-                        <td colspan="10" class="c pdf-muted">Tidak ada data cascading OPD.</td>
+                        <td colspan="12" class="c pdf-muted">Tidak ada data cascading OPD.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($pageRows as $index => $r): ?>
@@ -250,8 +262,9 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
                         <?php endif; ?>
 
                         <?php if (empty($r['es3_id'])): ?>
+                            <?php // 6 kolom kosong: ES III (2) + ES IV (2) + Pelaksana (2) ?>
                             <?php if (($pageFirstShow['indikator'][$r['indikator_id']] ?? -1) == $index): ?>
-                                <td colspan="4" class="dash">-</td>
+                                <td colspan="6" class="dash">-</td>
                             <?php endif; ?>
                         <?php else: ?>
                             <?php if (($pageFirstShow['es3'][$r['es3_id']] ?? -1) == $index): ?>
@@ -268,8 +281,9 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
                             <?php endif; ?>
 
                             <?php if (empty($r['es4_id'])): ?>
+                                <?php // 4 kolom kosong: Sasaran/Indikator ES IV + Sasaran/Indikator Pelaksana ?>
                                 <?php if (($pageFirstShow['es3_indikator'][$key] ?? -1) == $index): ?>
-                                    <td colspan="2" class="dash">-</td>
+                                    <td colspan="4" class="dash">-</td>
                                 <?php endif; ?>
                             <?php else: ?>
                                 <?php if (($pageFirstShow['es4'][$r['es4_id']] ?? -1) == $index): ?>
@@ -277,7 +291,28 @@ $pdfPages = empty($rows) ? [[]] : $buildPdfPages($rows);
                                         <?= !empty($r['es4_sasaran']) ? nl2br(esc($r['es4_sasaran'])) : '-' ?>
                                     </td>
                                 <?php endif; ?>
-                                <td><?= !empty($r['es4_indikator']) ? $idk . nl2br(esc($r['es4_indikator'])) : '-' ?></td>
+
+                                <?php // Indikator ES IV kini butuh rowspan: bisa punya beberapa Pelaksana. ?>
+                                <?php $keyI4 = $r['es4_id'] . '_' . ($r['es4_indikator_id'] ?? null); ?>
+                                <?php if (($pageFirstShow['es4_indikator'][$keyI4] ?? -1) == $index): ?>
+                                    <td rowspan="<?= $pageRowspan['es4_indikator'][$keyI4] ?? 1 ?>">
+                                        <?= !empty($r['es4_indikator']) ? $idk . nl2br(esc($r['es4_indikator'])) : '-' ?>
+                                    </td>
+                                <?php endif; ?>
+
+                                <?php // ---------- PELAKSANA ---------- ?>
+                                <?php if (empty($r['pelaksana_id'])): ?>
+                                    <?php if (($pageFirstShow['es4_indikator'][$keyI4] ?? -1) == $index): ?>
+                                        <td colspan="2" class="dash">-</td>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <?php if (($pageFirstShow['pelaksana'][$r['pelaksana_id']] ?? -1) == $index): ?>
+                                        <td rowspan="<?= $pageRowspan['pelaksana'][$r['pelaksana_id']] ?? 1 ?>">
+                                            <?= !empty($r['pelaksana_sasaran']) ? nl2br(esc($r['pelaksana_sasaran'])) : '-' ?>
+                                        </td>
+                                    <?php endif; ?>
+                                    <td><?= !empty($r['pelaksana_indikator']) ? $idk . nl2br(esc($r['pelaksana_indikator'])) : '-' ?></td>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                     </tr>

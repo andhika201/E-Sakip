@@ -52,13 +52,18 @@ class DashboardOpdModel extends Model
         ];
     }
 
+    /**
+     * Statistik IKU dihitung dari `iku_indikator` (IKU standalone), bukan lagi
+     * tabel `iku` lama yang menempel ke renstra. Cakupannya tetap global seperti
+     * statistik lain di dashboard ini (Renstra/Renja juga tidak difilter per OPD).
+     */
     public function getIkuStats()
     {
-        $selesai = $this->db->table('iku')
+        $selesai = $this->db->table('iku_indikator')
             ->where('status', 'selesai')
             ->countAllResults();
 
-        $draft = $this->db->table('iku')
+        $draft = $this->db->table('iku_indikator')
             ->groupStart()
                 ->where('status', 'draft')
                 ->orWhere('status IS NULL OR TRIM(status) = ', "''", false)

@@ -272,10 +272,11 @@
                             class="<?= $mode === 'opd' ? 'active' : '' ?>">
                             <i class="fas fa-building me-1"></i> OPD (Renstra Lengkap)
                         </a>
-                        <!-- <a href="<?= base_url('adminkab/cascading?mode=keseluruhan&periode=' . urlencode($periode)) ?>"
+                        <?php // Keseluruhan: rantai penuh RPJMD → Renstra OPD → ES III → ES IV/JF → Pelaksana ?>
+                        <a href="<?= base_url('adminkab/cascading?mode=keseluruhan&view=' . $view . '&periode=' . urlencode($periode)) ?>"
                             class="<?= $mode === 'keseluruhan' ? 'active' : '' ?>">
                             <i class="fas fa-diagram-project me-1"></i> Keseluruhan
-                        </a> -->
+                        </a>
                     </div>
 
                     <div class="tb-label"><i class="fas fa-filter me-1"></i>Filter</div>

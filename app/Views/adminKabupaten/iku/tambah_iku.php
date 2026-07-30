@@ -2,153 +2,57 @@
 <html lang="id">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tambah IKU - Admin Kabupaten</title>
-
-  <?= $this->include('adminKabupaten/templates/style.php'); ?>
-
-  <style>
-    .alert {
-      transition: all 0.3s ease;
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><?= esc($title ?? 'Tambah IKU Kabupaten') ?></title>
+    <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+        .select2-container { width: 100% !important; }
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: .375rem;
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+        }
+        .select2-selection__rendered { padding-left: 0 !important; color: #495057; }
+        .select2-selection__arrow { height: 100% !important; }
+        .select2-results__option--highlighted { background-color: #00743e !important; color: #fff; }
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
-  <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
+    <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left .3s ease;">
 
-  <!-- Header & Sidebar -->
-  <?= $this->include('adminKabupaten/templates/header.php'); ?>
-  <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
+        <?= $this->include('adminKabupaten/templates/header.php'); ?>
+        <?= $this->include('adminKabupaten/templates/sidebar.php'); ?>
 
-  <main class="flex-fill d-flex justify-content-center p-4 mt-4">
-    <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 900px;">
-      <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;">
-        Tambah Indikator Kinerja Utama (IKU)
-        <?php if (($mode ?? 'opd') === 'kabupaten'): ?>
-          <small class="d-block fs-6 text-muted">Mode: Kabupaten (RPJMD)</small>
-        <?php else: ?>
-          <small class="d-block fs-6 text-muted">Mode: OPD (RENSTRA)</small>
-        <?php endif; ?>
-      </h2>
+        <main class="flex-fill d-flex justify-content-center p-4 mt-2">
+            <div class="bg-white rounded shadow-sm p-4" style="width: 100%; max-width: 1200px;">
+                <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah IKU Kabupaten</h2>
 
-      <!-- ALERT -->
-      <div id="alert-container">
-        <?php if (session()->getFlashdata('error')): ?>
-          <div class="alert alert-danger">
-            <?= esc(session()->getFlashdata('error')) ?>
-          </div>
-        <?php endif; ?>
-      </div>
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div>
+                <?php endif; ?>
 
-      <form action="<?= base_url('adminkab/iku/save') ?>" method="post">
-        <?= csrf_field() ?>
-
-        <!-- kirim mode ke controller (opd / kabupaten) -->
-        <input type="hidden" name="mode" value="<?= esc($mode ?? 'opd') ?>">
-
-        <?php if (($mode ?? 'opd') === 'kabupaten'): ?>
-          <!-- indikator RPJMD -->
-          <input type="hidden" name="rpjmd_id" value="<?= esc($indikator['id']) ?>">
-        <?php else: ?>
-          <!-- indikator RENSTRA -->
-          <input type="hidden" name="renstra_id" value="<?= esc($indikator['id']) ?>">
-        <?php endif; ?>
-
-        <!-- Indikator & Definisi -->
-        <div class="row mb-3">
-          <div class="col-md-6 mb-3 mb-md-0">
-            <label class="form-label fw-semibold">Indikator Sasaran</label>
-            <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran'] ?? '-') ?>" readonly>
-          </div>
-
-          <div class="col-md-6">
-            <label for="definisi" class="form-label fw-semibold">Definisi Operasional</label>
-            <input type="text" name="definisi" id="definisi" class="form-control"
-              placeholder="Tulis definisi operasional IKU" required>
-          </div>
-        </div>
-
-        <!-- Formula/Rumusan Perhitungan & Sumber Data -->
-        <div class="row mb-3">
-          <div class="col-md-6 mb-3 mb-md-0">
-            <label for="rumusan_perhitungan" class="form-label fw-semibold">Formula / Rumusan Perhitungan</label>
-            <textarea name="rumusan_perhitungan" id="rumusan_perhitungan" class="form-control" rows="2"
-              placeholder="Tulis formula / rumusan perhitungan indikator"></textarea>
-          </div>
-          <div class="col-md-6">
-            <label for="sumber_data" class="form-label fw-semibold">Sumber Data</label>
-            <textarea name="sumber_data" id="sumber_data" class="form-control" rows="2"
-              placeholder="Sumber data indikator (mis. BPS, aplikasi, laporan OPD)"></textarea>
-          </div>
-        </div>
-
-        <!-- Penanggung Jawab -->
-        <div class="mb-3">
-          <label for="penanggung_jawab" class="form-label fw-semibold">Penanggung Jawab</label>
-          <input type="text" name="penanggung_jawab" id="penanggung_jawab" class="form-control"
-            placeholder="Isi nama jabatan (mis. Kepala Dinas ...)">
-          <small class="text-muted">Diisi dengan <strong>nama jabatan</strong> penanggung jawab.</small>
-        </div>
-
-        <!-- Program Pendukung dinonaktifkan sementara:
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Program Pendukung</label>
-          <div id="program-container">
-            <div class="input-group mb-2">
-              <input type="text" name="program_pendukung[]" class="form-control" placeholder="Isi program pendukung">
-              <button type="button" class="btn btn-outline-success add-program">+</button>
+                <?php
+                $this->setData([
+                    'iku'           => null,
+                    'is_lintas_opd' => false,
+                    'opd_list'      => [],
+                    'action_url'    => base_url('adminkab/iku/save'),
+                    'back_url'      => base_url('adminkab/iku?mode=kabupaten'),
+                ]);
+                ?>
+                <?= $this->include('templates/iku/_form') ?>
             </div>
-          </div>
-          <small class="text-muted">
-            Tambahkan satu atau beberapa program yang mendukung pencapaian IKU ini.
-          </small>
-        </div>
-        -->
+        </main>
 
-        <!-- Tombol -->
-        <div class="d-flex justify-content-between mt-4">
-          <a href="<?= base_url('adminkab/iku?mode=' . ($mode ?? 'opd')) ?>" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Kembali
-          </a>
-          <button type="submit" class="btn btn-success">
-            <i class="fas fa-save me-1"></i> Simpan
-          </button>
-        </div>
-      </form>
+        <?= $this->include('adminKabupaten/templates/footer.php'); ?>
     </div>
-  </main>
-
-  <?= $this->include('adminKabupaten/templates/footer.php'); ?>
-  </div>
-
-  <script>
-    // Tambah / hapus input program pendukung
-    document.addEventListener("click", function (e) {
-      if (e.target.classList.contains("add-program")) {
-        const container = document.getElementById("program-container");
-        const div = document.createElement("div");
-        div.classList.add("input-group", "mb-2");
-        div.innerHTML = `
-                <input type="text" name="program_pendukung[]" class="form-control"
-                       placeholder="Isi program pendukung">
-                <button type="button" class="btn btn-outline-danger remove-program">-</button>
-            `;
-        container.appendChild(div);
-      }
-
-      if (e.target.classList.contains("remove-program")) {
-        e.target.closest(".input-group").remove();
-      }
-    });
-  </script>
-
 </body>
 
 </html>

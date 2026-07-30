@@ -315,22 +315,60 @@
                         </div>
                         <div class="table-responsive tab-table-wrap">
                             <table class="table table-bordered table-striped small master-table">
-                                <thead class="table-success text-center"><tr><th>No</th><th>Satuan</th><th>Aksi</th></tr></thead>
+                                <thead class="table-success text-center"><tr><th>No</th><th>Satuan</th><th>Tipe</th><th>Skala Predikat</th><th>Aksi</th></tr></thead>
                                 <tbody>
                                 <?php $n = 1; foreach ($satuan as $s): ?>
+                                    <?php
+                                    // Skala hanya berlaku untuk tipe `predikat`; kode inilah yang
+                                    // muncul sebagai pilihan di form Target & Input Capaian.
+                                    $sTipe  = $s['tipe'] ?? 'angka';
+                                    $sSkala = ($satuanSkala ?? [])[(int) $s['id']] ?? [];
+                                    ?>
                                     <tr>
                                         <td class="text-center"><?= $n++ ?></td>
                                         <td><?= esc($s['satuan']) ?></td>
+                                        <td class="text-center">
+                                            <?php if ($sTipe === 'predikat'): ?>
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Predikat</span>
+                                            <?php else: ?>
+                                                <span class="text-muted"><?= esc(($satuanTipe ?? [])[$sTipe] ?? $sTipe) ?></span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if (empty($sSkala)): ?>
+                                                <span class="text-muted">&mdash;</span>
+                                            <?php else: ?>
+                                                <?php foreach ($sSkala as $sk): ?>
+                                                    <span class="badge bg-light text-dark border me-1 mb-1"
+                                                        title="<?= esc($sk['label'] ?? '', 'attr') ?>">
+                                                        <?= esc($sk['kode']) ?> = <?= esc(rtrim(rtrim(number_format((float) $sk['nilai'], 2, '.', ''), '0'), '.')) ?>
+                                                    </span>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-center text-nowrap">
-                                            <button class="btn btn-warning btn-sm" data-edit="modal-satuan" data-json='<?= $j(['id'=>$s['id'],'satuan'=>$s['satuan']]) ?>'><i class="fas fa-edit"></i></button>
+                                            <button class="btn btn-warning btn-sm" data-edit="modal-satuan" data-json='<?= $j([
+                                                'id'     => $s['id'],
+                                                'satuan' => $s['satuan'],
+                                                'tipe'   => $sTipe,
+                                                'skala'  => array_map(static fn ($sk) => [
+                                                    'kode'  => $sk['kode'],
+                                                    'label' => $sk['label'] ?? '',
+                                                    'nilai' => rtrim(rtrim(number_format((float) $sk['nilai'], 2, '.', ''), '0'), '.'),
+                                                ], $sSkala),
+                                            ]) ?>'><i class="fas fa-edit"></i></button>
                                             <a href="<?= base_url('adminkab/master/satuan/delete/' . (int)$s['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
-                                <?php if (empty($satuan)): ?><tr><td colspan="3" class="text-center text-muted py-3">Belum ada data.</td></tr><?php endif; ?>
+                                <?php if (empty($satuan)): ?><tr><td colspan="5" class="text-center text-muted py-3">Belum ada data.</td></tr><?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
+                        <small class="text-muted">
+                            Satuan bertipe <strong>Predikat</strong> (mis. Opini BPK, Nilai SAKIP) membuat kolom Target Triwulan
+                            dan Capaian Triwulan berubah jadi pilihan. Skor tiap predikat dipakai untuk menghitung Capaian Total.
+                        </small>
                     </div>
 
                 </div><!-- /tab-content -->
@@ -444,16 +482,124 @@
     </div></div></div>
 
     <!-- Satuan -->
-    <div class="modal fade" id="modal-satuan" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-        <form method="post" action="<?= base_url('adminkab/master/satuan/save') ?>">
+    <div class="modal fade" id="modal-satuan" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <form method="post" action="<?= base_url('adminkab/master/satuan/save') ?>" id="form-satuan">
             <?= csrf_field() ?><input type="hidden" name="id">
             <div class="modal-header"><h5 class="modal-title">Data Satuan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
-                <div class="mb-2"><label class="form-label">Nama Satuan</label><input type="text" name="satuan" class="form-control" required></div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-7">
+                        <label class="form-label">Nama Satuan</label>
+                        <input type="text" name="satuan" class="form-control" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Tipe Nilai</label>
+                        <select name="tipe" id="satuan-tipe" class="form-select">
+                            <?php foreach (($satuanTipe ?? []) as $tk => $tl): ?>
+                                <option value="<?= esc($tk) ?>"><?= esc($tl) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <?php // Skala hanya tampil untuk tipe `predikat`; dikirim sebagai JSON. ?>
+                <div id="satuan-skala-wrap" class="border rounded p-2 bg-light d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <div class="fw-semibold small">Skala Predikat</div>
+                            <div class="text-muted" style="font-size:.78rem;">
+                                Kode ditulis di Target &amp; Capaian; <strong>Nilai</strong> adalah skornya
+                                (makin besar makin baik). Contoh Opini BPK: TMP=1, TW=2, WDP=3, WTP=4.
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-success btn-sm" id="satuan-skala-add">
+                            <i class="fas fa-plus me-1"></i>Tambah Baris
+                        </button>
+                    </div>
+                    <div class="row g-1 small text-muted fw-semibold mb-1">
+                        <div class="col-3">Kode</div><div class="col-6">Keterangan</div><div class="col-2">Nilai</div><div class="col-1"></div>
+                    </div>
+                    <div id="satuan-skala-list"></div>
+                    <input type="hidden" name="skala_json" id="satuan-skala-json" value="">
+                </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-success">Simpan</button></div>
         </form>
     </div></div></div>
+
+    <script>
+        /** Editor skala predikat pada modal Satuan. */
+        (function () {
+            var form = document.getElementById('form-satuan');
+            var tipe = document.getElementById('satuan-tipe');
+            var wrap = document.getElementById('satuan-skala-wrap');
+            var list = document.getElementById('satuan-skala-list');
+            var json = document.getElementById('satuan-skala-json');
+            if (!form || !tipe || !wrap || !list || !json) return;
+
+            function esc(s) {
+                return String(s === null || s === undefined ? '' : s)
+                    .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            function barisHtml(item) {
+                item = item || {};
+                return '<div class="row g-1 mb-1 skala-item">'
+                    + '<div class="col-3"><input type="text" class="form-control form-control-sm skala-kode" placeholder="WTP" maxlength="50" value="' + esc(item.kode) + '"></div>'
+                    + '<div class="col-6"><input type="text" class="form-control form-control-sm skala-label" placeholder="Wajar Tanpa Pengecualian" value="' + esc(item.label) + '"></div>'
+                    + '<div class="col-2"><input type="number" step="any" class="form-control form-control-sm skala-nilai" placeholder="4" value="' + esc(item.nilai) + '"></div>'
+                    + '<div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm w-100 skala-hapus" title="Hapus"><i class="fas fa-times"></i></button></div>'
+                    + '</div>';
+            }
+
+            function render(skala) {
+                list.innerHTML = (skala && skala.length ? skala : []).map(barisHtml).join('');
+            }
+
+            function toggle() {
+                var predikat = tipe.value === 'predikat';
+                wrap.classList.toggle('d-none', !predikat);
+                if (predikat && !list.querySelector('.skala-item')) {
+                    list.insertAdjacentHTML('beforeend', barisHtml());
+                }
+            }
+
+            function sync() {
+                var data = [];
+                Array.prototype.forEach.call(list.querySelectorAll('.skala-item'), function (row) {
+                    var kode = row.querySelector('.skala-kode').value.trim();
+                    var nilai = row.querySelector('.skala-nilai').value.trim();
+                    if (kode === '' || nilai === '') return;
+                    data.push({ kode: kode, label: row.querySelector('.skala-label').value.trim(), nilai: nilai });
+                });
+                json.value = JSON.stringify(data);
+            }
+
+            document.getElementById('satuan-skala-add').addEventListener('click', function () {
+                list.insertAdjacentHTML('beforeend', barisHtml());
+            });
+            list.addEventListener('click', function (e) {
+                var hapus = e.target.closest('.skala-hapus');
+                if (hapus) hapus.closest('.skala-item').remove();
+            });
+            tipe.addEventListener('change', toggle);
+            form.addEventListener('submit', sync);
+
+            // fillForm() umum tidak mengerti array `skala`, jadi ditangani di sini.
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-add="modal-satuan"], [data-edit="modal-satuan"]');
+                if (!btn) return;
+                var data = {};
+                if (btn.dataset.json) { try { data = JSON.parse(btn.dataset.json); } catch (err) { data = {}; } }
+                // Ditunda agar berjalan SESUDAH fillForm() melakukan form.reset().
+                setTimeout(function () {
+                    tipe.value = data.tipe || 'angka';
+                    render(data.skala || []);
+                    toggle();
+                }, 0);
+            });
+        })();
+    </script>
 
     <script>
         (function () {

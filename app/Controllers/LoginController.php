@@ -113,6 +113,8 @@ class LoginController extends BaseController
             case 'admin_opd':
             case 'admin_kecamatan':     // kecamatan pakai modul & dashboard OPD
                 return redirect()->to('/adminopd/dashboard');
+            case 'bupati':              // dashboard eksekutif read-only, area rute sendiri
+                return redirect()->to('/bupati/dashboard');
             default:
                 session()->destroy();
                 return redirect()->to('/login')->with('error', 'Role tidak dikenali. Hubungi administrator.');

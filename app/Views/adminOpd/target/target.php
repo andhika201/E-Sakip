@@ -83,7 +83,6 @@
                                 <th rowspan="2" class="border p-2 align-middle">Tahun</th>
                                 <th rowspan="2" class="border p-2 align-middle">Satuan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
-                                <th rowspan="2" class="border p-2 align-middle">Baseline</th>
                                 <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
                                 <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
                                 <th rowspan="2" class="border p-2 align-middle">Aksi</th>
@@ -126,7 +125,6 @@
                                             <td class="text-start">
                                                 <?= nl2br(esc($row['rencana_aksi'] ?? '-')) ?>
                                             </td>
-                                            <td><?= esc($row['capaian'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
                                             <td><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
@@ -165,7 +163,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="13" class="text-muted">Data tidak ditemukan.</td>
+                                    <td colspan="12" class="text-muted">Data tidak ditemukan.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

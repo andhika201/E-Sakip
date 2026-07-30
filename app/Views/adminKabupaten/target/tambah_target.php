@@ -77,19 +77,14 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <label class="form-label">Tahun (RPJMD)</label>
                                 <input type="text" class="form-control" value="<?= esc($rpj['tahun'] ?? '-') ?>" readonly>
                             </div>
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6">
                                 <label class="form-label">Target Tahunan (RPJMD)</label>
                                 <input type="text" class="form-control" value="<?= esc($rpj['target_tahunan'] ?? '-') ?>"
                                     readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label" for="capaian">Baseline (Capaian)</label>
-                                <input type="text" class="form-control" id="capaian" name="capaian"
-                                    value="<?= old('capaian') ?>">
                             </div>
                         </div>
 
@@ -114,18 +109,13 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6 mb-3 mb-md-0">
                                 <label class="form-label">Tahun (Renstra)</label>
                                 <input type="text" class="form-control" value="<?= esc($rt['tahun']) ?>" readonly>
                             </div>
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-6">
                                 <label class="form-label">Target (Renstra)</label>
                                 <input type="text" class="form-control" value="<?= esc($rt['target']) ?>" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label" for="capaian">Baseline (Capaian)</label>
-                                <input type="text" class="form-control" id="capaian" name="capaian"
-                                    value="<?= old('capaian') ?>">
                             </div>
                         </div>
 

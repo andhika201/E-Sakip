@@ -93,8 +93,16 @@ $routes->group(
         // (pk_bupati/cetak dihapus: controller AdminKab\PkBupatiController tidak ada & tidak ada link.
         //  Cetak PK Bupati dilayani via pk/(:any)/cetak/(:num) dan AdminOpd\PkRenaksiController.)
 
+        // Dashboard Pengendalian Kinerja Kabupaten (Mode Kabupaten & Mode Fokus OPD).
+        // Endpoint JSON di bawahnya hanya melayani drawer/grafik; lingkupnya
+        // divalidasi ulang di controller (lihat AdminKabupatenController::bacaFilter).
         $routes->get('dashboard', 'AdminKabupatenController::dashboard');
-        $routes->post('dashboard/data', 'AdminKabupatenController::getDashboardData');
+        $routes->match(['get', 'post'], 'dashboard/data', 'AdminKabupatenController::getDashboardData');
+        $routes->get('dashboard/pk-bupati/(:num)', 'AdminKabupatenController::pkBupatiDetail/$1');
+        $routes->get('dashboard/opd/(:num)', 'AdminKabupatenController::opdDetail/$1');
+        $routes->get('dashboard/status-opd/(:segment)', 'AdminKabupatenController::statusOpd/$1');
+        $routes->get('dashboard/misi/(:num)', 'AdminKabupatenController::misiDetail/$1');
+        $routes->get('dashboard/anggaran-kinerja', 'AdminKabupatenController::anggaranKinerja');
 
         // Evaluasi Kinerja (Inspektorat) — placeholder
         $routes->get('evaluasi_inspektorat', 'AdminKabupatenController::evaluasi_inspektorat');
@@ -113,15 +121,26 @@ $routes->group(
         $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
         // ubah status lakip
         $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
+        // Dua tabel tambahan LAKIP (Analisis Faktor & Efisiensi Program).
+        // Semua aksi tulis lewat POST — lingkup (tahun/mode/opd) ikut di body
+        // dan tetap diverifikasi ulang di server (LakipAddendumTrait).
+        $routes->post('lakip/analisis/save', 'AdminKab\LakipController::analisisSave');
+        $routes->post('lakip/analisis/delete/(:num)', 'AdminKab\LakipController::analisisDelete/$1');
+        $routes->post('lakip/efisiensi/save', 'AdminKab\LakipController::efisiensiSave');
+        $routes->post('lakip/efisiensi/delete/(:num)', 'AdminKab\LakipController::efisiensiDelete/$1');
 
-        // iku
+        // iku (standalone — id yang dipakai adalah id SASARAN IKU, bukan lagi id indikator renstra/rpjmd)
         $routes->get('iku/cetak', 'AdminKab\IkuController::cetak');
         $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');
         $routes->get('iku', 'AdminKab\IkuController::index');
-        $routes->get('iku/tambah/(:num)', 'AdminKab\IkuController::tambah/$1');
+        $routes->get('iku/tambah', 'AdminKab\IkuController::tambah');
+        // sync: tarik sasaran/indikator/target dari RPJMD ke IKU kabupaten
+        $routes->get('iku/sync', 'AdminKab\IkuController::sync');
+        $routes->post('iku/sync/simpan', 'AdminKab\IkuController::syncSimpan');
         $routes->post('iku/save', 'AdminKab\IkuController::save');
         $routes->post('iku/update', 'AdminKab\IkuController::update');
-        // route untuk ubah status IKU
+        $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminKab\IkuController::delete/$1');
+        // ubah status per INDIKATOR IKU
         $routes->post('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
 
         // Catatan: seluruh rute Pegawai (kelola + sinkron SIMPEG/SIKASN) dipindah
@@ -166,6 +185,9 @@ $routes->group(
         // Modul monev lama (AdminKab\MonevController) sudah dihapus; kini dilayani PkRenaksiController.
         $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/bupati/$1');
         $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/bupati');
+        // realisasi anggaran per triwulan (tombol aksi tersendiri di MONEV)
+        $routes->get('monev/anggaran/(:num)', 'AdminOpd\PkRenaksiController::monevAnggaranForm/bupati/$1');
+        $routes->post('monev/anggaran/save', 'AdminOpd\PkRenaksiController::monevAnggaranSave/bupati');
         $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/bupati');
         $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/bupati');
 
@@ -189,6 +211,9 @@ $routes->group(
         $routes->get('renaksi_pk/(:any)', 'AdminOpd\PkRenaksiController::index/$1');
         $routes->get('monev_pk/(:any)/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/$1/$2');
         $routes->post('monev_pk/(:any)/save', 'AdminOpd\PkRenaksiController::monevSave/$1');
+        // realisasi anggaran per triwulan (tombol aksi tersendiri di MONEV)
+        $routes->get('monev_pk/(:any)/anggaran/(:num)', 'AdminOpd\PkRenaksiController::monevAnggaranForm/$1/$2');
+        $routes->post('monev_pk/(:any)/anggaran/save', 'AdminOpd\PkRenaksiController::monevAnggaranSave/$1');
         $routes->get('monev_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetak/$1');
         $routes->get('monev_pk/(:any)', 'AdminOpd\PkRenaksiController::monev/$1');
 
@@ -219,6 +244,12 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
     // Pengaturan Aplikasi — KHUSUS super admin
     $routes->get('pengaturan', 'SettingController::index');
     $routes->post('pengaturan/save', 'SettingController::save');
+
+    // Pengaturan Dashboard -> Ambang Status Capaian — KHUSUS super admin.
+    // Sumber tunggal rentang & warna status capaian yang dipakai dashboard.
+    $routes->get('dashboard-thresholds', 'AdminKab\DashboardThresholdController::index');
+    $routes->post('dashboard-thresholds/save', 'AdminKab\DashboardThresholdController::save');
+    $routes->post('dashboard-thresholds/reset', 'AdminKab\DashboardThresholdController::reset');
 
     // Master Program / Kegiatan / Sub Kegiatan PK (per tahun) — KHUSUS super admin
     $routes->get('program_pk', 'ProgramPkController::index');
@@ -287,7 +318,15 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     // capaian_pk = fitur lama tanpa method (digantikan monev/PkRenaksiController)
     // $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
 
+    // Dashboard Pengendalian Kinerja Perangkat Daerah.
+    // Halaman dirender penuh di server; endpoint JSON di bawahnya hanya untuk
+    // isi drawer & grafik. Semuanya di-scope opd_id dari sesi (lihat
+    // AdminOpdController::bacaFilter) sehingga tidak bisa dipakai lintas OPD.
     $routes->get('dashboard', 'AdminOpdController::index');
+    $routes->match(['get', 'post'], 'dashboard/data', 'AdminOpdController::data');
+    $routes->get('dashboard/indicator/(:num)', 'AdminOpdController::indicator/$1');
+    $routes->get('dashboard/status/(:segment)', 'AdminOpdController::status/$1');
+    $routes->get('dashboard/program/(:num)', 'AdminOpdController::program/$1');
 
     // Renstra
     $routes->get('renstra', 'AdminOpd\RenstraController::index');
@@ -313,14 +352,18 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     // $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
     $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 
-    // IKU
+    // IKU (standalone — id yang dipakai adalah id SASARAN IKU, bukan lagi id indikator renstra)
     $routes->get('iku/edit/(:num)', 'AdminOpd\IkuController::edit/$1');
     $routes->get('iku/cetak', 'AdminOpd\IkuController::cetak');
     $routes->get('iku', 'AdminOpd\IkuController::index');
-    $routes->get('iku/tambah/(:num)', 'AdminOpd\IkuController::tambah/$1');
+    $routes->get('iku/tambah', 'AdminOpd\IkuController::tambah');
+    // sync: tarik sasaran/indikator/target dari Renstra OPD ke IKU
+    $routes->get('iku/sync', 'AdminOpd\IkuController::sync');
+    $routes->post('iku/sync/simpan', 'AdminOpd\IkuController::syncSimpan');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
     $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
+    // ubah status per INDIKATOR IKU
     $routes->post('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
 
 
@@ -335,6 +378,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     // Modul monev lama (AdminOpd\MonevController) sudah dihapus; kini dilayani PkRenaksiController.
     $routes->get('monev/input/(:num)', 'AdminOpd\PkRenaksiController::monevForm/es3/$1');
     $routes->post('monev/save', 'AdminOpd\PkRenaksiController::monevSave/es3');
+    // realisasi anggaran per triwulan (tombol aksi tersendiri di MONEV)
+    $routes->get('monev/anggaran/(:num)', 'AdminOpd\PkRenaksiController::monevAnggaranForm/es3/$1');
+    $routes->post('monev/anggaran/save', 'AdminOpd\PkRenaksiController::monevAnggaranSave/es3');
     $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/es3');
     $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/es3');
 
@@ -373,6 +419,13 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
     // ubah status lakip
     $routes->get('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');
+    // Dua tabel tambahan LAKIP (Analisis Faktor & Efisiensi Program).
+    // Semua aksi tulis lewat POST — lingkup (tahun/mode/opd) ikut di body
+    // dan tetap diverifikasi ulang di server (LakipAddendumTrait).
+    $routes->post('lakip/analisis/save', 'AdminOpd\LakipOpdController::analisisSave');
+    $routes->post('lakip/analisis/delete/(:num)', 'AdminOpd\LakipOpdController::analisisDelete/$1');
+    $routes->post('lakip/efisiensi/save', 'AdminOpd\LakipOpdController::efisiensiSave');
+    $routes->post('lakip/efisiensi/delete/(:num)', 'AdminOpd\LakipOpdController::efisiensiDelete/$1');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');
@@ -404,10 +457,73 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('cascading/update-es4/(:num)', 'AdminOpd\CascadingController::updateEs4/$1');
     $routes->post('cascading/delete-es4/(:num)', 'AdminOpd\CascadingController::deleteEs4/$1');
 
+    // Jenjang PELAKSANA (di bawah Eselon IV / JF) — pola rute sama dgn es3/es4.
+    $routes->get('cascading/tambah-pelaksana/(:num)', 'AdminOpd\CascadingController::tambahPelaksana/$1');
+    $routes->post('cascading/save-pelaksana', 'AdminOpd\CascadingController::savePelaksana');
+    $routes->get('cascading/edit-pelaksana/(:num)', 'AdminOpd\CascadingController::editPelaksana/$1');
+    $routes->post('cascading/update-pelaksana/(:num)', 'AdminOpd\CascadingController::updatePelaksana/$1');
+    $routes->post('cascading/delete-pelaksana/(:num)', 'AdminOpd\CascadingController::deletePelaksana/$1');
+
     $routes->get('cascading/cetak', 'AdminOpd\CascadingController::cetak');
     $routes->get('cascading/excel', 'AdminOpd\CascadingController::excel');
     $routes->get('cascading/cetakpohon', 'AdminOpd\CascadingController::cetakPohon');
 });
+// =====================================================================
+// ROLE BUPATI — Dashboard Eksekutif + halaman monitoring READ-ONLY.
+//
+// Sengaja memakai PREFIX SENDIRI (/bupati), bukan menumpang /adminkab:
+// grup adminkab memuat rute administratif (tambah/edit/hapus, master data),
+// jadi menambahkan role bupati ke sana berisiko meloloskannya ke fitur tulis.
+//
+// Hanya metode GET yang didaftarkan (kecuali dashboard/data yang murni
+// pembacaan untuk grafik/drawer). Di atas itu masih ada ReadOnlyRoleFilter
+// yang menolak POST/PUT/PATCH/DELETE dari role bupati secara global.
+//
+// ModulePermissionFilter TIDAK menyentuh grup ini: filter itu hanya dipasang
+// untuk pola 'adminkab/*' & 'adminopd/*' (lihat Config\Filters::$filters),
+// sehingga tidak ada peta modul yang salah diterapkan ke rute /bupati.
+// =====================================================================
+$routes->group('bupati', ['filter' => 'auth:bupati,admin'], function ($routes) {
+    // ---------- Dashboard Eksekutif ----------
+    $routes->get('dashboard', 'Bupati\DashboardController::index');
+    $routes->match(['get', 'post'], 'dashboard/data', 'Bupati\DashboardController::data');
+    // Rute spesifik didaftarkan sebelum yang lebih umum.
+    $routes->get('dashboard/anggaran-kinerja', 'Bupati\DashboardController::anggaranKinerja');
+    $routes->get('dashboard/status-opd/(:segment)', 'Bupati\DashboardController::statusOpd/$1');
+    $routes->get('dashboard/pk/(:num)', 'Bupati\DashboardController::pkDetail/$1');
+    $routes->get('dashboard/opd/(:num)', 'Bupati\DashboardController::opdDetail/$1');
+    $routes->get('dashboard/misi/(:num)', 'Bupati\DashboardController::misiDetail/$1');
+    $routes->get('dashboard/indikator/(:num)', 'Bupati\DashboardController::indikatorDetail/$1');
+
+    // ---------- Perjanjian Kinerja (read-only lintas OPD) ----------
+    // Dokumen PK milik OPD ditentukan dari SESI di AdminOpd\PkController,
+    // sehingga tidak bisa dipakai Bupati. Halaman ini memakai query pembacaan
+    // lintas OPD yang sudah ada (UserPublicModel).
+    $routes->get('pk', 'Bupati\PkMonitoringController::index/bupati');
+    $routes->get('pk/(:segment)', 'Bupati\PkMonitoringController::index/$1');
+
+    // ---------- Target & Rencana Aksi (read-only) ----------
+    // Controller yang sama dengan admin_kab; canWrite selalu false untuk role
+    // bupati (lihat PkRenaksiController::ensureRole) dan tautannya diarahkan
+    // ke area /bupati (lihat PkRenaksiController::base).
+    $routes->get('target_renaksi/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/bupati');
+    $routes->get('target_renaksi', 'AdminOpd\PkRenaksiController::index/bupati');
+    $routes->get('target-renaksi', 'AdminOpd\PkRenaksiController::index/bupati'); // alias
+    $routes->get('renaksi_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetakRenaksi/$1');
+    $routes->get('renaksi_pk/(:any)', 'AdminOpd\PkRenaksiController::index/$1');
+
+    // ---------- MONEV (read-only) ----------
+    $routes->get('monev/cetak', 'AdminOpd\PkRenaksiController::cetak/bupati');
+    $routes->get('monev', 'AdminOpd\PkRenaksiController::monev/bupati');
+    $routes->get('monev_pk/(:any)/cetak', 'AdminOpd\PkRenaksiController::cetak/$1');
+    $routes->get('monev_pk/(:any)', 'AdminOpd\PkRenaksiController::monev/$1');
+
+    // ---------- LAKIP (read-only) ----------
+    $routes->get('lakip/cetak', 'AdminKab\LakipController::cetak');
+    $routes->get('lakip/cetak-excel', 'AdminKab\LakipController::cetakExcel');
+    $routes->get('lakip', 'AdminKab\LakipController::index');
+});
+
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login/authenticate', 'LoginController::authenticate');
 $routes->get('/logout', 'LoginController::logout');

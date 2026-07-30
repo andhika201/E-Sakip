@@ -41,3 +41,21 @@ if (!function_exists('casc_relabel')) {
         return $s;
     }
 }
+
+if (!function_exists('casc_pelaksana_label')) {
+    /**
+     * Label jenjang PELAKSANA (jenjang terakhir, di bawah Eselon IV / JF).
+     *
+     * Perlu fungsi sendiri karena BENTROK ISTILAH pada role admin_kecamatan:
+     * casc_relabel() sudah menggeser "ESS IV / JF" mereka menjadi
+     * "Pelaksana / JF", sehingga dua kolom akan sama-sama berbunyi "Pelaksana".
+     * Untuk role itu jenjang baru ini disebut "Staf Pelaksana" agar tetap bisa
+     * dibedakan; role lain memakai "Pelaksana" apa adanya.
+     *
+     * @param string $prefix mis. 'Sasaran ', 'Indikator ', 'Aksi ' (boleh kosong)
+     */
+    function casc_pelaksana_label(string $prefix = ''): string
+    {
+        return $prefix . (is_kecamatan_role() ? 'Staf Pelaksana' : 'Pelaksana');
+    }
+}

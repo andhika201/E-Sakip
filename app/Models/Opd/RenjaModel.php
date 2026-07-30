@@ -205,15 +205,93 @@ class RenjaModel extends Model
     public function getIndikatorSasaranById($id)
     {
         return $this->db->table('renja_indikator_sasaran ris')
-            ->select('ris.*, rs.sasaran as sasaran_nama')
+            ->select('ris.*, rs.sasaran_renja as sasaran_nama')
             ->join('renja_sasaran rs', 'rs.id = ris.renja_sasaran_id')
             ->where('ris.id', $id)
             ->get()
             ->getRowArray();
     }
 
+    // ==================== RENJA SASARAN CRUD ====================
 
-    
+    /**
+     * Simpan satu RENJA Sasaran. Mengembalikan ID baris yang baru dibuat.
+     */
+    public function createSasaran(array $data)
+    {
+        $allowed = ['opd_id', 'renstra_sasaran_id', 'sasaran_renja', 'status'];
+        $insert  = array_intersect_key($data, array_flip($allowed));
+
+        $this->db->table('renja_sasaran')->insert($insert);
+
+        return $this->db->insertID();
+    }
+
+    /**
+     * Perbarui satu RENJA Sasaran berdasarkan ID.
+     */
+    public function updateSasaran($id, array $data)
+    {
+        $allowed = ['renstra_sasaran_id', 'sasaran_renja', 'status'];
+        $update  = array_intersect_key($data, array_flip($allowed));
+
+        return $this->db->table('renja_sasaran')
+            ->where('id', $id)
+            ->update($update);
+    }
+
+    /**
+     * Hapus satu RENJA Sasaran beserta seluruh indikatornya (cascade manual,
+     * juga terlindungi FK ON DELETE CASCADE di level basis data).
+     */
+    public function deleteSasaran($id)
+    {
+        $this->db->table('renja_indikator_sasaran')
+            ->where('renja_sasaran_id', $id)
+            ->delete();
+
+        return $this->db->table('renja_sasaran')
+            ->where('id', $id)
+            ->delete();
+    }
+
+    // ==================== RENJA INDIKATOR SASARAN CRUD ====================
+
+    /**
+     * Simpan satu indikator RENJA Sasaran. Mengembalikan ID baris baru.
+     */
+    public function createIndikatorSasaran(array $data)
+    {
+        $allowed = ['renja_sasaran_id', 'indikator_sasaran', 'satuan', 'tahun', 'target'];
+        $insert  = array_intersect_key($data, array_flip($allowed));
+
+        $this->db->table('renja_indikator_sasaran')->insert($insert);
+
+        return $this->db->insertID();
+    }
+
+    /**
+     * Perbarui satu indikator RENJA Sasaran berdasarkan ID.
+     */
+    public function updateIndikatorSasaran($id, array $data)
+    {
+        $allowed = ['renja_sasaran_id', 'indikator_sasaran', 'satuan', 'tahun', 'target'];
+        $update  = array_intersect_key($data, array_flip($allowed));
+
+        return $this->db->table('renja_indikator_sasaran')
+            ->where('id', $id)
+            ->update($update);
+    }
+
+    /**
+     * Hapus satu indikator RENJA Sasaran berdasarkan ID.
+     */
+    public function deleteIndikatorSasaran($id)
+    {
+        return $this->db->table('renja_indikator_sasaran')
+            ->where('id', $id)
+            ->delete();
+    }
 
 // ==================== COMPLETE RENJA OPERATIONS ====================
 

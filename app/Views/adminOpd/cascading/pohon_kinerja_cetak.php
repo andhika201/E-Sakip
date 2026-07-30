@@ -168,7 +168,7 @@
             .tree { min-width: 0 !important; display: inline-block; }
             .tree-node { page-break-inside: avoid; }
             .tree li { padding: 12px 3px 0 3px; }
-            .box-l1, .box-l2, .box-l3, .box-es2, .box-es3, .box-es4 { box-shadow: none; }
+            .box-l1, .box-l2, .box-l3, .box-es2, .box-es3, .box-es4, .box-pelaksana { box-shadow: none; }
             .box-iks, .box-csf { box-shadow: none; }
             /* Paksa warna node tercetak walau "Background graphics" nonaktif */
             [class^="box-"], [class*=" box-"], .ind-kode, .pohon-legend .lg-swatch {

@@ -57,7 +57,9 @@ class PerangkatDaerahController extends BaseController
             return $this->respondError('Perangkat daerah tidak ditemukan.', 404);
         }
 
-        [$periode, $availablePeriods, $periodeError] = $this->resolvePeriod($opdId, false);
+        // Sejak IKU berdiri sendiri, periodenya diambil dari `iku_sasaran`,
+        // bukan lagi dari renstra.
+        [$periode, $availablePeriods, $periodeError] = $this->resolvePeriod($opdId, false, 'iku_sasaran');
 
         if ($periodeError) {
             return $this->respondError($periodeError, 400);
@@ -70,50 +72,59 @@ class PerangkatDaerahController extends BaseController
             return $this->respondError('Status tidak valid. Gunakan selesai, draft, belum, tercapai, atau all.', 400);
         }
 
-        $builder = $this->db->table('iku i')
-            ->select('
-                i.id AS iku_id,
-                i.renstra_id,
-                i.definisi,
-                i.status,
-                i.created_at,
-                i.updated_at,
+        $builder = $this->db->table('iku_indikator ind')
+            ->select("
+                ind.id AS indikator_id,
+                ind.indikator,
+                ind.definisi,
+                ind.rumusan_perhitungan,
+                ind.sumber_data,
+                ind.penanggung_jawab,
+                ind.jenis_indikator,
+                ind.baseline,
+                ind.urutan AS indikator_urutan,
+                ind.status,
+                ind.created_at,
+                ind.updated_at,
+                ind.satuan AS satuan_raw,
+                COALESCE(sat.satuan, NULLIF(ind.satuan, '')) AS satuan,
+                sas.id AS sasaran_id,
+                sas.sasaran,
+                sas.urutan AS sasaran_urutan,
+                sas.tahun_mulai,
+                sas.tahun_akhir,
                 o.id AS opd_id,
                 o.nama_opd,
-                o.singkatan,
-                rs.id AS sasaran_id,
-                rs.sasaran,
-                rs.tahun_mulai,
-                rs.tahun_akhir,
-                ris.id AS indikator_id,
-                ris.indikator_sasaran,
-                ris.satuan
-            ')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = i.renstra_id')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id')
-            ->join('opd o', 'o.id = rs.opd_id')
-            ->where('i.renstra_id IS NOT NULL', null, false)
-            ->where('rs.opd_id', $opdId)
-            ->orderBy('rs.id', 'ASC')
-            ->orderBy('ris.id', 'ASC')
-            ->orderBy('i.id', 'ASC');
+                o.singkatan
+            ", false)
+            ->join('iku_sasaran sas', 'sas.id = ind.iku_sasaran_id')
+            ->join('opd o', 'o.id = sas.opd_id')
+            ->join('satuan sat', "ind.satuan REGEXP '^[0-9]+$' AND sat.id = ind.satuan", 'left', false)
+            ->where('sas.opd_id', $opdId)
+            ->orderBy('sas.urutan', 'ASC')
+            ->orderBy('sas.id', 'ASC')
+            ->orderBy('ind.urutan', 'ASC')
+            ->orderBy('ind.id', 'ASC');
 
         if ($status !== 'all') {
-            $builder->where('i.status', $status);
+            $builder->where('ind.status', $status);
         }
 
         if ($periode) {
-            $builder->where('rs.tahun_mulai', $periode['tahun_mulai']);
-            $builder->where('rs.tahun_akhir', $periode['tahun_akhir']);
+            $builder->where('sas.tahun_mulai', $periode['tahun_mulai']);
+            $builder->where('sas.tahun_akhir', $periode['tahun_akhir']);
         }
 
         $rows = $builder->get()->getResultArray();
-        $data = $this->formatIkuRows($rows, $periode);
+        [$data, $years] = $this->formatIkuRows($rows, $periode);
 
         return $this->respondSuccess($data, [
             'opd' => $opd,
             'periode' => $periode,
             'available_periods' => $availablePeriods,
+            // Daftar kolom tahun yang dipakai tabel di web. Kalau periode tidak
+            // difilter, isinya gabungan tahun yang benar-benar punya target.
+            'years' => $years,
             'status_filter' => $status,
             'count' => count($data),
         ]);
@@ -196,34 +207,37 @@ class PerangkatDaerahController extends BaseController
         ]);
     }
 
+    /**
+     * @return array{0: array<int, array<string, mixed>>, 1: int[]} [data, daftar tahun kolom]
+     */
     private function formatIkuRows(array $rows, ?array $periode): array
     {
         if (empty($rows)) {
-            return [];
+            return [[], $periode['years'] ?? []];
         }
 
-        $ikuIds = array_column($rows, 'iku_id');
         $indikatorIds = array_column($rows, 'indikator_id');
 
-        $programRows = $this->db->table('iku_program_pendukung')
-            ->select('id, iku_id, program')
-            ->whereIn('iku_id', $ikuIds)
-            ->orderBy('iku_id', 'ASC')
+        $programRows = $this->db->table('iku_program')
+            ->select('id, iku_indikator_id, program')
+            ->whereIn('iku_indikator_id', $indikatorIds)
+            ->orderBy('iku_indikator_id', 'ASC')
+            ->orderBy('urutan', 'ASC')
             ->orderBy('id', 'ASC')
             ->get()
             ->getResultArray();
 
         $programMap = [];
         foreach ($programRows as $program) {
-            $programMap[(int) $program['iku_id']][] = [
+            $programMap[(int) $program['iku_indikator_id']][] = [
                 'id' => (int) $program['id'],
                 'program' => $program['program'],
             ];
         }
 
-        $targetBuilder = $this->db->table('renstra_target')
-            ->select('renstra_indikator_id, tahun, target')
-            ->whereIn('renstra_indikator_id', $indikatorIds)
+        $targetBuilder = $this->db->table('iku_target')
+            ->select('iku_indikator_id, tahun, target')
+            ->whereIn('iku_indikator_id', $indikatorIds)
             ->orderBy('tahun', 'ASC');
 
         if ($periode) {
@@ -235,19 +249,49 @@ class PerangkatDaerahController extends BaseController
         $targetRows = $targetBuilder->get()->getResultArray();
 
         $targetMap = [];
+        $tahunSet = [];
         foreach ($targetRows as $target) {
-            $targetMap[(int) $target['renstra_indikator_id']][(int) $target['tahun']] = $target['target'];
+            $tahun = (int) $target['tahun'];
+            $targetMap[(int) $target['iku_indikator_id']][$tahun] = $target['target'];
+            $tahunSet[$tahun] = true;
+        }
+
+        // Kolom tahun mengikuti tabel di web: seluruh tahun periode bila periode
+        // diketahui, kalau tidak gabungan tahun yang punya data.
+        if ($periode) {
+            $years = $periode['years'];
+        } else {
+            $years = array_keys($tahunSet);
+            sort($years);
         }
 
         $data = [];
         foreach ($rows as $row) {
-            $ikuId = (int) $row['iku_id'];
             $indikatorId = (int) $row['indikator_id'];
 
+            // Tahun tanpa baris target tetap dimunculkan sebagai null supaya
+            // konsumen bisa merender kolom lengkap seperti tampilan web.
+            $targetTahunan = [];
+            foreach ($years as $tahun) {
+                $targetTahunan[$tahun] = $targetMap[$indikatorId][$tahun] ?? null;
+            }
+            foreach ($targetMap[$indikatorId] ?? [] as $tahun => $nilai) {
+                $targetTahunan[$tahun] = $nilai;
+            }
+            ksort($targetTahunan);
+
             $data[] = [
-                'id' => $ikuId,
-                'renstra_id' => $this->intOrNull($row['renstra_id']),
+                // `id` sekarang id indikator IKU. `renstra_id` dipertahankan sebagai
+                // null demi kompatibilitas konsumen lama — IKU tidak lagi terkait renstra.
+                'id' => $indikatorId,
+                'iku_sasaran_id' => (int) $row['sasaran_id'],
+                'renstra_id' => null,
                 'definisi' => $row['definisi'],
+                'rumusan_perhitungan' => $row['rumusan_perhitungan'],
+                'sumber_data' => $row['sumber_data'],
+                'penanggung_jawab' => $row['penanggung_jawab'],
+                'jenis_indikator' => $row['jenis_indikator'],
+                'baseline' => $row['baseline'],
                 'status' => $row['status'],
                 'opd' => [
                     'id' => (int) $row['opd_id'],
@@ -257,29 +301,39 @@ class PerangkatDaerahController extends BaseController
                 'sasaran' => [
                     'id' => (int) $row['sasaran_id'],
                     'nama' => $row['sasaran'],
+                    'urutan' => $this->intOrNull($row['sasaran_urutan']),
                 ],
                 'indikator' => [
                     'id' => $indikatorId,
-                    'nama' => $row['indikator_sasaran'],
+                    'nama' => $row['indikator'],
                     'satuan' => $row['satuan'],
+                    // `iku_indikator.satuan` bisa berisi id master satuan atau
+                    // teks bebas — id-nya diekspos terpisah bila memang numerik.
+                    'satuan_id' => ctype_digit((string) $row['satuan_raw']) ? (int) $row['satuan_raw'] : null,
+                    'jenis_indikator' => $row['jenis_indikator'],
+                    'baseline' => $row['baseline'],
+                    'urutan' => $this->intOrNull($row['indikator_urutan']),
                 ],
                 'periode' => [
+                    'periode' => (int) $row['tahun_mulai'] . '-' . (int) $row['tahun_akhir'],
                     'tahun_mulai' => (int) $row['tahun_mulai'],
                     'tahun_akhir' => (int) $row['tahun_akhir'],
                 ],
-                'target_tahunan' => $targetMap[$indikatorId] ?? [],
-                'program_pendukung' => $programMap[$ikuId] ?? [],
+                'target_tahunan' => $targetTahunan,
+                'program_pendukung' => $programMap[$indikatorId] ?? [],
                 'created_at' => $row['created_at'],
                 'updated_at' => $row['updated_at'],
             ];
         }
 
-        return $data;
+        return [$data, $years];
     }
 
     private function formatCascadingRows(array $rows): array
     {
-        return array_map(function ($row) {
+        $satuanMap = $this->satuanMap($rows);
+
+        return array_map(function ($row) use ($satuanMap) {
             foreach ([
                 'tujuan_id',
                 'sasaran_id',
@@ -291,20 +345,76 @@ class PerangkatDaerahController extends BaseController
                 'es3_indikator_id',
                 'es4_id',
                 'es4_indikator_id',
+                // Jenjang Pelaksana (jenjang ke-7, di bawah Eselon IV/JF).
+                'pelaksana_id',
+                'pelaksana_indikator_id',
             ] as $field) {
                 if (array_key_exists($field, $row)) {
                     $row[$field] = $this->intOrNull($row[$field]);
                 }
             }
 
+            // `renstra_indikator_sasaran.satuan` menyimpan id master satuan atau
+            // teks bebas; nama terbacanya diekspos terpisah agar `satuan` lama
+            // tidak berubah arti bagi konsumen yang sudah ada.
+            $row['satuan_nama'] = $this->namaSatuan($row['satuan'] ?? null, $satuanMap);
+
             return $row;
         }, $rows);
+    }
+
+    /**
+     * Peta id master satuan -> nama, dari nilai `satuan` yang muncul di baris
+     * cascading. Satu query untuk seluruh baris.
+     *
+     * @return array<int, string>
+     */
+    private function satuanMap(array $rows): array
+    {
+        $ids = [];
+        foreach ($rows as $row) {
+            $satuan = $row['satuan'] ?? null;
+            if ($satuan !== null && ctype_digit((string) $satuan)) {
+                $ids[(int) $satuan] = true;
+            }
+        }
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $satuanRows = $this->db->table('satuan')
+            ->select('id, satuan')
+            ->whereIn('id', array_keys($ids))
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($satuanRows as $satuan) {
+            $map[(int) $satuan['id']] = $satuan['satuan'];
+        }
+
+        return $map;
+    }
+
+    private function namaSatuan($satuan, array $satuanMap): ?string
+    {
+        if ($satuan === null || $satuan === '') {
+            return null;
+        }
+
+        if (ctype_digit((string) $satuan)) {
+            return $satuanMap[(int) $satuan] ?? null;
+        }
+
+        return (string) $satuan;
     }
 
     private function buildPohonKinerja(array $rows): array
     {
         $tree = [];
         $tujuanIndex = [];
+        $satuanMap = $this->satuanMap($rows);
 
         foreach ($rows as $row) {
             $tujuanKey = $this->nodeKey($row['tujuan_id'] ?? null);
@@ -385,6 +495,7 @@ class PerangkatDaerahController extends BaseController
                     'id' => $indikatorId,
                     'nama' => $row['indikator_sasaran'],
                     'satuan' => $row['satuan'] ?? null,
+                    'satuan_nama' => $this->namaSatuan($row['satuan'] ?? null, $satuanMap),
                 ];
             }
 
@@ -431,7 +542,9 @@ class PerangkatDaerahController extends BaseController
                     'nama' => $row['es4_sasaran'],
                     'csf' => $row['csf_es4'] ?? null,
                     'indikator' => [],
+                    'pelaksana' => [],
                     '_indikator_index' => [],
+                    '_pelaksana_index' => [],
                 ];
             }
 
@@ -446,7 +559,36 @@ class PerangkatDaerahController extends BaseController
                 ];
             }
 
-            unset($tujuan, $sasaran, $renstraTujuan, $es2, $es3, $es4);
+            // Jenjang PELAKSANA — jenjang terakhir, mengikuti pohon di web.
+            $pelaksanaId = $this->intOrNull($row['pelaksana_id'] ?? null);
+            if (!$pelaksanaId) {
+                unset($tujuan, $sasaran, $renstraTujuan, $es2, $es3, $es4);
+                continue;
+            }
+
+            if (!isset($es4['_pelaksana_index'][$pelaksanaId])) {
+                $es4['_pelaksana_index'][$pelaksanaId] = count($es4['pelaksana']);
+                $es4['pelaksana'][] = [
+                    'id' => $pelaksanaId,
+                    'nama' => $row['pelaksana_sasaran'] ?? null,
+                    'csf' => $row['csf_pelaksana'] ?? null,
+                    'indikator' => [],
+                    '_indikator_index' => [],
+                ];
+            }
+
+            $pelaksana =& $es4['pelaksana'][$es4['_pelaksana_index'][$pelaksanaId]];
+
+            $pelaksanaIndikatorId = $this->intOrNull($row['pelaksana_indikator_id'] ?? null);
+            if ($pelaksanaIndikatorId && !isset($pelaksana['_indikator_index'][$pelaksanaIndikatorId])) {
+                $pelaksana['_indikator_index'][$pelaksanaIndikatorId] = true;
+                $pelaksana['indikator'][] = [
+                    'id' => $pelaksanaIndikatorId,
+                    'nama' => $row['pelaksana_indikator'] ?? null,
+                ];
+            }
+
+            unset($tujuan, $sasaran, $renstraTujuan, $es2, $es3, $es4, $pelaksana);
         }
 
         return $this->removeInternalKeys($tree);
@@ -494,9 +636,14 @@ class PerangkatDaerahController extends BaseController
         ];
     }
 
-    private function resolvePeriod(int $opdId, bool $useLatestWhenEmpty): array
+    /**
+     * @param string $sumberPeriode tabel sumber daftar periode: 'renstra_sasaran'
+     *                              (default) atau 'iku_sasaran' untuk endpoint IKU
+     *                              yang datanya sudah berdiri sendiri.
+     */
+    private function resolvePeriod(int $opdId, bool $useLatestWhenEmpty, string $sumberPeriode = 'renstra_sasaran'): array
     {
-        $availablePeriods = $this->getAvailablePeriods($opdId);
+        $availablePeriods = $this->getAvailablePeriods($opdId, $sumberPeriode);
         $periode = trim((string) ($this->request->getGet('periode') ?? ''));
         $start = $this->request->getGet('tahun_mulai') ?? $this->request->getGet('start');
         $end = $this->request->getGet('tahun_akhir') ?? $this->request->getGet('end');
@@ -540,9 +687,14 @@ class PerangkatDaerahController extends BaseController
         ];
     }
 
-    private function getAvailablePeriods(int $opdId): array
+    private function getAvailablePeriods(int $opdId, string $sumberPeriode = 'renstra_sasaran'): array
     {
-        $rows = $this->db->table('renstra_sasaran')
+        // Whitelist supaya nama tabel tidak pernah datang dari input pengguna.
+        if (!in_array($sumberPeriode, ['renstra_sasaran', 'iku_sasaran'], true)) {
+            $sumberPeriode = 'renstra_sasaran';
+        }
+
+        $rows = $this->db->table($sumberPeriode)
             ->select('tahun_mulai, tahun_akhir')
             ->where('opd_id', $opdId)
             ->groupBy(['tahun_mulai', 'tahun_akhir'])

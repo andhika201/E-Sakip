@@ -40,7 +40,7 @@
                 <th rowspan="2">Tahun</th>
                 <th rowspan="2">Satuan</th>
                 <th rowspan="2">Rencana Aksi</th>
-                <th rowspan="2">Baseline /<br>Target Tahunan</th>
+                <th rowspan="2">Target Tahunan</th>
                 <th colspan="4">Target Triwulan</th>
                 <th rowspan="2">Penanggung Jawab</th>
             </tr>

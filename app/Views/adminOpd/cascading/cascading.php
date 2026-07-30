@@ -381,6 +381,7 @@
     <!-- Helper form edit (fungsi global dipakai form di dalam modal) -->
     <script src="<?= base_url('assets/js/adminopd/cascading/cascading-es3-edit.js') ?>"></script>
     <script src="<?= base_url('assets/js/adminopd/cascading/cascading-es4.js') ?>"></script>
+    <script src="<?= base_url('assets/js/adminopd/cascading/cascading-pelaksana.js') ?>"></script>
     <!-- Orkestrasi AJAX: buka modal, submit, delete, refresh tabel tanpa reload -->
     <script>
         (function () {

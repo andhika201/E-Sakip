@@ -76,7 +76,7 @@
     }
 
     /* Node utama (terisi) */
-    .box-l1, .box-l2, .box-l3, .box-es2, .box-es3, .box-es4 {
+    .box-l1, .box-l2, .box-l3, .box-es2, .box-es3, .box-es4, .box-pelaksana {
         color: #fff;
         border-radius: 10px;
         padding: 10px 12px;
@@ -113,6 +113,8 @@
     .box-es3 { background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%); }
     /* Sasaran ESS IV — merah rose */
     .box-es4 { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); }
+    /* Pelaksana: oranye tua — kontras jelas dgn merah Eselon IV, tetap selaras palet. */
+    .box-pelaksana { background: linear-gradient(135deg, #b45309 0%, #92400e 100%); }
 
     /* Indikator kinerja — chip netral */
     .box-iks {

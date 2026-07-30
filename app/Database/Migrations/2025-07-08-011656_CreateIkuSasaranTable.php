@@ -4,62 +4,30 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
+/**
+ * DINONAKTIFKAN (2026-07-27).
+ *
+ * Dulu migration ini membuat `iku_sasaran` dengan FK WAJIB ke `renstra_sasaran`
+ * — bentuk lama sewaktu IKU masih menempel ke RENSTRA/RPJMD. Tabelnya sendiri
+ * tidak pernah benar-benar terbentuk di DB (hanya tercatat di tabel `migrations`).
+ *
+ * Sejak IKU dijadikan mandiri, `iku_sasaran` dibuat ulang dengan bentuk baru
+ * (kolom `opd_id`, tanpa relasi ke renstra/rpjmd) oleh:
+ *   2026-07-27-000001_CreateIkuStandaloneTables
+ *
+ * up()/down() sengaja dikosongkan supaya instalasi baru tidak membuat tabel
+ * berbentuk lama yang bentrok dengan migration penggantinya. File tetap
+ * dipertahankan agar riwayat `migrations` di DB lama tidak pincang.
+ */
 class CreateIkuSasaranTable extends Migration
 {
     public function up()
     {
-        $this->forge->addField([
-            'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'auto_increment' => true,
-            ],
-            'opd_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
-            ],
-            'renstra_sasaran_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
-                'null' => false,
-            ],
-            'sasaran' => [
-                'type' => 'TEXT',
-                'null' => false,
-            ],
-            'tahun_mulai' => [
-                'type' => 'YEAR',
-                'null' => false,
-            ],
-            'tahun_akhir' => [
-                'type' => 'YEAR',
-                'null' => false,
-            ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-            ],
-            'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-            ],
-        ]);
-
-        $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('opd_id', 'opd', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('renstra_sasaran_id', 'renstra_sasaran', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->createTable('iku_sasaran');
+        // no-op — lihat 2026-07-27-000001_CreateIkuStandaloneTables
     }
 
     public function down()
     {
-        $this->forge->dropTable('iku_sasaran', true, true);
+        // no-op
     }
 }

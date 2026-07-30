@@ -3,6 +3,7 @@
 namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
+use App\Controllers\Concerns\LakipAddendumTrait;
 use App\Models\LakipModel;
 use App\Models\Opd\RenstraModel;
 use App\Models\OpdModel;
@@ -10,6 +11,9 @@ use App\Models\RpjmdModel;
 
 class LakipOpdController extends BaseController
 {
+    /** Analisis Faktor + Efisiensi Program (dua tabel di bawah tabel utama). */
+    use LakipAddendumTrait;
+
     protected $lakipModel;
     protected $renstraModel;
     protected $rpjmdModel;
@@ -29,6 +33,12 @@ class LakipOpdController extends BaseController
     private function xssRule(): string
     {
         return 'regex_match[/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is]';
+    }
+
+    /** Prefix rute halaman ini — dipakai LakipAddendumTrait untuk redirect & action form. */
+    protected function lakipBaseUrl(): string
+    {
+        return 'adminopd/lakip';
     }
 
     private function buildQs(?string $tahun, ?string $status, ?string $mode = null, ?int $opdId = null): string
@@ -171,6 +181,16 @@ class LakipOpdController extends BaseController
             ];
         }
 
+        // Dua tabel tambahan (Analisis Faktor & Efisiensi Program) memakai
+        // tahun + lingkup yang sama dengan tabel utama. $rows bisa belum ada
+        // kalau admin_kab memilih mode OPD tanpa memilih OPD-nya.
+        $rows  = $rows ?? [];
+        $scope = $this->lakipScope((string) $tahun, $mode);
+        $data  = array_merge($data, $this->lakipAddendumData($scope), [
+            'indikatorRows' => $rows,
+            'addendumBase'  => $this->lakipBaseUrl(),
+        ]);
+
         return view('adminOpd/lakip/lakip', $data);
     }
 
@@ -250,7 +270,12 @@ class LakipOpdController extends BaseController
         }
 
         $unitName = $opdInfo['nama_opd'] ?? (($mode === 'kabupaten') ? 'Kabupaten Pringsewu' : 'Seluruh OPD');
-        $html = view('adminOpd/lakip/lakip_cetak', [
+
+        // Dua tabel tambahan ikut tercetak, memakai tahun & lingkup yang sama.
+        $rows  = $rows ?? [];
+        $scope = $this->lakipScope((string) $tahun, $mode);
+
+        $html = view('adminOpd/lakip/lakip_cetak', array_merge($this->lakipAddendumData($scope), [
             'title' => 'Cetak LAKIP',
             'role' => $role,
             'mode' => $mode,
@@ -264,21 +289,35 @@ class LakipOpdController extends BaseController
                 'status' => $status,
             ],
             'unitName' => $unitName,
-        ]);
+            'indikatorRows' => $rows,
+        ]));
 
+        // ============================================================
+        // CETAK LAKIP: TANPA KOP, WATERMARK, HEADER, & FOOTER HALAMAN.
+        //
+        // Dokumen langsung dimulai dari judul "LAPORAN AKUNTABILITAS KINERJA
+        // INSTANSI PEMERINTAH" (lihat view adminOpd/lakip/lakip_cetak).
+        // Karena itu di sini SENGAJA TIDAK dipanggil:
+        //   - $mpdf->SetHTMLHeader() / SetHTMLFooter()   -> tanpa header/footer & nomor halaman
+        //   - pdf_watermark_aksara()                     -> tanpa watermark (SetWatermarkImage)
+        //   - templates/pdf_kop (di view)                -> tanpa KOP & logo instansi
+        // Modul PDF lain (Cascading, Renstra, RKT, MONEV, dst.) TIDAK diubah dan
+        // tetap memakai kop/footer/watermark standar.
+        // ============================================================
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4-L',
-            'margin_left' => 10,
-            'margin_right' => 10,
-            'margin_top' => 12,
-            'margin_bottom' => 10,
+            'margin_left' => 12,
+            'margin_right' => 12,
+            'margin_top' => 14,
+            'margin_bottom' => 14,
             'margin_header' => 0,
             'margin_footer' => 0,
             'tempDir' => sys_get_temp_dir(),
         ]);
-        $mpdf->SetHTMLFooter(pdf_footer_aksara());
-        pdf_watermark_aksara($mpdf);
+        // Matikan eksplisit bila ada konfigurasi global mPDF yang menyalakannya.
+        $mpdf->showWatermarkText  = false;
+        $mpdf->showWatermarkImage = false;
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 
@@ -359,11 +398,20 @@ class LakipOpdController extends BaseController
 
         $unitName = $opdInfo['nama_opd'] ?? (($mode === 'kabupaten') ? 'Kabupaten Pringsewu' : 'Seluruh OPD');
 
+        // Sheet tambahan: Analisis Faktor & Efisiensi Program.
+        $rows     = $rows ?? [];
+        $scope    = $this->lakipScope((string) $tahun, $mode);
+        $addendum = $this->lakipAddendumData($scope);
+
         lakip_opd_excel($dataSource, $lakipMap, [
             'unit' => $unitName,
             'mode' => $mode,
             'tahun' => (string) $tahun,
             'status' => (string) ($status ?? ''),
+        ], [
+            'indikatorRows' => $rows,
+            'analisisMap'   => $addendum['analisisMap'],
+            'efisiensiRows' => $addendum['efisiensiRows'],
         ]);
     }
     /* =========================================================

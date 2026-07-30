@@ -533,6 +533,28 @@
           "definisi": {
             "type": "string"
           },
+          "rumusan_perhitungan": {
+            "type": "string",
+            "nullable": true
+          },
+          "sumber_data": {
+            "type": "string",
+            "nullable": true
+          },
+          "penanggung_jawab": {
+            "type": "string",
+            "nullable": true
+          },
+          "jenis_indikator": {
+            "type": "string",
+            "nullable": true,
+            "description": "Jenis indikator seperti yang tampil di web (mis. maksimasi/minimasi)."
+          },
+          "baseline": {
+            "type": "string",
+            "nullable": true,
+            "description": "Kondisi awal indikator."
+          },
           "status": {
             "type": "string",
             "nullable": true
@@ -548,6 +570,11 @@
               },
               "nama": {
                 "type": "string"
+              },
+              "urutan": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Urutan tampil sasaran pada tabel web."
               }
             }
           },
@@ -562,21 +589,54 @@
               },
               "satuan": {
                 "type": "string",
+                "nullable": true,
+                "description": "Nama satuan siap tampil (sudah di-resolve dari master satuan bila berupa id)."
+              },
+              "satuan_id": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Id master satuan; null bila satuan diketik manual."
+              },
+              "jenis_indikator": {
+                "type": "string",
+                "nullable": true
+              },
+              "baseline": {
+                "type": "string",
+                "nullable": true
+              },
+              "urutan": {
+                "type": "integer",
                 "nullable": true
               }
             }
           },
           "periode": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+              "periode": {
+                "type": "string",
+                "example": "2025-2029"
+              },
+              "tahun_mulai": {
+                "type": "integer"
+              },
+              "tahun_akhir": {
+                "type": "integer"
+              }
+            }
           },
           "target_tahunan": {
             "type": "object",
+            "description": "Berisi seluruh tahun pada meta.years; tahun tanpa target bernilai null (padanan tanda '-' di tabel web).",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             },
             "example": {
               "2025": "3,05",
-              "2026": "3,3"
+              "2026": "3,3",
+              "2027": null
             }
           },
           "program_pendukung": {
@@ -603,7 +663,37 @@
             "example": "success"
           },
           "meta": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+              "opd": {
+                "$ref": "#/components/schemas/Opd"
+              },
+              "periode": {
+                "type": "object",
+                "nullable": true
+              },
+              "available_periods": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "years": {
+                "type": "array",
+                "description": "Kolom tahun tabel IKU di web. Seluruh tahun periode bila periode diketahui, selain itu gabungan tahun yang punya target.",
+                "items": {
+                  "type": "integer"
+                },
+                "example": [2025, 2026, 2027, 2028, 2029]
+              },
+              "status_filter": {
+                "type": "string"
+              },
+              "count": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
           },
           "data": {
             "type": "array",
@@ -665,12 +755,79 @@
             "type": "string",
             "nullable": true
           },
+          "satuan": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nilai mentah: id master satuan atau teks bebas."
+          },
+          "satuan_nama": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nama satuan siap tampil, hasil resolve dari master satuan."
+          },
+          "csf_es2": {
+            "type": "string",
+            "nullable": true
+          },
           "es3_id": {
             "type": "integer",
             "nullable": true
           },
+          "es3_sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "es3_indikator_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "es3_indikator": {
+            "type": "string",
+            "nullable": true
+          },
+          "csf_es3": {
+            "type": "string",
+            "nullable": true
+          },
           "es4_id": {
             "type": "integer",
+            "nullable": true
+          },
+          "es4_sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "es4_indikator_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "es4_indikator": {
+            "type": "string",
+            "nullable": true
+          },
+          "csf_es4": {
+            "type": "string",
+            "nullable": true
+          },
+          "pelaksana_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Jenjang Pelaksana/JF, jenjang terakhir di bawah Eselon IV."
+          },
+          "pelaksana_sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "pelaksana_indikator_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "pelaksana_indikator": {
+            "type": "string",
+            "nullable": true
+          },
+          "csf_pelaksana": {
+            "type": "string",
             "nullable": true
           }
         }
@@ -696,6 +853,7 @@
       "PohonNode": {
         "type": "object",
         "additionalProperties": true,
+        "description": "Simpul akar pohon (Tujuan RPJMD). Rantai jenjangnya mengikuti tampilan web: sasaran -> tujuan_renstra -> es2 -> es3 -> es4 -> pelaksana, masing-masing punya array `indikator` dan (mulai es2) properti `csf`.",
         "properties": {
           "id": {
             "type": "integer",

@@ -207,46 +207,29 @@ class DashboardKabupatenModel
         return (int) $this->db->table('opd')->countAllResults();
     }
 
-    // --- IKU (filter via renstra_indikator_sasaran -> renstra_sasaran) ---
+    // --- IKU (standalone: iku_indikator -> iku_sasaran, filter langsung via opd_id) ---
     private function countIku(?int $opdId, ?int $year): array
     {
-        if (!$this->tableExists('iku'))
+        if (!$this->tableExists('iku_indikator') || !$this->tableExists('iku_sasaran'))
             return ['selesai' => 0, 'draft' => 0];
 
-        $b = $this->db->table('iku i');
+        $b = $this->db->table('iku_indikator ind')
+            ->join('iku_sasaran sas', 'sas.id = ind.iku_sasaran_id');
 
-        // join indikator & sasaran renstra untuk filter opd/tahun
-        if ($this->tableExists('renstra_indikator_sasaran')) {
-            $b->join('renstra_indikator_sasaran ris', 'ris.id = i.renstra_id', 'left');
-            if ($this->tableExists('renstra_sasaran')) {
-                $b->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'left');
+        if ($opdId) {
+            $b->where('sas.opd_id', $opdId);
+        }
 
-                if ($opdId && $this->hasColumn('renstra_sasaran', 'opd_id')) {
-                    $b->where('rs.opd_id', $opdId);
-                }
-
-                if ($year) {
-                    if ($this->hasColumn('renstra_sasaran', 'tahun_mulai') && $this->hasColumn('renstra_sasaran', 'tahun_akhir')) {
-                        $b->groupStart()
-                            ->where('rs.tahun_mulai <=', $year)
-                            ->where('rs.tahun_akhir >=', $year)
-                            ->groupEnd();
-                    } elseif ($this->hasColumn('renstra_sasaran', 'tahun')) {
-                        $b->where('rs.tahun', $year);
-                    }
-                }
-            }
-        } else {
-            // fallback: kalau belum ada tabel join, minimal filter langsung (kalau ada)
-            if ($opdId && $this->hasColumn('iku', 'opd_id'))
-                $b->where('i.opd_id', $opdId);
-            if ($year && $this->hasColumn('iku', 'tahun'))
-                $b->where('i.tahun', $year);
+        if ($year) {
+            $b->groupStart()
+                ->where('sas.tahun_mulai <=', $year)
+                ->where('sas.tahun_akhir >=', $year)
+                ->groupEnd();
         }
 
         $row = $b->select("
-                SUM(CASE WHEN LOWER(i.status)='selesai' THEN 1 ELSE 0 END) AS selesai,
-                SUM(CASE WHEN LOWER(i.status)='draft' OR i.status IS NULL OR TRIM(i.status)='' THEN 1 ELSE 0 END) AS draft
+                SUM(CASE WHEN LOWER(ind.status)='selesai' THEN 1 ELSE 0 END) AS selesai,
+                SUM(CASE WHEN LOWER(ind.status)='draft' OR ind.status IS NULL OR TRIM(ind.status)='' THEN 1 ELSE 0 END) AS draft
             ", false)->get()->getRowArray();
 
         return [

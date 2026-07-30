@@ -50,22 +50,26 @@ if (!function_exists('_lakip_status_label')) {
     }
 }
 
-if (!function_exists('lakip_excel_stream')) {
+if (!function_exists('_lakip_sheet_isi')) {
     /**
-     * Bangun & kirim file .xlsx lalu exit.
+     * Isi satu worksheet: judul, meta, header, data — gaya seragam.
      *
-     * @param string   $title    judul di baris 1
-     * @param array    $metaRows pasangan label => nilai (Unit, Mode, Tahun, Status)
-     * @param string[] $headers  label kolom
-     * @param array    $dataRows array of array (baris data, sudah dibersihkan)
-     * @param string   $filename nama file unduhan
+     * Dipisah dari lakip_excel_stream() supaya sheet tambahan (Analisis Faktor
+     * & Efisiensi Program) memakai tata letak yang sama persis.
+     *
+     * @param string[]                    $headers
+     * @param array<int, array<int, mixed>> $dataRows
+     * @param array<int, int>             $numericCols indeks kolom (0-based) yang
+     *                                                 ditulis sebagai ANGKA + format rupiah
      */
-    function lakip_excel_stream(string $title, array $metaRows, array $headers, array $dataRows, string $filename): void
-    {
-        $ss    = new Spreadsheet();
-        $sheet = $ss->getActiveSheet();
-        $sheet->setTitle('LAKIP');
-
+    function _lakip_sheet_isi(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        string $title,
+        array $metaRows,
+        array $headers,
+        array $dataRows,
+        array $numericCols = []
+    ): int {
         $nCol    = max(1, count($headers));
         $lastCol = Coordinate::stringFromColumnIndex($nCol);
 
@@ -85,8 +89,7 @@ if (!function_exists('lakip_excel_stream')) {
         }
 
         // --- Meta (Unit / Mode / Tahun / Status) ---
-        $metaStart = 4;
-        $r = $metaStart;
+        $r = 4;
         foreach ($metaRows as $label => $val) {
             $sheet->setCellValueExplicit("A{$r}", (string) $label . ' : ' . _lakip_txt($val), DataType::TYPE_STRING);
             $sheet->mergeCells("A{$r}:{$lastCol}{$r}");
@@ -110,9 +113,16 @@ if (!function_exists('lakip_excel_stream')) {
         $dr = $hRow + 1;
         foreach ($dataRows as $row) {
             $ci = 1;
-            foreach ($row as $val) {
+            foreach ($row as $idx => $val) {
                 $cell = Coordinate::stringFromColumnIndex($ci) . $dr;
-                $sheet->setCellValueExplicit($cell, (string) $val, DataType::TYPE_STRING);
+                if (in_array($idx, $numericCols, true) && is_numeric($val)) {
+                    // Nominal ditulis sebagai ANGKA supaya bisa dijumlah di Excel,
+                    // tampilannya diformat rupiah lewat number format.
+                    $sheet->setCellValue($cell, (float) $val);
+                    $sheet->getStyle($cell)->getNumberFormat()->setFormatCode('"Rp" #,##0');
+                } else {
+                    $sheet->setCellValueExplicit($cell, (string) $val, DataType::TYPE_STRING);
+                }
                 $ci++;
             }
             $dr++;
@@ -122,7 +132,7 @@ if (!function_exists('lakip_excel_stream')) {
         // --- Border, wrap, alignment ---
         $sheet->getStyle("A{$hRow}:{$lastCol}{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         if ($lastRow > $hRow) {
-            $sheet->getStyle("A" . ($hRow + 1) . ":{$lastCol}{$lastRow}")->getAlignment()
+            $sheet->getStyle('A' . ($hRow + 1) . ":{$lastCol}{$lastRow}")->getAlignment()
                 ->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
         }
 
@@ -131,8 +141,12 @@ if (!function_exists('lakip_excel_stream')) {
             $h = strtoupper((string) ($headers[$i - 1] ?? ''));
             if ($h === 'NO') {
                 $w = 6;
-            } elseif (in_array($h, ['SASARAN', 'INDIKATOR', 'OPD'], true)) {
+            } elseif (in_array($h, ['SASARAN', 'INDIKATOR', 'OPD', 'NAMA PROGRAM'], true)) {
                 $w = 40;
+            } elseif (strpos($h, 'FAKTOR') !== false || strpos($h, 'UPAYA') !== false) {
+                $w = 45;
+            } elseif (in_array($h, ['ANGGARAN', 'REALISASI', 'EFISIENSI'], true)) {
+                $w = 20;
             } elseif (strpos($h, 'SEBELUMNYA') !== false || strpos($h, 'CAPAIAN') !== false) {
                 $w = 16;
             } else {
@@ -143,6 +157,131 @@ if (!function_exists('lakip_excel_stream')) {
 
         $sheet->freezePane('A' . ($hRow + 1));
         $sheet->setAutoFilter($headerRange);
+
+        return $hRow;
+    }
+}
+
+if (!function_exists('_lakip_sheet_tambahan')) {
+    /**
+     * Tambahkan sheet "Analisis Faktor" & "Efisiensi Program" bila datanya ada.
+     *
+     * @param array $addendum ['indikatorRows','analisisMap','efisiensiRows']
+     */
+    function _lakip_sheet_tambahan(Spreadsheet $ss, array $addendum, array $metaRows): void
+    {
+        $indikatorRows = $addendum['indikatorRows'] ?? [];
+        $analisisMap   = $addendum['analisisMap'] ?? [];
+        $efisiensiRows = $addendum['efisiensiRows'] ?? [];
+
+        // --- Sheet 2: Analisis Faktor ---
+        $daftarIndikator = [];
+        foreach ($indikatorRows as $r) {
+            $tid = (int) ($r['target_id'] ?? 0);
+            if ($tid > 0 && !isset($daftarIndikator[$tid])) {
+                $daftarIndikator[$tid] = (string) ($r['indikator_sasaran'] ?? '-');
+            }
+        }
+
+        if (!empty($daftarIndikator)) {
+            $baris = [];
+            $no = 1;
+            foreach ($daftarIndikator as $tid => $nama) {
+                $daftar = $analisisMap[$tid] ?? [];
+                if (empty($daftar)) {
+                    $baris[] = [$no++, _lakip_txt($nama), '-', '-', '-'];
+                    continue;
+                }
+                foreach ($daftar as $i => $a) {
+                    $baris[] = [
+                        $i === 0 ? $no : '',
+                        $i === 0 ? _lakip_txt($nama) : '',
+                        _lakip_txt($a['faktor_pendukung'] ?? '') ?: '-',
+                        _lakip_txt($a['faktor_penghambat'] ?? '') ?: '-',
+                        _lakip_txt($a['upaya_peningkatan'] ?? '') ?: '-',
+                    ];
+                }
+                $no++;
+            }
+
+            $sheet = $ss->createSheet();
+            $sheet->setTitle('Analisis Faktor');
+            _lakip_sheet_isi(
+                $sheet,
+                'ANALISIS FAKTOR PENCAPAIAN KINERJA',
+                $metaRows,
+                [
+                    'NO', 'INDIKATOR',
+                    'FAKTOR PENDUKUNG KEBERHASILAN/KEGAGALAN, PENURUNAN/PENINGKATAN KINERJA',
+                    'FAKTOR PENGHAMBAT',
+                    'UPAYA UNTUK MENINGKATKAN PENCAPAIAN KINERJA',
+                ],
+                $baris
+            );
+        }
+
+        // --- Sheet 3: Efisiensi Program ---
+        if (!empty($efisiensiRows)) {
+            $baris = [];
+            $no = 1;
+            $totA = 0.0;
+            $totR = 0.0;
+            $totE = 0.0;
+            foreach ($efisiensiRows as $e) {
+                $totA += (float) ($e['anggaran'] ?? 0);
+                $totR += (float) ($e['realisasi'] ?? 0);
+                $totE += (float) ($e['efisiensi'] ?? 0);
+                $baris[] = [
+                    $no++,
+                    _lakip_txt((!empty($e['kode_program']) ? '[' . $e['kode_program'] . '] ' : '') . ($e['program_kegiatan'] ?? '-')),
+                    (float) ($e['anggaran'] ?? 0),
+                    (float) ($e['realisasi'] ?? 0),
+                    (float) ($e['efisiensi'] ?? 0),
+                ];
+            }
+            $baris[] = ['', 'TOTAL', $totA, $totR, $totE];
+
+            $sheet = $ss->createSheet();
+            $sheet->setTitle('Efisiensi Program');
+            _lakip_sheet_isi(
+                $sheet,
+                'EFISIENSI PROGRAM DAN ANGGARAN',
+                $metaRows,
+                ['NO', 'NAMA PROGRAM', 'ANGGARAN', 'REALISASI', 'EFISIENSI'],
+                $baris,
+                [2, 3, 4] // kolom nominal -> ditulis sebagai angka + format rupiah
+            );
+        }
+
+        $ss->setActiveSheetIndex(0);
+    }
+}
+
+if (!function_exists('lakip_excel_stream')) {
+    /**
+     * Bangun & kirim file .xlsx lalu exit.
+     *
+     * @param string   $title    judul di baris 1
+     * @param array    $metaRows pasangan label => nilai (Unit, Mode, Tahun, Status)
+     * @param string[] $headers  label kolom
+     * @param array    $dataRows array of array (baris data, sudah dibersihkan)
+     * @param string   $filename nama file unduhan
+     * @param array    $addendum ['indikatorRows','analisisMap','efisiensiRows'] —
+     *                           bila diisi, ditambahkan sebagai sheet 2 & 3
+     */
+    function lakip_excel_stream(string $title, array $metaRows, array $headers, array $dataRows, string $filename, array $addendum = []): void
+    {
+        $ss    = new Spreadsheet();
+        $sheet = $ss->getActiveSheet();
+        $sheet->setTitle('LAKIP');
+
+        // Sheet 1 (LAKIP) — tata letaknya persis seperti sebelumnya.
+        _lakip_sheet_isi($sheet, $title, $metaRows, $headers, $dataRows);
+
+        // Sheet 2 & 3 hanya dibuat kalau datanya memang ada.
+        if (!empty($addendum)) {
+            _lakip_sheet_tambahan($ss, $addendum, $metaRows);
+        }
 
         // --- Kirim ---
         while (ob_get_level() > 0) {
@@ -166,8 +305,9 @@ if (!function_exists('lakip_kab_excel')) {
      * @param array  $lakipMap key = target_id
      * @param string $mode     'kabupaten' | 'opd'
      * @param array  $meta     ['unit','tahun','status'] mentah dari controller
+     * @param array  $addendum ['indikatorRows','analisisMap','efisiensiRows'] -> sheet 2 & 3
      */
-    function lakip_kab_excel(array $rows, array $lakipMap, string $mode, array $meta): void
+    function lakip_kab_excel(array $rows, array $lakipMap, string $mode, array $meta, array $addendum = []): void
     {
         helper(['number', 'lakip']);
 
@@ -231,7 +371,8 @@ if (!function_exists('lakip_kab_excel')) {
             $metaRows,
             $headers,
             $data,
-            $filename
+            $filename,
+            $addendum
         );
     }
 }
@@ -244,8 +385,9 @@ if (!function_exists('lakip_opd_excel')) {
      * @param array  $dataSource hasil groupIndexRowsBySasaran()
      * @param array  $lakipMap   key = indikator_id
      * @param array  $meta       ['unit','mode','tahun','status'] mentah dari controller
+     * @param array  $addendum   ['indikatorRows','analisisMap','efisiensiRows'] -> sheet 2 & 3
      */
-    function lakip_opd_excel(array $dataSource, array $lakipMap, array $meta): void
+    function lakip_opd_excel(array $dataSource, array $lakipMap, array $meta, array $addendum = []): void
     {
         helper(['number', 'lakip']);
 
@@ -332,7 +474,8 @@ if (!function_exists('lakip_opd_excel')) {
             $metaRows,
             $headers,
             $data,
-            $filename
+            $filename,
+            $addendum
         );
     }
 }

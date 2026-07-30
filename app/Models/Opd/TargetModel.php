@@ -19,7 +19,6 @@ class TargetModel extends Model
         'pk_indikator_id',
 
         'rencana_aksi',
-        'capaian',
         'target_triwulan_1',
         'target_triwulan_2',
         'target_triwulan_3',
@@ -102,7 +101,6 @@ class TargetModel extends Model
 
                 tr.id                  AS target_id,
                 tr.rencana_aksi,
-                tr.capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -154,7 +152,6 @@ class TargetModel extends Model
 
         tr.id      AS target_id,
         tr.rencana_aksi,
-        tr.capaian,
         tr.target_triwulan_1,
         tr.target_triwulan_2,
         tr.target_triwulan_3,
@@ -205,7 +202,6 @@ class TargetModel extends Model
 
                 tr.id                   AS target_id,
                 tr.rencana_aksi,
-                tr.capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -252,6 +248,214 @@ class TargetModel extends Model
         return $builder->first();
     }
 
+    /* ==========================================================
+     * PROGRAM & ANGGARAN DARI PK
+     *
+     * Rantainya: pk_indikator -> pk_program (pk_indikator_id) -> program_pk.
+     * Satu indikator PK bisa menopang beberapa program, jadi datanya diambil
+     * TERPISAH (bukan di-join ke query daftar) supaya baris indikator tidak
+     * berlipat ganda gara-gara join 1-ke-banyak.
+     * ========================================================*/
+
+    /**
+     * @param int[] $pkIndikatorIds
+     *
+     * @return array<int, array<int, array{kode: string|null, program: string, anggaran: float, tahun: string|null}>>
+     */
+    public function getProgramPkByIndikator(array $pkIndikatorIds): array
+    {
+        $pkIndikatorIds = array_values(array_unique(array_filter(array_map('intval', $pkIndikatorIds))));
+        if (empty($pkIndikatorIds)) {
+            return [];
+        }
+
+        $rows = $this->db->table('pk_program pp')
+            ->select('
+                pp.pk_indikator_id,
+                pr.id            AS program_pk_id,
+                pr.kode_program,
+                pr.program_kegiatan,
+                pr.anggaran,
+                pr.tahun_anggaran
+            ')
+            ->join('program_pk pr', 'pr.id = pp.program_id')
+            ->whereIn('pp.pk_indikator_id', $pkIndikatorIds)
+            ->orderBy('pp.pk_indikator_id', 'ASC')
+            ->orderBy('pr.kode_program', 'ASC')
+            ->orderBy('pr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        $sudah = [];
+
+        foreach ($rows as $row) {
+            $indikatorId = (int) $row['pk_indikator_id'];
+            $programId   = (int) $row['program_pk_id'];
+
+            // Program yang sama bisa tercatat lebih dari sekali untuk satu
+            // indikator — cukup tampilkan sekali supaya anggarannya tidak dobel.
+            $kunci = $indikatorId . ':' . $programId;
+            if (isset($sudah[$kunci])) {
+                continue;
+            }
+            $sudah[$kunci] = true;
+
+            $map[$indikatorId][] = [
+                'kode'     => $row['kode_program'] !== '' ? $row['kode_program'] : null,
+                'program'  => (string) $row['program_kegiatan'],
+                'anggaran' => (float) $row['anggaran'],
+                'tahun'    => $row['tahun_anggaran'],
+            ];
+        }
+
+        return $map;
+    }
+
+    /* ==========================================================
+     * SUB RENCANA AKSI
+     *
+     * `rencana_aksi` menyimpan beberapa butir sebagai teks multi-baris
+     * (1 baris = 1 butir), jadi sub rencana ditautkan ke nomor baris butirnya
+     * lewat kolom `baris_rencana` (0 = butir ke-1).
+     * ========================================================*/
+
+    /**
+     * @param int[] $targetIds
+     *
+     * @return array<int, array<int, array<int, array{id: int, teks: string, tw: array<int, string|null>}>>>
+     *         [target_rencana_id => [baris_rencana => [ {id, teks, tw}, ... ]]]
+     */
+    public function getSubRencanaByTargets(array $targetIds): array
+    {
+        $targetIds = array_values(array_unique(array_filter(array_map('intval', $targetIds))));
+        if (empty($targetIds)) {
+            return [];
+        }
+
+        $rows = $this->db->table('target_sub_rencana')
+            ->select('id, target_rencana_id, baris_rencana, sub_rencana_aksi,
+                      target_triwulan_1, target_triwulan_2, target_triwulan_3, target_triwulan_4')
+            ->whereIn('target_rencana_id', $targetIds)
+            ->orderBy('target_rencana_id', 'ASC')
+            ->orderBy('baris_rencana', 'ASC')
+            ->orderBy('urutan', 'ASC')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['target_rencana_id']][(int) $row['baris_rencana']][] = [
+                'id'   => (int) $row['id'],
+                'teks' => (string) $row['sub_rencana_aksi'],
+                'tw'   => [
+                    1 => $row['target_triwulan_1'],
+                    2 => $row['target_triwulan_2'],
+                    3 => $row['target_triwulan_3'],
+                    4 => $row['target_triwulan_4'],
+                ],
+            ];
+        }
+
+        return $map;
+    }
+
+    /** Sub rencana aksi satu target, untuk prefill form edit. */
+    public function getSubRencanaByTarget(int $targetId): array
+    {
+        return $this->getSubRencanaByTargets([$targetId])[$targetId] ?? [];
+    }
+
+    /**
+     * Simpan seluruh sub rencana aksi milik satu target.
+     *
+     * Baris yang membawa `id` DIPERBARUI di tempat, bukan dihapus-lalu-insert.
+     * Ini penting: capaian MONEV menempel ke id sub, jadi id-nya harus bertahan
+     * setiap kali rencana aksi disunting. Sub yang hilang dari form dihapus.
+     *
+     * @param array<int|string, array<int, array{id?: int, teks: string, tw: array<int, string|null>}>> $map
+     *        [baris_rencana => [ {id, teks, tw}, ... ]]
+     */
+    public function saveSubRencana(int $targetId, array $map): int
+    {
+        $tabel = $this->db->table('target_sub_rencana');
+
+        $idLama = array_map('intval', array_column(
+            $this->db->table('target_sub_rencana')
+                ->select('id')
+                ->where('target_rencana_id', $targetId)
+                ->get()
+                ->getResultArray(),
+            'id'
+        ));
+
+        $nilaiTw = static function ($v) {
+            if (!is_scalar($v)) {
+                return null;
+            }
+            $v = trim((string) $v);
+            return $v === '' ? null : $v;
+        };
+
+        $idDipakai = [];
+        $jumlah    = 0;
+
+        foreach ($map as $indeksBaris => $daftar) {
+            $indeksBaris = (int) $indeksBaris;
+            if ($indeksBaris < 0 || !is_array($daftar)) {
+                continue;
+            }
+
+            $urutan = 0;
+            foreach ($daftar as $item) {
+                // Terima bentuk ringkas (teks saja) maupun lengkap (id + teks + triwulan).
+                $teks = is_array($item) ? ($item['teks'] ?? '') : $item;
+                if (!is_scalar($teks)) {
+                    continue;
+                }
+                $teks = trim((string) $teks);
+                if ($teks === '') {
+                    continue;
+                }
+
+                $tw   = is_array($item) ? (array) ($item['tw'] ?? []) : [];
+                $data = [
+                    'baris_rencana'     => $indeksBaris,
+                    'sub_rencana_aksi'  => $teks,
+                    'target_triwulan_1' => $nilaiTw($tw[1] ?? null),
+                    'target_triwulan_2' => $nilaiTw($tw[2] ?? null),
+                    'target_triwulan_3' => $nilaiTw($tw[3] ?? null),
+                    'target_triwulan_4' => $nilaiTw($tw[4] ?? null),
+                    'urutan'            => $urutan++,
+                    'updated_at'        => date('Y-m-d H:i:s'),
+                ];
+
+                $idSub = is_array($item) ? (int) ($item['id'] ?? 0) : 0;
+
+                if ($idSub > 0 && in_array($idSub, $idLama, true)) {
+                    $tabel->where('id', $idSub)->update($data);
+                    $idDipakai[] = $idSub;
+                } else {
+                    $tabel->insert($data + [
+                        'target_rencana_id' => $targetId,
+                        'created_at'        => date('Y-m-d H:i:s'),
+                    ]);
+                    $idDipakai[] = (int) $this->db->insertID();
+                }
+
+                $jumlah++;
+            }
+        }
+
+        $idDihapus = array_diff($idLama, $idDipakai);
+        if (!empty($idDihapus)) {
+            $this->db->table('target_sub_rencana')->whereIn('id', $idDihapus)->delete();
+        }
+
+        return $jumlah;
+    }
+
     /* ---------- LIST: PK BUPATI (pk.jenis='bupati') — admin_kab ---------- */
     public function getTargetListByPkBupati(?string $tahun = null): array
     {
@@ -271,7 +475,6 @@ class TargetModel extends Model
 
                 tr.id              AS target_id,
                 tr.rencana_aksi,
-                tr.capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -339,7 +542,6 @@ class TargetModel extends Model
 
                 tr.id              AS target_id,
                 tr.rencana_aksi,
-                tr.capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,

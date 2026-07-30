@@ -4,14 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IKU - e-SAKIP</title>
+    <title><?= esc($title ?? 'IKU - e-SAKIP') ?></title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
     <style>
-        /* Rapikan tabel IKU */
-        .iku-table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
         .iku-table thead th {
             position: sticky;
             top: 0;
@@ -20,32 +15,18 @@
             white-space: nowrap;
         }
         .iku-table th,
-        .iku-table td {
-            vertical-align: middle;
-        }
-        .iku-table td.text-start {
-            min-width: 160px;
-        }
-        .iku-table .col-tahun {
-            white-space: nowrap;
-            width: 64px;
-        }
-        .iku-table tbody tr:hover {
-            background-color: #f3faf5;
-        }
-        .table-wrap {
-            max-height: 70vh;
-            overflow: auto;
-        }
+        .iku-table td { vertical-align: middle; }
+        .iku-table td.text-start { min-width: 160px; }
+        .iku-table tbody tr:hover { background-color: #f3faf5; }
+        .table-wrap { max-height: 70vh; overflow: auto; }
     </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
     <div id="main-content" class="content-wrapper d-flex flex-column" style="transition: margin-left 0.3s ease;">
 
-        <!-- Header & Sidebar -->
-        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/header.php' : 'adminOpd/templates/header.php')); ?>
-        <?= $this->include(($role === 'admin_kab' ? 'adminKabupaten/templates/sidebar.php' : 'adminOpd/templates/sidebar.php')); ?>
+        <?= $this->include('adminOpd/templates/header.php'); ?>
+        <?= $this->include('adminOpd/templates/sidebar.php'); ?>
 
         <main class="flex-fill p-4 mt-2">
             <div class="bg-white rounded shadow-sm p-4">
@@ -53,247 +34,72 @@
                     Indikator Kinerja Utama (IKU)
                 </h2>
 
-                <!-- Filter Periode -->
-                <form method="get" class="mb-4">
-                    <div class="row align-items-end g-3">
-                        <div class="col-md-6">
-                            <label for="periode" class="form-label fw-semibold text-secondary">
-                                Periode
-                            </label>
-                            <select name="periode" id="periode" class="form-select" required>
-                                <option value="">-- Pilih Periode --</option>
-                                <?php if (!empty($grouped_data)): ?>
-                                    <?php foreach ($grouped_data as $key => $periode): ?>
-                                        <option value="<?= esc($key) ?>" <?= ($selected_periode ?? '') === $key ? 'selected' : '' ?>>
-                                            <?= esc($periode['period']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-success w-100">
-                                <i class="bi bi-funnel me-1"></i> Tampilkan
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="<?= base_url('adminopd/iku') ?>" class="btn btn-outline-secondary w-100">
-                                <i class="bi bi-arrow-repeat me-1"></i> Reset
-                            </a>
-                        </div>
-                        <?php if (!empty($selected_periode)): ?>
-                            <div class="col-md-3">
-                                <a href="<?= base_url('adminopd/iku/cetak?' . http_build_query(array_filter([
-                                    'periode' => $selected_periode ?? '',
-                                ], static fn($v) => $v !== ''))) ?>" target="_blank" class="btn btn-outline-danger w-100">
-                                    <i class="fas fa-file-pdf me-1"></i> Cetak PDF
-                                </a>
-                            </div>
-                        <?php endif; ?>
+                <?php if (session()->getFlashdata('error')): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <?= esc(session()->getFlashdata('error')) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (session()->getFlashdata('success')): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <?= esc(session()->getFlashdata('success')) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <form method="get" class="row g-2 mb-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold text-secondary mb-1">Periode</label>
+                        <select name="periode" class="form-select" onchange="this.form.submit()">
+                            <?php if (empty($grouped_data)): ?>
+                                <option value="">-- Belum ada data --</option>
+                            <?php else: ?>
+                                <?php foreach ($grouped_data as $key => $periode): ?>
+                                    <option value="<?= esc($key) ?>" <?= ($selected_periode === $key) ? 'selected' : '' ?>>
+                                        <?= esc($periode['period']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
                     </div>
                 </form>
 
-                <?php if (empty($selected_periode)): ?>
-
-                    <div class="text-center py-5 my-4">
-                        <i class="bi bi-calendar2-week text-success" style="font-size: 3rem;"></i>
-                        <h5 class="mt-3 text-secondary">Silakan pilih periode Renstra terlebih dahulu.</h5>
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div class="text-muted small">
+                        Sasaran, indikator, satuan, dan target IKU diinput langsung di sini — tidak lagi mengikuti Renstra.
                     </div>
-
-                <?php else: ?>
-
-                    <div class="table-responsive table-wrap mt-3">
-                        <table class="table table-bordered table-striped align-middle small text-center iku-table">
-                            <thead class="table-success text-dark">
-                                <tr>
-                                    <th rowspan="2" class="align-middle">No</th>
-                                    <th rowspan="2" class="align-middle">Sasaran</th>
-                                    <th rowspan="2" class="align-middle">Indikator Sasaran</th>
-                                    <th rowspan="2" class="align-middle">Definisi Operasional</th>
-                                    <th rowspan="2" class="align-middle">Formula / Rumusan Perhitungan</th>
-                                    <th rowspan="2" class="align-middle">Satuan</th>
-
-                                    <?php if (!empty($grouped_data)): ?>
-                                        <?php
-                                        $totalYears = 0;
-                                        foreach ($grouped_data as $p) {
-                                            $totalYears += count($p['years']);
-                                        }
-                                        ?>
-                                        <th colspan="<?= $totalYears ?>" class="text-center align-middle">
-                                            Target Capaian per Tahun
-                                        </th>
-                                    <?php else: ?>
-                                        <th colspan="5" class="align-middle">Target Capaian per Tahun</th>
-                                    <?php endif; ?>
-
-                                    <th rowspan="2" class="align-middle">Sumber Data</th>
-                                    <th rowspan="2" class="align-middle">Penanggung Jawab</th>
-                                    <th rowspan="2" class="align-middle">Status</th>
-                                    <!-- Program Pendukung dinonaktifkan sementara:
-                                    <th rowspan="2" class="align-middle">Program Pendukung</th>
-                                    -->
-                                    <th rowspan="2" class="align-middle">Aksi</th>
-                                </tr>
-                                <tr>
-                                    <?php if (!empty($grouped_data)): ?>
-                                        <?php foreach ($grouped_data as $periodKey => $dataPeriod): ?>
-                                            <?php foreach ($dataPeriod['years'] as $year): ?>
-                                                <th class="align-middle"><?= esc($year) ?></th>
-                                            <?php endforeach; ?>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                <?php
-                                $no = 1;
-                                $dataSource = ($role === 'admin_kab') ? ($rpjmd_data ?? []) : ($renstra_data ?? []);
-                                ?>
-
-                                <?php foreach ($dataSource as $row): ?>
-                                    <?php
-                                    $sasaranText = ($role === 'admin_kab')
-                                        ? ($row['sasaran_rpjmd'] ?? $row['sasaran'] ?? '-')
-                                        : ($row['sasaran'] ?? '-');
-
-                                    $indikators = $row['indikator_sasaran'] ?? [];
-                                    // Nomor mengikuti SASARAN: satu nomor per sasaran (digabung rowspan).
-                                    $sasRowspan = max(1, count($indikators));
-                                    $sasFirst   = true;
-                                    ?>
-
-                                    <?php foreach ($indikators as $indikator): ?>
-                                        <?php
-                                        // Cari IKU terkait indikator ini
-                                        $iku = null;
-                                        if (!empty($iku_data)) {
-                                            foreach ($iku_data as $item) {
-                                                // Non admin_kab (admin_opd, admin_kecamatan, dst) memakai renstra_id.
-                                                if (
-                                                    ($role === 'admin_kab' && ($item['rpjmd_id'] ?? null) == $indikator['id']) ||
-                                                    ($role !== 'admin_kab' && ($item['renstra_id'] ?? null) == $indikator['id'])
-                                                ) {
-                                                    $iku = $item;
-                                                    break;
-                                                }
-                                            }
-                                        }
-
-                                        // Map target per tahun
-                                        $targetMap = [];
-                                        if (!empty($indikator['target_tahunan']) && is_array($indikator['target_tahunan'])) {
-                                            foreach ($indikator['target_tahunan'] as $key => $target) {
-                                                if (is_array($target)) {
-                                                    $tahun = isset($target['tahun']) ? (int) $target['tahun'] : (int) $key;
-                                                    $nilai = $target['target_tahunan']
-                                                        ?? ($target['target'] ?? ($target['nilai'] ?? null));
-                                                } else {
-                                                    $tahun = (int) $key;
-                                                    $nilai = $target;
-                                                }
-                                                if ($tahun) {
-                                                    $targetMap[$tahun] = $nilai;
-                                                }
-                                            }
-                                        }
-                                        ?>
-                                        <tr>
-                                            <!-- No + Sasaran: digabung & dinomori per Sasaran -->
-                                            <?php if ($sasFirst): ?>
-                                                <td rowspan="<?= $sasRowspan ?>" class="align-middle text-center"><?= $no++ ?></td>
-                                                <td rowspan="<?= $sasRowspan ?>" class="align-middle text-start"><?= esc($sasaranText) ?></td>
-                                                <?php $sasFirst = false; ?>
-                                            <?php endif; ?>
-
-                                            <!-- Indikator -->
-                                            <td class="text-start"><?= esc($indikator['indikator_sasaran']) ?></td>
-
-                                            <!-- Definisi Operasional -->
-                                            <td class="text-start"><?= esc($iku['definisi'] ?? '-') ?></td>
-
-                                            <!-- Formula / Rumusan Perhitungan -->
-                                            <td class="text-start"><?= esc(trim((string)($iku['rumusan_perhitungan'] ?? '')) !== '' ? $iku['rumusan_perhitungan'] : '-') ?></td>
-
-                                            <!-- Satuan -->
-                                            <td><?= esc($indikator['satuan']) ?></td>
-
-                                            <!-- Target per Tahun -->
-                                            <?php if (!empty($grouped_data)): ?>
-                                                <?php foreach ($grouped_data as $dataPeriod): ?>
-                                                    <?php foreach ($dataPeriod['years'] as $year): ?>
-                                                        <?php
-                                                        $y = (int) $year;
-                                                        $value = '-';
-                                                        if (isset($targetMap[$y]) && $targetMap[$y] !== '' && $targetMap[$y] !== null) {
-                                                            $value = $targetMap[$y];
-                                                        }
-                                                        ?>
-                                                        <td><?= esc($value) ?></td>
-                                                    <?php endforeach; ?>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-
-                                            <!-- Sumber Data -->
-                                            <td class="text-start"><?= esc(trim((string)($iku['sumber_data'] ?? '')) !== '' ? $iku['sumber_data'] : '-') ?></td>
-
-                                            <!-- Penanggung Jawab -->
-                                            <td class="text-start"><?= esc(($iku['penanggung_jawab'] ?? '') !== '' ? $iku['penanggung_jawab'] : '-') ?></td>
-
-                                            <!-- Status (badge) -->
-                                            <td class="align-middle">
-                                                <?php
-                                                $rawStatus   = $iku['status'] ?? null;
-                                                $statusLower = $rawStatus ? strtolower(trim($rawStatus)) : '';
-                                                if ($statusLower === 'selesai') {
-                                                    $badgeClass  = 'bg-success';
-                                                    $statusLabel = 'Selesai';
-                                                } else {
-                                                    $badgeClass  = 'bg-warning text-dark';
-                                                    $statusLabel = 'Draft';
-                                                }
-                                                ?>
-                                                <span class="badge <?= $badgeClass ?>"><?= esc($statusLabel) ?></span>
-                                            </td>
-
-                                            <!-- Program Pendukung dinonaktifkan sementara -->
-
-                                            <!-- Aksi -->
-                                            <td>
-                                                <?php $ikuPerm = ($role === 'admin_kab') ? 'iku_kab' : 'iku_opd'; ?>
-                                                <?php if (!empty($indikator['id'])): ?>
-                                                    <?php if (empty($iku['definisi'])): ?>
-                                                        <?php if (user_can($ikuPerm . '.create')): ?>
-                                                        <a href="<?= base_url('adminopd/iku/tambah/' . $indikator['id']) ?>"
-                                                            class="btn btn-primary btn-sm" title="Tambah IKU">
-                                                            <i class="fas fa-plus"></i>
-                                                        </a>
-                                                        <?php else: ?><span class="text-muted">-</span><?php endif; ?>
-                                                    <?php else: ?>
-                                                        <?php if (user_can($ikuPerm . '.update')): ?>
-                                                        <a href="<?= base_url('adminopd/iku/edit/' . $indikator['id']) ?>"
-                                                            class="btn btn-warning btn-sm" title="Edit IKU">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <form method="post" action="<?= base_url('adminopd/iku/change_status/' . $indikator['id']) ?>" class="d-inline">
-                                                            <button type="submit" class="btn btn-info btn-sm change-status-btn" title="Ubah Status IKU">
-                                                                <i class="fas fa-sync-alt"></i>
-                                                            </button>
-                                                        </form>
-                                                        <?php else: ?><span class="text-muted">-</span><?php endif; ?>
-                                                    <?php endif; ?>
-                                                <?php else: ?>
-                                                    <span class="text-muted">-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                    <div class="d-flex gap-2">
+                        <?php if (user_can('iku_opd.create')): ?>
+                            <a href="<?= base_url('adminopd/iku/tambah') ?>" class="btn btn-success">
+                                <i class="fas fa-plus me-1"></i> Tambah IKU
+                            </a>
+                            <?php if (empty($is_lintas_opd)): ?>
+                                <a href="<?= base_url('adminopd/iku/sync') ?>" class="btn btn-outline-success"
+                                   title="Ambil sasaran, indikator, dan target dari Renstra OPD ini">
+                                    <i class="fas fa-sync-alt me-1"></i> Sync dari Renstra
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <?php if (!empty($selected_periode)): ?>
+                            <a href="<?= base_url('adminopd/iku/cetak?' . http_build_query(['periode' => $selected_periode])) ?>"
+                               target="_blank" class="btn btn-outline-danger">
+                                <i class="fas fa-file-pdf me-1"></i> Cetak PDF
+                            </a>
+                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
+                </div>
+
+                <?php
+                $this->setData([
+                    'show_opd'   => !empty($is_lintas_opd),
+                    'base_url'   => 'adminopd/iku',
+                    'perm'       => 'iku_opd',
+                    'can_manage' => true,
+                    'query'      => '',
+                ]);
+                ?>
+                <?= $this->include('templates/iku/_tabel') ?>
             </div>
         </main>
 

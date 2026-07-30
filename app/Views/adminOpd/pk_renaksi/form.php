@@ -1,6 +1,13 @@
 <?php
+helper('capaian');
+
 $isBupati = ($jenis === 'bupati');
 $isEdit   = ($mode === 'edit');
+
+// Satuan bertipe predikat (mis. Opini BPK) -> Target Triwulan dipilih dari
+// skala, bukan diketik bebas. Lihat app/Models/SatuanModel.php.
+$skala      = $skala ?? [];
+$isPredikat = $skala !== [];
 $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
     $map = ['bupati' => 'Bupati', 'jpt' => 'Eselon II', 'camat' => 'Eselon III', 'administrator' => 'Eselon III', 'pengawas' => 'Eselon IV'];
     $pkJenis = strtolower(trim((string) $pkJenis));
@@ -65,6 +72,15 @@ $val = function (string $k) use ($isEdit, $detail, $ctx) {
     return old($k, $default);
 };
 $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
+
+// format_helper tidak ikut autoload (lihat Config\Autoload::$helpers), jadi
+// formatRupiah() dipanggil lewat pembungkus yang punya cadangan sendiri.
+$rupiah = function ($nilai) {
+    if (function_exists('formatRupiah')) {
+        return formatRupiah($nilai);
+    }
+    return 'Rp ' . number_format((float) $nilai, 0, ',', '.');
+};
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -130,40 +146,85 @@ $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
                     </div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="col-md-6 mb-3 mb-md-0">
                         <label class="form-label">Tahun PK</label>
                         <input type="text" class="form-control" value="<?= esc($tahun) ?>" readonly>
                     </div>
-                    <div class="col-md-4 mb-3 mb-md-0">
+                    <div class="col-md-6">
                         <label class="form-label">Target</label>
                         <input type="text" class="form-control" value="<?= esc($ctx['indikator_target'] ?? '-') ?>" readonly>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="capaian">Baseline (Capaian Awal)</label>
-                        <input type="text" class="form-control" id="capaian" name="capaian" value="<?= esc($val('capaian')) ?>">
-                    </div>
+                </div>
+
+                <?php // Program & anggaran ikut Perjanjian Kinerja indikator ini — hanya ditampilkan. ?>
+                <div class="mb-3">
+                    <label class="form-label">Program &amp; Anggaran <span class="text-muted fw-normal">(dari Perjanjian Kinerja)</span></label>
+                    <?php if (empty($programPk ?? [])): ?>
+                        <div class="alert alert-light border mb-0 py-2 px-3 text-muted small">
+                            Indikator PK ini belum ditautkan ke program mana pun. Atur lewat menu Program Perjanjian Kinerja.
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered align-middle mb-1">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:90px;">Kode</th>
+                                        <th>Program</th>
+                                        <th class="text-end" style="width:170px;">Anggaran</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $totalAnggaran = 0; ?>
+                                    <?php foreach ($programPk as $prog): ?>
+                                        <?php $totalAnggaran += (float) $prog['anggaran']; ?>
+                                        <tr>
+                                            <td><?= esc($prog['kode'] ?? '-') ?></td>
+                                            <td class="text-start"><?= esc($prog['program']) ?></td>
+                                            <td class="text-end text-nowrap"><?= esc($rupiah($prog['anggaran'])) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                <?php if (count($programPk) > 1): ?>
+                                    <tfoot>
+                                        <tr class="fw-semibold">
+                                            <td colspan="2" class="text-end">Total</td>
+                                            <td class="text-end text-nowrap"><?= esc($rupiah($totalAnggaran)) ?></td>
+                                        </tr>
+                                    </tfoot>
+                                <?php endif; ?>
+                            </table>
+                        </div>
+                        <small class="text-muted">Diambil otomatis dari PK — ubah datanya di menu Program Perjanjian Kinerja.</small>
+                    <?php endif; ?>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Rencana Aksi</label>
+                    <label class="form-label">Rencana Aksi &amp; Sub Rencana Aksi</label>
+                    <?php if ($isPredikat): ?>
+                        <div class="alert alert-warning py-2 small mb-2">
+                            <i class="fas fa-list-ol me-1"></i>
+                            Satuan <strong><?= esc($ctx['satuan'] ?? '-') ?></strong> memakai <strong>skala predikat</strong>,
+                            jadi Target Triwulan dipilih dari daftar:
+                            <?php foreach ($skala as $s): ?>
+                                <span class="badge bg-white text-dark border ms-1"><?= esc($s['kode']) ?> = <?= esc(rtrim(rtrim(number_format((float) $s['nilai'], 2, '.', ''), '0'), '.')) ?></span>
+                            <?php endforeach; ?>
+                            <div class="text-muted mt-1">Ubah skalanya di <em>Master Data &rarr; Satuan</em>.</div>
+                        </div>
+                    <?php endif; ?>
                     <div id="renaksi-list"></div>
                     <button type="button" id="add-renaksi" class="btn btn-outline-success btn-sm mt-1">
                         <i class="fas fa-plus me-1"></i> Tambah Rencana Aksi
                     </button>
-                    <small class="text-muted d-block mt-1">Tambahkan satu atau beberapa rencana aksi; akan tampil sebagai daftar 1, 2, 3 … di tabel.</small>
+                    <small class="text-muted d-block mt-1">
+                        Tiap rencana aksi bisa dirinci lagi jadi beberapa sub rencana aksi; di tabel akan tampil
+                        sebagai daftar 1, 2, 3 … dengan sub-nya masing-masing.
+                    </small>
                     <textarea name="rencana_aksi" id="rencana_aksi_joined" class="d-none" required></textarea>
+                    <input type="hidden" name="sub_rencana_json" id="sub_rencana_json" value="">
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Target Triwulan</label>
-                    <div class="row g-2">
-                        <div class="col"><input type="text" name="target_triwulan_1" class="form-control" placeholder="Triwulan I" value="<?= esc($val('target_triwulan_1')) ?>"></div>
-                        <div class="col"><input type="text" name="target_triwulan_2" class="form-control" placeholder="Triwulan II" value="<?= esc($val('target_triwulan_2')) ?>"></div>
-                        <div class="col"><input type="text" name="target_triwulan_3" class="form-control" placeholder="Triwulan III" value="<?= esc($val('target_triwulan_3')) ?>"></div>
-                        <div class="col"><input type="text" name="target_triwulan_4" class="form-control" placeholder="Triwulan IV" value="<?= esc($val('target_triwulan_4')) ?>"></div>
-                    </div>
-                    <small class="text-muted">Dapat berupa angka desimal (mis. 1,5) maupun teks predikat (mis. A, Baik, Cukup).</small>
-                </div>
+                <?php // Target triwulan tingkat indikator DIHAPUS dari form: targetnya kini
+                      // diisi per Sub Rencana Aksi di atas, dan MONEV membacanya dari sana. ?>
 
                 <div class="mb-3">
                     <label class="form-label" for="penanggung_jawab">
@@ -205,50 +266,214 @@ $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
     <script>
         (function () {
             var initial = <?= json_encode((string) $val('rencana_aksi')) ?>;
+            // Skala predikat satuan indikator ini; kosong = target diketik bebas.
+            var SKALA = <?= json_encode(array_map(static fn ($s) => [
+                'kode'  => $s['kode'],
+                'label' => $s['label'] ?? '',
+            ], $skala), JSON_UNESCAPED_UNICODE) ?>;
+            // Sub rencana aksi tersimpan: { "<indeks butir>": [ {id, teks}, ... ] }
+            var initialSub = <?= json_encode($subRencana ?? [], JSON_UNESCAPED_UNICODE) ?>;
+            var oldSub = <?= json_encode((string) (old('sub_rencana_json') ?? '')) ?>;
+            if (oldSub) {
+                try { initialSub = JSON.parse(oldSub); } catch (err) { /* pakai data tersimpan */ }
+            }
+
             var list = document.getElementById('renaksi-list');
             var joined = document.getElementById('rencana_aksi_joined');
-            if (!list || !joined) return;
+            var subJson = document.getElementById('sub_rencana_json');
+            if (!list || !joined || !subJson) return;
 
             function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-            function rowHtml(val) {
-                return '<div class="input-group mb-2 renaksi-item">'
-                    + '<input type="text" class="form-control renaksi-input" placeholder="Tulis rencana aksi" value="' + esc(val) + '">'
-                    + '<button type="button" class="btn btn-outline-danger remove-renaksi" title="Hapus"><i class="fas fa-trash"></i></button>'
+            /** Satu baris sub: teksnya + target triwulan I-IV milik sub itu sendiri. */
+            function subRowHtml(sub) {
+                sub = sub || {};
+                var teks = sub.teks || '';
+                var tw = sub.tw || [];
+                var id = sub.id ? String(sub.id) : '';
+                var twHtml = [0, 1, 2, 3].map(function (i) {
+                    var label = ['I', 'II', 'III', 'IV'][i];
+                    var nilai = tw[i] || '';
+
+                    // Satuan berpredikat -> dropdown skala. Nilai lama yang tidak
+                    // ada di skala tetap ditawarkan agar tidak terhapus diam-diam.
+                    if (SKALA.length) {
+                        var dikenal = SKALA.some(function (s) {
+                            return String(s.kode).toLowerCase() === String(nilai).trim().toLowerCase();
+                        });
+                        var opts = '<option value="">TW ' + label + '</option>'
+                            + SKALA.map(function (s) {
+                                var pilih = String(s.kode).toLowerCase() === String(nilai).trim().toLowerCase() ? ' selected' : '';
+                                var teks = s.label ? (s.kode + ' — ' + s.label) : s.kode;
+                                return '<option value="' + esc(s.kode) + '"' + pilih + '>' + esc(teks) + '</option>';
+                            }).join('')
+                            + (nilai !== '' && !dikenal
+                                ? '<option value="' + esc(nilai) + '" selected>' + esc(nilai) + ' (di luar skala)</option>'
+                                : '');
+                        return '<div class="col">'
+                            + '<select class="form-select form-select-sm sub-tw" data-q="' + i + '"'
+                            + ' title="Target Triwulan ' + label + '">' + opts + '</select>'
+                            + '</div>';
+                    }
+
+                    return '<div class="col">'
+                        + '<input type="text" class="form-control form-control-sm sub-tw" data-q="' + i + '"'
+                        + ' placeholder="TW ' + label + '" title="Target Triwulan ' + label + '"'
+                        + ' value="' + esc(nilai) + '">'
+                        + '</div>';
+                }).join('');
+
+                return '<div class="sub-item mb-2" data-id="' + esc(id) + '">'
+                    + '<div class="input-group input-group-sm mb-1">'
+                    + '<span class="input-group-text sub-no bg-white text-muted"></span>'
+                    + '<input type="text" class="form-control sub-input" placeholder="Tulis sub rencana aksi" value="' + esc(teks) + '">'
+                    + '<button type="button" class="btn btn-outline-danger remove-sub" title="Hapus sub"><i class="fas fa-times"></i></button>'
+                    + '</div>'
+                    + '<div class="row g-1 ps-4">' + twHtml + '</div>'
                     + '</div>';
             }
 
-            function sync() {
-                var vals = Array.prototype.slice.call(list.querySelectorAll('.renaksi-input'))
-                    .map(function (i) { return i.value.trim(); })
-                    .filter(function (v) { return v !== ''; });
-                joined.value = vals.join('\n');
+            function rowHtml(val, subs) {
+                var subHtml = (subs && subs.length ? subs : []).map(subRowHtml).join('');
+                return '<div class="renaksi-item border rounded p-2 mb-2 bg-light">'
+                    + '<div class="input-group mb-2">'
+                    + '<span class="input-group-text renaksi-no bg-white fw-semibold"></span>'
+                    + '<input type="text" class="form-control renaksi-input" placeholder="Tulis rencana aksi" value="' + esc(val) + '">'
+                    + '<button type="button" class="btn btn-outline-danger remove-renaksi" title="Hapus rencana aksi"><i class="fas fa-trash"></i></button>'
+                    + '</div>'
+                    + '<div class="ps-3 border-start">'
+                    + '<div class="small text-muted mb-1">Sub Rencana Aksi</div>'
+                    + '<div class="sub-list">' + subHtml + '</div>'
+                    + '<button type="button" class="btn btn-outline-secondary btn-sm add-sub"><i class="fas fa-plus me-1"></i>Tambah Sub</button>'
+                    + '</div>'
+                    + '</div>';
             }
 
-            function addRow(val) { list.insertAdjacentHTML('beforeend', rowHtml(val)); sync(); }
+            /** Nomori ulang label 1,2,3 supaya cocok dengan tampilan tabel. */
+            function renumber() {
+                var n = 0;
+                Array.prototype.forEach.call(list.querySelectorAll('.renaksi-item'), function (item) {
+                    var label = item.querySelector('.renaksi-no');
+                    if (label) label.textContent = (++n);
+                    var s = 0;
+                    Array.prototype.forEach.call(item.querySelectorAll('.sub-no'), function (el) {
+                        el.textContent = (++s);
+                    });
+                });
+            }
+
+            /**
+             * Butir kosong tidak ikut disimpan, jadi indeks sub HARUS dihitung dari
+             * urutan butir yang TIDAK kosong — sama dengan cara tabel memecah baris.
+             */
+            function sync() {
+                var vals = [];
+                var map = {};
+                var idx = 0;
+
+                Array.prototype.forEach.call(list.querySelectorAll('.renaksi-item'), function (item) {
+                    var inp = item.querySelector('.renaksi-input');
+                    var v = inp ? inp.value.trim() : '';
+                    if (v === '') return;
+
+                    vals.push(v);
+
+                    var subs = [];
+                    Array.prototype.forEach.call(item.querySelectorAll('.sub-item'), function (si) {
+                        var teksEl = si.querySelector('.sub-input');
+                        var teks = teksEl ? teksEl.value.trim() : '';
+                        if (teks === '') return;
+
+                        var tw = ['', '', '', ''];
+                        Array.prototype.forEach.call(si.querySelectorAll('.sub-tw'), function (t) {
+                            var q = parseInt(t.getAttribute('data-q'), 10);
+                            if (!isNaN(q) && q >= 0 && q < 4) tw[q] = t.value.trim();
+                        });
+
+                        // id ikut dikirim supaya sub yang sudah ada di DB diperbarui
+                        // di tempat — capaian MONEV menempel ke id ini.
+                        var id = parseInt(si.getAttribute('data-id'), 10);
+                        subs.push({ id: isNaN(id) ? 0 : id, teks: teks, tw: tw });
+                    });
+
+                    if (subs.length) map[idx] = subs;
+                    idx++;
+                });
+
+                joined.value = vals.join('\n');
+                subJson.value = JSON.stringify(map);
+            }
+
+            function addRow(val, subs) {
+                list.insertAdjacentHTML('beforeend', rowHtml(val, subs));
+                renumber();
+                sync();
+            }
 
             // Inisialisasi baris dari nilai tersimpan (edit) atau 1 baris kosong (tambah)
             var lines = String(initial || '').split(/\r\n|\r|\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; });
             if (lines.length === 0) lines = [''];
-            lines.forEach(addRow);
 
-            document.getElementById('add-renaksi').addEventListener('click', function () { addRow(''); });
+            lines.forEach(function (line, i) {
+                var raw = initialSub ? initialSub[i] : null;
+                var subs = [];
+                if (Array.isArray(raw)) {
+                    subs = raw.map(function (s) {
+                        if (s && typeof s === 'object') {
+                            // Dari DB tw berindeks 1..4 (jadi objek saat di-JSON-kan);
+                            // dari old() tw berupa array berindeks 0..3.
+                            var t = s.tw || {};
+                            var tw = Array.isArray(t)
+                                ? [t[0] || '', t[1] || '', t[2] || '', t[3] || '']
+                                : [t[1] || '', t[2] || '', t[3] || '', t[4] || ''];
+                            return { id: s.id || 0, teks: s.teks || '', tw: tw };
+                        }
+                        return { id: 0, teks: String(s || ''), tw: ['', '', '', ''] };
+                    }).filter(function (s) { return s.teks !== ''; });
+                }
+                addRow(line, subs);
+            });
+
+            document.getElementById('add-renaksi').addEventListener('click', function () { addRow('', []); });
 
             list.addEventListener('click', function (e) {
+                if (e.target.closest('.add-sub')) {
+                    var wrap = e.target.closest('.renaksi-item').querySelector('.sub-list');
+                    if (wrap) wrap.insertAdjacentHTML('beforeend', subRowHtml({ id: 0, teks: '', tw: ['', '', '', ''] }));
+                    renumber();
+                    sync();
+                    return;
+                }
+
+                if (e.target.closest('.remove-sub')) {
+                    e.target.closest('.sub-item').remove();
+                    renumber();
+                    sync();
+                    return;
+                }
+
                 if (e.target.closest('.remove-renaksi')) {
                     var items = list.querySelectorAll('.renaksi-item');
                     if (items.length > 1) {
                         e.target.closest('.renaksi-item').remove();
                     } else {
-                        var inp = e.target.closest('.renaksi-item').querySelector('.renaksi-input');
+                        // sisa satu butir: kosongkan saja, jangan sampai form tanpa baris
+                        var item = e.target.closest('.renaksi-item');
+                        var inp = item.querySelector('.renaksi-input');
                         if (inp) inp.value = '';
+                        var sl = item.querySelector('.sub-list');
+                        if (sl) sl.innerHTML = '';
                     }
+                    renumber();
                     sync();
                 }
             });
+
             list.addEventListener('input', function (e) {
-                if (e.target.classList.contains('renaksi-input')) sync();
+                var c = e.target.classList;
+                if (c.contains('renaksi-input') || c.contains('sub-input') || c.contains('sub-tw')) sync();
             });
+
             var form = list.closest('form');
             if (form) form.addEventListener('submit', sync);
         })();

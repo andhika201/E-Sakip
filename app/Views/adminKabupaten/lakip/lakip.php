@@ -1,3 +1,16 @@
+<?php
+/**
+ * LAKIP tingkat Kabupaten (tabel capaian + Analisis Faktor + Efisiensi Program).
+ *
+ * $lakipCanWrite  bool    tombol tambah/edit/hapus/ubah-status ditampilkan?
+ * $lakipBase      string  prefix rute halaman ini ('adminkab/lakip' | 'bupati/lakip')
+ *
+ * Keduanya diisi controller; fallback di sini hanya jaring pengaman agar view
+ * tetap aman bila dipanggil tanpa keduanya.
+ */
+$lakipCanWrite = $lakipCanWrite ?? in_array(($role ?? ''), ['admin_kab', 'admin'], true);
+$lakipBase     = $lakipBase ?? 'adminkab/lakip';
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -137,11 +150,11 @@
                 }
                 ?>
                 <div class="col-md-auto d-flex gap-2">
-                    <a href="<?= base_url('adminkab/lakip/cetak') . '?' . http_build_query($cetakParams) ?>"
+                    <a href="<?= base_url($lakipBase . '/cetak') . '?' . http_build_query($cetakParams) ?>"
                         target="_blank" class="btn btn-outline-danger">
                         <i class="fas fa-file-pdf me-1"></i> Cetak PDF
                     </a>
-                    <a href="<?= base_url('adminkab/lakip/cetak-excel') . '?' . http_build_query($cetakParams) ?>"
+                    <a href="<?= base_url($lakipBase . '/cetak-excel') . '?' . http_build_query($cetakParams) ?>"
                         class="btn btn-outline-success">
                         <i class="fas fa-file-excel me-1"></i> Cetak Excel
                     </a>
@@ -266,15 +279,15 @@
                                 if ($mode === 'opd')
                                     $q .= '&opd_id=' . urlencode($selectedOpdId ?? '');
 
-                                $tambahUrl = base_url('adminkab/lakip/tambah/' . ($r['target_id'] ?? 0)) . '?' . $q;
+                                $tambahUrl = base_url($lakipBase . '/tambah/' . ($r['target_id'] ?? 0)) . '?' . $q;
 
-                                $editUrl = base_url('adminkab/lakip/edit/' . ($r['indikator_id'] ?? 0)) . '?' . $q;
+                                $editUrl = base_url($lakipBase . '/edit/' . ($r['indikator_id'] ?? 0)) . '?' . $q;
 
                                 $changeStatusUrl = '';
                                 $nextStatus = '';
                                 if (!empty($lakipItem['id'])) {
                                     $nextStatus = ($sLower === 'selesai') ? 'draft' : 'selesai';
-                                    $changeStatusUrl = base_url('adminkab/lakip/status/' . $lakipItem['id'] . '/' . $nextStatus) . '?' . $q;
+                                    $changeStatusUrl = base_url($lakipBase . '/status/' . $lakipItem['id'] . '/' . $nextStatus) . '?' . $q;
                                 }
 
                                 // rowspan keys
@@ -340,7 +353,12 @@
 
                                     <td class="col-aksi">
                                         <div class="aksi-wrap">
-                                            <?php if (empty($lakipItem['id'])): ?>
+                                            <?php if (!$lakipCanWrite): ?>
+                                                <?php // Role read-only (inspektorat / bupati): tanpa tombol pengubah data. ?>
+                                                <span class="badge bg-light text-secondary border" title="Peran Anda hanya dapat melihat data">
+                                                    <i class="fas fa-eye me-1"></i>Lihat
+                                                </span>
+                                            <?php elseif (empty($lakipItem['id'])): ?>
                                                 <a class="btn btn-primary aksi-btn" href="<?= $tambahUrl ?>" title="Tambah LAKIP">
                                                     <i class="fas fa-plus"></i>
                                                 </a>
@@ -354,7 +372,7 @@
                                                         <i class="fas fa-sync-alt"></i>
                                                     </a>
                                                 <?php endif; ?>
-                                                <a class="btn btn-danger aksi-btn" href="<?= base_url('adminkab/lakip/delete/' . $lakipItem['id']) . '?' . $q ?>"
+                                                <a class="btn btn-danger aksi-btn" href="<?= base_url($lakipBase . '/delete/' . $lakipItem['id']) . '?' . $q ?>"
                                                     title="Hapus LAKIP" onclick="return confirm('Apakah Anda yakin ingin menghapus data LAKIP ini?');">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
@@ -369,6 +387,9 @@
             </div>
 
         </div>
+
+        <?php // Analisis Faktor Pencapaian Kinerja + Efisiensi Program dan Anggaran ?>
+        <?= $this->include('lakip/addendum_layar') ?>
     </main>
 
     <?= $this->include('adminKabupaten/templates/footer.php'); ?>

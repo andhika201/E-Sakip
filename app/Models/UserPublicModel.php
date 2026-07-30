@@ -61,39 +61,66 @@ class UserPublicModel extends Model
         ];
     }
 
+    /**
+     * IKU OPD untuk halaman publik.
+     *
+     * Sejak IKU berdiri sendiri, sumbernya `iku_indikator`/`iku_sasaran`/`iku_target`
+     * (difilter lewat `iku_sasaran.opd_id`), bukan lagi tabel `iku` yang menempel
+     * ke renstra. Bentuk keluarannya sengaja dipertahankan agar view tidak berubah.
+     */
     public function getIkuOpdData($opd_id)
     {
-        $query = $this->db->table('iku')
-            ->select('iku.id as iku_id, o.id as opd_id_val, o.nama_opd, iku.definisi, rs.sasaran, ris.indikator_sasaran as indikator, s.satuan, iku.renstra_id')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = iku.renstra_id')
-            ->join('satuan s', 's.id = ris.satuan', 'left')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id')
-            ->join('opd o', 'o.id = rs.opd_id')
-            ->where('iku.status', 'selesai')
-            ->where('iku.renstra_id IS NOT NULL');
+        $query = $this->db->table('iku_indikator ind')
+            ->select("
+                ind.id AS iku_id,
+                o.id AS opd_id_val,
+                o.nama_opd,
+                ind.definisi,
+                sas.sasaran,
+                ind.indikator AS indikator,
+                COALESCE(s.satuan, NULLIF(ind.satuan, '')) AS satuan
+            ", false)
+            ->join('iku_sasaran sas', 'sas.id = ind.iku_sasaran_id')
+            ->join('opd o', 'o.id = sas.opd_id')
+            ->join('satuan s', "ind.satuan REGEXP '^[0-9]+$' AND s.id = ind.satuan", 'left', false)
+            ->where('ind.status', 'selesai')
+            ->orderBy('o.nama_opd', 'ASC')
+            ->orderBy('sas.urutan', 'ASC')
+            ->orderBy('sas.id', 'ASC')
+            ->orderBy('ind.urutan', 'ASC')
+            ->orderBy('ind.id', 'ASC');
 
         if ($opd_id !== 'all') {
-            $query->where('rs.opd_id', (int) $opd_id);
+            $query->where('sas.opd_id', (int) $opd_id);
         }
 
-        $ikuOpdDataRaw = $query->get()->getResultArray();
+        $ikuOpdData = $query->get()->getResultArray();
 
-        $targets = $this->db->table('renstra_target')->get()->getResultArray();
+        $indikatorIds = array_column($ikuOpdData, 'iku_id');
         $targetMap = [];
         $tahun_set = [];
-        foreach ($targets as $t) {
-            $targetMap[$t['renstra_indikator_id']][$t['tahun']] = $t['target'];
-            $tahun_set[$t['tahun']] = true;
+
+        if (!empty($indikatorIds)) {
+            $targets = $this->db->table('iku_target')
+                ->select('iku_indikator_id, tahun, target')
+                ->whereIn('iku_indikator_id', $indikatorIds)
+                ->orderBy('tahun', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            foreach ($targets as $t) {
+                $targetMap[(int) $t['iku_indikator_id']][(int) $t['tahun']] = $t['target'];
+                $tahun_set[(int) $t['tahun']] = true;
+            }
         }
+
         $tahunList = array_keys($tahun_set);
         sort($tahunList);
 
-        $ikuOpdData = [];
-        foreach ($ikuOpdDataRaw as $row) {
-            $renstra_id = $row['renstra_id'];
-            $row['target_capaian'] = $targetMap[$renstra_id] ?? [];
-            $ikuOpdData[] = $row;
+        foreach ($ikuOpdData as &$row) {
+            $row['target_capaian'] = $targetMap[(int) $row['iku_id']] ?? [];
         }
+        unset($row);
 
         return [
             'ikuOpdData' => $ikuOpdData,

@@ -53,26 +53,63 @@ $statusLabel = static function ($status) {
         }
         .text-center { text-align: center; }
         .text-start { text-align: left; }
+        /* Judul dua tabel tambahan (Analisis Faktor & Efisiensi Program) */
+        .addendum-judul {
+            font-size: 11px;
+            font-weight: bold;
+            color: #00743e;
+            margin: 0 0 2px;
+            text-align: center;
+        }
+        .addendum-sub {
+            font-size: 8.4px;
+            color: #526158;
+            text-align: center;
+            margin: 0 0 6px;
+        }
+
+        /* ===== IDENTITAS DOKUMEN (pengganti KOP) =====
+           Cetak LAKIP TIDAK memakai kop surat, logo instansi, watermark,
+           header, maupun footer halaman. Dokumen langsung dimulai dari judul
+           di bawah ini. Lihat catatan di AdminOpd\LakipOpdController::cetak(). */
+        .lakip-doc-title {
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: .3px;
+            color: #15311f;
+            margin: 0 0 3px;
+        }
+        .lakip-doc-unit {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #15311f;
+            margin: 0 0 2px;
+        }
+        .lakip-doc-sub {
+            text-align: center;
+            font-size: 9px;
+            color: #555;
+            margin: 0 0 10px;
+        }
     </style>
 </head>
 <body>
     <?php
-    $subjudulParts = [];
-    $unitTxt = trim((string) ($unitName ?? ''));
-    if ($unitTxt !== '') {
-        $subjudulParts[] = (($mode ?? 'opd') === 'kabupaten') ? $unitTxt : 'Perangkat Daerah: ' . $unitTxt;
-    }
-    $subjudulParts[] = 'Tahun ' . ($tahunAktif !== '' ? $tahunAktif : '-');
-    $subjudulParts[] = $modeLabel;
+    // Identitas dokumen: judul + nama Kabupaten/OPD + tahun + konteks mode.
+    $unitTxt  = trim((string) ($unitName ?? ''));
+    $isUnitPd = ($unitTxt !== '' && ($mode ?? 'opd') !== 'kabupaten');
     ?>
-    <?php $this->setData([
-        'judul'      => 'Laporan Akuntabilitas Kinerja Instansi Pemerintah Daerah',
-        'subjudul'   => implode(' - ', $subjudulParts),
-        'namaUnit'   => (($mode ?? 'opd') === 'kabupaten') ? '' : strtoupper($unitTxt),
-        'logoOnly'   => false,
-        'hideAksara' => true,
-    ]); ?>
-    <?= $this->include('templates/pdf_kop') ?>
+    <div class="lakip-doc-title">Laporan Akuntabilitas Kinerja Instansi Pemerintah</div>
+    <?php if ($unitTxt !== ''): ?>
+        <div class="lakip-doc-unit"><?= esc(($isUnitPd ? 'Perangkat Daerah: ' : '') . $unitTxt) ?></div>
+    <?php endif; ?>
+    <div class="lakip-doc-sub">
+        Tahun <?= esc($tahunAktif !== '' ? $tahunAktif : '-') ?> &middot; Lingkup <?= esc($modeLabel) ?>
+    </div>
 
     <div class="filter-note">Status: <?= esc($statusFilter !== '' ? $statusLabel($statusFilter) : 'Semua Status') ?></div>
 
@@ -170,5 +207,8 @@ $statusLabel = static function ($status) {
             <?php endif; ?>
         </tbody>
     </table>
+
+    <?php // Analisis Faktor Pencapaian Kinerja + Efisiensi Program dan Anggaran ?>
+    <?= $this->include('lakip/addendum_cetak') ?>
 </body>
 </html>

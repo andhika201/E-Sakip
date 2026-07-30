@@ -4,60 +4,24 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
+/**
+ * DINONAKTIFKAN (2026-07-27).
+ *
+ * Tabel `iku_indikator_kinerja` bentuk lama tidak dipakai lagi dan tidak pernah
+ * terbentuk di DB. Penggantinya adalah `iku_indikator` yang dibuat oleh:
+ *   2026-07-27-000001_CreateIkuStandaloneTables
+ *
+ * Lihat catatan lengkap di 2025-07-08-011656_CreateIkuSasaranTable.
+ */
 class CreateIkuIndikatorKinerjaTable extends Migration
 {
     public function up()
     {
-        $this->forge->addField([
-                'id' => [
-                    'type' => 'INT',
-                    'constraint' => 11,
-                    'unsigned' => true,
-                    'auto_increment' => true,
-                ],
-                'iku_sasaran_id' => [
-                    'type' => 'INT',
-                    'constraint' => 11,
-                    'unsigned' => true,
-                    'null' => false,
-                ],
-                'indikator_kinerja' => [
-                    'type' => 'TEXT',
-                    'null' => false,
-                ],
-                'definisi_formulasi' => [
-                    'type' => 'TEXT',
-                    'null' => false,
-                ],
-                'satuan' => [
-                    'type' => 'VARCHAR',
-                    'constraint' => 50,
-                    'null' => false,
-                ],
-                'program_pendukung' => [
-                    'type' => 'TEXT',
-                    'null' => true,
-                ],
-                'created_at' => [
-                    'type' => 'DATETIME',
-                    'null' => true,
-                    'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                ],
-                'updated_at' => [
-                    'type' => 'DATETIME',
-                    'null' => true,
-                    'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                    'on_update' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
-                ],
-            ]);
-
-            $this->forge->addKey('id', true);
-            $this->forge->addForeignKey('iku_sasaran_id', 'iku_sasaran', 'id', 'CASCADE', 'CASCADE');
-            $this->forge->createTable('iku_indikator_kinerja');
+        // no-op — lihat 2026-07-27-000001_CreateIkuStandaloneTables
     }
 
     public function down()
     {
-        $this->forge->dropTable('iku_indikator_kinerja', true, true);
+        // no-op
     }
 }

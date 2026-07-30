@@ -409,7 +409,14 @@ class CascadingModel extends Model
             es4.nama_sasaran as es4_sasaran,
 
             i4.id as es4_indikator_id,
-            i4.indikator as es4_indikator
+            i4.indikator as es4_indikator,
+
+            pel.csf as csf_pelaksana,
+            pel.id as pelaksana_id,
+            pel.nama_sasaran as pelaksana_sasaran,
+
+            ipel.id as pelaksana_indikator_id,
+            ipel.indikator as pelaksana_indikator
         ")
             ->join('renstra_tujuan rt', 'rt.id=rs.renstra_tujuan_id', 'left')
             ->join('renstra_indikator_tujuan rit', 'rit.tujuan_id=rt.id', 'left')
@@ -438,6 +445,20 @@ class CascadingModel extends Model
                 'i4.cascading_sasaran_id = es4.id',
                 'left'
             )
+            // Jenjang PELAKSANA: pola yang sama persis dengan es4, satu tingkat
+            // lebih dalam. `es3_indikator_id` di sini berisi id indikator ES IV
+            // (kolomnya memang bermakna "indikator induk", lihat migrasi
+            // 2026-07-27-000009).
+            ->join(
+                'cascading_sasaran_opd pel',
+                'pel.es3_indikator_id = i4.id AND pel.level="pelaksana"',
+                'left'
+            )
+            ->join(
+                'cascading_indikator_opd ipel',
+                'ipel.cascading_sasaran_id = pel.id',
+                'left'
+            )
             ->where('rs.opd_id', $opdId);
 
         if ($startYear && $endYear) {
@@ -455,6 +476,8 @@ class CascadingModel extends Model
             ->orderBy('i3.id', 'ASC')
             ->orderBy('es4.id', 'ASC')
             ->orderBy('i4.id', 'ASC')
+            ->orderBy('pel.id', 'ASC')
+            ->orderBy('ipel.id', 'ASC')
             ->orderBy('rit.id', 'ASC')
             ->get()
             ->getResultArray();
@@ -543,6 +566,8 @@ class CascadingModel extends Model
             'es3_indikator_id',
             'es4_id',
             'es4_indikator_id',
+            'pelaksana_id',
+            'pelaksana_indikator_id',
         ];
 
         $parts = [];
@@ -572,6 +597,11 @@ class CascadingModel extends Model
             'es4_sasaran',
             'es4_indikator_id',
             'es4_indikator',
+            'csf_pelaksana',
+            'pelaksana_id',
+            'pelaksana_sasaran',
+            'pelaksana_indikator_id',
+            'pelaksana_indikator',
         ] as $field) {
             $base[$field] = null;
         }
@@ -930,9 +960,16 @@ class CascadingModel extends Model
     }
 
     // =====================================================================
-    // MODE 3 — KESELURUHAN: RPJMD (Tujuan→Sasaran) turun ke Renstra tiap OPD
+    // MODE 3 — KESELURUHAN: RPJMD (Tujuan→Sasaran) turun ke Renstra tiap OPD,
+    // lalu diteruskan ke cascade internal OPD: Eselon III → Eselon IV/JF →
+    // PELAKSANA (tabel rekursif cascading_sasaran_opd + cascading_indikator_opd).
+    //
     // Relasi: renstra_tujuan.rpjmd_sasaran_id = rpjmd_sasaran.id
     // LEFT JOIN agar sasaran RPJMD tanpa renstra tetap tampil (kolom '-').
+    //
+    // Catatan penting: setiap join ke cascading_sasaran_opd DIKUNCI ke
+    // rs.opd_id sehingga cascade satu OPD tidak pernah menempel pada indikator
+    // Renstra OPD lain. Semua dilakukan dalam SATU query (bukan N+1).
     // =====================================================================
     public function getKeseluruhanMatrix($start, $end)
     {
@@ -957,7 +994,22 @@ class CascadingModel extends Model
                 rs.sasaran as renstra_sasaran,
 
                 ris.id as renstra_indikator_id,
-                ris.indikator_sasaran as renstra_indikator
+                ris.indikator_sasaran as renstra_indikator,
+
+                es3.id as es3_id,
+                es3.nama_sasaran as es3_sasaran,
+                i3.id as es3_indikator_id,
+                i3.indikator as es3_indikator,
+
+                es4.id as es4_id,
+                es4.nama_sasaran as es4_sasaran,
+                i4.id as es4_indikator_id,
+                i4.indikator as es4_indikator,
+
+                pel.id as pelaksana_id,
+                pel.nama_sasaran as pelaksana_sasaran,
+                ipel.id as pelaksana_indikator_id,
+                ipel.indikator as pelaksana_indikator
             ", false)
             ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
             ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
@@ -970,6 +1022,31 @@ class CascadingModel extends Model
             )
             ->join('opd o', 'o.id = rs.opd_id', 'left')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            // ESELON III — milik OPD pemilik sasaran renstra tsb
+            ->join(
+                'cascading_sasaran_opd es3',
+                "es3.renstra_indikator_sasaran_id = ris.id AND es3.level = 'es3' AND es3.opd_id = rs.opd_id",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd i3', 'i3.cascading_sasaran_id = es3.id', 'left')
+            // ESELON IV / JF
+            ->join(
+                'cascading_sasaran_opd es4',
+                "es4.es3_indikator_id = i3.id AND es4.level = 'es4'",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd i4', 'i4.cascading_sasaran_id = es4.id', 'left')
+            // PELAKSANA — `es3_indikator_id` di sini berisi id indikator ES IV
+            // (kolomnya bermakna "indikator induk", lihat migrasi 2026-07-27-000009)
+            ->join(
+                'cascading_sasaran_opd pel',
+                "pel.es3_indikator_id = i4.id AND pel.level = 'pelaksana'",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd ipel', 'ipel.cascading_sasaran_id = pel.id', 'left')
             ->where('m.tahun_mulai', $start)
             ->where('m.tahun_akhir', $end)
             ->orderBy('t.id', 'ASC')
@@ -978,6 +1055,12 @@ class CascadingModel extends Model
             ->orderBy('rt.id', 'ASC')
             ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
+            ->orderBy('es3.id', 'ASC')
+            ->orderBy('i3.id', 'ASC')
+            ->orderBy('es4.id', 'ASC')
+            ->orderBy('i4.id', 'ASC')
+            ->orderBy('pel.id', 'ASC')
+            ->orderBy('ipel.id', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -1157,8 +1240,24 @@ class CascadingModel extends Model
 
     /**
      * Pohon Keseluruhan versi ringkas (tanpa Visi/Misi/Tujuan RPJMD/Sasaran RPJMD):
-     * langsung per Perangkat Daerah → Tujuan Renstra → Sasaran Renstra → Indikator.
-     * @return array list [ ['nama_opd', 'tujuan' => [ ['nama','sasaran'=>[ ['nama','indikators'=>[...]] ]] ]] ]
+     * Perangkat Daerah → Tujuan Renstra → Sasaran Renstra (ES II) → Indikator,
+     * DITERUSKAN ke cascade internal OPD: Eselon III → Eselon IV/JF → PELAKSANA.
+     *
+     * Satu query saja (semua jenjang di-LEFT JOIN) supaya tidak N+1.
+     *
+     * @return array list [
+     *   ['nama_opd', 'tujuan' => [
+     *      ['nama', 'sasaran' => [
+     *         ['nama', 'indikators' => [...], 'es3s' => [
+     *            ['nama', 'indikators' => [...], 'es4s' => [
+     *               ['nama', 'indikators' => [...], 'pelaksanas' => [
+     *                  ['nama', 'indikators' => [...]]
+     *               ]]
+     *            ]]
+     *         ]]
+     *      ]]
+     *   ]]
+     * ]
      */
     public function getKeseluruhanByOpd($start, $end): array
     {
@@ -1171,11 +1270,44 @@ class CascadingModel extends Model
                 rs.id as rs_id,
                 rs.sasaran as renstra_sasaran,
                 ris.id as ris_id,
-                ris.indikator_sasaran as renstra_indikator
+                ris.indikator_sasaran as renstra_indikator,
+                es3.id as es3_id,
+                es3.nama_sasaran as es3_sasaran,
+                i3.id as i3_id,
+                i3.indikator as es3_indikator,
+                es4.id as es4_id,
+                es4.nama_sasaran as es4_sasaran,
+                i4.id as i4_id,
+                i4.indikator as es4_indikator,
+                pel.id as pel_id,
+                pel.nama_sasaran as pelaksana_sasaran,
+                ipel.id as ipel_id,
+                ipel.indikator as pelaksana_indikator
             ')
             ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'inner')
             ->join('opd o', 'o.id = rs.opd_id', 'inner')
             ->join('renstra_indikator_sasaran ris', 'ris.renstra_sasaran_id = rs.id', 'left')
+            ->join(
+                'cascading_sasaran_opd es3',
+                "es3.renstra_indikator_sasaran_id = ris.id AND es3.level = 'es3' AND es3.opd_id = rs.opd_id",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd i3', 'i3.cascading_sasaran_id = es3.id', 'left')
+            ->join(
+                'cascading_sasaran_opd es4',
+                "es4.es3_indikator_id = i3.id AND es4.level = 'es4'",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd i4', 'i4.cascading_sasaran_id = es4.id', 'left')
+            ->join(
+                'cascading_sasaran_opd pel',
+                "pel.es3_indikator_id = i4.id AND pel.level = 'pelaksana'",
+                'left',
+                false
+            )
+            ->join('cascading_indikator_opd ipel', 'ipel.cascading_sasaran_id = pel.id', 'left')
             ->where('rt.rpjmd_sasaran_id IS NOT NULL')
             ->where('rs.tahun_mulai', (int) $start)
             ->where('rs.tahun_akhir', (int) $end)
@@ -1183,6 +1315,12 @@ class CascadingModel extends Model
             ->orderBy('rt.id', 'ASC')
             ->orderBy('rs.id', 'ASC')
             ->orderBy('ris.id', 'ASC')
+            ->orderBy('es3.id', 'ASC')
+            ->orderBy('i3.id', 'ASC')
+            ->orderBy('es4.id', 'ASC')
+            ->orderBy('i4.id', 'ASC')
+            ->orderBy('pel.id', 'ASC')
+            ->orderBy('ipel.id', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -1198,11 +1336,52 @@ class CascadingModel extends Model
             }
             $rs = $r['rs_id'];
             if (!isset($map[$opd]['tujuan'][$rt]['sasaran'][$rs])) {
-                $map[$opd]['tujuan'][$rt]['sasaran'][$rs] = ['nama' => $r['renstra_sasaran'], 'indikators' => []];
+                $map[$opd]['tujuan'][$rt]['sasaran'][$rs] = [
+                    'nama'       => $r['renstra_sasaran'],
+                    'indikators' => [],
+                    'es3s'       => [],
+                ];
             }
+            $sasNode = &$map[$opd]['tujuan'][$rt]['sasaran'][$rs];
+
             if (!empty($r['ris_id'])) {
-                $map[$opd]['tujuan'][$rt]['sasaran'][$rs]['indikators'][$r['ris_id']] = $r['renstra_indikator'];
+                $sasNode['indikators'][$r['ris_id']] = $r['renstra_indikator'];
             }
+
+            if (empty($r['es3_id'])) {
+                unset($sasNode);
+                continue;
+            }
+            if (!isset($sasNode['es3s'][$r['es3_id']])) {
+                $sasNode['es3s'][$r['es3_id']] = ['nama' => $r['es3_sasaran'], 'indikators' => [], 'es4s' => []];
+            }
+            $es3Node = &$sasNode['es3s'][$r['es3_id']];
+            if (!empty($r['i3_id'])) {
+                $es3Node['indikators'][$r['i3_id']] = $r['es3_indikator'];
+            }
+
+            if (empty($r['es4_id'])) {
+                unset($es3Node, $sasNode);
+                continue;
+            }
+            if (!isset($es3Node['es4s'][$r['es4_id']])) {
+                $es3Node['es4s'][$r['es4_id']] = ['nama' => $r['es4_sasaran'], 'indikators' => [], 'pelaksanas' => []];
+            }
+            $es4Node = &$es3Node['es4s'][$r['es4_id']];
+            if (!empty($r['i4_id'])) {
+                $es4Node['indikators'][$r['i4_id']] = $r['es4_indikator'];
+            }
+
+            if (!empty($r['pel_id'])) {
+                if (!isset($es4Node['pelaksanas'][$r['pel_id']])) {
+                    $es4Node['pelaksanas'][$r['pel_id']] = ['nama' => $r['pelaksana_sasaran'], 'indikators' => []];
+                }
+                if (!empty($r['ipel_id'])) {
+                    $es4Node['pelaksanas'][$r['pel_id']]['indikators'][$r['ipel_id']] = $r['pelaksana_indikator'];
+                }
+            }
+
+            unset($es4Node, $es3Node, $sasNode);
         }
 
         // Bersihkan jadi list (buang key id)
@@ -1212,12 +1391,37 @@ class CascadingModel extends Model
             foreach ($opd['tujuan'] as $t) {
                 $sasaranList = [];
                 foreach ($t['sasaran'] as $s) {
-                    $sasaranList[] = ['nama' => $s['nama'], 'indikators' => array_values($s['indikators'])];
+                    $es3List = [];
+                    foreach ($s['es3s'] as $e3) {
+                        $es4List = [];
+                        foreach ($e3['es4s'] as $e4) {
+                            $pelList = [];
+                            foreach ($e4['pelaksanas'] as $p) {
+                                $pelList[] = ['nama' => $p['nama'], 'indikators' => array_values($p['indikators'])];
+                            }
+                            $es4List[] = [
+                                'nama'       => $e4['nama'],
+                                'indikators' => array_values($e4['indikators']),
+                                'pelaksanas' => $pelList,
+                            ];
+                        }
+                        $es3List[] = [
+                            'nama'       => $e3['nama'],
+                            'indikators' => array_values($e3['indikators']),
+                            'es4s'       => $es4List,
+                        ];
+                    }
+                    $sasaranList[] = [
+                        'nama'       => $s['nama'],
+                        'indikators' => array_values($s['indikators']),
+                        'es3s'       => $es3List,
+                    ];
                 }
                 $tujuanList[] = ['nama' => $t['nama'], 'sasaran' => $sasaranList];
             }
             $tree[] = ['nama_opd' => $opd['nama_opd'], 'tujuan' => $tujuanList];
         }
+
         return $tree;
     }
 

@@ -18,8 +18,6 @@ class CreateLakipKabTable extends Migration
             'judul'        => [
                 'type'       => 'VARCHAR',
                 'constraint' => 255,
-                'constraint' => 255,
-    
             ],
             'tanggal_laporan' => [
                 'type'       => 'DATE',

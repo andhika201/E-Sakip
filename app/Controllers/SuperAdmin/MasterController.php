@@ -93,6 +93,8 @@ class MasterController extends BaseController
             'opd'            => $opdAll,
             'users'          => $usersAll,
             'satuan'         => $this->satuanModel->getAllSatuan(),
+            'satuanSkala'    => $this->satuanModel->semuaSkala(),
+            'satuanTipe'     => SatuanModel::TIPE,
 
             'roles'          => $roles,
             'permissions'    => $this->roleModel->allPermissions(),
@@ -507,13 +509,81 @@ class MasterController extends BaseController
         if ($satuan === '') {
             return $this->back('satuan', 'error', 'Nama satuan wajib diisi.');
         }
+        if (!$this->isSafeText($satuan)) {
+            return $this->back('satuan', 'error', 'Nama satuan mengandung karakter yang tidak diizinkan.');
+        }
+
+        $tipe = (string) $this->request->getPost('tipe');
+        if (!array_key_exists($tipe, SatuanModel::TIPE)) {
+            $tipe = 'angka';
+        }
+
+        // Skala predikat dikirim form sebagai JSON: [{kode,label,nilai}, ...]
+        $skala = $this->bacaSkalaSatuan();
+        if ($skala === false) {
+            return $this->back('satuan', 'error', 'Skala predikat mengandung karakter yang tidak diizinkan.');
+        }
+        if ($tipe === 'predikat' && $skala === []) {
+            return $this->back('satuan', 'error', 'Satuan bertipe predikat wajib punya minimal satu baris skala (kode + nilai).');
+        }
+
+        $data = ['satuan' => $satuan];
+        if ($this->db->fieldExists('tipe', 'satuan')) {
+            $data['tipe'] = $tipe;
+        }
 
         if ($id) {
-            $this->db->table('satuan')->where('id', $id)->update(['satuan' => $satuan]);
-            return $this->back('satuan', 'success', 'Satuan diperbarui.');
+            $this->db->table('satuan')->where('id', $id)->update($data);
+        } else {
+            $this->db->table('satuan')->insert($data);
+            $id = (int) $this->db->insertID();
         }
-        $this->db->table('satuan')->insert(['satuan' => $satuan]);
-        return $this->back('satuan', 'success', 'Satuan ditambahkan.');
+
+        // Tipe non-predikat tidak memakai skala -> dikosongkan supaya tidak ada
+        // sisa data yang membingungkan kalau tipenya diubah bolak-balik.
+        $this->satuanModel->simpanSkala($id, $tipe === 'predikat' ? $skala : []);
+
+        return $this->back('satuan', 'success', 'Satuan ' . ($this->request->getPost('id') ? 'diperbarui.' : 'ditambahkan.'));
+    }
+
+    /**
+     * Baca skala predikat dari POST `skala_json`.
+     *
+     * @return array<int, array{kode: string, label: string, nilai: string}>|false
+     *         false bila ada teks yang tidak lolos filter
+     */
+    private function bacaSkalaSatuan()
+    {
+        $raw = trim((string) ($this->request->getPost('skala_json') ?? ''));
+        if ($raw === '') {
+            return [];
+        }
+
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            return [];
+        }
+
+        $hasil = [];
+        foreach ($data as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $kode  = trim((string) ($item['kode'] ?? ''));
+            $label = trim((string) ($item['label'] ?? ''));
+            $nilai = trim((string) ($item['nilai'] ?? ''));
+            if ($kode === '' || $nilai === '') {
+                continue;
+            }
+            if (!$this->isSafeText($kode) || !$this->isSafeText($label)) {
+                return false;
+            }
+
+            $hasil[] = ['kode' => $kode, 'label' => $label, 'nilai' => $nilai];
+        }
+
+        return $hasil;
     }
 
     public function satuanDelete($id = null)

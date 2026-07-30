@@ -3,14 +3,37 @@
 namespace App\Controllers\AdminKab;
 
 use App\Controllers\BaseController;
+use App\Controllers\Concerns\LakipAddendumTrait;
 use App\Models\LakipModel;
 use App\Models\OpdModel;
 
 class LakipController extends BaseController
 {
+    /** Analisis Faktor + Efisiensi Program (dua tabel di bawah tabel utama). */
+    use LakipAddendumTrait;
+
     protected $lakipModel;
     protected $opdModel;
     protected $db;
+
+    /**
+     * Role yang boleh MEMBACA LAKIP kabupaten (lintas OPD).
+     * `bupati` ikut membaca lewat area rute /bupati (read-only, tanpa tombol ubah).
+     */
+    private const ROLE_BACA = ['admin_kab', 'admin', 'admin_inspektorat', 'bupati'];
+
+    /** Role yang boleh MENULIS (tambah/ubah/hapus/ubah status) LAKIP kabupaten. */
+    private const ROLE_TULIS = ['admin_kab', 'admin'];
+
+    /**
+     * Prefix rute halaman ini — dipakai LakipAddendumTrait untuk redirect &
+     * action form. Role bupati dilayani di area /bupati sehingga tautannya
+     * tidak pernah mengarah ke area administratif.
+     */
+    protected function lakipBaseUrl(): string
+    {
+        return session()->get('role') === 'bupati' ? 'bupati/lakip' : 'adminkab/lakip';
+    }
 
     public function __construct()
     {
@@ -28,8 +51,9 @@ class LakipController extends BaseController
     {
         $session = session();
         $role = $session->get('role');
-        // Baca LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only lintas OPD)
-        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
+        // Baca LAKIP kabupaten: admin_kab, super admin, inspektorat & bupati
+        // (tiga terakhir read-only lintas OPD)
+        if (!in_array($role, self::ROLE_BACA, true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 
@@ -54,7 +78,11 @@ class LakipController extends BaseController
             $lakipMap = $this->lakipModel->getLakipMapRpjmd((string) $tahun, ($status ?: null));
         }
 
-        return view('adminKabupaten/lakip/lakip', [
+        // Dua tabel tambahan (Analisis Faktor & Efisiensi Program) memakai
+        // tahun + lingkup yang sama dengan tabel utama.
+        $scope = $this->lakipScope((string) $tahun, $mode);
+
+        return view('adminKabupaten/lakip/lakip', array_merge($this->lakipAddendumData($scope), [
             'title' => 'LAKIP - Admin Kabupaten',
             'role' => $role,
             'mode' => $mode,
@@ -64,7 +92,14 @@ class LakipController extends BaseController
             'filters' => ['tahun' => $tahun, 'status' => $status],
             'rows' => $rows,
             'lakipMap' => $lakipMap,
-        ]);
+            'indikatorRows' => $rows,
+            'addendumBase' => $this->lakipBaseUrl(),
+            // Gate tombol tambah/edit/hapus/ubah-status pada tabel utama +
+            // prefix rute agar role read-only (inspektorat/bupati) tidak pernah
+            // melihat atau menuju aksi pengubah data.
+            'lakipCanWrite' => in_array($role, self::ROLE_TULIS, true),
+            'lakipBase' => $this->lakipBaseUrl(),
+        ]));
     }
 
     public function cetak()
@@ -77,8 +112,8 @@ class LakipController extends BaseController
 
         $session = session();
         $role = $session->get('role');
-        // Cetak LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only)
-        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
+        // Cetak LAKIP kabupaten: admin_kab, super admin, inspektorat & bupati (read-only)
+        if (!in_array($role, self::ROLE_BACA, true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 
@@ -104,7 +139,11 @@ class LakipController extends BaseController
         }
 
         $unitName = $opdInfo['nama_opd'] ?? (($mode === 'opd') ? 'Seluruh OPD' : 'Kabupaten Pringsewu');
-        $html = view('adminKabupaten/lakip/lakip_cetak', [
+
+        // Dua tabel tambahan ikut tercetak, memakai tahun & lingkup yang sama.
+        $scope = $this->lakipScope((string) $tahun, $mode);
+
+        $html = view('adminKabupaten/lakip/lakip_cetak', array_merge($this->lakipAddendumData($scope), [
             'title' => 'Cetak LAKIP - Admin Kabupaten',
             'role' => $role,
             'mode' => $mode,
@@ -118,21 +157,37 @@ class LakipController extends BaseController
             'rows' => $rows,
             'lakipMap' => $lakipMap,
             'unitName' => $unitName,
-        ]);
+            'indikatorRows' => $rows,
+        ]));
 
+        // ============================================================
+        // CETAK LAKIP: TANPA KOP, WATERMARK, HEADER, & FOOTER HALAMAN.
+        //
+        // Dokumen langsung dimulai dari judul "LAPORAN AKUNTABILITAS KINERJA
+        // INSTANSI PEMERINTAH" (lihat view adminKabupaten/lakip/lakip_cetak).
+        // Karena itu di sini SENGAJA TIDAK dipanggil:
+        //   - $mpdf->SetHTMLHeader() / SetHTMLFooter()   -> tanpa header/footer & nomor halaman
+        //   - pdf_watermark_aksara()                     -> tanpa watermark (SetWatermarkImage)
+        //   - templates/pdf_kop (di view)                -> tanpa KOP & logo instansi
+        // Modul PDF lain (Cascading, RPJMD, Renstra, MONEV, dst.) TIDAK diubah
+        // dan tetap memakai kop/footer/watermark standar.
+        //
+        // Margin dibuat sedikit lebih lega karena tidak ada kop/footer lagi.
+        // ============================================================
         $mpdf = new \Mpdf\Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4-L',
-            'margin_left' => 10,
-            'margin_right' => 10,
-            'margin_top' => 12,
-            'margin_bottom' => 10,
+            'margin_left' => 12,
+            'margin_right' => 12,
+            'margin_top' => 14,
+            'margin_bottom' => 14,
             'margin_header' => 0,
             'margin_footer' => 0,
             'tempDir' => sys_get_temp_dir(),
         ]);
-        $mpdf->SetHTMLFooter(pdf_footer_aksara());
-        pdf_watermark_aksara($mpdf);
+        // Matikan eksplisit bila ada konfigurasi global mPDF yang menyalakannya.
+        $mpdf->showWatermarkText  = false;
+        $mpdf->showWatermarkImage = false;
         $mpdf->SetDisplayMode('fullpage');
         $mpdf->WriteHTML($html);
 
@@ -148,8 +203,8 @@ class LakipController extends BaseController
 
         $session = session();
         $role = $session->get('role');
-        // Cetak LAKIP kabupaten: admin_kab, super admin, & inspektorat (read-only)
-        if (!in_array($role, ['admin_kab', 'admin', 'admin_inspektorat'], true)) {
+        // Cetak LAKIP kabupaten: admin_kab, super admin, inspektorat & bupati (read-only)
+        if (!in_array($role, self::ROLE_BACA, true)) {
             return redirect()->to('/login')->with('error', 'Akses ditolak');
         }
 
@@ -175,10 +230,18 @@ class LakipController extends BaseController
 
         $unitName = $opdInfo['nama_opd'] ?? (($mode === 'opd') ? 'Seluruh OPD' : 'Kabupaten Pringsewu');
 
+        // Sheet tambahan: Analisis Faktor & Efisiensi Program.
+        $scope    = $this->lakipScope((string) $tahun, $mode);
+        $addendum = $this->lakipAddendumData($scope);
+
         lakip_kab_excel($rows, $lakipMap, $mode, [
             'unit' => $unitName,
             'tahun' => (string) $tahun,
             'status' => (string) $status,
+        ], [
+            'indikatorRows' => $rows,
+            'analisisMap'   => $addendum['analisisMap'],
+            'efisiensiRows' => $addendum['efisiensiRows'],
         ]);
     }
 

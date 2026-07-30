@@ -9,7 +9,8 @@ $rLabel = $role === 'admin' ? 'Super Admin'
   : ($role === 'admin_opd' ? 'Admin OPD'
     : ($role === 'admin_kab' ? 'Admin Kabupaten'
       : ($role === 'admin_kecamatan' ? 'Admin Kecamatan'
-        : ($role === 'admin_inspektorat' ? 'Inspektorat' : 'Pengguna'))));
+        : ($role === 'admin_inspektorat' ? 'Inspektorat'
+          : ($role === 'bupati' ? 'Bupati' : 'Pengguna')))));
 $rName = session('username') ?: 'Pengguna';
 ?>
 <style>

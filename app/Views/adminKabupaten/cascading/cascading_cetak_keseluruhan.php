@@ -25,24 +25,43 @@ $rsKey  = fn($r) => $rtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x');
     ]); ?>
     <?= $this->include('templates/pdf_kop') ?>
 
-    <table class="pdf-table">
+    <?php
+    // Lebar kolom dipatok persen (12 kolom) supaya A3-L tetap terbaca dan
+    // tidak ada jenjang yang terpotong. Nilai diulang tiap baris (tanpa
+    // rowspan besar) agar mpdf memecah tabel antar-halaman dengan benar —
+    // termasuk baris Pelaksana.
+    $ik = static fn($v) => !empty($v) ? '<b style="color:#00743e;">IK</b> ' . nl2br(esc($v)) : '-';
+    ?>
+    <table class="pdf-table" style="table-layout:fixed;">
+        <colgroup>
+            <col style="width:9%;"><col style="width:9%;"><col style="width:9%;"><col style="width:8%;">
+            <col style="width:8%;"><col style="width:8%;">
+            <col style="width:8%;"><col style="width:8%;">
+            <col style="width:8%;"><col style="width:8%;">
+            <col style="width:8.5%;"><col style="width:8.5%;">
+        </colgroup>
         <thead>
             <tr>
-                <th style="min-width:140px;">Tujuan RPJMD</th>
-                <th style="min-width:140px;">Sasaran RPJMD</th>
-                <th style="min-width:140px;">Perangkat Daerah</th>
-                <th style="min-width:140px;">Tujuan Renstra</th>
-                <th style="min-width:140px;">Sasaran Renstra</th>
-                <th style="min-width:140px;">Indikator Renstra</th>
+                <th>Tujuan RPJMD</th>
+                <th>Sasaran RPJMD</th>
+                <th>Perangkat Daerah</th>
+                <th>Tujuan Renstra</th>
+                <th>Sasaran ESS II</th>
+                <th>Indikator ESS II</th>
+                <th>Sasaran ESS III</th>
+                <th>Indikator ESS III</th>
+                <th>Sasaran ESS IV / JF</th>
+                <th>Indikator ESS IV</th>
+                <th><?= esc(casc_pelaksana_label('Sasaran ')) ?></th>
+                <th><?= esc(casc_pelaksana_label('Indikator ')) ?></th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($rows)): ?>
                 <tr>
-                    <td colspan="6" class="c pdf-muted">Tidak ada data.</td>
+                    <td colspan="12" class="c pdf-muted">Tidak ada data.</td>
                 </tr>
             <?php else: ?>
-                <?php // Nilai diulang tiap baris (tanpa rowspan) agar mpdf memecah tabel antar-halaman dengan benar. ?>
                 <?php foreach ($rows as $r): ?>
                     <tr>
                         <td><?= nl2br(esc($r['tujuan_rpjmd'] ?? '-')) ?></td>
@@ -50,7 +69,13 @@ $rsKey  = fn($r) => $rtKey($r) . '|' . ($r['renstra_sasaran_id'] ?? 'x');
                         <td><?= !empty($r['nama_opd']) ? nl2br(esc($r['nama_opd'])) : '-' ?></td>
                         <td><?= !empty($r['renstra_tujuan']) ? nl2br(esc($r['renstra_tujuan'])) : '-' ?></td>
                         <td><?= !empty($r['renstra_sasaran']) ? nl2br(esc($r['renstra_sasaran'])) : '-' ?></td>
-                        <td><?= !empty($r['renstra_indikator']) ? '<b style="color:#00743e;">IK</b> ' . nl2br(esc($r['renstra_indikator'])) : '-' ?></td>
+                        <td><?= $ik($r['renstra_indikator'] ?? null) ?></td>
+                        <td><?= !empty($r['es3_sasaran']) ? nl2br(esc($r['es3_sasaran'])) : '-' ?></td>
+                        <td><?= $ik($r['es3_indikator'] ?? null) ?></td>
+                        <td><?= !empty($r['es4_sasaran']) ? nl2br(esc($r['es4_sasaran'])) : '-' ?></td>
+                        <td><?= $ik($r['es4_indikator'] ?? null) ?></td>
+                        <td><?= !empty($r['pelaksana_sasaran']) ? nl2br(esc($r['pelaksana_sasaran'])) : '-' ?></td>
+                        <td><?= $ik($r['pelaksana_indikator'] ?? null) ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

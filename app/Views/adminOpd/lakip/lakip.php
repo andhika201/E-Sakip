@@ -466,6 +466,9 @@
                     </table>
                 </div>
             </div>
+
+            <?php // Analisis Faktor Pencapaian Kinerja + Efisiensi Program dan Anggaran ?>
+            <?= $this->include('lakip/addendum_layar') ?>
         </main>
 
         <?= $this->include('adminOpd/templates/footer.php'); ?>

@@ -39,6 +39,7 @@ class Filters extends BaseFilters
         'permission'    => \App\Filters\PermissionFilter::class,
         'activitylog'   => \App\Filters\ActivityLogFilter::class,
         'modperm'       => \App\Filters\ModulePermissionFilter::class,
+        'readonlyrole'  => \App\Filters\ReadOnlyRoleFilter::class,
     ];
 
     /**
@@ -77,6 +78,9 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
+            // Tolak POST/PUT/PATCH/DELETE dari role baca-saja (bupati) di
+            // SELURUH URL — pagar terakhir setelah tombol disembunyikan di view.
+            'readonlyrole',
         ],
         'after' => [
             // 'honeypot',

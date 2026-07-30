@@ -15,11 +15,13 @@ class MonevModel extends Model
     protected $allowedFields = [
         'opd_id',
         'target_rencana_id',      // SELALU mengarah ke target_rencana.id
+        'target_sub_rencana_id',  // 0 = capaian tingkat renaksi (lama); >0 = per SUB rencana aksi
         'capaian_triwulan_1',
         'capaian_triwulan_2',
         'capaian_triwulan_3',
         'capaian_triwulan_4',
-        'total',
+        'metode_perhitungan',     // sum | trend_naik | trend_turun | trend_flat
+        'total',                  // Capaian Total dalam PERSEN, hasil hitung server
     ];
 
     protected $useTimestamps = true;
@@ -39,7 +41,6 @@ class MonevModel extends Model
             ->select('
                 tr.id AS target_id,
                 tr.rencana_aksi,
-                tr.capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -97,7 +98,6 @@ class MonevModel extends Model
                 tr.id  AS target_id,
                 tr.opd_id,
                 tr.rencana_aksi,
-                tr.capaian AS target_capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -169,7 +169,6 @@ class MonevModel extends Model
                 tr.id  AS target_id,
                 tr.opd_id,
                 tr.rencana_aksi,
-                tr.capaian AS target_capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -239,7 +238,6 @@ class MonevModel extends Model
                 tr.id  AS target_id,
                 tr.opd_id,
                 tr.rencana_aksi,
-                tr.capaian AS target_capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -310,7 +308,6 @@ class MonevModel extends Model
                 tr.opd_id,
                 tr.pk_indikator_id,
                 tr.rencana_aksi,
-                tr.capaian AS target_capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -344,9 +341,12 @@ class MonevModel extends Model
             ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'left')
             ->join('pk', 'pk.id = ps.pk_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            // Dibatasi ke capaian tingkat renaksi (sub 0) supaya satu renaksi
+            // dengan banyak baris capaian per SUB tidak melipatgandakan barisnya.
+            // Rekap per sub diambil terpisah lewat getBySubForTargets().
             ->join(
                 $this->table . ' AS m',
-                'm.target_rencana_id = tr.id AND m.opd_id IS NULL',
+                'm.target_rencana_id = tr.id AND m.opd_id IS NULL AND m.target_sub_rencana_id = 0',
                 'left'
             )
             ->where('tr.pk_indikator_id IS NOT NULL', null, false)
@@ -385,7 +385,6 @@ class MonevModel extends Model
                 tr.opd_id,
                 tr.pk_indikator_id,
                 tr.rencana_aksi,
-                tr.capaian AS target_capaian,
                 tr.target_triwulan_1,
                 tr.target_triwulan_2,
                 tr.target_triwulan_3,
@@ -431,9 +430,11 @@ class MonevModel extends Model
             ->join('pegawai pj', 'pj.id = pk.pihak_1', 'left')
             ->join('jabatan jb', 'jb.id = pj.jabatan_id', 'left')
             ->join('satuan s', 's.id = pi.id_satuan', 'left')
+            // Lihat catatan di getIndexDataPkBupati(): dibatasi ke sub 0 agar
+            // baris indikator tidak berlipat saat capaian diisi per SUB.
             ->join(
                 $this->table . ' AS m',
-                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id',
+                'm.target_rencana_id = tr.id AND m.opd_id = tr.opd_id AND m.target_sub_rencana_id = 0',
                 'left'
             )
             ->where('tr.pk_indikator_id IS NOT NULL', null, false);
@@ -566,9 +567,10 @@ class MonevModel extends Model
      * Ambil satu baris monev berdasarkan (target_rencana_id, opd_id).
      * Untuk mode KAB: $opdId = null (cari m.opd_id IS NULL).
      */
-    public function findByTargetAndOpd(int $targetRencanaId, ?int $opdId): ?array
+    public function findByTargetAndOpd(int $targetRencanaId, ?int $opdId, int $subId = 0): ?array
     {
-        $builder = $this->where('target_rencana_id', $targetRencanaId);
+        $builder = $this->where('target_rencana_id', $targetRencanaId)
+            ->where('target_sub_rencana_id', max(0, $subId));
 
         if ($opdId === null) {
             $builder->where('opd_id IS NULL', null, false);
@@ -580,21 +582,159 @@ class MonevModel extends Model
     }
 
     /**
+     * Capaian MONEV per SUB rencana aksi, dikelompokkan per renaksi.
+     *
+     * @param int[] $targetIds
+     *
+     * @return array<int, array<int, array<string, mixed>>> [target_rencana_id => [sub_id => baris monev]]
+     */
+    public function getBySubForTargets(array $targetIds): array
+    {
+        $targetIds = array_values(array_unique(array_filter(array_map('intval', $targetIds))));
+        if (empty($targetIds)) {
+            return [];
+        }
+
+        $rows = $this->db->table($this->table)
+            ->select('id, target_rencana_id, target_sub_rencana_id, opd_id,
+                      capaian_triwulan_1, capaian_triwulan_2, capaian_triwulan_3, capaian_triwulan_4,
+                      metode_perhitungan, total')
+            ->whereIn('target_rencana_id', $targetIds)
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['target_rencana_id']][(int) $row['target_sub_rencana_id']] = $row;
+        }
+
+        return $map;
+    }
+
+    /* ==========================================================
+     * REALISASI ANGGARAN (tabel monev_anggaran)
+     *
+     * Pagu anggarannya ikut Perjanjian Kinerja (pk_program -> program_pk);
+     * yang disimpan di sini hanya realisasinya, 1 baris per target_rencana.
+     * ========================================================*/
+
+    /**
+     * @param int[] $targetIds
+     *
+     * @return array<int, array<string, mixed>> [target_rencana_id => baris realisasi]
+     */
+    public function getAnggaranForTargets(array $targetIds): array
+    {
+        $targetIds = array_values(array_unique(array_filter(array_map('intval', $targetIds))));
+        if (empty($targetIds)) {
+            return [];
+        }
+
+        $rows = $this->db->table('monev_anggaran')
+            ->select('id, target_rencana_id, opd_id,
+                      realisasi_triwulan_1, realisasi_triwulan_2, realisasi_triwulan_3, realisasi_triwulan_4')
+            ->whereIn('target_rencana_id', $targetIds)
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['target_rencana_id']] = $row;
+        }
+
+        return $map;
+    }
+
+    public function findAnggaran(int $targetRencanaId): ?array
+    {
+        return $this->db->table('monev_anggaran')
+            ->where('target_rencana_id', $targetRencanaId)
+            ->get()
+            ->getRowArray() ?: null;
+    }
+
+    /**
+     * Upsert realisasi anggaran satu rencana aksi.
+     *
+     * @param array<int, float|null> $realisasi [1..4 => nilai rupiah, null = belum diisi]
+     */
+    public function upsertAnggaran(int $targetRencanaId, ?int $opdId, array $realisasi): void
+    {
+        $data = [
+            'opd_id'               => $opdId,
+            'realisasi_triwulan_1' => $realisasi[1] ?? null,
+            'realisasi_triwulan_2' => $realisasi[2] ?? null,
+            'realisasi_triwulan_3' => $realisasi[3] ?? null,
+            'realisasi_triwulan_4' => $realisasi[4] ?? null,
+            'updated_at'           => date('Y-m-d H:i:s'),
+        ];
+
+        $row = $this->findAnggaran($targetRencanaId);
+
+        if ($row) {
+            $this->db->table('monev_anggaran')->where('id', $row['id'])->update($data);
+            return;
+        }
+
+        $this->db->table('monev_anggaran')->insert($data + [
+            'target_rencana_id' => $targetRencanaId,
+            'created_at'        => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Buang capaian yang sub rencana aksinya sudah tidak ada lagi.
+     *
+     * `monev.target_sub_rencana_id` sengaja tanpa FK (lihat
+     * db/update_2026-07-27_monev_per_sub.sql), jadi pembersihannya di sini.
+     */
+    public function hapusCapaianSubYatim(int $targetRencanaId): int
+    {
+        $subIds = array_map('intval', array_column(
+            $this->db->table('target_sub_rencana')
+                ->select('id')
+                ->where('target_rencana_id', $targetRencanaId)
+                ->get()
+                ->getResultArray(),
+            'id'
+        ));
+
+        $builder = $this->db->table($this->table)
+            ->where('target_rencana_id', $targetRencanaId)
+            ->where('target_sub_rencana_id >', 0);
+
+        if (!empty($subIds)) {
+            $builder->whereNotIn('target_sub_rencana_id', $subIds);
+        }
+
+        $builder->delete();
+
+        return $this->db->affectedRows();
+    }
+
+    /**
      * Upsert per (target_rencana_id, opd_id).
      * - Mode OPD:  $opdId = id OPD
      * - Mode KAB:  $opdId = null
+     *
+     * `total` WAJIB sudah berupa persentase hasil calculateCapaianTotalPercentage()
+     * (lihat app/Helpers/capaian_helper.php) — model ini tidak menghitung sendiri
+     * dan tidak menerima angka ketikan pengguna.
      */
-    public function upsertForTarget(int $targetRencanaId, ?int $opdId, array $payload): array
+    public function upsertForTarget(int $targetRencanaId, ?int $opdId, array $payload, int $subId = 0): array
     {
-        $row = $this->findByTargetAndOpd($targetRencanaId, $opdId);
+        $subId = max(0, $subId);
+        $row   = $this->findByTargetAndOpd($targetRencanaId, $opdId, $subId);
 
         $data = [
             'opd_id' => $opdId,
             'target_rencana_id' => $targetRencanaId,
+            'target_sub_rencana_id' => $subId,
             'capaian_triwulan_1' => $payload['capaian_triwulan_1'] ?? null,
             'capaian_triwulan_2' => $payload['capaian_triwulan_2'] ?? null,
             'capaian_triwulan_3' => $payload['capaian_triwulan_3'] ?? null,
             'capaian_triwulan_4' => $payload['capaian_triwulan_4'] ?? null,
+            'metode_perhitungan' => $payload['metode_perhitungan'] ?? null,
             'total' => array_key_exists('total', $payload) ? $payload['total'] : null,
         ];
 

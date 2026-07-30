@@ -1,4 +1,6 @@
 <?php
+helper('capaian'); // capaianFormatPersen() untuk kolom Capaian Total
+
 $isBupati = ($jenis === 'bupati');
 $isOpd    = !$isBupati;
 $isKab    = (($role ?? '') === 'admin_kab');
@@ -195,8 +197,11 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
         <th rowspan="2">Sasaran</th>
         <th rowspan="2">Indikator</th>
         <th rowspan="2">Satuan</th>
+        <th rowspan="2">Program</th>
+        <th rowspan="2">Anggaran</th>
+        <th colspan="4">Realisasi Anggaran Per Triwulan (Rp)</th>
         <th rowspan="2">Rencana Aksi</th>
-        <th rowspan="2">Baseline</th>
+        <th rowspan="2">Sub Rencana Aksi</th>
         <th colspan="4">Target Triwulan</th>
         <th colspan="4">Capaian Triwulan</th>
         <th rowspan="2">Capaian Total</th>
@@ -205,19 +210,69 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
     <tr>
         <th>I</th><th>II</th><th>III</th><th>IV</th>
         <th>I</th><th>II</th><th>III</th><th>IV</th>
+        <th>I</th><th>II</th><th>III</th><th>IV</th>
     </tr>
     </thead>
     <tbody>
     <?php if (!empty($grouped)): ?>
         <?php
         $no = 1;
+        // Baris MONEV mengikuti SUB rencana aksi; target & capaian triwulan per sub.
+        $subMap     = $subMap ?? [];
+        $monevSub   = $monevSub ?? [];
+        $programMap = $programMap ?? [];
+        $rupiah = function ($nilai) {
+            if (function_exists('formatRupiah')) {
+                return formatRupiah($nilai);
+            }
+            return 'Rp ' . number_format((float) $nilai, 0, ',', '.');
+        };
+        $barisFor = function ($row) use ($splitAksi, $subMap, $programMap) {
+            $items = $splitAksi($row['rencana_aksi'] ?? '');
+            $subs  = $subMap[(int) ($row['target_id'] ?? 0)] ?? [];
+            $nProg = count($programMap[(int) ($row['pk_indikator_id'] ?? 0)] ?? []);
+
+            if (empty($items)) {
+                return [[], [1], max(1, $nProg), 1];
+            }
+
+            $perButir = [];
+            foreach ($items as $k => $_) {
+                $perButir[$k] = max(1, count($subs[$k] ?? []));
+            }
+            $barisRenaksi = array_sum($perButir);
+
+            return [$items, $perButir, max($barisRenaksi, $nProg), $barisRenaksi];
+        };
+
+        /** Bagi tinggi indikator ke jumlah program lewat rowspan. */
+        $bagiProgram = function (array $programs, int $n): array {
+            if (empty($programs)) {
+                return [[], []];
+            }
+            $span = [];
+            $mulai = [];
+            $sisaBaris   = $n;
+            $sisaProgram = count($programs);
+            $awal = 0;
+            foreach ($programs as $pi => $_) {
+                $s = max(1, (int) ceil($sisaBaris / max(1, $sisaProgram)));
+                $span[$pi]   = $s;
+                $mulai[$awal] = $pi;
+                $awal        += $s;
+                $sisaBaris   -= $s;
+                $sisaProgram--;
+            }
+            return [$span, $mulai];
+        };
         $opdTotals = [];
         if ($showOpd) {
             foreach ($grouped as $gr) {
                 $ok = $gr[0]['opd_id'] ?? ($gr[0]['nama_opd'] ?? '-');
                 $t  = 0;
                 foreach ($gr as $grRow) {
-                    $t += max(1, count($splitAksi($grRow['rencana_aksi'] ?? '')));
+                    [, , $nb] = $barisFor($grRow);
+                    $t += $nb;
                 }
                 $opdTotals[$ok] = ($opdTotals[$ok] ?? 0) + $t;
             }
@@ -229,7 +284,7 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
             $indCounts = [];
             $sasTotal  = 0;
             foreach ($rows as $ri => $r) {
-                $c = max(1, count($splitAksi($r['rencana_aksi'] ?? '')));
+                [, , $c] = $barisFor($r);
                 $indCounts[$ri] = $c;
                 $sasTotal += $c;
             }
@@ -247,8 +302,23 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
             $newOpd = ($showOpd && $opdKey !== $curOpdKey);
             ?>
             <?php foreach ($rows as $ri => $row): ?>
-                <?php $items = $splitAksi($row['rencana_aksi'] ?? ''); $n = $indCounts[$ri]; ?>
+                <?php
+                [$items, $barisButir, $n, $barisRenaksi] = $barisFor($row);
+                $targetId  = (int) ($row['target_id'] ?? 0);
+                $subsRow   = $subMap[$targetId] ?? [];
+                $capaian   = $monevSub[$targetId] ?? [];
+                $programs  = array_values($programMap[(int) ($row['pk_indikator_id'] ?? 0)] ?? []);
+                $realisasi = ($anggaranMap ?? [])[$targetId] ?? null;
+                $barisRender = [];
+                foreach ($barisButir as $bk => $bJumlah) {
+                    for ($bj = 0; $bj < $bJumlah; $bj++) {
+                        $barisRender[] = [$bk, $bj];
+                    }
+                }
+                [$spanProgram, $mulaiProgram] = $bagiProgram($programs, $n);
+                ?>
                 <?php for ($k = 0; $k < $n; $k++): ?>
+                    <?php [$butirIdx, $subIdx] = $barisRender[$k] ?? [null, null]; ?>
                     <tr>
                         <?php if ($showOpd): ?>
                             <?php if ($newOpd): ?>
@@ -276,21 +346,71 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
                             <td rowspan="<?= $n ?>" class="c"><?= esc($row['satuan'] ?? '-') ?></td>
                         <?php endif; ?>
 
-                        <td class="text-start">
-                            <?php $txt = $items[$k] ?? ''; echo ($txt !== '') ? esc($txt) : ($n === 1 ? '-' : ''); ?>
-                        </td>
+                        <?php // Program & pagu anggaran ikut PK, dibagi lewat rowspan ?>
+                        <?php if (empty($programs)): ?>
+                            <?php if ($k === 0): ?>
+                                <td rowspan="<?= $n ?>" class="c">-</td>
+                                <td rowspan="<?= $n ?>" class="c">-</td>
+                            <?php endif; ?>
+                        <?php elseif (isset($mulaiProgram[$k])): ?>
+                            <?php
+                            $pi   = $mulaiProgram[$k];
+                            $prog = $programs[$pi];
+                            $span = $spanProgram[$pi] ?? 1;
+                            ?>
+                            <td rowspan="<?= $span ?>" class="text-start">
+                                <?= esc(!empty($prog['kode']) ? '[' . $prog['kode'] . '] ' : '') ?><?= esc($prog['program']) ?>
+                            </td>
+                            <td rowspan="<?= $span ?>" class="text-start nowrap"><?= esc($rupiah($prog['anggaran'])) ?></td>
+                        <?php endif; ?>
+
+                        <?php // Realisasi anggaran: per indikator ?>
+                        <?php if ($k === 0): ?>
+                            <?php foreach ([1, 2, 3, 4] as $q): ?>
+                                <?php $rv = $realisasi['realisasi_triwulan_' . $q] ?? null; ?>
+                                <td rowspan="<?= $n ?>" class="text-start nowrap">
+                                    <?= ($rv !== null && $rv !== '') ? esc($rupiah($rv)) : '-' ?>
+                                </td>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+
+                        <?php if ($butirIdx === null): ?>
+                            <?php // Sisa baris: Renaksi + Sub + 4 target + 4 capaian + total = 11 kolom ?>
+                            <?php if ($k === $barisRenaksi): ?>
+                                <td colspan="11" rowspan="<?= $n - $barisRenaksi ?>"></td>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <?php // Rencana Aksi membentang setinggi sub rencana aksinya ?>
+                            <?php if ($subIdx === 0): ?>
+                                <td rowspan="<?= $barisButir[$butirIdx] ?? 1 ?>" class="text-start">
+                                    <?php $txt = $items[$butirIdx] ?? ''; ?>
+                                    <?= ($txt !== '') ? esc(($butirIdx + 1) . '. ' . $txt) : '-' ?>
+                                </td>
+                            <?php endif; ?>
+
+                            <?php
+                            $sub   = $subsRow[$butirIdx][$subIdx] ?? null;
+                            $subId = (int) ($sub['id'] ?? 0);
+                            $cap   = $capaian[$subId] ?? null;
+                            ?>
+                            <td class="text-start">
+                                <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '-' ?>
+                            </td>
+
+                            <?php // Target & capaian triwulan sama-sama mengikuti SUB rencana aksi ?>
+                            <?php foreach ([1, 2, 3, 4] as $q): ?>
+                                <?php $tw = $sub['tw'][$q] ?? null; ?>
+                                <td class="c"><?= ($tw !== null && $tw !== '') ? esc($tw) : '-' ?></td>
+                            <?php endforeach; ?>
+                            <?php foreach ([1, 2, 3, 4] as $q): ?>
+                                <?php $cv = $cap['capaian_triwulan_' . $q] ?? null; ?>
+                                <td class="c"><?= ($cv !== null && $cv !== '') ? esc($cv) : '-' ?></td>
+                            <?php endforeach; ?>
+                            <?php // Capaian Total = persentase hasil hitungan server (monev.total) ?>
+                            <td class="c"><?= capaianFormatPersen($cap['total'] ?? null) ?></td>
+                        <?php endif; ?>
 
                         <?php if ($k === 0): ?>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['indikator_target'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['target_triwulan_1'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['target_triwulan_2'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['target_triwulan_3'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['target_triwulan_4'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['capaian_triwulan_1'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['capaian_triwulan_2'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['capaian_triwulan_3'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['capaian_triwulan_4'] ?? '-') ?></td>
-                            <td rowspan="<?= $n ?>" class="c"><?= esc($row['monev_total'] ?? '-') ?></td>
                             <?php if ($isBupati): ?>
                                 <?php if (!$pdPrinted): ?>
                                     <td rowspan="<?= $sasTotal ?>" class="text-start">
@@ -314,7 +434,9 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
         <?php endforeach; ?>
     <?php else: ?>
         <tr>
-            <td colspan="<?= 16 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0) ?>" class="c pdf-muted">
+            <?php // +1 kolom sejak Sub Rencana Aksi ditambahkan ?>
+            <?php // +2 Program & Anggaran, +4 Realisasi Anggaran per triwulan, -1 Baseline dihapus ?>
+            <td colspan="<?= 22 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0) ?>" class="c pdf-muted">
                 Belum ada data Rencana Aksi / MONEV PK untuk filter ini.
             </td>
         </tr>

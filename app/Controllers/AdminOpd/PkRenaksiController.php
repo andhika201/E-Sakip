@@ -5,6 +5,7 @@ namespace App\Controllers\AdminOpd;
 use App\Controllers\BaseController;
 use App\Models\Opd\TargetModel;
 use App\Models\Opd\MonevModel;
+use App\Models\SatuanModel;
 use Config\Database;
 
 /**
@@ -23,15 +24,35 @@ use Config\Database;
  */
 class PkRenaksiController extends BaseController
 {
+    /** `capaian` menyediakan rumus Capaian Total (persentase) untuk MONEV. */
+    protected $helpers = ['cascading_label', 'capaian'];
+
     protected TargetModel $targets;
     protected MonevModel $monev;
+    protected SatuanModel $satuan;
     protected $db;
 
     public function __construct()
     {
         $this->targets = new TargetModel();
         $this->monev   = new MonevModel();
+        $this->satuan  = new SatuanModel();
         $this->db      = Database::connect();
+    }
+
+    /**
+     * Skala predikat satuan sebuah indikator (kosong = satuan angka biasa).
+     *
+     * Sengaja diambil terpisah, bukan lewat JOIN di query besar: instalasi yang
+     * belum menjalankan db/update_2026-07-27_satuan_predikat.sql tetap jalan
+     * (SatuanModel mengembalikan [] kalau tabelnya belum ada), tinggal input
+     * target/capaiannya kembali berupa angka bebas.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function skalaSatuan(?array $ctx): array
+    {
+        return $this->satuan->skalaBySatuan((int) ($ctx['satuan_id'] ?? 0));
     }
 
     /* ===================== HELPER KONTEKS ===================== */
@@ -271,12 +292,19 @@ class PkRenaksiController extends BaseController
      */
     private function base(string $jenis): string
     {
+        $role = (string) session()->get('role');
+
+        // Role bupati SELALU dilayani di area /bupati (read-only), termasuk
+        // untuk jenis 'bupati' maupun 'es3', supaya tautan pada view tidak
+        // pernah mengarah ke area administratif /adminkab.
+        if ($role === 'bupati') {
+            return 'bupati';
+        }
         if ($jenis === 'bupati') {
             return 'adminkab';
         }
         // admin_kab & admin_inspektorat memantau lintas OPD lewat rute /adminkab (read-only);
         // admin_opd & admin_kecamatan mengelola PK-nya sendiri lewat /adminopd.
-        $role = (string) session()->get('role');
         return in_array($role, ['admin_kab', 'admin_inspektorat'], true) ? 'adminkab' : 'adminopd';
     }
 
@@ -292,6 +320,12 @@ class PkRenaksiController extends BaseController
     private function ensureRole(string $jenis, bool $write): bool
     {
         $role = (string) session()->get('role');
+
+        // Role bupati: BACA saja, untuk semua jenis. Tidak pernah lolos ke $write.
+        if ($role === 'bupati') {
+            return !$write;
+        }
+
         if ($jenis === 'bupati') {
             if ($write) {
                 return $role === 'admin_kab';
@@ -316,6 +350,7 @@ class PkRenaksiController extends BaseController
                 pi.id        AS pk_indikator_id,
                 pi.indikator AS indikator_sasaran,
                 pi.target    AS indikator_target,
+                pi.id_satuan AS satuan_id,
                 s.satuan     AS satuan,
                 pk.id        AS pk_id,
                 pk.tahun     AS tahun,
@@ -393,6 +428,12 @@ class PkRenaksiController extends BaseController
             $tahunList   = $this->targets->getAvailableYearsPkOpd($opdFilter);
         }
 
+        // Program & anggaran diambil dari PK (pk_program -> program_pk), dan sub
+        // rencana aksi dari target_sub_rencana. Keduanya relasi 1-ke-banyak, jadi
+        // diambil terpisah supaya baris indikator tidak berlipat karena join.
+        $programMap = $this->targets->getProgramPkByIndikator(array_column($rows, 'pk_indikator_id'));
+        $subMap     = $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id'));
+
         // Group per sasaran PK (pakai pk_sasaran_id agar sasaran milik pejabat
         // berbeda tidak tergabung walau teksnya kebetulan sama)
         $grouped = [];
@@ -410,6 +451,8 @@ class PkRenaksiController extends BaseController
         ];
 
         return view('adminOpd/pk_renaksi/index', [
+            'programMap'   => $programMap,
+            'subMap'       => $subMap,
             'opdMap'       => $opdMap,
             'autoPd'       => $autoPd,
             'manualPd'     => $manualPd,
@@ -463,12 +506,15 @@ class PkRenaksiController extends BaseController
         }
 
         return view('adminOpd/pk_renaksi/form', [
-            'jenis'   => $jenis,
-            'base'    => $this->base($jenis),
-            'mode'    => 'tambah',
-            'ctx'     => $ctx,
-            'detail'  => null,
-            'opdList' => ($jenis === 'bupati') ? $this->opdOptions() : [],
+            'jenis'      => $jenis,
+            'base'       => $this->base($jenis),
+            'mode'       => 'tambah',
+            'ctx'        => $ctx,
+            'detail'     => null,
+            'opdList'    => ($jenis === 'bupati') ? $this->opdOptions() : [],
+            'subRencana' => [],
+            'skala'      => $this->skalaSatuan($ctx),
+            'programPk'  => $this->targets->getProgramPkByIndikator([$pi])[$pi] ?? [],
         ]);
     }
 
@@ -480,17 +526,11 @@ class PkRenaksiController extends BaseController
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
         }
 
-        $rxN = $this->rxNumber();
         $rxT = $this->rxText();
         $rules = [
             'pk_indikator_id'   => 'required|integer',
             'rencana_aksi'      => 'required|string|max_length[10000]|' . $rxT,
             'penanggung_jawab'  => 'permit_empty|string|max_length[255]|' . $rxT,
-            'capaian'           => 'permit_empty|' . $rxN,
-            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
         ];
         if (!$this->validate($rules, $this->triwulanMessages())) {
             return redirect()->back()->withInput()
@@ -512,17 +552,25 @@ class PkRenaksiController extends BaseController
                 ->with('error', 'Rencana aksi sudah ada untuk indikator ini.');
         }
 
-        $this->targets->insert([
+        $subRencana = $this->bacaSubRencana();
+        if ($subRencana === false) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Sub rencana aksi mengandung karakter yang tidak diizinkan.');
+        }
+
+        $newId = $this->targets->insert([
             'opd_id'            => (int) $ctx['opd_id'],
             'pk_indikator_id'   => $pi,
             'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
-            'capaian'           => $this->request->getPost('capaian'),
-            'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
-            'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
-            'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
-            'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
+            // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
+            // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
+            // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
             'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
-        ]);
+        ], true);
+
+        if ($newId) {
+            $this->targets->saveSubRencana((int) $newId, $subRencana);
+        }
 
         return redirect()->to(base_url($this->renaksiUrl($jenis)))
             ->with('success', 'Rencana aksi berhasil ditambahkan.');
@@ -546,13 +594,20 @@ class PkRenaksiController extends BaseController
                 ->with('error', 'Data bukan milik OPD Anda.');
         }
 
+        $pkIndikatorId = (int) ($detail['pk_indikator_id'] ?? 0);
+
         return view('adminOpd/pk_renaksi/form', [
-            'jenis'   => $jenis,
-            'base'    => $this->base($jenis),
-            'mode'    => 'edit',
-            'ctx'     => $detail,
-            'detail'  => $detail,
-            'opdList' => ($jenis === 'bupati') ? $this->opdOptions() : [],
+            'jenis'      => $jenis,
+            'base'       => $this->base($jenis),
+            'mode'       => 'edit',
+            'ctx'        => $detail,
+            'detail'     => $detail,
+            'opdList'    => ($jenis === 'bupati') ? $this->opdOptions() : [],
+            'subRencana' => $this->targets->getSubRencanaByTarget((int) $id),
+            'skala'      => $this->skalaSatuan($detail),
+            'programPk'  => $pkIndikatorId > 0
+                ? ($this->targets->getProgramPkByIndikator([$pkIndikatorId])[$pkIndikatorId] ?? [])
+                : [],
         ]);
     }
 
@@ -575,34 +630,126 @@ class PkRenaksiController extends BaseController
                 ->with('error', 'Data bukan milik OPD Anda.');
         }
 
-        $rxN = $this->rxNumber();
         $rxT = $this->rxText();
         $rules = [
             'rencana_aksi'      => 'required|string|max_length[10000]|' . $rxT,
             'penanggung_jawab'  => 'permit_empty|string|max_length[255]|' . $rxT,
-            'capaian'           => 'permit_empty|' . $rxN,
-            'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'target_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
         ];
         if (!$this->validate($rules, $this->triwulanMessages())) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' ', $this->validator->getErrors()));
         }
 
+        $subRencana = $this->bacaSubRencana();
+        if ($subRencana === false) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Sub rencana aksi mengandung karakter yang tidak diizinkan.');
+        }
+
         $this->targets->update($id, [
             'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
-            'capaian'           => $this->request->getPost('capaian'),
-            'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
-            'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
-            'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
-            'target_triwulan_4' => $this->request->getPost('target_triwulan_4'),
+            // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
+            // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
+            // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
             'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
         ]);
 
+        $this->targets->saveSubRencana($id, $subRencana);
+        // Capaian MONEV milik sub yang dihapus ikut dibersihkan (kolomnya tanpa FK).
+        $this->monev->hapusCapaianSubYatim($id);
+
         return redirect()->to(base_url($this->renaksiUrl($jenis)))
             ->with('success', 'Rencana aksi berhasil diperbarui.');
+    }
+
+    /**
+     * Baca sub rencana aksi dari POST.
+     *
+     * Form mengirimnya sebagai JSON pada field `sub_rencana_json`, berbentuk
+     * { "<indeks butir rencana aksi>": [ {"teks": "...", "tw": ["I","II","III","IV"]}, ... ] }.
+     * JSON dipakai (bukan input array bernama) supaya penomoran butir tetap benar
+     * walau ada butir yang dihapus/disisipkan di tengah.
+     *
+     * Target triwulan sengaja TIDAK dipaksa cocok dengan skala predikat: untuk
+     * satuan berpredikat, form sudah membatasinya lewat dropdown, sedangkan
+     * data lama yang di luar skala tetap boleh tersimpan apa adanya. Kalau
+     * targetnya tidak bisa dinilai, Capaian Total-nya yang melaporkan
+     * (lihat calculateCapaianTotalPercentage()), bukan simpanan yang ditolak.
+     *
+     * @return array<int, array<int, array{teks: string, tw: array<int, string|null>}>>|false
+     *         false bila ada teks yang tidak lolos filter
+     */
+    private function bacaSubRencana()
+    {
+        $raw = (string) ($this->request->getPost('sub_rencana_json') ?? '');
+        if (trim($raw) === '') {
+            return [];
+        }
+
+        $data = json_decode($raw, true);
+        if (!is_array($data)) {
+            return [];
+        }
+
+        // Pola yang sama dengan rxText() dipakai field rencana aksi.
+        $aman = static fn(string $teks): bool => (bool) preg_match(
+            '/^(?!.*<\s*script\b)(?!.*<\/\s*script\s*>)(?!.*javascript\s*:)(?!.*data\s*:\s*text\/html)(?!.*(?<!\w)on\w+\s*=)(?!.*<\?php)(?!.*<\?).*$/is',
+            $teks
+        );
+
+        $hasil = [];
+        foreach ($data as $indeksBaris => $daftar) {
+            $indeksBaris = (int) $indeksBaris;
+            if ($indeksBaris < 0 || !is_array($daftar)) {
+                continue;
+            }
+
+            foreach ($daftar as $item) {
+                // Terima bentuk ringkas (string) maupun lengkap (objek: id + teks + triwulan).
+                $teks = is_array($item) ? ($item['teks'] ?? '') : $item;
+                if (!is_scalar($teks)) {
+                    continue;
+                }
+
+                $teks = trim((string) $teks);
+                if ($teks === '') {
+                    continue;
+                }
+                if (mb_strlen($teks) > 2000 || !$aman($teks)) {
+                    return false;
+                }
+
+                $tw = [];
+                $twInput = is_array($item) ? (array) ($item['tw'] ?? []) : [];
+                foreach ([1, 2, 3, 4] as $q) {
+                    // JSON dari form berindeks 0..3; terima juga kunci 1..4.
+                    $nilai = $twInput[$q - 1] ?? ($twInput[$q] ?? null);
+                    if (!is_scalar($nilai)) {
+                        $tw[$q] = null;
+                        continue;
+                    }
+
+                    $nilai = trim((string) $nilai);
+                    if ($nilai === '') {
+                        $tw[$q] = null;
+                        continue;
+                    }
+                    if (mb_strlen($nilai) > 255 || !$aman($nilai)) {
+                        return false;
+                    }
+
+                    $tw[$q] = $nilai;
+                }
+
+                // id sub dipertahankan supaya capaian MONEV yang menempel padanya
+                // tidak putus setiap kali rencana aksi disunting.
+                $idSub = is_array($item) ? (int) ($item['id'] ?? 0) : 0;
+
+                $hasil[$indeksBaris][] = ['id' => max(0, $idSub), 'teks' => $teks, 'tw' => $tw];
+            }
+        }
+
+        return $hasil;
     }
 
     /* =========== PERANGKAT DAERAH PENDUKUNG PK BUPATI: FORM KELOLA =========== */
@@ -733,28 +880,24 @@ class PkRenaksiController extends BaseController
         }
 
         $grouped = [];
-        $withCapaian = 0;
-        $pctSum = 0.0;
-        $pctN   = 0;
         foreach ($rows as $row) {
             $grouped[$row['pk_sasaran_id'] ?? '-'][] = $row;
-            if (!empty($row['monev_id'])) {
-                $withCapaian++;
-            }
-            $target = $this->pkNum($row['indikator_target'] ?? null);
-            $total  = $this->pkNum($row['monev_total'] ?? null);
-            if ($target && $total !== null) {
-                $pctSum += ($total / $target * 100);
-                $pctN++;
-            }
         }
-        $summary = [
-            'renaksi'      => count($rows),
-            'with_capaian' => $withCapaian,
-            'avg_pct'      => $pctN > 0 ? round($pctSum / $pctN, 1) : null,
-        ];
+
+        // Capaian disimpan per SUB rencana aksi, jadi rekapnya dihitung dari
+        // sana (bukan dari kolom hasil join yang hanya memuat capaian sub 0).
+        $monevSub = $this->monev->getBySubForTargets(array_column($rows, 'target_id'));
+        $summary  = $this->ringkasCapaian(count($rows), $monevSub);
 
         return view('adminOpd/pk_renaksi/monev', [
+            // Target triwulan kini per SUB rencana aksi, dan capaiannya pun
+            // disimpan per sub — keduanya diambil terpisah lalu dipetakan.
+            'subMap'      => $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id')),
+            'monevSub'    => $monevSub,
+            // Program & pagu anggaran ikut PK (sama dengan Target & Rencana Aksi),
+            // realisasi anggarannya diinput sendiri di MONEV.
+            'programMap'  => $this->targets->getProgramPkByIndikator(array_column($rows, 'pk_indikator_id')),
+            'anggaranMap' => $this->monev->getAnggaranForTargets(array_column($rows, 'target_id')),
             'jenis'       => $jenis,
             'autoPd'      => $autoPd,
             'base'        => $this->base($jenis),
@@ -832,28 +975,19 @@ class PkRenaksiController extends BaseController
         }
 
         $grouped = [];
-        $withCapaian = 0;
-        $pctSum = 0.0;
-        $pctN   = 0;
         foreach ($rows as $row) {
             $grouped[$row['pk_sasaran_id'] ?? '-'][] = $row;
-            if (!empty($row['monev_id'])) {
-                $withCapaian++;
-            }
-            $target = $this->pkNum($row['indikator_target'] ?? null);
-            $total  = $this->pkNum($row['monev_total'] ?? null);
-            if ($target && $total !== null) {
-                $pctSum += ($total / $target * 100);
-                $pctN++;
-            }
         }
-        $summary = [
-            'renaksi'      => count($rows),
-            'with_capaian' => $withCapaian,
-            'avg_pct'      => $pctN > 0 ? round($pctSum / $pctN, 1) : null,
-        ];
+
+        $monevSub = $this->monev->getBySubForTargets(array_column($rows, 'target_id'));
+        $summary  = $this->ringkasCapaian(count($rows), $monevSub);
 
         $html = view('adminOpd/pk_renaksi/cetak', [
+            // Target triwulan per SUB rencana aksi + capaiannya per sub
+            'subMap'      => $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id')),
+            'monevSub'    => $monevSub,
+            'programMap'  => $this->targets->getProgramPkByIndikator(array_column($rows, 'pk_indikator_id')),
+            'anggaranMap' => $this->monev->getAnggaranForTargets(array_column($rows, 'target_id')),
             'jenis'       => $jenis,
             'grouped'     => $grouped,
             'tahun'       => $tahun ?? 'all',
@@ -972,6 +1106,8 @@ class PkRenaksiController extends BaseController
         ];
 
         $html = view('adminOpd/pk_renaksi/target_rencana_aksi_cetak', [
+            'programMap'   => $this->targets->getProgramPkByIndikator(array_column($rows, 'pk_indikator_id')),
+            'subMap'       => $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id')),
             'opdMap'       => $opdMap,
             'autoPd'       => $autoPd,
             'manualPd'     => $manualPd,
@@ -1013,14 +1149,39 @@ class PkRenaksiController extends BaseController
         exit;
     }
 
-    /** Angka Indonesia -> float (null bila kosong/non-numerik). */
-    private function pkNum($v): ?float
+    /**
+     * Kartu ringkasan MONEV.
+     *
+     * `monev.total` sudah berupa PERSENTASE hasil hitungan server, jadi
+     * rata-ratanya cukup dirata-rata langsung — tidak dibagi target lagi.
+     *
+     * @param int                                              $jumlahRenaksi baris indikator/renaksi yang tampil
+     * @param array<int, array<int, array<string, mixed>>>     $monevSub      [target_id => [sub_id => baris monev]]
+     *
+     * @return array{renaksi: int, with_capaian: int, avg_pct: float|null}
+     */
+    private function ringkasCapaian(int $jumlahRenaksi, array $monevSub): array
     {
-        if ($v === null || $v === '') {
-            return null;
+        $terisi = 0;
+        $jumlah = 0.0;
+        $n      = 0;
+
+        foreach ($monevSub as $perSub) {
+            foreach ($perSub as $cap) {
+                $terisi++;
+                $pct = capaianToFloat($cap['total'] ?? null);
+                if ($pct !== null) {
+                    $jumlah += $pct;
+                    $n++;
+                }
+            }
         }
-        $v = str_replace(',', '.', (string) $v);
-        return is_numeric($v) ? (float) $v : null;
+
+        return [
+            'renaksi'      => $jumlahRenaksi,
+            'with_capaian' => $terisi,
+            'avg_pct'      => $n > 0 ? round($jumlah / $n, 1) : null,
+        ];
     }
 
     /* ===================== MONEV: FORM INPUT CAPAIAN ===================== */
@@ -1043,14 +1204,119 @@ class PkRenaksiController extends BaseController
 
         // monev.opd_id: bupati = NULL, es3 = target_rencana.opd_id
         $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
-        $monevRow   = $this->monev->findByTargetAndOpd((int) $targetId, $monevOpdId);
+
+        // Capaian diinput per SUB rencana aksi (?sub=<id>). Tanpa ?sub, form
+        // jatuh ke capaian tingkat rencana aksi (bentuk lama, sub_id = 0).
+        $subId = (int) ($this->request->getGet('sub') ?? 0);
+        $sub   = $subId > 0 ? $this->cariSubRencana((int) $targetId, $subId) : null;
+        if ($subId > 0 && $sub === null) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Sub rencana aksi tidak ditemukan pada rencana aksi ini.');
+        }
+
+        $monevRow = $this->monev->findByTargetAndOpd((int) $targetId, $monevOpdId, $subId);
+        $targets  = $this->targetTriwulan($detail, $sub);
+        $skala    = $this->skalaSatuan($detail);
+
+        // Pratinjau awal dihitung di server juga, supaya form edit menampilkan
+        // angka yang benar bahkan sebelum/ tanpa JavaScript berjalan.
+        $preview = calculateCapaianTotalPercentage(
+            $monevRow['metode_perhitungan'] ?? null,
+            $targets,
+            [
+                1 => $monevRow['capaian_triwulan_1'] ?? null,
+                2 => $monevRow['capaian_triwulan_2'] ?? null,
+                3 => $monevRow['capaian_triwulan_3'] ?? null,
+                4 => $monevRow['capaian_triwulan_4'] ?? null,
+            ],
+            $skala
+        );
+
+        // Predikat tidak bisa diakumulasi (menjumlah opini BPK tak bermakna).
+        $metodeList = capaianMetodeList();
+        if ($skala !== []) {
+            unset($metodeList['sum']);
+        }
 
         return view('adminOpd/pk_renaksi/monev_form', [
-            'jenis'  => $jenis,
-            'base'   => $this->base($jenis),
-            'detail' => $detail,
-            'monev'  => $monevRow,
+            'jenis'      => $jenis,
+            'base'       => $this->base($jenis),
+            'detail'     => $detail,
+            'monev'      => $monevRow,
+            'sub'        => $sub,
+            'targets'    => $targets,
+            'skala'      => $skala,
+            'metodeList' => $metodeList,
+            'preview'    => $preview,
         ]);
+    }
+
+    /**
+     * Target triwulan acuan sebuah baris capaian: dari SUB rencana aksi bila
+     * capaiannya per sub, kalau tidak dari tingkat rencana aksi (bentuk lama).
+     *
+     * Selalu dibaca dari DB — target yang dikirim browser tidak pernah dipercaya.
+     *
+     * @return array<int, string|null> [1..4 => target]
+     */
+    private function targetTriwulan(array $detail, ?array $sub): array
+    {
+        $sumber = $sub ?? $detail;
+
+        return [
+            1 => $sumber['target_triwulan_1'] ?? null,
+            2 => $sumber['target_triwulan_2'] ?? null,
+            3 => $sumber['target_triwulan_3'] ?? null,
+            4 => $sumber['target_triwulan_4'] ?? null,
+        ];
+    }
+
+    /**
+     * Cek bentuk nilai capaian menurut satuannya.
+     *
+     * - satuan angka   : wajib angka (boleh desimal titik/koma)
+     * - satuan predikat: wajib salah satu kode skala
+     *
+     * $lama = baris monev tersimpan. Nilai yang SUDAH tersimpan tapi di luar
+     * skala (data sebelum satuannya dijadikan predikat) tetap diterima apa
+     * adanya — supaya membuka lalu menyimpan form tidak menghapus data lama;
+     * Capaian Total-nya yang akan dilaporkan belum bisa dihitung.
+     *
+     * @param array<int, string|null>          $capaian
+     * @param array<int, array<string, mixed>> $skala
+     * @param array<string, mixed>             $lama
+     *
+     * @return string|null pesan kesalahan, null bila semua sah
+     */
+    private function cekBentukCapaian(array $capaian, array $skala, array $lama = []): ?string
+    {
+        $peta = capaianSkalaMap($skala);
+
+        foreach ([1, 2, 3, 4] as $q) {
+            $nilai = $capaian[$q] ?? null;
+            if (!capaianTerisi($nilai)) {
+                continue;
+            }
+
+            $tersimpan = $lama['capaian_triwulan_' . $q] ?? null;
+            if (capaianTerisi($tersimpan) && (string) $tersimpan === (string) $nilai) {
+                continue; // nilai lama, tidak diubah
+            }
+
+            if ($peta === []) {
+                if (capaianToFloat($nilai) === null) {
+                    return 'Capaian Triwulan ' . capaianRomawi($q) . ' harus berupa angka.';
+                }
+                continue;
+            }
+
+            if (capaianNilaiSkala($nilai, $peta) === null) {
+                return 'Capaian Triwulan ' . capaianRomawi($q) . ' harus salah satu dari: '
+                    . implode(', ', array_column($skala, 'kode')) . '.';
+            }
+        }
+
+        return null;
     }
 
     /* ===================== MONEV: SIMPAN CAPAIAN ===================== */
@@ -1061,21 +1327,27 @@ class PkRenaksiController extends BaseController
             return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
         }
 
-        $rxT = $this->rxText();
+        // Tahap 1: yang bisa divalidasi tanpa tahu indikatornya. Bentuk nilai
+        // capaian baru bisa dicek setelah satuannya diketahui (angka vs predikat).
+        // `total` sengaja TIDAK divalidasi/disimpan dari POST — selalu dihitung
+        // ulang di server (lihat di bawah).
         $rules = [
             'target_rencana_id'  => 'required|integer',
-            'capaian_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'capaian_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'capaian_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'capaian_triwulan_4' => 'permit_empty|string|max_length[255]|' . $rxT,
-            'total'              => 'permit_empty|string|max_length[255]|' . $rxT,
+            'metode_perhitungan' => 'required|in_list[' . implode(',', array_keys(capaianMetodeList())) . ']',
+            'capaian_triwulan_1' => 'permit_empty|max_length[255]|' . $this->rxText(),
+            'capaian_triwulan_2' => 'permit_empty|max_length[255]|' . $this->rxText(),
+            'capaian_triwulan_3' => 'permit_empty|max_length[255]|' . $this->rxText(),
+            'capaian_triwulan_4' => 'permit_empty|max_length[255]|' . $this->rxText(),
         ];
         $messages = [
+            'metode_perhitungan' => [
+                'required' => 'Metode perhitungan wajib dipilih.',
+                'in_list'  => 'Metode perhitungan tidak dikenal.',
+            ],
             'capaian_triwulan_1' => ['regex_match' => 'Capaian Triwulan I mengandung karakter yang tidak diizinkan.'],
             'capaian_triwulan_2' => ['regex_match' => 'Capaian Triwulan II mengandung karakter yang tidak diizinkan.'],
             'capaian_triwulan_3' => ['regex_match' => 'Capaian Triwulan III mengandung karakter yang tidak diizinkan.'],
             'capaian_triwulan_4' => ['regex_match' => 'Capaian Triwulan IV mengandung karakter yang tidak diizinkan.'],
-            'total'              => ['regex_match' => 'Total capaian mengandung karakter yang tidak diizinkan.'],
         ];
         if (!$this->validate($rules, $messages)) {
             return redirect()->back()->withInput()
@@ -1095,19 +1367,180 @@ class PkRenaksiController extends BaseController
 
         $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
 
+        // Sub harus benar-benar milik rencana aksi ini (cegah tempel capaian
+        // ke sub milik renaksi/OPD lain).
+        $subId = (int) ($this->request->getPost('target_sub_rencana_id') ?? 0);
+        $sub   = null;
+        if ($subId > 0) {
+            $sub = $this->cariSubRencana($targetId, $subId);
+            if ($sub === null) {
+                return redirect()->to(base_url($this->monevUrl($jenis)))
+                    ->with('error', 'Sub rencana aksi tidak ditemukan pada rencana aksi ini.');
+            }
+        }
+
         $txt = fn ($v) => ($v === null || $v === '') ? null : trim((string) $v);
-        $payload = [
-            'capaian_triwulan_1' => $txt($this->request->getPost('capaian_triwulan_1')),
-            'capaian_triwulan_2' => $txt($this->request->getPost('capaian_triwulan_2')),
-            'capaian_triwulan_3' => $txt($this->request->getPost('capaian_triwulan_3')),
-            'capaian_triwulan_4' => $txt($this->request->getPost('capaian_triwulan_4')),
-            'total'              => $txt($this->request->getPost('total')),
+        $metode  = (string) $this->request->getPost('metode_perhitungan');
+        $capaian = [
+            1 => $txt($this->request->getPost('capaian_triwulan_1')),
+            2 => $txt($this->request->getPost('capaian_triwulan_2')),
+            3 => $txt($this->request->getPost('capaian_triwulan_3')),
+            4 => $txt($this->request->getPost('capaian_triwulan_4')),
         ];
 
-        $this->monev->upsertForTarget($targetId, $monevOpdId, $payload);
+        // Tahap 2: bentuk nilai capaian, sekarang satuannya sudah diketahui.
+        $skala = $this->skalaSatuan($detail);
+        $lama  = $this->monev->findByTargetAndOpd($targetId, $monevOpdId, $subId) ?? [];
+        if ($skala !== [] && $metode === 'sum') {
+            return redirect()->back()->withInput()
+                ->with('error', 'Metode Akumulasi / Jumlah tidak berlaku untuk satuan berpredikat.');
+        }
+        if (($salah = $this->cekBentukCapaian($capaian, $skala, $lama)) !== null) {
+            return redirect()->back()->withInput()->with('error', $salah);
+        }
+
+        // Capaian Total dihitung ULANG di server dari target yang tersimpan di
+        // DB. Nilai `total` yang dikirim browser sengaja diabaikan — form-nya
+        // readonly, tapi POST-nya tetap bisa dimanipulasi.
+        $hitung = calculateCapaianTotalPercentage($metode, $this->targetTriwulan($detail, $sub), $capaian, $skala);
+
+        $payload = [
+            'capaian_triwulan_1' => $capaian[1],
+            'capaian_triwulan_2' => $capaian[2],
+            'capaian_triwulan_3' => $capaian[3],
+            'capaian_triwulan_4' => $capaian[4],
+            'metode_perhitungan' => $metode,
+            'total'              => $hitung['percentage'],
+        ];
+
+        $this->monev->upsertForTarget($targetId, $monevOpdId, $payload, $subId);
+
+        // Capaian tetap tersimpan walau persentasenya belum bisa dihitung
+        // (mis. target triwulannya masih berupa teks) — pengguna diberi tahu
+        // apa yang harus dibereskan, bukan kehilangan data yang sudah diketik.
+        if ($hitung['error'] !== null && $hitung['filled_quarters_count'] > 0) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Capaian tersimpan, tetapi Capaian Total belum dapat dihitung: ' . $hitung['error']);
+        }
 
         return redirect()->to(base_url($this->monevUrl($jenis)))
             ->with('success', 'Capaian berhasil disimpan.');
+    }
+
+    /* ============ MONEV: REALISASI ANGGARAN (form & simpan) ============ */
+
+    /**
+     * Form realisasi anggaran per triwulan untuk satu rencana aksi.
+     * Pagu anggarannya read-only, ikut Perjanjian Kinerja.
+     */
+    public function monevAnggaranForm($jenis, $targetId)
+    {
+        $jenis = $this->normJenis((string) $jenis);
+        if (!$jenis || !$this->ensureRole($jenis, true)) {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
+        }
+
+        $detail = $this->getRenaksiDetail((int) $targetId, $jenis);
+        if (!$detail) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Rencana aksi tidak ditemukan.');
+        }
+        if ($jenis === 'es3' && (int) $detail['opd_id'] !== (int) session()->get('opd_id')) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Data bukan milik OPD Anda.');
+        }
+
+        $pkIndikatorId = (int) ($detail['pk_indikator_id'] ?? 0);
+
+        return view('adminOpd/pk_renaksi/monev_anggaran_form', [
+            'jenis'     => $jenis,
+            'base'      => $this->base($jenis),
+            'detail'    => $detail,
+            'anggaran'  => $this->monev->findAnggaran((int) $targetId),
+            'programPk' => $pkIndikatorId > 0
+                ? ($this->targets->getProgramPkByIndikator([$pkIndikatorId])[$pkIndikatorId] ?? [])
+                : [],
+        ]);
+    }
+
+    /** Simpan realisasi anggaran per triwulan. */
+    public function monevAnggaranSave($jenis)
+    {
+        $jenis = $this->normJenis((string) $jenis);
+        if (!$jenis || !$this->ensureRole($jenis, true)) {
+            return redirect()->to(base_url('/'))->with('error', 'Tidak berhak.');
+        }
+
+        $targetId = (int) ($this->request->getPost('target_rencana_id') ?? 0);
+        $detail   = $this->getRenaksiDetail($targetId, $jenis);
+        if (!$detail) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Rencana aksi tidak ditemukan.');
+        }
+        if ($jenis === 'es3' && (int) $detail['opd_id'] !== (int) session()->get('opd_id')) {
+            return redirect()->to(base_url($this->monevUrl($jenis)))
+                ->with('error', 'Data bukan milik OPD Anda.');
+        }
+
+        $realisasi = [];
+        foreach ([1, 2, 3, 4] as $q) {
+            $nilai = $this->rupiahKeAngka($this->request->getPost('realisasi_triwulan_' . $q));
+            if ($nilai === false) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'Realisasi Triwulan ' . $q . ' harus berupa angka rupiah.');
+            }
+            $realisasi[$q] = $nilai;
+        }
+
+        $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
+        $this->monev->upsertAnggaran($targetId, $monevOpdId, $realisasi);
+
+        return redirect()->to(base_url($this->monevUrl($jenis)))
+            ->with('success', 'Realisasi anggaran berhasil disimpan.');
+    }
+
+    /**
+     * Ubah input rupiah jadi angka.
+     *
+     * Menerima "1.500.000", "1500000", atau "1.500.000,00". Kosong -> null
+     * (belum diisi, dibedakan dari 0). Mengembalikan false bila bukan angka.
+     *
+     * @return float|null|false
+     */
+    private function rupiahKeAngka($nilai)
+    {
+        if ($nilai === null) {
+            return null;
+        }
+
+        $teks = trim((string) $nilai);
+        if ($teks === '') {
+            return null;
+        }
+
+        // Buang pemisah ribuan & simbol; koma desimal jadi titik.
+        $teks = str_replace(['Rp', 'rp', ' ', '.'], '', $teks);
+        $teks = str_replace(',', '.', $teks);
+
+        if (!is_numeric($teks)) {
+            return false;
+        }
+
+        $angka = (float) $teks;
+
+        return $angka < 0 ? false : $angka;
+    }
+
+    /**
+     * Ambil satu sub rencana aksi, dipastikan milik rencana aksi yang dimaksud.
+     */
+    private function cariSubRencana(int $targetRencanaId, int $subId): ?array
+    {
+        return $this->db->table('target_sub_rencana')
+            ->where('id', $subId)
+            ->where('target_rencana_id', $targetRencanaId)
+            ->get()
+            ->getRowArray() ?: null;
     }
 
     /* ===================== UTIL ===================== */
@@ -1123,6 +1556,7 @@ class PkRenaksiController extends BaseController
                 tr.*,
                 pi.indikator AS indikator_sasaran,
                 pi.target    AS indikator_target,
+                pi.id_satuan AS satuan_id,
                 s.satuan     AS satuan,
                 pk.tahun     AS indikator_tahun,
                 pk.opd_id    AS pk_opd_id,
@@ -1154,7 +1588,6 @@ class PkRenaksiController extends BaseController
         return [
             'rencana_aksi'      => ['regex_match' => 'Rencana aksi mengandung karakter yang tidak diizinkan.'],
             'penanggung_jawab'  => ['regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.'],
-            'capaian'           => ['regex_match' => 'Baseline harus berupa angka (contoh: 1 atau 1,5).'],
             'target_triwulan_1' => ['regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.'],
             'target_triwulan_2' => ['regex_match' => 'Target Triwulan II mengandung karakter yang tidak diizinkan.'],
             'target_triwulan_3' => ['regex_match' => 'Target Triwulan III mengandung karakter yang tidak diizinkan.'],

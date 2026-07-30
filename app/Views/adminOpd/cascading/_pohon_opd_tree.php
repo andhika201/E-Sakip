@@ -20,6 +20,8 @@ $showKode = $showKode ?? true;
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#c2410c,#9a3412)"></span> Sasaran Eselon II</div>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran Eselon III</div>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran Eselon IV</div>
+    <?php // Pelaksana: oranye tua — beda jelas dari merah Eselon IV, tetap selaras palet ?>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#b45309,#92400e)"></span> <?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
     <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Kinerja</div>
     <?php if ($showCsf): ?>
         <div class="lg-item"><span class="lg-swatch" style="background:#faf3e6;border:1px solid #ecdcb8"></span> CSF</div>
@@ -128,6 +130,31 @@ $showKode = $showKode ?? true;
                                                                                                             <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorEs4)) ?></div>
                                                                                                         <?php endforeach; ?>
                                                                                                     </div>
+
+                                                                                                    <?php // L7: PELAKSANA — jenjang terakhir, di bawah Eselon IV / JF ?>
+                                                                                                    <?php if (!empty($es4['pelaksanas'])): ?>
+                                                                                                        <ul>
+                                                                                                            <?php foreach ($es4['pelaksanas'] as $pel): ?>
+                                                                                                                <li>
+                                                                                                                    <div class="tree-node">
+                                                                                                                        <?php if ($showCsf && !empty($pel['csf'])): ?>
+                                                                                                                            <div class="box-csf">
+                                                                                                                                <div class="node-label" style="opacity:.8">CSF</div>
+                                                                                                                                <?= nl2br(esc($pel['csf'])) ?>
+                                                                                                                            </div>
+                                                                                                                        <?php endif; ?>
+                                                                                                                        <div class="box-pelaksana">
+                                                                                                                            <div class="node-label"><?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
+                                                                                                                            <?= nl2br(esc($pel['nama'])) ?>
+                                                                                                                        </div>
+                                                                                                                        <?php foreach ($pel['indikators'] as $indikatorPel): ?>
+                                                                                                                            <div class="box-iks"><?php if ($showKode): ?><span class="ind-kode">IK</span><?php endif; ?><?= nl2br(esc($indikatorPel)) ?></div>
+                                                                                                                        <?php endforeach; ?>
+                                                                                                                    </div>
+                                                                                                                </li>
+                                                                                                            <?php endforeach; ?>
+                                                                                                        </ul>
+                                                                                                    <?php endif; ?>
                                                                                                 </li>
                                                                                             <?php endforeach; ?>
                                                                                         </ul>

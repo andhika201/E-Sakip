@@ -223,6 +223,10 @@
 
                                             <th>Sasaran ESS IV / JF</th>
                                             <th>Indikator ESS IV</th>
+
+                                            <?php // Jenjang PELAKSANA — di bawah Eselon IV / JF ?>
+                                            <th>Sasaran Pelaksana</th>
+                                            <th>Indikator Pelaksana</th>
                                         </tr>
                                     </thead>
 
@@ -265,9 +269,10 @@
                                                     </td>
                                                 <?php endif; ?>
 
+                                                <?php // colspan 6 = ESS III (2) + ESS IV (2) + Pelaksana (2) ?>
                                                 <?php if (empty($r['es3_id'])): ?>
                                                     <?php if (($firstShow['indikator'][$r['indikator_id']] ?? null) == $index): ?>
-                                                        <td colspan="4" class="text-center text-muted">-</td>
+                                                        <td colspan="6" class="text-center text-muted">-</td>
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <?php if (($firstShow['es3'][$r['es3_id']] ?? null) == $index): ?>
@@ -284,9 +289,10 @@
                                                     <?php endif; ?>
                                                 <?php endif; ?>
 
+                                                <?php // colspan 4 = ESS IV (2) + Pelaksana (2) ?>
                                                 <?php if (!empty($r['es3_id']) && empty($r['es4_id'])): ?>
                                                     <?php if (($firstShow['es3_indikator'][$key] ?? null) == $index): ?>
-                                                        <td colspan="2" class="text-center text-muted">-</td>
+                                                        <td colspan="4" class="text-center text-muted">-</td>
                                                     <?php endif; ?>
                                                 <?php elseif (!empty($r['es4_id'])): ?>
                                                     <?php if (($firstShow['es4'][$r['es4_id']] ?? null) == $index): ?>
@@ -294,9 +300,30 @@
                                                             <?= esc($r['es4_sasaran']) ?>
                                                         </td>
                                                     <?php endif; ?>
-                                                    <td class="text-start">
-                                                        <?= $r['es4_indikator'] ?? '-' ?>
-                                                    </td>
+
+                                                    <?php // Indikator ESS IV butuh rowspan sejak ada jenjang Pelaksana. ?>
+                                                    <?php $keyI4 = $r['es4_id'] . '_' . ($r['es4_indikator_id'] ?? null); ?>
+                                                    <?php if (($firstShow['es4_indikator'][$keyI4] ?? null) == $index): ?>
+                                                        <td rowspan="<?= $rowspan['es4_indikator'][$keyI4] ?? 1 ?>" class="text-start">
+                                                            <?= esc($r['es4_indikator'] ?? '-') ?>
+                                                        </td>
+                                                    <?php endif; ?>
+
+                                                    <?php // ================= PELAKSANA ================= ?>
+                                                    <?php if (empty($r['pelaksana_id'])): ?>
+                                                        <?php if (($firstShow['es4_indikator'][$keyI4] ?? null) == $index): ?>
+                                                            <td colspan="2" class="text-center text-muted">-</td>
+                                                        <?php endif; ?>
+                                                    <?php else: ?>
+                                                        <?php if (($firstShow['pelaksana'][$r['pelaksana_id']] ?? null) == $index): ?>
+                                                            <td rowspan="<?= $rowspan['pelaksana'][$r['pelaksana_id']] ?? 1 ?>" class="text-start">
+                                                                <?= esc($r['pelaksana_sasaran'] ?? '-') ?>
+                                                            </td>
+                                                        <?php endif; ?>
+                                                        <td class="text-start">
+                                                            <?= esc($r['pelaksana_indikator'] ?? '-') ?>
+                                                        </td>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </tr>
                                         <?php endforeach; ?>

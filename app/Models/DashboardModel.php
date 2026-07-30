@@ -118,10 +118,10 @@ class DashboardModel extends Model
         return $this->normalizeStatusCounts($rows);
     }
 
-    /** Tabel asumsi: iku_sasaran (kolom: status, created_at). Jika perlu per-OPD, tambahkan kolom/relasi ke OPD. */
+    /** Status IKU tersimpan per indikator di `iku_indikator`; pemiliknya lewat iku_sasaran.opd_id. */
     public function getIkuStats(?string $year = null): array
     {
-        $q = $this->db->table('iku_sasaran')
+        $q = $this->db->table('iku_indikator')
             ->select('status, COUNT(*) as count')
             ->groupBy('status');
 

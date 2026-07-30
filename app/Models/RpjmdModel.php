@@ -1544,9 +1544,10 @@ class RpjmdModel extends Model
             ->getResultArray();
 
         foreach ($sasaranList as &$sasaran) {
+            // kolom i.satuan bisa berisi id tabel `satuan` atau langsung nama satuan
             $indikatorList = $this->db->table('rpjmd_indikator_sasaran i')
-                ->select('i.id, i.indikator_sasaran, s.satuan')
-                ->join('satuan s', 's.id = i.satuan', 'left')
+                ->select("i.id, i.indikator_sasaran, COALESCE(s.satuan, NULLIF(i.satuan, '')) AS satuan", false)
+                ->join('satuan s', "i.satuan REGEXP '^[0-9]+$' AND s.id = i.satuan", 'left', false)
                 ->where('i.sasaran_id', $sasaran['id'])
                 ->get()
                 ->getResultArray();

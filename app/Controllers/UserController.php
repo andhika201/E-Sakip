@@ -2,8 +2,17 @@
 
 namespace App\Controllers;
 
+use App\Controllers\Concerns\CascadingOpdMetaTrait;
+
 class UserController extends BaseController
 {
+    /**
+     * Meta & pohon matriks cascading Perangkat Daerah — implementasi bersama
+     * dengan area admin. Halaman publik ikut menampilkan jenjang PELAKSANA
+     * tanpa perlu salinan logika sendiri.
+     */
+    use CascadingOpdMetaTrait;
+
     public function index()
     {
         // session()->destroy(); // hapus semua session
@@ -666,147 +675,26 @@ class UserController extends BaseController
         ]);
     }
 
+    /* Meta & pohon cascading OPD: implementasi tunggal di CascadingOpdMetaTrait. */
+
     private function preprocessCascadingOpdEmptyIds(array &$rows): void
     {
-        foreach ($rows as $index => &$r) {
-            if (empty($r['tujuan_id'])) {
-                $r['tujuan_id'] = 'empty_tujuan_' . $index;
-            }
-            if (empty($r['sasaran_id'])) {
-                $r['sasaran_id'] = 'empty_sasaran_' . $index;
-            }
-            if (empty($r['renstra_tujuan_id'])) {
-                $r['renstra_tujuan_id'] = 'empty_rt_' . $index;
-            }
-            if (empty($r['indikator_tujuan_id'])) {
-                $r['indikator_tujuan_id'] = 'empty_it_' . $r['renstra_tujuan_id'];
-            }
-            if (empty($r['renstra_sasaran_id'])) {
-                $r['renstra_sasaran_id'] = 'empty_rs_' . $index;
-            }
-            if (empty($r['indikator_id'])) {
-                $r['indikator_id'] = 'empty_ris_' . $index;
-            }
-        }
-        unset($r);
+        $this->cascOpdPreprocessEmptyIds($rows);
     }
 
     private function buildCascadingOpdRowspan($rows)
     {
-        $meta = [
-            'tujuan' => [],
-            'sasaran' => [],
-            'tujuan_renstra' => [],
-            'indikator_tujuan' => [],
-            'sasaran_renstra' => [],
-            'indikator' => [],
-            'es3' => [],
-            'es3_indikator' => [],
-            'es4' => [],
-        ];
-        foreach ($rows as $r) {
-            $meta['tujuan'][$r['tujuan_id']] = ($meta['tujuan'][$r['tujuan_id']] ?? 0) + 1;
-            $meta['sasaran'][$r['sasaran_id']] = ($meta['sasaran'][$r['sasaran_id']] ?? 0) + 1;
-            $meta['tujuan_renstra'][$r['renstra_tujuan_id']] = ($meta['tujuan_renstra'][$r['renstra_tujuan_id']] ?? 0) + 1;
-            $meta['indikator_tujuan'][$r['indikator_tujuan_id']] = ($meta['indikator_tujuan'][$r['indikator_tujuan_id']] ?? 0) + 1;
-            $meta['sasaran_renstra'][$r['renstra_sasaran_id']] = ($meta['sasaran_renstra'][$r['renstra_sasaran_id']] ?? 0) + 1;
-            $meta['indikator'][$r['indikator_id']] = ($meta['indikator'][$r['indikator_id']] ?? 0) + 1;
-            if ($r['es3_id'])
-                $meta['es3'][$r['es3_id']] = ($meta['es3'][$r['es3_id']] ?? 0) + 1;
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
-            $meta['es3_indikator'][$key] = ($meta['es3_indikator'][$key] ?? 0) + 1;
-            if ($r['es4_id'])
-                $meta['es4'][$r['es4_id']] = ($meta['es4'][$r['es4_id']] ?? 0) + 1;
-        }
-        return $meta;
+        return $this->cascOpdRowspanMeta($rows);
     }
 
     private function buildCascadingOpdFirstShow($rows)
     {
-        $shown = [
-            'tujuan' => [],
-            'sasaran' => [],
-            'tujuan_renstra' => [],
-            'indikator_tujuan' => [],
-            'sasaran_renstra' => [],
-            'indikator' => [],
-            'es3' => [],
-            'es3_indikator' => [],
-            'es4' => [],
-        ];
-        foreach ($rows as $index => $r) {
-            if (!isset($shown['tujuan'][$r['tujuan_id']]))
-                $shown['tujuan'][$r['tujuan_id']] = $index;
-            if (!isset($shown['sasaran'][$r['sasaran_id']]))
-                $shown['sasaran'][$r['sasaran_id']] = $index;
-            if (!isset($shown['tujuan_renstra'][$r['renstra_tujuan_id']]))
-                $shown['tujuan_renstra'][$r['renstra_tujuan_id']] = $index;
-            if (!isset($shown['indikator_tujuan'][$r['indikator_tujuan_id']]))
-                $shown['indikator_tujuan'][$r['indikator_tujuan_id']] = $index;
-            if (!isset($shown['sasaran_renstra'][$r['renstra_sasaran_id']]))
-                $shown['sasaran_renstra'][$r['renstra_sasaran_id']] = $index;
-            if (!isset($shown['indikator'][$r['indikator_id']]))
-                $shown['indikator'][$r['indikator_id']] = $index;
-            if ($r['es3_id'] && !isset($shown['es3'][$r['es3_id']]))
-                $shown['es3'][$r['es3_id']] = $index;
-            $key = $r['es3_id'] . '_' . ($r['es3_indikator_id'] ?? null);
-            if (!isset($shown['es3_indikator'][$key]))
-                $shown['es3_indikator'][$key] = $index;
-            if ($r['es4_id'] && !isset($shown['es4'][$r['es4_id']]))
-                $shown['es4'][$r['es4_id']] = $index;
-        }
-        return $shown;
+        return $this->cascOpdFirstShowMeta($rows);
     }
 
     private function buildOpdTree($rows)
     {
-        $tree = [];
-        foreach ($rows as $r) {
-            $tId = rtrim('_' . ($r['tujuan_id'] ?? 'none'), '_');
-            if (!isset($tree[$tId])) {
-                $tree[$tId] = ['nama' => $r['tujuan_rpjmd'] ?: '(Tanpa Tujuan RPJMD)', 'sasarans' => []];
-            }
-            $sId = rtrim('_' . ($r['sasaran_id'] ?? 'none'), '_');
-            if (!isset($tree[$tId]['sasarans'][$sId])) {
-                $tree[$tId]['sasarans'][$sId] = ['nama' => $r['sasaran_rpjmd'] ?: '(Tanpa Sasaran RPJMD)', 'tujuan_renstras' => []];
-            }
-            $rtId = rtrim('_' . ($r['renstra_tujuan_id'] ?? 'none'), '_');
-            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId] = [
-                    'nama' => $r['renstra_tujuan'] ?: '(Tanpa Tujuan Renstra)',
-                    'indikator_tujuan' => [],
-                    'es2s' => []
-                ];
-            }
-            $itId = $r['indikator_tujuan_id'] ?? null;
-            if (!empty($itId) && !empty($r['indikator_tujuan'])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['indikator_tujuan'][$itId] = $r['indikator_tujuan'];
-            }
-            $rsId = rtrim('_' . ($r['renstra_sasaran_id'] ?? 'none'), '_');
-            if (empty($r['renstra_sasaran_id']) && empty($r['renstra_sasaran']))
-                continue;
-            if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId])) {
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId] = [
-                    'nama' => $r['renstra_sasaran'] ?: '(Tanpa Sasaran ES.II)',
-                    'csf' => $r['csf_es2'],
-                    'indikators' => [],
-                    'es3s' => []
-                ];
-            }
-            $risId = $r['indikator_id'];
-            if ($risId)
-                $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['indikators'][$risId] = $r['indikator_sasaran'];
-            $es3Id = $r['es3_id'];
-            if ($es3Id) {
-                if (!isset($tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id])) {
-                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id] = ['nama' => $r['es3_sasaran'], 'csf' => $r['csf_es3'], 'indikators' => []];
-                }
-                $es3IndId = $r['es3_indikator_id'];
-                if ($es3IndId)
-                    $tree[$tId]['sasarans'][$sId]['tujuan_renstras'][$rtId]['es2s'][$rsId]['es3s'][$es3Id]['indikators'][$es3IndId] = $r['es3_indikator'];
-            }
-        }
-        return $tree;
+        return $this->cascOpdTree($rows);
     }
 
     private function getPkDataByJenis($jenis)

@@ -196,10 +196,14 @@ if (!function_exists('_casc_opd_merge_ranges')) {
             $sasaranEss3 = $rowKey($row, 'es3_id', $index, 'empty_es3_', $indikatorEss2);
             $indikatorEss3 = $rowKey($row, 'es3_indikator_id', $index, 'empty_i3_', $sasaranEss3);
             $sasaranEss4 = $rowKey($row, 'es4_id', $index, 'empty_es4_', $indikatorEss3);
+            $indikatorEss4 = $rowKey($row, 'es4_indikator_id', $index, 'empty_i4_', $sasaranEss4);
+            $sasaranPel = $rowKey($row, 'pelaksana_id', $index, 'empty_pel_', $indikatorEss4);
 
             $hasEss3 = $filled($row['es3_id'] ?? null);
             $hasIndikatorEss3 = $filled($row['es3_indikator_id'] ?? null);
             $hasEss4 = $filled($row['es4_id'] ?? null);
+            $hasIndikatorEss4 = $filled($row['es4_indikator_id'] ?? null);
+            $hasPelaksana = $filled($row['pelaksana_id'] ?? null);
 
             $keys[$index] = [
                 1 => $tujuan,
@@ -211,8 +215,13 @@ if (!function_exists('_casc_opd_merge_ranges')) {
                 7 => $hasEss3 ? $sasaranEss3 : null,
                 8 => $hasIndikatorEss3 ? $indikatorEss3 : null,
                 9 => $hasEss4 ? $sasaranEss4 : null,
+                // Indikator ES IV kini bisa menaungi beberapa baris Pelaksana,
+                // jadi ikut di-merge seperti jenjang di atasnya.
+                10 => $hasIndikatorEss4 ? $indikatorEss4 : null,
+                11 => $hasPelaksana ? $sasaranPel : null,
                 'no_es3' => $hasEss3 ? null : $indikatorEss2,
                 'no_es4' => ($hasIndikatorEss3 && !$hasEss4) ? $indikatorEss3 : null,
+                'no_pelaksana' => ($hasIndikatorEss4 && !$hasPelaksana) ? $indikatorEss4 : null,
             ];
         }
 
@@ -258,12 +267,15 @@ if (!function_exists('_casc_opd_merge_ranges')) {
             }
         };
 
-        foreach ([1, 2, 3, 4, 5, 6, 7, 8, 9] as $column) {
+        foreach ([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as $column) {
             $mergeByKey($column, $column);
         }
 
-        $mergeByKey('no_es3', 7, 10);
-        $mergeByKey('no_es4', 9, 10);
+        // Sel gabungan untuk jenjang yang belum terisi. Kolom 7-12 =
+        // ES III (2) + ES IV (2) + Pelaksana (2).
+        $mergeByKey('no_es3', 7, 12);
+        $mergeByKey('no_es4', 9, 12);
+        $mergeByKey('no_pelaksana', 11, 12);
 
         return $ranges;
     }
@@ -280,6 +292,12 @@ if (!function_exists('cascading_opd_excel')) {
             'Sasaran ESS III', 'Indikator ESS III',
             'Sasaran ESS IV/JF', 'Indikator ESS IV',
         ]);
+        // Dua kolom jenjang Pelaksana, SETELAH kolom Eselon IV.
+        // Tidak lewat casc_relabel(): labelnya sudah ditangani
+        // casc_pelaksana_label() (lihat catatan bentrok istilah di helper).
+        $headers[] = casc_pelaksana_label('Sasaran ');
+        $headers[] = casc_pelaksana_label('Indikator ');
+
         $data = [];
         foreach ($rows as $rw) {
             $data[] = [
@@ -293,6 +311,8 @@ if (!function_exists('cascading_opd_excel')) {
                 _casc_txt(!empty($rw['es3_indikator']) ? $rw['es3_indikator'] : '-'),
                 _casc_txt(!empty($rw['es4_sasaran']) ? $rw['es4_sasaran'] : '-'),
                 _casc_txt(!empty($rw['es4_indikator']) ? $rw['es4_indikator'] : '-'),
+                _casc_txt(!empty($rw['pelaksana_sasaran']) ? $rw['pelaksana_sasaran'] : '-'),
+                _casc_txt(!empty($rw['pelaksana_indikator']) ? $rw['pelaksana_indikator'] : '-'),
             ];
         }
         $sub   = 'Perangkat Daerah: ' . ($namaOpd !== '' ? $namaOpd : '-') . ' · Periode ' . $periode;
@@ -304,24 +324,48 @@ if (!function_exists('cascading_opd_excel')) {
 }
 
 if (!function_exists('cascading_keseluruhan_excel')) {
-    /** Cascading Keseluruhan (getKeseluruhanMatrix): RPJMD → Perangkat Daerah → Renstra. */
+    /**
+     * Cascading Keseluruhan (getKeseluruhanMatrix):
+     * RPJMD → Perangkat Daerah → Renstra (ES II) → ES III → ES IV/JF → PELAKSANA.
+     */
     function cascading_keseluruhan_excel(array $rows, string $periode): void
     {
-        $headers = ['Tujuan RPJMD', 'Sasaran RPJMD', 'Perangkat Daerah', 'Tujuan Renstra', 'Sasaran Renstra', 'Indikator Renstra'];
+        helper('cascading_label');
+
+        $headers = [
+            'Tujuan RPJMD', 'Sasaran RPJMD', 'Perangkat Daerah', 'Tujuan Renstra',
+            'Sasaran ESS II', 'Indikator ESS II',
+            'Sasaran ESS III', 'Indikator ESS III',
+            'Sasaran ESS IV/JF', 'Indikator ESS IV',
+        ];
+        // Dua kolom jenjang Pelaksana, SETELAH kolom Eselon IV. Label lewat
+        // casc_pelaksana_label() (lihat catatan bentrok istilah di helper label).
+        $headers[] = casc_pelaksana_label('Sasaran ');
+        $headers[] = casc_pelaksana_label('Indikator ');
+
+        $isi = static fn($v) => _casc_txt(!empty($v) ? $v : '-');
+
         $data = [];
         foreach ($rows as $rw) {
             $data[] = [
                 _casc_txt($rw['tujuan_rpjmd'] ?? '-'),
                 _casc_txt($rw['sasaran_rpjmd'] ?? '-'),
-                _casc_txt(!empty($rw['nama_opd']) ? $rw['nama_opd'] : '-'),
-                _casc_txt(!empty($rw['renstra_tujuan']) ? $rw['renstra_tujuan'] : '-'),
-                _casc_txt(!empty($rw['renstra_sasaran']) ? $rw['renstra_sasaran'] : '-'),
-                _casc_txt(!empty($rw['renstra_indikator']) ? $rw['renstra_indikator'] : '-'),
+                $isi($rw['nama_opd'] ?? null),
+                $isi($rw['renstra_tujuan'] ?? null),
+                $isi($rw['renstra_sasaran'] ?? null),
+                $isi($rw['renstra_indikator'] ?? null),
+                $isi($rw['es3_sasaran'] ?? null),
+                $isi($rw['es3_indikator'] ?? null),
+                $isi($rw['es4_sasaran'] ?? null),
+                $isi($rw['es4_indikator'] ?? null),
+                $isi($rw['pelaksana_sasaran'] ?? null),
+                $isi($rw['pelaksana_indikator'] ?? null),
             ];
         }
         cascading_excel_stream(
             'Cascading Kinerja Keseluruhan',
-            'RPJMD Kabupaten → Renstra Perangkat Daerah · Periode ' . $periode,
+            'RPJMD Kabupaten → Renstra Perangkat Daerah → Eselon III/IV → '
+                . casc_pelaksana_label() . ' · Periode ' . $periode,
             $headers,
             $data,
             'Cascading-Keseluruhan-' . $periode . '.xlsx'

@@ -6,7 +6,9 @@
  */
 helper('rbac');
 $role    = session()->get('role');
-$dashUrl = in_array($role, ['admin_opd', 'admin_kecamatan'], true) ? base_url('adminopd/dashboard') : base_url('adminkab/dashboard');
+$dashUrl = in_array($role, ['admin_opd', 'admin_kecamatan'], true)
+    ? base_url('adminopd/dashboard')
+    : ($role === 'bupati' ? base_url('bupati/dashboard') : base_url('adminkab/dashboard'));
 $linkCls = 'btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded sidebar-nav-link';
 $ddBtn   = 'btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 rounded dropdown-toggle d-flex justify-content-between align-items-center sidebar-nav-link';
 
@@ -58,6 +60,35 @@ $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_
   #sidebar .dropdown-toggle::after { transition: transform .2s ease; }
   #sidebar .dropdown-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
 </style>
+
+<?php if ($role === 'bupati'): ?>
+  <?php
+  /* ===================== BUPATI =====================
+     Sidebar sengaja SANGAT sederhana: menu utamanya hanya Dashboard Eksekutif.
+     Detail PK / Target & Rencana Aksi / MONEV / LAKIP normalnya dibuka dari
+     kartu, grafik, dan drawer pada dashboard; tautan di bawah hanya jalan
+     pintas read-only ke halaman yang sama.
+     TIDAK ADA: Master Data, Program PK, Pegawai, Pengaturan, Log Aktivitas,
+     pengelolaan Cascading, maupun menu administratif lainnya. */
+  $bupatiMenu = [
+      ['bupati/pk/bupati',     'fa-file-signature', 'Perjanjian Kinerja'],
+      ['bupati/target_renaksi', 'fa-list-check',     'Target &amp; Rencana Aksi'],
+      ['bupati/monev',          'fa-chart-line',     'MONEV'],
+      ['bupati/lakip',          'fa-file-lines',     'LAKIP'],
+  ];
+  ?>
+  <a href="<?= base_url('bupati/dashboard') ?>" class="<?= $linkCls ?>">
+    <i class="fas fa-gauge-high"></i><span>Dashboard Eksekutif</span>
+  </a>
+
+  <div class="sidebar-section">Detail Monitoring</div>
+  <?php foreach ($bupatiMenu as [$url, $ikon, $label]): ?>
+    <a href="<?= base_url($url) ?>" class="<?= $linkCls ?>">
+      <i class="fas <?= $ikon ?>"></i><span><?= $label ?></span>
+    </a>
+  <?php endforeach; ?>
+
+<?php else: ?>
 
 <?php if (user_can('dashboard.view')): ?>
   <a href="<?= $dashUrl ?>" class="<?= $linkCls ?>"><i class="fas fa-gauge-high"></i><span>Dashboard</span></a>
@@ -189,12 +220,20 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
   <a href="<?= base_url('adminkab/program_pk') ?>" class="<?= $linkCls ?>"><i class="fas fa-list-ol"></i><span>Program &amp; Kegiatan PK</span></a>
   <a href="<?= base_url('adminkab/log-aktivitas') ?>" class="<?= $linkCls ?>"><i class="fas fa-clock-rotate-left"></i><span>Log Aktivitas</span></a>
   <a href="<?= base_url('adminkab/pengaturan') ?>" class="<?= $linkCls ?>"><i class="fas fa-gear"></i><span>Pengaturan Aplikasi</span></a>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddPengaturanDashboard" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-sliders"></i> Pengaturan Dashboard</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddPengaturanDashboard">
+      <li><a class="dropdown-item" href="<?= base_url('adminkab/dashboard-thresholds') ?>">Ambang Status Capaian</a></li>
+    </ul>
+  </div>
 <?php endif; ?>
 
 <?php if (user_can('tentang_kami.view')): ?>
   <div class="sidebar-section">Lainnya</div>
   <a href="<?= base_url(($role === 'admin_opd' ? 'adminopd' : 'adminkab') . '/tentang_kami') ?>" class="<?= $linkCls ?>"><i class="fas fa-circle-info"></i><span>Tentang Kami</span></a>
 <?php endif; ?>
+
+<?php endif; /* akhir cabang non-bupati */ ?>
 
 <script>
   // Tandai menu sidebar yang sedang aktif sesuai URL

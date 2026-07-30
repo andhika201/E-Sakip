@@ -108,7 +108,7 @@
                         <th rowspan="2" class="border p-2 align-middle">Tahun</th>
                         <th rowspan="2" class="border p-2 align-middle">Satuan</th>
                         <th rowspan="2" class="border p-2 align-middle">Rencana Aksi</th>
-                        <th rowspan="2" class="border p-2 align-middle">Baseline / Target Tahunan</th>
+                        <th rowspan="2" class="border p-2 align-middle">Target Tahunan</th>
                         <th colspan="4" class="border p-2 align-middle">Target Triwulan</th>
                         <th rowspan="2" class="border p-2 align-middle">Penanggung Jawab</th>
                         <th rowspan="2" class="border p-2 align-middle">Aksi</th>

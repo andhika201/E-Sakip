@@ -348,7 +348,6 @@ class TargetController extends BaseController
                 'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
                 // TEXT/ALPHANUMERIC
-                'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -361,9 +360,6 @@ class TargetController extends BaseController
                 ],
                 'penanggung_jawab' => [
                     'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
-                ],
-                'capaian' => [
-                    'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_1' => [
                     'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
@@ -405,7 +401,6 @@ class TargetController extends BaseController
             $data = [
                 'rpjmd_target_id' => $rpjmdTargetId,
                 'rencana_aksi' => $this->request->getPost('rencana_aksi'),
-                'capaian' => $this->request->getPost('capaian'),
                 'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
                 'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
                 'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
@@ -430,7 +425,6 @@ class TargetController extends BaseController
             'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
             // TEXT/ALPHANUMERIC
-            'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -448,9 +442,6 @@ class TargetController extends BaseController
                 'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
             ],
 
-            'capaian' => [
-                'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
-            ],
 
             'target_triwulan_1' => [
                 'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
@@ -504,7 +495,6 @@ class TargetController extends BaseController
             'opd_id' => $opdId,
             'renstra_target_id' => $rtId,
             'rencana_aksi' => $this->request->getPost('rencana_aksi'),
-            'capaian' => $this->request->getPost('capaian'),
             'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
             'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
             'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
@@ -655,7 +645,6 @@ class TargetController extends BaseController
                 'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
                 // TEXT/ALPHANUMERIC
-                'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
                 'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -670,9 +659,6 @@ class TargetController extends BaseController
                 ],
                 'penanggung_jawab' => [
                     'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
-                ],
-                'capaian' => [
-                    'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
                 ],
                 'target_triwulan_1' => [
                     'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
@@ -694,7 +680,6 @@ class TargetController extends BaseController
 
             $data = [
                 'rencana_aksi' => $this->request->getPost('rencana_aksi'),
-                'capaian' => $this->request->getPost('capaian'),
                 'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
                 'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
                 'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),
@@ -720,7 +705,6 @@ class TargetController extends BaseController
             'penanggung_jawab' => 'permit_empty|string|max_length[100]|' . $rxText,
 
             // TEXT/ALPHANUMERIC
-            'capaian' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_1' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_2' => 'permit_empty|string|max_length[255]|' . $rxText,
             'target_triwulan_3' => 'permit_empty|string|max_length[255]|' . $rxText,
@@ -735,9 +719,6 @@ class TargetController extends BaseController
             ],
             'penanggung_jawab' => [
                 'regex_match' => 'Penanggung jawab mengandung karakter yang tidak diizinkan.',
-            ],
-            'capaian' => [
-                'regex_match' => 'Capaian mengandung karakter yang tidak diizinkan.',
             ],
             'target_triwulan_1' => [
                 'regex_match' => 'Target Triwulan I mengandung karakter yang tidak diizinkan.',
@@ -761,7 +742,6 @@ class TargetController extends BaseController
 
         $data = [
             'rencana_aksi' => $this->request->getPost('rencana_aksi'),
-            'capaian' => $this->request->getPost('capaian'),
             'target_triwulan_1' => $this->request->getPost('target_triwulan_1'),
             'target_triwulan_2' => $this->request->getPost('target_triwulan_2'),
             'target_triwulan_3' => $this->request->getPost('target_triwulan_3'),

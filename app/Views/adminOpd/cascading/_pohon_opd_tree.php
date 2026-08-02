@@ -15,13 +15,14 @@ $showKode = $showKode ?? true;
 <div class="pohon-legend">
     <span class="lg-title">Keterangan:</span>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#15803d,#166534)"></span> Tujuan RPJMD</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#0f766e,#115e59)"></span> Sasaran RPJMD</div>
+    <?php // Jenjang sasaran dinomori 1–5 (RPJMD, ESS II, ESS III, ESS IV/JF, Pelaksana) ?>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#0f766e,#115e59)"></span> Sasaran 1</div>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2563eb,#1e40af)"></span> Tujuan Renstra</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#c2410c,#9a3412)"></span> Sasaran Eselon II</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran Eselon III</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran Eselon IV</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#c2410c,#9a3412)"></span> Sasaran 2</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran 3</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran 4</div>
     <?php // Pelaksana: oranye tua — beda jelas dari merah Eselon IV, tetap selaras palet ?>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#b45309,#92400e)"></span> <?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#b45309,#92400e)"></span> Sasaran 5</div>
     <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Kinerja</div>
     <?php if ($showCsf): ?>
         <div class="lg-item"><span class="lg-swatch" style="background:#faf3e6;border:1px solid #ecdcb8"></span> CSF</div>
@@ -48,7 +49,7 @@ $showKode = $showKode ?? true;
                                     <!-- L2: Sasaran RPJMD -->
                                     <div class="tree-node">
                                         <div class="box-l2">
-                                            <div class="node-label">Sasaran RPJMD</div>
+                                            <div class="node-label">Sasaran 1</div>
                                             <?= nl2br(esc($sasaranRpjmd['nama'])) ?>
                                         </div>
                                     </div>
@@ -81,7 +82,7 @@ $showKode = $showKode ?? true;
                                                                             </div>
                                                                         <?php endif; ?>
                                                                         <div class="box-es2">
-                                                                            <div class="node-label">Sasaran ESS II</div>
+                                                                            <div class="node-label">Sasaran 2</div>
                                                                             <?= nl2br(esc($es2['nama'])) ?>
                                                                         </div>
                                                                         <?php foreach ($es2['indikators'] as $indikatorEs2): ?>
@@ -102,7 +103,7 @@ $showKode = $showKode ?? true;
                                                                                             </div>
                                                                                         <?php endif; ?>
                                                                                         <div class="box-es3">
-                                                                                            <div class="node-label">Sasaran ESS III</div>
+                                                                                            <div class="node-label">Sasaran 3</div>
                                                                                             <?= nl2br(esc($es3['nama'])) ?>
                                                                                         </div>
                                                                                         <?php foreach ($es3['indikators'] as $indikatorEs3): ?>
@@ -123,7 +124,7 @@ $showKode = $showKode ?? true;
                                                                                                             </div>
                                                                                                         <?php endif; ?>
                                                                                                         <div class="box-es4">
-                                                                                                            <div class="node-label">Sasaran ESS IV</div>
+                                                                                                            <div class="node-label">Sasaran 4</div>
                                                                                                             <?= nl2br(esc($es4['nama'])) ?>
                                                                                                         </div>
                                                                                                         <?php foreach ($es4['indikators'] as $indikatorEs4): ?>
@@ -144,7 +145,7 @@ $showKode = $showKode ?? true;
                                                                                                                             </div>
                                                                                                                         <?php endif; ?>
                                                                                                                         <div class="box-pelaksana">
-                                                                                                                            <div class="node-label"><?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
+                                                                                                                            <div class="node-label">Sasaran 5</div>
                                                                                                                             <?= nl2br(esc($pel['nama'])) ?>
                                                                                                                         </div>
                                                                                                                         <?php foreach ($pel['indikators'] as $indikatorPel): ?>

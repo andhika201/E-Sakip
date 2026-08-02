@@ -18,7 +18,8 @@ $showOpd = $showOpd ?? true;
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#1f6f68,#14524d)"></span> Misi</div>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2f7d4f,#21603a)"></span> Tujuan RPJMD</div>
     <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Tujuan</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#8a6a3c,#654b27)"></span> Sasaran RPJMD</div>
+    <?php // Jenjang sasaran dinomori seragam lintas pohon: RPJMD = Sasaran 1 ?>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#8a6a3c,#654b27)"></span> Sasaran 1</div>
     <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator Sasaran</div>
     <?php if ($showOpd): ?>
         <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#565f70,#3d4553)"></span> Perangkat Daerah</div>
@@ -72,7 +73,7 @@ $showOpd = $showOpd ?? true;
                                                                 <!-- SASARAN -->
                                                                 <div class="tree-node">
                                                                     <div class="box-sasaran">
-                                                                        <div class="node-label">Sasaran RPJMD</div>
+                                                                        <div class="node-label">Sasaran 1</div>
                                                                         <?= nl2br(esc($sasaran['sasaran_rpjmd'])) ?>
                                                                     </div>
                                                                     <?php foreach ($sasaran['indikator_sasaran'] as $iks): ?>

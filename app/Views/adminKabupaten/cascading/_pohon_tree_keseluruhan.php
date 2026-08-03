@@ -16,10 +16,11 @@ $rootLabel = function_exists('setting') ? setting('instansi', 'Pemerintah Kabupa
     <span class="lg-title">Keterangan:</span>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#565f70,#3d4553)"></span> Perangkat Daerah</div>
     <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#345a86,#244463)"></span> Tujuan Renstra</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2c7c92,#1f5c6b)"></span> Sasaran ESS II (Renstra)</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran ESS III</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran ESS IV / JF</div>
-    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#b45309,#92400e)"></span> <?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
+    <?php // Nomor sasaran seragam lintas pohon; di sini mulai dari 2 karena Sasaran RPJMD (1) tidak ditampilkan ?>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#2c7c92,#1f5c6b)"></span> Sasaran 2 (Renstra)</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#9333ea,#7e22ce)"></span> Sasaran 3</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#e11d48,#be123c)"></span> Sasaran 4</div>
+    <div class="lg-item"><span class="lg-swatch" style="background:linear-gradient(135deg,#b45309,#92400e)"></span> Sasaran 5</div>
     <div class="lg-item"><span class="lg-swatch" style="background:#eef2f5;border:1px solid #dbe4de"></span> Indikator</div>
 </div>
 
@@ -66,7 +67,7 @@ $rootLabel = function_exists('setting') ? setting('instansi', 'Pemerintah Kabupa
                                                                 <!-- SASARAN RENSTRA (ESELON II) -->
                                                                 <div class="tree-node">
                                                                     <div class="box-sasaran-renstra">
-                                                                        <div class="node-label">Sasaran ESS II</div>
+                                                                        <div class="node-label">Sasaran 2</div>
                                                                         <?= nl2br(esc($sr['nama'])) ?>
                                                                     </div>
                                                                     <?php foreach ($sr['indikators'] as $ind): ?>
@@ -81,7 +82,7 @@ $rootLabel = function_exists('setting') ? setting('instansi', 'Pemerintah Kabupa
                                                                                 <!-- ESELON III -->
                                                                                 <div class="tree-node">
                                                                                     <div class="box-es3">
-                                                                                        <div class="node-label">Sasaran ESS III</div>
+                                                                                        <div class="node-label">Sasaran 3</div>
                                                                                         <?= nl2br(esc($es3['nama'])) ?>
                                                                                     </div>
                                                                                     <?php foreach ($es3['indikators'] as $ind): ?>
@@ -96,7 +97,7 @@ $rootLabel = function_exists('setting') ? setting('instansi', 'Pemerintah Kabupa
                                                                                                 <!-- ESELON IV / JF -->
                                                                                                 <div class="tree-node">
                                                                                                     <div class="box-es4">
-                                                                                                        <div class="node-label">Sasaran ESS IV / JF</div>
+                                                                                                        <div class="node-label">Sasaran 4</div>
                                                                                                         <?= nl2br(esc($es4['nama'])) ?>
                                                                                                     </div>
                                                                                                     <?php foreach ($es4['indikators'] as $ind): ?>
@@ -111,7 +112,7 @@ $rootLabel = function_exists('setting') ? setting('instansi', 'Pemerintah Kabupa
                                                                                                                 <!-- PELAKSANA -->
                                                                                                                 <div class="tree-node">
                                                                                                                     <div class="box-pelaksana">
-                                                                                                                        <div class="node-label"><?= esc(casc_pelaksana_label('Sasaran ')) ?></div>
+                                                                                                                        <div class="node-label">Sasaran 5</div>
                                                                                                                         <?= nl2br(esc($pel['nama'])) ?>
                                                                                                                     </div>
                                                                                                                     <?php foreach ($pel['indikators'] as $ind): ?>

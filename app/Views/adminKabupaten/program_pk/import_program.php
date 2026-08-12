@@ -96,12 +96,45 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Cakupan Import -->
                     <div class="bg-light border rounded p-3 mb-3">
+                        <label class="fw-medium h5 d-block mb-3">Cakupan Import</label>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cakupan" id="cakupan-per-opd"
+                                        value="per_opd" checked>
+                                    <label class="form-check-label" for="cakupan-per-opd">
+                                        <strong>Per OPD</strong>
+                                        <div class="small text-muted">
+                                            Seluruh isi file dimasukkan ke satu OPD yang Anda pilih di bawah.
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="cakupan" id="cakupan-seluruh"
+                                        value="seluruh">
+                                    <label class="form-check-label" for="cakupan-seluruh">
+                                        <strong>Seluruh OPD</strong>
+                                        <div class="small text-muted">
+                                            OPD ditentukan otomatis dari blok unit pada Excel. Unit yang tidak dikenali
+                                            akan diminta dipetakan manual — tanpa unggah ulang file.
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-light border rounded p-3 mb-3" id="blok-opd">
                         <label class="fw-medium h5 d-block mb-3">OPD</label>
 
                         <div class="row">
                             <div class="col-md-6">
-                                <select name="opd_id" class="form-control border-secondary" required>
+                                <select name="opd_id" id="opd_id" class="form-control border-secondary" required>
                                     <option value="">-- Pilih OPD --</option>
                                     <?php foreach ($opds as $opd): ?>
                                         <option value="<?= $opd['id'] ?>">
@@ -115,6 +148,15 @@
                                 </small>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="alert alert-info d-none" id="info-seluruh">
+                        <i class="fas fa-circle-info me-1"></i>
+                        Pada cakupan <strong>Seluruh OPD</strong>, pilihan OPD dinonaktifkan. Sistem membaca pergantian
+                        unit dari kolom kode unit pada Excel, lalu mencocokkannya ke master OPD
+                        (nama persis &rarr; alias tersimpan &rarr; aturan unit bawahan). Kecocokan yang meragukan
+                        <strong>tidak</strong> diproses otomatis, melainkan masuk daftar pemetaan manual.
+                        <a href="<?= base_url('adminkab/program_pk/mapping') ?>" class="alert-link">Lihat daftar pemetaan</a>.
                     </div>
 
 
@@ -268,6 +310,29 @@
                 e.preventDefault();
             }
         });
+
+        // Cakupan "Seluruh OPD": field OPD dinonaktifkan supaya tidak ada OPD
+        // default yang ikut terkirim. Validasi sebenarnya tetap di server.
+        (function () {
+            const perOpd  = document.getElementById('cakupan-per-opd');
+            const seluruh = document.getElementById('cakupan-seluruh');
+            const blokOpd = document.getElementById('blok-opd');
+            const info    = document.getElementById('info-seluruh');
+            const opd     = document.getElementById('opd_id');
+
+            function terapkan() {
+                const semua = seluruh.checked;
+                blokOpd.classList.toggle('d-none', semua);
+                info.classList.toggle('d-none', !semua);
+                opd.disabled = semua;
+                opd.required = !semua;
+                if (semua) { opd.value = ''; }
+            }
+
+            perOpd.addEventListener('change', terapkan);
+            seluruh.addEventListener('change', terapkan);
+            terapkan();
+        })();
     </script>
     </div>
 </body>

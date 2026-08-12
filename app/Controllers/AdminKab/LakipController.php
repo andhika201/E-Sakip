@@ -4,6 +4,7 @@ namespace App\Controllers\AdminKab;
 
 use App\Controllers\BaseController;
 use App\Controllers\Concerns\LakipAddendumTrait;
+use App\Controllers\Concerns\LakipBenchmarkTrait;
 use App\Models\LakipModel;
 use App\Models\OpdModel;
 
@@ -11,6 +12,9 @@ class LakipController extends BaseController
 {
     /** Analisis Faktor + Efisiensi Program (dua tabel di bawah tabel utama). */
     use LakipAddendumTrait;
+
+    /** Chart perbandingan Provinsi Lampung & Nasional (di atas Analisis Faktor). */
+    use LakipBenchmarkTrait;
 
     protected $lakipModel;
     protected $opdModel;
@@ -82,7 +86,7 @@ class LakipController extends BaseController
         // tahun + lingkup yang sama dengan tabel utama.
         $scope = $this->lakipScope((string) $tahun, $mode);
 
-        return view('adminKabupaten/lakip/lakip', array_merge($this->lakipAddendumData($scope), [
+        return view('adminKabupaten/lakip/lakip', array_merge($this->lakipAddendumData($scope), $this->lakipBenchmarkData($scope, $rows, $lakipMap), [
             'title' => 'LAKIP - Admin Kabupaten',
             'role' => $role,
             'mode' => $mode,

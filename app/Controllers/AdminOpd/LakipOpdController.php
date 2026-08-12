@@ -4,6 +4,7 @@ namespace App\Controllers\AdminOpd;
 
 use App\Controllers\BaseController;
 use App\Controllers\Concerns\LakipAddendumTrait;
+use App\Controllers\Concerns\LakipBenchmarkTrait;
 use App\Models\LakipModel;
 use App\Models\Opd\RenstraModel;
 use App\Models\OpdModel;
@@ -13,6 +14,9 @@ class LakipOpdController extends BaseController
 {
     /** Analisis Faktor + Efisiensi Program (dua tabel di bawah tabel utama). */
     use LakipAddendumTrait;
+
+    /** Chart perbandingan Provinsi Lampung & Nasional (di atas Analisis Faktor). */
+    use LakipBenchmarkTrait;
 
     protected $lakipModel;
     protected $renstraModel;
@@ -186,7 +190,7 @@ class LakipOpdController extends BaseController
         // kalau admin_kab memilih mode OPD tanpa memilih OPD-nya.
         $rows  = $rows ?? [];
         $scope = $this->lakipScope((string) $tahun, $mode);
-        $data  = array_merge($data, $this->lakipAddendumData($scope), [
+        $data  = array_merge($data, $this->lakipAddendumData($scope), $this->lakipBenchmarkData($scope, $rows, $lakipMap), [
             'indikatorRows' => $rows,
             'addendumBase'  => $this->lakipBaseUrl(),
         ]);

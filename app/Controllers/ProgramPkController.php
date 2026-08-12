@@ -3,31 +3,24 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Controllers\Concerns\ImportMultiOpdTrait;
 use App\Models\ProgramPkModel;
 use App\Models\OpdModel;
+use App\Services\OpdResolver;
 use CodeIgniter\HTTP\ResponseInterface;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ProgramPkController extends BaseController
 {
     /**
-     * Lebar baku tiap ruas kode SIPD pada Lampiran 8 APBD.
+     * Cakupan import "Seluruh OPD": staging batch, resolusi OPD per unit, dan
+     * pemetaan manual tanpa unggah ulang Excel.
      *
-     * SIPD mencetak sebagian sel sebagai angka (1, 2, 3) dan sebagian lagi
-     * sebagai teks (01, 02, 0003) untuk kode yang sama persis. Tanpa
-     * normalisasi, "02" dan "2" menghasilkan kode berbeda sehingga re-import
-     * file yang sama membuat data ganda.
-     *
-     * @var array<string, int[]> per segmen kode (dipisah titik)
+     * Pembacaan Excel-nya sendiri ada di App\Services\Lampiran8Parser dan
+     * penulisan ke tabel produksi di App\Services\ProgramPkWriter, sehingga
+     * kedua cakupan (per OPD & seluruh OPD) memakai logika hirarki yang sama.
      */
-    private const KODE_WIDTH = [
-        'B' => [1],     // urusan
-        'C' => [2],     // bidang urusan
-        'D' => [2],     // program
-        'E' => [1, 2],  // kegiatan, mis. "2.01"
-        'F' => [4],     // sub kegiatan
-    ];
+    use ImportMultiOpdTrait;
 
     protected $programPkModel;
     protected $OpdModel;
@@ -275,12 +268,21 @@ class ProgramPkController extends BaseController
         $sheetName     = trim((string) $this->request->getPost('sheet'));
         $dryRun        = (bool) $this->request->getPost('dryrun');
 
+        // Cakupan import: 'per_opd' (perilaku lama) atau 'seluruh' (OPD
+        // ditentukan otomatis dari blok unit di Excel).
+        $cakupan = $this->request->getPost('cakupan') === 'seluruh' ? 'seluruh' : 'per_opd';
+
         if ($tahun <= 0) {
             return redirect()->back()->with('error', 'Tahun anggaran wajib diisi');
         }
 
-        if ($opdId <= 0) {
+        // OPD hanya wajib pada cakupan per OPD. Pada cakupan seluruh OPD,
+        // nilai kiriman form sengaja diabaikan supaya tidak ada OPD default.
+        if ($cakupan === 'per_opd' && $opdId <= 0) {
             return redirect()->back()->with('error', 'OPD wajib dipilih');
+        }
+        if ($cakupan === 'seluruh') {
+            $opdId = 0;
         }
 
         if ($jenisAnggaran === '') {
@@ -302,11 +304,67 @@ class ProgramPkController extends BaseController
             return redirect()->back()->with('error', 'Sheet "' . $sheetName . '" tidak ditemukan pada file');
         }
 
+        // Satu pembacaan file untuk kedua cakupan: hasilnya daftar unit
+        // beserta Program/Kegiatan/Sub miliknya.
+        try {
+            $hasilParse = (new \App\Services\Lampiran8Parser())->parse($sheet);
+        } catch (\Throwable $e) {
+            log_message('error', 'Gagal mem-parse Lampiran 8: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Isi file tidak dapat dibaca: ' . $e->getMessage());
+        }
+
+        if (empty($hasilParse['units'])) {
+            return redirect()->back()->with('error', 'Tidak ada blok unit / data Program yang terbaca pada file ini.');
+        }
+
         $db = \Config\Database::connect();
+
+        /* =========================================================
+         * CAKUPAN: SELURUH OPD
+         * =======================================================*/
+        if ($cakupan === 'seluruh') {
+            $db->transException(true)->transBegin();
+
+            try {
+                $ring = $this->importSeluruhOpd(
+                    $db,
+                    $hasilParse['units'],
+                    $tahun,
+                    $jenisAnggaran,
+                    (string) $file->getClientName(),
+                    $dryRun
+                );
+
+                if ($dryRun) {
+                    $db->transRollback();
+                } else {
+                    $db->transCommit();
+                }
+            } catch (\Throwable $e) {
+                $db->transRollback();
+                log_message('error', 'Gagal import Program PK (seluruh OPD): ' . $e->getMessage());
+
+                return redirect()->back()->with('error', 'Import gagal, transaksi dibatalkan: ' . $e->getMessage());
+            }
+
+            return $this->pesanHasilSeluruhOpd($ring, $dryRun);
+        }
+
+        /* =========================================================
+         * CAKUPAN: PER OPD (perilaku lama, tidak diubah)
+         * =======================================================*/
         $db->transException(true)->transBegin();
 
         try {
-            $stat = $this->importLampiran8($db, $sheet, $opdId, $tahun, $jenisAnggaran);
+            $writer = new \App\Services\ProgramPkWriter($db);
+            $stat   = \App\Services\ProgramPkWriter::statKosong();
+
+            // Seluruh isi file masuk ke OPD yang dipilih pengguna, apa pun
+            // blok unitnya — persis seperti sebelum ada pilihan cakupan.
+            foreach ($hasilParse['units'] as $unit) {
+                $writer->tulisUnit($unit, $opdId, $tahun, $jenisAnggaran, $stat);
+            }
 
             if ($dryRun) {
                 $db->transRollback();
@@ -347,602 +405,241 @@ class ProgramPkController extends BaseController
         return redirect()->to('/adminkab/program_pk/import')->with('success', $pesan);
     }
 
-    /**
-     * Inti import Lampiran 8: baca sheet, bentuk kode hirarki, lalu upsert
-     * Program -> Kegiatan -> Sub Kegiatan. Dipanggil di dalam transaksi.
-     *
-     * @return array<string, int> ringkasan jumlah data baru/diperbarui/dilewati
-     */
-    private function importLampiran8(
-        $db,
-        Worksheet $sheet,
-        int $opdId,
-        int $tahun,
-        string $jenisAnggaran
-    ): array {
-        $rows = $sheet->toArray(null, true, true, true);
+    /* =========================================================
+     * CAKUPAN SELURUH OPD — PESAN HASIL & PEMETAAN MANUAL
+     * =======================================================*/
 
-        $tbProgram  = $db->table('program_pk');
-        $tbKegiatan = $db->table('kegiatan_pk');
-        $tbSub      = $db->table('sub_kegiatan_pk');
-        $now        = date('Y-m-d H:i:s');
+    /** Susun pesan hasil import/simulasi cakupan seluruh OPD. */
+    private function pesanHasilSeluruhOpd(array $ring, bool $dryRun)
+    {
+        $stat = $ring['stat'];
 
-        // Konteks yang boleh diwarisi baris di bawahnya. Hanya A/B/C, karena
-        // ketiganya murni penanda posisi; D/E/F justru penentu level baris
-        // sehingga harus dibaca apa adanya (mewarisi D membuat baris urusan
-        // ikut terbaca sebagai program).
-        $ctxUnit   = '';
-        $ctxUrusan = '';
-        $ctxBidang = '';
+        $ringkasan = sprintf(
+            '%d unit terbaca — %d exact, %d alias, %d aturan induk, %d perlu mapping manual. '
+            . 'Program %d, Kegiatan %d, Sub Kegiatan %d. Total anggaran Rp%s.',
+            $ring['unit_total'],
+            $ring['exact'],
+            $ring['alias'],
+            $ring['parent_rule'],
+            $ring['pending'],
+            $ring['program'],
+            $ring['kegiatan'],
+            $ring['sub'],
+            number_format($ring['total_anggaran'], 0, ',', '.')
+        );
 
-        // Parent aktif. Selalu diturunkan dari kode baris yang sedang diproses,
-        // bukan sekadar entitas terakhir yang kebetulan terbaca.
-        $currentProgramId    = null;
-        $currentKegiatanId   = null;
-        $currentProgramKode  = null;
-        $currentKegiatanKode = null;
-        $currentKegiatanE    = '';
-
-        // Memo id per kode selama satu proses import.
-        $programIdByKode  = [];
-        $kegiatanIdByKode = [];
-
-        // Kode yang benar-benar punya baris sendiri di file, dan nomenklatur
-        // namanya per B.C.D(.E) — nama program/kegiatan sama di semua unit.
-        $kodeProgramDenganBaris  = [];
-        $kodeKegiatanDenganBaris = [];
-        $namaProgramNomenklatur  = [];
-        $namaKegiatanNomenklatur = [];
-
-        // Kegiatan yang dipakai sub kegiatan tanpa punya baris sendiri.
-        $kegiatanTanpaBaris = [];
-
-        $stat = [
-            'program_baru'    => 0,
-            'program_update'  => 0,
-            'program_auto'    => 0,
-            'kegiatan_baru'   => 0,
-            'kegiatan_update' => 0,
-            'kegiatan_auto'   => 0,
-            'sub_baru'        => 0,
-            'sub_update'      => 0,
-            'lewat'           => 0,
-        ];
-
-        foreach ($rows as $rowNo => $r) {
-            if (!is_int($rowNo)) {
-                continue;
+        if ($dryRun) {
+            $peringatan = '';
+            if ($stat['lewat'] > 0) {
+                $peringatan = ' ' . $stat['lewat'] . ' baris berpotensi dilewati karena induknya tidak ditemukan.';
             }
 
-            $A = $this->cleanUraian($r['A'] ?? '');
-            $G = $this->cleanUraian($r['G'] ?? '');
+            return redirect()->to('/adminkab/program_pk/import')
+                ->with('success', 'Simulasi selesai (tidak ada data yang disimpan). ' . $ringkasan . $peringatan);
+        }
 
-            // Ganti perangkat daerah/unit (mis. dari Dinas ke Puskesmas):
-            // seluruh konteks dan parent di bawahnya harus direset.
-            if ($A !== '' && $A !== $ctxUnit) {
-                $ctxUnit             = $A;
-                $ctxUrusan           = '';
-                $ctxBidang           = '';
-                $currentProgramId    = null;
-                $currentKegiatanId   = null;
-                $currentProgramKode  = null;
-                $currentKegiatanKode = null;
-                $currentKegiatanE    = '';
-            }
-
-            $nB = $this->normalizeKodeRuas($r['B'] ?? '', self::KODE_WIDTH['B']);
-            $nC = $this->normalizeKodeRuas($r['C'] ?? '', self::KODE_WIDTH['C']);
-            $nD = $this->normalizeKodeRuas($r['D'] ?? '', self::KODE_WIDTH['D']);
-            $nE = $this->normalizeKodeRuas($r['E'] ?? '', self::KODE_WIDTH['E']);
-            $nF = $this->normalizeKodeRuas($r['F'] ?? '', self::KODE_WIDTH['F']);
-
-            // Urusan berganti -> bidang urusan di bawahnya tidak berlaku lagi.
-            if ($nB !== '') {
-                if ($nB !== $ctxUrusan) {
-                    $ctxUrusan = $nB;
-                    $ctxBidang = '';
-                }
-            } else {
-                $nB = $ctxUrusan;
-            }
-
-            if ($nC !== '') {
-                $ctxBidang = $nC;
-            } else {
-                $nC = $ctxBidang;
-            }
-
-            // Baris OPD / urusan / bidang urusan / TOTAL / tanda tangan.
-            // Reset parent supaya baris berikutnya tidak menempel ke
-            // program atau kegiatan dari blok sebelumnya.
-            if ($nD === '' || $nD === '00') {
-                $currentProgramId    = null;
-                $currentKegiatanId   = null;
-                $currentProgramKode  = null;
-                $currentKegiatanKode = null;
-                $currentKegiatanE    = '';
-                continue;
-            }
-
-            if ($G === '') {
-                continue;
-            }
-
-            $kodeProgram = ($ctxUnit !== '' ? $ctxUnit : '0')
-                . '.' . ($nB !== '' ? $nB : '0')
-                . '.' . ($nC !== '' ? $nC : '00')
-                . '.' . $nD;
-
-            // Sub kegiatan yang kolom E-nya dikosongkan (gaya fill-down)
-            // mewarisi kegiatan terakhir pada program yang sama.
-            if ($nE === '' && $nF !== '' && $currentKegiatanE !== '' && $currentProgramKode === $kodeProgram) {
-                $nE = $currentKegiatanE;
-            }
-
-            // Anggaran wajib diambil dari kolom K baris entitas ini sendiri.
-            // null = sel benar-benar kosong, nilai lama dipertahankan.
-            $anggaran = $this->parseAnggaranCell($sheet, $rowNo);
-
-            /**
-             * =========================
-             * PROGRAM
-             * =========================
-             */
-            if ($nE === '') {
-                $data = [
-                    'opd_id'           => $opdId,
-                    'kode_program'     => $kodeProgram,
-                    'program_kegiatan' => $G,
-                    'tahun_anggaran'   => $tahun,
-                    'jenis_anggaran'   => $jenisAnggaran,
-                    'updated_at'       => $now,
-                ];
-                if ($anggaran !== null) {
-                    $data['anggaran'] = $anggaran;
-                }
-
-                $programId = $this->findProgramId(
-                    $tbProgram,
-                    $programIdByKode,
-                    $kodeProgram,
-                    $opdId,
-                    $tahun,
-                    $jenisAnggaran
-                );
-
-                if ($programId !== null) {
-                    $tbProgram->where('id', $programId)->update($data);
-                    $stat['program_update']++;
-                } else {
-                    $data['created_at'] = $now;
-                    $tbProgram->insert($data);
-                    $programId = (int) $db->insertID();
-                    $stat['program_baru']++;
-                }
-
-                $programIdByKode[$kodeProgram]        = $programId;
-                $kodeProgramDenganBaris[$kodeProgram] = true;
-                $namaProgramNomenklatur[$nB . '.' . $nC . '.' . $nD] = $G;
-                $currentProgramId   = $programId;
-                $currentProgramKode = $kodeProgram;
-
-                // Pindah program -> kegiatan aktif tidak berlaku lagi.
-                $currentKegiatanId   = null;
-                $currentKegiatanKode = null;
-                $currentKegiatanE    = '';
-                continue;
-            }
-
-            // Kegiatan & sub kegiatan wajib menempel pada program milik baris
-            // ini (A+B+C+D), bukan program terakhir yang kebetulan terbaca.
-            // Program aktif hanya dipakai ulang bila kodenya memang sama.
-            $programId = ($currentProgramKode === $kodeProgram && $currentProgramId !== null)
-                ? $currentProgramId
-                : $this->findProgramId(
-                    $tbProgram,
-                    $programIdByKode,
-                    $kodeProgram,
-                    $opdId,
-                    $tahun,
-                    $jenisAnggaran
-                );
-
-            if ($programId === null) {
-                // Sebagian unit (mis. Puskesmas dan UPT) langsung mencantumkan
-                // kegiatan tanpa baris Program tersendiri. Programnya dibuat
-                // dari jalur kode baris ini supaya kegiatan tetap masuk ke
-                // hirarki yang benar — bukan menempel ke program terakhir yang
-                // kebetulan terbaca seperti perilaku importer lama.
-                $nomenklatur = $nB . '.' . $nC . '.' . $nD;
-
-                $tbProgram->insert([
-                    'opd_id'           => $opdId,
-                    'kode_program'     => $kodeProgram,
-                    // Nama program identik di semua unit, ambil dari baris
-                    // program unit induk yang sudah terbaca lebih dulu.
-                    'program_kegiatan' => $namaProgramNomenklatur[$nomenklatur] ?? ('PROGRAM ' . $nomenklatur),
-                    'tahun_anggaran'   => $tahun,
-                    'jenis_anggaran'   => $jenisAnggaran,
-                    'anggaran'         => 0,
-                    'created_at'       => $now,
-                    'updated_at'       => $now,
-                ]);
-
-                $programId                    = (int) $db->insertID();
-                $programIdByKode[$kodeProgram] = $programId;
-                $stat['program_auto']++;
-            }
-
-            $currentProgramId   = $programId;
-            $currentProgramKode = $kodeProgram;
-            $kodeKegiatan       = $kodeProgram . '.' . $nE;
-
-            /**
-             * =========================
-             * KEGIATAN
-             * =========================
-             */
-            if ($nF === '') {
-                $data = [
-                    'program_id'     => $programId,
-                    'kode_kegiatan'  => $kodeKegiatan,
-                    'kegiatan'       => $G,
-                    'tahun_anggaran' => $tahun,
-                    'jenis_anggaran' => $jenisAnggaran,
-                    'updated_at'     => $now,
-                ];
-                if ($anggaran !== null) {
-                    $data['anggaran'] = $anggaran;
-                }
-
-                // Dicocokkan lewat kode di bawah program induknya, bukan
-                // lewat nama kegiatan (nama bisa berubah antar dokumen dan
-                // nama yang sama dipakai di banyak program).
-                $kegiatanId = $this->findKegiatanId(
-                    $tbKegiatan,
-                    $kegiatanIdByKode,
-                    $kodeKegiatan,
-                    $programId,
-                    $tahun,
-                    $jenisAnggaran
-                );
-
-                if ($kegiatanId !== null) {
-                    $tbKegiatan->where('id', $kegiatanId)->update($data);
-                    $stat['kegiatan_update']++;
-                } else {
-                    $data['created_at'] = $now;
-                    $tbKegiatan->insert($data);
-                    $kegiatanId = (int) $db->insertID();
-                    $stat['kegiatan_baru']++;
-                }
-
-                $kegiatanIdByKode[$programId . '|' . $kodeKegiatan]  = $kegiatanId;
-                $kodeKegiatanDenganBaris[$kodeKegiatan]              = true;
-                $namaKegiatanNomenklatur[$nB . '.' . $nC . '.' . $nD . '.' . $nE] = $G;
-                $currentKegiatanId   = $kegiatanId;
-                $currentKegiatanKode = $kodeKegiatan;
-                $currentKegiatanE    = $nE;
-                continue;
-            }
-
-            /**
-             * =========================
-             * SUB KEGIATAN
-             * =========================
-             */
-            // Sama seperti program: kegiatan aktif hanya dipakai ulang bila
-            // kode kegiatan baris ini persis sama (kode sudah memuat jalur
-            // program, jadi tidak mungkin nyantol ke program lain).
-            $kegiatanId = ($currentKegiatanKode === $kodeKegiatan && $currentKegiatanId !== null)
-                ? $currentKegiatanId
-                : $this->findKegiatanId(
-                    $tbKegiatan,
-                    $kegiatanIdByKode,
-                    $kodeKegiatan,
-                    $programId,
-                    $tahun,
-                    $jenisAnggaran
-                );
-
-            if ($kegiatanId === null) {
-                // Seperti pada program: ada unit (mis. Kelurahan) yang langsung
-                // mencantumkan sub kegiatan tanpa baris Kegiatan tersendiri.
-                $nomenklatur = $nB . '.' . $nC . '.' . $nD . '.' . $nE;
-
-                $tbKegiatan->insert([
-                    'program_id'     => $programId,
-                    'kode_kegiatan'  => $kodeKegiatan,
-                    'kegiatan'       => $namaKegiatanNomenklatur[$nomenklatur] ?? ('Kegiatan ' . $nomenklatur),
-                    'tahun_anggaran' => $tahun,
-                    'jenis_anggaran' => $jenisAnggaran,
-                    'anggaran'       => 0,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ]);
-
-                $kegiatanId = (int) $db->insertID();
-                $kegiatanIdByKode[$programId . '|' . $kodeKegiatan] = $kegiatanId;
-                $stat['kegiatan_auto']++;
-            }
-
-            if (!isset($kodeKegiatanDenganBaris[$kodeKegiatan])) {
-                $kegiatanTanpaBaris[$kodeKegiatan] = $kegiatanId;
-            }
-
-            $currentKegiatanId   = $kegiatanId;
-            $currentKegiatanKode = $kodeKegiatan;
-            $kodeSub             = $kodeKegiatan . '.' . $nF;
-
-            $data = [
-                'kegiatan_id'      => $kegiatanId,
-                'kode_sub_kegiatan' => $kodeSub,
-                'sub_kegiatan'     => $G,
-                'tahun_anggaran'   => $tahun,
-                'jenis_anggaran'   => $jenisAnggaran,
-                'updated_at'       => $now,
-            ];
-            if ($anggaran !== null) {
-                $data['anggaran'] = $anggaran;
-            }
-
-            // Dicari di bawah kegiatan induknya. Kode sub yang sama
-            // (mis. "0001") dipakai ulang di banyak kegiatan, jadi
-            // pencarian hanya lewat kode + tahun pasti salah sasaran.
-            $subId = $this->findSubKegiatanId(
-                $tbSub,
-                $kodeSub,
-                $kegiatanId,
-                $tahun,
-                $jenisAnggaran
+        $pesan = 'Import selesai. ' . $ringkasan
+            . sprintf(
+                ' Tersimpan: Program %d baru / %d diperbarui, Kegiatan %d baru / %d diperbarui, Sub Kegiatan %d baru / %d diperbarui.',
+                $stat['program_baru'],
+                $stat['program_update'],
+                $stat['kegiatan_baru'],
+                $stat['kegiatan_update'],
+                $stat['sub_baru'],
+                $stat['sub_update']
             );
 
-            if ($subId !== null) {
-                $tbSub->where('id', $subId)->update($data);
-                $stat['sub_update']++;
-            } else {
-                $data['created_at'] = $now;
-                $tbSub->insert($data);
-                $stat['sub_baru']++;
-            }
+        // Masih ada unit yang OPD-nya belum pasti -> arahkan ke halaman
+        // mapping. Datanya sudah tersimpan di staging, tidak perlu unggah ulang.
+        if ($ring['pending'] > 0 && !empty($ring['batch_id'])) {
+            return redirect()->to('/adminkab/program_pk/mapping/' . (int) $ring['batch_id'])
+                ->with('info', $pesan . ' ' . $ring['pending'] . ' unit menunggu pemetaan OPD di bawah ini.');
         }
 
-        // Entitas tanpa baris sendiri di file tidak punya kolom K, sehingga
-        // anggarannya diisi dari total anak di bawahnya. Dihitung ulang setiap
-        // import agar hasilnya tetap sama saat file yang sama diimpor kembali.
-        // Entitas yang punya baris sendiri tidak disentuh — anggarannya wajib
-        // apa adanya dari kolom K.
-        // Kegiatan lebih dulu, karena totalnya menjadi sumber total program.
-        foreach ($kegiatanTanpaBaris as $kode => $id) {
-            if (isset($kodeKegiatanDenganBaris[$kode])) {
-                continue;
-            }
+        return redirect()->to('/adminkab/program_pk/import')->with('success', $pesan);
+    }
 
-            $tbKegiatan->where('id', $id)->update([
-                'anggaran'   => $this->sumAnggaran($db, 'sub_kegiatan_pk', 'kegiatan_id', $id),
-                'updated_at' => $now,
+    /** Daftar batch import yang masih menyisakan unit pending. */
+    public function mappingIndex()
+    {
+        $db = \Config\Database::connect();
+        if (!$this->stagingSiap($db)) {
+            return redirect()->to('/adminkab/program_pk/import')
+                ->with('error', 'Tabel staging import belum tersedia. Jalankan db/update_2026-08-12_import_multi_opd.sql.');
+        }
+
+        $batches = $db->table('import_batch')
+            ->orderBy('created_at', 'DESC')
+            ->limit(50)
+            ->get()->getResultArray();
+
+        return view('adminKabupaten/program_pk/mapping_batch', [
+            'title'   => 'Pemetaan OPD Hasil Import',
+            'batches' => $batches,
+        ]);
+    }
+
+    /** Daftar unit dalam satu batch beserta status pemetaannya. */
+    public function mapping($batchId = null)
+    {
+        $db = \Config\Database::connect();
+        if (!$this->stagingSiap($db)) {
+            return redirect()->to('/adminkab/program_pk/import')
+                ->with('error', 'Tabel staging import belum tersedia. Jalankan db/update_2026-08-12_import_multi_opd.sql.');
+        }
+
+        $batchId = (int) $batchId;
+        $batch   = $db->table('import_batch')->where('id', $batchId)->get()->getRowArray();
+        if (!$batch) {
+            return redirect()->to('/adminkab/program_pk/mapping')->with('error', 'Batch import tidak ditemukan.');
+        }
+
+        $units = $db->table('import_batch_unit')
+            ->where('batch_id', $batchId)
+            ->orderBy('mapping_status', 'ASC')
+            ->orderBy('urutan', 'ASC')
+            ->get()->getResultArray();
+
+        $resolver = new OpdResolver($db);
+        foreach ($units as $i => $u) {
+            // Nama OPD SELALU dari master, tidak pernah dari Excel.
+            $units[$i]['nama_opd']       = $resolver->namaOpd($u['opd_id'] === null ? null : (int) $u['opd_id']);
+            $units[$i]['nama_saran_opd'] = $resolver->namaOpd($u['saran_opd_id'] === null ? null : (int) $u['saran_opd_id']);
+        }
+
+        return view('adminKabupaten/program_pk/mapping_unit', [
+            'title' => 'Pemetaan OPD — Batch #' . $batchId,
+            'batch' => $batch,
+            'units' => $units,
+        ]);
+    }
+
+    /** Detail satu unit pending: pilih OPD + pratinjau hierarki. */
+    public function mappingDetail($unitId = null)
+    {
+        $db = \Config\Database::connect();
+        if (!$this->stagingSiap($db)) {
+            return redirect()->to('/adminkab/program_pk/import')
+                ->with('error', 'Tabel staging import belum tersedia.');
+        }
+
+        $unit = $this->unitDariStaging($db, (int) $unitId);
+        if (!$unit) {
+            return redirect()->to('/adminkab/program_pk/mapping')->with('error', 'Unit import tidak ditemukan.');
+        }
+
+        $batch    = $db->table('import_batch')->where('id', $unit['batch_id'])->get()->getRowArray();
+        $resolver = new OpdResolver($db);
+
+        return view('adminKabupaten/program_pk/mapping_detail', [
+            'title'     => 'Pemetaan OPD — ' . $unit['nama_unit'],
+            'unit'      => $unit,
+            'batch'     => $batch,
+            'preview'   => $this->pratinjauUnit($unit),
+            'opds'      => $this->OpdModel->orderBy('nama_opd', 'ASC')->findAll(),
+            'namaSaran' => $resolver->namaOpd($unit['saran_opd_id']),
+        ]);
+    }
+
+    /**
+     * Simpan pemetaan manual lalu finalisasi unit tersebut ke tabel produksi.
+     * Satu mapping berlaku untuk SELURUH blok unit, bukan per Program.
+     */
+    public function mappingSave($unitId = null)
+    {
+        $db = \Config\Database::connect();
+        if (!$this->stagingSiap($db)) {
+            return redirect()->to('/adminkab/program_pk/import')
+                ->with('error', 'Tabel staging import belum tersedia.');
+        }
+
+        $unitId = (int) $unitId;
+        $unit   = $this->unitDariStaging($db, $unitId);
+        if (!$unit) {
+            return redirect()->to('/adminkab/program_pk/mapping')->with('error', 'Unit import tidak ditemukan.');
+        }
+
+        $kembali = '/adminkab/program_pk/mapping/' . $unit['batch_id'];
+
+        if ($unit['mapping_status'] === 'imported') {
+            return redirect()->to($kembali)->with('error', 'Unit ini sudah pernah diproses.');
+        }
+
+        $opdId = (int) ($this->request->getPost('opd_id') ?? 0);
+        if ($opdId <= 0) {
+            return redirect()->back()->with('error', 'Pilih OPD tujuan terlebih dahulu.');
+        }
+        // OPD wajib benar-benar ada di master — tidak menerima id sembarangan.
+        if (!$this->OpdModel->find($opdId)) {
+            return redirect()->back()->with('error', 'OPD tujuan tidak ditemukan pada master OPD.');
+        }
+
+        $batch = $db->table('import_batch')->where('id', $unit['batch_id'])->get()->getRowArray();
+        if (!$batch) {
+            return redirect()->to('/adminkab/program_pk/mapping')->with('error', 'Batch import tidak ditemukan.');
+        }
+
+        $simpanAlias = (bool) $this->request->getPost('simpan_alias');
+        $userId      = (int) session()->get('user_id') ?: null;
+
+        $db->transException(true)->transBegin();
+
+        try {
+            $writer = new \App\Services\ProgramPkWriter($db);
+            $stat   = \App\Services\ProgramPkWriter::statKosong();
+
+            $writer->tulisUnit(
+                $unit,
+                $opdId,
+                (int) $batch['tahun'],
+                (string) $batch['jenis_anggaran'],
+                $stat
+            );
+
+            $db->table('import_batch_unit')->where('id', $unitId)->update([
+                'opd_id'         => $opdId,
+                'mapping_status' => 'imported',
+                'mapping_method' => 'manual',
+                'updated_at'     => date('Y-m-d H:i:s'),
             ]);
-        }
 
-        foreach ($programIdByKode as $kode => $id) {
-            if (isset($kodeProgramDenganBaris[$kode])) {
-                continue;
+            if ($simpanAlias) {
+                (new OpdResolver($db))->simpanAlias($unit['nama_unit'], $unit['kode_unit'], $opdId, $userId);
             }
 
-            $tbProgram->where('id', $id)->update([
-                'anggaran'   => $this->sumAnggaran($db, 'kegiatan_pk', 'program_id', $id),
-                'updated_at' => $now,
+            // Batch dianggap selesai kalau tidak ada lagi unit yang menunggu.
+            $sisa = (int) $db->table('import_batch_unit')
+                ->where('batch_id', $unit['batch_id'])
+                ->where('mapping_status', 'pending_mapping')
+                ->countAllResults();
+
+            $db->table('import_batch')->where('id', $unit['batch_id'])->update([
+                'jumlah_pending' => $sisa,
+                'status'         => $sisa > 0 ? 'pending_mapping' : 'selesai',
+                'updated_at'     => date('Y-m-d H:i:s'),
             ]);
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Gagal finalisasi mapping unit ' . $unitId . ': ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal memproses mapping: ' . $e->getMessage());
         }
 
-        return $stat;
-    }
+        $nama = (new OpdResolver($db))->namaOpd($opdId);
 
-    /**
-     * Total anggaran anak dari satu induk, dipakai untuk mengisi anggaran
-     * entitas yang tidak punya barisnya sendiri di Lampiran 8.
-     */
-    private function sumAnggaran($db, string $table, string $parentColumn, int $parentId): int
-    {
-        $row = $db->table($table)
-            ->selectSum('anggaran', 'total')
-            ->where($parentColumn, $parentId)
-            ->get()
-            ->getRow();
-
-        return (int) ($row->total ?? 0);
-    }
-
-    /**
-     * Normalisasi satu ruas kode SIPD ke bentuk baku.
-     *
-     * Tiap segmen (dipisah titik) dibuang nol depannya lalu dikembalikan ke
-     * lebar baku, sehingga "1"/"01", "2"/"02", dan "3"/"0003" selalu
-     * menghasilkan nilai yang sama. Bentuk berlebar tetap ini juga membuat
-     * pengurutan string pada kolom kode tetap urut secara numerik.
-     *
-     * @param int[] $widths lebar per segmen; segmen berikutnya memakai lebar terakhir
-     *
-     * @return string '' bila sel kosong atau bukan kode angka
-     */
-    private function normalizeKodeRuas($value, array $widths): string
-    {
-        $value = trim((string) $value);
-        if ($value === '') {
-            return '';
-        }
-
-        $fallbackWidth = $widths ? (int) $widths[array_key_last($widths)] : 1;
-        $segments      = [];
-
-        foreach (explode('.', $value) as $index => $segment) {
-            $segment = trim($segment);
-
-            // Bukan kode angka — mis. baris header ("PROGRAM"), "TOTAL", atau
-            // blok tanda tangan. Dianggap tidak berkode supaya baris itu tidak
-            // ikut terbaca sebagai Program/Kegiatan/Sub Kegiatan.
-            if ($segment === '' || preg_match('/^\d+$/', $segment) !== 1) {
-                return '';
-            }
-
-            $digits = ltrim($segment, '0');
-            if ($digits === '') {
-                $digits = '0';
-            }
-
-            $segments[] = str_pad($digits, $widths[$index] ?? $fallbackWidth, '0', STR_PAD_LEFT);
-        }
-
-        return implode('.', $segments);
-    }
-
-    /**
-     * Rapikan uraian dari Excel: sel SIPD kerap memuat baris baru dan spasi
-     * ganda hasil pembungkusan teks.
-     */
-    private function cleanUraian($value): string
-    {
-        $value = (string) $value;
-        $clean = preg_replace('/\s+/u', ' ', $value);
-
-        return trim($clean ?? $value);
-    }
-
-    /**
-     * Baca anggaran (kolom K) pada satu baris.
-     *
-     * @return int|null null bila sel kosong, agar nilai lama tidak tertimpa 0
-     */
-    private function parseAnggaranCell(Worksheet $sheet, int $row): ?int
-    {
-        $cell = $sheet->getCell('K' . $row);
-        $raw  = $cell->getValue();
-
-        if (is_int($raw) || is_float($raw)) {
-            return (int) round((float) $raw);
-        }
-
-        $text = trim((string) $raw);
-        if ($text === '') {
-            $text = trim((string) $cell->getFormattedValue());
-        }
-        if ($text === '' || $text === '-') {
-            return null;
-        }
-
-        $negatif = str_starts_with($text, '(') || str_starts_with($text, '-');
-        $text    = preg_replace('/[^0-9.,]/', '', $text);
-        if ($text === '') {
-            return null;
-        }
-
-        // Buang pecahan. SIPD mencetak "89,920,779,177.000000000" maupun
-        // "190,754,000.00"; format Indonesia memakai "190.754.000,00".
-        $dot   = strrpos($text, '.');
-        $comma = strrpos($text, ',');
-        $sep   = max($dot === false ? -1 : $dot, $comma === false ? -1 : $comma);
-
-        if ($sep >= 0) {
-            $tail = substr($text, $sep + 1);
-            // Ruas terakhir tepat 3 digit = kelompok ribuan, bukan pecahan.
-            if (preg_match('/^\d{3}$/', $tail) !== 1) {
-                $text = substr($text, 0, $sep);
-            }
-        }
-
-        $digits = preg_replace('/\D/', '', $text);
-        if ($digits === '') {
-            return 0;
-        }
-
-        return $negatif ? -(int) $digits : (int) $digits;
-    }
-
-    /**
-     * Cari program dengan kunci import: opd_id + tahun + jenis anggaran + kode.
-     *
-     * @param array<string, int> $cache memo per proses import
-     */
-    private function findProgramId(
-        $tbProgram,
-        array &$cache,
-        string $kodeProgram,
-        int $opdId,
-        int $tahun,
-        string $jenisAnggaran
-    ): ?int {
-        if (isset($cache[$kodeProgram])) {
-            return $cache[$kodeProgram];
-        }
-
-        $row = $tbProgram
-            ->where('opd_id', $opdId)
-            ->where('tahun_anggaran', $tahun)
-            ->where('jenis_anggaran', $jenisAnggaran)
-            ->where('kode_program', $kodeProgram)
-            ->get()
-            ->getRow();
-
-        if (!$row) {
-            return null;
-        }
-
-        return $cache[$kodeProgram] = (int) $row->id;
-    }
-
-    /**
-     * Cari kegiatan di bawah program induknya: program_id + kode + tahun + jenis.
-     *
-     * @param array<string, int> $cache memo per proses import
-     */
-    private function findKegiatanId(
-        $tbKegiatan,
-        array &$cache,
-        string $kodeKegiatan,
-        int $programId,
-        int $tahun,
-        string $jenisAnggaran
-    ): ?int {
-        $cacheKey = $programId . '|' . $kodeKegiatan;
-        if (isset($cache[$cacheKey])) {
-            return $cache[$cacheKey];
-        }
-
-        $row = $tbKegiatan
-            ->where('program_id', $programId)
-            ->where('kode_kegiatan', $kodeKegiatan)
-            ->where('tahun_anggaran', $tahun)
-            ->where('jenis_anggaran', $jenisAnggaran)
-            ->get()
-            ->getRow();
-
-        if (!$row) {
-            return null;
-        }
-
-        return $cache[$cacheKey] = (int) $row->id;
-    }
-
-    /**
-     * Cari sub kegiatan di bawah kegiatan induknya:
-     * kegiatan_id + kode + tahun + jenis.
-     */
-    private function findSubKegiatanId(
-        $tbSub,
-        string $kodeSub,
-        int $kegiatanId,
-        int $tahun,
-        string $jenisAnggaran
-    ): ?int {
-        $row = $tbSub
-            ->where('kegiatan_id', $kegiatanId)
-            ->where('kode_sub_kegiatan', $kodeSub)
-            ->where('tahun_anggaran', $tahun)
-            ->where('jenis_anggaran', $jenisAnggaran)
-            ->get()
-            ->getRow();
-
-        return $row ? (int) $row->id : null;
+        return redirect()->to($kembali)->with('success', sprintf(
+            '%s dipetakan ke %s. Tersimpan: Program %d baru / %d diperbarui, Kegiatan %d baru / %d diperbarui, Sub Kegiatan %d baru / %d diperbarui.',
+            $unit['nama_unit'],
+            $nama,
+            $stat['program_baru'],
+            $stat['program_update'],
+            $stat['kegiatan_baru'],
+            $stat['kegiatan_update'],
+            $stat['sub_baru'],
+            $stat['sub_update']
+        ));
     }
 
     private function normalizeMoney($value): int

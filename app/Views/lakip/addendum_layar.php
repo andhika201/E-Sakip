@@ -80,6 +80,12 @@ foreach ($indikatorRows as $r) {
     </div>
 <?php endif; ?>
 
+<?php // Urutan halaman: Tabel Capaian LAKIP -> Chart Perbandingan ->
+      // Analisis Faktor -> Efisiensi Program/Anggaran. ?>
+<?php if (!empty($benchmarkCanView)): ?>
+    <?= $this->include('lakip/benchmark_chart') ?>
+<?php endif; ?>
+
 <!-- ============================================================
      CARD 2 — ANALISIS FAKTOR PENCAPAIAN KINERJA
      ============================================================ -->

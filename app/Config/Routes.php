@@ -129,6 +129,12 @@ $routes->group(
         $routes->post('lakip/efisiensi/save', 'AdminKab\LakipController::efisiensiSave');
         $routes->post('lakip/efisiensi/delete/(:num)', 'AdminKab\LakipController::efisiensiDelete/$1');
 
+        // Benchmark Provinsi Lampung & Nasional (chart perbandingan LAKIP).
+        // Izin tulisnya TIDAK memakai lakip_kab.* melainkan
+        // lakip_benchmark.manage — diperiksa ulang di LakipBenchmarkTrait.
+        $routes->post('lakip/benchmark/save', 'AdminKab\LakipController::benchmarkSave');
+        $routes->post('lakip/benchmark/delete/(:num)', 'AdminKab\LakipController::benchmarkDelete/$1');
+
         // iku (standalone — id yang dipakai adalah id SASARAN IKU, bukan lagi id indikator renstra/rpjmd)
         $routes->get('iku/cetak', 'AdminKab\IkuController::cetak');
         $routes->get('iku/edit/(:num)', 'AdminKab\IkuController::edit/$1');
@@ -257,6 +263,14 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
     $routes->get('program_pk/import', 'ProgramPkController::import');
     $routes->get('program_pk/template', 'ProgramPkController::template');
     $routes->post('program_pk/import/process', 'ProgramPkController::processImport');
+
+    // Pemetaan OPD untuk cakupan import "Seluruh OPD". Unit yang OPD-nya
+    // belum bisa ditentukan menunggu di staging dan dipetakan di sini —
+    // tanpa perlu mengunggah ulang Excel.
+    $routes->get('program_pk/mapping', 'ProgramPkController::mappingIndex');
+    $routes->get('program_pk/mapping/(:num)', 'ProgramPkController::mapping/$1');
+    $routes->get('program_pk/mapping/unit/(:num)', 'ProgramPkController::mappingDetail/$1');
+    $routes->post('program_pk/mapping/unit/(:num)/save', 'ProgramPkController::mappingSave/$1');
     $routes->get('program_pk/edit/(:num)', 'ProgramPkController::edit/$1');
     $routes->post('program_pk/save', 'ProgramPkController::save');
     $routes->post('program_pk/update/(:num)', 'ProgramPkController::update/$1');
@@ -426,6 +440,12 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('lakip/analisis/delete/(:num)', 'AdminOpd\LakipOpdController::analisisDelete/$1');
     $routes->post('lakip/efisiensi/save', 'AdminOpd\LakipOpdController::efisiensiSave');
     $routes->post('lakip/efisiensi/delete/(:num)', 'AdminOpd\LakipOpdController::efisiensiDelete/$1');
+
+    // Benchmark Provinsi/Nasional. Rute disediakan agar admin_kab yang membuka
+    // LAKIP lewat area OPD tetap bisa menyimpan; role OPD sendiri ditolak
+    // LakipBenchmarkTrait karena tidak punya lakip_benchmark.manage.
+    $routes->post('lakip/benchmark/save', 'AdminOpd\LakipOpdController::benchmarkSave');
+    $routes->post('lakip/benchmark/delete/(:num)', 'AdminOpd\LakipOpdController::benchmarkDelete/$1');
 
     // Tentang Kami
     $routes->get('tentang_kami', 'AdminOpdController::tentang_kami');

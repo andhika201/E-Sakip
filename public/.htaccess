@@ -44,6 +44,14 @@ Options -Indexes
 	ErrorDocument 404 index.php
 </IfModule>
 
+# Spesifikasi OpenAPI: berkas statis yang ikut berubah tiap deploy, jadi
+# jangan biarkan cache browser/proxy menyajikan versi lama ke /api-docs.
+<IfModule mod_headers.c>
+	<Files "openapi.json">
+		Header set Cache-Control "no-cache, must-revalidate"
+	</Files>
+</IfModule>
+
 # Disable server signature start
 ServerSignature Off
 # Disable server signature end

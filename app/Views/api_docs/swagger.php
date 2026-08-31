@@ -1,3 +1,11 @@
+<?php
+// Nomor versi berkas spesifikasi ikut ditempel di URL-nya. Tanpa ini,
+// `openapi.json` adalah berkas statis biasa sehingga cache browser (dan
+// LiteSpeed/proxy di hosting) tetap menyajikan salinan LAMA sesudah deploy —
+// halaman ini terlihat "tidak ikut ter-update" padahal berkasnya sudah baru.
+$specFile    = FCPATH . 'openapi.json';
+$specVersion = is_file($specFile) ? filemtime($specFile) : time();
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -24,7 +32,7 @@
     <script>
         window.onload = function () {
             window.ui = SwaggerUIBundle({
-                url: 'openapi.json',
+                url: 'openapi.json?v=<?= (int) $specVersion ?>',
                 dom_id: '#swagger-ui',
                 presets: [
                     SwaggerUIBundle.presets.apis,

@@ -11,6 +11,23 @@ class LakipModel extends Model
     protected $returnType = 'array';
     protected $useAutoIncrement = true;
 
+    /**
+     * =====================================================================
+     * ENAM KOLOM LINGKUP WAJIB ADA DI DAFTAR INI
+     *
+     * `allowedFields` adalah PENYARING: medan di luar daftar DIBUANG DIAM-DIAM
+     * oleh CI4, bukan ditolak. Daftar ini pernah tertinggal saat kolom
+     * `tahun`/`opd_id`/`mode`/`source_*` ditambahkan (migrasi 2026-08-20), dan
+     * akibatnya nyata: 134 baris realisasi lahir tanpa lingkup — 98 di
+     * antaranya berisi angka yang diketik operator, tidak terbaca layar mana
+     * pun. Controller mengirim datanya dengan benar; penyaring inilah yang
+     * membuangnya.
+     *
+     * Jalur IKU paling parah: tampilannya mengunci pada
+     * `source_type + tahun + opd_id + source_entity_id`, jadi tanpa keempatnya
+     * realisasi yang baru disimpan LENYAP SEKETIKA dari layar.
+     * =====================================================================
+     */
     protected $allowedFields = [
         'renstra_target_id',
         'rpjmd_target_id',
@@ -20,6 +37,13 @@ class LakipModel extends Model
         'capaian_tahun_ini',
         'capaian_hitung',
         'status',
+        'tahun',
+        'opd_id',
+        'mode',
+        'source_type',
+        'source_version_id',
+        'source_entity_id',
+        'lakip_version_id',
         'created_at',
         'updated_at',
     ];
@@ -287,6 +311,84 @@ class LakipModel extends Model
 
         foreach ($b->get()->getResultArray() as $r) {
             $map[(int) $r['source_entity_id']] = $r;
+        }
+
+        // =================================================================
+        // JEMBATAN REALISASI LAMA
+        //
+        // Sebelum LAKIP membaca IKU, realisasi diinput menempel ke target
+        // Renstra/RPJMD. Tanpa jembatan ini, layar bersumber IKU tampil
+        // KOSONG padahal capaiannya sudah diketik operator — dan tombol
+        // "tambah" yang lalu muncul menggiring mereka mengetik ulang,
+        // melahirkan baris kembar.
+        //
+        // Kuncinya silsilah: `iku_indikator.source_indikator_id` menunjuk
+        // indikator sumber yang targetnya dirujuk realisasi lama. Baris
+        // bersumber IKU (bila ada) selalu MENANG — jembatan hanya mengisi
+        // lubang, tidak menimpa.
+        // =================================================================
+        foreach ($this->jembatanRealisasiLama($tahun, $status, $opdId) as $k => $r) {
+            if (! isset($map[$k])) {
+                $map[$k] = $r;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Realisasi lama (berjangkar Renstra/RPJMD) dipetakan ke id indikator IKU
+     * berjalan — kunci yang sama dengan getLakipMapIku().
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function jembatanRealisasiLama(int $tahun, ?string $status, ?int $opdId): array
+    {
+        if (! $this->db->fieldExists('source_indikator_id', 'iku_indikator')) {
+            return [];
+        }
+
+        $map = [];
+
+        if (! empty($opdId)) {
+            // Lingkup OPD: realisasi lama menempel ke renstra_target.
+            $b = $this->db->table('lakip l')
+                ->select('l.*, ii.id AS indikator_id', false)
+                ->join('renstra_target rt', 'rt.id = l.renstra_target_id')
+                ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id')
+                ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id')
+                ->join(
+                    'iku_indikator ii',
+                    "ii.source_indikator_id = ris.id AND ii.source_type = 'renstra'"
+                    . ' AND ii.dihentikan_pada IS NULL',
+                    'inner',
+                    false
+                )
+                ->where('rt.tahun', $tahun)
+                ->where('rs.opd_id', $opdId);
+        } else {
+            // Lingkup kabupaten: realisasi lama menempel ke rpjmd_target.
+            $b = $this->db->table('lakip l')
+                ->select('l.*, ii.id AS indikator_id', false)
+                ->join('rpjmd_target rpt', 'rpt.id = l.rpjmd_target_id')
+                ->join(
+                    'iku_indikator ii',
+                    "ii.source_indikator_id = rpt.indikator_sasaran_id AND ii.source_type = 'rpjmd'"
+                    . ' AND ii.dihentikan_pada IS NULL',
+                    'inner',
+                    false
+                )
+                ->join('iku_sasaran iks', 'iks.id = ii.iku_sasaran_id AND iks.opd_id IS NULL', 'inner', false)
+                ->where('rpt.tahun', $tahun);
+        }
+
+        if (! empty($status)) {
+            $b->where('l.status', $status);
+        }
+
+        foreach ($b->get()->getResultArray() as $r) {
+            $r['jembatan'] = true; // penanda: capaian lama, dinaikkan dari jangkar sumber
+            $map[(int) $r['indikator_id']] = $r;
         }
 
         return $map;

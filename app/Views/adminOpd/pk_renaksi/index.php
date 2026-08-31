@@ -82,7 +82,12 @@ $eselonLabel = function ($pkJenis, $jabatanEselon = null, $jabatanNama = null) {
 //   - colspan baris kosong   (count)
 // non-bupati: No, [OPD], [Pejabat], Sasaran, Indikator, Tahun, Satuan, Target,
 //             Unit (Program/Kegiatan/Sub Kegiatan), Anggaran, Rencana Aksi,
-//             Sub Rencana Aksi, 4x Triwulan, Penanggung Jawab, Aksi
+//             Sub Rencana Aksi, Satuan (milik SUB), 4x Triwulan,
+//             Penanggung Jawab, Aksi
+//
+// Kolom 'satuan' dan 'subsat' sengaja dua-duanya ada dan TIDAK boleh
+// disatukan: yang pertama satuan INDIKATOR, yang kedua satuan target
+// triwulan tiap SUB rencana aksi. Keduanya kerap berbeda.
 // ---------------------------------------------------------------------------
 if ($isBupati) {
     // Tabel PK Bupati hanya 8 kolom -> lebarnya sengaja dijaga ~1.180px
@@ -114,6 +119,7 @@ if ($isBupati) {
             ['key' => 'anggaran',  'w' => 140],
             ['key' => 'renaksi',   'w' => 240],
             ['key' => 'sub',       'w' => 230],
+            ['key' => 'subsat',    'w' => 90],
             ['key' => 'tw1',       'w' => 60],
             ['key' => 'tw2',       'w' => 60],
             ['key' => 'tw3',       'w' => 60],
@@ -517,6 +523,11 @@ $filterQs = http_build_query(array_filter([
                                     <th rowspan="2" class="c-anggaran">Anggaran</th>
                                     <th rowspan="2" class="c-renaksi">Rencana Aksi</th>
                                     <th rowspan="2" class="c-sub">Sub Rencana Aksi</th>
+                                    <?php /* Satuan target triwulan tiap SUB — berbeda dari kolom
+                                             "Satuan" di kiri yang milik INDIKATOR. Satu indikator
+                                             bersatuan Persen lazim dirinci jadi sub-sub yang
+                                             dihitung dalam Dokumen atau Kegiatan. */ ?>
+                                    <th rowspan="2" class="c-subsat">Satuan</th>
                                     <th colspan="4">Target Triwulan</th>
                                     <th rowspan="2" class="c-pj">Penanggung Jawab</th>
                                     <th rowspan="2" class="c-aksi">Aksi</th>
@@ -807,6 +818,12 @@ $filterQs = http_build_query(array_filter([
                                                         <?php $sub = $subsRow[$butirIdx][$subIdx] ?? null; ?>
                                                         <td rowspan="<?= $spanRow ?>" class="text-start sub-cell va-top c-sub">
                                                             <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '<span class="text-muted">-</span>' ?>
+                                                        </td>
+
+                                                        <td rowspan="<?= $spanRow ?>" class="va-top c-subsat">
+                                                            <?= ($sub !== null && ($sub['satuan'] ?? '') !== '')
+                                                                ? esc($sub['satuan'])
+                                                                : '<span class="text-muted">-</span>' ?>
                                                         </td>
 
                                                         <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini

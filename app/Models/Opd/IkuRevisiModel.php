@@ -505,9 +505,15 @@ class IkuRevisiModel extends Model
     }
 
     /**
-     * Tahun yang MASIH BEBAS dipakai revisi bernomor pada satu lingkup.
+     * Tahun yang MASIH BEBAS dipakai sebuah revisi pada satu lingkup.
      *
-     * Tahun pertama periode selalu dikecualikan: itu jatah Kondisi Awal.
+     * Tahun PERTAMA periode ikut dihitung. Dulu ia selalu dikecualikan sebagai
+     * "jatah Kondisi Awal", padahal yang membuatnya tidak bisa dipakai bukan
+     * jatah melainkan kenyataan bahwa Kondisi Awal sedang menempatinya — dan
+     * itu sudah tertangkap $terpakai. Mengecualikannya secara buta membuat
+     * tahun itu HILANG dari daftar bahkan ketika benar-benar kosong, sehingga
+     * pemakai tidak punya cara menempatkan revisi di awal periode dan tidak
+     * diberi tahu alasannya.
      *
      * @return int[]
      */
@@ -517,7 +523,7 @@ class IkuRevisiModel extends Model
 
         $bebas = [];
 
-        foreach (range($tahunMulai + 1, $tahunAkhir) as $th) {
+        foreach (range($tahunMulai, $tahunAkhir) as $th) {
             if (! isset($terpakai[$th])) {
                 $bebas[] = $th;
             }
@@ -712,7 +718,8 @@ class IkuRevisiModel extends Model
         int $revisiId,
         array $baris,
         array $baru = [],
-        bool $izinBerlaku = false
+        bool $izinBerlaku = false,
+        array $sasaranBaru = []
     ): void {
         $revisi = $this->ambil($revisiId);
 
@@ -723,16 +730,33 @@ class IkuRevisiModel extends Model
         // Pintu terakhir. Controller sudah memeriksa izinnya, tetapi model
         // tetap menolak sendiri bila tidak diberi tahu — supaya pemanggil baru
         // yang lupa memeriksa tidak diam-diam ikut membongkar arsip.
-        if ($izinBerlaku && $revisi['status'] === self::STATUS_BERLAKU) {
+        //
+        // =================================================================
+        // ARSIP ('superseded') IKUT BISA DIPERBAIKI DI BAWAH IZIN
+        //
+        // Dulu hanya 'berlaku' yang boleh. Tetapi justru arsip-lah yang
+        // dibaca LAKIP tahun-tahun lampau: salah ketik indikator pada versi
+        // yang sudah digantikan tetap tercetak di laporan tahun itu, dan
+        // tidak ada satu pun jalan membetulkannya.
+        //
+        // Yang membedakan keduanya BUKAN boleh-tidaknya disunting, melainkan
+        // apa yang terjadi sesudahnya: hasil suntingan revisi 'berlaku'
+        // diterapkan ke IKU berjalan, sedangkan arsip berhenti di arsip. Itu
+        // diatur di controller (revisiSelesaikanIzin), bukan di sini.
+        // =================================================================
+        if ($izinBerlaku && in_array($revisi['status'], [self::STATUS_BERLAKU, self::STATUS_SUPERSEDED], true)) {
             // lolos: penyuntingan di bawah izin yang sudah disetujui
         } elseif ($revisi['status'] !== self::STATUS_DRAFT) {
-            throw new RuntimeException('Hanya draft yang bisa disunting; revisi yang sudah berlaku adalah arsip.');
+            throw new RuntimeException(
+                'Revisi berstatus ' . $revisi['status'] . ' hanya bisa disunting di bawah izin '
+                . 'yang sudah disetujui Admin Kabupaten.'
+            );
         }
 
         $tahunMulai = (int) $revisi['tahun_mulai'];
         $tahunAkhir = (int) $revisi['tahun_akhir'];
 
-        $this->dalamTransaksi(function () use ($revisiId, $baris, $baru, $tahunMulai, $tahunAkhir) {
+        $this->dalamTransaksi(function () use ($revisiId, $baris, $baru, $sasaranBaru, $tahunMulai, $tahunAkhir) {
             $db  = $this->db;
             $now = date('Y-m-d H:i:s');
 
@@ -818,88 +842,291 @@ class IkuRevisiModel extends Model
                     continue;
                 }
 
-                $teks = trim((string) ($isi['indikator'] ?? ''));
-
-                if ($teks === '') {
-                    // Kartu yang benar-benar kosong memang boleh diabaikan —
-                    // pemakai menekan "Tambah Indikator" lalu berubah pikiran.
-                    // Tetapi kartu yang SEBAGIAN terisi tidak boleh hilang
-                    // diam-diam sementara pemakai menerima pesan "tersimpan":
-                    // ia baru tahu isiannya lenyap saat membuka draft lagi.
-                    if ($this->kartuBaruAdaIsinya($isi)) {
-                        throw new RuntimeException(
-                            'Ada indikator baru yang sudah diisi sebagian tetapi nama indikatornya '
-                            . 'masih kosong. Isi kolom "Indikator", atau kosongkan seluruh kartunya.'
-                        );
-                    }
-
-                    continue;
-                }
-
                 $sasaranArsipId = (int) ($isi['revisi_sasaran_id'] ?? 0);
 
-                $sasaranSah = $db->table('iku_revisi_sasaran')
+                // Pencegah IDOR: sasaran tujuan harus milik revisi ini.
+                $sasaranSah = $sasaranArsipId > 0 && $db->table('iku_revisi_sasaran')
                     ->where('id', $sasaranArsipId)->where('revisi_id', $revisiId)->countAllResults() > 0;
 
-                if (! $sasaranSah) {
-                    throw new RuntimeException(
-                        'Indikator baru "' . mb_substr($teks, 0, 60) . '" tidak terhubung ke sasaran '
-                        . 'mana pun dalam revisi ini, jadi tidak bisa disimpan.'
-                    );
-                }
-
-                $jenis     = $this->jenisPerubahanSah($isi['jenis_perubahan'] ?? self::UBAH_BARU);
-                $pengganti = isset($isi['indikator_sebelumnya_id']) && (int) $isi['indikator_sebelumnya_id'] > 0
-                    ? (int) $isi['indikator_sebelumnya_id']
-                    : null;
-
-                if ($jenis !== self::UBAH_PENGGANTI) {
-                    $pengganti = null;
-                }
-
-                if ($jenis === self::UBAH_PENGGANTI && $pengganti === null) {
-                    throw new RuntimeException(
-                        'Indikator baru "' . mb_substr($teks, 0, 60) . '" ditandai sebagai PENGGANTI, '
-                        . 'tetapi indikator yang digantikan belum dipilih.'
-                    );
-                }
-
-                $satuan = trim((string) ($isi['satuan'] ?? ''));
-
-                $db->table('iku_revisi_indikator')->insert([
-                    'revisi_id'               => $revisiId,
-                    'revisi_sasaran_id'       => $sasaranArsipId,
-                    'sumber_indikator_id'     => null,
-                    'indikator'               => $teks,
-                    'definisi'                => $this->kosongJadiNull($isi['definisi'] ?? null),
-                    'rumusan_perhitungan'     => $this->kosongJadiNull($isi['rumusan_perhitungan'] ?? null),
-                    'satuan'                  => $this->kosongJadiNull($satuan),
-                    'satuan_nama'             => $this->namaSatuan($satuan),
-                    'sumber_data'             => $this->kosongJadiNull($isi['sumber_data'] ?? null),
-                    'penanggung_jawab'        => $this->kosongJadiNull($isi['penanggung_jawab'] ?? null),
-                    'jenis_indikator'         => $this->kosongJadiNull($isi['jenis_indikator'] ?? null),
-                    'baseline'                => $this->kosongJadiNull($isi['baseline'] ?? null),
-                    'urutan'                  => (int) ($isi['urutan'] ?? 999),
-                    'status'                  => 'draft',
-                    'jenis_perubahan'         => $jenis,
-                    'indikator_sebelumnya_id' => $pengganti,
-                    'perubahan_substansial'   => ! empty($isi['perubahan_substansial']) ? 1 : 0,
-                    'catatan_perubahan'       => $this->kosongJadiNull($isi['catatan_perubahan'] ?? null),
-                    'created_at'              => $now,
-                    'updated_at'              => $now,
-                ]);
-
-                $this->simpanTargetArsip(
-                    (int) $db->insertID(),
-                    (array) ($isi['target'] ?? []),
-                    $tahunMulai,
-                    $tahunAkhir,
-                    $now
+                $this->sisipkanIndikatorBaru(
+                    $revisiId, $sasaranArsipId, $sasaranSah, $isi, $tahunMulai, $tahunAkhir, $now
                 );
             }
 
+            // =========================================================
+            // SASARAN BARU (SASARAN MANDIRI) — DITAMBAHKAN DI SINI, BUKAN
+            // LEWAT PINTU TERSENDIRI YANG MENULIS LANGSUNG KE TABEL LIVE
+            //
+            // Sebelumnya sasaran mandiri lahir lewat IkuController::save()
+            // yang memanggil IkuModel::createComplete() — menulis LANGSUNG ke
+            // `iku_sasaran`, di luar alur revisi. Akibatnya IKU berjalan
+            // berubah tanpa revisi dan tanpa pengesahan, sementara arsip
+            // revisi mana pun tidak pernah memuatnya: sasaran itu tampil di
+            // IKU berjalan tetapi TIDAK ADA di dokumen penilaian tahun mana
+            // pun, sehingga LAKIP tidak bisa menilainya.
+            //
+            // Di sini ia menjadi bagian dari draft, ikut diperiksa Admin
+            // Kabupaten, dan baru menyentuh tabel live saat revisinya disahkan
+            // lewat terapkanKeLive() — yang memang sudah tahu cara
+            // MELAHIRKAN sasaran live dari baris arsip ber-sumber_sasaran_id
+            // NULL, jadi tidak ada yang perlu diubah di sisi itu.
+            // =========================================================
+            $this->sisipkanSasaranBaru($revisiId, (array) $sasaranBaru, $tahunMulai, $tahunAkhir, $now);
+
             return true;
         }, 'penyimpanan suntingan draft revisi');
+    }
+
+    /**
+     * Satu kartu indikator baru -> satu baris arsip.
+     *
+     * Dipisah dari simpanSuntinganDraft() supaya indikator yang menempel pada
+     * sasaran LAMA dan yang menempel pada sasaran BARU melewati aturan yang
+     * sama persis — dua salinan logika ini pernah menjadi cara paling mudah
+     * bagi keduanya untuk menyimpang tanpa ketahuan.
+     *
+     * @param bool $sasaranSah hasil pemeriksaan kepemilikan yang WAJIB
+     *                         dilakukan pemanggil; diteruskan, bukan diulang,
+     *                         karena sasaran baru belum tentu ada di basis
+     *                         data saat pemeriksaan pertama dilakukan.
+     */
+    private function sisipkanIndikatorBaru(
+        int $revisiId,
+        int $sasaranArsipId,
+        bool $sasaranSah,
+        array $isi,
+        int $tahunMulai,
+        int $tahunAkhir,
+        string $now
+    ): void {
+        $db   = $this->db;
+        $teks = trim((string) ($isi['indikator'] ?? ''));
+
+        if ($teks === '') {
+            // Kartu yang benar-benar kosong memang boleh diabaikan —
+            // pemakai menekan "Tambah Indikator" lalu berubah pikiran.
+            // Tetapi kartu yang SEBAGIAN terisi tidak boleh hilang
+            // diam-diam sementara pemakai menerima pesan "tersimpan":
+            // ia baru tahu isiannya lenyap saat membuka draft lagi.
+            if ($this->kartuBaruAdaIsinya($isi)) {
+                throw new RuntimeException(
+                    'Ada indikator baru yang sudah diisi sebagian tetapi nama indikatornya '
+                    . 'masih kosong. Isi kolom "Indikator", atau kosongkan seluruh kartunya.'
+                );
+            }
+
+            return;
+        }
+
+        if (! $sasaranSah) {
+            throw new RuntimeException(
+                'Indikator baru "' . mb_substr($teks, 0, 60) . '" tidak terhubung ke sasaran '
+                . 'mana pun dalam revisi ini, jadi tidak bisa disimpan.'
+            );
+        }
+
+        $jenis     = $this->jenisPerubahanSah($isi['jenis_perubahan'] ?? self::UBAH_BARU);
+        $pengganti = isset($isi['indikator_sebelumnya_id']) && (int) $isi['indikator_sebelumnya_id'] > 0
+            ? (int) $isi['indikator_sebelumnya_id']
+            : null;
+
+        if ($jenis !== self::UBAH_PENGGANTI) {
+            $pengganti = null;
+        }
+
+        if ($jenis === self::UBAH_PENGGANTI && $pengganti === null) {
+            throw new RuntimeException(
+                'Indikator baru "' . mb_substr($teks, 0, 60) . '" ditandai sebagai PENGGANTI, '
+                . 'tetapi indikator yang digantikan belum dipilih.'
+            );
+        }
+
+        $satuan = trim((string) ($isi['satuan'] ?? ''));
+
+        $db->table('iku_revisi_indikator')->insert([
+            'revisi_id'               => $revisiId,
+            'revisi_sasaran_id'       => $sasaranArsipId,
+            'sumber_indikator_id'     => null,
+            'indikator'               => $teks,
+            'definisi'                => $this->kosongJadiNull($isi['definisi'] ?? null),
+            'rumusan_perhitungan'     => $this->kosongJadiNull($isi['rumusan_perhitungan'] ?? null),
+            'satuan'                  => $this->kosongJadiNull($satuan),
+            'satuan_nama'             => $this->namaSatuan($satuan),
+            'sumber_data'             => $this->kosongJadiNull($isi['sumber_data'] ?? null),
+            'penanggung_jawab'        => $this->kosongJadiNull($isi['penanggung_jawab'] ?? null),
+            'jenis_indikator'         => $this->kosongJadiNull($isi['jenis_indikator'] ?? null),
+            'baseline'                => $this->kosongJadiNull($isi['baseline'] ?? null),
+            'urutan'                  => (int) ($isi['urutan'] ?? 999),
+            'status'                  => 'draft',
+            'jenis_perubahan'         => $jenis,
+            'indikator_sebelumnya_id' => $pengganti,
+            'perubahan_substansial'   => ! empty($isi['perubahan_substansial']) ? 1 : 0,
+            'catatan_perubahan'       => $this->kosongJadiNull($isi['catatan_perubahan'] ?? null),
+            'created_at'              => $now,
+            'updated_at'              => $now,
+        ]);
+
+        $this->simpanTargetArsip(
+            (int) $db->insertID(),
+            (array) ($isi['target'] ?? []),
+            $tahunMulai,
+            $tahunAkhir,
+            $now
+        );
+    }
+
+    /**
+     * Sasaran baru (SASARAN MANDIRI) -> baris arsip, beserta indikatornya.
+     *
+     * ---------------------------------------------------------------------
+     * BENTUK MASUKANNYA
+     *
+     *   sasaran_baru[K][sasaran]           teks sasaran (wajib)
+     *   sasaran_baru[K][renstra_tujuan_id] tujuan Renstra penaungnya (wajib)
+     *   sasaran_baru[K][indikator][N][...] kartu indikator, bentuknya SAMA
+     *                                      persis dengan `baru[...]`
+     *
+     * Indikatornya SENGAJA disarangkan di dalam sasarannya, bukan dikirim
+     * lewat `baru[]` dengan kunci sementara. Sasaran baru belum punya id saat
+     * form dikirim; menyarangkannya membuat hubungan "indikator ini milik
+     * sasaran itu" terbaca langsung dari bentuk datanya, tanpa lapisan
+     * penerjemah kunci-sementara yang bisa salah memetakan tanpa bergejala.
+     *
+     * ---------------------------------------------------------------------
+     * MENGAPA TUJUAN RENSTRA WAJIB
+     *
+     * Alasan yang sama dengan pintu lamanya (IkuController::tambah()): tanpa
+     * tujuan, sasaran ini muncul di Cascading dengan kolom-kolom kosong, di
+     * luar blok Tujuan mana pun. Kewajibannya ditegakkan DI SINI, bukan hanya
+     * di form, karena form bisa dilewati.
+     *
+     * `sumber_sasaran_id` dibiarkan NULL — itulah penanda "belum punya baris
+     * live". terapkanKeLive() membaca penanda itu untuk MELAHIRKAN sasaran
+     * live saat revisinya disahkan, lalu mengisi balik id-nya ke sini.
+     */
+    private function sisipkanSasaranBaru(
+        int $revisiId,
+        array $sasaranBaru,
+        int $tahunMulai,
+        int $tahunAkhir,
+        string $now
+    ): void {
+        if ($sasaranBaru === []) {
+            return;
+        }
+
+        $db = $this->db;
+
+        // Teks yang SUDAH ada di draft ini, untuk menolak kembar. Dibaca sekali
+        // di depan, lalu ditambahi tiap sasaran baru yang lolos — dua kartu
+        // baru berteks sama dalam satu penyimpanan pun ikut tertangkap.
+        $sudahAda = [];
+
+        foreach ($db->table('iku_revisi_sasaran')->select('sasaran')
+            ->where('revisi_id', $revisiId)->get()->getResultArray() as $r) {
+            $sudahAda[$this->kunciTeks($r['sasaran'])] = true;
+        }
+
+        // Sasaran baru ditaruh di EKOR dokumen. Urutan 0 akan membuatnya
+        // memimpin di depan sasaran hasil Renstra di layar Cascading.
+        $urutan = (int) ($db->table('iku_revisi_sasaran')
+            ->selectMax('urutan')->where('revisi_id', $revisiId)
+            ->get()->getRowArray()['urutan'] ?? 0);
+
+        foreach ($sasaranBaru as $isi) {
+            if (! is_array($isi)) {
+                continue;
+            }
+
+            $teks      = trim((string) ($isi['sasaran'] ?? ''));
+            $indikator = (array) ($isi['indikator'] ?? []);
+
+            if ($teks === '') {
+                // Kartu kosong = pemakai menekan "Tambah Sasaran" lalu berubah
+                // pikiran. Tetapi kartu yang indikatornya sudah diisi tidak
+                // boleh hilang diam-diam di balik pesan "tersimpan".
+                foreach ($indikator as $kartu) {
+                    if (is_array($kartu)
+                        && (trim((string) ($kartu['indikator'] ?? '')) !== ''
+                            || $this->kartuBaruAdaIsinya($kartu))) {
+                        throw new RuntimeException(
+                            'Ada sasaran baru yang indikatornya sudah diisi tetapi nama sasarannya '
+                            . 'masih kosong. Isi kolom "Sasaran", atau kosongkan seluruh kartunya.'
+                        );
+                    }
+                }
+
+                continue;
+            }
+
+            $kunci = $this->kunciTeks($teks);
+
+            if (isset($sudahAda[$kunci])) {
+                throw new RuntimeException(
+                    'Sasaran "' . mb_substr($teks, 0, 60) . '" sudah ada pada revisi ini. '
+                    . 'Tambahkan indikatornya pada sasaran yang sudah ada, bukan membuat sasaran kembar.'
+                );
+            }
+
+            $tujuanId = (int) ($isi['renstra_tujuan_id'] ?? 0);
+
+            if ($tujuanId <= 0 && $this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
+                throw new RuntimeException(
+                    'Sasaran baru "' . mb_substr($teks, 0, 60) . '" belum memilih Tujuan Renstra. '
+                    . 'Tanpa itu sasaran ini tidak punya tempat di Cascading.'
+                );
+            }
+
+            $db->table('iku_revisi_sasaran')->insert($this->kolomTujuanArsip($isi) + [
+                'revisi_id'         => $revisiId,
+                // NULL = belum punya baris live; terapkanKeLive() yang
+                // melahirkannya saat revisi disahkan.
+                'sumber_sasaran_id' => null,
+                'sasaran'           => $teks,
+                'tahun_mulai'       => $tahunMulai,
+                'tahun_akhir'       => $tahunAkhir,
+                'urutan'            => ++$urutan,
+                'jenis_perubahan'   => self::UBAH_BARU,
+                'catatan_perubahan' => $this->kosongJadiNull($isi['catatan_perubahan'] ?? null),
+                // Penanda "lahir di IKU". Dipakai Sync mode Ganti untuk TIDAK
+                // menghapusnya, sama seperti sasaran mandiri lewat pintu lama.
+                'source_type'       => 'iku',
+                'source_version_id' => null,
+                'source_ref_id'     => null,
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ]);
+
+            $sasaranArsipId    = (int) $db->insertID();
+            $sudahAda[$kunci]  = true;
+            $adaIndikator      = false;
+
+            foreach ($indikator as $kartu) {
+                if (! is_array($kartu)) {
+                    continue;
+                }
+
+                if (trim((string) ($kartu['indikator'] ?? '')) !== '') {
+                    $adaIndikator = true;
+                }
+
+                // Sasarannya baru saja dibuat di transaksi ini, jadi
+                // kepemilikannya pasti — tidak ada id tebakan yang bisa masuk.
+                $this->sisipkanIndikatorBaru(
+                    $revisiId, $sasaranArsipId, true, $kartu, $tahunMulai, $tahunAkhir, $now
+                );
+            }
+
+            // Sasaran tanpa indikator tidak berarti apa-apa: ia tidak bisa
+            // dinilai LAKIP, dan saat disahkan ia melahirkan baris live kosong
+            // yang hanya menambah baris di Cascading tanpa isi.
+            if (! $adaIndikator) {
+                throw new RuntimeException(
+                    'Sasaran baru "' . mb_substr($teks, 0, 60) . '" belum punya satu indikator pun. '
+                    . 'Tambahkan minimal satu indikator, atau kosongkan kartunya.'
+                );
+            }
+        }
     }
 
     /** Tulis target arsip satu indikator; tahun di luar periode dibuang. */
@@ -1080,6 +1307,52 @@ class IkuRevisiModel extends Model
                 'updated_at'           => date('Y-m-d H:i:s'),
             ]);
 
+            // =============================================================
+            // --- 5. JAHIT ULANG GARIS WAKTU: PENUTUP YANG WAJIB ---
+            //
+            // Langkah 2 di atas hanya melihat baris ber-status 'berlaku', dan
+            // hanya menurunkan yang mulai berlakunya LEBIH AWAL. Itu benar
+            // selama revisi selalu disahkan berurutan — asumsi yang RUNTUH
+            // sejak tahun berlaku boleh dipilih bebas.
+            //
+            // Bila revisi yang disahkan mulai LEBIH AWAL daripada revisi yang
+            // sudah berlaku, cabang `$batasAtas` cuma membatasi yang baru dan
+            // TIDAK menurunkan siapa pun — hasilnya DUA baris berstatus
+            // 'berlaku' sekaligus. Ditambah `berlaku_sampai_tahun` warisan
+            // yang tidak ikut dihitung ulang, jendelanya bisa tumpang tindih,
+            // dan resolveEfektif() menolak melayani tahun yang bertabrakan itu
+            // ("Konflik masa berlaku revisi" di layar).
+            //
+            // Terreproduksi: Kondisi Awal di 2027, lalu sahkan revisi 2025 ->
+            // dua-duanya 'berlaku'.
+            //
+            // jahitUlangTimeline() adalah SATU-SATUNYA otoritas atas jendela
+            // dan status. Dijalankan di sini, urutan pengesahan tidak lagi
+            // menentukan kebenaran hasilnya.
+            // =============================================================
+            $digeser = array_values(array_unique(array_merge(
+                $digeser,
+                $this->jahitUlangTimeline($opdId, (int) $revisi['tahun_mulai'], (int) $revisi['tahun_akhir'], $revisiId)
+            )));
+
+            // Bila sesudah dijahit ternyata BUKAN revisi ini yang terkini,
+            // tabel live harus mengikuti yang terkini — bukan isi revisi yang
+            // baru saja disahkan. Mengesahkan dokumen untuk tahun lampau tidak
+            // boleh memundurkan IKU berjalan.
+            $terkini = $this->lingkup($opdId, (int) $revisi['tahun_mulai'], (int) $revisi['tahun_akhir'])
+                ->where('status', self::STATUS_BERLAKU)
+                ->get()->getRowArray();
+
+            if ($terkini !== null && (int) $terkini['id'] !== $revisiId) {
+                $this->terapkanKeLive(
+                    (int) $terkini['id'],
+                    $opdId,
+                    (int) $terkini['berlaku_mulai_tahun'],
+                    (int) $revisi['tahun_mulai'],
+                    (int) $revisi['tahun_akhir']
+                );
+            }
+
             return [
                 'revisi_id'              => $revisiId,
                 'digeser'                => $digeser,
@@ -1091,19 +1364,39 @@ class IkuRevisiModel extends Model
     /**
      * Ubah tahun mulai berlaku sebuah revisi.
      *
-     * Untuk draft ini sekadar mengganti angka usulan. Untuk revisi yang SUDAH
-     * BERLAKU, timeline-nya ikut dijahit ulang: revisi sebelumnya ditutup
-     * tepat setahun sebelum tahun baru — tanpa itu akan ada tahun yang
-     * dipayungi dua revisi sekaligus dan resolveEfektif() menolak melayani.
+     * =====================================================================
+     * SATU-SATUNYA LARANGAN ADALAH TAHUN KEMBAR
+     *
+     * Tahun berlaku boleh dipilih BEBAS di dalam periode, untuk revisi mana
+     * pun — draft maupun yang sedang berlaku, termasuk Kondisi Awal. Yang
+     * ditolak hanya satu: tahun yang sudah dipayungi revisi lain, sebab
+     * "revisi mana yang dipakai tahun ini" harus punya tepat satu jawaban.
+     *
+     * Tiga larangan lama dicabut, karena semuanya menjaga URUTAN, bukan
+     * kebenaran:
+     *
+     *   * Kondisi Awal tidak boleh digeser — dicabut. Ia memang jangkar awal
+     *     periode, tetapi menggesernya bukan kerusakan diam-diam: tahun yang
+     *     lalu tak berpayung membuat LAKIP jatuh ke Renstra DENGAN
+     *     PEMBERITAHUAN di layar (LakipSumberTrait), dan langkahnya bisa
+     *     dibatalkan dengan menggesernya kembali. Peringatannya dikembalikan
+     *     lewat kunci `peringatan` agar pemanggil menyampaikannya.
+     *   * Tahun pertama periode terlarang bagi revisi bernomor — dicabut.
+     *     Bila Kondisi Awal sudah pindah, tahun itu memang bebas.
+     *   * Tidak boleh melompati tetangga — dicabut. Urutan nomor revisi
+     *     adalah urutan PENYUSUNAN, bukan urutan berlaku; memaksa keduanya
+     *     sama hanya membuat penyusun harus menggeser tiga revisi demi
+     *     membetulkan satu.
+     *
+     * Yang menggantikan ketiganya: seluruh garis waktu DIJAHIT ULANG dari nol
+     * sesudah perubahan (lihat jahitUlangTimeline()), sehingga tiap tahun
+     * tetap dipayungi tepat satu revisi berapa pun urutan nomornya.
      *
      * Realisasi LAKIP TIDAK tersentuh: capaian menempel pada indikator
      * berjalan (sumber_indikator_id), bukan pada revisinya, jadi tahun yang
      * berpindah payung tetap membaca realisasi yang sama.
      *
-     * Revisi ke-0 (Kondisi Awal) ditolak: ia jangkar awal periode. Menggesernya
-     * membuat tahun-tahun pertama tidak dipayungi siapa pun.
-     *
-     * @return array{dari:int, ke:int, digeser:array<int,int>}
+     * @return array{dari:int, ke:int, digeser:array<int,int>, peringatan:?string}
      */
     public function ubahTahunBerlaku(int $revisiId, int $tahunBaru): array
     {
@@ -1119,19 +1412,30 @@ class IkuRevisiModel extends Model
                 throw new RuntimeException('Revisi tidak ditemukan.');
             }
 
-            if ((int) $revisi['nomor'] === 0) {
-                throw new RuntimeException(
-                    'Kondisi Awal selalu berlaku sejak awal periode — tahun berlakunya tidak bisa diubah. '
-                    . 'Ubah tahun berlaku revisi di atasnya.'
-                );
-            }
-
             $status = (string) $revisi['status'];
 
-            if (! in_array($status, [self::STATUS_DRAFT, self::STATUS_BERLAKU], true)) {
+            // =============================================================
+            // 'superseded' IKUT BOLEH DIUBAH
+            //
+            // 'superseded' berarti "bukan versi terkini", BUKAN "tidak pernah
+            // berlaku": ia tetap dokumen resmi bagi tahun-tahun yang
+            // dipayunginya, dan resolveEfektif() memang membacanya. Begitu ada
+            // dua revisi, semua kecuali yang terbaru berstatus ini — mengunci
+            // mereka berarti masa berlaku yang telanjur salah tidak pernah bisa
+            // dibetulkan, justru pada versi yang paling sering perlu dirapikan.
+            //
+            // Yang tetap ditolak:
+            //   'menunggu' — sedang di meja verifikator; menggesernya di
+            //                belakang punggung mereka mengubah apa yang sedang
+            //                diperiksa. Tarik pengajuannya dulu.
+            //   'batal'    — tidak punya tempat di garis waktu sama sekali.
+            // =============================================================
+            if (! in_array($status, [self::STATUS_DRAFT, self::STATUS_BERLAKU, self::STATUS_SUPERSEDED], true)) {
                 throw new RuntimeException(
-                    'Tahun berlaku hanya bisa diubah pada draft, atau pada revisi berlaku yang '
-                    . 'sedang dibuka lewat izin sunting. Status sekarang: ' . $status . '.'
+                    $status === self::STATUS_MENUNGGU
+                        ? 'Revisi ini sedang menunggu keputusan Admin Kabupaten. Tarik pengajuannya '
+                          . 'dulu bila tahun berlakunya hendak diubah.'
+                        : 'Revisi berstatus ' . $status . ' tidak punya masa berlaku yang bisa diubah.'
                 );
             }
 
@@ -1143,21 +1447,12 @@ class IkuRevisiModel extends Model
             $this->validasiLingkupDraft($tahunMulai, $tahunAkhir, $tahunBaru);
 
             if ($tahunBaru === $dari) {
-                return ['dari' => $dari, 'ke' => $tahunBaru, 'digeser' => []];
+                return ['dari' => $dari, 'ke' => $tahunBaru, 'digeser' => [], 'peringatan' => null];
             }
 
-            // Revisi ke-1 dan seterusnya tidak boleh merebut tahun pertama
-            // periode: itu jatah Kondisi Awal.
-            if ($tahunBaru === $tahunMulai) {
-                throw new RuntimeException(
-                    'Tahun ' . $tahunBaru . ' adalah awal periode dan dipayungi Kondisi Awal. '
-                    . 'Revisi paling cepat berlaku mulai ' . ($tahunMulai + 1) . '.'
-                );
-            }
-
-            // Tahun tujuan tidak boleh sudah dipakai revisi lain (draft yang
-            // masih diusulkan sekalipun, supaya bentroknya ketahuan sekarang,
-            // bukan saat pengesahan).
+            // SATU-SATUNYA larangan: tahun tujuan sudah dipayungi revisi lain.
+            // Pengajuan yang masih menggantung ikut dihitung, supaya bentroknya
+            // ketahuan sekarang — bukan saat pengesahan, di meja orang lain.
             $bentrok = $this->lingkup($opdId, $tahunMulai, $tahunAkhir)
                 ->whereIn('status', [self::STATUS_BERLAKU, self::STATUS_SUPERSEDED, self::STATUS_MENUNGGU])
                 ->where('berlaku_mulai_tahun', $tahunBaru)
@@ -1177,70 +1472,395 @@ class IkuRevisiModel extends Model
                 );
             }
 
-            if ($status === self::STATUS_DRAFT) {
-                $db->table('iku_revisi')->where('id', $revisiId)->update([
-                    'berlaku_mulai_tahun' => $tahunBaru,
-                    'updated_at'          => date('Y-m-d H:i:s'),
-                ]);
-
-                return ['dari' => $dari, 'ke' => $tahunBaru, 'digeser' => []];
-            }
-
-            // ---- revisi BERLAKU: jahit ulang timeline -----------------------
-            $tetangga = $this->lingkup($opdId, $tahunMulai, $tahunAkhir)
-                ->whereIn('status', [self::STATUS_BERLAKU, self::STATUS_SUPERSEDED])
-                ->where('id !=', $revisiId)
-                ->orderBy('berlaku_mulai_tahun', 'ASC')
-                ->get()->getResultArray();
-
-            $sebelum = null; // tetangga terdekat di bawah
-            $sesudah = null; // tetangga terdekat di atas
-
-            foreach ($tetangga as $t) {
-                $m = (int) $t['berlaku_mulai_tahun'];
-                if ($m < $dari) {
-                    $sebelum = $t;      // terurut ASC: yang terakhir < dari adalah yang terdekat
-                } elseif ($m > $dari && $sesudah === null) {
-                    $sesudah = $t;
-                }
-            }
-
-            // Tidak boleh melompati tetangga: urutan revisi harus tetap sama
-            // dengan urutan nomornya, karena arsip tiap revisi dibekukan dari
-            // keadaan pendahulunya.
-            if ($sebelum !== null && $tahunBaru <= (int) $sebelum['berlaku_mulai_tahun']) {
-                throw new RuntimeException(
-                    'Tahun baru harus sesudah ' . $sebelum['berlaku_mulai_tahun']
-                    . ' — tahun mulai "' . $sebelum['nama'] . '" yang berlaku sebelum revisi ini.'
-                );
-            }
-
-            if ($sesudah !== null && $tahunBaru >= (int) $sesudah['berlaku_mulai_tahun']) {
-                throw new RuntimeException(
-                    'Tahun baru harus sebelum ' . $sesudah['berlaku_mulai_tahun']
-                    . ' — tahun mulai "' . $sesudah['nama'] . '" yang berlaku sesudah revisi ini.'
-                );
-            }
-
-            $digeser = [];
-
-            // Revisi sebelumnya menutup diri tepat sebelum tahun baru — baik
-            // maju (payungnya memendek) maupun mundur (payungnya memanjang).
-            if ($sebelum !== null) {
-                $db->table('iku_revisi')->where('id', (int) $sebelum['id'])->update([
-                    'berlaku_sampai_tahun' => $tahunBaru - 1,
-                    'updated_at'           => date('Y-m-d H:i:s'),
-                ]);
-                $digeser[] = (int) $sebelum['id'];
-            }
-
             $db->table('iku_revisi')->where('id', $revisiId)->update([
                 'berlaku_mulai_tahun' => $tahunBaru,
                 'updated_at'          => date('Y-m-d H:i:s'),
             ]);
 
-            return ['dari' => $dari, 'ke' => $tahunBaru, 'digeser' => $digeser];
+            // Draft belum punya tempat di garis waktu (berlaku_sampai_tahun-nya
+            // baru diisi saat disahkan), jadi tidak ada yang perlu dijahit.
+            $digeser = $status === self::STATUS_DRAFT
+                ? []
+                : $this->jahitUlangTimeline($opdId, $tahunMulai, $tahunAkhir, $revisiId);
+
+            return [
+                'dari'       => $dari,
+                'ke'         => $tahunBaru,
+                'digeser'    => $digeser,
+                'peringatan' => $this->peringatanAwalPeriode($opdId, $tahunMulai, $tahunAkhir),
+            ];
         }, 'ubah tahun berlaku revisi IKU');
+    }
+
+    /**
+     * Siapa saja yang masih merujuk sebuah revisi — penghalang penghapusan.
+     *
+     * =====================================================================
+     * MENGAPA HARUS DIHITUNG SENDIRI
+     *
+     * `iku_revisi.id` dirujuk beberapa tabel TANPA foreign key, jadi basis
+     * data TIDAK akan menahan penghapusan. Tanpa daftar ini, menghapus sebuah
+     * revisi meninggalkan angka yang menunjuk ke ketiadaan — dan tak satu pun
+     * layar melaporkannya sebagai galat; mereka hanya berhenti menemukan
+     * sumbernya.
+     *
+     * Yang PUNYA foreign key ON DELETE CASCADE (arsip isi revisi) sengaja
+     * tidak didaftar: memang seharusnya ikut terhapus.
+     *
+     * `lakip_snapshot_baris.iku_revisi_indikator_id` menunjuk ke arsip
+     * indikator yang CASCADE — jadi ia ikut dihitung lewat revisinya, bukan
+     * lewat id revisi langsung.
+     *
+     * @return array<string,int> [keterangan => jumlah baris] yang tidak kosong
+     */
+    public function penghalangHapus(int $revisiId): array
+    {
+        $db  = $this->db;
+        $ada = [];
+
+        $hitung = static function (string $tabel, callable $kondisi) use ($db): int {
+            if (! $db->tableExists($tabel)) {
+                return 0;
+            }
+
+            return $kondisi($db->table($tabel));
+        };
+
+        $n = $hitung('lakip', static fn ($b) => $b
+            ->where('source_type', 'iku')->where('source_version_id', $revisiId)->countAllResults());
+
+        if ($n > 0) {
+            $ada['baris realisasi LAKIP yang dinilai terhadap versi ini'] = $n;
+        }
+
+        if ($db->tableExists('lakip_snapshot')
+            && $db->fieldExists('sumber_iku_revisi_id', 'lakip_snapshot')) {
+            $n = $db->table('lakip_snapshot')->where('sumber_iku_revisi_id', $revisiId)->countAllResults();
+
+            if ($n > 0) {
+                $ada['snapshot LAKIP yang dibekukan dari versi ini'] = $n;
+            }
+        }
+
+        if ($db->tableExists('lakip_snapshot_baris')
+            && $db->fieldExists('iku_revisi_indikator_id', 'lakip_snapshot_baris')) {
+            $n = (int) ($db->query(
+                'SELECT COUNT(*) AS n FROM lakip_snapshot_baris b
+                   JOIN iku_revisi_indikator ri ON ri.id = b.iku_revisi_indikator_id
+                  WHERE ri.revisi_id = ?',
+                [$revisiId]
+            )->getRowArray()['n'] ?? 0);
+
+            if ($n > 0) {
+                $ada['baris snapshot LAKIP yang menunjuk indikator arsip versi ini'] = $n;
+            }
+        }
+
+        if ($db->tableExists('lakip_penyesuaian')) {
+            foreach (['iku_revisi_id', 'usul_revisi_iku'] as $kolom) {
+                if (! $db->fieldExists($kolom, 'lakip_penyesuaian')) {
+                    continue;
+                }
+
+                $n = $db->table('lakip_penyesuaian')->where($kolom, $revisiId)->countAllResults();
+
+                if ($n > 0) {
+                    $ada['penyesuaian kebijakan LAKIP (' . $kolom . ')'] = $n;
+                }
+            }
+        }
+
+        return $ada;
+    }
+
+    /**
+     * HAPUS sebuah versi IKU beserta seluruh arsip isinya.
+     *
+     * =====================================================================
+     * TIDAK BISA DIBATALKAN — DAN KARENA ITU BERPENJAGA BANYAK
+     *
+     * Arsip isi (`iku_revisi_sasaran/_indikator/_target/_program`) ikut
+     * terhapus lewat foreign key ON DELETE CASCADE. Baris LIVE tidak ikut
+     * terhapus: `iku_sasaran.revisi_id` dan `iku_indikator.revisi_id`
+     * ber-ON DELETE SET NULL, jadi isinya tetap ada, hanya kehilangan
+     * keterangan "versi mana yang terakhir menuliskannya".
+     *
+     * Yang ditolak:
+     *   * status 'menunggu' — sedang di meja verifikator;
+     *   * masih ada yang merujuknya (lihat penghalangHapus()).
+     *
+     * =====================================================================
+     * MENGHAPUS VERSI YANG SEDANG BERLAKU
+     *
+     * Diizinkan, tetapi TIDAK cukup sekadar menghapus barisnya: tabel live
+     * masih berisi tulisan versi itu, sementara sesudah penghapusan LAKIP
+     * akan membaca arsip versi SEBELUMNYA. Layar dan arsip jadi berbeda isi,
+     * dan tidak ada yang melaporkannya.
+     *
+     * Karena itu penerus terdekat diangkat menjadi 'berlaku' dan diterapkan
+     * ulang ke tabel live, sehingga IKU berjalan kembali sama dengan dokumen
+     * yang menaunginya. Bila tidak ada penerus sama sekali, tabel live
+     * dibiarkan apa adanya — itu keadaan "belum pernah ada versi", persis
+     * seperti sebelum modul revisi dipasang.
+     *
+     * @return array{nomor:int, nama:string, status_lama:string,
+     *               penerus:?int, digeser:int[], peringatan:?string}
+     */
+    public function hapusRevisi(int $revisiId): array
+    {
+        if (! $this->siap()) {
+            throw new RuntimeException('Tabel revisi IKU belum tersedia.');
+        }
+
+        return $this->dalamTransaksi(function () use ($revisiId) {
+            $db     = $this->db;
+            $revisi = $db->table('iku_revisi')->where('id', $revisiId)->get()->getRowArray();
+
+            if (! $revisi) {
+                throw new RuntimeException('Revisi tidak ditemukan.');
+            }
+
+            $status = (string) $revisi['status'];
+
+            if ($status === self::STATUS_MENUNGGU) {
+                throw new RuntimeException(
+                    'Revisi ini sedang menunggu keputusan Admin Kabupaten. Tarik pengajuannya '
+                    . 'dulu sebelum meminta penghapusan.'
+                );
+            }
+
+            $penghalang = $this->penghalangHapus($revisiId);
+
+            if ($penghalang !== []) {
+                $rinci = [];
+
+                foreach ($penghalang as $apa => $n) {
+                    $rinci[] = $n . ' ' . $apa;
+                }
+
+                throw new RuntimeException(
+                    'Versi ini masih dirujuk data lain, jadi tidak bisa dihapus: '
+                    . implode('; ', $rinci) . '. Menghapusnya akan membuat rujukan itu '
+                    . 'menunjuk ke dokumen yang tidak ada lagi.'
+                );
+            }
+
+            $opdId      = $revisi['opd_id'] !== null ? (int) $revisi['opd_id'] : null;
+            $tahunMulai = (int) $revisi['tahun_mulai'];
+            $tahunAkhir = (int) $revisi['tahun_akhir'];
+
+            $this->tutupIzinRevisi($revisiId);
+            $db->table('iku_revisi')->where('id', $revisiId)->delete();
+
+            // Garis waktu DULU: ia yang menentukan siapa kini versi terkini,
+            // sekaligus membetulkan statusnya. Penerus tidak lagi ditebak di
+            // sini — menebaknya terpisah berarti dua aturan "siapa yang
+            // berlaku" yang bisa menyimpang.
+            $digeser = $this->jahitUlangTimeline($opdId, $tahunMulai, $tahunAkhir);
+
+            $penerus = $this->lingkup($opdId, $tahunMulai, $tahunAkhir)
+                ->where('status', self::STATUS_BERLAKU)
+                ->get()->getRowArray();
+
+            $penerusId = $penerus !== null ? (int) $penerus['id'] : null;
+
+            // Kembalikan tabel live agar sama dengan dokumen yang kini
+            // menaunginya. Tanpa ini layar menampilkan tulisan versi yang baru
+            // saja ditiadakan. Hanya perlu bila yang dihapus memang sedang
+            // berlaku — arsip lama tidak pernah menyentuh tabel live.
+            //
+            // terapkanKeLive() dipanggil LANGSUNG, bukan lewat terapkanUlang():
+            // yang terakhir membuka transaksinya sendiri, sedangkan kita sudah
+            // berada di dalam satu. TransaksiAman menolak transaksi bersarang
+            // dengan tegas — CodeIgniter tidak bisa membatalkannya sungguhan,
+            // jadi kegagalan di tengah akan meninggalkan penghapusan setengah
+            // jadi yang tidak bisa dikembalikan.
+            if ($status === self::STATUS_BERLAKU && $penerus !== null) {
+                $this->terapkanKeLive(
+                    $penerusId,
+                    $opdId,
+                    (int) $penerus['berlaku_mulai_tahun'],
+                    $tahunMulai,
+                    $tahunAkhir
+                );
+            }
+
+            return [
+                'nomor'       => (int) $revisi['nomor'],
+                'nama'        => (string) $revisi['nama'],
+                'status_lama' => $status,
+                'penerus'     => $status === self::STATUS_BERLAKU ? $penerusId : null,
+                'digeser'     => $digeser,
+                'peringatan'  => $this->peringatanAwalPeriode($opdId, $tahunMulai, $tahunAkhir),
+            ];
+        }, 'penghapusan revisi IKU');
+    }
+
+    /**
+     * Jahit ulang SELURUH garis waktu masa berlaku pada satu lingkup.
+     *
+     * =====================================================================
+     * MENGAPA MENYELURUH, BUKAN MENAMBAL TETANGGA
+     *
+     * Versi lama hanya menyentuh tetangga terdekat, dan karena itu ia HARUS
+     * melarang sebuah revisi melompati tetangganya — kalau melompat, tambalan
+     * setempat meninggalkan tahun yang dipayungi dua revisi sekaligus, dan
+     * resolveEfektif() menolak melayani tahun itu.
+     *
+     * Menjahit dari nol menghapus kebutuhan larangan tersebut: urutkan seluruh
+     * revisi resmi menurut tahun mulainya, lalu tiap revisi ditutup tepat
+     * sebelum tahun mulai revisi berikutnya. Yang paling akhir dibiarkan
+     * terbuka (NULL) — artinya "belum ada revisi sesudahnya", bukan "berlaku
+     * selamanya".
+     *
+     * Hasilnya rapat menurut definisi, berapa pun urutan nomornya. Itu pula
+     * yang membuat tahun berlaku bisa dipilih bebas.
+     *
+     * @return int[] id revisi yang masa berlakunya ikut berubah
+     */
+    private function jahitUlangTimeline(?int $opdId, int $tahunMulai, int $tahunAkhir, int $kecuali = 0): array
+    {
+        $baris = $this->lingkup($opdId, $tahunMulai, $tahunAkhir)
+            ->whereIn('status', [self::STATUS_BERLAKU, self::STATUS_SUPERSEDED])
+            ->orderBy('berlaku_mulai_tahun', 'ASC')
+            ->orderBy('nomor', 'ASC')
+            ->get()->getResultArray();
+
+        $digeser = [];
+        $jumlah  = count($baris);
+
+        foreach ($baris as $i => $r) {
+            $batas = $i + 1 < $jumlah
+                ? (int) $baris[$i + 1]['berlaku_mulai_tahun'] - 1
+                : null;
+
+            $lama = $r['berlaku_sampai_tahun'] !== null ? (int) $r['berlaku_sampai_tahun'] : null;
+
+            if ($lama === $batas) {
+                continue;
+            }
+
+            $this->db->table('iku_revisi')->where('id', (int) $r['id'])->update([
+                'berlaku_sampai_tahun' => $batas,
+                'updated_at'           => date('Y-m-d H:i:s'),
+            ]);
+
+            // Revisi yang tahunnya baru saja diubah bukan "ikut tergeser";
+            // ia yang menggeser. Dikeluarkan supaya laporan ke layar jujur.
+            if ((int) $r['id'] !== $kecuali) {
+                $digeser[] = (int) $r['id'];
+            }
+        }
+
+        // =================================================================
+        // STATUS IKUT DIJAHIT, BUKAN HANYA JENDELA TAHUNNYA
+        //
+        // Versi awal method ini hanya membetulkan `berlaku_sampai_tahun` dan
+        // membiarkan `status` apa adanya. Sejak tahun berlaku boleh dipilih
+        // bebas, itu melahirkan keadaan yang tidak masuk akal: revisi yang
+        // memayungi tahun-tahun TERAKHIR berstatus 'superseded', sementara
+        // revisi yang memayungi tahun-tahun AWAL berstatus 'berlaku'.
+        //
+        // Bukan sekadar janggal di layar. `revisiBerlaku()` mengurutkan
+        // `berlaku_mulai_tahun DESC` — jadi ia dan kolom status saling
+        // bertentangan; dan `revisiKeadaanIzin()` menutup permanen revisi
+        // ber-status 'superseded', sehingga izin sunting yang menempel padanya
+        // tidak akan pernah bisa diselesaikan NAUPUN ditarik, dan seluruh
+        // lingkup itu terkunci dari permohonan baru untuk selamanya.
+        //
+        // 'berlaku' berarti "versi terkini", dan yang terkini adalah yang
+        // mulai berlakunya paling akhir. Itulah yang ditegakkan di sini.
+        //
+        // URUTANNYA PENTING: turunkan dulu, naikkan belakangan. UNIQUE index
+        // `uq_iku_revisi_efektif` memuat `berlaku_key` yang lahir dari status,
+        // sehingga dua baris 'berlaku' sesaat pun ditolak basis data.
+        // =================================================================
+        if ($baris !== []) {
+            $terkini = (int) $baris[$jumlah - 1]['id'];
+
+            foreach ($baris as $r) {
+                if ((int) $r['id'] !== $terkini && $r['status'] === self::STATUS_BERLAKU) {
+                    $this->db->table('iku_revisi')->where('id', (int) $r['id'])->update([
+                        'status'     => self::STATUS_SUPERSEDED,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                    // Izin sunting yang menempel pada revisi yang baru saja
+                    // turun pangkat tidak bisa dikerjakan lagi — tutup, jangan
+                    // ditinggalkan menggantung memblokir lingkupnya.
+                    $this->tutupIzinRevisi((int) $r['id']);
+                }
+            }
+
+            if ($baris[$jumlah - 1]['status'] === self::STATUS_SUPERSEDED) {
+                $this->db->table('iku_revisi')->where('id', $terkini)->update([
+                    'status'     => self::STATUS_BERLAKU,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
+
+        return $digeser;
+    }
+
+    /**
+     * Tutup permohonan izin yang masih menggantung pada sebuah revisi.
+     *
+     * Dipanggil saat revisi itu turun pangkat jadi arsip: izin yang menempel
+     * padanya sudah kehilangan gunanya, dan bila dibiarkan ia memblokir
+     * SELURUH lingkup dari permohonan baru — sebab hanya satu permohonan
+     * boleh menggantung per dokumen.
+     *
+     * Ditulis langsung ke tabelnya, bukan lewat IzinSuntingService: method ini
+     * berjalan di dalam transaksi milik model, dan layanan itu membuka
+     * jalurnya sendiri. Kolomnya sengaja dijaga `tableExists`, karena modul
+     * izin bisa saja belum terpasang di basis data lama.
+     */
+    private function tutupIzinRevisi(int $revisiId): void
+    {
+        if (! $this->db->tableExists('dokumen_izin_sunting')) {
+            return;
+        }
+
+        $this->db->table('dokumen_izin_sunting')
+            ->where('modul', 'iku')
+            ->where('version_id', $revisiId)
+            ->whereIn('status', ['pending', 'disetujui'])
+            ->update([
+                'status'            => 'selesai',
+                'catatan_keputusan' => 'Ditutup otomatis: revisi ini bukan lagi versi terkini.',
+                'selesai_pada'      => date('Y-m-d H:i:s'),
+                'updated_at'        => date('Y-m-d H:i:s'),
+            ]);
+    }
+
+    /**
+     * Adakah tahun di AWAL periode yang kini tidak dipayungi revisi mana pun?
+     *
+     * Bukan galat, dan karena itu tidak dilempar sebagai pengecualian: LAKIP
+     * tahun tanpa payung IKU jatuh ke Renstra/RPJMD dengan pemberitahuan di
+     * layar, dan keadaannya bisa dibatalkan dengan menggeser revisinya
+     * kembali. Tetapi ia harus DIKATAKAN, bukan dibiarkan ditemukan sendiri
+     * berbulan kemudian saat LAKIP disusun.
+     */
+    private function peringatanAwalPeriode(?int $opdId, int $tahunMulai, int $tahunAkhir): ?string
+    {
+        $paling = $this->lingkup($opdId, $tahunMulai, $tahunAkhir)
+            ->selectMin('berlaku_mulai_tahun', 'awal')
+            ->whereIn('status', [self::STATUS_BERLAKU, self::STATUS_SUPERSEDED])
+            ->get()->getRowArray();
+
+        $awal = isset($paling['awal']) ? (int) $paling['awal'] : 0;
+
+        if ($awal <= $tahunMulai) {
+            return null;
+        }
+
+        $tanpa = range($tahunMulai, $awal - 1);
+
+        return 'Tahun ' . implode(', ', $tanpa) . ' kini TIDAK dipayungi versi IKU mana pun. '
+            . 'LAKIP tahun itu akan dinilai memakai Renstra/RPJMD sampai ada revisi yang '
+            . 'berlaku mulai ' . $tahunMulai . '.';
     }
 
     /**
@@ -1365,6 +1985,28 @@ class IkuRevisiModel extends Model
                 'Revisi ini belum berisi indikator apa pun, jadi belum ada yang bisa diperiksa.'
             );
         }
+
+        // =================================================================
+        // TAHUN BERLAKU DIPERIKSA ULANG DI SINI, BUKAN HANYA SAAT DRAFT LAHIR
+        //
+        // tolakTahunBentrok() sudah dijalankan waktu draft dibuat, tetapi
+        // keadaan bisa BERGESER di antara "dibuat" dan "diajukan":
+        //
+        //   * revisi lain disahkan lebih dulu dan mengambil tahun itu;
+        //   * revisi lain diajukan lebih dulu (status 'menunggu');
+        //   * tahun berlaku draft ini sendiri digeser lewat ubahTahunBerlaku().
+        //
+        // Tanpa pemeriksaan ini, bentrokannya baru ketahuan di meja Admin
+        // Kabupaten saat hendak mengesahkan — pada orang yang tidak bisa
+        // memperbaikinya, dan sesudah antrean verifikasi terlanjur terisi
+        // pengajuan yang memang tidak mungkin disahkan.
+        // =================================================================
+        $this->tolakTahunBentrok(
+            $revisi['opd_id'] !== null ? (int) $revisi['opd_id'] : null,
+            (int) $revisi['tahun_mulai'],
+            (int) $revisi['tahun_akhir'],
+            (int) $revisi['berlaku_mulai_tahun']
+        );
 
         return (bool) $this->db->table('iku_revisi')->where('id', $revisiId)->update([
             'status'       => self::STATUS_MENUNGGU,
@@ -2094,6 +2736,54 @@ class IkuRevisiModel extends Model
             : $b->where('opd_id', $opdId);
     }
 
+    /**
+     * Kolom `renstra_tujuan_id` untuk baris arsip sasaran — bila kolomnya ada.
+     *
+     * Dijaga `fieldExists` mengikuti pola IkuModel::kolomTujuanMandiri():
+     * basis data yang belum menjalankan
+     * db/update_2026-08-31_sasaran_mandiri_dalam_revisi.sql tetap berjalan
+     * seperti sebelumnya, hanya tanpa penurunan tujuan.
+     *
+     * Menerima baris live (`renstra_tujuan_id`) maupun larik form.
+     *
+     * @param array<string,mixed> $sumber
+     * @return array<string,int|null>
+     */
+    private function kolomTujuanArsip(array $sumber): array
+    {
+        if (! $this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
+            return [];
+        }
+
+        return [
+            'renstra_tujuan_id' => ! empty($sumber['renstra_tujuan_id'])
+                ? (int) $sumber['renstra_tujuan_id'] : null,
+        ];
+    }
+
+    /**
+     * Kolom `renstra_tujuan_id` untuk baris LIVE, diambil dari arsipnya.
+     *
+     * Dipisah dari kolomTujuanArsip() karena tabel yang diperiksa berbeda:
+     * arsip bisa saja sudah punya kolomnya sementara live belum, atau
+     * sebaliknya, pada basis data yang urutan migrasinya tidak seragam.
+     *
+     * @param array<string,mixed> $arsip
+     * @return array<string,int|null>
+     */
+    private function kolomTujuanLive(array $arsip): array
+    {
+        if (! $this->db->fieldExists('renstra_tujuan_id', 'iku_sasaran')
+            || ! array_key_exists('renstra_tujuan_id', $arsip)) {
+            return [];
+        }
+
+        return [
+            'renstra_tujuan_id' => ! empty($arsip['renstra_tujuan_id'])
+                ? (int) $arsip['renstra_tujuan_id'] : null,
+        ];
+    }
+
     /** Kunci pembanding teks: beda spasi & huruf besar bukan indikator berbeda. */
     private function kunciTeks(?string $teks): string
     {
@@ -2206,7 +2896,7 @@ class IkuRevisiModel extends Model
                 'source_version_id' => $as['source_version_id'] ?? null,
                 'source_sasaran_id' => $as['source_ref_id'] ?? null,
                 'updated_at'      => $now,
-            ];
+            ] + $this->kolomTujuanLive($as);
 
             if ($sasaranLiveId > 0 && $db->table('iku_sasaran')->where('id', $sasaranLiveId)->countAllResults() > 0) {
                 // Sasaran yang dihidupkan kembali oleh revisi ini tidak boleh
@@ -2478,7 +3168,7 @@ class IkuRevisiModel extends Model
         $sasaranRows = $b->orderBy('urutan', 'ASC')->orderBy('id', 'ASC')->get()->getResultArray();
 
         foreach ($sasaranRows as $sas) {
-            $db->table('iku_revisi_sasaran')->insert([
+            $db->table('iku_revisi_sasaran')->insert($this->kolomTujuanArsip($sas) + [
                 'revisi_id'         => $revisiId,
                 'sumber_sasaran_id' => (int) $sas['id'],
                 // Jejak asal ikut dibekukan. Tanpa ini, membekukan IKU ke

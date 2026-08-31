@@ -227,6 +227,35 @@ trait LakipSnapshotTrait
     }
 
     /* =========================================================
+     * PINTU SNAPSHOT & PENYESUAIAN DITUTUP
+     *
+     * Penguncian tahun LAKIP kini dilayani mekanisme PENGESAHAN
+     * (LakipPengesahanModel): sahkan -> terkunci -> ajukan perbaikan ->
+     * admin_kab memutuskan -> sahkan ulang.
+     *
+     * Endpoint di bawah TIDAK CUKUP disembunyikan tombolnya. Selama ia hidup,
+     * URL yang diketik langsung masih bisa memfinalkan tahun lewat jalur LAMA
+     * — dan layar akan terkunci oleh kunci yang tidak dijelaskan panel
+     * Pengesahan mana pun. Dua kunci pada satu tahun adalah keadaan yang
+     * mustahil dipahami operator.
+     *
+     * Kode & tabelnya sengaja TIDAK dihapus: dua snapshot draft milik 2025
+     * masih tersimpan utuh, dan mekanismenya bisa dihidupkan kembali bila
+     * kelak dibutuhkan.
+     * =======================================================*/
+
+    /** Jawaban seragam bagi seluruh pintu yang ditutup. */
+    private function snapshotDitutup(array $scope)
+    {
+        return redirect()->to($this->kembaliLakip($scope))->with(
+            'error',
+            'Snapshot & Penyesuaian Kebijakan tidak lagi dipakai. Penguncian LAKIP '
+            . 'kini lewat panel Pengesahan: tekan Sahkan untuk mengunci, dan bila ada '
+            . 'yang keliru ajukan Permintaan Perbaikan ke Admin Kabupaten.'
+        );
+    }
+
+    /* =========================================================
      * AKSI — SNAPSHOT
      * =======================================================*/
 
@@ -234,6 +263,9 @@ trait LakipSnapshotTrait
     public function snapshotSiapkan()
     {
         $scope = $this->lakipScopeFromPost();
+
+        return $this->snapshotDitutup($scope);
+        // @phpstan-ignore-next-line — kode lama sengaja dipertahankan di bawah.
 
         if (! $scope['canWrite'] || ! $this->bolehSnapshot()) {
             return redirect()->to($this->kembaliLakip($scope))
@@ -255,6 +287,9 @@ trait LakipSnapshotTrait
     {
         $scope = $this->lakipScopeFromPost();
 
+        return $this->snapshotDitutup($scope);
+        // @phpstan-ignore-next-line — kode lama sengaja dipertahankan di bawah.
+
         if (! $scope['canWrite'] || ! $this->bolehSnapshot()) {
             return redirect()->to($this->kembaliLakip($scope))
                 ->with('error', 'Anda tidak berwenang menyinkronkan snapshot LAKIP pada lingkup ini.');
@@ -274,6 +309,9 @@ trait LakipSnapshotTrait
     public function snapshotFinalkan()
     {
         $scope = $this->lakipScopeFromPost();
+
+        return $this->snapshotDitutup($scope);
+        // @phpstan-ignore-next-line — kode lama sengaja dipertahankan di bawah.
 
         if (! $scope['canWrite'] || ! $this->bolehFinalisasi()) {
             return redirect()->to($this->kembaliLakip($scope))
@@ -335,6 +373,9 @@ trait LakipSnapshotTrait
     public function penyesuaianSave()
     {
         $scope = $this->lakipScopeFromPost();
+
+        return $this->snapshotDitutup($scope);
+        // @phpstan-ignore-next-line — kode lama sengaja dipertahankan di bawah.
 
         if (! $scope['canWrite'] || ! $this->bolehPenyesuaian()) {
             return redirect()->to($this->kembaliLakip($scope))

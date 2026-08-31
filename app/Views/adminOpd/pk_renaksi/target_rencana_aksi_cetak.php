@@ -38,6 +38,10 @@ $bobotKolom['unit']        = 15;
 $bobotKolom['anggaran']    = 9;
 $bobotKolom['renaksi']     = 13;
 $bobotKolom['sub_renaksi'] = 13;
+// Satuan milik SUB rencana aksi. WAJIB ikut didaftar di sini: peta ini yang
+// menentukan lebar tiap <col> DAN colspan baris "belum ada data" — menambah
+// <th> tanpa menambah bobotnya membuat kedua-duanya meleset satu kolom.
+$bobotKolom['sub_satuan']  = 6;
 $bobotKolom['tw1']         = 4;
 $bobotKolom['tw2']         = 4;
 $bobotKolom['tw3']         = 4;
@@ -315,6 +319,9 @@ $splitAksi = function ($text) {
             <th rowspan="2">Anggaran</th>
             <th rowspan="2">Rencana Aksi</th>
             <th rowspan="2">Sub Rencana Aksi</th>
+            <?php /* Satuan milik SUB — berbeda dari kolom Satuan di kiri yang
+                     milik indikator. Tanpa ini angka triwulan tercetak telanjang. */ ?>
+            <th rowspan="2">Satuan</th>
             <th colspan="4">Target Triwulan</th>
             <th rowspan="2">Penanggung Jawab</th>
         </tr>
@@ -474,6 +481,10 @@ $splitAksi = function ($text) {
                                 <?php $sub = $subsRow[$butirIdx][$subIdx] ?? null; ?>
                                 <td rowspan="<?= $spanRow ?>" class="text-start">
                                     <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '-' ?>
+                                </td>
+
+                                <td rowspan="<?= $spanRow ?>">
+                                    <?= ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '-' ?>
                                 </td>
 
                                 <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini ?>

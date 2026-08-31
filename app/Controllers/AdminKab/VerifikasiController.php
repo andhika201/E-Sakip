@@ -140,6 +140,11 @@ class VerifikasiController extends BaseController
             'antrean'      => $antrean,
             'koreksi'      => $koreksi,
             'izinSunting'  => $izin,
+            // Izin yang SUDAH disetujui dan masih terbuka. Tanpa daftar
+            // ini ia lenyap dari layar begitu diputus, dan izin yang tak
+            // pernah ditutup memblokir lingkupnya dari permohonan baru
+            // tanpa seorang pun bisa melihat penyebabnya.
+            'izinBerjalan' => (new IzinSuntingService())->berjalanSemua(),
             'ikuRevisi'    => $ikuRevisi,
             'modulBoleh'   => $modulBoleh,
         ]);
@@ -450,8 +455,52 @@ class VerifikasiController extends BaseController
             return $this->tolakIzinSunting();
         }
 
+        $svc  = new IzinSuntingService();
+        $izin = $svc->ambil((int) $id);
+
+        // =================================================================
+        // PERMOHONAN HAPUS: MENYETUJUI = MENGHAPUS, SAAT ITU JUGA
+        //
+        // Sengaja tidak dipecah jadi "disetujui lalu OPD menekan hapus".
+        // Keadaan "sudah disetujui tapi belum dihapus" hanya menambah satu
+        // pintu yang bisa basi, dan yang memikul akibat penghapusan sebaiknya
+        // adalah orang yang memutuskannya.
+        //
+        // Urutannya: HAPUS DULU, tutup permohonan belakangan. Kalau terbalik
+        // dan penghapusan gagal, permohonannya sudah tertutup 'disetujui'
+        // sementara versinya masih ada — dan tidak ada lagi jalan
+        // menyelesaikannya tanpa permohonan baru.
+        // =================================================================
+        if ($izin !== null
+            && ($izin['jenis'] ?? IzinSuntingService::JENIS_SUNTING) === IzinSuntingService::JENIS_HAPUS) {
+            if ($izin['modul'] !== \App\Services\Version\VersionScope::MODUL_IKU) {
+                return redirect()->back()->with('error',
+                    'Permohonan penghapusan baru tersedia untuk versi IKU.');
+            }
+
+            try {
+                $hasil = (new \App\Models\Opd\IkuRevisiModel())
+                    ->hapusRevisi((int) ($izin['version_id'] ?? 0));
+
+                $svc->setujui((int) $id, $this->pengguna(), $this->request->getPost('catatan'));
+            } catch (Throwable $e) {
+                return redirect()->back()->with('error', $e->getMessage());
+            }
+
+            $pesan = 'Versi "' . $hasil['nama'] . '" (revisi ke-' . $hasil['nomor'] . ') dihapus'
+                . ($hasil['penerus'] !== null
+                    ? ', dan versi penerusnya diberlakukan kembali ke IKU berjalan.'
+                    : '.');
+
+            $keluar = redirect()->to(base_url('adminkab/verifikasi'))->with('success', $pesan);
+
+            return empty($hasil['peringatan'])
+                ? $keluar
+                : $keluar->with('warning', $hasil['peringatan']);
+        }
+
         try {
-            (new IzinSuntingService())->setujui(
+            $svc->setujui(
                 (int) $id,
                 $this->pengguna(),
                 $this->request->getPost('catatan')

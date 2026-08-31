@@ -71,7 +71,10 @@ $draftTersedia = $draft_tersedia ?? [];
                 <?php foreach ($versiTersedia as $v): ?>
                     <option value="<?= (int) $v['id'] ?>"
                         <?= $versiDipilih !== null && (int) $versiDipilih['id'] === (int) $v['id'] ? 'selected' : '' ?>>
-                        V<?= (int) $v['version_no'] ?> — <?= esc($v['label']) ?>
+                        <?php /* `label_tampil` sudah memuat "V{n} — " bila memang perlu.
+                                 Menambahkannya lagi di sini yang dulu mencetak
+                                 "V2 — V2 — RENSTRA ...". */ ?>
+                        <?= esc($v['label_tampil'] ?? $v['label']) ?>
                         (<?= (int) $v['jumlah_sasaran'] ?> sasaran, berlaku <?= esc($v['effective_from']) ?>)
                     </option>
                 <?php endforeach; ?>
@@ -90,7 +93,7 @@ $draftTersedia = $draft_tersedia ?? [];
         Data di bawah diambil dari <strong><?= esc($sumber_label) ?></strong> periode
         <strong><?= esc($periode['period'] ?? '-') ?></strong>,
         <?php if ($versiDipilih !== null): ?>
-            versi <strong>V<?= (int) $versiDipilih['version_no'] ?> — <?= esc($versiDipilih['label']) ?></strong>.
+            versi <strong><?= esc($versiDipilih['label_tampil'] ?? $versiDipilih['label']) ?></strong>.
             Isinya tetap sebagaimana saat versi itu ditetapkan.
         <?php else: ?>
             <strong>kondisi berjalan</strong>. Baris yang sudah dipensiunkan tidak ikut ditawarkan.

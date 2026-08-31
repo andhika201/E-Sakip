@@ -221,10 +221,19 @@ class LakipSnapshotIkuCheck extends BaseCommand
             'renstra_indikator_id',
             \App\Models\LakipBenchmarkModel::kolomIndikator('opd', 'renstra')
         );
+        // Sejak §24 (commit "version untuk iku admin_kab"), sumber IKU
+        // diperiksa SEBELUM mode: IKU Kabupaten juga menulis ke kolom
+        // iku_indikator_id, bukan meminjam kolom milik dokumen RPJMD.
+        // Pemeriksa lama mengunci aturan sebelumnya dan gagal palsu.
         $this->samaDengan(
-            'mode kabupaten selalu RPJMD apa pun sumber yang diminta',
-            'rpjmd_indikator_id',
+            'kabupaten + sumber IKU memakai kolom IKU (§24)',
+            'iku_indikator_id',
             \App\Models\LakipBenchmarkModel::kolomIndikator('kabupaten', 'iku')
+        );
+        $this->samaDengan(
+            'kabupaten + sumber RPJMD tetap kolom RPJMD',
+            'rpjmd_indikator_id',
+            \App\Models\LakipBenchmarkModel::kolomIndikator('kabupaten', 'rpjmd')
         );
 
         // Indikator IKU berjalan kini dianggap sah — dulu selalu null.

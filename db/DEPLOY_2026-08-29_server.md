@@ -41,11 +41,32 @@ melapor "dilewati" alih-alih menggandakan pekerjaan.
     4. db/perbaiki_2026-08-28_iku_pringsewu_samakan_renstra.sql
     5. db/perbaiki_2026-08-28_iku_kembar_sisa_sync.sql
     6. db/perbaiki_2026-08-28_sisa_tunggal_indikator_iku.sql
-    7. db/update_2026-08-28_silsilah_sasaran_iku_opd.sql      <-- silsilah 5 -> 82
-    8. db/update_2026-08-28_silsilah_iku_kabupaten.sql
-    9. db/update_2026-08-29_silsilah_iku_kab_akronim.sql      <-- kabupaten 8 -> 10
-   10. db/update_2026-08-29_sasaran_iku_mandiri.sql           <-- KOLOM BARU + FK
-   11. db/update_2026-08-29_tandai_indikator_iku_mandiri.sql  <-- lindungi IKP
+    7. db/update_2026-08-28_silsilah_sasaran_iku_opd.sql       <-- silsilah 5 -> 82
+    8. db/server/2026-08-28_B_silsilah_iku_kabupaten.sql       <-- VARIAN SERVER
+    9. db/update_2026-08-29_silsilah_iku_kab_akronim.sql       <-- kabupaten 8 -> 10
+   10. db/server/2026-08-29_A_kolom_sasaran_mandiri.sql        <-- VARIAN SERVER, kolom + FK
+   11. db/update_2026-08-29_tandai_indikator_iku_mandiri.sql   <-- lindungi IKP
+
+### Mengapa ada map `db/server/`
+
+Pengguna basis data di server tidak diizinkan membaca `information_schema`:
+
+    #1044 - Access denied for user 'esakippringsewu'@'localhost'
+            to database 'information_schema'
+
+Tiga skrip memakainya untuk membuat dirinya aman-diulang. Ketiganya sudah
+diganti dengan varian di `db/server/` yang tidak menyentuhnya sama sekali,
+dan seluruh urutan di halaman ini SUDAH DIUJI ULANG memakai varian itu —
+hasil akhirnya sama persis: 1413 dari 1413 baris berjangkar.
+
+PAKAI YANG DI `db/server/`, JANGAN yang asli, untuk nomor 8, 10, dan 12.
+Nomor lain tidak terpengaruh (tidak satu pun memakai `information_schema`).
+
+Nomor 10 sengaja TIDAK punya penjaga aman-diulang, karena MySQL tidak
+mengenal `ADD COLUMN IF NOT EXISTS`. Jalankan sekali. Bila muncul galat
+#1060 (kolom duplikat), #1061 (indeks duplikat), atau #1826 (kunci asing
+duplikat), artinya bagian itu memang sudah ada — abaikan, lanjutkan.
+Galat LAIN jangan diabaikan.
 
 Nomor 1-6 hampir tidak mengubah apa pun di server Anda — koreksi itu sudah
 Anda kerjakan manual di sana. Dijalankan tetap, supaya tidak ada yang
@@ -100,7 +121,12 @@ Hasilnya sama.
 
 ## 4. JANGKAR ULANG — SETELAH langkah 3
 
-    db/update_2026-08-27_cascading_sumber_iku.sql
+   12. db/server/2026-08-27_C_jangkar_cascading_isi.sql        <-- VARIAN SERVER
+
+Varian ini hanya berisi bagian PENGISIAN. Bagian pembuatan kolom/indeks/kunci
+asing pada skrip asli sudah ada di server Anda, dan justru bagian itulah yang
+memakai `information_schema` serta PROCEDURE — dengan membuangnya, masalahnya
+ikut hilang alih-alih ditambal.
 
 Dijalankan SESUDAH sync, bukan sebelumnya: penjangkaran bergantung pada
 silsilah indikator yang baru dibuat sync. Pada uji coba, langkah ini membawa
@@ -137,6 +163,74 @@ Selama belum diputuskan, keenamnya tetap muncul di daftar "tidak ada padanan"
 pada layar Sync. Mode Ganti akan menawarkan membuangnya — TETAPI selalu lewat
 pratinjau yang menyebut namanya satu per satu, jadi tidak ada yang terhapus
 diam-diam.
+
+---
+
+## 6b. LAKIP — PEMULIHAN REALISASI YATIM (baru, 29 Agustus malam)
+
+Dijalankan SETELAH kode baru terpasang (butuh LakipModel yang sudah
+ditambal). Urutannya WAJIB seperti ini:
+
+    L1. db/perbaiki_2026-08-29_lakip_pulangkan_lingkup.sql
+    L2. db/perbaiki_2026-08-29_lakip_yatim_eksekusi.sql
+    L3. db/perbaiki_2026-08-29_lakip_jangkar_ulang.sql
+
+Ketiganya sudah diuji UTUH pada salinan `backup-29 agustus.sql`, dan hasil
+akhirnya diverifikasi IDENTIK baris-per-baris dengan basis data lokal
+(152 baris lakip, 0 beda, 0 slot dobel).
+
+Apa yang terjadi:
+
+  * L1 memulangkan lingkup 11 baris yang jangkarnya masih hidup;
+  * L2 mengarsipkan SEMUA 123 yatim tanpa jangkar ke tabel baru
+    `lakip_yatim_arsip` (salinan JSON utuh — tidak ada angka yang lenyap),
+    lalu membersihkan tabel kerja;
+  * L3 menjangkar-ulang 18 baris yang lingkupnya utuh tapi jangkarnya putus
+    (Dinkes 12, Disporapar 2, DPMP 2, Setwan 1, Sekda 1) — deterministik
+    lewat jejak `source_entity_id` + cadangan bergenerasi lama, TERMASUK
+    seluruh realisasi Dinas Kesehatan 2025 yang delapan bulan tak terlihat;
+    dua baris Sekda yang indikatornya sudah dihapus dari Renstra ikut
+    diarsipkan.
+
+Setelahnya, LAKIP Dinkes 2025 menampilkan 6 dari 7 indikator terisi
+(stunting memang belum pernah diisi operatornya).
+
+---
+
+## 6c. LAKIP MENILAI TERHADAP IKU (tahap akhir)
+
+Dijalankan SETELAH bagian 6b selesai dan kode terbaru terpasang.
+
+    S1. php spark iku:sahkan-massal              (pratinjau — tidak menulis)
+    S2. php spark iku:sahkan-massal --fix        (bekukan Kondisi Awal 36 OPD)
+    S3. db/migrasi_2026-08-29_lakip_ke_iku.sql   (pindahkan kunci realisasi)
+
+S2 memakai `IkuRevisiModel::pastikanBaseline()` — mekanisme yang sudah ada:
+membekukan IKU BERJALAN menjadi revisi bernomor 0 "Kondisi Awal". Ia tidak
+mengarang dokumen bertanda tangan; isinya potret IKU yang sudah ada, yang
+sendirinya berasal dari Renstra lewat Sync. Tanpa ini, LAKIP tidak punya
+versi yang memayungi tahun laporan, sehingga selamanya jatuh ke Renstra.
+
+S3 memindahkan kunci realisasi dari target Renstra ke indikator IKU.
+`renstra_target_id` SENGAJA dipertahankan sebagai jejak asal sekaligus jalan
+pulang (perintah pembatalannya tertulis di kepala skrip).
+
+Hasil terukur di lokal (cermin server):
+
+    Kondisi Awal dibekukan : 36 OPD (1 dilewati: sudah punya revisi)
+    lingkup berpayung 2025 : 37 dari 37
+    realisasi bermigrasi   : 118 baris (83 berisi angka)
+    tanpa versi payung     : 0
+    tabrakan slot          : 0
+    sengaja tertinggal     : 2 baris
+
+Dua yang tertinggal adalah indikator yang padanan IKU-nya ada TAPI belum
+bersilsilah — Disdukcapil "Akta Kematian" dan Kec. Sukoharjo "Pembinaan
+Aparatur". Keduanya tetap tampil lewat jembatan; penautannya menunggu
+keputusan (redaksinya berbeda, dan untuk Sukoharjo subjeknya pun berbeda).
+
+Regresi sesudah S3: lakip:jaga-snapshot 48/0 · casc:akar-check 113/0 ·
+casc:versi-check 9/0.
 
 ---
 

@@ -899,8 +899,18 @@ class RenstraController extends BaseController
 
             $this->renstraModel->updateCompleteTujuan($tujuanId, $post);
 
+            $pesan = 'Berhasil diperbarui';
+
+            // Menghapus indikator adalah hak penyusun Renstra — tetapi capaian
+            // LAKIP yang kehilangan tautannya tidak boleh lenyap tanpa suara.
+            if ($this->renstraModel->lakipTerputus > 0) {
+                $pesan .= '. PERHATIAN: ' . $this->renstraModel->lakipTerputus
+                    . ' realisasi LAKIP kehilangan tautan karena indikator/targetnya dihapus.'
+                    . ' Periksa menu LAKIP untuk tahun terkait.';
+            }
+
             return redirect()->to('/adminopd/renstra')
-                ->with('success', 'Berhasil diperbarui');
+                ->with('success', $pesan);
 
         } catch (\Exception $e) {
 

@@ -78,7 +78,15 @@ $labelSkala = static function ($nilai) use ($skala) {
             <?php if ($sub !== null): ?>
                 <div class="mb-3">
                     <label class="form-label">Sub Rencana Aksi</label>
-                    <input type="text" class="form-control bg-light" value="<?= esc($sub['sub_rencana_aksi']) ?>" readonly>
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light" value="<?= esc($sub['sub_rencana_aksi']) ?>" readonly>
+                        <?php /* Satuannya ikut ditampilkan: yang diisi di bawah adalah
+                                 ANGKA capaian, dan tanpa satuan operator hanya bisa
+                                 menebak angka itu dihitung dalam apa. */ ?>
+                        <?php if (($sub['satuan'] ?? '') !== ''): ?>
+                            <span class="input-group-text"><?= esc($sub['satuan']) ?></span>
+                        <?php endif; ?>
+                    </div>
                     <small class="text-muted">Capaian di bawah ini khusus untuk sub rencana aksi tersebut.</small>
                 </div>
             <?php endif; ?>

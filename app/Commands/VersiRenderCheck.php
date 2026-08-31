@@ -278,6 +278,18 @@ class VersiRenderCheck extends BaseCommand
                             'alasan' => 'target indikator salah ketik',
                             'diminta_nama' => 'admin_opd', 'diminta_pada' => date('Y-m-d H:i:s'),
                         ]],
+                        // Daftar izin yang SUDAH disetujui: satu-satunya tempat
+                        // tombol Cabut dirender. Rutenya sudah lama ada tetapi
+                        // tidak pernah punya layar, sehingga izin yang tak
+                        // pernah ditutup memblokir lingkupnya tanpa jalan keluar.
+                        'izinBerjalan' => [[
+                            'id' => 2, 'modul' => $modul, 'opd_key' => (int) $scope->opdKey(),
+                            'nama_opd' => 'OPD Uji', 'periode_mulai' => $scope->periodeMulai(),
+                            'periode_akhir' => $scope->periodeAkhir(), 'version_id' => 9,
+                            'alasan' => 'perbaikan rumusan',
+                            'diputus_nama' => 'admin_kab', 'diputus_pada' => date('Y-m-d H:i:s'),
+                        ]],
+                        '__memuat' => ['Izin Sunting yang Sedang Terbuka', 'Cabut Izin'],
                     ];
 
                     $uji['versi/verifikasi_lihat'] = [
@@ -625,6 +637,66 @@ class VersiRenderCheck extends BaseCommand
                     'perluVerifikasi' => true,
                 ];
 
+                // Daftar dengan KEADAAN IZIN per baris: tiga aksi yang berbeda
+                // tegas pada revisi berlaku. Tanpa fixture ini ketiganya tidak
+                // tersentuh render mana pun, karena baris 'berlaku' pada
+                // fixture di atas sengaja tidak membawa izin_keadaan.
+                $uji['iku revisi (daftar + aksi izin)'] = ['__view' => 'iku/revisi_index'] + [
+                    'title' => 'Revisi IKU', 'role' => 'admin_opd', 'baseUrl' => 'adminopd/iku',
+                    'daftar' => [
+                        array_merge($revisiIku, ['id' => 3, 'status' => 'berlaku',
+                            'izin_keadaan' => ['boleh_minta' => true, 'izin' => null,
+                                'boleh_tarik' => false, 'sedang_disunting' => false]]),
+                        array_merge($revisiIku, ['id' => 4, 'status' => 'berlaku',
+                            'izin_keadaan' => ['boleh_minta' => false, 'izin' => ['id' => 7],
+                                'boleh_tarik' => true, 'sedang_disunting' => false]]),
+                        array_merge($revisiIku, ['id' => 5, 'status' => 'berlaku',
+                            'izin_keadaan' => ['boleh_minta' => false, 'izin' => ['id' => 8],
+                                'boleh_tarik' => false, 'sedang_disunting' => true]]),
+                    ],
+                    'konflik' => [], 'bolehRevisi' => true, 'bolehSahkan' => false,
+                    'perluVerifikasi' => true,
+                    // Ketiga aksi WAJIB benar-benar tercetak. Tanpa penegasan
+                    // ini, render yang "berhasil" tetap bisa menghasilkan
+                    // kolom aksi kosong — persis keluhan yang melahirkannya.
+                    '__memuat' => ['Ajukan Izin Sunting', 'izin menunggu keputusan', 'izin terbuka'],
+                ];
+
+                // Form pembuatan revisi belum pernah punya fixture sama sekali,
+                // padahal ia memuat dua blok yang seluruhnya digerakkan JS:
+                // pemilih tahun berlaku dan pemilih versi Renstra.
+                $periodeUji = [
+                    '2025-2029' => [
+                        'period' => '2025 - 2029', 'years' => range(2025, 2029),
+                        'tahun_mulai' => 2025, 'tahun_akhir' => 2029,
+                        'terpakai' => [
+                            2025 => ['id' => 1, 'nomor' => '0', 'nama' => 'Kondisi Awal', 'status' => 'berlaku'],
+                        ],
+                        'bebas' => [2026, 2027, 2028, 2029],
+                    ],
+                ];
+
+                $uji['iku revisi (buat)'] = ['__view' => 'iku/revisi_form'] + [
+                    'title' => 'Buat Revisi IKU', 'role' => 'admin_opd',
+                    'baseUrl' => 'adminopd/iku', 'periodeOpsi' => $periodeUji,
+                    'versiRenstra' => [],
+                    // Lingkup tanpa versi Renstra: blok sync TIDAK boleh muncul.
+                    '__tanpa' => ['Sekalian salin isi Renstra ke draft ini'],
+                ];
+
+                $uji['iku revisi (buat + sync renstra)'] = ['__view' => 'iku/revisi_form'] + [
+                    'title' => 'Buat Revisi IKU', 'role' => 'admin_opd',
+                    'baseUrl' => 'adminopd/iku', 'periodeOpsi' => $periodeUji,
+                    'versiRenstra' => [
+                        '2025-2029' => [[
+                            'id' => 324, 'version_no' => 2, 'label' => 'RENSTRA OPD #20 2025-2029',
+                            'effective_from' => '2025-06-01', 'effective_to' => null,
+                            'jumlah_sasaran' => 1,
+                        ]],
+                    ],
+                    '__memuat' => ['Sekalian salin isi Renstra ke draft ini', 'renstra_versi'],
+                ];
+
                 $uji['iku revisi (sunting draft)'] = ['__view' => 'iku/revisi_sunting'] + [
                     'title' => 'Sunting Draft', 'role' => 'admin_opd', 'baseUrl' => 'adminopd/iku',
                     'revisi' => $revisiIku, 'isi' => $isiRevisiUji, 'years' => $tahunIku,
@@ -695,6 +767,90 @@ class VersiRenderCheck extends BaseCommand
                     + array_merge($dasarLihat, [
                         'revisi'      => array_merge($revisiIku, ['status' => 'superseded']),
                         'keadaanIzin' => $keadaanKosong,
+                    ]);
+
+                // ARSIP kini ikut bisa dimintakan izin, dan tombolnya berbunyi
+                // berbeda: ia tidak pernah diterapkan ke IKU berjalan.
+                $uji['iku revisi (arsip, boleh minta izin)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'revisi'      => array_merge($revisiIku, ['status' => 'superseded']),
+                        'keadaanIzin' => array_merge($keadaanKosong, [
+                            'boleh_minta' => true, 'arsip' => true,
+                        ]),
+                    ]);
+
+                $uji['iku revisi (arsip, izin terbuka)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'revisi'      => array_merge($revisiIku, ['status' => 'superseded']),
+                        'keadaanIzin' => [
+                            'terkunci' => false, 'izin' => $izinContoh, 'boleh_minta' => false,
+                            'boleh_tarik' => false, 'sedang_disunting' => true,
+                            'arsip' => true, 'alasan' => 'Izin perbaikan arsip disetujui.',
+                        ],
+                        // Tombolnya WAJIB berbunyi "Tutup Izin", bukan
+                        // "Terapkan ke IKU Berjalan" — menerapkan arsip justru
+                        // memundurkan dokumen yang sedang dipakai.
+                        '__memuat' => ['Selesai &amp; Tutup Izin'],
+                        '__tanpa'  => ['Terapkan ke IKU Berjalan'],
+                    ]);
+
+                // ---------------------------------------------------------
+                // Blok-blok yang lahir 2026-08-31. Sama seperti panel izin di
+                // atas: tanpa fixture sendiri, ketiganya TIDAK tersentuh
+                // render mana pun, karena masing-masing hanya muncul saat satu
+                // variabel tertentu terisi.
+                // ---------------------------------------------------------
+
+                // "Tambah Sasaran" hanya dirender bila ada Tujuan Renstra yang
+                // bisa dipilih; fixture lain tidak memasoknya sama sekali.
+                $uji['iku revisi (sunting + tambah sasaran)'] = ['__view' => 'iku/revisi_sunting']
+                    + array_merge($uji['iku revisi (sunting draft)'], [
+                        'tujuanOptions' => [
+                            ['id' => 3, 'tujuan' => 'Meningkatnya tata kelola pemerintahan'],
+                        ],
+                    ]);
+
+                // Pemilih "Ubah Tahun" beserta tahun yang sudah terpakai.
+                $uji['iku revisi (ubah tahun berlaku)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'keadaanIzin'      => $keadaanKosong,
+                        'bolehUbahBerlaku' => true,
+                        'tahunBebas'       => [2027, 2028],
+                        'tahunTerpakai'    => [
+                            2026 => ['id' => 5, 'nomor' => '1', 'nama' => 'Revisi ke-1', 'status' => 'berlaku'],
+                        ],
+                    ]);
+
+                $uji['iku revisi (boleh minta hapus)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'keadaanIzin'  => $keadaanKosong,
+                        'keadaanHapus' => [
+                            'boleh_minta' => true, 'permohonan' => null,
+                            'penghalang' => [], 'boleh_tarik' => false,
+                            'alasan' => 'Penghapusan versi tidak bisa dibatalkan.',
+                        ],
+                    ]);
+
+                $uji['iku revisi (permohonan hapus menunggu)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'keadaanIzin'  => $keadaanKosong,
+                        'keadaanHapus' => [
+                            'boleh_minta' => false,
+                            'permohonan'  => $izinContoh + ['status' => 'pending'],
+                            'penghalang'  => [], 'boleh_tarik' => true,
+                            'alasan' => 'Menunggu keputusan Admin Kabupaten.',
+                        ],
+                    ]);
+
+                $uji['iku revisi (hapus terhalang rujukan)'] = ['__view' => 'iku/revisi_lihat']
+                    + array_merge($dasarLihat, [
+                        'keadaanIzin'  => $keadaanKosong,
+                        'keadaanHapus' => [
+                            'boleh_minta' => false, 'permohonan' => null,
+                            'penghalang'  => ['baris realisasi LAKIP' => 4],
+                            'boleh_tarik' => false,
+                            'alasan' => 'Belum bisa dihapus — masih dirujuk: 4 baris realisasi LAKIP.',
+                        ],
                     ]);
 
                 // Layar sync: tiga keadaan yang perilakunya berbeda tegas.

@@ -280,6 +280,16 @@ $labelUnit = $labelUnitHeader
                 'label' => $s['label'] ?? '',
             ], $skala), JSON_UNESCAPED_UNICODE) ?>;
             // Sub rencana aksi tersimpan: { "<indeks butir>": [ {id, teks}, ... ] }
+            <?php /* Nama satuan saja: yang disimpan pada sub rencana aksi adalah
+                     TEKS-nya, bukan id — supaya rencana lama tidak ikut berubah
+                     bunyinya bila master satuan kelak diubah namanya. */ ?>
+            var SATUAN = <?= json_encode(
+                array_values(array_filter(array_map(
+                    static fn ($s) => (string) ($s['satuan'] ?? ''),
+                    $satuanOptions ?? []
+                ), static fn ($s) => $s !== '')),
+                JSON_UNESCAPED_UNICODE
+            ) ?>;
             var initialSub = <?= json_encode($subRencana ?? [], JSON_UNESCAPED_UNICODE) ?>;
             var oldSub = <?= json_encode((string) (old('sub_rencana_json') ?? '')) ?>;
             if (oldSub) {
@@ -331,10 +341,32 @@ $labelUnit = $labelUnitHeader
                         + '</div>';
                 }).join('');
 
+                // Satuan target triwulan sub ini. Diletakkan TEPAT SESUDAH
+                // kolom sub rencana aksi, sama seperti urutannya di tabel.
+                //
+                // Nilai lama yang tidak ada di master tetap ditawarkan sebagai
+                // pilihan terpilih — master satuan bisa berubah, dan rencana
+                // yang sudah tersimpan tidak boleh kehilangan satuannya
+                // diam-diam hanya karena dibuka kembali.
+                var satuan = sub.satuan || '';
+                var dikenalSat = SATUAN.some(function (s) {
+                    return String(s).toLowerCase() === String(satuan).trim().toLowerCase();
+                });
+                var satOpts = '<option value="">— satuan —</option>'
+                    + SATUAN.map(function (s) {
+                        var pilih = String(s).toLowerCase() === String(satuan).trim().toLowerCase() ? ' selected' : '';
+                        return '<option value="' + esc(s) + '"' + pilih + '>' + esc(s) + '</option>';
+                    }).join('')
+                    + (satuan !== '' && !dikenalSat
+                        ? '<option value="' + esc(satuan) + '" selected>' + esc(satuan) + ' (di luar master)</option>'
+                        : '');
+
                 return '<div class="sub-item mb-2" data-id="' + esc(id) + '">'
                     + '<div class="input-group input-group-sm mb-1">'
                     + '<span class="input-group-text sub-no bg-white text-muted"></span>'
                     + '<input type="text" class="form-control sub-input" placeholder="Tulis sub rencana aksi" value="' + esc(teks) + '">'
+                    + '<select class="form-select sub-satuan flex-grow-0" style="max-width:150px"'
+                    + ' title="Satuan target triwulan sub ini">' + satOpts + '</select>'
                     + '<button type="button" class="btn btn-outline-danger remove-sub" title="Hapus sub"><i class="fas fa-times"></i></button>'
                     + '</div>'
                     + '<div class="row g-1 ps-4">' + twHtml + '</div>'
@@ -401,7 +433,11 @@ $labelUnit = $labelUnitHeader
                         // id ikut dikirim supaya sub yang sudah ada di DB diperbarui
                         // di tempat — capaian MONEV menempel ke id ini.
                         var id = parseInt(si.getAttribute('data-id'), 10);
-                        subs.push({ id: isNaN(id) ? 0 : id, teks: teks, tw: tw });
+
+                        var satEl = si.querySelector('.sub-satuan');
+                        var sat = satEl ? satEl.value.trim() : '';
+
+                        subs.push({ id: isNaN(id) ? 0 : id, teks: teks, satuan: sat, tw: tw });
                     });
 
                     if (subs.length) map[idx] = subs;
@@ -482,6 +518,18 @@ $labelUnit = $labelUnitHeader
                 if (c.contains('renaksi-input') || c.contains('sub-input') || c.contains('sub-tw')) sync();
             });
 
+            // <select> memicu 'change', bukan 'input'. Peramban modern memang
+            // ikut memicu 'input', tetapi menyandarkan penyimpanan pada
+            // perilaku yang tidak dijamin itu berarti satuan (dan target
+            // triwulan pada satuan berpredikat, yang juga <select>) bisa tidak
+            // ikut terkirim tanpa gejala apa pun.
+            list.addEventListener('change', function (e) {
+                var c = e.target.classList;
+                if (c.contains('sub-satuan') || c.contains('sub-tw')) sync();
+            });
+
+            // Jaring terakhir: apa pun yang terlewat di atas tetap tersinkron
+            // tepat sebelum form dikirim.
             var form = list.closest('form');
             if (form) form.addEventListener('submit', sync);
         })();

@@ -67,9 +67,14 @@ $routes->group('api', ['filter' => 'api-token'], static function ($routes) {
     $routes->get('perangkat-daerah/(:num)/iku', 'Api\PerangkatDaerahController::iku/$1');
     $routes->get('perangkat-daerah/(:num)/cascading', 'Api\PerangkatDaerahController::cascading/$1');
     $routes->get('perangkat-daerah/(:num)/pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja/$1');
+    $routes->get('perangkat-daerah/(:num)/target-renaksi', 'Api\TargetRenaksiController::index/$1');
     $routes->get('iku', 'Api\PerangkatDaerahController::iku');
     $routes->get('cascading', 'Api\PerangkatDaerahController::cascading');
     $routes->get('pohon-kinerja', 'Api\PerangkatDaerahController::pohonKinerja');
+    // Target & Rencana Aksi. Segmen 'bupati' didaftarkan lebih dulu agar tidak
+    // ditelan rute daftar PK OPD di bawahnya.
+    $routes->get('target-renaksi/bupati', 'Api\TargetRenaksiController::bupati');
+    $routes->get('target-renaksi', 'Api\TargetRenaksiController::index');
 });
 
 $routes->group(
@@ -197,6 +202,10 @@ $routes->group(
         $routes->post('iku/revisi/izin/tarik/(:num)', 'AdminKab\IkuController::revisiTarikIzin/$1');
         $routes->post('iku/revisi/izin/selesai/(:num)', 'AdminKab\IkuController::revisiSelesaikanIzin/$1');
 
+        // Permohonan HAPUS versi. Keputusannya di antrean verifikasi yang
+        // sama dengan izin sunting; menyetujui berarti menghapus.
+        $routes->post('iku/revisi/hapus/ajukan/(:num)', 'AdminKab\IkuController::revisiMintaHapus/$1');
+
         $routes->post('iku/revisi/berlaku/(:num)', 'AdminKab\IkuController::revisiUbahBerlaku/$1');
         $routes->post('iku/revisi/tarik/(:num)', 'AdminKab\IkuController::revisiTarik/$1');
         $routes->post('iku/ajukan-pengesahan', 'AdminKab\IkuController::ajukanPengesahan');
@@ -252,6 +261,13 @@ $routes->group(
         $routes->get('cascading/cetak', 'AdminKab\CascadingController::cetak');
         $routes->get('cascading/excel', 'AdminKab\CascadingController::excel');
         $routes->post('cascading/save-csf', 'AdminKab\CascadingController::saveCsf');
+        // Pengesahan LAKIP Kabupaten (kunci tahun) — kembaran sisi OPD.
+        $routes->post('lakip/pengesahan/sahkan', 'AdminKab\LakipController::pengesahanSahkan');
+        $routes->post('lakip/pengesahan/ajukan', 'AdminKab\LakipController::pengesahanAjukan');
+        $routes->post('lakip/pengesahan/tarik/(:num)', 'AdminKab\LakipController::pengesahanTarik/$1');
+        // Kotak masuk permintaan perbaikan LAKIP dari OPD.
+        $routes->get('lakip/permintaan', 'AdminKab\LakipController::permintaanIndex');
+        $routes->post('lakip/permintaan/(:num)/(:segment)', 'AdminKab\LakipController::permintaanPutuskan/$1/$2');
         $routes->get('cascading/cetak-pohon', 'AdminKab\CascadingController::cetakPohon');
 
         // RKPD (read-only: turunan RKT). Hanya index yang aktif.
@@ -517,6 +533,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
 
     // Izin sunting revisi IKU yang sudah berlaku (lihat catatan di blok AdminKab).
     $routes->post('iku/revisi/izin/ajukan/(:num)', 'AdminOpd\IkuController::revisiMintaIzin/$1');
+    $routes->post('iku/revisi/hapus/ajukan/(:num)', 'AdminOpd\IkuController::revisiMintaHapus/$1');
     $routes->post('iku/revisi/izin/tarik/(:num)', 'AdminOpd\IkuController::revisiTarikIzin/$1');
     $routes->post('iku/revisi/izin/selesai/(:num)', 'AdminOpd\IkuController::revisiSelesaikanIzin/$1');
 
@@ -598,6 +615,10 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('lakip/snapshot/sinkronkan', 'AdminOpd\LakipOpdController::snapshotSinkronkan');
     $routes->post('lakip/snapshot/finalkan', 'AdminOpd\LakipOpdController::snapshotFinalkan');
     $routes->post('lakip/penyesuaian/save', 'AdminOpd\LakipOpdController::penyesuaianSave');
+    // Pengesahan LAKIP (kunci tahun) + permintaan perbaikan ke admin kabupaten.
+    $routes->post('lakip/pengesahan/sahkan', 'AdminOpd\LakipOpdController::pengesahanSahkan');
+    $routes->post('lakip/pengesahan/ajukan', 'AdminOpd\LakipOpdController::pengesahanAjukan');
+    $routes->post('lakip/pengesahan/tarik/(:num)', 'AdminOpd\LakipOpdController::pengesahanTarik/$1');
     $routes->post('lakip/penyesuaian/usul-revisi/(:num)', 'AdminOpd\LakipOpdController::penyesuaianUsulRevisi/$1');
     $routes->post('lakip/penyesuaian/cabut/(:num)', 'AdminOpd\LakipOpdController::penyesuaianCabut/$1');
 

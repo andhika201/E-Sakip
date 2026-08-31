@@ -49,6 +49,23 @@ class IzinSuntingService
     /** Status yang masih menggantung; hanya satu boleh ada per dokumen. */
     public const STATUS_BERJALAN = [self::STATUS_PENDING, self::STATUS_DISETUJUI];
 
+    /**
+     * =====================================================================
+     * DUA JENIS PERMOHONAN, SATU ANTREAN
+     *
+     * 'sunting' membuka kunci supaya dokumen bisa diperbaiki. 'hapus' meminta
+     * dokumen itu DITIADAKAN. Keduanya berbagi tabel, antrean, dan aturan
+     * kewenangan yang sama — yang berbeda hanya apa yang terjadi saat
+     * disetujui.
+     *
+     * Baris lama tidak punya kolom ini; DEFAULT 'sunting' pada skema membuat
+     * seluruhnya terbaca sebagai permohonan sunting, persis seperti sebelum
+     * kolomnya ada.
+     * =====================================================================
+     */
+    public const JENIS_SUNTING = 'sunting';
+    public const JENIS_HAPUS   = 'hapus';
+
     private const TABEL = 'dokumen_izin_sunting';
 
     private ConnectionInterface $db;
@@ -76,17 +93,30 @@ class IzinSuntingService
      * PEMBACAAN
      * =======================================================*/
 
-    /** Permohonan yang masih berjalan pada satu dokumen, bila ada. */
-    public function berjalan(VersionScope $scope): ?array
+    /**
+     * Permohonan yang masih berjalan pada satu dokumen, bila ada.
+     *
+     * `$jenis` null = apa pun jenisnya (dipakai penjaga "satu permohonan
+     * menggantung per dokumen"). Bawaannya SUNTING supaya seluruh pemanggil
+     * lama — Renstra, RPJMD, dan penjaga kunci IKU — tidak mendadak membaca
+     * permohonan HAPUS sebagai izin sunting, yang berarti membuka kunci
+     * dokumen atas keputusan yang bukan tentang itu.
+     */
+    public function berjalan(VersionScope $scope, ?string $jenis = self::JENIS_SUNTING): ?array
     {
         if (! $this->siap()) {
             return null;
         }
 
-        $baris = $this->db->table(self::TABEL)
+        $b = $this->db->table(self::TABEL)
             ->where($this->kondisi($scope))
-            ->whereIn('status', self::STATUS_BERJALAN)
-            ->get()->getRowArray();
+            ->whereIn('status', self::STATUS_BERJALAN);
+
+        if ($jenis !== null && $this->punyaKolomJenis()) {
+            $b->where('jenis', $jenis);
+        }
+
+        $baris = $b->get()->getRowArray();
 
         return $baris ?: null;
     }
@@ -94,7 +124,7 @@ class IzinSuntingService
     /** Apakah dokumen ini sedang boleh disunting meski versinya sudah ditetapkan. */
     public function bolehSunting(VersionScope $scope): bool
     {
-        $izin = $this->berjalan($scope);
+        $izin = $this->berjalan($scope, self::JENIS_SUNTING);
 
         return $izin !== null && $izin['status'] === self::STATUS_DISETUJUI;
     }
@@ -137,6 +167,42 @@ class IzinSuntingService
         return $b->orderBy('i.diminta_pada', 'ASC')->get()->getResultArray();
     }
 
+    /**
+     * Izin yang SUDAH DISETUJUI dan masih terbuka, lintas dokumen.
+     *
+     * =====================================================================
+     * MENGAPA PERLU DAFTAR TERSENDIRI
+     *
+     * `antrean()` hanya memuat yang berstatus `pending`. Begitu sebuah izin
+     * disetujui, ia LENYAP dari layar Admin Kabupaten — padahal `cabut()`
+     * dan rutenya sudah ada sejak awal, hanya tidak pernah punya tempat untuk
+     * ditekan.
+     *
+     * Akibatnya bukan sekadar tidak rapi. Satu dokumen hanya boleh punya satu
+     * permohonan menggantung; izin yang terlanjur disetujui lalu tidak pernah
+     * ditutup akan MEMBLOKIR seluruh lingkup itu dari permohonan baru, tanpa
+     * seorang pun bisa melihat penyebabnya atau mencabutnya.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function berjalanSemua(?string $modul = null): array
+    {
+        if (! $this->siap()) {
+            return [];
+        }
+
+        $b = $this->db->table(self::TABEL . ' i')
+            ->select('i.*, o.nama_opd')
+            ->join('opd o', 'o.id = i.opd_id', 'left')
+            ->where('i.status', self::STATUS_DISETUJUI);
+
+        if ($modul !== null) {
+            $b->where('i.modul', $modul);
+        }
+
+        return $b->orderBy('i.diputus_pada', 'ASC')->get()->getResultArray();
+    }
+
     public function ambil(int $id): ?array
     {
         if (! $this->siap() || $id <= 0) {
@@ -157,25 +223,40 @@ class IzinSuntingService
      *
      * @throws RuntimeException bila alasan kosong atau sudah ada permohonan berjalan
      */
-    public function ajukan(VersionScope $scope, string $alasan, ?int $oleh, ?int $versiId = null): int
-    {
+    public function ajukan(
+        VersionScope $scope,
+        string $alasan,
+        ?int $oleh,
+        ?int $versiId = null,
+        string $jenis = self::JENIS_SUNTING
+    ): int {
         $this->pastikanSiap();
 
         $alasan = trim($alasan);
+        $jenis  = $jenis === self::JENIS_HAPUS ? self::JENIS_HAPUS : self::JENIS_SUNTING;
 
         // Alasan diwajibkan, bukan basa-basi: yang membaca permohonan ini adalah
         // orang lain di instansi lain, dan tanpa alasan ia hanya bisa menebak.
         if ($alasan === '') {
-            throw new RuntimeException('Sebutkan alasan mengapa Renstra perlu disunting.');
+            throw new RuntimeException($jenis === self::JENIS_HAPUS
+                ? 'Sebutkan alasan mengapa versi ini perlu dihapus.'
+                : 'Sebutkan alasan mengapa dokumen ini perlu disunting.');
         }
 
-        if ($this->berjalan($scope) !== null) {
+        // Satu dokumen hanya boleh punya SATU permohonan menggantung, apa pun
+        // jenisnya: memohon hapus sementara permohonan sunting masih
+        // menggantung berarti dua keputusan yang saling meniadakan atas
+        // dokumen yang sama.
+        if (($berjalan = $this->berjalan($scope, null)) !== null) {
             throw new RuntimeException(
-                'Sudah ada permohonan izin sunting yang berjalan untuk periode ini.'
+                ($berjalan['jenis'] ?? self::JENIS_SUNTING) === self::JENIS_HAPUS
+                    ? 'Sudah ada permohonan PENGHAPUSAN yang berjalan untuk periode ini. '
+                      . 'Selesaikan dulu permohonan itu.'
+                    : 'Sudah ada permohonan izin sunting yang berjalan untuk periode ini.'
             );
         }
 
-        $this->db->table(self::TABEL)->insert([
+        $baris = [
             'modul'         => $scope->modul(),
             'scope'         => $scope->scope(),
             'opd_id'        => $scope->opdId(),
@@ -187,9 +268,28 @@ class IzinSuntingService
             'diminta_oleh'  => $oleh,
             'diminta_nama'  => $this->namaPengguna(),
             'diminta_pada'  => date('Y-m-d H:i:s'),
-        ]);
+        ];
+
+        // Dijaga fieldExists supaya basis data yang belum menjalankan
+        // db/update_2026-08-31_izin_hapus_versi_iku.sql tetap melayani jalur
+        // sunting seperti biasa, alih-alih gagal menyisipkan.
+        if ($this->punyaKolomJenis()) {
+            $baris['jenis'] = $jenis;
+        }
+
+        $this->db->table(self::TABEL)->insert($baris);
 
         return (int) $this->db->insertID();
+    }
+
+    /** Apakah skema sudah punya kolom pembeda jenis permohonan. */
+    public function punyaKolomJenis(): bool
+    {
+        try {
+            return $this->siap() && $this->db->fieldExists('jenis', self::TABEL);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /** OPD menarik permohonannya sendiri selagi belum diputuskan. */

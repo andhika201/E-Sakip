@@ -1,6 +1,6 @@
 # Dokumentasi API e-SAKIP
 
-API ini menyediakan data read-only untuk perangkat daerah, IKU, cascading, dan pohon kinerja perangkat daerah.
+API ini menyediakan data read-only untuk perangkat daerah, IKU, cascading, pohon kinerja, serta Target & Rencana Aksi perangkat daerah.
 
 ## Swagger UI
 
@@ -325,6 +325,175 @@ Response `data` berbentuk tree:
   }
 ]
 ```
+
+### 6. Target & Rencana Aksi Perangkat Daerah
+
+Isinya sama dengan tabel **Target dan Rencana Aksi** PK OPD/Kecamatan (Eselon II/III/IV) di web:
+Sasaran → Indikator → unit anggaran → Rencana Aksi → Sub Rencana Aksi → Target Triwulan I–IV → Penanggung Jawab.
+
+```http
+GET /api/perangkat-daerah/{opd_id}/target-renaksi
+```
+
+Alias (tanpa `opd_id` hasilnya lintas perangkat daerah, seperti tampilan admin kabupaten):
+
+```http
+GET /api/target-renaksi?opd_id={opd_id}
+```
+
+Filter:
+
+| Parameter | Keterangan | Contoh |
+| --- | --- | --- |
+| `tahun` | Filter tahun PK. Kosong atau `all` = semua tahun | `2026` |
+| `opd_id` | Batasi pada satu perangkat daerah | `20` |
+| `eselon` | `jpt` (Eselon II), `administrator` (Eselon III, alias `camat`/`kecamatan`), `pengawas` (Eselon IV) | `jpt` |
+| `pejabat_id` | Pejabat penandatangan PK (`pk.pihak_1`) | `151` |
+
+Contoh:
+
+```bash
+curl -H "api-token: ISI_API_TOKEN" \
+  "http://127.0.0.1:8080/api/perangkat-daerah/20/target-renaksi?tahun=2026&eselon=jpt"
+```
+
+`data` dikelompokkan per Sasaran PK — satu elemen = satu blok bernomor pada kolom **No** di web:
+
+```json
+[
+  {
+    "no": 1,
+    "pk_sasaran_id": 1896,
+    "pk_id": 453,
+    "sasaran": "Meningkatnya transformasi layanan berbasis digital ...",
+    "opd": {
+      "id": 20,
+      "nama_opd": "Dinas Komunikasi Dan Informatika"
+    },
+    "pejabat": {
+      "id": 151,
+      "nama": "MOUDY ARY NAZOLLA, S.STP.MH",
+      "jabatan": "Kepala Dinas Komunikasi Dan Informatika",
+      "eselon": "Eselon II",
+      "jenis": "jpt"
+    },
+    "indikator": [
+      {
+        "pk_indikator_id": 2321,
+        "indikator": "Indeks Pemerintah Digital",
+        "tahun": "2026",
+        "satuan": "Indeks",
+        "target": "1,4",
+        "unit": [
+          {
+            "level": "program",
+            "level_label": "Program",
+            "ref_key": "program:74",
+            "kode": "2",
+            "nama": "PROGRAM PENGELOLAAN APLIKASI INFORMATIKA",
+            "anggaran": 1062961500,
+            "anggaran_format": "Rp 1.062.961.500",
+            "tahun_anggaran": "2026",
+            "fallback": false
+          }
+        ],
+        "total_anggaran": 6702706507,
+        "total_anggaran_format": "Rp 6.702.706.507",
+        "target_id": 426,
+        "punya_renaksi": true,
+        "rencana_aksi": [
+          {
+            "no": 1,
+            "uraian": "Penyusunan rencana kerja Pemerintah Digital ...",
+            "sub_rencana_aksi": [
+              {
+                "id": 27,
+                "no": 1,
+                "uraian": "Identifikasi kebutuhan perangkat daerah",
+                "target_triwulan": {
+                  "1": "10",
+                  "2": "20",
+                  "3": null,
+                  "4": "40"
+                }
+              }
+            ]
+          }
+        ],
+        "target_triwulan": {
+          "1": "0",
+          "2": "0",
+          "3": "0",
+          "4": "1,4"
+        },
+        "penanggung_jawab": "Kepala Dinas Komunikasi Dan Informatika"
+      }
+    ]
+  }
+]
+```
+
+Catatan:
+
+- Kolom **unit** mengikuti jenis PK, sama seperti di web: Program (`jpt`, `camat`), Kegiatan (`administrator`), Sub Kegiatan (`pengawas`). Judul kolomnya dikirim di `meta.label_kolom_unit`.
+- `unit[].fallback = true` berarti tingkat aslinya kosong sehingga isinya diambil dari tingkat di atasnya (di web ditandai badge kuning).
+- `rencana_aksi` memecah teks multi-baris `target_rencana.rencana_aksi` menjadi butir; **Target Triwulan yang tampil di layar** adalah milik `sub_rencana_aksi`. `target_triwulan` pada level indikator adalah nilai rekaman `target_rencana` itu sendiri.
+- `target_id: null` / `punya_renaksi: false` = indikator PK yang belum diturunkan jadi Rencana Aksi (di web tampil tombol **Tambah**).
+- `meta.summary` sama dengan kartu ringkasan di atas tabel, dan `meta.available_years` sama dengan isi dropdown Tahun.
+
+### 7. Target & Rencana Aksi PK Bupati
+
+```http
+GET /api/target-renaksi/bupati
+```
+
+Filter:
+
+| Parameter | Keterangan | Contoh |
+| --- | --- | --- |
+| `tahun` | Filter tahun PK. Kosong atau `all` = semua tahun | `2026` |
+
+Contoh:
+
+```bash
+curl -H "api-token: ISI_API_TOKEN" \
+  "http://127.0.0.1:8080/api/target-renaksi/bupati?tahun=2026"
+```
+
+Tabel PK Bupati di web memang hanya menampilkan Sasaran, Indikator, Tahun, Satuan, Target, dan Perangkat Daerah Pendukung, jadi response-nya pun berhenti di situ:
+
+```json
+[
+  {
+    "no": 1,
+    "pk_sasaran_id": 1354,
+    "pk_id": 364,
+    "sasaran": "Meningkatnya kualitas Pendidikan",
+    "indikator": [
+      {
+        "pk_indikator_id": 1644,
+        "indikator": "Indeks  Pendidikan",
+        "tahun": "2026",
+        "satuan": "Nilai",
+        "target": "0,654"
+      }
+    ],
+    "perangkat_daerah_pendukung": {
+      "sumber": "manual",
+      "opd": [
+        {
+          "id": 10,
+          "nama": "Dinas Pendidikan Dan Kebudayaan"
+        }
+      ]
+    }
+  }
+]
+```
+
+Catatan:
+
+- `perangkat_daerah_pendukung.sumber` bernilai `manual` (ditetapkan admin lewat tombol Aksi), `otomatis` (hasil pencocokan sasaran PK ke rantai cascading), atau `null` bila belum ditetapkan. Penetapan manual mengalahkan hasil otomatis, sama seperti di web.
 
 ## Kode Status HTTP
 

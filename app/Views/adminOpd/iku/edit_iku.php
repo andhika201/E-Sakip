@@ -48,3 +48,23 @@ $title = $title ?? 'Sunting Keterangan IKU';
                 'sasaranSumber' => $sasaranRenstra ?? null,
             ]); ?>
             <?= $this->include('templates/iku/_edit_keterangan') ?>
+        </main>
+
+        <?php /* =====================================================================
+                 FOOTER WAJIB IKUT — DAN PERNAH TIDAK.
+
+                 Berkas ini sempat berakhir tepat di baris include di atas: tanpa
+                 </main>, tanpa footer, tanpa penutup <body>/<html>. Akibatnya
+                 bukan sekadar HTML cacat — `adminOpd/templates/footer.php` yang
+                 memuat jQuery, select2, dan DataTables tidak pernah dijalankan,
+                 sehingga seluruh skrip yang diandalkan halaman ini diam.
+
+                 Kembarannya di adminKabupaten/iku/edit_iku.php selalu lengkap;
+                 yang ini tertinggal. Terjaring `php spark versi:render`, yang
+                 memang menolak render tanpa </html>.
+             ===================================================================== */ ?>
+        <?= $this->include('adminOpd/templates/footer.php'); ?>
+    </div>
+</body>
+
+</html>

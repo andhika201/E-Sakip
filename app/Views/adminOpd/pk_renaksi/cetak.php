@@ -206,6 +206,10 @@ foreach ([1, 2, 3, 4] as $q) {
 }
 $kolomLebar['renaksi'] = 8.5;
 $kolomLebar['sub']     = 8.5;
+// Satuan milik SUB. WAJIB ikut didaftar: peta ini yang menentukan lebar tiap
+// <col> DAN colspan empty-state — menambah <th> tanpa menambah lebarnya
+// membuat kedua-duanya meleset satu kolom.
+$kolomLebar['subsat']  = 3.5;
 foreach ([1, 2, 3, 4] as $q) {
     $kolomLebar['target_' . $q] = 2;
 }
@@ -240,6 +244,10 @@ $lebarJumlah = array_sum($kolomLebar) ?: 1;
         <th colspan="4">Realisasi Anggaran Per Triwulan (Rp)</th>
         <th rowspan="2">Rencana Aksi</th>
         <th rowspan="2">Sub Rencana Aksi</th>
+        <?php /* Satuan milik SUB. Ikut dicetak di sini juga: cetakan ini
+                 menampilkan baris sub yang sama, dan target maupun capaian
+                 triwulannya sama-sama tak berarti tanpa satuan. */ ?>
+        <th rowspan="2">Satuan</th>
         <th colspan="4">Target Triwulan</th>
         <th colspan="4">Capaian Triwulan</th>
         <th rowspan="2">Capaian Total</th>
@@ -450,6 +458,10 @@ $lebarJumlah = array_sum($kolomLebar) ?: 1;
                             ?>
                             <td rowspan="<?= $spanRow ?>" class="text-start">
                                 <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '-' ?>
+                            </td>
+
+                            <td rowspan="<?= $spanRow ?>">
+                                <?= ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '-' ?>
                             </td>
 
                             <?php // Target & capaian triwulan sama-sama mengikuti SUB rencana aksi ?>

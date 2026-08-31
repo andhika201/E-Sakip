@@ -293,9 +293,10 @@
                                 <?php foreach ($sl['pilihan_sumber'] as $p): ?>
                                     <option value="<?= esc($p['nilai']) ?>"
                                         <?= $sl['sumber'] === $p['nilai'] ? 'selected' : '' ?>
-                                        <?= empty($p['tersedia']) ? 'disabled' : '' ?>>
+                                        <?= empty($p['tersedia']) || ! empty($p['terkunci']) ? 'disabled' : '' ?>>
                                         <?= esc($p['label']) ?><?= ! empty($p['bawaan']) ? ' (bawaan)' : '' ?><?= empty($p['tersedia'])
-                                            ? ' — belum ada versi' : '' ?>
+                                            ? ' — belum ada versi'
+                                            : (! empty($p['terkunci']) ? ' — terkunci: dinilai lewat IKU' : '') ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -564,7 +565,13 @@
 
             <?php // Snapshot tahunan + kunci tahun + penyesuaian kebijakan.
                  // Partial ini menyembunyikan dirinya sendiri bila tabel snapshot belum ada. ?>
-            <?= $this->include('lakip/snapshot_panel') ?>
+            <?= $this->include('lakip/pengesahan_panel') ?>
+
+            <?php /* Panel Snapshot & Penyesuaian Kebijakan DICABUT.
+                     Penguncian tahun kini dilayani panel Pengesahan di atas.
+                     Dua mekanisme kunci pada satu layar hanya membingungkan:
+                     operator tidak bisa tahu mana yang sebenarnya berlaku.
+                     Kodenya sengaja tidak dihapus — lihat LakipSnapshotTrait. */ ?>
         </main>
 
         <?= $this->include('adminOpd/templates/footer.php'); ?>

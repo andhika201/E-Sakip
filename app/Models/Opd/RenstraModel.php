@@ -1736,10 +1736,34 @@ class RenstraModel extends Model
         }
     }
 
+    /**
+     * Berapa realisasi LAKIP yang tautannya putus oleh simpanan Renstra
+     * terakhir. Controller membacanya untuk memberi peringatan — penghapusan
+     * indikator memang hak penyusun Renstra, tetapi memutus capaian yang
+     * sudah diketik orang tidak boleh terjadi tanpa suara.
+     */
+    public int $lakipTerputus = 0;
+
+    /** @param array<int, array{id: int|string}> $barisTarget id target yang akan dihapus */
+    private function catatLakipTerputus(array $barisTarget): void
+    {
+        if ($barisTarget === []) {
+            return;
+        }
+
+        $ids = array_map(static fn ($r) => (int) $r['id'], $barisTarget);
+
+        $this->lakipTerputus += (int) $this->db->table('lakip')
+            ->whereIn('renstra_target_id', $ids)
+            ->countAllResults();
+    }
+
     public function updateCompleteTujuan(int $tujuanId, array $post)
     {
         $db = $this->db;
         $db->transStart();
+
+        $this->lakipTerputus = 0;
 
         try {
 
@@ -1933,16 +1957,24 @@ class RenstraModel extends Model
                             }
 
                             $postedIndSIds[] = $indSasaranId;
-                            // ======================
-// DELETE TARGET LAMA
-// ======================
-                            $db->table('renstra_target')
-                                ->where('renstra_indikator_id', $indSasaranId)
-                                ->delete();
 
-                            // ======================
-// INSERT TARGET BARU
-// ======================
+                            // =========================================
+                            // UPSERT TARGET — ID DIPERTAHANKAN
+                            //
+                            // Dulu blok ini DELETE semua target lalu INSERT
+                            // ulang pada SETIAP simpan, walau nilainya tidak
+                            // berubah. Karena `lakip.renstra_target_id` ber-FK
+                            // ON DELETE SET NULL, setiap edit Renstra memutus
+                            // jangkar seluruh realisasi LAKIP di bawah tujuan
+                            // ini — begitulah 123 baris realisasi menjadi
+                            // yatim (dan 4.314 lubang id di renstra_target).
+                            //
+                            // Kini: tahun yang sudah ada DI-UPDATE (id tetap),
+                            // tahun baru di-INSERT, dan hanya tahun yang
+                            // benar-benar dihapus dari form yang DI-DELETE.
+                            // =========================================
+                            $tahunDipakai = [];
+
                             if (!empty($ind['target_tahunan'])) {
 
                                 $targets = array_values($ind['target_tahunan']);
@@ -1959,14 +1991,43 @@ class RenstraModel extends Model
                                     if ($target === '' || $target === null)
                                         continue;
 
-                                    $db->table('renstra_target')
-                                        ->insert([
-                                            'renstra_indikator_id' => $indSasaranId,
-                                            'tahun' => $tahun,
-                                            'target' => $target
-                                        ]);
+                                    $tahunDipakai[] = $tahun;
+
+                                    $adaTarget = $db->table('renstra_target')
+                                        ->where('renstra_indikator_id', $indSasaranId)
+                                        ->where('tahun', $tahun)
+                                        ->get()->getRowArray();
+
+                                    if ($adaTarget) {
+                                        $db->table('renstra_target')
+                                            ->where('id', $adaTarget['id'])
+                                            ->update(['target' => $target]);
+                                    } else {
+                                        $db->table('renstra_target')
+                                            ->insert([
+                                                'renstra_indikator_id' => $indSasaranId,
+                                                'tahun' => $tahun,
+                                                'target' => $target
+                                            ]);
+                                    }
                                 }
                             }
+
+                            // Hanya tahun yang dihilangkan dari form yang dihapus —
+                            // dan realisasi LAKIP yang ikut terputus DICATAT.
+                            $qHapus = $db->table('renstra_target')
+                                ->where('renstra_indikator_id', $indSasaranId);
+                            if (!empty($tahunDipakai)) {
+                                $qHapus->whereNotIn('tahun', $tahunDipakai);
+                            }
+                            $this->catatLakipTerputus($qHapus->select('id')->get()->getResultArray());
+
+                            $qHapus2 = $db->table('renstra_target')
+                                ->where('renstra_indikator_id', $indSasaranId);
+                            if (!empty($tahunDipakai)) {
+                                $qHapus2->whereNotIn('tahun', $tahunDipakai);
+                            }
+                            $qHapus2->delete();
                         }
                     }
 
@@ -1974,6 +2035,25 @@ class RenstraModel extends Model
                     // 🔥 DELETE SETELAH LOOP
                     // =========================
                     if (!empty($postedIndSIds)) {
+
+                        // Indikator yang dihapus membawa serta targetnya —
+                        // realisasi LAKIP yang menjangkarnya dicatat dulu.
+                        $doomedInd = array_column(
+                            $db->table('renstra_indikator_sasaran')
+                                ->select('id')
+                                ->where('renstra_sasaran_id', $sasaranId)
+                                ->whereNotIn('id', $postedIndSIds)
+                                ->get()->getResultArray(),
+                            'id'
+                        );
+
+                        if (!empty($doomedInd)) {
+                            $this->catatLakipTerputus(
+                                $db->table('renstra_target')->select('id')
+                                    ->whereIn('renstra_indikator_id', $doomedInd)
+                                    ->get()->getResultArray()
+                            );
+                        }
 
                         $db->table('renstra_indikator_sasaran')
                             ->where('renstra_sasaran_id', $sasaranId)
@@ -1987,6 +2067,31 @@ class RenstraModel extends Model
             // DELETE SASARAN YANG DIHAPUS DI FORM
             // ======================
             if (!empty($postedSasaranIds)) {
+
+                $doomedSas = array_column(
+                    $db->table('renstra_sasaran')->select('id')
+                        ->where('renstra_tujuan_id', $tujuanId)
+                        ->whereNotIn('id', $postedSasaranIds)
+                        ->get()->getResultArray(),
+                    'id'
+                );
+
+                if (!empty($doomedSas)) {
+                    $doomedInd2 = array_column(
+                        $db->table('renstra_indikator_sasaran')->select('id')
+                            ->whereIn('renstra_sasaran_id', $doomedSas)
+                            ->get()->getResultArray(),
+                        'id'
+                    );
+
+                    if (!empty($doomedInd2)) {
+                        $this->catatLakipTerputus(
+                            $db->table('renstra_target')->select('id')
+                                ->whereIn('renstra_indikator_id', $doomedInd2)
+                                ->get()->getResultArray()
+                        );
+                    }
+                }
 
                 $db->table('renstra_sasaran')
                     ->where('renstra_tujuan_id', $tujuanId)

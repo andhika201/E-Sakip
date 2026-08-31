@@ -79,3 +79,15 @@ $tpl = in_array($peranSekarang, ['admin_opd', 'admin_kecamatan'], true)
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 <?php endif; ?>
+
+                <?php /* Berhasil TAPI ada akibat yang perlu diketahui — mis.
+                         menggeser Kondisi Awal membuat awal periode tidak
+                         berpayung. Tanpa laras ini, pesan seperti itu terpaksa
+                         menumpang 'error' (padahal tidak gagal) atau hilang. */ ?>
+                <?php if (session()->getFlashdata('warning')): ?>
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-triangle-exclamation me-1"></i>
+                        <?= esc(session()->getFlashdata('warning')) ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>

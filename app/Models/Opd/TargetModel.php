@@ -537,8 +537,14 @@ class TargetModel extends Model
             return [];
         }
 
+        // Kolom `satuan` dijaga fieldExists: basis data yang belum menjalankan
+        // db/update_2026-08-31_satuan_sub_rencana.sql tetap berjalan seperti
+        // sebelumnya, hanya tanpa satuannya — bukan gagal dengan galat SQL.
+        $adaSatuan = $this->db->fieldExists('satuan', 'target_sub_rencana');
+
         $rows = $this->db->table('target_sub_rencana')
-            ->select('id, target_rencana_id, baris_rencana, sub_rencana_aksi,
+            ->select('id, target_rencana_id, baris_rencana, sub_rencana_aksi,'
+                . ($adaSatuan ? ' satuan,' : '') . '
                       target_triwulan_1, target_triwulan_2, target_triwulan_3, target_triwulan_4')
             ->whereIn('target_rencana_id', $targetIds)
             ->orderBy('target_rencana_id', 'ASC')
@@ -551,8 +557,9 @@ class TargetModel extends Model
         $map = [];
         foreach ($rows as $row) {
             $map[(int) $row['target_rencana_id']][(int) $row['baris_rencana']][] = [
-                'id'   => (int) $row['id'],
-                'teks' => (string) $row['sub_rencana_aksi'],
+                'id'     => (int) $row['id'],
+                'teks'   => (string) $row['sub_rencana_aksi'],
+                'satuan' => (string) ($row['satuan'] ?? ''),
                 'tw'   => [
                     1 => $row['target_triwulan_1'],
                     2 => $row['target_triwulan_2'],
@@ -583,7 +590,8 @@ class TargetModel extends Model
      */
     public function saveSubRencana(int $targetId, array $map): int
     {
-        $tabel = $this->db->table('target_sub_rencana');
+        $tabel     = $this->db->table('target_sub_rencana');
+        $adaSatuan = $this->db->fieldExists('satuan', 'target_sub_rencana');
 
         $idLama = array_map('intval', array_column(
             $this->db->table('target_sub_rencana')
@@ -634,6 +642,17 @@ class TargetModel extends Model
                     'urutan'            => $urutan++,
                     'updated_at'        => date('Y-m-d H:i:s'),
                 ];
+
+                // Ditambahkan hanya bila kolomnya ada. `allowedFields` tidak
+                // menjaga jalur ini (query builder langsung), jadi menulis
+                // kolom yang belum terpasang akan gagal dengan galat SQL —
+                // bukan diabaikan diam-diam.
+                if ($adaSatuan) {
+                    $satuan = is_array($item) ? ($item['satuan'] ?? null) : null;
+                    $satuan = is_scalar($satuan) ? trim((string) $satuan) : '';
+
+                    $data['satuan'] = $satuan === '' ? null : mb_substr($satuan, 0, 50);
+                }
 
                 $idSub = is_array($item) ? (int) ($item['id'] ?? 0) : 0;
 

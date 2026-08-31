@@ -177,6 +177,64 @@ $badge = static function (string $status): array {
                                     </button>
                                 </form>
                             <?php endif; ?>
+
+                            <?php /* =====================================================
+                                     REVISI YANG SUDAH BERLAKU
+
+                                     Dulu baris ini hanya punya "Lihat", sehingga jalan
+                                     untuk meminta izin sunting tidak pernah terlihat dari
+                                     sini — dan tampak seolah menu ini memang tidak
+                                     menyediakannya. Padahal panelnya ada, hanya
+                                     tersembunyi satu klik di halaman detail.
+
+                                     Formnya TIDAK diduplikasi ke sini: alasan wajib diisi,
+                                     dan kotak teks per baris membuat tabel ini tidak
+                                     terbaca. Yang ditaruh di sini adalah PENUNJUK ke
+                                     tempat formnya, plus keadaan permohonan yang sedang
+                                     berjalan supaya terbaca sekilas.
+                                ===================================================== */ ?>
+                            <?php $izin = $r['izin_keadaan'] ?? []; ?>
+
+                            <?php if (! empty($izin['sedang_disunting'])): ?>
+                                <a href="<?= base_url($baseUrl . '/revisi/sunting/' . (int) $r['id']) ?>"
+                                   class="btn btn-sm btn-warning mb-1">
+                                    <i class="fa-solid fa-pen"></i> Perbaiki
+                                </a>
+                                <span class="badge bg-success-subtle text-success-emphasis border mb-1">
+                                    izin terbuka
+                                </span>
+                            <?php elseif (! empty($izin['izin']) && ! empty($izin['boleh_tarik'])): ?>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border mb-1">
+                                    <i class="fa-solid fa-hourglass-half"></i> izin menunggu keputusan
+                                </span>
+                            <?php elseif (! empty($izin['boleh_minta'])): ?>
+                                <a href="<?= base_url($baseUrl . '/revisi/lihat/' . (int) $r['id']) ?>"
+                                   class="btn btn-sm btn-outline-warning mb-1"
+                                   title="<?= ! empty($izin['arsip'])
+                                       ? 'Versi ini sudah digantikan, tetapi isinya masih dibaca LAKIP tahun-tahun yang dipayunginya. Ajukan izin untuk membetulkannya.'
+                                       : 'Revisi ini sudah berlaku sehingga terkunci. Ajukan izin dulu untuk memperbaikinya.' ?>">
+                                    <i class="fa-solid fa-unlock"></i>
+                                    <?= ! empty($izin['arsip']) ? 'Ajukan Izin Perbaikan Arsip' : 'Ajukan Izin Sunting' ?>
+                                </a>
+                            <?php endif; ?>
+
+                            <?php /* Permohonan HAPUS versi. Formnya (beserta alasan wajib)
+                                     ada di halaman detail; di sini cukup penunjuknya, dan
+                                     hanya bila memang sedang bisa diajukan — menawarkan
+                                     tombol yang pasti ditolak hanya membuang waktu. */ ?>
+                            <?php $hps = $r['hapus_keadaan'] ?? []; ?>
+
+                            <?php if (! empty($hps['permohonan'])): ?>
+                                <span class="badge bg-danger-subtle text-danger-emphasis border mb-1">
+                                    <i class="fa-solid fa-hourglass-half"></i> permohonan hapus menunggu
+                                </span>
+                            <?php elseif (! empty($hps['boleh_minta'])): ?>
+                                <a href="<?= base_url($baseUrl . '/revisi/lihat/' . (int) $r['id']) ?>"
+                                   class="btn btn-sm btn-outline-danger mb-1"
+                                   title="Penghapusan versi tidak bisa dibatalkan, jadi harus disetujui Admin Kabupaten.">
+                                    <i class="fa-solid fa-trash"></i> Ajukan Hapus Versi
+                                </a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

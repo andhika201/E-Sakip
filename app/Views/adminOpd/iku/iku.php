@@ -187,16 +187,24 @@
                                     <i class="fas fa-sync-alt me-1"></i> Sync dari Renstra
                                 </a>
 
-                                <?php /* SASARAN MANDIRI — jalan kedua, sengaja diletakkan
-                                         SESUDAH Sync dan bergaya lebih redup: Sync tetap cara
-                                         yang benar untuk sasaran yang ada di Renstra, dan yang
-                                         ini hanya untuk yang memang belum ada di sana. */ ?>
-                                <a href="<?= base_url('adminopd/iku/tambah' . (! empty($selected_periode)
-                                       ? '?periode=' . urlencode((string) $selected_periode) : '')) ?>"
-                                   class="btn btn-outline-secondary"
-                                   title="Sasaran yang belum ada di Renstra; wajib memilih tujuan Renstra-nya">
-                                    <i class="fas fa-plus me-1"></i> Sasaran Mandiri
-                                </a>
+                                <?php /* =====================================================
+                                         TOMBOL "SASARAN MANDIRI" SENGAJA DICABUT DARI SINI
+
+                                         Pintu itu menulis LANGSUNG ke tabel live, di luar alur
+                                         revisi: IKU berjalan berubah tanpa revisi, tanpa
+                                         pengesahan, dan sasarannya tidak pernah masuk arsip
+                                         versi mana pun — sehingga ia tampil di layar ini tetapi
+                                         TIDAK ADA di dokumen penilaian tahun mana pun, dan LAKIP
+                                         tidak bisa menilainya.
+
+                                         Sejak 2026-08-31 sasaran mandiri ditambahkan di dalam
+                                         layar sunting draft revisi (tombol "Tambah Sasaran",
+                                         bersebelahan dengan "Tambah Indikator"), sehingga ia
+                                         ikut diperiksa dan baru berlaku setelah disahkan.
+
+                                         Sync tetap di sini: ia jalan yang benar untuk sasaran
+                                         yang MEMANG ada di Renstra, dan ia menyimpan silsilahnya.
+                                    ===================================================== */ ?>
                             <?php endif; ?>
                         <?php endif; ?>
                         <?php if (!empty($selected_periode)): ?>

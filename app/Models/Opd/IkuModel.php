@@ -870,7 +870,7 @@ class IkuModel extends Model
             return [];
         }
 
-        return $this->db->table('dokumen_versi d')
+        $rows = $this->db->table('dokumen_versi d')
             ->select('d.id, d.version_no, d.label, d.effective_from, d.effective_to,
                       COUNT(rvs.id) AS jumlah_sasaran')
             ->join('renstra_versi_sasaran rvs', 'rvs.version_id = d.id', 'inner')
@@ -882,6 +882,32 @@ class IkuModel extends Model
             ->groupBy('d.id')
             ->orderBy('d.version_no', 'DESC')
             ->get()->getResultArray();
+
+        // =============================================================
+        // LABEL SIAP TAMPIL — DISUSUN SEKALI DI SINI
+        //
+        // `label` yang tersimpan SUDAH memuat nomor versinya ("V2 — RENSTRA
+        // OPD #20 2025-2029"). Layar yang menambahkan "V{n} — " sendiri karena
+        // itu mencetak "V2 — V2 — RENSTRA ...".
+        //
+        // Diperbaiki di sini, bukan di tiap layar: dua layar memakai daftar
+        // yang sama, dan menambalnya satu per satu berarti cacat yang sama
+        // bisa hidup lagi di layar ketiga.
+        //
+        // Prefiks tetap ditambahkan bila label memang belum memuatnya —
+        // label bisa saja diketik operator tanpa nomor versi.
+        // =============================================================
+        foreach ($rows as &$r) {
+            $label  = trim((string) $r['label']);
+            $awalan = 'V' . (int) $r['version_no'];
+
+            $r['label_tampil'] = ($label === '' || stripos($label, $awalan) !== 0)
+                ? trim($awalan . ' — ' . $label, " —")
+                : $label;
+        }
+        unset($r);
+
+        return $rows;
     }
 
     private function kandidatSasaranRenstra(int $opdId, int $tahunMulai, int $tahunAkhir): array

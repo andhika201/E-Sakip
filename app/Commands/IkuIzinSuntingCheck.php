@@ -118,7 +118,7 @@ class IkuIzinSuntingCheck extends BaseCommand
         $this->harusGagal(
             'arsip berlaku menolak disunting tanpa izin',
             static fn () => $model->simpanSuntinganDraft($revisiDua, $suntingan),
-            'draft'
+            'di bawah izin'
         );
 
         // --- 2. izin diajukan lalu disetujui ---
@@ -137,7 +137,7 @@ class IkuIzinSuntingCheck extends BaseCommand
         $this->harusGagal(
             'menunggu keputusan belum membuka kunci',
             static fn () => $model->simpanSuntinganDraft($revisiDua, $suntingan),
-            'draft'
+            'di bawah izin'
         );
 
         $izin->setujui($izinId, null, 'Silakan diperbaiki.');
@@ -174,16 +174,47 @@ class IkuIzinSuntingCheck extends BaseCommand
                 ->where('revisi_id', $revisiDua)->get()->getRowArray()['indikator']
         );
 
-        // --- 5. revisi superseded tetap tertutup, walau izinnya masih berlaku ---
+        // --- 5. ARSIP (superseded) ikut bisa dibetulkan di bawah izin ---
+        //
+        // Aturan lamanya: superseded terkunci PERMANEN. Itu dicabut, karena
+        // arsip-lah yang dibaca LAKIP tahun-tahun lampau — salah ketik di sana
+        // tetap tercetak pada laporan tahun itu, dan membetulkannya di revisi
+        // terkini tidak mengubah apa pun.
+        //
+        // Yang tetap dijaga ada dua, dan keduanya diuji di bawah:
+        //   * tanpa izin, arsip TETAP menolak disunting;
+        //   * hasil suntingan arsip TIDAK pernah menyentuh IKU berjalan
+        //     (terapkanUlang menolaknya — lihat pemeriksaan terakhir).
         $this->harusGagal(
-            'revisi superseded tetap tertutup walau ada izin',
+            'arsip menolak disunting TANPA izin',
             static fn () => $model->simpanSuntinganDraft(
                 $revisiSatu,
                 [$arsipSatu => ['indikator' => 'Coba bongkar arsip lama', 'jenis_perubahan' => 'revisi']],
                 [],
-                true
+                false
             ),
-            'draft'
+            'di bawah izin'
+        );
+
+        $model->simpanSuntinganDraft(
+            $revisiSatu,
+            [$arsipSatu => ['indikator' => 'Arsip lama dibetulkan', 'jenis_perubahan' => 'revisi']],
+            [],
+            true
+        );
+
+        $this->samaDengan(
+            'arsip BISA dibetulkan di bawah izin',
+            'Arsip lama dibetulkan',
+            (string) $this->db->table('iku_revisi_indikator')
+                ->where('id', $arsipSatu)->get()->getRowArray()['indikator']
+        );
+
+        $this->samaDengan(
+            'IKU berjalan TIDAK ikut berubah oleh perbaikan arsip',
+            0,
+            (int) $this->db->table('iku_indikator')
+                ->like('indikator', 'Arsip lama dibetulkan', 'after')->countAllResults()
         );
 
         // --- 6. izin ditutup, kunci kembali terpasang ---
@@ -194,7 +225,7 @@ class IkuIzinSuntingCheck extends BaseCommand
         $this->harusGagal(
             'kunci kembali terpasang setelah izin ditutup',
             static fn () => $model->simpanSuntinganDraft($revisiDua, $suntingan),
-            'draft'
+            'di bawah izin'
         );
 
         // --- 7. terapkanUlang menolak revisi yang bukan berlaku ---

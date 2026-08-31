@@ -80,9 +80,10 @@ $normSas = static fn($s) => strtolower(trim(preg_replace('/\s+/', ' ', (string) 
 $es3Base = base_url($base . '/monev_pk/es3');
 
 // No, Sasaran, Indikator, Satuan, Unit (Program/Kegiatan/Sub Kegiatan), Anggaran,
-// Realisasi Anggaran (I-IV + Aksi), Rencana Aksi, Sub Rencana Aksi, Target TW (4),
-// Capaian TW (4), Total, Penanggung Jawab, Aksi
-$cols = 24 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0);
+// Realisasi Anggaran (I-IV + Aksi), Rencana Aksi, Sub Rencana Aksi,
+// Satuan (milik SUB), Target TW (4), Capaian TW (4), Total,
+// Penanggung Jawab, Aksi
+$cols = 25 + ($showPejabat ? 1 : 0) + ($showOpd ? 1 : 0);
 
 // format_helper tidak ikut autoload — pakai pembungkus bercadangan.
 $rupiah = function ($nilai) {
@@ -233,6 +234,10 @@ $filterQs = http_build_query(array_filter([
                                 <th colspan="5">Realisasi Anggaran Per Triwulan (Rp)</th>
                                 <th rowspan="2">Rencana Aksi</th>
                                 <th rowspan="2">Sub Rencana Aksi</th>
+                                <?php /* Satuan milik SUB — bukan satuan indikator di kiri.
+                                         Target DAN capaian triwulan sama-sama tak berarti
+                                         tanpa keterangan satuannya. */ ?>
+                                <th rowspan="2">Satuan</th>
                                 <th colspan="4">Target Triwulan</th>
                                 <th colspan="4">Capaian Triwulan</th>
                                 <th rowspan="2">Capaian Total</th>
@@ -489,6 +494,12 @@ $filterQs = http_build_query(array_filter([
                                                     ?>
                                                     <td rowspan="<?= $spanRow ?>" class="text-start">
                                                         <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '<span class="text-muted">-</span>' ?>
+                                                    </td>
+
+                                                    <td rowspan="<?= $spanRow ?>">
+                                                        <?= ($sub !== null && ($sub['satuan'] ?? '') !== '')
+                                                            ? esc($sub['satuan'])
+                                                            : '<span class="text-muted">-</span>' ?>
                                                     </td>
 
                                                     <?php // Target Triwulan diambil dari SUB rencana aksi

@@ -102,17 +102,30 @@ class IkuBerlakuCheck extends BaseCommand
 
             CLI::write('== Penolakan yang wajib ==', 'cyan');
 
-            $this->cek('Kondisi Awal ditolak digeser',
-                $this->ditolak(fn () => $model->ubahTahunBerlaku($rev0, 2091)));
-
-            $this->cek('tahun pertama periode ditolak (jatah Kondisi Awal)',
-                $this->ditolak(fn () => $model->ubahTahunBerlaku($rev1, self::TM)));
+            // Sejak tahun berlaku boleh dipilih bebas, hanya DUA hal yang
+            // ditolak: tahun yang sudah dipayungi revisi lain, dan tahun di
+            // luar periode. Tiga larangan lama (Kondisi Awal tak boleh
+            // digeser, tahun pertama terlarang, tak boleh melompati tetangga)
+            // sengaja dicabut — lihat ubahTahunBerlaku(); yang menjaga
+            // kerapatan sekarang adalah jahitUlangTimeline().
+            $this->cek('tahun yang sudah dipakai revisi lain ditolak',
+                $this->ditolak(fn () => $model->ubahTahunBerlaku($rev1, self::TM))); // 2090 milik rev0
 
             $this->cek('tahun di luar periode ditolak',
                 $this->ditolak(fn () => $model->ubahTahunBerlaku($rev1, self::TA + 1)));
 
-            $this->cek('melompati tetangga bawah ditolak',
-                $this->ditolak(fn () => $model->ubahTahunBerlaku($rev1, self::TM))); // rev0 mulai 2090
+            CLI::newLine();
+            CLI::write('== Kondisi Awal kini BOLEH digeser ==', 'cyan');
+
+            $hasil = $model->ubahTahunBerlaku($rev0, 2091);
+            $this->cek('Kondisi Awal berhasil digeser',
+                (int) $this->baris($db, $rev0)['berlaku_mulai_tahun'] === 2091);
+            $this->cek('awal periode yang jadi tanpa payung DIPERINGATKAN',
+                ! empty($hasil['peringatan']));
+
+            $kembali = $model->ubahTahunBerlaku($rev0, self::TM);
+            $this->cek('dikembalikan ke awal periode, peringatan hilang',
+                empty($kembali['peringatan']));
 
             CLI::newLine();
             CLI::write('== Draft ==', 'cyan');
@@ -161,6 +174,22 @@ class IkuBerlakuCheck extends BaseCommand
                 }
             }
             $this->cek('timeline rapat: tiap tahun dipayungi tepat satu revisi', $rapat);
+
+            CLI::newLine();
+            CLI::write('== Melompati tetangga kini BOLEH ==', 'cyan');
+
+            // Keadaan sekarang: rev0 mulai 2090, rev1 mulai 2091.
+            // rev0 dipindah ke 2093 — MELEWATI rev1. Dulu ditolak; kini
+            // diizinkan, dan garis waktunya dijahit ulang dari nol sehingga
+            // urutan payung mengikuti TAHUN, bukan nomor revisi.
+            $model->ubahTahunBerlaku($rev0, 2093);
+
+            $this->cek('revisi boleh melompati tetangganya',
+                (int) $this->baris($db, $rev0)['berlaku_mulai_tahun'] === 2093);
+            $this->cek('yang kini lebih awal ditutup tepat sebelum penerusnya',
+                (int) $this->baris($db, $rev1)['berlaku_sampai_tahun'] === 2092);
+            $this->cek('yang kini paling akhir dibiarkan terbuka',
+                $this->baris($db, $rev0)['berlaku_sampai_tahun'] === null);
 
             CLI::newLine();
             CLI::write('== Status lain ==', 'cyan');

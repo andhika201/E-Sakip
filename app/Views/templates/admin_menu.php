@@ -20,6 +20,19 @@ $canKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('iku_kab.v
 $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_opd.view')
     || user_can('pk_opd.view') || user_can('target_opd.view') || user_can('monev_opd.view')
     || user_can('lakip_opd.view') || user_can('cascading_opd.view');
+
+// Jumlah permintaan perbaikan LAKIP yang menunggu keputusan admin kabupaten.
+// Dihitung di sini supaya lencananya terlihat tanpa perlu membuka halamannya —
+// permintaan yang tidak terlihat sama saja dengan permintaan yang tidak dikirim.
+$lakipMenunggu = 0;
+
+if (user_can('lakip_opd.buka_kunci')) {
+    $mPengesahan = new \App\Models\LakipPengesahanModel();
+
+    if ($mPengesahan->siap()) {
+        $lakipMenunggu = count($mPengesahan->menungguKeputusan());
+    }
+}
 ?>
 
 <style>
@@ -169,6 +182,17 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
     <button class="<?= $ddBtn ?>" type="button" id="ddLaporKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-file-lines"></i> Pelaporan Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddLaporKab">
       <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP</a></li>
+      <?php if (user_can('lakip_opd.buka_kunci')): ?>
+        <li>
+          <a class="dropdown-item d-flex justify-content-between align-items-center"
+             href="<?= base_url('adminkab/lakip/permintaan') ?>">
+            <span>Permintaan Perbaikan</span>
+            <?php if ($lakipMenunggu > 0): ?>
+              <span class="badge bg-danger rounded-pill"><?= (int) $lakipMenunggu ?></span>
+            <?php endif; ?>
+          </a>
+        </li>
+      <?php endif; ?>
     </ul>
   </div>
 <?php endif; ?>

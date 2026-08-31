@@ -3,7 +3,7 @@
   "info": {
     "title": "API e-SAKIP Kabupaten Pringsewu",
     "version": "1.0.0",
-    "description": "API read-only untuk perangkat daerah, IKU, cascading, dan pohon kinerja perangkat daerah."
+    "description": "API read-only untuk perangkat daerah, IKU, cascading, pohon kinerja, serta Target & Rencana Aksi (turunan Perjanjian Kinerja)."
   },
   "servers": [
     {
@@ -28,6 +28,9 @@
     },
     {
       "name": "Pohon Kinerja"
+    },
+    {
+      "name": "Target & Rencana Aksi"
     }
   ],
   "paths": {
@@ -323,6 +326,120 @@
           }
         }
       }
+    },
+    "/api/perangkat-daerah/{opd_id}/target-renaksi": {
+      "get": {
+        "tags": ["Target & Rencana Aksi"],
+        "summary": "Target & Rencana Aksi perangkat daerah",
+        "description": "Sama dengan tabel Target dan Rencana Aksi PK OPD/Kecamatan di web (Eselon II/III/IV): Sasaran > Indikator > unit anggaran > Rencana Aksi > Sub Rencana Aksi > Target Triwulan I-IV > Penanggung Jawab. Data dikelompokkan per Sasaran PK, meniru penggabungan baris pada kolom \"No\".",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/TahunPk"
+          },
+          {
+            "$ref": "#/components/parameters/EselonPk"
+          },
+          {
+            "$ref": "#/components/parameters/PejabatPk"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Target & Rencana Aksi perangkat daerah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetRenaksiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/target-renaksi": {
+      "get": {
+        "tags": ["Target & Rencana Aksi"],
+        "summary": "Target & Rencana Aksi PK OPD/Kecamatan",
+        "description": "Sama dengan tabel Target dan Rencana Aksi PK OPD/Kecamatan di web (Eselon II/III/IV): Sasaran > Indikator > unit anggaran > Rencana Aksi > Sub Rencana Aksi > Target Triwulan I-IV > Penanggung Jawab. Data dikelompokkan per Sasaran PK, meniru penggabungan baris pada kolom \"No\". Tanpa `opd_id`, hasilnya lintas perangkat daerah.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdQueryOpsional"
+          },
+          {
+            "$ref": "#/components/parameters/TahunPk"
+          },
+          {
+            "$ref": "#/components/parameters/EselonPk"
+          },
+          {
+            "$ref": "#/components/parameters/PejabatPk"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Target & Rencana Aksi PK OPD/Kecamatan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetRenaksiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/target-renaksi/bupati": {
+      "get": {
+        "tags": ["Target & Rencana Aksi"],
+        "summary": "Target & Rencana Aksi PK Bupati",
+        "description": "Sama dengan tabel Target dan Rencana Aksi PK Bupati di web, yang memang hanya menampilkan Sasaran, Indikator, Tahun, Satuan, Target, dan Perangkat Daerah Pendukung.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TahunPk"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Target & Rencana Aksi PK Bupati",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetRenaksiBupatiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -396,6 +513,48 @@
           "default": "selesai"
         },
         "description": "Filter status IKU. Default hanya menampilkan IKU dengan status selesai."
+      },
+      "TahunPk": {
+        "name": "tahun",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^(\\d{4}|all)$",
+          "example": "2026"
+        },
+        "description": "Filter tahun Perjanjian Kinerja. Kosong atau `all` = semua tahun."
+      },
+      "OpdIdQueryOpsional": {
+        "name": "opd_id",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "example": 20
+        },
+        "description": "Batasi pada satu perangkat daerah. Kosong = lintas OPD."
+      },
+      "EselonPk": {
+        "name": "eselon",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": ["jpt", "administrator", "camat", "kecamatan", "pengawas"],
+          "example": "jpt"
+        },
+        "description": "Filter jenjang PK: `jpt` (Eselon II), `administrator` (Eselon III, alias `camat`/`kecamatan`), `pengawas` (Eselon IV). Kosong = semua jenjang."
+      },
+      "PejabatPk": {
+        "name": "pejabat_id",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "example": 151
+        },
+        "description": "Filter pejabat penandatangan PK (`pk.pihak_1`)."
       }
     },
     "responses": {
@@ -884,6 +1043,482 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PohonNode"
+            }
+          }
+        }
+      },
+      "TargetTriwulan": {
+        "type": "object",
+        "description": "Target Triwulan I-IV. Nilai `null` = belum diisi (tampil \"-\" di web).",
+        "properties": {
+          "1": {
+            "type": "string",
+            "nullable": true,
+            "example": "10"
+          },
+          "2": {
+            "type": "string",
+            "nullable": true,
+            "example": "20"
+          },
+          "3": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "4": {
+            "type": "string",
+            "nullable": true,
+            "example": "40"
+          }
+        }
+      },
+      "UnitAnggaranPk": {
+        "type": "object",
+        "description": "Satu baris kolom unit anggaran. Tingkatnya mengikuti jenis PK: Program (bupati/jpt/camat), Kegiatan (administrator), Sub Kegiatan (pengawas).",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": ["program", "kegiatan", "subkegiatan"]
+          },
+          "level_label": {
+            "type": "string",
+            "example": "Program"
+          },
+          "ref_key": {
+            "type": "string",
+            "example": "program:74"
+          },
+          "kode": {
+            "type": "string",
+            "nullable": true,
+            "example": "2"
+          },
+          "nama": {
+            "type": "string",
+            "example": "PROGRAM PENGELOLAAN APLIKASI INFORMATIKA"
+          },
+          "anggaran": {
+            "type": "number",
+            "format": "float",
+            "example": 1062961500
+          },
+          "anggaran_format": {
+            "type": "string",
+            "example": "Rp 1.062.961.500"
+          },
+          "tahun_anggaran": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026"
+          },
+          "fallback": {
+            "type": "boolean",
+            "description": "true = tingkat aslinya kosong sehingga isinya diambil dari tingkat di atasnya (di web ditandai badge kuning)."
+          }
+        }
+      },
+      "SubRencanaAksi": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 27
+          },
+          "no": {
+            "type": "integer",
+            "example": 1
+          },
+          "uraian": {
+            "type": "string"
+          },
+          "target_triwulan": {
+            "$ref": "#/components/schemas/TargetTriwulan"
+          }
+        }
+      },
+      "RencanaAksi": {
+        "type": "object",
+        "description": "`target_rencana.rencana_aksi` disimpan sebagai teks multi-baris; satu baris = satu butir Rencana Aksi. Setiap butir membawa Sub Rencana Aksi-nya sendiri.",
+        "properties": {
+          "no": {
+            "type": "integer",
+            "example": 1
+          },
+          "uraian": {
+            "type": "string"
+          },
+          "sub_rencana_aksi": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubRencanaAksi"
+            }
+          }
+        }
+      },
+      "IndikatorRenaksi": {
+        "type": "object",
+        "properties": {
+          "pk_indikator_id": {
+            "type": "integer",
+            "example": 2321
+          },
+          "indikator": {
+            "type": "string",
+            "example": "Indeks Pemerintah Digital"
+          },
+          "tahun": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026"
+          },
+          "satuan": {
+            "type": "string",
+            "nullable": true,
+            "example": "Indeks"
+          },
+          "target": {
+            "type": "string",
+            "nullable": true,
+            "example": "1,4"
+          },
+          "unit": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitAnggaranPk"
+            }
+          },
+          "total_anggaran": {
+            "type": "number",
+            "format": "float",
+            "example": 6702706507
+          },
+          "total_anggaran_format": {
+            "type": "string",
+            "example": "Rp 6.702.706.507"
+          },
+          "target_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "ID `target_rencana`. null = Rencana Aksi belum dibuat."
+          },
+          "punya_renaksi": {
+            "type": "boolean"
+          },
+          "rencana_aksi": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RencanaAksi"
+            }
+          },
+          "target_triwulan": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TargetTriwulan"
+              }
+            ],
+            "description": "Target triwulan pada level `target_rencana`. Kolom Triwulan I-IV di web menampilkan target milik Sub Rencana Aksi."
+          },
+          "penanggung_jawab": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "IndikatorRenaksiBupati": {
+        "type": "object",
+        "properties": {
+          "pk_indikator_id": {
+            "type": "integer",
+            "example": 1644
+          },
+          "indikator": {
+            "type": "string",
+            "example": "Indeks Pendidikan"
+          },
+          "tahun": {
+            "type": "string",
+            "nullable": true,
+            "example": "2026"
+          },
+          "satuan": {
+            "type": "string",
+            "nullable": true,
+            "example": "Nilai"
+          },
+          "target": {
+            "type": "string",
+            "nullable": true,
+            "example": "0,654"
+          }
+        }
+      },
+      "SasaranRenaksi": {
+        "type": "object",
+        "description": "Satu blok bernomor pada kolom \"No\" tabel Target & Rencana Aksi.",
+        "properties": {
+          "no": {
+            "type": "integer",
+            "example": 1
+          },
+          "pk_sasaran_id": {
+            "type": "integer",
+            "example": 1896
+          },
+          "pk_id": {
+            "type": "integer",
+            "nullable": true,
+            "example": 453
+          },
+          "sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "opd": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "nullable": true,
+                "example": 20
+              },
+              "nama_opd": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "pejabat": {
+            "type": "object",
+            "description": "Pejabat penandatangan PK beserta label eselonnya.",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "nullable": true,
+                "example": 151
+              },
+              "nama": {
+                "type": "string",
+                "nullable": true
+              },
+              "jabatan": {
+                "type": "string",
+                "nullable": true
+              },
+              "eselon": {
+                "type": "string",
+                "example": "Eselon II"
+              },
+              "jenis": {
+                "type": "string",
+                "nullable": true,
+                "enum": ["jpt", "administrator", "camat", "pengawas", null],
+                "description": "Nilai `pk.jenis` mentah."
+              }
+            }
+          },
+          "indikator": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndikatorRenaksi"
+            }
+          }
+        }
+      },
+      "SasaranRenaksiBupati": {
+        "type": "object",
+        "properties": {
+          "no": {
+            "type": "integer",
+            "example": 1
+          },
+          "pk_sasaran_id": {
+            "type": "integer",
+            "example": 1354
+          },
+          "pk_id": {
+            "type": "integer",
+            "nullable": true,
+            "example": 364
+          },
+          "sasaran": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikator": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndikatorRenaksiBupati"
+            }
+          },
+          "perangkat_daerah_pendukung": {
+            "type": "object",
+            "description": "Perangkat Daerah pendukung Sasaran PK Bupati, persis seperti kolom di web: penetapan manual mengalahkan hasil pencocokan otomatis.",
+            "properties": {
+              "sumber": {
+                "type": "string",
+                "nullable": true,
+                "enum": ["manual", "otomatis", null],
+                "description": "null = belum ditetapkan."
+              },
+              "opd": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 10
+                    },
+                    "nama": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TargetRenaksiResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "jenis": {
+                "type": "string",
+                "example": "es3"
+              },
+              "opd": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Opd"
+                  }
+                ],
+                "nullable": true
+              },
+              "tahun": {
+                "type": "string",
+                "example": "2026"
+              },
+              "available_years": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "filter": {
+                "type": "object",
+                "properties": {
+                  "opd_id": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "eselon": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "pejabat_id": {
+                    "type": "integer",
+                    "nullable": true
+                  }
+                }
+              },
+              "label_kolom_unit": {
+                "type": "string",
+                "description": "Judul kolom unit anggaran di web, mengikuti filter eselon.",
+                "example": "Program"
+              },
+              "summary": {
+                "type": "object",
+                "description": "Ringkasan yang sama dengan kartu di atas tabel web.",
+                "properties": {
+                  "sasaran": {
+                    "type": "integer"
+                  },
+                  "indikator": {
+                    "type": "integer"
+                  },
+                  "sudah_renaksi": {
+                    "type": "integer"
+                  },
+                  "belum_renaksi": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "count": {
+                "type": "integer",
+                "description": "Jumlah indikator PK (baris sumber)."
+              }
+            },
+            "additionalProperties": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SasaranRenaksi"
+            }
+          }
+        }
+      },
+      "TargetRenaksiBupatiResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "jenis": {
+                "type": "string",
+                "example": "bupati"
+              },
+              "tahun": {
+                "type": "string",
+                "example": "all"
+              },
+              "available_years": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "summary": {
+                "type": "object",
+                "description": "Ringkasan yang sama dengan kartu di atas tabel web.",
+                "properties": {
+                  "sasaran": {
+                    "type": "integer"
+                  },
+                  "indikator": {
+                    "type": "integer"
+                  },
+                  "sudah_renaksi": {
+                    "type": "integer"
+                  },
+                  "belum_renaksi": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "count": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SasaranRenaksiBupati"
             }
           }
         }

@@ -263,6 +263,25 @@ $medanIndikator = static function (
 <?= $this->include('templates/shell_atas') ?>
 
 <style>
+    /* =====================================================================
+       TATA LETAK MENGIKUTI LAYAR "TAMBAH SASARAN MANDIRI"
+
+       Kartu shell bawaannya selebar layar. Di sini ia dipersempit dan
+       dipusatkan persis seperti adminOpd/iku/tambah_iku.php (max-width
+       1200px), supaya dua layar yang sama-sama mengisi sasaran & indikator
+       tidak terasa seperti dua aplikasi berbeda.
+       ===================================================================== */
+    main > .bg-white {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+    }
+    main { display: flex; justify-content: center; }
+
+    /* Judul bawaan shell diganti judul+subjudul di badan halaman. */
+    main > .bg-white > h2.h4 { display: none; }
+
     /* Kartu yang ditandai Dihentikan diredupkan supaya nasibnya terbaca
        sekilas, tanpa menyembunyikan isinya — pengguna masih bisa berubah
        pikiran dan memilih jenis lain. */
@@ -294,6 +313,15 @@ $medanIndikator = static function (
    dokumen resmi, jadi ia harus terbaca seperti itu. */
 $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
 ?>
+
+<h2 class="h3 fw-bold text-center mb-2" style="color: #00743e;">
+    <?= $bawahIzin ? 'Perbaiki Revisi IKU' : 'Sunting Draft Revisi IKU' ?>
+</h2>
+<p class="text-center text-muted small mb-4">
+    <?= esc($revisi['nama']) ?> &mdash; periode
+    <?= (int) $revisi['tahun_mulai'] ?>&ndash;<?= (int) $revisi['tahun_akhir'] ?>,
+    berlaku mulai <strong><?= (int) $revisi['berlaku_mulai_tahun'] ?></strong>.
+</p>
 
 <?php if ($bawahIzin): ?>
     <div class="kotak-jejak mb-4 border-warning">
@@ -345,63 +373,166 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
             <?= (int) $revisi['tahun_mulai'] ?>&ndash;<?= (int) $revisi['tahun_akhir'] ?> saat draft dibuat.
         </div>
     <?php else: ?>
-        <?php foreach ($isi as $sas): ?>
+        <?php /* Satu <section> per sasaran, bergaya sama dengan
+                 templates/iku/_form.php: judul h5 lalu daftar kartu
+                 `.indikator-item`. Kelas fungsional (.indikator-kartu,
+                 .wadah-baru, .pola-indikator, .tanda-jenis) DIPERTAHANKAN —
+                 seluruh JS di bawah bergantung padanya. */ ?>
+        <?php foreach ($isi as $nSas => $sas): ?>
             <?php $sasId = (int) $sas['id']; ?>
-            <div class="card mb-4">
-                <div class="card-header bg-success-subtle d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <span class="fw-semibold"><?= esc($sas['sasaran']) ?></span>
+            <section class="mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h5 fw-semibold mb-0">
+                        <span class="text-muted">Sasaran <?= $nSas + 1 ?>.</span>
+                        <?= esc($sas['sasaran']) ?>
+                    </h2>
                     <span class="badge bg-light text-dark border">
                         <?= count($sas['indikator']) ?> indikator
                     </span>
                 </div>
-                <div class="card-body">
-                    <?php foreach ($sas['indikator'] as $n => $ind): ?>
-                        <?php $id = (int) $ind['id']; ?>
-                        <div class="border rounded p-3 mb-3 bg-light indikator-kartu
-                                    <?= ($ind['jenis_perubahan'] ?? '') === 'dihentikan' ? 'kartu-dihentikan' : '' ?>">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="fw-medium">Indikator <?= $n + 1 ?></span>
-                                <span class="badge bg-light text-dark border tanda-jenis">
-                                    <?= esc($jenisOpsi[$ind['jenis_perubahan'] ?? 'tetap'] ?? 'Tetap') ?>
-                                </span>
-                            </div>
-                            <?php $medanIndikator(
-                                'baris[' . $id . ']',
-                                $tempelIsianDitolak($ind, old('baris.' . $id)),
-                                $satuan_options, $years, $jenisOpsi, $indikatorLive, true
-                            ); ?>
+
+                <?php foreach ($sas['indikator'] as $n => $ind): ?>
+                    <?php $id = (int) $ind['id']; ?>
+                    <div class="indikator-item border rounded p-3 bg-light mb-3 indikator-kartu
+                                <?= ($ind['jenis_perubahan'] ?? '') === 'dihentikan' ? 'kartu-dihentikan' : '' ?>">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="fw-medium indikator-title mb-0">Indikator <?= $n + 1 ?></label>
+                            <span class="badge bg-light text-dark border tanda-jenis">
+                                <?= esc($jenisOpsi[$ind['jenis_perubahan'] ?? 'tetap'] ?? 'Tetap') ?>
+                            </span>
                         </div>
-                    <?php endforeach; ?>
+                        <?php $medanIndikator(
+                            'baris[' . $id . ']',
+                            $tempelIsianDitolak($ind, old('baris.' . $id)),
+                            $satuan_options, $years, $jenisOpsi, $indikatorLive, true
+                        ); ?>
+                    </div>
+                <?php endforeach; ?>
 
-                    <div class="wadah-baru" data-sasaran="<?= $sasId ?>"></div>
+                <div class="wadah-baru" data-sasaran="<?= $sasId ?>"></div>
 
-                    <button type="button" class="btn btn-outline-success btn-sm tambah-indikator"
-                            data-sasaran="<?= $sasId ?>">
+                <button type="button" class="btn btn-outline-success btn-sm tambah-indikator"
+                        data-sasaran="<?= $sasId ?>">
+                    <i class="fa-solid fa-plus me-1"></i>Tambah Indikator
+                </button>
+
+                <?php /* Template kartu baru. Isi <template> tidak pernah ikut
+                         terkirim saat submit, jadi medan ber-placeholder __N__
+                         di dalamnya aman. */ ?>
+                <template class="pola-indikator" data-sasaran="<?= $sasId ?>">
+                    <div class="indikator-item border border-success rounded p-3 bg-white mb-3 indikator-kartu">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="fw-medium indikator-title text-success mb-0">
+                                <i class="fa-solid fa-plus me-1"></i>Indikator baru
+                            </label>
+                            <button type="button" class="btn btn-outline-danger btn-sm hapus-kartu-baru"
+                                    title="Batalkan penambahan ini">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="baru[s<?= $sasId ?>___N__][revisi_sasaran_id]"
+                               value="<?= $sasId ?>">
+                        <?php $medanIndikator('baru[s' . $sasId . '___N__]', [], $satuan_options, $years, $jenisOpsi, $indikatorLive, false); ?>
+                    </div>
+                </template>
+            </section>
+            <hr class="my-4">
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php /* =====================================================================
+             SASARAN BARU (SASARAN MANDIRI)
+
+             Ditempatkan di EKOR daftar, sesudah seluruh kartu sasaran — sejajar
+             dengan "Tambah Indikator" yang juga duduk di ekor daftar indikator
+             dalam kartunya. Pemakai membaca dokumen dari atas ke bawah, lalu
+             menemukan tombol tambah tepat di tempat isian barunya akan muncul.
+
+             Hanya ditawarkan bila ada Tujuan Renstra yang bisa dipilih. Lingkup
+             KABUPATEN tidak punya Renstra, jadi daftarnya kosong dan blok ini
+             tidak dirender sama sekali — lebih jujur daripada menampilkan tombol
+             yang pasti berujung galat.
+        ===================================================================== */ ?>
+    <?php if (! empty($tujuanOptions)): ?>
+        <div class="wadah-sasaran-baru"></div>
+
+        <div class="d-grid mb-4">
+            <button type="button" class="btn btn-outline-primary tambah-sasaran">
+                <i class="fa-solid fa-plus me-1"></i>Tambah Sasaran
+            </button>
+            <div class="form-text text-center mt-1">
+                Sasaran yang lahir di IKU, bukan salinan Renstra. Ia ikut diperiksa
+                dan baru berlaku setelah revisi ini disahkan.
+            </div>
+        </div>
+
+        <template class="pola-sasaran">
+            <section class="mb-4 border border-primary rounded p-3 kartu-sasaran-baru">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h2 class="h5 fw-semibold mb-0 text-primary">
+                        <i class="fa-solid fa-plus me-1"></i>Sasaran baru
+                    </h2>
+                    <button type="button" class="btn btn-outline-danger btn-sm hapus-sasaran-baru"
+                            title="Batalkan penambahan sasaran ini">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label fw-semibold">
+                                Sasaran <span class="text-danger">*</span>
+                            </label>
+                            <textarea name="sasaran_baru[s__S__][sasaran]" rows="2"
+                                      class="form-control isian-sasaran" required
+                                      placeholder="Rumusan sasaran yang hendak ditambahkan"></textarea>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold">
+                                Tujuan Renstra <span class="text-danger">*</span>
+                            </label>
+                            <select name="sasaran_baru[s__S__][renstra_tujuan_id]" class="form-select" required>
+                                <option value="">— pilih tujuan —</option>
+                                <?php foreach ($tujuanOptions as $t): ?>
+                                    <option value="<?= (int) $t['id'] ?>"><?= esc($t['tujuan']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">
+                                Menentukan letaknya di Cascading. Tanpa ini barisnya
+                                muncul di luar blok Tujuan mana pun.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wadah-indikator-sasaran-baru"></div>
+
+                    <button type="button" class="btn btn-outline-success btn-sm tambah-indikator-sasaran-baru">
                         <i class="fa-solid fa-plus me-1"></i>Tambah Indikator
                     </button>
+                    <div class="form-text">Sasaran baru wajib punya minimal satu indikator.</div>
 
-                    <?php /* Template kartu baru. Isi <template> tidak pernah ikut
-                             terkirim saat submit, jadi medan ber-placeholder __N__
-                             di dalamnya aman. */ ?>
-                    <template class="pola-indikator" data-sasaran="<?= $sasId ?>">
-                        <div class="border border-success rounded p-3 mb-3 bg-white indikator-kartu">
+                    <?php /* Template bersarang. Isi <template> tidak pernah ikut
+                             terkirim, jadi placeholder __S__/__N__ di dalamnya aman. */ ?>
+                    <template class="pola-indikator-sasaran-baru">
+                        <div class="indikator-item border border-success rounded p-3 mb-3 bg-white indikator-kartu">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="fw-medium text-success">
+                                <label class="fw-medium indikator-title text-success mb-0">
                                     <i class="fa-solid fa-plus me-1"></i>Indikator baru
-                                </span>
+                                </label>
                                 <button type="button" class="btn btn-outline-danger btn-sm hapus-kartu-baru"
                                         title="Batalkan penambahan ini">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
-                            <input type="hidden" name="baru[s<?= $sasId ?>___N__][revisi_sasaran_id]"
-                                   value="<?= $sasId ?>">
-                            <?php $medanIndikator('baru[s' . $sasId . '___N__]', [], $satuan_options, $years, $jenisOpsi, $indikatorLive, false); ?>
+                            <?php $medanIndikator(
+                                'sasaran_baru[s__S__][indikator][i__N__]',
+                                [], $satuan_options, $years, $jenisOpsi, $indikatorLive, false
+                            ); ?>
                         </div>
                     </template>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            </section>
+        </template>
     <?php endif; ?>
 
     <div class="bilah-simpan d-flex gap-2 align-items-center">
@@ -488,6 +619,74 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
             if (!tombol) return;
 
             var kartu = tombol.closest('.indikator-kartu');
+
+            if (kartu) kartu.remove();
+        });
+
+        // ============ TAMBAH / HAPUS SASARAN BARU ============
+        //
+        // Sengaja TIDAK menumpang handler .tambah-indikator di atas: handler itu
+        // mencari pola & wadahnya lewat document.querySelector('[data-sasaran=..]'),
+        // penanda milik sasaran yang SUDAH ADA di arsip. Sasaran baru belum punya
+        // id, jadi pencarian di sini dilingkupkan ke kartunya sendiri.
+        var urutSasaran = 0;
+
+        var tombolSasaran = document.querySelector('.tambah-sasaran');
+        var polaSasaran   = document.querySelector('.pola-sasaran');
+        var wadahSasaran  = document.querySelector('.wadah-sasaran-baru');
+
+        if (tombolSasaran && polaSasaran && wadahSasaran) {
+            tombolSasaran.addEventListener('click', function () {
+                urutSasaran++;
+
+                var bungkus = document.createElement('div');
+                bungkus.innerHTML = polaSasaran.innerHTML.split('__S__').join('_' + urutSasaran);
+
+                var kartu = bungkus.firstElementChild;
+                wadahSasaran.appendChild(kartu);
+
+                // Satu kartu indikator langsung disodorkan: sasaran tanpa
+                // indikator pasti ditolak server, jadi menyodorkannya lebih
+                // awal menghemat satu klik sekaligus memberitahu bentuk isiannya.
+                var tombolInd = kartu.querySelector('.tambah-indikator-sasaran-baru');
+                if (tombolInd) tombolInd.click();
+
+                kartu.querySelector('.isian-sasaran').focus();
+            });
+        }
+
+        form.addEventListener('click', function (e) {
+            var tombol = e.target.closest('.tambah-indikator-sasaran-baru');
+
+            if (!tombol) return;
+
+            var kartuSas = tombol.closest('.kartu-sasaran-baru');
+
+            if (!kartuSas) return;
+
+            var pola  = kartuSas.querySelector('.pola-indikator-sasaran-baru');
+            var wadah = kartuSas.querySelector('.wadah-indikator-sasaran-baru');
+
+            if (!pola || !wadah) return;
+
+            urut++;
+
+            var bungkus = document.createElement('div');
+            bungkus.innerHTML = pola.innerHTML.split('__N__').join('_' + urut);
+
+            var kartu = bungkus.firstElementChild;
+            wadah.appendChild(kartu);
+
+            /* Sengaja TIDAK di-select2-kan; lihat catatan di kepala berkas. */
+            kartu.querySelector('.isian-indikator').focus();
+        });
+
+        form.addEventListener('click', function (e) {
+            var tombol = e.target.closest('.hapus-sasaran-baru');
+
+            if (!tombol) return;
+
+            var kartu = tombol.closest('.kartu-sasaran-baru');
 
             if (kartu) kartu.remove();
         });

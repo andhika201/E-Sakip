@@ -151,13 +151,25 @@ $labelModul = static fn (string $m): string => match ($m) {
                     </thead>
                     <tbody>
                         <?php foreach ($izinSunting as $z): ?>
-                            <tr>
+                            <?php
+                            /* Permohonan HAPUS menumpang antrean yang sama.
+                               Ia WAJIB terbaca berbeda: menyetujuinya berarti
+                               MENGHAPUS versi, bukan membuka kunci — dan itu
+                               tidak bisa dibatalkan. */
+                            $iniHapus = ($z['jenis'] ?? 'sunting') === 'hapus';
+                            ?>
+                            <tr class="<?= $iniHapus ? 'table-danger' : '' ?>">
                                 <td>
                                     <div class="fw-semibold"><?= esc($z['nama_opd'] ?? ('OPD #' . (int) $z['opd_key'])) ?></div>
                                     <div class="text-secondary sel-kecil">
                                         <?= esc(strtoupper($z['modul'])) ?>
                                         <?= (int) $z['periode_mulai'] ?>&ndash;<?= (int) $z['periode_akhir'] ?>
                                     </div>
+                                    <?php if ($iniHapus): ?>
+                                        <span class="badge bg-danger mt-1">
+                                            <i class="fa-solid fa-trash me-1"></i>PERMOHONAN HAPUS VERSI
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?= esc($z['alasan']) ?></td>
                                 <td class="sel-kecil text-secondary">
@@ -172,10 +184,13 @@ $labelModul = static fn (string $m): string => match ($m) {
                                     <form method="post"
                                           action="<?= base_url('adminkab/verifikasi/izin/setujui/' . (int) $z['id']) ?>"
                                           class="mb-2"
-                                          onsubmit="return confirm('Beri izin sunting <?= esc(strtoupper($z['modul']), 'js') ?>? Dokumen OPD ini akan terbuka untuk diperbaiki, sementara arsip versi yang sudah ditetapkan tetap utuh.')">
+                                          onsubmit="return confirm('<?= $iniHapus
+                                              ? 'HAPUS versi ini sekarang? Arsip isinya ikut terhapus dan TIDAK BISA dikembalikan.'
+                                              : 'Beri izin sunting ' . esc(strtoupper($z['modul']), 'js') . '? Dokumen OPD ini akan terbuka untuk diperbaiki, sementara arsip versi yang sudah ditetapkan tetap utuh.' ?>')">
                                         <?= csrf_field() ?>
-                                        <button class="btn btn-success btn-sm w-100">
-                                            <i class="fa-solid fa-unlock me-1"></i>Beri Izin
+                                        <button class="btn btn-sm w-100 <?= $iniHapus ? 'btn-danger' : 'btn-success' ?>">
+                                            <i class="fa-solid <?= $iniHapus ? 'fa-trash' : 'fa-unlock' ?> me-1"></i>
+                                            <?= $iniHapus ? 'Setujui &amp; Hapus' : 'Beri Izin' ?>
                                         </button>
                                     </form>
 
@@ -190,6 +205,88 @@ $labelModul = static fn (string $m): string => match ($m) {
                                                   placeholder="Alasan penolakan (wajib)"></textarea>
                                         <button class="btn btn-outline-danger btn-sm w-100">
                                             <i class="fa-solid fa-xmark me-1"></i>Tolak
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php /* =====================================================================
+         IZIN YANG SEDANG TERBUKA
+
+         Antrean di atas hanya memuat yang berstatus `pending`. Begitu sebuah
+         izin disetujui, ia LENYAP dari layar ini — padahal cabut() dan rutenya
+         sudah ada sejak awal, hanya tidak pernah punya tempat untuk ditekan.
+
+         Akibatnya nyata: satu dokumen hanya boleh punya satu permohonan
+         menggantung, sehingga izin yang terlanjur disetujui lalu tidak pernah
+         ditutup MEMBLOKIR seluruh lingkup itu dari permohonan baru — dan tidak
+         seorang pun bisa melihat penyebabnya, apalagi mencabutnya.
+     ===================================================================== */ ?>
+<?php $izinBerjalan = $izinBerjalan ?? []; ?>
+
+<?php if (! empty($izinBerjalan)): ?>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold">
+            Izin Sunting yang Sedang Terbuka
+            <span class="badge bg-success ms-1"><?= count($izinBerjalan) ?></span>
+            <div class="text-secondary sel-kecil fw-normal mt-1">
+                Sudah disetujui dan belum ditutup. Selama masih terbuka, lingkup itu
+                tidak bisa mengajukan permohonan baru — cabut bila penyuntingannya
+                ternyata tidak jadi dikerjakan.
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle small mb-0" data-no-paginate>
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:200px">OPD &amp; Periode</th>
+                            <th>Alasan</th>
+                            <th style="width:170px">Disetujui</th>
+                            <th style="width:150px">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($izinBerjalan as $z): ?>
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">
+                                        <?= esc($z['nama_opd'] ?? ('OPD #' . (int) $z['opd_key'])) ?>
+                                    </div>
+                                    <div class="text-secondary sel-kecil">
+                                        <?= esc(strtoupper($z['modul'])) ?>
+                                        <?= (int) $z['periode_mulai'] ?>&ndash;<?= (int) $z['periode_akhir'] ?>
+                                        <?php if (! empty($z['version_id'])): ?>
+                                            &middot; versi #<?= (int) $z['version_id'] ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td><?= esc($z['alasan']) ?></td>
+                                <td class="sel-kecil text-secondary">
+                                    <?= esc($z['diputus_nama'] ?? '&mdash;') ?>
+                                    <div>
+                                        <?= ! empty($z['diputus_pada'])
+                                            ? esc(date('d M Y H:i', strtotime($z['diputus_pada'])))
+                                            : '' ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <form method="post"
+                                          action="<?= base_url('adminkab/verifikasi/izin/cabut/' . (int) $z['id']) ?>"
+                                          onsubmit="return confirm('Cabut izin sunting ini? Dokumennya terkunci kembali, dan lingkup itu bisa mengajukan permohonan baru.');">
+                                        <?= csrf_field() ?>
+                                        <input type="text" name="catatan" maxlength="500"
+                                               class="form-control form-control-sm mb-1"
+                                               placeholder="Catatan (opsional)">
+                                        <button class="btn btn-outline-danger btn-sm w-100">
+                                            <i class="fa-solid fa-lock me-1"></i>Cabut Izin
                                         </button>
                                     </form>
                                 </td>

@@ -104,168 +104,56 @@ class IkuController extends BaseController
     /* =========================================================
      * FORM TAMBAH
      * =======================================================*/
-    /**
-     * Form SASARAN MANDIRI — sasaran yang lahir di IKU, bukan salinan Renstra.
-     *
-     * =====================================================================
-     * MENGAPA PINTU INI DIBUKA LAGI
-     *
-     * Ia dulu ditutup karena melahirkan sasaran kembar di sebelah hasil sync,
-     * dan baris tanpa jejak asal. Dua alasan itu kini dijawab, bukan diabaikan:
-     *
-     *   * KEMBAR — `sasaranAdaDiRenstra()` menolak teks yang sudah ada di
-     *     Renstra pada OPD & periode ini, dan menunjuk ke tombol Sync.
-     *   * JEJAK ASAL — tujuan Renstra WAJIB dipilih. Tanpa itu barisnya muncul
-     *     di Cascading dengan empat kolom kosong, di luar blok Tujuan mana pun.
-     *
-     * Yang tetap tidak bisa dilakukan di sini: menyalin sasaran yang memang ada
-     * di Renstra. Itu pekerjaan Sync, dan Sync yang menyimpan silsilahnya.
-     */
+    /** Pintu SASARAN MANDIRI lama — ditutup. Lihat tolakPintuMandiri(). */
     public function tambah()
     {
-        $opdId = $this->opdIdSesi();
-
-        if ($opdId === false) {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        }
-
-        if ($opdId === null) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Sasaran mandiri ditambahkan dari akun OPD yang bersangkutan.');
-        }
-
-        if (! user_can('iku_opd.create')) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Anda tidak memiliki akses untuk menambah IKU.');
-        }
-
-        [$daftarPeriode, $periode] = $this->resolvePeriodeSumber('renstra', $opdId);
-
-        if ($daftarPeriode === []) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Renstra OPD ini belum punya periode, sehingga tujuannya belum bisa dipilih.');
-        }
-
-        $tujuan = $this->ikuModel->tujuanRenstraOpd(
-            $opdId,
-            (int) $periode['tahun_mulai'],
-            (int) $periode['tahun_akhir']
-        );
-
-        if ($tujuan === []) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Renstra periode ini belum punya tujuan, jadi sasaran mandiri belum bisa dinaungi. '
-                    . 'Lengkapi Tujuan Renstra terlebih dahulu.');
-        }
-
-        return view('adminOpd/iku/tambah_iku', [
-            'title'          => 'Tambah Sasaran Mandiri IKU',
-            'iku'            => [
-                'tahun_mulai' => (int) $periode['tahun_mulai'],
-                'tahun_akhir' => (int) $periode['tahun_akhir'],
-            ],
-            'tujuanOptions'  => $tujuan,
-            'satuan_options' => $this->ikuModel->getSatuanOptions(),
-            'opd_list'       => [],
-            'is_lintas_opd'  => false,
-            'role'           => session()->get('role'),
-        ]);
+        // =================================================================
+        // PINTU INI DITUTUP — SASARAN MANDIRI KINI LAHIR DI DALAM REVISI
+        //
+        // Jalur lama menulis LANGSUNG ke tabel live lewat createComplete(),
+        // di luar alur revisi. Akibatnya IKU berjalan berubah tanpa revisi dan
+        // tanpa pengesahan, dan sasarannya tidak pernah masuk arsip versi mana
+        // pun — sehingga ia tampil di layar IKU tetapi TIDAK ADA di dokumen
+        // penilaian tahun mana pun, dan LAKIP tidak bisa menilainya.
+        //
+        // Tombolnya sudah dicabut dari layar, tetapi RUTE-nya masih bisa
+        // diketik langsung — dan pintu belakang yang menulis ke tabel live
+        // sama berbahayanya dengan tombol. Karena itu ditutup di controller,
+        // bukan sekadar disembunyikan di view.
+        //
+        // Method save() di bawah ikut ditutup dengan alasan yang sama.
+        // =================================================================
+        return $this->tolakPintuMandiri();
     }
 
-    /* =========================================================
-     * SIMPAN BARU
-     * =======================================================*/
+    /**
+     * Penolakan bersama untuk pintu sasaran mandiri lama.
+     *
+     * Diarahkan ke Versi IKU, bukan sekadar ditolak: pemakai yang sampai ke
+     * sini memang sedang hendak menambah sasaran, dan menyebut tempat barunya
+     * jauh lebih berguna daripada pesan "akses ditolak".
+     */
+    private function tolakPintuMandiri()
+    {
+        return redirect()->to(base_url('adminopd/iku/revisi'))->with(
+            'error',
+            'Menambah sasaran mandiri kini dilakukan di dalam Versi IKU: buat revisi '
+            . '(atau buka draft yang sudah ada), lalu tekan "Tambah Sasaran" di layar '
+            . 'suntingnya. Dengan begitu sasaran barunya ikut diperiksa Admin Kabupaten '
+            . 'dan tercatat pada dokumen penilaian tahun berjalan.'
+        );
+    }
+
+    /**
+     * Penyimpanan sasaran mandiri lama — ditutup bersama tambah().
+     *
+     * Ditutup di sini, bukan sekadar dengan menghapus formnya: POST bisa
+     * dikirim tanpa membuka form mana pun, dan jalur ini menulis LANGSUNG ke
+     * `iku_sasaran`/`iku_indikator` di luar alur revisi.
+     */
     public function save()
     {
-        $opdId = $this->opdIdSesi();
-
-        if ($opdId === false) {
-            return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
-        }
-
-        if ($opdId === null) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Sasaran mandiri ditambahkan dari akun OPD yang bersangkutan.');
-        }
-
-        if (! user_can('iku_opd.create')) {
-            return redirect()->to(base_url('adminopd/iku'))
-                ->with('error', 'Anda tidak memiliki akses untuk menambah IKU.');
-        }
-
-        $post = $this->request->getPost() ?? [];
-        $data = $this->bacaFormIku($post);
-
-        // opd_id TIDAK diambil dari form: operator OPD hanya boleh menulis untuk
-        // dirinya sendiri, sekalipun POST-nya dikarang.
-        $data['opd_id'] = $opdId;
-
-        if ($error = $this->validasiFormIku($data)) {
-            return redirect()->back()->withInput()->with('error', $error);
-        }
-
-        $tujuanId = (int) ($post['renstra_tujuan_id'] ?? 0);
-
-        if ($tujuanId <= 0) {
-            return redirect()->back()->withInput()
-                ->with('error', 'Tujuan Renstra wajib dipilih — tanpa itu sasaran ini tidak punya tempat di Cascading.');
-        }
-
-        // Tujuannya harus milik OPD & periode ini. Tanpa pemeriksaan ini, POST
-        // yang dikarang bisa menggantungkan sasaran pada tujuan OPD lain.
-        $tujuanSah = array_column(
-            $this->ikuModel->tujuanRenstraOpd($opdId, (int) $data['tahun_mulai'], (int) $data['tahun_akhir']),
-            'id'
-        );
-
-        if (! in_array($tujuanId, array_map('intval', $tujuanSah), true)) {
-            return redirect()->back()->withInput()
-                ->with('error', 'Tujuan Renstra yang dipilih bukan milik OPD atau periode ini.');
-        }
-
-        if ($this->ikuModel->sasaranAdaDiRenstra(
-            $opdId, (int) $data['tahun_mulai'], (int) $data['tahun_akhir'], (string) $data['sasaran']
-        )) {
-            return redirect()->back()->withInput()->with(
-                'error',
-                'Sasaran dengan redaksi ini SUDAH ADA di Renstra periode ini. '
-                . 'Ambil lewat tombol Sync supaya silsilahnya ikut tersimpan — '
-                . 'mengetiknya di sini akan melahirkan sasaran kembar.'
-            );
-        }
-
-        // Penanda "lahir di IKU". Dipakai mode Ganti untuk TIDAK menghapusnya,
-        // dan tahan walau tujuannya kelak dihapus (FK-nya ON DELETE SET NULL).
-        $data['source_type']       = 'iku';
-        $data['renstra_tujuan_id'] = $tujuanId;
-
-        // Indikatornya ikut ditandai, bukan hanya sasarannya. Penjaga mode
-        // Ganti memeriksa penanda di TINGKAT INDIKATOR juga, karena ada kasus
-        // indikator mandiri yang bernaung di bawah sasaran hasil sync.
-        foreach ($data['indikator'] as &$satuIndikator) {
-            $satuIndikator['source_type'] = 'iku';
-        }
-        unset($satuIndikator);
-
-        // Ditaruh di EKOR daftar. Cascading mengurutkan Eselon II lewat
-        // `iku_sasaran.urutan` lebih dulu, jadi urutan 0 akan membuat sasaran
-        // mandiri memimpin dokumen di depan sasaran hasil Renstra.
-        $data['urutan'] = $this->ikuModel->urutanBerikutnya(
-            $opdId, (int) $data['tahun_mulai'], (int) $data['tahun_akhir']
-        );
-
-        try {
-            $this->ikuModel->createComplete($data);
-        } catch (\Throwable $e) {
-            log_message('error', '[IKU MANDIRI] ' . $e->getMessage());
-
-            return redirect()->back()->withInput()
-                ->with('error', 'Gagal menyimpan sasaran mandiri: ' . $e->getMessage());
-        }
-
-        return redirect()->to(base_url('adminopd/iku?periode=' . (int) $data['tahun_mulai'] . '-' . (int) $data['tahun_akhir']))
-            ->with('success', 'Sasaran mandiri disimpan. Ia tampil di Cascading di bawah tujuan Renstra yang Anda pilih, '
-                . 'dan tidak akan terhapus oleh Sync mode Ganti.');
+        return $this->tolakPintuMandiri();
     }
 
     /* =========================================================

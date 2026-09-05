@@ -76,7 +76,12 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             // 'honeypot',
-            // 'csrf',
+            // CSRF diaktifkan 5 Sep 2026. Sebelum dinyalakan, seluruh jalur
+            // mutasi diaudit: 103 form POST (satu tanpa token, sudah
+            // diperbaiki) dan 8 titik AJAX POST. Token dipasang sekali di
+            // <head> bersama adminOpd/templates/style.php supaya tidak ada
+            // halaman yang tertinggal.
+            'csrf',
             // 'invalidchars',
             // Tolak POST/PUT/PATCH/DELETE dari role baca-saja (bupati) di
             // SELURUH URL — pagar terakhir setelah tombol disembunyikan di view.

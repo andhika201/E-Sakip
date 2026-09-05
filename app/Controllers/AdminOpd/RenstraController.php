@@ -96,8 +96,20 @@ class RenstraController extends BaseController
     // ==================== INDEX RENSTRA ====================
     public function index()
     {
+        // =============================================================
+        // TIDAK ADA TRANSAKSI DI HALAMAN BACA
+        //
+        // Di sini dulu ada `$db->transStart();` tanpa `transComplete()`
+        // sama sekali — halaman ini berakhir dengan `return view(...)`.
+        // Akibatnya setiap kali daftar Renstra dibuka, satu transaksi
+        // dibiarkan menggantung sampai PHP menutup koneksinya, termasuk
+        // pada jalur `return redirect()` saat sesi OPD kosong.
+        //
+        // Halaman ini tidak menulis apa pun, jadi transaksinya memang tidak
+        // pernah dibutuhkan. Yang ditinggalkannya hanyalah kunci baca dan
+        // sambungan yang tertahan lebih lama daripada perlunya.
+        // =============================================================
         $db = \Config\Database::connect();
-        $db->transStart();
         $session = session();
         $opdId = $session->get('opd_id');
 
@@ -413,16 +425,43 @@ class RenstraController extends BaseController
             // ============================
             $rx = $this->xssRule();
 
+            // =====================================================
+            // PERIODE WAJIB MASUK AKAL
+            //
+            // `tahun_mulai` semula hanya `required` — teks apa pun lolos — dan
+            // hubungan antara keduanya tidak pernah diperiksa sama sekali,
+            // sehingga periode terbalik (2029-2025) bisa tersimpan.
+            //
+            // Itu bukan sekadar data jelek. Periode adalah KUNCI pencocokan di
+            // hampir seluruh sistem: versi Renstra, sync IKU, jendela berlaku
+            // revisi, dan pemilihan sumber LAKIP semuanya menjodohkan lewat
+            // (tahun_mulai, tahun_akhir). Baris berperiode terbalik tidak
+            // pernah cocok dengan apa pun, dan gejalanya muncul jauh dari
+            // sini — sebagai "sasaran tidak ditemukan" di modul lain.
+            //
+            // `greater_than_equal_to[{tahun_mulai}]` membandingkan antar-field
+            // memakai placeholder bawaan CodeIgniter.
+            // =====================================================
             $rules = [
                 'rpjmd_sasaran_id' => 'required|integer',
                 'tujuan_renstra' => 'required|string|max_length[5000]|' . $rx,
-                'tahun_mulai' => 'required',
-                'tahun_akhir' => 'required',
+                'tahun_mulai' => 'required|integer|greater_than[1999]|less_than[2100]',
+                'tahun_akhir' => 'required|integer|greater_than_equal_to[{tahun_mulai}]|less_than[2100]',
             ];
 
             $messages = [
                 'tujuan_renstra' => [
                     'regex_match' => 'Tujuan Renstra terdeteksi mengandung script / input berbahaya.',
+                ],
+                'tahun_mulai' => [
+                    'integer'      => 'Tahun mulai harus berupa angka.',
+                    'greater_than' => 'Tahun mulai tidak masuk akal.',
+                    'less_than'    => 'Tahun mulai tidak masuk akal.',
+                ],
+                'tahun_akhir' => [
+                    'integer'                 => 'Tahun akhir harus berupa angka.',
+                    'greater_than_equal_to'   => 'Tahun akhir tidak boleh lebih awal daripada tahun mulai.',
+                    'less_than'               => 'Tahun akhir tidak masuk akal.',
                 ],
             ];
 
@@ -613,11 +652,13 @@ class RenstraController extends BaseController
             // ============================
             // VALIDASI UTAMA
             // ============================
+            // Aturan yang SAMA dengan save() — lihat catatan di sana. Dua jalur
+            // yang menulis kolom yang sama tidak boleh punya dua standar.
             $rules = [
                 'rpjmd_sasaran_id' => 'required|integer',
                 'tujuan_renstra' => 'required|string|max_length[5000]',
-                'tahun_mulai' => 'required|integer',
-                'tahun_akhir' => 'required|integer',
+                'tahun_mulai' => 'required|integer|greater_than[1999]|less_than[2100]',
+                'tahun_akhir' => 'required|integer|greater_than_equal_to[{tahun_mulai}]|less_than[2100]',
             ];
 
             if (!$this->validate($rules)) {

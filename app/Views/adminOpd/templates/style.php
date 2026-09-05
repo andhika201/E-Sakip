@@ -1,3 +1,22 @@
+<?php // =====================================================================
+      // TOKEN CSRF UNTUK SELURUH HALAMAN ADMIN
+      //
+      // Berkas ini adalah <head> bersama 104 view (adminOpd, adminKabupaten,
+      // bupati, user). Token dipasang di sini SEKALI supaya setiap skrip yang
+      // mengirim mutasi lewat fetch/AJAX punya token tanpa harus mengingat
+      // menambahkannya per halaman.
+      //
+      // Sebelumnya meta ini hanya ada di beberapa halaman cascading, sehingga
+      // public/assets/js/adminopd/pk/pk.js — yang MENGHAPUS PK lewat
+      // fetch POST — berjalan tanpa token sama sekali. Selama CSRF nonaktif
+      // hal itu tidak terlihat; begitu diaktifkan, tombol hapusnya mati.
+      //
+      // Pola pemakaian di sisi JS ada di pk_detail.js:
+      //   const n = document.querySelector('meta[name="csrf-name"]').content;
+      //   const h = document.querySelector('meta[name="csrf-hash"]').content;
+      // ===================================================================== ?>
+<meta name="csrf-name" content="<?= csrf_token() ?>">
+<meta name="csrf-hash" content="<?= csrf_hash() ?>">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <!-- Select2 CSS -->

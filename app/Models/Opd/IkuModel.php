@@ -2,6 +2,7 @@
 
 namespace App\Models\Opd;
 
+use App\Models\Concerns\TransaksiAman;
 use CodeIgniter\Model;
 use Throwable;
 
@@ -25,6 +26,9 @@ use Throwable;
  */
 class IkuModel extends Model
 {
+    // Dipakai buangTanpaPadanan(); menolak transaksi bersarang secara sengaja.
+    use TransaksiAman;
+
     protected $table         = 'iku_sasaran';
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
@@ -2076,20 +2080,40 @@ class IkuModel extends Model
             array_filter($calon, static fn ($c) => in_array((int) $c['id'], $buang, true))
         )));
 
-        // Target & program ikut lewat ON DELETE CASCADE.
-        $this->db->table('iku_indikator')->whereIn('id', $buang)->delete();
+        // =============================================================
+        // DUA PENGHAPUSAN, SATU TRANSAKSI
+        //
+        // Membuang indikator dan membuang cangkang sasaran yang jadi kosong
+        // adalah satu tindakan yang sama di mata pemakai. Sebelumnya keduanya
+        // berjalan tanpa transaksi apa pun, jadi kegagalan di tengah
+        // meninggalkan keadaan yang mustahil dijelaskan: indikatornya sudah
+        // hilang, sasarannya tinggal cangkang kosong, dan tidak ada satu pun
+        // pesan yang menyebutkannya.
+        //
+        // CATATAN CAKUPAN: ini membuat PEMBUANGAN-nya atomik, bukan
+        // "sync + buang" sebagai satu kesatuan. Menyatukan keduanya tidak
+        // mungkin tanpa membongkar lapisan model: penyalinan sudah memakai
+        // dalamTransaksi() sendiri, dan TransaksiAman SENGAJA menolak
+        // transaksi bersarang karena CodeIgniter tidak bisa membatalkannya
+        // dengan benar. Membungkusnya dari luar justru akan menggagalkan
+        // penyalinannya.
+        // =============================================================
+        return $this->dalamTransaksi(function () use ($buang, $sasaranTersentuh, $hasil) {
+            // Target & program ikut lewat ON DELETE CASCADE.
+            $this->db->table('iku_indikator')->whereIn('id', $buang)->delete();
 
-        // Cangkang sasaran yang isinya habis.
-        foreach ($sasaranTersentuh as $sid) {
-            $sisa = $this->db->table('iku_indikator')->where('iku_sasaran_id', $sid)->countAllResults();
+            // Cangkang sasaran yang isinya habis.
+            foreach ($sasaranTersentuh as $sid) {
+                $sisa = $this->db->table('iku_indikator')->where('iku_sasaran_id', $sid)->countAllResults();
 
-            if ($sisa === 0) {
-                $this->db->table('iku_sasaran')->where('id', $sid)->delete();
-                $hasil['dibuang_sasaran']++;
+                if ($sisa === 0) {
+                    $this->db->table('iku_sasaran')->where('id', $sid)->delete();
+                    $hasil['dibuang_sasaran']++;
+                }
             }
-        }
 
-        return $hasil;
+            return $hasil;
+        }, 'pembuangan IKU tanpa padanan');
     }
 
     /** Alasan sebuah indikator IKU tidak boleh dibuang, atau null bila aman. */

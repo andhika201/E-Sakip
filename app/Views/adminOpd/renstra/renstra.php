@@ -609,11 +609,12 @@
                                                     <!-- AKSI (per sasaran) -->
                                                     <td rowspan="<?= $sasRowspan[$sid] ?>">
                                                         <?php if (user_can('renstra.delete')): ?>
-                                                        <a href="<?= base_url('adminopd/renstra/delete/' . esc($sid)) ?>"
-                                                            onclick="return confirm('Yakin ingin menghapus sasaran ini?')"
-                                                            class="btn btn-danger btn-sm mb-1" title="Hapus Sasaran">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
+                                                        <?= view('templates/tombol_hapus', [
+                                                            'url'   => base_url('adminopd/renstra/delete/' . esc($sid)),
+                                                            'pesan' => 'Yakin ingin menghapus sasaran ini?',
+                                                            'judul' => 'Hapus Sasaran',
+                                                            'kelas' => 'btn btn-danger btn-sm mb-1',
+                                                        ]) ?>
                                                         <?php endif; ?>
                                                         <?php if (user_can('renstra.update')): ?>
                                                         <button type="button" class="btn btn-info btn-sm change-status-btn mb-1"

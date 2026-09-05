@@ -497,7 +497,21 @@
         // Function to confirm delete
         function confirmDelete(id) {
             if (confirm('Apakah Anda yakin ingin menghapus data RENJA ini?')) {
-                window.location.href = '<?= base_url('adminopd/renja/delete/') ?>' + id;
+                // Dikirim sebagai POST, bukan window.location (GET): menghapus
+                // dengan sekadar membuka alamat membuat CSRF tak berlaku dan
+                // membiarkan prefetch peramban ikut memicunya.
+                const f = document.createElement('form');
+                f.method = 'post';
+                f.action = '<?= base_url('adminopd/renja/delete/') ?>' + id;
+
+                const t = document.createElement('input');
+                t.type = 'hidden';
+                t.name = '<?= csrf_token() ?>';
+                t.value = '<?= csrf_hash() ?>';
+                f.appendChild(t);
+
+                document.body.appendChild(f);
+                f.submit();
             }
         }
 

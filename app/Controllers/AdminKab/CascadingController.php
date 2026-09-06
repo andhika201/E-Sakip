@@ -97,6 +97,36 @@ class CascadingController extends BaseController
         ));
     }
 
+    /**
+     * Versi IKU Kabupaten yang sedang dibaca, untuk jalur SELAIN index().
+     *
+     * Kembaran CascadingController OPD: semula hanya index() yang membaca
+     * `?iku_versi=`, sementara Excel, cetak, dan cetak pohon memanggil
+     * matriksnya tanpa versi — yang berarti IKU BERJALAN. Pemakai memilih
+     * sebuah versi di layar lalu menerima cetakan yang disusun dari sumber
+     * lain, tanpa satu pun tanda bahwa isinya berbeda.
+     */
+    private function versiIkuDariPermintaan(?int $opdId, int $start, int $end): ?int
+    {
+        $rev = new \App\Models\Opd\IkuRevisiModel();
+
+        if (! $rev->siap()) {
+            return null;
+        }
+
+        // Lingkup MENENTUKAN daftar yang sah. Mode Kabupaten memakai revisi
+        // ber-opd NULL; mode fokus OPD memakai revisi milik OPD itu. Memvalidasi
+        // id OPD terhadap daftar kabupaten membuatnya tidak pernah cocok — dan
+        // hasilnya diam-diam jatuh ke IKU berjalan, persis kekeliruan yang
+        // hendak diperbaiki di sini.
+        $tersedia = array_values(array_filter(
+            $rev->daftar($opdId, $start, $end),
+            static fn ($r) => in_array($r['status'], ['berlaku', 'superseded'], true)
+        ));
+
+        return $this->versiIkuKabDipilih($this->request->getGet('iku_versi'), $tersedia);
+    }
+
     /** Versi terpilih, divalidasi terhadap daftar yang sah. */
     private function versiIkuKabDipilih($nilai, array $tersedia): ?int
     {
@@ -176,7 +206,12 @@ class CascadingController extends BaseController
                 $visi = $this->ambilVisi($start, $end);
             } elseif ($mode === 'opd') {
                 if ($opdId) {
-                    $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+                    $rows      = $this->cascadingModel->getCascadingMatrixByOpd(
+                $opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan((int) $opdId, (int) $start, (int) $end)
+            );
                     $this->preprocessEmptyIds($rows);
                     $rowspan   = $this->opdRowspanMeta($rows);
                     $firstShow = $this->opdFirstShowMeta($rows);
@@ -630,14 +665,23 @@ class CascadingController extends BaseController
             if (!$opdId) {
                 return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
             }
-            $rows = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $rows = $this->cascadingModel->getCascadingMatrixByOpd(
+                $opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan((int) $opdId, (int) $start, (int) $end)
+            );
             $o    = $this->db->table('opd')->select('nama_opd')->where('id', $opdId)->get()->getRowArray();
             cascading_opd_excel($rows, $periode, $o['nama_opd'] ?? '');
         } elseif ($mode === 'keseluruhan') {
             $rows = $this->cascadingModel->getKeseluruhanMatrix($start, $end);
             cascading_keseluruhan_excel($rows, $periode);
         } else {
-            $rows = $this->cascadingModel->getMatrix($start, $end);
+            $rows = $this->cascadingModel->getMatrix(
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan(null, (int) $start, (int) $end)
+            );
             cascading_kab_excel($rows, $years, $periode);
         }
     }
@@ -666,7 +710,12 @@ class CascadingController extends BaseController
             if (!$opdId) {
                 return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
             }
-            $rows      = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $rows      = $this->cascadingModel->getCascadingMatrixByOpd(
+                $opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan((int) $opdId, (int) $start, (int) $end)
+            );
             $this->preprocessEmptyIds($rows);
             $rowspan   = $this->opdRowspanMeta($rows);
             $firstShow = $this->opdFirstShowMeta($rows);
@@ -693,7 +742,11 @@ class CascadingController extends BaseController
         } else { // kabupaten
             // Matriks lengkap RPJMD: Visi + Misi -> Tujuan -> Sasaran -> Indikator
             // -> Program -> Perangkat Daerah (getMatrix), + target per tahun & kondisi akhir.
-            $rows = $this->cascadingModel->getMatrix($start, $end);
+            $rows = $this->cascadingModel->getMatrix(
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan(null, (int) $start, (int) $end)
+            );
 
             $html = view('adminKabupaten/cascading/cascading_cetak_kabupaten', [
                 'rows'        => $rows,
@@ -791,7 +844,12 @@ class CascadingController extends BaseController
             if (!$opdId) {
                 return redirect()->back()->with('error', 'Perangkat Daerah wajib dipilih');
             }
-            $rows    = $this->cascadingModel->getCascadingMatrixByOpd($opdId, $start, $end);
+            $rows    = $this->cascadingModel->getCascadingMatrixByOpd(
+                $opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan((int) $opdId, (int) $start, (int) $end)
+            );
             $tree    = $this->buildOpdTree(
                 $rows,
                 $this->cascadingModel->programPkByEs3($opdId, $start, $end)

@@ -2,16 +2,37 @@
 
 namespace App\Models\Opd;
 
+use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\Model;
+use CodeIgniter\Validation\ValidationInterface;
 
 class RenstraModel extends Model
 {
     protected $db;
 
-    public function __construct()
+    /**
+     * =====================================================================
+     * KONEKSI YANG DIOPER HARUS DIPAKAI
+     *
+     * Sebelumnya konstruktor ini tidak menerima argumen apa pun dan memaksa
+     * `$this->db = Database::connect()`. Akibatnya `new RenstraModel($db)`
+     * DIAM-DIAM mengabaikan `$db` dan tetap membaca basis data bawaan —
+     * tidak ada galat, tidak ada peringatan, hanya jawaban dari basis data
+     * yang salah.
+     *
+     * Itu bukan kemungkinan teoretis: `versi:verify --db <salinan>` menulis
+     * fixture-nya ke salinan lalu membacanya lewat model ini, yang membaca
+     * basis data aplikasi — sehingga hasilnya nol baris dan pemeriksaannya
+     * berhenti di tengah jalan dengan "Undefined array key 0".
+     *
+     * Untuk pemakaian biasa (tanpa argumen) perilakunya persis sama:
+     * `Model::__construct()` sendiri sudah menyetel `$this->db` ke koneksi
+     * bawaan bila tidak ada yang dioper.
+     * =====================================================================
+     */
+    public function __construct(?ConnectionInterface &$db = null, ?ValidationInterface $validation = null)
     {
-        parent::__construct();
-        $this->db = \Config\Database::connect();
+        parent::__construct($db, $validation);
     }
 
     // =========================================================

@@ -127,7 +127,7 @@
                                         <td><?= esc($p['golongan'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-pangkat" data-json='<?= $j(['id'=>$p['id'],'nama_pangkat'=>$p['nama_pangkat'],'golongan'=>$p['golongan']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <a href="<?= base_url('adminkab/master/pangkat/delete/' . (int)$p['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/pangkat/delete/' . (int)$p['id'])]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -155,7 +155,7 @@
                                         <td class="text-center"><?= esc($jb['eselon'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-jabatan" data-json='<?= $j(['id'=>$jb['id'],'nama_jabatan'=>$jb['nama_jabatan'],'opd_id'=>$jb['opd_id'],'eselon'=>$jb['eselon']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <a href="<?= base_url('adminkab/master/jabatan/delete/' . (int)$jb['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/jabatan/delete/' . (int)$jb['id'])]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -189,7 +189,7 @@
                                         <td><?= esc($o['alamat_opd'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-opd" data-json='<?= $j(['id'=>$o['id'],'nama_opd'=>$o['nama_opd'],'singkatan'=>$o['singkatan'],'jenis'=>$o['jenis'] ?? 'opd','alamat_opd'=>$o['alamat_opd']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <a href="<?= base_url('adminkab/master/opd/delete/' . (int)$o['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/opd/delete/' . (int)$o['id'])]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -220,7 +220,7 @@
                                         </td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-user" data-json='<?= $j(['id'=>$u['user_id'],'username'=>$u['username'],'email'=>$u['email'],'role'=>$u['role'],'opd_id'=>$u['opd_id'],'is_active'=>$u['is_active']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <a href="<?= base_url('adminkab/master/user/delete/' . (int)$u['user_id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/user/delete/' . (int)$u['user_id'])]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -250,7 +250,7 @@
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-role" data-json='<?= $j(['id'=>$r['id'],'name'=>$r['name'],'label'=>$r['label']]) ?>'><i class="fas fa-edit"></i></button>
                                             <?php if ((int)$r['is_system'] !== 1): ?>
-                                                <a href="<?= base_url('adminkab/master/role/delete/' . (int)$r['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                                <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/role/delete/' . (int)$r['id'])]) ?>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -363,7 +363,7 @@
                                                     'nilai' => rtrim(rtrim(number_format((float) $sk['nilai'], 2, '.', ''), '0'), '.'),
                                                 ], $sSkala),
                                             ]) ?>'><i class="fas fa-edit"></i></button>
-                                            <a href="<?= base_url('adminkab/master/satuan/delete/' . (int)$s['id']) ?>" <?= $delConfirm ?> class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/satuan/delete/' . (int)$s['id'])]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

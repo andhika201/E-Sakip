@@ -900,12 +900,13 @@ class PkRenaksiController extends BaseController
         // Capaian disimpan per SUB rencana aksi, jadi rekapnya dihitung dari
         // sana (bukan dari kolom hasil join yang hanya memuat capaian sub 0).
         $monevSub = $this->monev->getBySubForTargets(array_column($rows, 'target_id'));
-        $summary  = $this->ringkasCapaian(count($rows), $monevSub);
+        $subMap   = $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id'));
+        $summary  = $this->ringkasCapaian(count($rows), $monevSub, $subMap);
 
         return view('adminOpd/pk_renaksi/monev', [
             // Target triwulan kini per SUB rencana aksi, dan capaiannya pun
             // disimpan per sub — keduanya diambil terpisah lalu dipetakan.
-            'subMap'      => $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id')),
+            'subMap'      => $subMap,
             'monevSub'    => $monevSub,
             // Unit anggaran (Program/Kegiatan/Sub Kegiatan sesuai pk.jenis) & pagunya
             // ikut PK (sama dengan Target & Rencana Aksi), realisasi anggarannya
@@ -998,11 +999,12 @@ class PkRenaksiController extends BaseController
         }
 
         $monevSub = $this->monev->getBySubForTargets(array_column($rows, 'target_id'));
-        $summary  = $this->ringkasCapaian(count($rows), $monevSub);
+        $subMap   = $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id'));
+        $summary  = $this->ringkasCapaian(count($rows), $monevSub, $subMap);
 
         $html = view('adminOpd/pk_renaksi/cetak', [
             // Target triwulan per SUB rencana aksi + capaiannya per sub
-            'subMap'      => $this->targets->getSubRencanaByTargets(array_column($rows, 'target_id')),
+            'subMap'      => $subMap,
             'monevSub'    => $monevSub,
             'programMap'  => $this->targets->getUnitPkByIndikator(array_column($rows, 'pk_indikator_id')),
             'anggaranMap' => $this->monev->getAnggaranForTargets(array_column($rows, 'target_id')),
@@ -1184,14 +1186,38 @@ class PkRenaksiController extends BaseController
      *
      * @return array{renaksi: int, with_capaian: int, avg_pct: float|null}
      */
-    private function ringkasCapaian(int $jumlahRenaksi, array $monevSub): array
+    private function ringkasCapaian(int $jumlahRenaksi, array $monevSub, array $subMap = []): array
     {
         $terisi = 0;
         $jumlah = 0.0;
         $n      = 0;
 
-        foreach ($monevSub as $perSub) {
-            foreach ($perSub as $cap) {
+        foreach ($monevSub as $targetId => $perSub) {
+            // =========================================================
+            // HANYA BARIS UKUR CURRENT YANG DIRATA-RATA
+            //
+            // Aturannya sama dengan OpdDashboardService::getIndicators():
+            // begitu sebuah rencana aksi punya sub, baris MONEV tingkat
+            // rencana aksi (sub_id 0) bukan lagi bahan pengukuran.
+            //
+            // Tanpa penyaring ini kartu "Rata-rata Realisasi" ikut menjumlah
+            // baris tinggalan, dan isinya bisa BUKAN persentase sama sekali.
+            // Contoh nyata pada DPMPTSP (eselon II): monev #81 menyimpan
+            // total 4091 — itu jumlah capaian mentah 2183 + 1908, bukan
+            // persen — dan monev #80 menyimpan "58%" lengkap dengan tanda
+            // persennya. Keduanya baris tingkat rencana aksi padahal
+            // targetnya sudah dipecah jadi 3 dan 5 sub.
+            //
+            // Akibatnya kartu menampilkan rata-rata 404,7%. Dengan baris
+            // current saja, angkanya 101,1%.
+            // =========================================================
+            $punyaSub = ($subMap[$targetId] ?? []) !== [];
+
+            foreach ($perSub as $subId => $cap) {
+                if ($punyaSub && (int) $subId === 0) {
+                    continue;
+                }
+
                 $terisi++;
                 $pct = capaianToFloat($cap['total'] ?? null);
                 if ($pct !== null) {

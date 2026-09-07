@@ -73,6 +73,11 @@
   .ins-title { font-weight: 700; font-size: .87rem; color: #1d2b23; line-height: 1.35; }
   .ins-why { font-size: .79rem; color: #6b7a70; margin-top: 2px; }
   .ins-act { flex: 0 0 auto; }
+  /* Sub-baris ketika satu indikator punya lebih dari satu catatan tindak lanjut. */
+  .ins-item { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e6ece8; }
+  /* Catatan pertama menempel pada judul — pemisah hanya antar catatan. */
+  .ins-title + .ins-item { margin-top: 4px; padding-top: 0; border-top: 0; }
+  .ins-item-act { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
 
   .ind-card { border: 1px solid #eef2ef; border-radius: 12px; padding: 12px 14px; background: #fff; }
   .ind-card + .ind-card { margin-top: 10px; }

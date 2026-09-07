@@ -40,6 +40,25 @@ class OpdDashboardService
     /** Jenis PK pendukung — hanya untuk drill-down, tidak masuk capaian total OPD. */
     private const JENIS_PENDUKUNG = ['administrator', 'pengawas'];
 
+    /**
+     * Daftar RESMI jenis catatan kartu "Perlu Perhatian" — urut dari yang
+     * paling genting, sejalan dengan severity di getPriorityInsights().
+     *
+     * Sumber tunggal label kartu: setiap kode catatan yang bisa lahir di
+     * getPriorityInsights() WAJIB terdaftar di sini, supaya jumlah baris
+     * rincian selalu menutup angka total di kartu. `kunci` dipertahankan agar
+     * pemakai lama (view kabupaten/bupati, php spark dash:verify) tidak patah.
+     */
+    private const PERHATIAN_JENIS = [
+        'indikator_kritis'      => ['kunci' => 'kritis',          'label' => 'indikator kritis',                    'warna' => 'merah'],
+        'indikator_perhatian'   => ['kunci' => 'perlu_perhatian', 'label' => 'indikator perlu perhatian',           'warna' => 'kuning'],
+        'renaksi_belum'         => ['kunci' => 'renaksi_belum',   'label' => 'Rencana Aksi belum lengkap',          'warna' => 'oranye'],
+        'monev_belum'           => ['kunci' => 'monev_belum',     'label' => 'MONEV belum lengkap',                 'warna' => 'oranye'],
+        'indikator_belum_valid' => ['kunci' => 'belum_valid',     'label' => 'indikator belum dapat dihitung',      'warna' => 'abu'],
+        'anggaran_belum'        => ['kunci' => 'anggaran_belum',  'label' => 'realisasi anggaran belum diperbarui', 'warna' => 'biru'],
+        'verifikasi'            => ['kunci' => 'verifikasi',      'label' => 'laporan LAKIP belum final',           'warna' => 'abu'],
+    ];
+
     private $db;
 
     /** @var array<int, array<int, array<string, mixed>>> cache skala satuan per satuan_id */
@@ -309,6 +328,7 @@ class OpdDashboardService
             'perhatian'           => $this->ringkasPerhatian($indikator, $insight, $anggaran),
             'status_distribution' => $distribusi,
             'insights'            => $insight,
+            'insight_groups'      => $this->groupInsights($insight),
             'misi'                => $misi,
             'indicators'          => array_map([$this, 'ringkasIndikator'], $indikator),
             'chart_series'        => $this->getQuarterlyOptions($indikator),
@@ -526,6 +546,10 @@ class OpdDashboardService
             $renaksi   = $renaksiMap[$indikatorId . ':' . $opdId] ?? [];
             $barisUkur = [];
             $subTotal  = 0;
+            // Baris MONEV tingkat rencana aksi yang tertinggal padahal sub-nya
+            // sudah ada. Bukan bahan pengukuran; dibawa hanya sebagai penanda
+            // residu supaya bisa dilaporkan tanpa memengaruhi angka.
+            $warisan   = 0;
 
             foreach ($renaksi as $tr) {
                 $targetId = (int) $tr['id'];
@@ -543,12 +567,43 @@ class OpdDashboardService
                     );
                 }
 
-                // Baris capaian tingkat rencana aksi (sub_id = 0). Dipakai bila
-                // belum ada sub rencana aksi, atau bila data lama terlanjur
-                // tersimpan di sana meski sub-nya sudah dibuat.
+                // =====================================================
+                // BARIS UKUR CURRENT: SUB BILA ADA, PARENT BILA TIDAK
+                //
+                // Baris capaian tingkat rencana aksi (`target_sub_rencana_id`
+                // = 0) hanya sah sebagai pengukuran ketika rencana aksi itu
+                // memang belum dipecah menjadi sub.
+                //
+                // Sebelumnya baris parent juga ikut ditarik ketika sub SUDAH
+                // ada, asalkan parent-nya masih menyimpan capaian lama:
+                //
+                //     if ($subs === [] || ($monev0 !== null && adaCapaian($monev0)))
+                //
+                // Itu akar warning palsu "Metode perhitungan belum dipilih".
+                // Begitu sebuah rencana aksi dipecah jadi sub, barisnya yang
+                // lama tertinggal di MONEV tanpa metode — form MONEV tidak
+                // lagi menampilkannya, jadi tidak ada yang bisa mengisinya.
+                // Dashboard lalu menghitungnya sebagai baris ukur yang cacat
+                // dan menyuruh operator memilih metode untuk baris yang tidak
+                // ada di layar mana pun.
+                //
+                // Pada basis data ini: dari 437 rencana aksi, 239 masih
+                // menyimpan parent lama, 232 di antaranya berisi capaian, dan
+                // 220 tidak bermetode — 220 warning palsu, seluruhnya lahir
+                // dari satu klausa itu.
+                //
+                // Parent lama TIDAK dihapus: ia tetap di basis data dan tetap
+                // terbaca oleh `monev:warisan` sebagai bahan audit. Yang
+                // berubah hanya kedudukannya — bukan lagi bahan pengukuran.
+                // =====================================================
                 $monev0 = $monevMap[$targetId][0] ?? null;
-                if ($subs === [] || ($monev0 !== null && $this->adaCapaian($monev0))) {
+
+                if ($subs === []) {
                     $barisUkur[] = $this->bangunBarisUkur($tr, null, $monev0, $skala, $triwulan, $predikat);
+                } elseif ($monev0 !== null && $this->adaCapaian($monev0)) {
+                    // Dihitung supaya bisa dilaporkan sebagai residu yang perlu
+                    // dibersihkan, bukan supaya ikut mengukur.
+                    $warisan++;
                 }
             }
 
@@ -588,13 +643,23 @@ class OpdDashboardService
                 'pejabat_jabatan'  => (string) ($r['pejabat_jabatan'] ?? ''),
                 'renaksi_count'    => count($renaksi),
                 'sub_count'        => $subTotal,
+                'warisan_count'    => $warisan,
                 'penanggung_jawab' => $this->penanggungJawab($renaksi),
                 'rows'             => $barisUkur,
                 'percentage'       => $agregat['percentage'],
                 'validity'         => $agregat['validity'],
+                // Tiga keadaan, bukan dua: ada angka / belum dapat dinilai /
+                // belum lengkap. Tanpa pemisahan ini, indikator yang targetnya
+                // baru jatuh tempo triwulan depan diwarnai sama dengan yang
+                // datanya memang bermasalah.
                 'status'           => $agregat['validity']['is_valid']
                     ? getAchievementStatus((float) $agregat['percentage'])
-                    : dash_status_nonnumeric($barisUkur === [] ? 'belum_ada_data' : 'belum_valid'),
+                    : dash_status_nonnumeric(
+                        $barisUkur === []
+                            ? 'belum_ada_data'
+                            : (! empty($agregat['validity']['not_evaluable']) ? 'belum_dinilai' : 'belum_valid')
+                    ),
+                'tak_terukur'      => (int) ($agregat['tak_terukur'] ?? 0),
                 'verification'     => $this->verificationInfo(),
                 'programs'         => $program,
                 'anggaran'         => $anggaran,
@@ -729,14 +794,50 @@ class OpdDashboardService
             return [];
         }
 
+        // =============================================================
+        // WARISAN TIDAK DIJUMLAHKAN BERSAMA PER-UNIT
+        //
+        // `monev_anggaran` menampung dua bentuk baris:
+        //
+        //   warisan  : ref_level & ref_id NULL — realisasi satu rencana aksi
+        //              seluruhnya, dari sebelum realisasi dirinci per unit.
+        //   per-unit : ref_level program/kegiatan/subkegiatan + ref_id.
+        //
+        // Keduanya menyatakan uang YANG SAMA dengan rincian berbeda. Kalau
+        // sebuah rencana aksi kebetulan punya dua-duanya, menjumlahkan
+        // semuanya melipatgandakan penyerapannya.
+        //
+        // Pada basis data ini kebetulan tidak ada satu pun baris warisan
+        // tersisa (seluruh 320 baris sudah per-unit, dan tidak ada target
+        // yang memuat kedua bentuk), jadi hasil angkanya hari ini sama saja.
+        // Penjagaannya tetap dipasang karena bentuk warisan masih sah ditulis
+        // oleh form MONEV lama, dan sekali satu baris seperti itu masuk,
+        // gejalanya adalah angka yang membesar diam-diam — bukan galat.
+        //
+        // `per_unit` dihitung lebih dulu supaya bisa dipakai sebagai penyaring
+        // di HAVING: bila ada baris per-unit, hanya itu yang dijumlahkan.
+        // =============================================================
         $rows = $this->db->table('monev_anggaran')
             ->select('target_rencana_id,
-                      SUM(realisasi_triwulan_1) AS realisasi_triwulan_1,
-                      SUM(realisasi_triwulan_2) AS realisasi_triwulan_2,
-                      SUM(realisasi_triwulan_3) AS realisasi_triwulan_3,
-                      SUM(realisasi_triwulan_4) AS realisasi_triwulan_4,
+                      SUM(CASE WHEN ref_level IS NOT NULL AND ref_id IS NOT NULL THEN 1 ELSE 0 END) AS baris_per_unit,
+                      SUM(CASE WHEN ada_per_unit = 0 OR (ref_level IS NOT NULL AND ref_id IS NOT NULL)
+                               THEN realisasi_triwulan_1 END) AS realisasi_triwulan_1,
+                      SUM(CASE WHEN ada_per_unit = 0 OR (ref_level IS NOT NULL AND ref_id IS NOT NULL)
+                               THEN realisasi_triwulan_2 END) AS realisasi_triwulan_2,
+                      SUM(CASE WHEN ada_per_unit = 0 OR (ref_level IS NOT NULL AND ref_id IS NOT NULL)
+                               THEN realisasi_triwulan_3 END) AS realisasi_triwulan_3,
+                      SUM(CASE WHEN ada_per_unit = 0 OR (ref_level IS NOT NULL AND ref_id IS NOT NULL)
+                               THEN realisasi_triwulan_4 END) AS realisasi_triwulan_4,
                       MAX(updated_at) AS updated_at,
                       COUNT(*) AS jumlah_baris', false)
+            ->join(
+                '(SELECT target_rencana_id AS t,
+                         MAX(ref_level IS NOT NULL AND ref_id IS NOT NULL) AS ada_per_unit
+                    FROM monev_anggaran GROUP BY target_rencana_id) pu',
+                'pu.t = monev_anggaran.target_rencana_id',
+                'inner',
+                false
+            )
             ->whereIn('target_rencana_id', $targetIds)
             ->groupBy('target_rencana_id')
             ->get()->getResultArray();
@@ -1073,9 +1174,37 @@ class OpdDashboardService
         $subValid       = 0;
         $subTotal       = 0;
 
+        // Baris yang datanya lengkap tetapi belum punya pembagi. Dihitung
+        // terpisah supaya bisa dilaporkan, dan TIDAK ikut menahan agregat.
+        $takTerukur = 0;
+
         foreach ($barisUkur as $baris) {
             $v      = $baris['validity'];
             $adalahSub = (int) ($baris['sub_id'] ?? 0) > 0;
+
+            // =========================================================
+            // BELUM DAPAT DINILAI DIKELUARKAN, BUKAN DIHITUNG GAGAL
+            //
+            // Barisnya sudah diisi dengan benar; yang belum ada hanya target
+            // kumulatif pada periode yang sedang dinilai. Menahannya sebagai
+            // "bermasalah" akan menjatuhkan SELURUH indikator — termasuk yang
+            // sub-sub lainnya sudah lengkap dan sudah punya angka — hanya
+            // karena satu pekerjaan baru jatuh tempo triwulan depan.
+            //
+            // Juga tidak dihitung sebagai sub yang gagal: `subValid` di bawah
+            // dipakai menyusun kalimat "seluruh sub sudah lengkap", dan baris
+            // seperti ini memang lengkap.
+            // =========================================================
+            if (!empty($v['not_evaluable'])) {
+                $takTerukur++;
+
+                if ($adalahSub) {
+                    $subTotal++;
+                    $subValid++;
+                }
+
+                continue;
+            }
 
             if ($adalahSub) {
                 $subTotal++;
@@ -1098,7 +1227,8 @@ class OpdDashboardService
 
         if ($bermasalah !== null) {
             return [
-                'percentage' => null,
+                'percentage'  => null,
+                'tak_terukur' => $takTerukur,
                 'validity'   => [
                     'is_valid'    => false,
                     'reason_code' => $bermasalah['reason_code'],
@@ -1118,8 +1248,26 @@ class OpdDashboardService
             ];
         }
 
+        // Seluruh barisnya belum dapat dinilai: indikatornya pun belum dapat
+        // dinilai. Ini BUKAN "belum valid" — datanya lengkap, hanya belum ada
+        // yang bisa dihitung. Dibedakan supaya tidak jadi butir tindak lanjut
+        // dan tidak diwarnai merah.
+        if ($n === 0 && $takTerukur > 0) {
+            return [
+                'percentage'  => null,
+                'tak_terukur' => $takTerukur,
+                'validity'    => [
+                    'is_valid'      => false,
+                    'not_evaluable' => true,
+                    'reason_code'   => 'zero_target',
+                    'reason'        => 'Belum dapat dinilai — target kumulatif pada periode ini masih 0.',
+                ],
+            ];
+        }
+
         return [
-            'percentage' => $n > 0 ? round($jumlah / $n, 2) : null,
+            'percentage'  => $n > 0 ? round($jumlah / $n, 2) : null,
+            'tak_terukur' => $takTerukur,
             'validity'   => $n > 0
                 ? ['is_valid' => true, 'reason_code' => null, 'reason' => null]
                 : ['is_valid' => false, 'reason_code' => 'not_calculable', 'reason' => dash_reason_label('not_calculable')],
@@ -1329,17 +1477,38 @@ class OpdDashboardService
      */
     public function getOpdAchievement(array $indikator): array
     {
-        $wajib = count($indikator);
-        $valid = 0;
-        $jumlah = 0.0;
+        // =============================================================
+        // KELENGKAPAN DATA vs KEMAMPUAN DINILAI
+        //
+        // Dua hal yang dulu tercampur dalam satu angka `wajib`:
+        //
+        //   belum lengkap      -> data wajibnya kurang; MEMANG menahan agregat
+        //   belum dapat dinilai-> datanya lengkap, pembaginya yang belum ada
+        //
+        // Yang kedua dikeluarkan dari pembagi. Kalau ikut dihitung, satu
+        // indikator yang pekerjaannya baru jatuh tempo di TW IV membuat capaian
+        // seluruh OPD "belum tersedia" sepanjang tahun — padahal tidak ada satu
+        // pun data yang kurang.
+        // =============================================================
+        $total_     = count($indikator);
+        $takTerukur = 0;
+        $valid      = 0;
+        $jumlah     = 0.0;
 
         foreach ($indikator as $i) {
+            if (! empty($i['validity']['not_evaluable'])) {
+                $takTerukur++;
+
+                continue;
+            }
+
             if ($i['validity']['is_valid']) {
                 $valid++;
                 $jumlah += (float) $i['percentage'];
             }
         }
 
+        $wajib        = $total_ - $takTerukur;
         $bisaDihitung = $wajib > 0 && $valid === $wajib;
         $total        = $bisaDihitung ? round($jumlah / $wajib, 2) : null;
         $verifikasi   = $this->verificationInfo();
@@ -1349,14 +1518,110 @@ class OpdDashboardService
             'total'          => $total,
             'valid'          => $valid,
             'wajib'          => $wajib,
+            'indikator'      => $total_,
+            'tak_terukur'    => $takTerukur,
             'belum_valid'    => $wajib - $valid,
             'can_compute'    => $bisaDihitung,
-            'status'         => $bisaDihitung ? getAchievementStatus((float) $total) : dash_status_nonnumeric('belum_valid'),
+            'status'         => $bisaDihitung
+                ? getAchievementStatus((float) $total)
+                : dash_status_nonnumeric($wajib === 0 && $takTerukur > 0 ? 'belum_dinilai' : 'belum_valid'),
             'verified_all'   => $verifikasi['available'] && $belumVerif === 0,
             'label'          => ($verifikasi['available'] && $belumVerif === 0) ? 'Terverifikasi' : 'Sementara',
             'belum_verifikasi' => $belumVerif,
             'verifikasi'     => $verifikasi,
         ];
+    }
+
+    /**
+     * Realisasi anggaran yang BENAR-BENAR milik tiap Program.
+     *
+     * =================================================================
+     * MENGAPA INI PERLU
+     *
+     * Sebelumnya rincian per Program disusun begini: realisasi sebuah
+     * INDIKATOR ditempelkan ke SETIAP Program yang menopang indikator itu.
+     * Untuk indikator yang menopang satu program hasilnya benar; untuk yang
+     * menopang lebih dari satu, angka yang sama muncul berkali-kali.
+     *
+     * Pada basis data ini ada 72 indikator yang menopang lebih dari satu
+     * program — salah satunya menopang 169 program sekaligus. Grand total-nya
+     * memang tetap benar (dihitung sekali per rencana aksi), tetapi rincian
+     * yang dibaca orang tidak pernah menjumlah ke total itu.
+     *
+     * `monev_anggaran` sebenarnya sudah menyimpan unit yang dimaksud pada
+     * `ref_level` + `ref_id`. Yang kurang hanyalah menelusurinya naik ke
+     * program:
+     *
+     *     program      -> ref_id adalah program itu sendiri
+     *     kegiatan     -> kegiatan_pk.program_id
+     *     subkegiatan  -> sub_kegiatan_pk.kegiatan_id -> kegiatan_pk.program_id
+     *
+     * Baris warisan (tanpa ref_level/ref_id) tidak bisa ditelusuri ke program
+     * mana pun — memang tidak pernah menyebutkannya. Baris seperti itu
+     * DILEWATI di sini dan hanya ikut pada grand total, sehingga rinciannya
+     * jujur berkata "belum dirinci" alih-alih menebak.
+     *
+     * Kumulatif TW1..TW{triwulan}, sama dengan realisasiIndikator(), supaya
+     * rincian dan total memakai aturan yang sama.
+     *
+     * @param array<int> $targetIds
+     *
+     * @return array<int, array{nilai: float, lengkap: bool}> [program_id => ...]
+     */
+    private function realisasiPerProgram(array $targetIds, int $triwulan): array
+    {
+        $targetIds = $this->bersihkanIds($targetIds);
+
+        if ($targetIds === [] || !$this->db->tableExists('monev_anggaran')) {
+            return [];
+        }
+
+        $kolom = [];
+        for ($q = 1; $q <= max(1, min(4, $triwulan)); $q++) {
+            $kolom[] = 'COALESCE(ma.realisasi_triwulan_' . $q . ', 0)';
+        }
+
+        $adaIsi = [];
+        for ($q = 1; $q <= max(1, min(4, $triwulan)); $q++) {
+            $adaIsi[] = 'ma.realisasi_triwulan_' . $q . ' IS NULL';
+        }
+
+        $rows = $this->db->table('monev_anggaran ma')
+            ->select("CASE ma.ref_level
+                          WHEN 'program'     THEN ma.ref_id
+                          WHEN 'kegiatan'    THEN k.program_id
+                          WHEN 'subkegiatan' THEN k2.program_id
+                      END AS program_id,
+                      SUM(" . implode(' + ', $kolom) . ") AS nilai,
+                      MAX(" . implode(' OR ', $adaIsi) . ") AS ada_kosong", false)
+            ->join('kegiatan_pk k', "ma.ref_level = 'kegiatan' AND k.id = ma.ref_id", 'left', false)
+            ->join('sub_kegiatan_pk sk', "ma.ref_level = 'subkegiatan' AND sk.id = ma.ref_id", 'left', false)
+            ->join('kegiatan_pk k2', 'k2.id = sk.kegiatan_id', 'left')
+            ->whereIn('ma.target_rencana_id', $targetIds)
+            ->where('ma.ref_level IS NOT NULL', null, false)
+            ->where('ma.ref_id IS NOT NULL', null, false)
+            ->groupBy('program_id')
+            ->get()->getResultArray();
+
+        $map = [];
+
+        foreach ($rows as $r) {
+            $pid = (int) ($r['program_id'] ?? 0);
+
+            // Unit yang induknya sudah tidak ada lagi (kegiatan/sub kegiatan
+            // terhapus) tidak punya program untuk dirujuk. Dilewati, bukan
+            // ditempelkan ke program sembarang.
+            if ($pid <= 0) {
+                continue;
+            }
+
+            $map[$pid] = [
+                'nilai'   => (float) $r['nilai'],
+                'lengkap' => !((int) $r['ada_kosong'] === 1),
+            ];
+        }
+
+        return $map;
     }
 
     /**
@@ -1382,23 +1647,38 @@ class OpdDashboardService
         // berlipat saat satu rencana aksi menopang beberapa program.
         $targetTerhitung = [];
 
+        // Rincian per Program diambil dari unit yang MEMANG disebut baris
+        // realisasi (monev_anggaran.ref_level/ref_id), bukan dari indikator
+        // yang menopangnya — lihat realisasiPerProgram().
+        $targetIds = [];
+        foreach ($indikator as $i) {
+            foreach ($i['rows'] ?? [] as $baris) {
+                $targetIds[] = (int) ($baris['target_id'] ?? 0);
+            }
+        }
+        $realisasiProgram = $this->realisasiPerProgram($targetIds, $triwulan);
+
         foreach ($indikator as $i) {
             foreach ($i['programs'] as $p) {
                 $pid = (int) $p['program_id'];
                 if (!isset($program[$pid])) {
                     $program[$pid] = $p + ['indikator' => [], 'realisasi' => null, 'realisasi_status' => 'belum_dilaporkan'];
+
+                    // Diisi SEKALI saat programnya pertama kali dikenal.
+                    // Sebelumnya baris ini ada di dalam loop indikator dan
+                    // menambahkan realisasi indikator ini ke program — yang
+                    // berarti program pendukung banyak indikator menerima
+                    // penjumlahan berulang.
+                    if (isset($realisasiProgram[$pid])) {
+                        $program[$pid]['realisasi']        = $realisasiProgram[$pid]['nilai'];
+                        $program[$pid]['realisasi_status'] = $realisasiProgram[$pid]['lengkap']
+                            ? 'lengkap' : 'sebagian';
+                    }
                 }
                 $program[$pid]['indikator'][] = [
                     'id'   => $i['indikator_id'],
                     'nama' => $i['indikator'],
                 ];
-                // Realisasi rencana aksi indikator ini diatributkan ke program yang
-                // didukungnya. Bila satu rencana aksi menopang >1 program, angka per
-                // program bisa muncul ganda — totalnya tetap dihitung sekali di bawah.
-                if ($i['realisasi'] !== null) {
-                    $program[$pid]['realisasi'] = (float) ($program[$pid]['realisasi'] ?? 0) + (float) $i['realisasi'];
-                    $program[$pid]['realisasi_status'] = $i['realisasi_status'];
-                }
             }
 
             if ($i['realisasi'] !== null && !isset($targetTerhitung[$i['indikator_id']])) {
@@ -1616,6 +1896,19 @@ class OpdDashboardService
                 continue;
             }
 
+            // =========================================================
+            // BELUM DAPAT DINILAI BUKAN TINDAK LANJUT
+            //
+            // Tidak ada yang bisa dikerjakan operator: datanya sudah lengkap,
+            // targetnya memang baru jatuh tempo di triwulan berikutnya.
+            // Memasukkannya ke daftar Perlu Tindak Lanjut hanya menambah butir
+            // yang tak bisa diselesaikan siapa pun — persis kelas keluhan yang
+            // membuat daftar ini berhenti dipercaya.
+            // =========================================================
+            if (! empty($i['validity']['not_evaluable'])) {
+                continue;
+            }
+
             $alasan = (string) ($i['validity']['reason'] ?? dash_reason_label((string) $i['validity']['reason_code']));
             $kode   = (string) $i['validity']['reason_code'];
 
@@ -1714,6 +2007,17 @@ class OpdDashboardService
     /**
      * Ringkasan kartu 4 — Perlu Perhatian.
      *
+     * Kartu ini WAJIB rekonsiliasi: angka besar ("N Tindak Lanjut") harus sama
+     * dengan penjumlahan baris rincian di bawahnya. Karena itu `rincian`
+     * memuat SELURUH jenis catatan yang ada — bukan empat jenis pilihan
+     * seperti dulu, yang membuat kartu berbunyi "3 Tindak Lanjut" sambil hanya
+     * merinci satu ("1 realisasi anggaran belum diperbarui") karena jenis
+     * `indikator_belum_valid` dan `verifikasi` tidak pernah punya baris.
+     *
+     * Bila tampilan hanya sanggup memuat sebagian baris, sisanya diringkas
+     * sendiri oleh view memakai kunci `lainnya` — bukan dengan menghilangkan
+     * jenis catatan diam-diam.
+     *
      * @param array<int, array<string, mixed>> $indikator
      * @param array<int, array<string, mixed>> $insights
      *
@@ -1725,25 +2029,106 @@ class OpdDashboardService
             return count(array_filter($insights, static fn ($i) => $i['code'] === $code));
         };
 
-        $rinci = [
-            'kritis'          => $hitung($insights, 'indikator_kritis'),
-            'perlu_perhatian' => $hitung($insights, 'indikator_perhatian'),
-            'belum_valid'     => $hitung($insights, 'indikator_belum_valid'),
-            'monev_belum'     => $hitung($insights, 'monev_belum'),
-            'renaksi_belum'   => $hitung($insights, 'renaksi_belum'),
-            'anggaran_belum'  => $hitung($insights, 'anggaran_belum'),
-            'verifikasi'      => $hitung($insights, 'verifikasi'),
-        ];
+        $rinci = [];
+        foreach (self::PERHATIAN_JENIS as $code => $meta) {
+            $rinci[$meta['kunci']] = $hitung($insights, $code);
+        }
 
-        // `total` = jumlah SELURUH catatan (itu yang dibuka drawer), sedangkan
-        // `total_rinci` = yang benar-benar dirinci di kartu. Keduanya dikirim
-        // terpisah supaya kartu tidak lagi menampilkan angka besar yang tidak
-        // pernah cocok dengan baris-baris di bawahnya.
+        // Baris siap-tampil: hanya jenis yang benar-benar ada, urut dari yang
+        // paling genting, lengkap dengan label & warnanya. View cukup
+        // melooping ini — tidak lagi memilih sendiri jenis mana yang tampil.
+        $rincian = [];
+        foreach (self::PERHATIAN_JENIS as $code => $meta) {
+            $n = $rinci[$meta['kunci']];
+            if ($n > 0) {
+                $rincian[] = [
+                    'code'  => $code,
+                    'label' => $meta['label'],
+                    'teks'  => $n . ' ' . $meta['label'],
+                    'count' => $n,
+                    'color' => dash_color($meta['warna']),
+                ];
+            }
+        }
+
+        // Jaring pengaman: bila kelak ada kode catatan baru yang belum terdaftar
+        // di PERHATIAN_JENIS, ia tetap ikut terhitung sebagai "catatan lain"
+        // sehingga kartu tidak pernah lagi kehilangan angka.
+        $takDikenal = count($insights) - array_sum($rinci);
+        if ($takDikenal > 0) {
+            $rincian[] = [
+                'code'  => 'lainnya',
+                'label' => 'catatan lain',
+                'teks'  => $takDikenal . ' catatan lain',
+                'count' => $takDikenal,
+                'color' => dash_color('abu'),
+            ];
+        }
+
         return $rinci + [
             'total'       => count($insights),
-            'total_rinci' => array_sum($rinci),
-            'lainnya'     => count($insights) - array_sum($rinci),
+            'total_rinci' => array_sum(array_column($rincian, 'count')),
+            'lainnya'     => max(0, $takDikenal),
+            'rincian'     => $rincian,
         ];
+    }
+
+    /**
+     * Kelompokkan catatan tindak lanjut per indikator.
+     *
+     * Satu indikator yang belum lengkap kerap melahirkan beberapa catatan
+     * sekaligus (mis. "belum dapat dihitung" + "realisasi anggaran belum
+     * diperbarui"). Bila daftar dibiarkan datar, panel prioritas terbaca
+     * seolah ada banyak masalah berbeda padahal indikatornya satu — dan lima
+     * baris teratas bisa habis dipakai satu jenis catatan saja.
+     *
+     * Catatan yang tidak menempel pada indikator (mis. LAKIP) tetap berdiri
+     * sendiri sebagai satu kelompok.
+     *
+     * @param array<int, array<string, mixed>> $insights
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function groupInsights(array $insights): array
+    {
+        $grup = [];
+
+        foreach ($insights as $i) {
+            $kunci = $i['indikator_id'] !== null
+                ? 'ind-' . (int) $i['indikator_id']
+                : 'umum-' . md5($i['judul']);
+
+            if (!isset($grup[$kunci])) {
+                $grup[$kunci] = [
+                    'key'          => $kunci,
+                    'judul'        => $i['judul'],
+                    'indikator_id' => $i['indikator_id'],
+                    'severity'     => $i['severity'],
+                    'color'        => $i['color'],
+                    'items'        => [],
+                ];
+            }
+
+            // Warna & kegentingan kelompok mengikuti catatan terberatnya.
+            if ($i['severity'] < $grup[$kunci]['severity']) {
+                $grup[$kunci]['severity'] = $i['severity'];
+                $grup[$kunci]['color']    = $i['color'];
+            }
+
+            $grup[$kunci]['items'][] = [
+                'code'   => $i['code'],
+                'alasan' => $i['alasan'],
+                'status' => $i['status'],
+                'color'  => $i['color'],
+                'url'    => $i['url'],
+                'tombol' => $i['tombol'],
+            ];
+        }
+
+        $out = array_values($grup);
+        usort($out, static fn ($a, $b) => $a['severity'] <=> $b['severity'] ?: strcmp($a['judul'], $b['judul']));
+
+        return $out;
     }
 
     /**
@@ -1855,12 +2240,20 @@ class OpdDashboardService
             'verification'    => $i['verification'],
             'renaksi_count'   => $i['renaksi_count'],
             'sub_count'       => $i['sub_count'],
+            // Berapa baris yang BENAR-BENAR dipakai mengukur, dan berapa baris
+            // tinggalan tingkat rencana aksi yang sengaja tidak dipakai. Dua
+            // angka ini yang membedakan "datanya kurang" dari "datanya ada tapi
+            // tersimpan di tempat yang sudah tidak dibaca".
+            'baris_ukur'      => count($i['rows'] ?? []),
+            'warisan_count'   => (int) ($i['warisan_count'] ?? 0),
             'misi'            => $i['misi'],
             'anggaran'        => $i['anggaran'],
             'realisasi'       => $i['realisasi'],
             'realisasi_status' => $i['realisasi_status'],
+            // Ringkasan seluruh baris ukur, bukan metode baris pertama —
+            // lihat capaianMetodeRingkas().
             'metode'          => $i['rows'][0]['metode'] ?? null,
-            'metode_nama'     => capaianMetodeNama($i['rows'][0]['metode'] ?? null),
+            'metode_nama'     => capaianMetodeRingkas($i['rows'] ?? []),
             'capaian_terakhir' => $this->capaianTerakhir($i),
             'penanggung_jawab' => $i['penanggung_jawab'],
             'updated_at'      => $i['updated_at'],
@@ -1935,6 +2328,22 @@ class OpdDashboardService
             ->where('pk.tahun', $tahun)
             ->get()->getRowArray();
         $waktu[] = $mv['w'] ?? null;
+
+        // Realisasi anggaran juga "pembaruan data". Tanpa baris ini, operator
+        // yang baru saja mengisi realisasi triwulan melihat header masih
+        // menyebut tanggal lama, lalu mengira simpanannya gagal.
+        if ($this->db->tableExists('monev_anggaran')) {
+            $ma = $this->db->table('monev_anggaran ma')
+                ->select('MAX(ma.updated_at) AS w')
+                ->join('target_rencana tr', 'tr.id = ma.target_rencana_id', 'inner')
+                ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'inner')
+                ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'inner')
+                ->join('pk', 'pk.id = ps.pk_id', 'inner')
+                ->where('tr.opd_id', $opdId)
+                ->where('pk.tahun', $tahun)
+                ->get()->getRowArray();
+            $waktu[] = $ma['w'] ?? null;
+        }
 
         $waktu = array_values(array_filter($waktu));
 

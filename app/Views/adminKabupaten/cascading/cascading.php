@@ -256,8 +256,13 @@
                 $mode    = $mode ?? 'kabupaten';
                 $periode = $filters['periode'] ?? '';
                 // Bangun query string konsisten utk tombol cetak
+                // Versi IKU yang sedang dilihat WAJIB ikut. Tanpa ini, dokumen
+                // yang tercetak disusun dari IKU BERJALAN sementara layarnya
+                // menampilkan versi terpilih — dan yang tercetak justru yang
+                // dipakai orang.
                 $cetakQS = 'mode=' . $mode . '&periode=' . urlencode($periode)
-                    . ($mode === 'opd' && !empty($opd_id) ? '&opd_id=' . (int) $opd_id : '');
+                    . ($mode === 'opd' && !empty($opd_id) ? '&opd_id=' . (int) $opd_id : '')
+                    . (!empty($versiIkuDipilih) ? '&iku_versi=' . (int) $versiIkuDipilih : '');
                 ?>
 
                 <!-- ===================== MODE ===================== -->

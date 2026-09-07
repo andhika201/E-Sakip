@@ -98,6 +98,24 @@ $labelUnit = $labelUnitHeader
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= esc($judul) ?> - <?= esc(setting('app_name', 'e-SAKIP')) ?></title>
     <?= $this->include('adminOpd/templates/style.php'); ?>
+    <style>
+        /* Kotak sub rencana aksi tumbuh KE BAWAH mengikuti isinya.
+           `resize:none` karena tingginya sudah diatur tumbuhkan(); membiarkan
+           pegangan resize hanya membuat tinggi manual bertabrakan dengan tinggi
+           otomatis. `overflow-y:hidden` menyembunyikan bilah gulung yang tidak
+           akan pernah terpakai. */
+        .sub-item .sub-input {
+            resize: none;
+            overflow-y: hidden;
+            line-height: 1.5;
+        }
+
+        /* Nomor, satuan, dan tombol hapus dibiarkan MEREGANG mengikuti tinggi
+           kotak — itu perilaku bawaan input-group Bootstrap. Sempat saya coba
+           menahannya di baris pertama, tetapi hasilnya justru rusak: sudut
+           kanan bawah grup menganga dan sisanya tampak menggantung. Meregang
+           membuat satu baris sub tetap terbaca sebagai satu kesatuan kotak. */
+    </style>
 </head>
 
 <body class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -303,6 +321,27 @@ $labelUnit = $labelUnitHeader
 
             function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+            /**
+             * Samakan tinggi sebuah textarea sub dengan tinggi isinya.
+             *
+             * Tingginya dinolkan dulu; tanpa itu `scrollHeight` hanya pernah
+             * bertambah dan kotak tidak pernah menyusut kembali saat teksnya
+             * dihapus.
+             */
+            function tumbuhkan(el) {
+                if (!el) return;
+                el.style.height = 'auto';
+                el.style.height = el.scrollHeight + 'px';
+            }
+
+            /** Semua textarea sub di dalam sebuah wadah (atau seluruh daftar). */
+            function tumbuhkanSemua(wadah) {
+                Array.prototype.forEach.call(
+                    (wadah || list).querySelectorAll('.sub-input'),
+                    tumbuhkan
+                );
+            }
+
             /** Satu baris sub: teksnya + target triwulan I-IV milik sub itu sendiri. */
             function subRowHtml(sub) {
                 sub = sub || {};
@@ -364,8 +403,21 @@ $labelUnit = $labelUnitHeader
                 return '<div class="sub-item mb-2" data-id="' + esc(id) + '">'
                     + '<div class="input-group input-group-sm mb-1">'
                     + '<span class="input-group-text sub-no bg-white text-muted"></span>'
-                    + '<input type="text" class="form-control sub-input" placeholder="Tulis sub rencana aksi" value="' + esc(teks) + '">'
-                    + '<select class="form-select sub-satuan flex-grow-0" style="max-width:150px"'
+                    // Textarea, bukan input satu baris. Sub rencana aksi sering
+                    // berupa kalimat penuh; pada <input> teksnya menggulung ke
+                    // samping sehingga yang terlihat hanya potongan terakhir.
+                    // Tingginya diatur tumbuhkan() mengikuti isi, jadi seluruh
+                    // kalimat terbaca tanpa perlu menggulung.
+                    //
+                    // rows="1" supaya baris pendek tetap setinggi kotak biasa.
+                    + '<textarea class="form-control sub-input" rows="1"'
+                    + ' placeholder="Tulis sub rencana aksi">' + esc(teks) + '</textarea>'
+                    // Lebarnya proporsional, bukan dipatok sempit: nama satuan bisa
+                    // panjang ("Dokumen", "Orang/Kegiatan", "Persentase"), dan kotak
+                    // 150px memotongnya jadi tidak terbaca. flex-basis memberi porsi
+                    // tetap sambil tetap boleh menyusut di layar sempit.
+                    + '<select class="form-select sub-satuan flex-grow-0 flex-shrink-1"'
+                    + ' style="flex-basis:220px;min-width:130px"'
                     + ' title="Satuan target triwulan sub ini">' + satOpts + '</select>'
                     + '<button type="button" class="btn btn-outline-danger remove-sub" title="Hapus sub"><i class="fas fa-times"></i></button>'
                     + '</div>'
@@ -450,6 +502,8 @@ $labelUnit = $labelUnitHeader
 
             function addRow(val, subs) {
                 list.insertAdjacentHTML('beforeend', rowHtml(val, subs));
+                // Hanya butir yang baru saja disisipkan yang perlu diukur.
+                tumbuhkanSemua(list.lastElementChild);
                 renumber();
                 sync();
             }
@@ -470,9 +524,13 @@ $labelUnit = $labelUnitHeader
                             var tw = Array.isArray(t)
                                 ? [t[0] || '', t[1] || '', t[2] || '', t[3] || '']
                                 : [t[1] || '', t[2] || '', t[3] || '', t[4] || ''];
-                            return { id: s.id || 0, teks: s.teks || '', tw: tw };
+                            // `satuan` WAJIB ikut dibawa. Tanpa baris ini,
+                            // dropdown satuan terbuka kosong saat menyunting,
+                            // dan satuan yang sudah tersimpan terhapus begitu
+                            // form disimpan ulang — hilang tanpa gejala.
+                            return { id: s.id || 0, teks: s.teks || '', satuan: s.satuan || '', tw: tw };
                         }
-                        return { id: 0, teks: String(s || ''), tw: ['', '', '', ''] };
+                        return { id: 0, teks: String(s || ''), satuan: '', tw: ['', '', '', ''] };
                     }).filter(function (s) { return s.teks !== ''; });
                 }
                 addRow(line, subs);
@@ -483,7 +541,10 @@ $labelUnit = $labelUnitHeader
             list.addEventListener('click', function (e) {
                 if (e.target.closest('.add-sub')) {
                     var wrap = e.target.closest('.renaksi-item').querySelector('.sub-list');
-                    if (wrap) wrap.insertAdjacentHTML('beforeend', subRowHtml({ id: 0, teks: '', tw: ['', '', '', ''] }));
+                    if (wrap) {
+                        wrap.insertAdjacentHTML('beforeend', subRowHtml({ id: 0, teks: '', satuan: '', tw: ['', '', '', ''] }));
+                        tumbuhkanSemua(wrap.lastElementChild);
+                    }
                     renumber();
                     sync();
                     return;
@@ -515,8 +576,25 @@ $labelUnit = $labelUnitHeader
 
             list.addEventListener('input', function (e) {
                 var c = e.target.classList;
+                if (c.contains('sub-input')) tumbuhkan(e.target);
                 if (c.contains('renaksi-input') || c.contains('sub-input') || c.contains('sub-tw')) sync();
             });
+
+            // Enter TIDAK menyisipkan baris baru. Sub rencana aksi disimpan
+            // sebagai satu nilai tunggal, dan `joined` memakai baris baru
+            // sebagai pemisah antar rencana aksi — membiarkan Enter berarti
+            // memasukkan pemisah ke dalam isi. Textarea di sini dipakai murni
+            // supaya kalimat panjang terlihat utuh, bukan untuk teks berbaris.
+            list.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && e.target.classList.contains('sub-input')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Lebar kotak berubah saat jendela diubah ukurannya atau sidebar
+            // dibuka/ditutup; pembungkusan barisnya ikut berubah, jadi tingginya
+            // harus diukur ulang.
+            window.addEventListener('resize', function () { tumbuhkanSemua(); });
 
             // <select> memicu 'change', bukan 'input'. Peramban modern memang
             // ikut memicu 'input', tetapi menyandarkan penyimpanan pada

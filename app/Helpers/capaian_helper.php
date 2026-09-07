@@ -55,6 +55,63 @@ if (!function_exists('capaianMetodeNama')) {
     }
 }
 
+if (!function_exists('capaianMetodeRingkas')) {
+    /**
+     * Ringkasan metode perhitungan sebuah indikator dari SELURUH baris ukurnya.
+     *
+     * =================================================================
+     * MENGAPA TIDAK CUKUP `rows[0]`
+     *
+     * Sebelumnya layar mengambil `rows[0]['metode']` — metode baris pertama —
+     * lalu menampilkannya sebagai metode indikator. Itu benar hanya ketika
+     * indikator punya tepat satu baris ukur. Begitu sebuah rencana aksi
+     * dipecah menjadi beberapa sub dengan metode berbeda, layar menampilkan
+     * metode salah satu sub seolah berlaku untuk semuanya, dan pembacanya
+     * tidak punya cara tahu bahwa sub lain dihitung dengan cara lain.
+     *
+     * Lebih buruk pada urutan sebaliknya: bila sub PERTAMA kebetulan sudah
+     * bermetode sementara sub kedua belum, layar menampilkan nama metode yang
+     * meyakinkan padahal agregatnya justru tidak bisa dihitung.
+     *
+     * @param array<int, array<string, mixed>> $rows baris ukur CURRENT
+     */
+    function capaianMetodeRingkas(array $rows): string
+    {
+        if ($rows === []) {
+            return '-';
+        }
+
+        $metode = [];
+
+        foreach ($rows as $baris) {
+            $m = trim((string) ($baris['metode'] ?? ''));
+
+            // Satu saja yang belum bermetode sudah membuat agregat tidak bisa
+            // dihitung, jadi itulah yang perlu dibaca lebih dulu — bukan nama
+            // metode baris yang kebetulan sudah terisi.
+            if ($m === '') {
+                return 'Metode capaian belum ditentukan';
+            }
+
+            $metode[$m] = true;
+        }
+
+        if (count($metode) > 1) {
+            return 'Beragam (per Sub Rencana Aksi)';
+        }
+
+        return capaianMetodeNama((string) array_key_first($metode));
+    }
+}
+
+if (!function_exists('capaianAngkaRingkas')) {
+    /** Angka untuk kalimat penjelas: 7.0 -> "7", 7.5 -> "7,5". */
+    function capaianAngkaRingkas(float $nilai): string
+    {
+        return rtrim(rtrim(number_format($nilai, 2, ',', '.'), '0'), ',');
+    }
+}
+
 if (!function_exists('capaianRomawi')) {
     function capaianRomawi(int $triwulan): string
     {
@@ -185,18 +242,59 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
         $peta = capaianSkalaMap($skala);
         $nilai = static fn ($v): ?float => capaianNilaiSkala($v, $peta);
         $satuanPredikat = $peta !== [];
+        // =============================================================
+        // TIGA KEADAAN, BUKAN DUA
+        //
+        // Sebelumnya hasil fungsi ini hanya punya dua keadaan: ada angka, atau
+        // `error`. Itu memaksa keadaan ketiga — data SUDAH lengkap tetapi
+        // pembaginya nol — ikut memilih salah satu dari keduanya, dan dua-duanya
+        // berbohong:
+        //
+        //   dijadikan 0%   -> indikatornya masuk pita Kritis (0-59,99) padahal
+        //                     pekerjaannya belum jatuh tempo;
+        //   dijadikan 100% -> 7 dibagi 0 disebut "tercapai penuh";
+        //   dijadikan error-> operator disuruh membetulkan data yang sudah benar.
+        //
+        // Karena itu ditambahkan `status`:
+        //
+        //   calculated    persentasenya sah
+        //   not_evaluable data lengkap, tetapi belum ada pembagi yang bisa
+        //                 dipakai — BUKAN kesalahan, BUKAN data kurang
+        //   incomplete    data wajib belum lengkap / tidak terbaca
+        //
+        // `percentage` dan `error` dipertahankan apa adanya supaya pemanggil
+        // lama tetap jalan: not_evaluable memberi percentage null TANPA error,
+        // sehingga tidak ada layar lama yang mendadak menampilkan pesan merah.
+        // =============================================================
         $hasil = [
             'percentage'              => null,
+            'status'                  => 'incomplete',
+            'reason_code'             => null,
+            'target_total'            => null,
+            'actual_total'            => null,
             'last_quarter'            => null,
             'filled_quarters_count'   => 0,
             'calculation_description' => 'Isi minimal satu capaian triwulan untuk menghitung capaian total.',
             'error'                   => null,
         ];
 
-        $gagal = static function (array $hasil, string $pesan): array {
+        $gagal = static function (array $hasil, string $pesan, string $kode = 'invalid_input'): array {
             $hasil['error']                   = $pesan;
             $hasil['calculation_description'] = $pesan;
             $hasil['percentage']              = null;
+            $hasil['status']                  = 'incomplete';
+            $hasil['reason_code']             = $kode;
+
+            return $hasil;
+        };
+
+        /** Data lengkap, tetapi tidak ada pembagi yang sah. Bukan kegagalan. */
+        $takTerukur = static function (array $hasil, string $kode, string $pesan): array {
+            $hasil['percentage']              = null;
+            $hasil['error']                   = null;
+            $hasil['status']                  = 'not_evaluable';
+            $hasil['reason_code']             = $kode;
+            $hasil['calculation_description'] = $pesan;
 
             return $hasil;
         };
@@ -253,11 +351,68 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
                 $totalTarget  += (float) $nilai($baris['target']);
             }
 
+            // =====================================================
+            // TARGET 0 DAN CAPAIAN 0 -> 0%  (keputusan klien, 3 Sep 2026)
+            //
+            // Pembagi 0 secara matematis tidak terdefinisi, dan sebelumnya
+            // Capaian Total ditolak dengan "Total target triwulan bernilai 0".
+            // Kalimat itu benar untuk baris yang seluruh targetnya memang
+            // kosong, tetapi menyesatkan untuk kasus yang jauh lebih sering:
+            // target ADA namun jatuh tempo di triwulan yang belum dilaporkan
+            // (mis. target 0-0-1-0, baru TW1-TW2 yang diisi). Operator lalu
+            // mencari kesalahan yang tidak ada.
+            //
+            // Klien memutuskan: bila targetnya 0 DAN capaiannya juga 0,
+            // Capaian Total ditulis 0%, bukan ditolak.
+            //
+            // KONSEKUENSI YANG PERLU DIINGAT saat membaca dashboard: 0% masuk
+            // pita "Kritis" (0-59,99). Jadi sub yang pekerjaannya baru jatuh
+            // tempo di TW3/TW4 akan menyumbang 0% ke rata-rata indikatornya
+            // sepanjang tahun berjalan. Itu memang yang diminta; bila kelak
+            // dirasa terlalu keras, yang perlu diubah adalah pita statusnya
+            // atau perlakuan "belum jatuh tempo" pada agregat indikator —
+            // bukan rumus ini.
+            //
+            // =====================================================
+            // PEMBAGI 0 PADA AKUMULASI -> BELUM DAPAT DINILAI
+            //
+            // "Akumulasi / Jumlah" menjawab bagaimana nilai antar-triwulan
+            // digabung, BUKAN apakah semakin besar semakin baik. Karena arahnya
+            // tidak diketahui, target kumulatif 0 tidak boleh diterjemahkan
+            // menjadi angka apa pun:
+            //
+            //   0 dari 0  bukan 0% (tidak ada yang gagal dikerjakan)
+            //             bukan 100% (tidak ada yang dituntut)
+            //   7 dari 0  bukan 100% — 7 dibagi 0 tidak menghasilkan persen
+            //
+            // Keduanya keadaan yang SAH: targetnya memang baru jatuh tempo di
+            // triwulan berikutnya. Begitu triwulan bertarget ikut dinilai,
+            // pembaginya muncul dan persentasenya dihitung seperti biasa —
+            // termasuk bila hasilnya di atas 100%.
+            //
+            // trend_turun TIDAK lewat sini: ia memang "semakin rendah semakin
+            // baik", sehingga target 0 punya arti yang jelas dan rumusnya
+            // sendiri sudah menanganinya di bawah.
+            // =====================================================
             if (abs($totalTarget) < 1e-9) {
-                return $gagal($hasil, 'Total target triwulan bernilai 0, Capaian Total tidak dapat dihitung.');
+                $nol = abs($totalCapaian) < 1e-9;
+
+                return $takTerukur(
+                    $hasil,
+                    $nol ? 'zero_target' : 'actual_without_target',
+                    $nol
+                        ? 'Belum dapat dinilai. Target kumulatif sampai Triwulan '
+                            . capaianRomawi($akhir['quarter']) . ' masih 0.'
+                        : 'Belum dapat dinilai. Realisasi ' . capaianAngkaRingkas($totalCapaian)
+                            . ' sudah tercatat, namun target kumulatif sampai Triwulan '
+                            . capaianRomawi($akhir['quarter']) . ' masih 0.'
+                );
             }
 
             $hasil['percentage']              = round($totalCapaian / $totalTarget * 100, 2);
+            $hasil['status']                  = 'calculated';
+            $hasil['target_total']            = $totalTarget;
+            $hasil['actual_total']            = $totalCapaian;
             $hasil['calculation_description'] = 'Dihitung dari akumulasi ' . count($terisi)
                 . ' triwulan yang telah diisi.';
 
@@ -276,26 +431,47 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
             // KEBIJAKAN: ubah angka 100 di bawah bila nanti ada batas maksimal
             // persentase yang disepakati (mis. dibatasi 100% atau 200%).
             if (abs($capaian) < 1e-9) {
-                $hasil['percentage'] = 100.0;
+                $hasil['percentage']   = 100.0;
+                $hasil['status']       = 'calculated';
+                $hasil['target_total'] = $target;
+                $hasil['actual_total'] = $capaian;
 
                 return $hasil;
             }
 
-            $hasil['percentage'] = round($target / $capaian * 100, 2);
+            $hasil['percentage']   = round($target / $capaian * 100, 2);
+            $hasil['status']       = 'calculated';
+            $hasil['target_total'] = $target;
+            $hasil['actual_total'] = $capaian;
 
             return $hasil;
         }
 
         // trend_naik & trend_flat: semakin tinggi capaian semakin baik.
+        //
+        // trend_flat berlabel "target tetap", tetapi RUMUSNYA di sini memang
+        // sama dengan trend_naik — bukan "harus persis sama dengan target".
+        // Karena itu ia tidak diperlakukan sebagai exact-target; memperlakukannya
+        // begitu berarti mengarang makna yang tidak pernah ada di kode ini.
         if (abs($target) < 1e-9) {
-            return $gagal(
+            $nol = abs($capaian) < 1e-9;
+
+            return $takTerukur(
                 $hasil,
-                'Target Triwulan ' . capaianRomawi($akhir['quarter'])
-                    . ' bernilai 0, Capaian Total tidak dapat dihitung.'
+                $nol ? 'zero_target' : 'actual_without_target',
+                $nol
+                    ? 'Belum dapat dinilai. Target Triwulan ' . capaianRomawi($akhir['quarter'])
+                        . ' masih 0.'
+                    : 'Belum dapat dinilai. Realisasi ' . capaianAngkaRingkas($capaian)
+                        . ' sudah tercatat, namun target Triwulan '
+                        . capaianRomawi($akhir['quarter']) . ' masih 0.'
             );
         }
 
-        $hasil['percentage'] = round($capaian / $target * 100, 2);
+        $hasil['percentage']   = round($capaian / $target * 100, 2);
+        $hasil['status']       = 'calculated';
+        $hasil['target_total'] = $target;
+        $hasil['actual_total'] = $capaian;
 
         return $hasil;
     }

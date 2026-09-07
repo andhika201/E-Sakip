@@ -285,7 +285,7 @@ class KabupatenDashboardService
                 'is_valid'        => $i['validity']['is_valid'],
                 'reason_code'     => $i['validity']['reason_code'],
                 'reason'          => $i['validity']['reason'],
-                'metode_nama'     => capaianMetodeNama($i['rows'][0]['metode'] ?? null),
+                'metode_nama'     => capaianMetodeRingkas($i['rows'] ?? []),
                 'verification'    => $i['verification'],
                 'renaksi_count'   => $i['renaksi_count'],
                 'pengampu'        => $pengampu[(int) $i['sasaran_id']] ?? [],
@@ -574,6 +574,8 @@ class KabupatenDashboardService
         $valid   = (int) $ringkas['valid'];
         $invalid = $total - $valid;
         $kritis  = (int) $ringkas['kritis'];
+        // Sengaja TIDAK ikut menentukan status KINERJA — lihat catatan di
+        // bawah. Tetap dipakai untuk melengkapi kalimat alasan.
         $belumUpdate = (bool) ($ringkas['update']['belum_update'] ?? false);
 
         $bungkus = static function (array $status, string $alasan, bool $karenaData = false) use ($kritis, $invalid, $ringkas): array {
@@ -582,6 +584,9 @@ class KabupatenDashboardService
                 // Membedakan "kritis karena kinerja" (persentase memang rendah)
                 // dari "kritis karena data" (ada indikator kritis TAPI datanya
                 // belum diperbarui, jadi persentase OPD-nya belum ada).
+                // Sejak "Kritis" tidak lagi boleh lahir dari data yang belum
+                // lengkap, nilainya selalu false. Kuncinya dipertahankan agar
+                // pembacanya (rekap & view) tidak perlu ikut diubah.
                 'critical_by_data'         => $karenaData,
                 'critical_indicator_count' => $kritis,
                 'invalid_indicator_count'  => $invalid,
@@ -593,17 +598,31 @@ class KabupatenDashboardService
             return $bungkus(dash_status_nonnumeric('belum_ada_data'), 'Belum ada indikator Perjanjian Kinerja pimpinan.');
         }
 
-        if ($kritis > 0 && $belumUpdate) {
-            // Dulu memakai getAchievementStatus(0.0) — memalsukan capaian 0%
-            // untuk memancing status Kritis. Sekarang ambang "critical" dibaca
-            // langsung dari tabel, dan ditandai critical_by_data supaya tidak
-            // tercampur dengan OPD yang capaiannya memang rendah.
-            return $bungkus(
-                $this->statusAmbang('critical'),
-                $kritis . ' indikator kritis dan data belum diperbarui (' . $ringkas['update']['keterangan'] . ')',
-                true
-            );
-        }
+        // =============================================================
+        // "KRITIS" HANYA UNTUK KINERJA, BUKAN UNTUK DATA YANG BELUM LENGKAP
+        //
+        // Di sini dulu ada satu cabang lagi: bila OPD punya indikator kritis
+        // DAN datanya belum diperbarui, statusnya dipaksa menjadi Kritis dan
+        // ditandai `critical_by_data`.
+        //
+        // Penandanya benar, tetapi labelnya terlanjur terbaca. Yang sampai ke
+        // pimpinan adalah kata "Kritis" — dan sebuah OPD yang sebenarnya belum
+        // sempat mengisi MONEV tampil sederajat dengan OPD yang capaiannya
+        // memang buruk. Flag internal tidak pernah bisa menahan makna sebuah
+        // label yang sudah tercetak di layar.
+        //
+        // Cabang itu dihapus, dan penilaiannya jatuh ke aturan yang memang
+        // sudah ada di bawah:
+        //
+        //   ada indikator belum dapat dihitung -> Belum Valid
+        //   seluruhnya valid & ada yang kritis -> Perlu Perhatian
+        //   seluruhnya valid                   -> status ambang capaian
+        //
+        // Sinyal kritisnya TIDAK hilang: `critical_indicator_count` tetap
+        // dibawa, indikator kritis tetap muncul di Prioritas Pimpinan, dan
+        // keterlambatan pembaruan tetap dilaporkan lewat kartu tersendiri
+        // beserta `late_update_count`.
+        // =============================================================
 
         if ($kritis > 0) {
             // "Minimal Perlu Perhatian": indikator kritis tidak boleh tertutup
@@ -627,6 +646,17 @@ class KabupatenDashboardService
                 $alasan = 'Sebagian besar indikator (' . $invalid . ' dari ' . $total . ') belum dapat dihitung.';
             } else {
                 $alasan = $invalid . ' dari ' . $total . ' indikator belum dapat dihitung.';
+            }
+
+            // Keterangan keterlambatan yang dulu dibawa cabang "kritis karena
+            // data" tidak ikut hilang — ia menempel di sini, pada status yang
+            // memang jujur menyatakan capaiannya belum bisa dinilai.
+            if ($belumUpdate) {
+                $alasan .= ' Data belum diperbarui (' . $ringkas['update']['keterangan'] . ').';
+            }
+
+            if ($kritis > 0) {
+                $alasan .= ' ' . $kritis . ' indikator berstatus kritis.';
             }
 
             return $bungkus(dash_status_nonnumeric('belum_valid'), $alasan);
@@ -1380,7 +1410,7 @@ class KabupatenDashboardService
             'sasaran'        => $i['sasaran'],
             'satuan'         => $i['satuan'],
             'target_tahunan' => $i['target_tahunan'],
-            'metode_nama'    => capaianMetodeNama($i['rows'][0]['metode'] ?? null),
+            'metode_nama'    => capaianMetodeRingkas($i['rows'] ?? []),
             'percentage'     => $i['percentage'],
             'percentage_teks' => $i['percentage'] !== null ? capaianFormatPersen($i['percentage']) : null,
             'status'         => $i['status'],
@@ -1504,7 +1534,9 @@ class KabupatenDashboardService
     /** Perubahan data terakhir yang relevan (seluruh OPD, tahun terpilih). */
     public function getLastUpdate(int $tahun): ?string
     {
-        $row = $this->db->table('monev m')
+        $waktu = [];
+
+        $mv = $this->db->table('monev m')
             ->select('MAX(m.updated_at) AS w')
             ->join('target_rencana tr', 'tr.id = m.target_rencana_id', 'inner')
             ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'inner')
@@ -1512,7 +1544,26 @@ class KabupatenDashboardService
             ->join('pk', 'pk.id = ps.pk_id', 'inner')
             ->where('pk.tahun', $tahun)
             ->get()->getRowArray();
+        $waktu[] = $mv['w'] ?? null;
 
-        return $row['w'] ?? null;
+        // Disamakan dengan OpdDashboardService::getLastUpdate(): "Pembaruan
+        // data terakhir" harus berarti hal yang sama di layar OPD, Kabupaten,
+        // dan Bupati. Sebelumnya layar Kabupaten hanya melihat `monev`,
+        // sehingga pembaruan realisasi anggaran tidak pernah tercermin.
+        if ($this->db->tableExists('monev_anggaran')) {
+            $ma = $this->db->table('monev_anggaran ma')
+                ->select('MAX(ma.updated_at) AS w')
+                ->join('target_rencana tr', 'tr.id = ma.target_rencana_id', 'inner')
+                ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'inner')
+                ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'inner')
+                ->join('pk', 'pk.id = ps.pk_id', 'inner')
+                ->where('pk.tahun', $tahun)
+                ->get()->getRowArray();
+            $waktu[] = $ma['w'] ?? null;
+        }
+
+        $waktu = array_values(array_filter($waktu));
+
+        return $waktu === [] ? null : max($waktu);
     }
 }

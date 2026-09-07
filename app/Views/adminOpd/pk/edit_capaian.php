@@ -31,6 +31,7 @@
             <div class="table-responsive">
                 <?php if (isset($pk_data['jenis']) && $pk_data['jenis'] === $jenis): ?>
                     <form method="POST" action="<?= base_url(($jenis==='bupati'? 'adminkab/':'adminopd/').'capaian_pk/'.$jenis.'/setcapaian/'. $pk_data['id']) ?>">
+                        <?= csrf_field() ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">SASARAN DAN INDIKATOR</h4>
                         <table class="table table-bordered table-striped text-center small mb-5">
                             <thead class="table-success">

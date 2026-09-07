@@ -527,17 +527,23 @@
                                                             <i class="fas fa-edit"></i>
                                                         </a>
 
+                                                        <?php // Ubah status & hapus DUA-DUANYA menulis ke basis data,
+                                                              // jadi keduanya lewat POST — lihat templates/tombol_hapus.php. ?>
                                                         <?php if ($changeStatusUrl && $nextStatus): ?>
-                                                            <a href="<?= $changeStatusUrl . $qsBase ?>" class="btn btn-sm btn-info"
-                                                                title="Ubah status ke <?= esc(ucfirst($nextStatus)) ?>">
-                                                                <i class="fas fa-sync-alt"></i>
-                                                            </a>
+                                                            <?= view('templates/tombol_hapus', [
+                                                                'url'   => $changeStatusUrl . $qsBase,
+                                                                'pesan' => 'Ubah status LAKIP menjadi ' . ucfirst($nextStatus) . '?',
+                                                                'judul' => 'Ubah status ke ' . ucfirst($nextStatus),
+                                                                'kelas' => 'btn btn-sm btn-info',
+                                                                'ikon'  => 'fas fa-sync-alt',
+                                                            ]) ?>
                                                         <?php endif; ?>
-                                                        <a href="<?= base_url('adminopd/lakip/delete/' . $lakipItem['id']) . $qsBase ?>"
-                                                            class="btn btn-sm btn-danger" title="Hapus LAKIP"
-                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus data LAKIP ini?');">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
+                                                        <?= view('templates/tombol_hapus', [
+                                                            'url'   => base_url('adminopd/lakip/delete/' . $lakipItem['id']) . $qsBase,
+                                                            'pesan' => 'Apakah Anda yakin ingin menghapus data LAKIP ini?',
+                                                            'judul' => 'Hapus LAKIP',
+                                                            'kelas' => 'btn btn-sm btn-danger',
+                                                        ]) ?>
                                                     <?php endif; ?>
                                                 <?php else: ?>
                                                     <span class="text-muted">-</span>

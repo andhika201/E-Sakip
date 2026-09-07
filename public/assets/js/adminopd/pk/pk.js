@@ -6,11 +6,18 @@ function deletePk(pkId) {
     console.warn('pkData not found, skipping pk.js');
     return;
     }
+    // Token CSRF WAJIB ikut. Body-nya JSON, jadi tokennya dikirim lewat
+    // header X-CSRF-TOKEN — field POST biasa tidak akan terbaca dari badan
+    // JSON. Meta-nya dipasang di <head> bersama (adminOpd/templates/style.php),
+    // sehingga tersedia di semua halaman admin.
+    const csrfHash = document.querySelector('meta[name="csrf-hash"]')?.content || '';
+
     fetch(`${base_url}adminopd/pk/${jenis}/delete/${pkId}`, {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfHash,
         },
         credentials: 'same-origin',
     })

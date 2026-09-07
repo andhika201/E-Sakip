@@ -323,6 +323,12 @@ class IkuController extends BaseController
             (int) $daftarPeriode[$periode]['tahun_akhir']
         );
 
+        // Id versi yang DIKIRIM tetapi tidak sah ditolak di sini — tanpa ini ia
+        // diam-diam jatuh ke Renstra berjalan. Lihat tolakVersiSumberTakSah().
+        if ($tolak = $this->tolakVersiSumberTakSah($post['renstra_versi'] ?? null, $versiTersedia)) {
+            return $tolak;
+        }
+
         $versiDipilih = $this->versiRenstraDipilih($post['renstra_versi'] ?? null, $versiTersedia);
 
         // Seluruh isi sumber terpilih disalin — pemakai memilih SUMBER, bukan
@@ -686,6 +692,14 @@ class IkuController extends BaseController
                 ->with('error', 'Anda tidak memiliki akses untuk menghapus IKU OPD lain.');
         }
 
+        // Lingkup yang sudah punya revisi disahkan tidak boleh diubah langsung.
+        $lingkup = $this->lingkupSasaranIku($sasaranId);
+
+        if ($lingkup !== null
+            && ($tolak = $this->tolakBilaIkuSudahResmi($lingkup['opd_id'], $lingkup['tahun_mulai'], $lingkup['tahun_akhir']))) {
+            return $tolak;
+        }
+
         try {
             $this->ikuModel->deleteComplete($sasaranId);
             session()->setFlashdata('success', 'Data IKU berhasil dihapus.');
@@ -713,6 +727,13 @@ class IkuController extends BaseController
 
         if (!$this->canAccessOpd($owner['opd_id'])) {
             return redirect()->back()->with('error', 'Anda tidak memiliki akses ke IKU OPD lain.');
+        }
+
+        $lingkup = $this->lingkupSasaranIku((int) ($owner['iku_sasaran_id'] ?? 0));
+
+        if ($lingkup !== null
+            && ($tolak = $this->tolakBilaIkuSudahResmi($lingkup['opd_id'], $lingkup['tahun_mulai'], $lingkup['tahun_akhir']))) {
+            return $tolak;
         }
 
         $statusBaru = $this->ikuModel->toggleStatusIndikator((int) $indikatorId);

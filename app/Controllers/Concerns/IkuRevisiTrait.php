@@ -48,6 +48,77 @@ trait IkuRevisiTrait
         return $this->revisiModel ??= new IkuRevisiModel();
     }
 
+    /**
+     * Tolak perubahan langsung ke IKU BERJALAN bila lingkupnya sudah punya
+     * revisi yang DISAHKAN.
+     *
+     * =================================================================
+     * MENGAPA
+     *
+     * Begitu sebuah lingkup punya revisi berstatus `berlaku`, IKU berjalan
+     * bukan lagi coretan kerja — ia isi dokumen resmi yang arsipnya dibaca
+     * LAKIP dan Cascading. Menghapus sasaran atau membalik status indikator
+     * langsung di sana berarti mengubah dokumen resmi tanpa jejak: arsip
+     * revisinya tetap memuat baris lama, sementara yang berjalan sudah
+     * berbeda, dan tidak ada satu pun layar yang melaporkan selisih itu.
+     *
+     * Jalur yang benar adalah membuat revisi baru — mekanismenya sudah ada
+     * lengkap dengan izin sunting dan pengesahan Admin Kabupaten.
+     *
+     * Endpoint `iku/delete` dan `iku/change_status` yang dijaga di sini
+     * TIDAK dipanggil dari view mana pun; keduanya sisa jalur lama yang masih
+     * terdaftar di rute. Karena itu penjagaan ini tidak mematikan tombol
+     * siapa pun — ia hanya menutup pintu yang tertinggal terbuka.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|null null bila boleh lanjut
+     */
+    /**
+     * Lingkup (OPD + periode) sebuah sasaran IKU berjalan.
+     *
+     * @return array{opd_id: ?int, tahun_mulai: int, tahun_akhir: int}|null
+     */
+    protected function lingkupSasaranIku(int $sasaranId): ?array
+    {
+        if ($sasaranId <= 0) {
+            return null;
+        }
+
+        $row = db_connect()->table('iku_sasaran')
+            ->select('opd_id, tahun_mulai, tahun_akhir')
+            ->where('id', $sasaranId)
+            ->get()->getRowArray();
+
+        if (! $row) {
+            return null;
+        }
+
+        return [
+            'opd_id'      => $row['opd_id'] !== null ? (int) $row['opd_id'] : null,
+            'tahun_mulai' => (int) $row['tahun_mulai'],
+            'tahun_akhir' => (int) $row['tahun_akhir'],
+        ];
+    }
+
+    protected function tolakBilaIkuSudahResmi(?int $opdId, int $tahunMulai, int $tahunAkhir)
+    {
+        if ($tahunMulai <= 0 || $tahunAkhir <= 0) {
+            return null;
+        }
+
+        $berlaku = $this->revisi()->revisiBerlaku($opdId, $tahunMulai, $tahunAkhir);
+
+        if ($berlaku === null) {
+            return null;
+        }
+
+        return redirect()->back()->with(
+            'error',
+            'IKU periode ' . $tahunMulai . '-' . $tahunAkhir . ' sudah memiliki revisi yang disahkan ("'
+            . (string) ($berlaku['nama'] ?? 'revisi berlaku') . '"), sehingga tidak bisa diubah langsung. '
+            . 'Buat revisi baru untuk mengubahnya.'
+        );
+    }
+
     abstract protected function revisiPermPrefix(): string;
 
     /** NULL = lingkup kabupaten. */
@@ -793,9 +864,29 @@ trait IkuRevisiTrait
             }
         }
 
-        // Tanpa pilihan yang sah, dipakai versi TERBARU — daftarnya sudah
-        // diurutkan version_no DESC. Menolak di sini hanya memaksa pemakai
-        // mengulang form demi memilih yang toh jadi bawaannya.
+        // =============================================================
+        // TIDAK DIPILIH -> versi TERBARU.  DIPILIH TAPI TIDAK SAH -> DITOLAK.
+        //
+        // Semula keduanya diperlakukan sama: apa pun yang tidak cocok jatuh ke
+        // $tersedia[0]. Untuk "tidak dipilih" itu memang masuk akal — daftarnya
+        // sudah urut version_no DESC, jadi yang terbaru adalah bawaan yang
+        // wajar. Tetapi untuk id yang DIKIRIM dan tidak cocok, diam-diam
+        // mengganti sumbernya berarti menyalin dari versi yang tidak pernah
+        // diminta siapa pun, dan hasilnya tersimpan sebagai kehendak pemakai.
+        //
+        // Di sini menolak aman: $tersedia dipastikan tidak kosong beberapa
+        // baris di atas, jadi id yang tidak cocok memang keliru — form basi,
+        // atau kiriman yang dikarang.
+        // =============================================================
+        $mentah = $this->request->getPost('renstra_versi');
+
+        if ($versi === null && $mentah !== null && trim((string) $mentah) !== '') {
+            throw new \RuntimeException(
+                'Versi Renstra yang dipilih tidak sah untuk periode ini. '
+                . 'Muat ulang halaman lalu pilih dari daftar yang tersedia.'
+            );
+        }
+
         $versi ??= $tersedia[0];
 
         $kandidat = $this->ikuModel->getKandidatSync(

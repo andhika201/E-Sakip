@@ -124,3 +124,13 @@ _modules/*
 
 /results/
 /phpunit*.xml
+
+# Dump basis data. JANGAN pernah ikut ter-commit: isinya data produksi
+# (nama pegawai, struktur organisasi, seluruh capaian kinerja). Berkas
+# seperti test.sql / backup-*.sql lahir dari phpMyAdmin atau mysqldump saat
+# menelusuri masalah di server, dan gampang ikut tersapu `git add .`.
+/test.sql
+/backup*.sql
+/*-backup.sql
+/dump*.sql
+/Data_server.sql

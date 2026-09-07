@@ -1,5 +1,28 @@
 <?php
 
+/*
+ * =====================================================================
+ * MUTASI TIDAK LEWAT GET  (hardening 5 September 2026)
+ *
+ * Rute yang MENGUBAH data hanya menerima POST/DELETE. Sebelumnya sebagian
+ * didaftarkan dengan match(['get','post','delete']) dan dipanggil dari view
+ * sebagai <a href> biasa, sehingga:
+ *
+ *   * CSRF tidak menjaganya — CodeIgniter hanya memeriksa token pada
+ *     POST/PUT/PATCH/DELETE, jadi sekadar memuat alamatnya sudah cukup;
+ *   * prefetch/pemindai tautan peramban bisa memicunya tanpa ada yang menekan;
+ *   * `GET /adminopd/lakip/status/<id>/selesai` mengubah status LAKIP hanya
+ *     dengan diketik di bilah alamat.
+ *
+ * Tombol pemanggilnya sudah diubah menjadi form POST lewat
+ * app/Views/templates/tombol_hapus.php. Kalau ada tombol hapus yang mendadak
+ * memberi 404, penyebabnya hampir pasti tautan <a href> yang belum ikut
+ * diubah — jangan kembalikan 'get' ke rutenya.
+ *
+ * `dashboard/data` sengaja TETAP menerima GET: ia hanya membaca.
+ * =====================================================================
+ */
+
 use CodeIgniter\Router\RouteCollection;
 
 /**
@@ -94,7 +117,7 @@ $routes->group(
         $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
         $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
         // $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
-        $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
+        $routes->match(['post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
         // (pk_bupati/cetak dihapus: controller AdminKab\PkBupatiController tidak ada & tidak ada link.
         //  Cetak PK Bupati dilayani via pk/(:any)/cetak/(:num) dan AdminOpd\PkRenaksiController.)
 
@@ -145,9 +168,9 @@ $routes->group(
         // download & update-status: method tidak ada; ubah status LAKIP dilayani lakip/status/(:num)/(:segment)
         // $routes->get('lakip/download/(:num)', 'AdminKab\LakipController::download/$1');
         // $routes->post('lakip/update-status', 'AdminKab\LakipController::updateStatus');
-        $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
+        $routes->match(['post', 'delete'], 'lakip/delete/(:num)', 'AdminKab\LakipController::delete/$1');
         // ubah status lakip
-        $routes->get('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
+        $routes->post('lakip/status/(:num)/(:segment)', 'AdminKab\LakipController::status/$1/$2');
         // Dua tabel tambahan LAKIP (Analisis Faktor & Efisiensi Program).
         // Semua aksi tulis lewat POST — lingkup (tahun/mode/opd) ikut di body
         // dan tetap diverifikasi ulang di server (LakipAddendumTrait).
@@ -184,7 +207,7 @@ $routes->group(
         $routes->post('iku/sync/simpan', 'AdminKab\IkuController::syncSimpan');
         $routes->post('iku/save', 'AdminKab\IkuController::save');
         $routes->post('iku/update', 'AdminKab\IkuController::update');
-        $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminKab\IkuController::delete/$1');
+        $routes->match(['post', 'delete'], 'iku/delete/(:num)', 'AdminKab\IkuController::delete/$1');
         // ubah status per INDIKATOR IKU
         $routes->post('iku/change_status/(:num)', 'AdminKab\IkuController::change_status/$1');
         // REVISI IKU (versi dokumen). Draft tidak pernah menyentuh IKU berjalan;
@@ -250,7 +273,7 @@ $routes->group(
         $routes->get('rpjmd/edit/(:num)', 'RpjmdController::edit/$1');
         $routes->post('rpjmd/save', 'RpjmdController::save');
         $routes->post('rpjmd/update', 'RpjmdController::update');
-        $routes->match(['get', 'post', 'delete'], 'rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
+        $routes->match(['post', 'delete'], 'rpjmd/delete/(:num)', 'RpjmdController::delete/$1');
         $routes->post('rpjmd/update-status', 'RpjmdController::updateStatus');
 
         // Cascading
@@ -279,7 +302,7 @@ $routes->group(
         // $routes->get('rkpd/edit/(:num)', 'RkpdController::edit/$1');
         // $routes->post('rkpd/save', 'RkpdController::save');
         // $routes->post('rkpd/update', 'RkpdController::update');
-        // $routes->match(['get', 'post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
+        // $routes->match(['post', 'delete'], 'rkpd/delete/(:num)', 'RkpdController::delete/$1');
         // $routes->post('rkpd/update-status', 'RkpdController::updateStatus');
 
         // (rkt kabupaten dihapus: controller AdminKab\RktController tidak ada & tidak ada menu.
@@ -397,26 +420,26 @@ $routes->group('adminkab', ['filter' => 'auth:admin'], function ($routes) {
     $routes->post('log-aktivitas/clear', 'AdminKab\ActivityLogController::clearOld');
 
     $routes->post('master/pegawai/save', 'SuperAdmin\MasterController::pegawaiSave');
-    $routes->match(['get', 'post', 'delete'], 'master/pegawai/delete/(:num)', 'SuperAdmin\MasterController::pegawaiDelete/$1');
+    $routes->match(['post', 'delete'], 'master/pegawai/delete/(:num)', 'SuperAdmin\MasterController::pegawaiDelete/$1');
 
     $routes->post('master/pangkat/save', 'SuperAdmin\MasterController::pangkatSave');
-    $routes->match(['get', 'post', 'delete'], 'master/pangkat/delete/(:num)', 'SuperAdmin\MasterController::pangkatDelete/$1');
+    $routes->match(['post', 'delete'], 'master/pangkat/delete/(:num)', 'SuperAdmin\MasterController::pangkatDelete/$1');
 
     $routes->post('master/jabatan/save', 'SuperAdmin\MasterController::jabatanSave');
-    $routes->match(['get', 'post', 'delete'], 'master/jabatan/delete/(:num)', 'SuperAdmin\MasterController::jabatanDelete/$1');
+    $routes->match(['post', 'delete'], 'master/jabatan/delete/(:num)', 'SuperAdmin\MasterController::jabatanDelete/$1');
 
     $routes->post('master/opd/save', 'SuperAdmin\MasterController::opdSave');
-    $routes->match(['get', 'post', 'delete'], 'master/opd/delete/(:num)', 'SuperAdmin\MasterController::opdDelete/$1');
+    $routes->match(['post', 'delete'], 'master/opd/delete/(:num)', 'SuperAdmin\MasterController::opdDelete/$1');
 
     $routes->post('master/user/save', 'SuperAdmin\MasterController::userSave');
-    $routes->match(['get', 'post', 'delete'], 'master/user/delete/(:num)', 'SuperAdmin\MasterController::userDelete/$1');
+    $routes->match(['post', 'delete'], 'master/user/delete/(:num)', 'SuperAdmin\MasterController::userDelete/$1');
 
     $routes->post('master/role/save', 'SuperAdmin\MasterController::roleSave');
-    $routes->match(['get', 'post', 'delete'], 'master/role/delete/(:num)', 'SuperAdmin\MasterController::roleDelete/$1');
+    $routes->match(['post', 'delete'], 'master/role/delete/(:num)', 'SuperAdmin\MasterController::roleDelete/$1');
     $routes->post('master/role/permissions', 'SuperAdmin\MasterController::rolePermSave');
 
     $routes->post('master/satuan/save', 'SuperAdmin\MasterController::satuanSave');
-    $routes->match(['get', 'post', 'delete'], 'master/satuan/delete/(:num)', 'SuperAdmin\MasterController::satuanDelete/$1');
+    $routes->match(['post', 'delete'], 'master/satuan/delete/(:num)', 'SuperAdmin\MasterController::satuanDelete/$1');
 });
 
 $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'], function ($routes) {
@@ -429,7 +452,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->get('pk/(:any)/tambah', 'AdminOpd\PkController::tambah/$1');
     $routes->post('pk/(:any)/save', 'AdminOpd\PkController::save/$1');
     $routes->get('pk/(:any)', 'AdminOpd\PkController::index/$1');
-    $routes->match(['get', 'post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
+    $routes->match(['post', 'delete'], 'pk/(:any)/delete/(:num)', 'AdminOpd\PkController::delete/$1/$2');
     // capaian_pk = fitur lama tanpa method (digantikan monev/PkRenaksiController)
     // $routes->get('capaian_pk/(:any)', 'AdminOpd\PkController::capaian_pk/$1');
 
@@ -489,7 +512,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->get('renstra/edit/(:num)', 'AdminOpd\RenstraController::edit/$1');
     $routes->post('renstra/save', 'AdminOpd\RenstraController::save');
     $routes->post('renstra/update/(:num)', 'AdminOpd\RenstraController::update/$1');
-    $routes->match(['get', 'post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
+    $routes->match(['post', 'delete'], 'renstra/delete/(:num)', 'AdminOpd\RenstraController::delete/$1');
     $routes->post('renstra/update-status', 'AdminOpd\RenstraController::updateStatus');
     // Siklus hidup Renstra berjalan (= Versi 1): ajukan validasi & tarik permohonan.
     $routes->post('renstra/ajukan-validasi', 'AdminOpd\RenstraController::renstraAjukanValidasi');
@@ -506,7 +529,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('rkt/update', 'AdminOpd\RktController::update');
     $routes->post('rkt/delete-indikator', 'AdminOpd\RktController::deleteByIndicator');
     // rkt/delete/(:num): method delete() tidak ada; hapus RKT dilakukan via rkt/delete-indikator (deleteByIndicator)
-    // $routes->match(['get', 'post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
+    // $routes->match(['post', 'delete'], 'rkt/delete/(:num)', 'AdminOpd\RktController::delete/$1');
     $routes->post('rkt/update-status', 'AdminOpd\RktController::updateStatus');
 
     // IKU (standalone — id yang dipakai adalah id SASARAN IKU, bukan lagi id indikator renstra)
@@ -519,7 +542,7 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('iku/sync/simpan', 'AdminOpd\IkuController::syncSimpan');
     $routes->post('iku/save', 'AdminOpd\IkuController::save');
     $routes->post('iku/update', 'AdminOpd\IkuController::update');
-    $routes->match(['get', 'post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
+    $routes->match(['post', 'delete'], 'iku/delete/(:num)', 'AdminOpd\IkuController::delete/$1');
     // ubah status per INDIKATOR IKU
     $routes->post('iku/change_status/(:num)', 'AdminOpd\IkuController::change_status/$1');
     // REVISI IKU (versi dokumen) — lingkup OPD sendiri, diambil dari session.
@@ -599,9 +622,9 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     // download & update-status: method tidak ada; ubah status LAKIP dilayani lakip/status/(:num)/(:segment)
     // $routes->get('lakip/download/(:num)', 'AdminOpd\LakipOpdController::download/$1');
     // $routes->post('lakip/update-status', 'AdminOpd\LakipOpdController::updateStatus');
-    $routes->match(['get', 'post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
+    $routes->match(['post', 'delete'], 'lakip/delete/(:num)', 'AdminOpd\LakipOpdController::delete/$1');
     // ubah status lakip
-    $routes->get('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');
+    $routes->post('lakip/status/(:num)/(:segment)', 'AdminOpd\LakipOpdController::status/$1/$2');
     // Dua tabel tambahan LAKIP (Analisis Faktor & Efisiensi Program).
     // Semua aksi tulis lewat POST — lingkup (tahun/mode/opd) ikut di body
     // dan tetap diverifikasi ulang di server (LakipAddendumTrait).

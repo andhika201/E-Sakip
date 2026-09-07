@@ -375,6 +375,35 @@ class CascadingController extends BaseController
     }
 
     /** Versi terpilih, divalidasi terhadap daftar yang sah. */
+    /**
+     * Versi IKU yang sedang dibaca layar, untuk jalur SELAIN index().
+     *
+     * =================================================================
+     * MENGAPA PERLU
+     *
+     * Semula hanya index() yang menghormati `?iku_versi=`. Excel, cetak,
+     * cetak pohon, dan tabel AJAX memanggil getCascadingMatrixByOpd() tanpa
+     * versi — dan tanpa versi berarti IKU BERJALAN.
+     *
+     * Akibatnya pemakai memilih sebuah versi di layar, melihat satu matriks,
+     * lalu menekan Cetak/Excel dan menerima matriks LAIN yang disusun dari
+     * IKU berjalan. Yang tercetak justru dokumen yang dipakai orang, dan
+     * tidak ada satu pun tanda bahwa isinya berbeda dari yang barusan
+     * dilihat.
+     *
+     * Tautan cetak/ekspor di view SEMULA TIDAK membawa `iku_versi` sama
+     * sekali — hanya `periode`. Jadi memperbaiki sisi controller saja tidak
+     * cukup; tautannya ikut diperbaiki di
+     * app/Views/adminOpd/cascading/cascading.php.
+     */
+    private function versiIkuDariPermintaan(int $start, int $end): ?int
+    {
+        return $this->versiIkuDipilih(
+            $this->request->getGet('iku_versi'),
+            $this->versiIkuTersedia($start, $end)
+        );
+    }
+
     private function versiIkuDipilih($nilai, array $tersedia): ?int
     {
         $id = (int) $nilai;
@@ -399,7 +428,12 @@ class CascadingController extends BaseController
             return redirect()->back()->with('error', 'Periode wajib dipilih');
         }
         [$start, $end] = explode('-', $periode);
-        $rows = $this->cascadingModel->getCascadingMatrixByOpd($this->opdId, (int) $start, (int) $end);
+        $rows = $this->cascadingModel->getCascadingMatrixByOpd(
+            $this->opdId,
+            (int) $start,
+            (int) $end,
+            $this->versiIkuDariPermintaan((int) $start, (int) $end)
+        );
 
         $db = \Config\Database::connect();
         $o  = $db->table('opd')->select('nama_opd')->where('id', $this->opdId)->get()->getRowArray();
@@ -421,7 +455,12 @@ class CascadingController extends BaseController
 
         [$start, $end] = explode('-', $periode);
         $rows = $this->cascadingModel
-            ->getCascadingMatrixByOpd($this->opdId, (int) $start, (int) $end);
+            ->getCascadingMatrixByOpd(
+                $this->opdId,
+                (int) $start,
+                (int) $end,
+                $this->versiIkuDariPermintaan((int) $start, (int) $end)
+            );
 
         $this->preprocessEmptyIds($rows);
 
@@ -454,7 +493,12 @@ class CascadingController extends BaseController
         $end = (int) $end;
 
         $rows = $this->cascadingModel
-            ->getCascadingMatrixByOpd($this->opdId, $start, $end);
+            ->getCascadingMatrixByOpd(
+                $this->opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan($start, $end)
+            );
 
         $this->preprocessEmptyIds($rows);
 
@@ -526,7 +570,12 @@ class CascadingController extends BaseController
         $end   = (int) $end;
 
         $rows = $this->cascadingModel
-            ->getCascadingMatrixByOpd($this->opdId, $start, $end);
+            ->getCascadingMatrixByOpd(
+                $this->opdId,
+                $start,
+                $end,
+                $this->versiIkuDariPermintaan($start, $end)
+            );
 
         $tree = $this->buildOpdTree(
             $rows,

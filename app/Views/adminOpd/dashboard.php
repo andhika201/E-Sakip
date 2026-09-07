@@ -253,10 +253,22 @@ $js = static fn ($v) => json_encode(
               <div>
                 <div class="kpi-num"><?= (int) $wasp['total'] ?> <span style="font-size:.9rem;font-weight:700;color:#6b7a70;">Tindak Lanjut</span></div>
                 <div class="kpi-sub mt-2">
-                  <?php if ($wasp['kritis'] > 0): ?><div><span class="dot" style="background:#d64545"></span><?= (int) $wasp['kritis'] ?> indikator kritis</div><?php endif; ?>
-                  <?php if ($wasp['monev_belum'] > 0): ?><div><span class="dot" style="background:#e07b39"></span><?= (int) $wasp['monev_belum'] ?> MONEV belum lengkap</div><?php endif; ?>
-                  <?php if ($wasp['renaksi_belum'] > 0): ?><div><span class="dot" style="background:#d9a520"></span><?= (int) $wasp['renaksi_belum'] ?> Rencana Aksi belum ada</div><?php endif; ?>
-                  <?php if ($wasp['anggaran_belum'] > 0): ?><div><span class="dot" style="background:#3f6296"></span><?= (int) $wasp['anggaran_belum'] ?> realisasi anggaran belum diperbarui</div><?php endif; ?>
+                  <?php
+                  // Rincian datang lengkap & sudah terurut dari service, jadi
+                  // penjumlahannya selalu sama dengan angka di atas. Yang tidak
+                  // muat ditampilkan diringkas jadi satu baris "catatan lain" —
+                  // tidak dihilangkan seperti versi terdahulu.
+                  $rincian = $wasp['rincian'] ?? [];
+                  $muat    = 3;
+                  $tampil  = count($rincian) > $muat + 1 ? array_slice($rincian, 0, $muat) : $rincian;
+                  $sisa    = (int) $wasp['total'] - array_sum(array_column($tampil, 'count'));
+                  ?>
+                  <?php foreach ($tampil as $r): ?>
+                    <div><span class="dot" style="background:<?= esc($r['color']['hex']) ?>"></span><?= esc($r['teks']) ?></div>
+                  <?php endforeach; ?>
+                  <?php if ($sisa > 0): ?>
+                    <div><span class="dot" style="background:#8a968f"></span><?= $sisa ?> catatan lain</div>
+                  <?php endif; ?>
                   <?php if ($wasp['total'] === 0): ?><div class="text-success fw-semibold">Tidak ada kondisi yang perlu ditindaklanjuti.</div><?php endif; ?>
                 </div>
               </div>
@@ -315,31 +327,44 @@ $js = static fn ($v) => json_encode(
                   <h3>Prioritas Tindak Lanjut</h3>
                   <p>Disusun otomatis dari aturan kelengkapan &amp; capaian data.</p>
                 </div>
-                <?php if (count($dash['insights']) > 5): ?>
+                <?php $grup = $dash['insight_groups'] ?? []; ?>
+                <?php if (count($grup) > 5): ?>
                   <button type="button" class="btn btn-sm btn-outline-success" data-drawer="perhatian">
-                    Lihat semua (<?= count($dash['insights']) ?>)
+                    Lihat semua (<?= count($grup) ?>)
                   </button>
                 <?php endif; ?>
               </div>
 
-              <?php if ($dash['insights'] === []): ?>
+              <?php if ($grup === []): ?>
                 <div class="empty">
                   <div class="ic"><i class="fas fa-circle-check"></i></div>
                   <p class="mb-0 small">Seluruh indikator lengkap dan tidak ada kondisi yang perlu ditindaklanjuti.</p>
                 </div>
               <?php else: ?>
-                <?php foreach (array_slice($dash['insights'], 0, 5) as $ins): ?>
+                <?php // Satu indikator = satu kartu, walau catatannya lebih dari satu.
+                      // Sebelumnya daftar ini datar sehingga indikator yang sama muncul
+                      // berkali-kali dan lima baris teratas habis oleh satu jenis catatan. ?>
+                <?php foreach (array_slice($grup, 0, 5) as $g): ?>
                   <div class="ins">
-                    <div class="ins-bar" style="background: <?= esc($ins['color']['hex']) ?>"></div>
+                    <div class="ins-bar" style="background: <?= esc($g['color']['hex']) ?>"></div>
                     <div class="ins-body">
-                      <div class="ins-title"><?= esc($ins['judul']) ?></div>
-                      <div class="ins-why"><?= esc($ins['alasan']) ?></div>
-                      <span class="badge-soft mt-2" style="background: <?= esc($ins['color']['soft']) ?>; color: <?= esc($ins['color']['hex']) ?>;">
-                        <?= esc($ins['status']) ?>
-                      </span>
-                    </div>
-                    <div class="ins-act">
-                      <a href="<?= esc($ins['url']) ?>" class="btn btn-sm btn-outline-success"><?= esc($ins['tombol']) ?></a>
+                      <div class="ins-title">
+                        <?= esc($g['judul']) ?>
+                        <?php if (count($g['items']) > 1): ?>
+                          <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; <?= count($g['items']) ?> hal perlu dilengkapi</span>
+                        <?php endif; ?>
+                      </div>
+                      <?php foreach ($g['items'] as $it): ?>
+                        <div class="ins-item">
+                          <div class="ins-why"><?= esc($it['alasan']) ?></div>
+                          <div class="ins-item-act">
+                            <span class="badge-soft" style="background: <?= esc($it['color']['soft']) ?>; color: <?= esc($it['color']['hex']) ?>;">
+                              <?= esc($it['status']) ?>
+                            </span>
+                            <a href="<?= esc($it['url']) ?>" class="btn btn-sm btn-outline-success"><?= esc($it['tombol']) ?></a>
+                          </div>
+                        </div>
+                      <?php endforeach; ?>
                     </div>
                   </div>
                 <?php endforeach; ?>
@@ -425,6 +450,7 @@ $js = static fn ($v) => json_encode(
       window.DASH = <?= $js([
         'indicators'  => $dash['indicators'],
         'insights'    => $dash['insights'],
+        'groups'      => $dash['insight_groups'],
         'series'      => $dash['chart_series'],
         'distribusi'  => $dash['status_distribution'],
         'anggaran'    => $dash['anggaran'],
@@ -715,7 +741,11 @@ $js = static fn ($v) => json_encode(
                     '<dt>Sasaran PK</dt><dd>' + esc(d.sasaran) + '</dd>' +
                     '<dt>Satuan</dt><dd>' + esc(d.satuan || '-') + '</dd>' +
                     '<dt>Target tahunan</dt><dd>' + esc(d.target_tahunan || '-') + '</dd>' +
-                    '<dt>Metode perhitungan</dt><dd>' + esc(d.rows.length ? (d.rows[0].metode ? d.rows[0].metode : 'belum dipilih') : '-') + '</dd>' +
+                    // Memakai metode_nama, yang meringkas SELURUH baris ukur.
+                    // Sebelumnya baris ini membaca d.rows[0].metode: selain
+                    // hanya mewakili baris pertama, ia juga mencetak kode
+                    // mentahnya ("sum", "trend_naik") ke layar pengguna.
+                    '<dt>Metode perhitungan</dt><dd>' + esc(d.metode_nama || '-') + '</dd>' +
                     '<dt>Capaian total</dt><dd>' + (d.percentage_teks || 'belum dapat dihitung') + '</dd>' +
                     '<dt>Rencana Aksi</dt><dd>' + d.renaksi_count + ' rencana &middot; ' + d.sub_count + ' sub rencana</dd>' +
                     '<dt>Penanggung jawab</dt><dd>' + esc(d.penanggung_jawab || d.pejabat_jabatan || '-') + '</dd>' +
@@ -811,17 +841,31 @@ $js = static fn ($v) => json_encode(
             return { t: 'Penyerapan Anggaran', s: a.program_count + ' program pendukung', html: ringkas + daftar };
           },
           perhatian: function () {
-            var html = D.insights.length ? D.insights.map(function (i) {
+            // Dikelompokkan per indikator, sama seperti panel di halaman —
+            // supaya jumlah kartu = jumlah indikator yang perlu ditangani,
+            // sedangkan jumlah catatan tetap terbaca di sub-judulnya.
+            var grup = D.groups || [];
+            var html = grup.length ? grup.map(function (g) {
+              var isi = g.items.map(function (i) {
+                return '<div class="ins-item"><div class="ins-why">' + esc(i.alasan) + '</div>' +
+                  '<div class="ins-item-act">' +
+                  '<span class="badge-soft" style="background:' + esc(i.color.soft) + ';color:' + esc(i.color.hex) + ';">' + esc(i.status) + '</span>' +
+                  '<a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">' + esc(i.tombol) + '</a></div></div>';
+              }).join('');
               return '<div class="ins" style="background:#fff;">' +
-                '<div class="ins-bar" style="background:' + esc(i.color.hex) + '"></div>' +
-                '<div class="ins-body"><div class="ins-title">' + esc(i.judul) + '</div>' +
-                '<div class="ins-why">' + esc(i.alasan) + '</div>' +
-                '<span class="badge-soft mt-2" style="background:' + esc(i.color.soft) + ';color:' + esc(i.color.hex) + ';">' + esc(i.status) + '</span></div>' +
-                '<div class="ins-act"><a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">' + esc(i.tombol) + '</a></div></div>';
+                '<div class="ins-bar" style="background:' + esc(g.color.hex) + '"></div>' +
+                '<div class="ins-body"><div class="ins-title">' + esc(g.judul) +
+                (g.items.length > 1
+                  ? ' <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; ' + g.items.length + ' hal perlu dilengkapi</span>'
+                  : '') +
+                '</div>' + isi + '</div></div>';
             }).join('') :
               '<div class="drawer-section"><div class="empty"><div class="ic"><i class="fas fa-circle-check"></i></div>' +
               '<p class="mb-0 small">Tidak ada kondisi yang perlu ditindaklanjuti.</p></div></div>';
-            return { t: 'Prioritas Tindak Lanjut', s: D.insights.length + ' kondisi', html: '<div class="drawer-section">' + html + '</div>' };
+            var sub = grup.length
+              ? grup.length + ' hal · ' + D.insights.length + ' catatan tindak lanjut'
+              : 'tidak ada catatan';
+            return { t: 'Prioritas Tindak Lanjut', s: sub, html: '<div class="drawer-section">' + html + '</div>' };
           }
         };
 

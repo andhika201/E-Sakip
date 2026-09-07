@@ -226,11 +226,16 @@
                     <div class="casc-viewbar" style="justify-content:flex-end;">
                         <!-- Tools tab Tabel Cascading -->
                         <div class="casc-viewtools" id="tabelTools" <?= $isPohon ? 'hidden' : '' ?>>
-                            <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode']) ?>"
+                            <?php // Versi IKU yang sedang dilihat ikut dibawa ke cetak/ekspor.
+                                  // Tanpa ini, dokumen yang tercetak disusun dari IKU BERJALAN
+                                  // sementara layarnya menampilkan versi terpilih — dan yang
+                                  // tercetak justru yang dipakai orang. ?>
+                            <?php $qsVersi = !empty($versiIkuDipilih) ? '&iku_versi=' . (int) $versiIkuDipilih : ''; ?>
+                            <a href="<?= base_url('adminopd/cascading/cetak?periode=' . $filters['periode'] . $qsVersi) ?>"
                                 target="_blank" class="btn btn-sm btn-danger text-nowrap">
                                 <i class="fas fa-file-pdf me-1"></i> Cetak Cascading
                             </a>
-                            <a href="<?= base_url('adminopd/cascading/excel?periode=' . $filters['periode']) ?>"
+                            <a href="<?= base_url('adminopd/cascading/excel?periode=' . $filters['periode'] . $qsVersi) ?>"
                                 class="btn btn-sm btn-success text-nowrap">
                                 <i class="fas fa-file-excel me-1"></i> Excel
                             </a>
@@ -244,7 +249,7 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary casc-act" onclick="pohonZoom(1)" title="Perbesar">
                                 <i class="fas fa-magnifying-glass-plus"></i>
                             </button>
-                            <a href="<?= base_url('adminopd/cascading/cetakpohon?periode=' . $filters['periode']) ?>"
+                            <a href="<?= base_url('adminopd/cascading/cetakpohon?periode=' . $filters['periode'] . $qsVersi) ?>"
                                 target="_blank" class="btn btn-sm btn-success text-nowrap">
                                 <i class="fas fa-print me-1"></i> Cetak Pohon
                             </a>

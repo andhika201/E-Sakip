@@ -287,10 +287,30 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
                 <div>
                   <div class="kpi-num"><?= (int) $fWasp['total'] ?> <span style="font-size:.9rem;font-weight:700;color:#6b7a70;">Catatan</span></div>
                   <div class="kpi-sub mt-2">
-                    <?php if ($fWasp['kritis'] > 0): ?><?= $sorot('fa-circle-exclamation', '#d64545', (int) $fWasp['kritis'] . ' indikator kritis') ?><?php endif; ?>
-                    <?php if ($fWasp['monev_belum'] > 0): ?><?= $sorot('fa-pen-to-square', '#e07b39', (int) $fWasp['monev_belum'] . ' MONEV belum lengkap') ?><?php endif; ?>
-                    <?php if ($fWasp['renaksi_belum'] > 0): ?><?= $sorot('fa-list-check', '#d9a520', (int) $fWasp['renaksi_belum'] . ' Rencana Aksi belum disusun') ?><?php endif; ?>
-                    <?php if ($fWasp['belum_valid'] > 0): ?><?= $sorot('fa-calculator', '#8a968f', (int) $fWasp['belum_valid'] . ' indikator belum dapat dihitung') ?><?php endif; ?>
+                    <?php
+                    // Rincian datang lengkap dari OpdDashboardService dan sudah
+                    // terurut menurut kegentingan; yang tidak muat diringkas
+                    // sebagai "catatan lain" supaya penjumlahannya tetap sama
+                    // dengan angka besar di atas.
+                    $ikonJenis = [
+                        'indikator_kritis'      => 'fa-circle-exclamation',
+                        'indikator_perhatian'   => 'fa-triangle-exclamation',
+                        'renaksi_belum'         => 'fa-list-check',
+                        'monev_belum'           => 'fa-pen-to-square',
+                        'indikator_belum_valid' => 'fa-calculator',
+                        'anggaran_belum'        => 'fa-coins',
+                        'verifikasi'            => 'fa-file-circle-check',
+                    ];
+                    $fRincian = $fWasp['rincian'] ?? [];
+                    $fTampil  = count($fRincian) > 4 ? array_slice($fRincian, 0, 3) : $fRincian;
+                    $fSisa    = (int) $fWasp['total'] - array_sum(array_column($fTampil, 'count'));
+                    ?>
+                    <?php foreach ($fTampil as $r): ?>
+                      <?= $sorot($ikonJenis[$r['code']] ?? 'fa-circle-dot', $r['color']['hex'], esc($r['teks'])) ?>
+                    <?php endforeach; ?>
+                    <?php if ($fSisa > 0): ?>
+                      <?= $sorot('fa-ellipsis', '#6b7a70', $fSisa . ' catatan lain') ?>
+                    <?php endif; ?>
                     <?php if (!empty($fUpdate)): ?>
                       <?php
                         // Sama seperti aturan dashboard kabupaten: peringatan
@@ -301,9 +321,6 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
                       <?php if ($hari > 14 && !dash_triwulan_selesai((int) $tahun, (int) $triwulan)): ?>
                         <?= $sorot('fa-clock-rotate-left', '#d9a520', 'Tidak diperbarui ' . $hari . ' hari') ?>
                       <?php endif; ?>
-                    <?php endif; ?>
-                    <?php if ((int) ($fWasp['lainnya'] ?? 0) > 0): ?>
-                      <?= $sorot('fa-ellipsis', '#6b7a70', (int) $fWasp['lainnya'] . ' catatan lain (realisasi anggaran & pelaporan)') ?>
                     <?php endif; ?>
                     <?php if ($fWasp['total'] === 0): ?><?= $sorot('fa-circle-check', '#0a8f50', 'Tidak ada catatan pada periode ini') ?><?php endif; ?>
                   </div>
@@ -368,26 +385,38 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
               <div class="panel">
                 <div class="panel-head">
                   <div><h3>Lima Prioritas Perangkat Daerah</h3><p>Disusun otomatis dari aturan kelengkapan &amp; capaian (bukan AI).</p></div>
-                  <?php if (count($fokus['insights']) > 5): ?>
-                    <button type="button" class="btn btn-sm btn-outline-success" data-drawer="f_perhatian">Lihat semua (<?= count($fokus['insights']) ?>)</button>
+                  <?php $fGrup = $fokus['insight_groups'] ?? []; ?>
+                  <?php if (count($fGrup) > 5): ?>
+                    <button type="button" class="btn btn-sm btn-outline-success" data-drawer="f_perhatian">Lihat semua (<?= count($fGrup) ?>)</button>
                   <?php endif; ?>
                 </div>
-                <?php if ($fokus['insights'] === []): ?>
+                <?php if ($fGrup === []): ?>
                   <div class="empty"><div class="ic"><i class="fas fa-circle-check"></i></div>
                     <p class="mb-0 small">Tidak ada kondisi yang perlu ditindaklanjuti.</p></div>
                 <?php else: ?>
-                  <?php foreach (array_slice($fokus['insights'], 0, 5) as $ins): ?>
+                  <?php // Lima PRIORITAS = lima hal berbeda. Sebelum ini daftarnya datar,
+                        // sehingga satu indikator bisa memakan dua–tiga baris sekaligus. ?>
+                  <?php foreach (array_slice($fGrup, 0, 5) as $g): ?>
                     <div class="ins">
-                      <div class="ins-bar" style="background: <?= esc($ins['color']['hex']) ?>"></div>
+                      <div class="ins-bar" style="background: <?= esc($g['color']['hex']) ?>"></div>
                       <div class="ins-body">
-                        <div class="ins-title"><?= esc($ins['judul']) ?></div>
-                        <div class="ins-why"><?= esc($ins['alasan']) ?></div>
-                        <span class="badge-soft mt-2" style="background: <?= esc($ins['color']['soft']) ?>; color: <?= esc($ins['color']['hex']) ?>;">
-                          <i class="fas fa-circle-info"></i><?= esc($ins['status']) ?>
-                        </span>
-                      </div>
-                      <div class="ins-act">
-                        <a href="<?= esc($ins['url']) ?>" class="btn btn-sm btn-outline-success">Lihat</a>
+                        <div class="ins-title">
+                          <?= esc($g['judul']) ?>
+                          <?php if (count($g['items']) > 1): ?>
+                            <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; <?= count($g['items']) ?> hal perlu dilengkapi</span>
+                          <?php endif; ?>
+                        </div>
+                        <?php foreach ($g['items'] as $it): ?>
+                          <div class="ins-item">
+                            <div class="ins-why"><?= esc($it['alasan']) ?></div>
+                            <div class="ins-item-act">
+                              <span class="badge-soft" style="background: <?= esc($it['color']['soft']) ?>; color: <?= esc($it['color']['hex']) ?>;">
+                                <i class="fas fa-circle-info"></i><?= esc($it['status']) ?>
+                              </span>
+                              <a href="<?= esc($it['url']) ?>" class="btn btn-sm btn-outline-success">Lihat</a>
+                            </div>
+                          </div>
+                        <?php endforeach; ?>
                       </div>
                     </div>
                   <?php endforeach; ?>
@@ -754,6 +783,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
         'anggaran'   => $fokus['anggaran'],
         'perhatian'  => $fokus['perhatian'],
         'insights'   => $fokus['insights'],
+        'groups'     => $fokus['insight_groups'],
         'indicators' => $fokus['indicators'],
         'series'     => $fokus['chart_series'],
         'distribusi' => $fokus['status_distribution'],
@@ -870,6 +900,28 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
               '<i class="fas fa-circle-info"></i>' + esc(i.status) + '</span></div>' +
             // Read-only: label tombol SELALU "Lihat".
             '<div class="ins-act"><a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">Lihat</a></div></div>';
+        }).join('') + '</div>';
+      }
+
+      /* Varian berkelompok: catatan tindak lanjut OPD, yang satu indikatornya
+         bisa punya beberapa catatan sekaligus. */
+      function daftarInsightGrup(list) {
+        if (!list || !list.length) return kosong('Tidak ada kondisi yang perlu ditindaklanjuti.', 'fa-circle-check');
+        return '<div class="drawer-section">' + list.map(function (g) {
+          var isi = g.items.map(function (i) {
+            return '<div class="ins-item"><div class="ins-why">' + esc(i.alasan) + '</div>' +
+              '<div class="ins-item-act">' +
+              '<span class="badge-soft" style="background:' + esc(i.color.soft) + ';color:' + esc(i.color.hex) + ';">' +
+              '<i class="fas fa-circle-info"></i>' + esc(i.status) + '</span>' +
+              '<a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">Lihat</a></div></div>';
+          }).join('');
+          return '<div class="ins" style="background:#fff;">' +
+            '<div class="ins-bar" style="background:' + esc(g.color.hex) + '"></div>' +
+            '<div class="ins-body"><div class="ins-title">' + esc(g.judul) +
+            (g.items.length > 1
+              ? ' <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; ' + g.items.length + ' hal perlu dilengkapi</span>'
+              : '') +
+            '</div>' + isi + '</div></div>';
         }).join('') + '</div>';
       }
 
@@ -1344,7 +1396,12 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
           return { t: 'Penyerapan Anggaran', s: D.fokus.opd_nama, html: kepala + daftar };
         },
         f_perhatian: function () {
-          return { t: 'Prioritas Tindak Lanjut', s: D.fokus.opd_nama, html: daftarInsight(D.fokus.insights) };
+          var g = D.fokus.groups || [];
+          return {
+            t: 'Prioritas Tindak Lanjut',
+            s: D.fokus.opd_nama + (g.length ? ' · ' + D.fokus.insights.length + ' catatan' : ''),
+            html: daftarInsightGrup(g)
+          };
         }
       };
 

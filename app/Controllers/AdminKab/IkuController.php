@@ -266,6 +266,12 @@ class IkuController extends BaseController
             (int) $daftarPeriode[$periode]['tahun_akhir']
         );
 
+        // Sama seperti sisi OPD: id yang dikirim tetapi tidak sah DITOLAK,
+        // bukan dibiarkan jatuh ke RPJMD berjalan.
+        if ($tolak = $this->tolakVersiSumberTakSah($post['renstra_versi'] ?? null, $versiTersedia)) {
+            return $tolak;
+        }
+
         $versiDipilih = $this->versiSumberDipilih($post['renstra_versi'] ?? null, $versiTersedia);
         $versiId      = $versiDipilih !== null ? (int) $versiDipilih['id'] : null;
 
@@ -554,6 +560,14 @@ class IkuController extends BaseController
                 ->with('error', 'IKU milik OPD dihapus lewat menu IKU pada akun OPD yang bersangkutan.');
         }
 
+        // Lingkup yang sudah punya revisi disahkan tidak boleh diubah langsung.
+        $lingkup = $this->lingkupSasaranIku((int) $sasaranId);
+
+        if ($lingkup !== null
+            && ($tolak = $this->tolakBilaIkuSudahResmi($lingkup['opd_id'], $lingkup['tahun_mulai'], $lingkup['tahun_akhir']))) {
+            return $tolak;
+        }
+
         try {
             $this->ikuModel->deleteComplete((int) $sasaranId);
             session()->setFlashdata('success', 'IKU berhasil dihapus.');
@@ -581,6 +595,13 @@ class IkuController extends BaseController
         if ($owner['opd_id'] !== null) {
             return redirect()->back()
                 ->with('error', 'Status IKU milik OPD diubah lewat menu IKU pada akun OPD yang bersangkutan.');
+        }
+
+        $lingkup = $this->lingkupSasaranIku((int) ($owner['iku_sasaran_id'] ?? 0));
+
+        if ($lingkup !== null
+            && ($tolak = $this->tolakBilaIkuSudahResmi($lingkup['opd_id'], $lingkup['tahun_mulai'], $lingkup['tahun_akhir']))) {
+            return $tolak;
         }
 
         $statusBaru = $this->ikuModel->toggleStatusIndikator((int) $indikatorId);

@@ -138,6 +138,9 @@ if (!function_exists('dash_status_nonnumeric')) {
     {
         $peta = [
             'belum_valid'         => ['name' => 'Belum Valid',         'color' => 'abu',    'icon' => 'fa-circle-question'],
+            // Data LENGKAP, tetapi belum ada pembagi untuk menilainya. Sengaja
+            // abu-abu, bukan merah: ini bukan kinerja buruk dan bukan kelalaian.
+            'belum_dinilai'       => ['name' => 'Belum Dapat Dinilai', 'color' => 'abu',    'icon' => 'fa-hourglass-half'],
             'belum_ada_data'      => ['name' => 'Belum Ada Data',      'color' => 'abu',    'icon' => 'fa-minus'],
             'belum_terverifikasi' => ['name' => 'Belum Terverifikasi', 'color' => 'oranye', 'icon' => 'fa-hourglass-half'],
         ];
@@ -253,6 +256,9 @@ if (!function_exists('dash_row_validity')) {
 
         $gagal = static fn (string $code, ?string $pesan = null): array => [
             'is_valid'        => false,
+            // Data wajibnya memang belum lengkap / tidak terbaca. Berbeda dari
+            // `not_evaluable` di bawah, yang datanya justru sudah lengkap.
+            'not_evaluable'   => false,
             'reason_code'     => $code,
             'reason'          => $pesan ?? dash_reason_label($code),
             'percentage'      => null,
@@ -296,6 +302,32 @@ if (!function_exists('dash_row_validity')) {
         if ($hasil['error'] !== null) {
             return $gagal(dash_map_error_code((string) $hasil['error']), (string) $hasil['error']);
         }
+
+        // =========================================================
+        // BELUM DAPAT DINILAI — DIBEDAKAN DARI BELUM LENGKAP
+        //
+        // Barisnya sah dan datanya sudah diisi; yang belum ada hanyalah
+        // pembagi. Kalau ini dijadikan `$gagal`, dashboard akan
+        // memperlakukannya sebagai pekerjaan yang belum beres: masuk hitungan
+        // "belum valid", menyumbang butir Perlu Tindak Lanjut, dan menahan
+        // agregat OPD — padahal tidak ada yang bisa dikerjakan operator.
+        //
+        // `is_valid` tetap false karena tidak ada persentase yang sah untuk
+        // dirata-rata, TETAPI `not_evaluable` menandainya agar pemanggil bisa
+        // MENGELUARKANNYA dari perhitungan alih-alih menghitungnya gagal.
+        // =========================================================
+        if (($hasil['status'] ?? '') === 'not_evaluable') {
+            return [
+                'is_valid'        => false,
+                'not_evaluable'   => true,
+                'reason_code'     => (string) ($hasil['reason_code'] ?? 'zero_target'),
+                'reason'          => (string) $hasil['calculation_description'],
+                'percentage'      => null,
+                'filled_quarters' => (int) $hasil['filled_quarters_count'],
+                'last_quarter'    => $hasil['last_quarter'],
+            ];
+        }
+
         if ($hasil['percentage'] === null) {
             return $gagal('not_calculable');
         }
@@ -309,6 +341,7 @@ if (!function_exists('dash_row_validity')) {
             if (!capaianTerisi($capaian[$q] ?? null) && capaianTerisi($targets[$q] ?? null)) {
                 return [
                     'is_valid'        => false,
+                    'not_evaluable'   => false,
                     'reason_code'     => 'incomplete_period',
                     'reason'          => 'Capaian Triwulan ' . capaianRomawi($q) . ' belum diinput.',
                     'percentage'      => (float) $hasil['percentage'],
@@ -320,6 +353,7 @@ if (!function_exists('dash_row_validity')) {
 
         return [
             'is_valid'        => true,
+            'not_evaluable'   => false,
             'reason_code'     => null,
             'reason'          => null,
             'percentage'      => round((float) $hasil['percentage'], 2),

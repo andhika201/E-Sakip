@@ -15,20 +15,32 @@ use Throwable;
  *   php spark monev:warisan --fix      kosongkan capaian warisannya
  *
  * =====================================================================
- * MASALAHNYA
+ * PERANNYA SUDAH BERUBAH — BACA INI DULU
  *
  * Satu indikator diukur lewat BARIS UKUR: tiap sub rencana aksi punya target,
  * capaian, dan metode perhitungannya sendiri. Bila sub belum ada, rencana
  * aksinya sendiri yang menjadi baris ukur.
  *
  * Banyak OPD mengisi capaian di tingkat rencana aksi LEBIH DULU, baru kemudian
- * memecahnya menjadi sub. Capaian lama itu tetap tinggal — dan karena
- * OpdDashboardService tetap menghitung baris yang punya capaian (lihat
- * catatannya di sana), satu baris warisan tanpa metode perhitungan menjatuhkan
- * seluruh indikator menjadi "belum dapat dihitung", meski setiap sub di
- * bawahnya sudah lengkap.
+ * memecahnya menjadi sub. Capaian lama itu tetap tinggal.
  *
- * Yang dilihat operator: "data saya sudah ada, kenapa dibilang belum".
+ * DULU baris tinggalan itu MERUSAK dashboard: OpdDashboardService ikut
+ * menghitung baris tingkat rencana aksi selama masih berkapaian, sehingga satu
+ * baris tanpa metode menjatuhkan seluruh indikator menjadi "belum dapat
+ * dihitung" walau setiap sub di bawahnya sudah lengkap. Perintah ini lahir
+ * sebagai penawarnya, dan menjalankannya terasa WAJIB.
+ *
+ * SEJAK 2 September 2026 tidak lagi. Dashboard kini memilih baris ukurnya
+ * dengan tegas — sub bila ada, parent bila tidak — sehingga baris tinggalan
+ * TIDAK PERNAH ikut mengukur apa pun. Pada basis data ini perubahan itu
+ * menurunkan laporan "metode belum dipilih" dari 291 menjadi 65; ke-226
+ * sisanya memang palsu.
+ *
+ * Maka perintah ini sekarang ALAT KEBERSIHAN DATA, bukan syarat supaya
+ * dashboard benar. Menjalankannya merapikan residu; TIDAK menjalankannya
+ * tidak lagi membuat angka mana pun salah. Karena itu jangan pernah
+ * menjadikannya prasyarat rilis, dan jangan menjalankan --fix hanya untuk
+ * "menghilangkan peringatan" — peringatannya sudah tidak ada.
  *
  * =====================================================================
  * YANG DIANGGAP WARISAN

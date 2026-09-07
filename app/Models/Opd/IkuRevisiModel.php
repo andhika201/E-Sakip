@@ -2207,18 +2207,52 @@ class IkuRevisiModel extends Model
 
             // Peta isi draft sekarang, untuk menandai yang sudah ada. Dibaca
             // sekali di awal, bukan per baris, supaya tidak jadi N+1.
-            $sasaranAda = [];
+            // =========================================================
+            // DUA KUNCI PENCOCOKAN: SILSILAH DULU, TEKS BELAKANGAN
+            //
+            // Semula baris draft hanya dicocokkan lewat TEKS. Ejaan dan spasi
+            // memang sudah dinormalkan kunciTeks(), tetapi begitu redaksi
+            // sasaran di Renstra disunting — satu kata diganti, tanda baca
+            // dirapikan — teksnya tidak lagi sama, dan sync menganggapnya
+            // sasaran BARU. Hasilnya sasaran kembar di dalam draft: satu
+            // salinan IKU berjalan, satu lagi hasil sync, isinya sama saja.
+            //
+            // Itu bukan kemungkinan teoretis; riwayat proyek ini memuat
+            // beberapa skrip perbaikan `iku_kembar` yang lahir dari sebab
+            // serupa.
+            //
+            // Silsilah jauh lebih kokoh: `source_ref_id` pada baris arsip
+            // menunjuk baris Renstra BERJALAN yang menurunkannya, dan
+            // kandidat sync membawa id yang sama pada `sumber_live_id`.
+            // Redaksi boleh berubah, tautannya tidak.
+            //
+            // Teks tetap dipakai sebagai cadangan: baris lama yang belum
+            // sempat mendapat silsilah (sebelum migrasi 2026-08-28) hanya
+            // bertaut lewat teks, dan mencocokkannya tetap lebih baik
+            // daripada menggandakannya.
+            // =========================================================
+            $sasaranAda      = [];
+            $sasaranSilsilah = [];
 
             foreach ($db->table('iku_revisi_sasaran')->where('revisi_id', $revisiId)
                 ->get()->getResultArray() as $sa) {
                 $sasaranAda[$this->kunciTeks($sa['sasaran'])] = $sa;
+
+                if (! empty($sa['source_ref_id'])) {
+                    $sasaranSilsilah[(int) $sa['source_ref_id']] = $sa;
+                }
             }
 
-            $indikatorAda = [];
+            $indikatorAda      = [];
+            $indikatorSilsilah = [];
 
             foreach ($db->table('iku_revisi_indikator')->where('revisi_id', $revisiId)
                 ->get()->getResultArray() as $ia) {
                 $indikatorAda[(int) $ia['revisi_sasaran_id']][$this->kunciTeks($ia['indikator'])] = (int) $ia['id'];
+
+                if (! empty($ia['source_ref_id'])) {
+                    $indikatorSilsilah[(int) $ia['revisi_sasaran_id']][(int) $ia['source_ref_id']] = (int) $ia['id'];
+                }
             }
 
             $urutanSasaran = count($sasaranAda);
@@ -2233,9 +2267,25 @@ class IkuRevisiModel extends Model
                 $dipilih  = array_map('intval', (array) ($pilihan[$idSumber] ?? []));
                 $diperbaru = array_map('intval', (array) ($perbarui[$idSumber] ?? []));
                 $kunciS   = $this->kunciTeks((string) $sasaran['sasaran']);
+                $liveS    = (int) ($sasaran['sumber_live_id'] ?? 0);
 
-                if (isset($sasaranAda[$kunciS])) {
-                    $arsipSasaranId = (int) $sasaranAda[$kunciS]['id'];
+                // Silsilah lebih dipercaya daripada teks; lihat catatan di atas.
+                $cocokS = ($liveS > 0 && isset($sasaranSilsilah[$liveS]))
+                    ? $sasaranSilsilah[$liveS]
+                    : ($sasaranAda[$kunciS] ?? null);
+
+                if ($cocokS !== null) {
+                    // Teks sasaran di draft SENGAJA tidak ikut ditimpa. Sync
+                    // adalah operasi tingkat INDIKATOR — sasaran hanya wadah
+                    // penempatannya, dan getKandidatSync() memang tidak pernah
+                    // membandingkan redaksi sasaran.
+                    //
+                    // Menimpanya di sini akan menyala setengah-setengah: hanya
+                    // saat kebetulan ada indikator di bawahnya yang berubah,
+                    // sebab sasaran tanpa indikator berubah dilewati sejak
+                    // penjaga di atas. Perilaku yang kadang jalan kadang tidak
+                    // lebih menyesatkan daripada yang konsisten tidak jalan.
+                    $arsipSasaranId = (int) $cocokS['id'];
                 } else {
                     $db->table('iku_revisi_sasaran')->insert([
                         'revisi_id'         => $revisiId,
@@ -2252,8 +2302,13 @@ class IkuRevisiModel extends Model
                         'updated_at'        => $now,
                     ]);
 
-                    $arsipSasaranId          = (int) $db->insertID();
-                    $sasaranAda[$kunciS]     = ['id' => $arsipSasaranId];
+                    $arsipSasaranId      = (int) $db->insertID();
+                    $sasaranAda[$kunciS] = ['id' => $arsipSasaranId, 'sasaran' => $sasaran['sasaran']];
+
+                    if ($liveS > 0) {
+                        $sasaranSilsilah[$liveS] = $sasaranAda[$kunciS];
+                    }
+
                     $stat['sasaran_baru']++;
                 }
 
@@ -2269,7 +2324,12 @@ class IkuRevisiModel extends Model
                     }
 
                     $kunciI = $this->kunciTeks((string) $ind['indikator']);
-                    $adaId  = $indikatorAda[$arsipSasaranId][$kunciI] ?? null;
+                    $liveI  = (int) ($ind['sumber_live_id'] ?? 0);
+
+                    // Sama seperti sasaran: silsilah dulu, teks belakangan.
+                    $adaId = ($liveI > 0 && isset($indikatorSilsilah[$arsipSasaranId][$liveI]))
+                        ? $indikatorSilsilah[$arsipSasaranId][$liveI]
+                        : ($indikatorAda[$arsipSasaranId][$kunciI] ?? null);
 
                     if ($adaId !== null) {
                         // Sudah ada di draft. Ditimpa HANYA bila perubahannya
@@ -2308,6 +2368,13 @@ class IkuRevisiModel extends Model
                     $arsipIndId = (int) $db->insertID();
 
                     $indikatorAda[$arsipSasaranId][$kunciI] = $arsipIndId;
+
+                    // Silsilahnya ikut dicatat, supaya kandidat lain dalam
+                    // jalannya yang sama tidak menyisipkannya untuk kedua kali.
+                    if ($liveI > 0) {
+                        $indikatorSilsilah[$arsipSasaranId][$liveI] = $arsipIndId;
+                    }
+
                     $stat['indikator_baru']++;
 
                     foreach ($ind['target'] ?? [] as $tahun => $nilai) {

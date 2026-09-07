@@ -145,6 +145,54 @@ trait IkuFormTrait
      * Nilai dari form tidak pernah dipercaya: id karangan tidak boleh membuka
      * arsip milik lingkup lain.
      */
+    /**
+     * Tolak id versi sumber yang DIKIRIM tetapi tidak sah.
+     *
+     * =================================================================
+     * DUA KEADAAN YANG TIDAK BOLEH DISAMAKAN
+     *
+     * `versiSumberDipilih()` mengembalikan null untuk dua hal yang sangat
+     * berbeda: parameter memang tidak dikirim, dan parameter dikirim tetapi
+     * tidak ada di daftar versi yang sah. Pemanggilnya lalu meneruskan null
+     * ke getKandidatSync(), yang menafsirkannya sebagai "tanpa versi" lalu
+     * membaca Renstra/RPJMD BERJALAN.
+     *
+     * Akibatnya id karangan — atau id milik OPD lain, atau id dari form yang
+     * sudah basi — tidak pernah ditolak. Ia diam-diam berganti menjadi sumber
+     * lain, dan pemakainya menyimpan hasil sync yang dikiranya berasal dari
+     * versi yang ia pilih.
+     *
+     * Penjaga ini memisahkan keduanya: kosong = tidak dikirim (dibiarkan),
+     * terisi tetapi tidak cocok = ditolak.
+     *
+     * @param array<int, array<string, mixed>> $tersedia versi yang sah
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|null null bila tidak perlu ditolak
+     */
+    private function tolakVersiSumberTakSah($nilai, array $tersedia)
+    {
+        $mentah = is_string($nilai) ? trim($nilai) : $nilai;
+
+        // Tidak dikirim sama sekali — bukan urusan penjaga ini.
+        if ($mentah === null || $mentah === '') {
+            return null;
+        }
+
+        $id = (int) $mentah;
+
+        foreach ($tersedia as $v) {
+            if ((int) $v['id'] === $id) {
+                return null;
+            }
+        }
+
+        return redirect()->back()->withInput()->with(
+            'error',
+            'Versi sumber yang dipilih tidak sah untuk periode & lingkup ini. '
+            . 'Muat ulang halaman lalu pilih versi dari daftar yang tersedia.'
+        );
+    }
+
     private function versiSumberDipilih($nilai, array $tersedia): ?array
     {
         $id = (int) $nilai;

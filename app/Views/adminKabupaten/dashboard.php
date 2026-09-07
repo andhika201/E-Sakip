@@ -234,9 +234,19 @@ $js = static fn ($v) => json_encode(
                 <div>
                   <div class="kpi-num"><?= (int) $fWasp['total'] ?> <span style="font-size:.9rem;font-weight:700;color:#6b7a70;">Tindak Lanjut</span></div>
                   <div class="kpi-sub mt-2">
-                    <?php if ($fWasp['kritis'] > 0): ?><div><span class="dot" style="background:#d64545"></span><?= (int) $fWasp['kritis'] ?> indikator kritis</div><?php endif; ?>
-                    <?php if ($fWasp['monev_belum'] > 0): ?><div><span class="dot" style="background:#e07b39"></span><?= (int) $fWasp['monev_belum'] ?> MONEV belum lengkap</div><?php endif; ?>
-                    <?php if ($fWasp['renaksi_belum'] > 0): ?><div><span class="dot" style="background:#d9a520"></span><?= (int) $fWasp['renaksi_belum'] ?> Rencana Aksi belum ada</div><?php endif; ?>
+                    <?php
+                    // Rincian lengkap & terurut dari OpdDashboardService, jadi
+                    // penjumlahannya pasti sama dengan angka di atas.
+                    $fRincian = $fWasp['rincian'] ?? [];
+                    $fTampil  = count($fRincian) > 4 ? array_slice($fRincian, 0, 3) : $fRincian;
+                    $fSisa    = (int) $fWasp['total'] - array_sum(array_column($fTampil, 'count'));
+                    ?>
+                    <?php foreach ($fTampil as $r): ?>
+                      <div><span class="dot" style="background:<?= esc($r['color']['hex']) ?>"></span><?= esc($r['teks']) ?></div>
+                    <?php endforeach; ?>
+                    <?php if ($fSisa > 0): ?>
+                      <div><span class="dot" style="background:#8a968f"></span><?= $fSisa ?> catatan lain</div>
+                    <?php endif; ?>
                     <?php if ($fWasp['total'] === 0): ?><div class="text-success fw-semibold">Tidak ada kondisi yang perlu ditindaklanjuti.</div><?php endif; ?>
                   </div>
                 </div>
@@ -282,24 +292,35 @@ $js = static fn ($v) => json_encode(
               <div class="panel">
                 <div class="panel-head">
                   <div><h3>Prioritas Tindak Lanjut OPD</h3><p>Disusun otomatis dari aturan kelengkapan &amp; capaian.</p></div>
-                  <?php if (count($fokus['insights']) > 5): ?>
-                    <button type="button" class="btn btn-sm btn-outline-success" data-drawer="f_perhatian">Lihat semua (<?= count($fokus['insights']) ?>)</button>
+                  <?php $fGrup = $fokus['insight_groups'] ?? []; ?>
+                  <?php if (count($fGrup) > 5): ?>
+                    <button type="button" class="btn btn-sm btn-outline-success" data-drawer="f_perhatian">Lihat semua (<?= count($fGrup) ?>)</button>
                   <?php endif; ?>
                 </div>
-                <?php if ($fokus['insights'] === []): ?>
+                <?php if ($fGrup === []): ?>
                   <div class="empty"><div class="ic"><i class="fas fa-circle-check"></i></div>
                     <p class="mb-0 small">Tidak ada kondisi yang perlu ditindaklanjuti.</p></div>
                 <?php else: ?>
-                  <?php foreach (array_slice($fokus['insights'], 0, 5) as $ins): ?>
+                  <?php // Satu indikator = satu kartu, seluruh catatannya di dalamnya. ?>
+                  <?php foreach (array_slice($fGrup, 0, 5) as $g): ?>
                     <div class="ins">
-                      <div class="ins-bar" style="background: <?= esc($ins['color']['hex']) ?>"></div>
+                      <div class="ins-bar" style="background: <?= esc($g['color']['hex']) ?>"></div>
                       <div class="ins-body">
-                        <div class="ins-title"><?= esc($ins['judul']) ?></div>
-                        <div class="ins-why"><?= esc($ins['alasan']) ?></div>
-                        <span class="badge-soft mt-2" style="background: <?= esc($ins['color']['soft']) ?>; color: <?= esc($ins['color']['hex']) ?>;"><?= esc($ins['status']) ?></span>
-                      </div>
-                      <div class="ins-act">
-                        <a href="<?= esc($ins['url']) ?>" class="btn btn-sm btn-outline-success"><?= $canWrite ? esc($ins['tombol']) : 'Lihat' ?></a>
+                        <div class="ins-title">
+                          <?= esc($g['judul']) ?>
+                          <?php if (count($g['items']) > 1): ?>
+                            <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; <?= count($g['items']) ?> hal perlu dilengkapi</span>
+                          <?php endif; ?>
+                        </div>
+                        <?php foreach ($g['items'] as $it): ?>
+                          <div class="ins-item">
+                            <div class="ins-why"><?= esc($it['alasan']) ?></div>
+                            <div class="ins-item-act">
+                              <span class="badge-soft" style="background: <?= esc($it['color']['soft']) ?>; color: <?= esc($it['color']['hex']) ?>;"><?= esc($it['status']) ?></span>
+                              <a href="<?= esc($it['url']) ?>" class="btn btn-sm btn-outline-success"><?= $canWrite ? esc($it['tombol']) : 'Lihat' ?></a>
+                            </div>
+                          </div>
+                        <?php endforeach; ?>
                       </div>
                     </div>
                   <?php endforeach; ?>
@@ -640,6 +661,7 @@ $js = static fn ($v) => json_encode(
         'anggaran'   => $fokus['anggaran'],
         'perhatian'  => $fokus['perhatian'],
         'insights'   => $fokus['insights'],
+        'groups'     => $fokus['insight_groups'],
         'indicators' => $fokus['indicators'],
         'series'     => $fokus['chart_series'],
         'distribusi' => $fokus['status_distribution'],
@@ -752,6 +774,27 @@ $js = static fn ($v) => json_encode(
             (i.objek ? '<div class="ins-why">' + esc(i.objek) + '</div>' : '') +
             '<span class="badge-soft mt-2" style="background:' + esc(i.color.soft) + ';color:' + esc(i.color.hex) + ';">' + esc(i.status) + '</span></div>' +
             '<div class="ins-act"><a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">' + esc(D.can_write ? i.tombol : 'Lihat') + '</a></div></div>';
+        }).join('') + '</div>';
+      }
+
+      /* Varian berkelompok: dipakai catatan tindak lanjut OPD, yang satu
+         indikatornya bisa punya beberapa catatan sekaligus. */
+      function daftarInsightGrup(list) {
+        if (!list || !list.length) return kosong('Tidak ada kondisi yang perlu ditindaklanjuti.', 'fa-circle-check');
+        return '<div class="drawer-section">' + list.map(function (g) {
+          var isi = g.items.map(function (i) {
+            return '<div class="ins-item"><div class="ins-why">' + esc(i.alasan) + '</div>' +
+              '<div class="ins-item-act">' +
+              '<span class="badge-soft" style="background:' + esc(i.color.soft) + ';color:' + esc(i.color.hex) + ';">' + esc(i.status) + '</span>' +
+              '<a class="btn btn-sm btn-outline-success" href="' + esc(i.url) + '">' + esc(D.can_write ? i.tombol : 'Lihat') + '</a></div></div>';
+          }).join('');
+          return '<div class="ins" style="background:#fff;">' +
+            '<div class="ins-bar" style="background:' + esc(g.color.hex) + '"></div>' +
+            '<div class="ins-body"><div class="ins-title">' + esc(g.judul) +
+            (g.items.length > 1
+              ? ' <span class="text-muted fw-normal" style="font-size:.76rem;">&middot; ' + g.items.length + ' hal perlu dilengkapi</span>'
+              : '') +
+            '</div>' + isi + '</div></div>';
         }).join('') + '</div>';
       }
 
@@ -1223,7 +1266,12 @@ $js = static fn ($v) => json_encode(
           return { t: 'Penyerapan Anggaran', s: D.fokus.opd_nama, html: kepala + daftar };
         },
         f_perhatian: function () {
-          return { t: 'Prioritas Tindak Lanjut', s: D.fokus.opd_nama, html: daftarInsight(D.fokus.insights) };
+          var g = D.fokus.groups || [];
+          return {
+            t: 'Prioritas Tindak Lanjut',
+            s: D.fokus.opd_nama + (g.length ? ' · ' + D.fokus.insights.length + ' catatan' : ''),
+            html: daftarInsightGrup(g)
+          };
         }
       };
 

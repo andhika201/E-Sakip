@@ -1968,10 +1968,23 @@ class OpdDashboardService
 
         // Status verifikasi/pelaporan — memakai status LAKIP yang memang ada,
         // bukan status verifikasi karangan (lihat verificationInfo()).
-        $lakip = $this->statusLakip($opdId, $tahun);
+        //
+        // Yang ditagih adalah LAKIP terakhir yang tahunnya SUDAH TUTUP, bukan
+        // LAKIP tahun yang sedang ditampilkan: LAKIP tahun berjalan belum bisa
+        // disusun sama sekali, sehingga menagihnya hanya melahirkan butir yang
+        // tidak bisa diselesaikan siapa pun (lihat dash_tahun_lakip_jatuh_tempo()).
+        //
+        // Karena tahunnya bisa berbeda dari filter dashboard, judul, pesan, DAN
+        // tautan tombolnya ikut digeser — tombol yang membuka tahun lain akan
+        // memperlihatkan halaman yang tampak baik-baik saja dan membuat butir
+        // ini terbaca sebagai tuduhan keliru.
+        $tahunLakip = dash_tahun_lakip_jatuh_tempo($tahun);
+        $lakip      = $this->statusLakip($opdId, $tahunLakip);
         if ($lakip['perlu_tindak_lanjut']) {
-            $out[] = $this->insight(70, 'verifikasi', 'Laporan Kinerja (LAKIP) ' . $tahun,
-                $lakip['pesan'], 'Belum final', 'abu', $urlLkp, 'Buka LAKIP', null);
+            $out[] = $this->insight(70, 'verifikasi', 'Laporan Kinerja (LAKIP) ' . $tahunLakip,
+                $lakip['pesan'], 'Belum final', 'abu',
+                $tahunLakip === $tahun ? $urlLkp : $this->moduleLinks($tahunLakip, $jenis, $opdId)['lakip'],
+                'Buka LAKIP', null);
         }
 
         usort($out, static fn ($a, $b) => $a['severity'] <=> $b['severity'] ?: strcmp($a['judul'], $b['judul']));
@@ -2399,8 +2412,11 @@ class OpdDashboardService
     }
 
     /**
-     * Status LAKIP OPD tahun berjalan — satu-satunya status "kefinalan"
-     * pelaporan yang benar-benar ada datanya.
+     * Status LAKIP OPD untuk SATU tahun tertentu — satu-satunya status
+     * "kefinalan" pelaporan yang benar-benar ada datanya.
+     *
+     * `$tahun` di sini adalah tahun LAKIP yang sudah jatuh tempo
+     * (dash_tahun_lakip_jatuh_tempo()), bukan otomatis tahun filter dashboard.
      *
      * @return array{status: string|null, pesan: string, perlu_tindak_lanjut: bool}
      */

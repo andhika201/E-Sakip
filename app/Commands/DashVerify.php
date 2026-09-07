@@ -252,6 +252,33 @@ class DashVerify extends BaseCommand
         $this->cek('prioritas terurut (kritis lebih dulu)',
             $d8['insights'] === [] || $d8['insights'][0]['severity'] <= $d8['insights'][count($d8['insights']) - 1]['severity']);
 
+        CLI::write('== LAKIP: yang ditagih hanya tahun yang sudah tutup ==', 'yellow');
+        // TAHUN_UJI sengaja jauh di depan (2099), jadi "LAKIP tahun dashboard"
+        // pasti belum tutup — persis keadaan yang dulu melahirkan butir tindak
+        // lanjut yang tak bisa diselesaikan siapa pun.
+        $sekarang   = (int) date('Y');
+        $tahunLakip = dash_tahun_lakip_jatuh_tempo($tahun);
+        $this->cek('tahun berjalan -> ditagih LAKIP setahun ke belakang',
+            dash_tahun_lakip_jatuh_tempo($sekarang) === $sekarang - 1);
+        $this->cek('tahun yang sudah tutup -> LAKIP tahun itu sendiri, tidak digeser lagi',
+            dash_tahun_lakip_jatuh_tempo($sekarang - 1) === $sekarang - 1
+            && dash_tahun_lakip_jatuh_tempo($sekarang - 3) === $sekarang - 3);
+        $this->cek('tahun yang belum tutup tidak pernah jadi tagihan',
+            $tahunLakip < $sekarang && $tahunLakip !== $tahun);
+        $this->cek('tidak ada butir yang menagih LAKIP tahun berjalan/mendatang',
+            array_filter($d8['insights'], static fn ($i) => str_contains((string) $i['judul'], 'LAKIP ' . $tahun)
+                || str_contains((string) $i['alasan'], 'LAKIP tahun ' . $tahun)) === []);
+
+        $lakipIns = array_values(array_filter($d8['insights'], static fn ($i) => $i['code'] === 'verifikasi'));
+        if ($lakipIns !== []) {
+            $this->cek('butir LAKIP menyebut tahun yang jatuh tempo',
+                str_contains((string) $lakipIns[0]['judul'], (string) $tahunLakip));
+            // Tombol yang membuka tahun LAIN akan memperlihatkan halaman yang
+            // tampak baik-baik saja, dan butirnya terbaca sebagai tuduhan keliru.
+            $this->cek('tombolnya membuka LAKIP tahun itu juga',
+                str_contains((string) $lakipIns[0]['url'], 'tahun=' . $tahunLakip));
+        }
+
         CLI::write('== Kartu Perlu Perhatian rekonsiliasi ==', 'yellow');
         $this->ujiRekonsiliasiPerhatian($d8);
 

@@ -449,3 +449,40 @@ if (!function_exists('dash_triwulan_berjalan')) {
         return max(1, (int) ceil((int) date('n') / 3) - 1);
     }
 }
+
+if (!function_exists('dash_tahun_lakip_jatuh_tempo')) {
+    /**
+     * Tahun LAKIP yang laporannya BENAR-BENAR sudah jatuh tempo saat ini.
+     *
+     * LAKIP tahun X baru dapat disusun SETELAH tahun X berakhir — isinya
+     * capaian setahun penuh. Selama tahun berjalan, LAKIP tahun itu belum ada
+     * dan memang belum boleh ada.
+     *
+     * Menagihnya di tengah tahun adalah peringatan palsu yang persis sekelas
+     * dengan yang sudah diperbaiki pada dash_triwulan_berjalan(): butir tindak
+     * lanjut yang tidak bisa diselesaikan siapa pun, menyala sepanjang tahun,
+     * dan pelan-pelan membuat panel Prioritas Tindak Lanjut berhenti dipercaya.
+     *
+     * Karena itu yang ditagih adalah LAKIP terakhir yang tahunnya sudah tutup:
+     *
+     *   dashboard 2026 dibuka pada 2026  -> LAKIP 2025   (satu tahun ke belakang)
+     *   dashboard 2025 dibuka pada 2026  -> LAKIP 2025   (tahun itu sendiri, sudah tutup)
+     *   dashboard 2024 dibuka pada 2026  -> LAKIP 2024
+     *
+     * Perhatikan baris kedua: aturannya BUKAN "selalu tahun - 1". Bila yang
+     * dibuka adalah tahun yang sudah lewat, LAKIP tahun itu sendirilah yang
+     * jatuh tempo — menggesernya lagi ke belakang akan membuat dashboard tahun
+     * lampau menagih dokumen yang salah dan tidak pernah menyinggung LAKIP
+     * tahun yang sedang ditampilkan.
+     *
+     * Catatan yang disengaja: tagihan menyala sejak 1 Januari, sedangkan
+     * tenggat resmi penyampaian LAKIP jatuh sekitar akhir Maret. Itu memang
+     * masa penyusunannya, dan butirnya berbobot paling ringan (abu-abu,
+     * "Belum final"), jadi tidak diberi tenggang. Bila kelak diminta, yang
+     * perlu diubah cukup fungsi ini.
+     */
+    function dash_tahun_lakip_jatuh_tempo(int $tahun): int
+    {
+        return min($tahun, (int) date('Y') - 1);
+    }
+}

@@ -460,6 +460,15 @@ class RktController extends BaseController
 
         // dd($data['program'][0]);
         $data['opd_id'] = session()->get('opd_id'); // atau sesuai field sesi kamu
+
+        // Status TIDAK boleh datang dari form (§34).
+        //
+        // saveRkt() membaca `$payload['status']` langsung dari POST mentah,
+        // sehingga menambahkan satu field tersembunyi sudah cukup untuk
+        // membuat RKT lahir dalam keadaan 'selesai' tanpa pernah melewati
+        // tombol penyelesaiannya. Status baru hanya boleh berpindah lewat
+        // updateStatus(), yang memang memeriksa keadaan seluruh barisnya.
+        unset($data['status']);
         $rktModel = new \App\Models\RktModel();
         try {
             if ($rktModel->saveRkt($data)) {
@@ -472,7 +481,7 @@ class RktController extends BaseController
 
         } catch (\Exception $e) {
             log_message('error', 'Error saving PK: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'RKT gagal diproses', 'opd.rkt'));
         }
 
     }
@@ -755,7 +764,7 @@ class RktController extends BaseController
         } catch (\Throwable $th) {
             $db->transRollback();
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan: ' . $th->getMessage());
+                ->with('error', pesanGalatBerawalan($th, 'Terjadi kesalahan', 'opd.rkt'));
         }
     }
 
@@ -770,11 +779,32 @@ class RktController extends BaseController
             return redirect()->back()->with('error', 'Indikator tidak valid.');
         }
 
+        // =============================================================
+        // LINGKUP OPD DIAMBIL DARI SESI, DAN IKUT MENYARING
+        //
+        // Sebelumnya baca maupun tulis di bawah hanya menyaring
+        // `indikator_id` + `tahun`. Karena indikator milik SEMUA OPD hidup di
+        // tabel yang sama, satu POST dengan indikator_id milik OPD lain sudah
+        // cukup untuk membalik status RKT mereka — tanpa galat apa pun, dan
+        // tanpa jejak bahwa yang mengubahnya bukan pemiliknya.
+        //
+        // `deleteByIndicator()` tepat di bawah method ini SUDAH menyaring
+        // opd_id sejak semula; yang satu ini terlewat.
+        // =============================================================
+        $opdId = session()->get('opd_id');
+
+        if ($opdId === null || $opdId === '') {
+            return redirect()->back()->with('error', 'Lingkup OPD tidak dikenali.');
+        }
+
+        $opdId = (int) $opdId;
+
         try {
-            // Ambil semua RKT untuk indikator + tahun ini
+            // Ambil semua RKT untuk indikator + tahun ini, MILIK OPD INI.
             $rows = $db->table('rkt')
                 ->where('indikator_id', $indikatorId)
                 ->where('tahun', $tahun)
+                ->where('opd_id', $opdId)
                 ->get()
                 ->getResultArray();
 
@@ -801,6 +831,7 @@ class RktController extends BaseController
             $db->table('rkt')
                 ->where('indikator_id', $indikatorId)
                 ->where('tahun', $tahun)
+                ->where('opd_id', $opdId)
                 ->update([
                     'status' => $newStatus,
                     'updated_at' => date('Y-m-d H:i:s'),
@@ -813,7 +844,7 @@ class RktController extends BaseController
         } catch (\Throwable $th) {
             return redirect()->back()->with(
                 'error',
-                'Gagal mengubah status RKT: ' . $th->getMessage()
+                pesanGalatBerawalan($th, 'Gagal mengubah status RKT', 'opd.rkt')
             );
         }
     }
@@ -870,7 +901,7 @@ class RktController extends BaseController
 
         } catch (\Throwable $e) {
             $db->transRollback();
-            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Gagal menghapus data', 'opd.rkt'));
         }
     }
 }

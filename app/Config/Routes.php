@@ -262,6 +262,13 @@ $routes->group(
         $routes->post('rpjmd/versi/ajukan/(:num)', 'RpjmdController::versiAjukan/$1');
         $routes->post('rpjmd/versi/tetapkan/(:num)', 'RpjmdController::versiTetapkan/$1');
         $routes->post('rpjmd/versi/batalkan/(:num)', 'RpjmdController::versiBatalkan/$1');
+        // HAPUS versi — POST saja, dan sengaja HANYA untuk RPJMD.
+        //
+        // DokumenVersiTrait dipakai bersama RenstraController, tetapi versi
+        // Renstra milik OPD tidak boleh dimusnahkan tanpa persetujuan dan alur
+        // persetujuannya belum ada. Rutenya tidak didaftarkan di sana, dan
+        // versiBolehHapus() menolak lingkup OPD sebagai lapis kedua.
+        $routes->post('rpjmd/versi/hapus/(:num)', 'RpjmdController::versiHapus/$1');
         // Tombolnya dirender versi/lihat.php untuk semua pemegang
         // rpjmd.version.pin — tanpa dua rute ini POST-nya mendarat 404.
         $routes->post('rpjmd/versi/jadikan-utama/(:num)', 'RpjmdController::versiJadikanUtama/$1');

@@ -205,9 +205,9 @@ class PegawaiController extends BaseController
             $msg = $this->syncMessage($r);
             return redirect()->to($dest)->with('success', $msg);
         } catch (ProviderNotConfiguredException $e) {
-            return redirect()->to($dest)->with('error', $e->getMessage());
+            return redirect()->to($dest)->with('error', pesanGalat($e, 'kab.pegawai'));
         } catch (\Throwable $e) {
-            return redirect()->to($dest)->with('error', 'Sinkron gagal: ' . $e->getMessage());
+            return redirect()->to($dest)->with('error', pesanGalatBerawalan($e, 'Sinkron gagal', 'kab.pegawai'));
         }
     }
 

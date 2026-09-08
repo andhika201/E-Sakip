@@ -204,6 +204,24 @@ trait IkuRevisiTrait
         return $this->izinService ??= new IzinSuntingService();
     }
 
+    /**
+     * Kewenangan MEMBUANG sebuah versi IKU, menurut lingkupnya.
+     *
+     * Lingkup OPD mengajukan (butuh izin "request"); lingkup Kabupaten
+     * menghapus langsung (butuh izin hapus modulnya sendiri). Dipusatkan di
+     * sini supaya layar dan penyimpan tidak pernah memakai aturan berbeda —
+     * kalau berbeda, tombolnya muncul lalu penyimpanannya menolak, atau
+     * sebaliknya tombolnya hilang padahal kewenangannya ada.
+     */
+    private function bolehHapusVersi(): bool
+    {
+        if ($this->revisiOpdId() === null) {
+            return function_exists('user_can') && user_can($this->revisiPermPrefix() . '.delete');
+        }
+
+        return $this->bolehMintaIzin();
+    }
+
     private function bolehMintaIzin(): bool
     {
         return function_exists('user_can') && user_can('iku.izin_sunting.request');
@@ -362,7 +380,7 @@ trait IkuRevisiTrait
                 (int) $revisi['id']
             );
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi('/lihat/' . (int) $id))->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi('/lihat/' . (int) $id))->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($this->urlRevisi('/lihat/' . (int) $id))->with('success',
@@ -454,18 +472,40 @@ trait IkuRevisiTrait
         }
 
         return array_merge($kosong, [
-            'boleh_minta' => $this->bolehMintaIzin(),
-            'alasan'      => 'Penghapusan versi tidak bisa dibatalkan, jadi harus disetujui '
-                . 'Admin Kabupaten lebih dulu.',
+            'boleh_minta' => $this->bolehHapusVersi(),
+            'alasan'      => $this->revisiOpdId() === null
+                ? 'Penghapusan versi tidak bisa dibatalkan.'
+                : 'Penghapusan versi tidak bisa dibatalkan, jadi harus disetujui '
+                    . 'Admin Kabupaten lebih dulu.',
         ]);
     }
 
     /** POST: OPD memohon sebuah versi IKU dihapus. */
     public function revisiMintaHapus($id = null)
     {
-        if (! $this->bolehMintaIzin()) {
+        // =============================================================
+        // GERBANGNYA MENGIKUTI LINGKUP
+        //
+        // Lingkup OPD MENGAJUKAN, jadi yang diperiksa adalah kewenangan
+        // mengajukan izin. Lingkup Kabupaten MENGHAPUS LANGSUNG (lihat catatan
+        // di bawah), jadi yang diperiksa adalah kewenangan menghapus modulnya
+        // sendiri.
+        //
+        // Ini bukan kerapian belaka: `admin_kab` memang TIDAK memiliki
+        // `iku.izin_sunting.request` — ia pemegang `...verify`. Selama
+        // gerbangnya masih menuntut izin "request", jalur hapus langsung
+        // berhenti di baris pertama dengan pesan yang menyesatkan
+        // ("tidak berwenang mengajukan") padahal yang diminta bukan pengajuan.
+        // =============================================================
+        $lingkupKab = $this->revisiOpdId() === null;
+
+        $berwenang = $this->bolehHapusVersi();
+
+        if (! $berwenang) {
             return redirect()->to($this->urlRevisi())
-                ->with('error', 'Anda tidak berwenang mengajukan penghapusan versi IKU.');
+                ->with('error', $lingkupKab
+                    ? 'Anda tidak berwenang menghapus versi IKU.'
+                    : 'Anda tidak berwenang mengajukan penghapusan versi IKU.');
         }
 
         $revisi = $this->revisi()->ambil((int) $id);
@@ -482,6 +522,39 @@ trait IkuRevisiTrait
                 $keadaan['alasan'] ?? 'Versi ini tidak dalam keadaan bisa dimohonkan penghapusan.');
         }
 
+        // =============================================================
+        // LINGKUP KABUPATEN: HAPUS LANGSUNG, TANPA PENGAJUAN
+        //
+        // Penghapusan versi butuh persetujuan Admin Kabupaten karena tidak bisa
+        // dibatalkan. Untuk versi milik OPD itu masuk akal: yang meminta dan
+        // yang memutuskan adalah dua pihak berbeda.
+        //
+        // Untuk versi KABUPATEN, keduanya orang yang sama. Alurnya menjadi
+        // Admin Kabupaten mengajukan izin kepada dirinya sendiri, lalu pindah
+        // ke antrean verifikasi untuk menyetujui permohonannya sendiri — dua
+        // langkah yang tidak menambah satu pun pengawasan, hanya menambah
+        // kebingungan.
+        //
+        // Penjaga yang benar-benar melindungi tetap berlaku penuh:
+        // revisiKeadaanHapus() di atas dan penghalangHapus() di dalam
+        // hapusRevisi() — keduanya menolak versi yang masih dipakai LAKIP,
+        // cascading, atau arsip lain.
+        // =============================================================
+        if ($lingkupKab) {
+            try {
+                $ringkas = $this->revisi()->hapusRevisi((int) $revisi['id']);
+            } catch (Throwable $e) {
+                return redirect()->to($kembali)->with('error', pesanGalatBerawalan($e, 'Versi tidak bisa dihapus', 'umum.ikuRevisi'));
+            }
+
+            $lanjut = ! empty($ringkas['penerus'])
+                ? ' Revisi berikutnya kini yang berlaku.'
+                : '';
+
+            return redirect()->to($this->urlRevisi())->with('success',
+                'Versi "' . (string) ($ringkas['nama'] ?? $revisi['nama'] ?? 'revisi') . '" dihapus.' . $lanjut);
+        }
+
         try {
             $this->izin()->ajukan(
                 $this->revisiScope($revisi),
@@ -491,7 +564,7 @@ trait IkuRevisiTrait
                 IzinSuntingService::JENIS_HAPUS
             );
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($kembali)->with('success',
@@ -525,7 +598,7 @@ trait IkuRevisiTrait
         try {
             $this->izin()->tarik((int) $id, $this->penggunaRevisi());
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($kembali)->with('success', 'Permohonan izin sunting ditarik.');
@@ -570,7 +643,7 @@ trait IkuRevisiTrait
 
             $this->izin()->selesaikan($this->revisiScope($revisi));
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($kembali)->with('success', $arsip
@@ -734,14 +807,50 @@ trait IkuRevisiTrait
         // Lingkup KABUPATEN tidak punya Renstra, jadi tidak ada yang
         // ditawarkan di sana; layar menyembunyikan bloknya sendiri.
         // =============================================================
+        // Daftar versi sumber per periode. Untuk OPD dari Renstra, untuk
+        // kabupaten dari RPJMD — dua-duanya kini ditawarkan, karena keduanya
+        // memang punya sumber.
         $versiRenstra = [];
 
-        if ($opdId !== null) {
-            foreach ($opsi as $kunci => $p) {
-                $versiRenstra[$kunci] = $this->ikuModel->versiRenstraTersedia(
-                    $opdId, (int) $p['tahun_mulai'], (int) $p['tahun_akhir']
-                );
+        $sumberSync = $opdId === null ? 'rpjmd' : 'renstra';
+
+        foreach ($opsi as $kunci => $p) {
+            $tm = (int) $p['tahun_mulai'];
+            $ta = (int) $p['tahun_akhir'];
+
+            $daftar = $opdId === null
+                ? $this->ikuModel->versiRpjmdTersedia($tm, $ta)
+                : $this->ikuModel->versiRenstraTersedia($opdId, $tm, $ta);
+
+            // =========================================================
+            // "KONDISI BERJALAN" DITAWARKAN LEBIH DULU
+            //
+            // Versi terbit hanya bisa jadi sumber bila ARSIPnya berisi, dan
+            // pada lingkup kabupaten satu-satunya versi RPJMD yang terbit
+            // membekukan nol baris. Tanpa opsi ini daftarnya kosong, dan
+            // pilihan "salin isi RPJMD" tidak pernah bisa dipakai sama
+            // sekali walau isi RPJMD berjalan lengkap.
+            //
+            // Ditaruh paling atas karena ia bawaan yang paling masuk akal:
+            // isi Renstra/RPJMD sebagaimana adanya hari ini. Dan hanya
+            // ditawarkan bila memang ADA isinya — pilihan yang begitu
+            // dipakai melapor "tidak ada yang bisa disalin" sama
+            // membingungkannya dengan daftar kosong.
+            // =========================================================
+            $jumlahBerjalan = $this->ikuModel->sumberBerjalanBerisi($sumberSync, $opdId, $tm, $ta);
+
+            if ($jumlahBerjalan > 0) {
+                array_unshift($daftar, [
+                    'id'             => 0,
+                    'version_no'     => null,
+                    'label'          => 'Kondisi berjalan (sekarang)',
+                    'effective_from' => null,
+                    'effective_to'   => null,
+                    'jumlah_sasaran' => $jumlahBerjalan,
+                ]);
             }
+
+            $versiRenstra[$kunci] = $daftar;
         }
 
         return view('iku/revisi_form', [
@@ -749,6 +858,8 @@ trait IkuRevisiTrait
             'role'         => session()->get('role'),
             'periodeOpsi'  => $opsi,
             'versiRenstra' => $versiRenstra,
+            // Nama sumber untuk label layar: 'Renstra' atau 'RPJMD'.
+            'namaSumber'   => $opdId === null ? 'RPJMD' : 'Renstra',
             'baseUrl'      => $this->revisiBaseUrl(),
         ]);
     }
@@ -795,8 +906,14 @@ trait IkuRevisiTrait
                 'dibuat_oleh'         => (int) session()->get('user_id') ?: null,
             ]);
 
-            $pesan = 'Draft revisi dibuat berisi salinan IKU yang berlaku sekarang. '
-                . 'IKU berjalan BELUM berubah — silakan sunting lalu sahkan.';
+            // Dua kalimat berbeda untuk dua hasil yang berbeda. Sesudah sync
+            // ganti total, isi draft BUKAN lagi salinan IKU berjalan, dan
+            // mengatakannya begitu akan membuat operator mengira isinya
+            // gabungan — persis salah paham yang hendak dihilangkan.
+            $pesan = $this->request->getPost('sync_renstra')
+                ? 'Draft revisi dibuat. IKU berjalan BELUM berubah — silakan sunting lalu sahkan.'
+                : 'Draft revisi dibuat berisi salinan IKU yang berlaku sekarang. '
+                    . 'IKU berjalan BELUM berubah — silakan sunting lalu sahkan.';
 
             // Sync menyusul DI DALAM permintaan yang sama bila diminta, supaya
             // pemakai tidak perlu berpindah layar hanya untuk melakukan hal
@@ -813,14 +930,14 @@ trait IkuRevisiTrait
                 } catch (Throwable $e) {
                     return redirect()->to($this->urlRevisi('/sunting/' . $id))
                         ->with('success', $pesan)
-                        ->with('warning', 'Draft dibuat, TETAPI penyalinan dari Renstra gagal: '
-                            . $e->getMessage() . ' Ulangi lewat menu Sync dari Renstra.');
+                        ->with('warning', 'Draft dibuat, TETAPI penyalinan dari sumber gagal: '
+                            . $e->getMessage() . ' Ulangi lewat menu Sync.');
                 }
             }
 
             return redirect()->to($this->urlRevisi('/sunting/' . $id))->with('success', $pesan);
         } catch (Throwable $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
     }
 
@@ -841,22 +958,57 @@ trait IkuRevisiTrait
     {
         $opdId = $this->revisiOpdId();
 
-        if ($opdId === null) {
-            throw new \RuntimeException(
-                'Lingkup kabupaten tidak bersumber dari Renstra, jadi tidak ada yang bisa disalin.'
-            );
-        }
+        // =============================================================
+        // SUMBERNYA MENGIKUTI LINGKUP
+        //
+        //   OPD       -> Renstra OPD itu
+        //   Kabupaten -> RPJMD
+        //
+        // Semula method ini menolak lingkup kabupaten mentah-mentah dengan
+        // "tidak bersumber dari Renstra" — benar soal Renstra, tetapi salah
+        // kesimpulannya: IKU Kabupaten memang punya sumber, yaitu RPJMD, dan
+        // mesin penyalinannya sudah ada dan dipakai layar Sync Kabupaten
+        // (getKandidatSync('rpjmd', ...)).
+        //
+        // Akibat penolakan itu, Admin Kabupaten harus memutar: buat revisi ->
+        // pindah ke layar Sync -> pilih draft tujuan. Persis alur berputar
+        // yang dulu dihapus untuk sisi OPD.
+        //
+        // Nama field POST-nya tetap `renstra_versi` untuk KEDUA lingkup —
+        // itu nama yang sudah dipakai layar Sync Kabupaten juga, dan
+        // mengubahnya hanya demi kerapian nama akan memutus form yang ada.
+        // =============================================================
+        $sumber = $opdId === null ? 'rpjmd' : 'renstra';
+        $label  = $opdId === null ? 'RPJMD' : 'Renstra';
 
-        $tersedia = $this->ikuModel->versiRenstraTersedia($opdId, $tahunMulai, $tahunAkhir);
+        $tersedia = $opdId === null
+            ? $this->ikuModel->versiRpjmdTersedia($tahunMulai, $tahunAkhir)
+            : $this->ikuModel->versiRenstraTersedia($opdId, $tahunMulai, $tahunAkhir);
 
-        if ($tersedia === []) {
-            throw new \RuntimeException(
-                'Belum ada versi Renstra yang ditetapkan pada periode ' . $tahunMulai . '-' . $tahunAkhir . '.'
-            );
-        }
+        // =============================================================
+        // "KONDISI BERJALAN" ADALAH SUMBER YANG SAH, BUKAN CADANGAN DARURAT
+        //
+        // Semula method ini menuntut sebuah versi sumber yang SUDAH TERBIT
+        // DAN BERISI, lalu menyerah bila tidak ada. Pada lingkup kabupaten
+        // itu berarti menyerah selalu: satu-satunya versi RPJMD yang terbit
+        // membekukan NOL baris arsip, sehingga versiRpjmdTersedia() kosong
+        // dan pilihan "salin isi RPJMD" tidak pernah bisa dipakai — persis
+        // keluhan bahwa sync RPJMD tidak muncul saat membuat versi IKU baru.
+        //
+        // Padahal mesinnya sudah sanggup: getKandidatSync() dengan versi null
+        // membaca Renstra/RPJMD BERJALAN, dan itulah yang dipakai layar Sync
+        // selama ini. Yang kurang hanya pengakuan bahwa jalur itu boleh
+        // ditempuh dari sini juga.
+        //
+        // Nilai 0 dari form berarti "kondisi berjalan" secara eksplisit.
+        // =============================================================
+        $mentah = $this->request->getPost('renstra_versi');
+        $dikirim = $mentah !== null && trim((string) $mentah) !== '';
+        $diminta = (int) ($mentah ?? 0);
 
-        $diminta = (int) ($this->request->getPost('renstra_versi') ?? 0);
-        $versi   = null;
+        $berjalan = $dikirim && $diminta === 0;
+
+        $versi = null;
 
         foreach ($tersedia as $v) {
             if ((int) $v['id'] === $diminta) {
@@ -873,31 +1025,78 @@ trait IkuRevisiTrait
         // wajar. Tetapi untuk id yang DIKIRIM dan tidak cocok, diam-diam
         // mengganti sumbernya berarti menyalin dari versi yang tidak pernah
         // diminta siapa pun, dan hasilnya tersimpan sebagai kehendak pemakai.
-        //
-        // Di sini menolak aman: $tersedia dipastikan tidak kosong beberapa
-        // baris di atas, jadi id yang tidak cocok memang keliru — form basi,
-        // atau kiriman yang dikarang.
         // =============================================================
-        $mentah = $this->request->getPost('renstra_versi');
-
-        if ($versi === null && $mentah !== null && trim((string) $mentah) !== '') {
+        if ($versi === null && $dikirim && ! $berjalan) {
             throw new \RuntimeException(
-                'Versi Renstra yang dipilih tidak sah untuk periode ini. '
+                'Versi ' . $label . ' yang dipilih tidak sah untuk periode ini. '
                 . 'Muat ulang halaman lalu pilih dari daftar yang tersedia.'
             );
         }
 
-        $versi ??= $tersedia[0];
+        // Tidak dipilih apa pun: pakai versi terbit terbaru bila ada, dan
+        // jatuh ke kondisi berjalan bila memang belum ada versi berisi.
+        if ($versi === null && ! $berjalan) {
+            $versi = $tersedia[0] ?? null;
+        }
+
+        $versiId = $versi !== null ? (int) $versi['id'] : null;
 
         $kandidat = $this->ikuModel->getKandidatSync(
-            'renstra', $opdId, $tahunMulai, $tahunAkhir, (int) $versi['id']
+            $sumber, $opdId, $tahunMulai, $tahunAkhir, $versiId
         );
 
-        [$pilihan, $perbarui] = $this->keranjangSyncPenuh($kandidat);
+        if ($kandidat === []) {
+            throw new \RuntimeException(
+                'Tidak ada isi ' . $label . ' yang bisa disalin untuk periode '
+                . $tahunMulai . '-' . $tahunAkhir . '.'
+            );
+        }
 
-        return $this->revisi()->imporKandidat(
-            $draftId, $kandidat, $pilihan, 'renstra', (int) $versi['id'], $perbarui
+        // =============================================================
+        // GANTI TOTAL, BUKAN TAMBAL KEKURANGAN
+        //
+        // `buatDraft()` mengisi draft baru dengan salinan IKU yang berlaku
+        // sekarang. Bila sesudah itu sync hanya MENAMBAHKAN yang kurang,
+        // versi barunya berisi gabungan IKU lama + sumber — dan baris IKU
+        // lama yang sudah tidak ada di Renstra/RPJMD ikut terbawa terus dari
+        // versi ke versi.
+        //
+        // Yang diminta adalah versi baru yang isinya SAMA DENGAN SUMBER.
+        // Karena itu isinya dikosongkan lebih dulu, lalu seluruh isi sumber
+        // dituliskan — dengan keranjangSyncSemua(), bukan keranjangSyncPenuh()
+        // yang membuang kandidat 'sama' (lihat catatan di sana).
+        //
+        // Hanya berlaku pada draft yang BARU dibuat lewat jalur ini. IKU yang
+        // berjalan tidak disentuh sama sekali; ia baru berubah bila revisinya
+        // disahkan.
+        //
+        // Konsekuensinya dinyatakan terus terang di pesan hasil: indikator
+        // yang sengaja disusun sendiri di IKU dan tidak punya padanan di
+        // sumber TIDAK ikut terbawa.
+        // =============================================================
+        // Keterangan buatan tangan direkam SEBELUM dikosongkan, lalu
+        // dikembalikan sesudah isi barunya masuk. `definisi`,
+        // `rumusan_perhitungan`, `sumber_data`, dan `penanggung_jawab` tidak
+        // ada di Renstra maupun RPJMD — menuliskan ulang isi dari sumber akan
+        // mengosongkannya, padahal 108 dari 143 indikator sudah memilikinya
+        // dan layar ini justru menjanjikan keterangan itu tidak tertimpa.
+        $keterangan = $this->revisi()->keteranganDraft($draftId);
+
+        $dibuang = $this->revisi()->kosongkanIsiDraft($draftId);
+
+        [$pilihan, $perbarui] = $this->keranjangSyncSemua($kandidat);
+
+        $stat = $this->revisi()->imporKandidat(
+            $draftId, $kandidat, $pilihan, $sumber, $versiId, $perbarui
         );
+
+        $stat['diganti_sasaran']   = (int) ($dibuang['sasaran'] ?? 0);
+        $stat['diganti_indikator'] = (int) ($dibuang['indikator'] ?? 0);
+        $stat['dari_berjalan']     = $versiId === null ? 1 : 0;
+        $stat['keterangan_pulih']  = $this->revisi()
+            ->kembalikanKeteranganDraft($draftId, $keterangan);
+
+        return $stat;
     }
 
     /* =========================================================
@@ -1139,7 +1338,7 @@ trait IkuRevisiTrait
                 ->with('success', 'Draft revisi disimpan. IKU berjalan belum berubah — '
                     . 'ajukan revisinya dari daftar bila sudah selesai.');
         } catch (Throwable $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
     }
 
@@ -1190,7 +1389,7 @@ trait IkuRevisiTrait
                 ? $keluar->with('success', $pesan)
                 : $keluar->with('success', $pesan)->with('warning', $hasil['peringatan']);
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi('/lihat/' . $revisiId))->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi('/lihat/' . $revisiId))->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
     }
 
@@ -1235,7 +1434,7 @@ trait IkuRevisiTrait
         try {
             $this->revisi()->ajukan((int) $id, (int) session()->get('user_id') ?: null);
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi())->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi())->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($this->urlRevisi())->with('success',
@@ -1259,7 +1458,7 @@ trait IkuRevisiTrait
         try {
             $this->revisi()->tarikPengajuan((int) $id);
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi())->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi())->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
 
         return redirect()->to($this->urlRevisi())
@@ -1305,7 +1504,7 @@ trait IkuRevisiTrait
 
             return redirect()->to($this->urlRevisi())->with('success', $pesan);
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi())->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi())->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
     }
 
@@ -1327,7 +1526,7 @@ trait IkuRevisiTrait
             return redirect()->to($this->urlRevisi())
                 ->with('success', 'Draft dibatalkan. Jejaknya tetap tersimpan.');
         } catch (Throwable $e) {
-            return redirect()->to($this->urlRevisi())->with('error', $e->getMessage());
+            return redirect()->to($this->urlRevisi())->with('error', pesanGalat($e, 'umum.ikuRevisi'));
         }
     }
 }

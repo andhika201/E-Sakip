@@ -98,7 +98,7 @@ trait RenstraVersiIsiTrait
             // Kembali ke formnya, bukan ke daftar: yang salah adalah isian, dan
             // memulangkan pengguna ke daftar berarti ketikannya hilang percuma.
             return redirect()->back()->withInput()
-                ->with('error', 'Gagal menyimpan tujuan: ' . $e->getMessage());
+                ->with('error', pesanGalatBerawalan($e, 'Gagal menyimpan tujuan', 'umum.renstraVersiIsi'));
         }
 
         return redirect()->to($kembali)->with('success', $tujuanId > 0

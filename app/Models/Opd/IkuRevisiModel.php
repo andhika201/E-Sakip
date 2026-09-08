@@ -2179,6 +2179,222 @@ class IkuRevisiModel extends Model
      *                        daripada menambah baris baru, dan tidak boleh
      *                        terjadi hanya karena kotak yang sama tercentang.
      */
+
+
+    /** Kolom IKU yang diketik operator dan TIDAK punya asal di Renstra/RPJMD. */
+    private const KOLOM_KETERANGAN = [
+        'definisi', 'rumusan_perhitungan', 'sumber_data', 'penanggung_jawab',
+    ];
+
+    /**
+     * Rekam keterangan buatan tangan pada sebuah draft, sebelum isinya diganti.
+     *
+     * =====================================================================
+     * MENGAPA PERLU DISELAMATKAN TERPISAH
+     *
+     * Sync GANTI TOTAL mengosongkan isi draft lalu menuliskan ulang seluruhnya
+     * dari Renstra/RPJMD. Yang ikut hilang bukan hanya baris yang memang tidak
+     * ada di sumber — hilang pula `definisi`, `rumusan_perhitungan`,
+     * `sumber_data`, dan `penanggung_jawab`.
+     *
+     * Keempatnya TIDAK ADA di Renstra maupun RPJMD. Mereka lahir di IKU,
+     * diketik satu per satu oleh operator, dan pada basis data ini 108 dari
+     * 143 indikator sudah memilikinya. Menuliskannya ulang dari sumber berarti
+     * mengosongkan semuanya — pekerjaan berbulan-bulan yang tidak diminta
+     * siapa pun untuk dibuang, dan yang layar pembuatan revisi justru
+     * menjanjikan "tidak ikut tertimpa".
+     *
+     * Ganti total adalah soal ISI MANA yang ada — sasaran dan indikator apa,
+     * beserta satuan dan targetnya. Bukan soal membuang catatan operator atas
+     * indikator yang ternyata tetap ada di sumber.
+     *
+     * =====================================================================
+     * DUA KUNCI, SILSILAH LEBIH DULU
+     *
+     * Pola yang sama dengan imporKandidat(): `source_ref_id` menautkan baris
+     * arsip ke baris sumber yang menurunkannya dan tidak ikut berubah saat
+     * redaksi disunting. Teks dipakai sebagai cadangan untuk baris lama yang
+     * belum sempat bersilsilah.
+     *
+     * @return array{silsilah: array<int,array<string,mixed>>, teks: array<string,array<string,mixed>>}
+     */
+    public function keteranganDraft(int $revisiId): array
+    {
+        $simpanan = ['silsilah' => [], 'teks' => []];
+
+        if (! $this->db->tableExists('iku_revisi_indikator')) {
+            return $simpanan;
+        }
+
+        $kolom = array_values(array_filter(
+            self::KOLOM_KETERANGAN,
+            fn ($k) => $this->db->fieldExists($k, 'iku_revisi_indikator')
+        ));
+
+        if ($kolom === []) {
+            return $simpanan;
+        }
+
+        $rows = $this->db->table('iku_revisi_indikator')
+            ->select(implode(', ', array_merge(['id', 'indikator', 'source_ref_id'], $kolom)))
+            ->where('revisi_id', $revisiId)
+            ->get()->getResultArray();
+
+        foreach ($rows as $r) {
+            $isi = [];
+
+            foreach ($kolom as $k) {
+                if (trim((string) ($r[$k] ?? '')) !== '') {
+                    $isi[$k] = $r[$k];
+                }
+            }
+
+            // Baris tanpa satu pun keterangan tidak perlu diingat.
+            if ($isi === []) {
+                continue;
+            }
+
+            if (! empty($r['source_ref_id'])) {
+                $simpanan['silsilah'][(int) $r['source_ref_id']] = $isi;
+            }
+
+            $simpanan['teks'][$this->kunciTeks((string) $r['indikator'])] = $isi;
+        }
+
+        return $simpanan;
+    }
+
+    /**
+     * Kembalikan keterangan yang direkam keteranganDraft() ke isi draft yang baru.
+     *
+     * Hanya mengisi kolom yang MASIH KOSONG. Bila sumber ternyata membawa
+     * nilainya sendiri, nilai dari sumber yang menang — sync tetap sync, dan
+     * pemulihan ini bukan alasan untuk membatalkan isi yang baru disalin.
+     *
+     * @param array{silsilah: array<int,array<string,mixed>>, teks: array<string,array<string,mixed>>} $simpanan
+     *
+     * @return int jumlah baris yang menerima kembali keterangannya
+     */
+    public function kembalikanKeteranganDraft(int $revisiId, array $simpanan): int
+    {
+        if (($simpanan['silsilah'] ?? []) === [] && ($simpanan['teks'] ?? []) === []) {
+            return 0;
+        }
+
+        $kolom = array_values(array_filter(
+            self::KOLOM_KETERANGAN,
+            fn ($k) => $this->db->fieldExists($k, 'iku_revisi_indikator')
+        ));
+
+        if ($kolom === []) {
+            return 0;
+        }
+
+        $rows = $this->db->table('iku_revisi_indikator')
+            ->select(implode(', ', array_merge(['id', 'indikator', 'source_ref_id'], $kolom)))
+            ->where('revisi_id', $revisiId)
+            ->get()->getResultArray();
+
+        $dipulihkan = 0;
+
+        foreach ($rows as $r) {
+            $ref  = ! empty($r['source_ref_id']) ? (int) $r['source_ref_id'] : 0;
+            $isi  = $simpanan['silsilah'][$ref]
+                ?? ($simpanan['teks'][$this->kunciTeks((string) $r['indikator'])] ?? null);
+
+            if ($isi === null) {
+                continue;
+            }
+
+            $tulis = [];
+
+            foreach ($kolom as $k) {
+                if (isset($isi[$k]) && trim((string) ($r[$k] ?? '')) === '') {
+                    $tulis[$k] = $isi[$k];
+                }
+            }
+
+            if ($tulis === []) {
+                continue;
+            }
+
+            $this->db->table('iku_revisi_indikator')->where('id', (int) $r['id'])->update($tulis);
+            $dipulihkan++;
+        }
+
+        return $dipulihkan;
+    }
+
+    /**
+     * KOSONGKAN seluruh isi sebuah draft revisi, menyisakan kepalanya.
+     *
+     * =====================================================================
+     * UNTUK APA
+     *
+     * `buatDraft()` mengisi draft baru dengan salinan IKU yang berlaku
+     * sekarang — titik awal yang benar untuk revisi yang disunting tangan.
+     * Tetapi ketika pemakai memilih "salin isi Renstra/RPJMD", yang ia
+     * maksud adalah versi barunya BERISI SUMBER ITU, bukan IKU lama ditambah
+     * kekurangannya. Tanpa dikosongkan lebih dulu, hasilnya gabungan: baris
+     * IKU lama yang tidak ada di sumber tetap tinggal, dan versi "baru"
+     * membawa isi yang seharusnya sudah ditinggalkan.
+     *
+     * =====================================================================
+     * MENGAPA AMAN — DAN MENGAPA HANYA DRAFT
+     *
+     * Isi draft hidup di tabel ARSIP (`iku_revisi_*`), bukan di tabel IKU
+     * berjalan. Cascading menunjuk `iku_indikator` yang live, dan LAKIP hanya
+     * boleh terikat revisi berstatus berlaku/superseded. Jadi tidak ada yang
+     * merujuk isi sebuah draft selain draft itu sendiri.
+     *
+     * Begitu statusnya bukan draft lagi, semua itu tidak berlaku: revisi yang
+     * menunggu sedang dinilai orang lain, dan yang berlaku/superseded adalah
+     * arsip resmi yang dibaca LAKIP. Karena itu status selain draft DITOLAK,
+     * bukan sekadar tidak dianjurkan.
+     *
+     * @return array<string,int> jumlah baris yang dibuang per bagian
+     */
+    public function kosongkanIsiDraft(int $revisiId): array
+    {
+        $revisi = $this->ambil($revisiId);
+
+        if (! $revisi) {
+            throw new RuntimeException('Draft revisi tidak ditemukan.');
+        }
+
+        if ($revisi['status'] !== self::STATUS_DRAFT) {
+            throw new RuntimeException(
+                'Hanya draft yang isinya boleh dikosongkan. Status sekarang: '
+                . $revisi['status'] . '.'
+            );
+        }
+
+        $db = $this->db;
+
+        $hitung = static function (string $tabel) use ($db, $revisiId): int {
+            if (! $db->tableExists($tabel) || ! $db->fieldExists('revisi_id', $tabel)) {
+                return 0;
+            }
+
+            return $db->table($tabel)->where('revisi_id', $revisiId)->countAllResults();
+        };
+
+        $dibuang = [
+            'sasaran'   => $hitung('iku_revisi_sasaran'),
+            'indikator' => $hitung('iku_revisi_indikator'),
+        ];
+
+        // `iku_revisi_target` dan `iku_revisi_program` TIDAK menyimpan
+        // revisi_id — keduanya hanya menggantung pada revisi_indikator_id
+        // dengan foreign key ON DELETE CASCADE. Jadi menghapus indikatornya
+        // sudah membawa serta target & programnya; menuliskannya sendiri di
+        // sini justru akan jadi kode yang tidak pernah berjalan.
+        $db->table('iku_revisi_indikator')->where('revisi_id', $revisiId)->delete();
+        $db->table('iku_revisi_sasaran')->where('revisi_id', $revisiId)->delete();
+
+        return $dibuang;
+    }
+
     public function imporKandidat(
         int $revisiId,
         array $kandidat,

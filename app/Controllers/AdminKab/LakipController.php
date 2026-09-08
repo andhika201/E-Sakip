@@ -935,6 +935,36 @@ class LakipController extends BaseController
 
         // Diperiksa ulang di server: id dari form tidak pernah dipercaya
         // sebagai bukti lingkup.
+
+        // =====================================================
+        // REVISI SUMBER WAJIB SUDAH RESMI
+        //
+        // `getIkuTargetDetail()` hanya memastikan indikatornya memang ada
+        // DI DALAM revisi itu — ia tidak peduli revisinya sudah disahkan
+        // atau masih draft. Daftar versi di layar memang cuma menawarkan
+        // yang resmi (LakipSourceService::pilihanVersiIku() menyaring
+        // berlaku/superseded), tetapi kiriman POST tidak pernah diperiksa
+        // ulang terhadap daftar itu.
+        //
+        // Terbukti lewat uji: sebuah baris LAKIP berhasil dibuat terikat
+        // ke revisi berstatus `draft` yang belum pernah disahkan siapa
+        // pun, dan layar menjawab "berhasil disimpan". LAKIP lalu dinilai
+        // terhadap target yang belum menjadi dokumen resmi — dan ikatannya
+        // dibekukan, jadi kekeliruannya ikut tersimpan.
+        //
+        // `superseded` TETAP diterima: LAKIP tahun lampau memang wajar
+        // menunjuk revisi yang kini sudah digantikan.
+        // =====================================================
+        $revisiSumber = $this->revisiResmiUntukLakip($revisiId);
+
+        if ($revisiSumber === null) {
+            return redirect()->back()->withInput()->with(
+                'error',
+                'Versi IKU yang dipilih belum disahkan, sehingga tidak bisa dipakai sebagai '
+                . 'dasar penilaian LAKIP. Pilih versi yang sudah berlaku.'
+            );
+        }
+
         $cek = $this->lakipModel->getIkuTargetDetail($revisiId, $indikator, $tahunForm);
 
         if ($cek === null || (int) ($cek['opd_id'] ?? 0) !== (int) ($opdId ?? 0)) {
@@ -1225,7 +1255,7 @@ class LakipController extends BaseController
             ]);
         } catch (\Throwable $e) {
             return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun))
-                ->with('error', $e->getMessage());
+                ->with('error', pesanGalat($e, 'kab.lakip'));
         }
 
         return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun))->with(
@@ -1250,7 +1280,7 @@ class LakipController extends BaseController
                 (string) $this->request->getPost('alasan'), session()->get('user_id'));
         } catch (\Throwable $e) {
             return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun))
-                ->with('error', $e->getMessage());
+                ->with('error', pesanGalat($e, 'kab.lakip'));
         }
 
         return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun))
@@ -1273,7 +1303,7 @@ class LakipController extends BaseController
         try {
             $m->tarik((int) $permintaanId);
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.lakip'));
         }
 
         return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun))
@@ -1327,7 +1357,7 @@ class LakipController extends BaseController
                 ? $m->setujui((int) $permintaanId, session()->get('user_id'), $tanggapan)
                 : $m->tolak((int) $permintaanId, session()->get('user_id'), $tanggapan);
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.lakip'));
         }
 
         return redirect()->to(base_url('adminkab/lakip/permintaan'))->with(
@@ -1337,4 +1367,26 @@ class LakipController extends BaseController
                 : 'Permintaan ditolak. LAKIP tahun itu tetap terkunci.'
         );
     }
+
+    /**
+     * Revisi IKU yang SAH dijadikan dasar penilaian LAKIP, atau null.
+     *
+     * Hanya `berlaku` dan `superseded` — draft, menunggu pengesahan, dan yang
+     * dibatalkan bukan dokumen resmi.
+     */
+    private function revisiResmiUntukLakip(int $revisiId): ?array
+    {
+        if ($revisiId <= 0) {
+            return null;
+        }
+
+        $row = (new \App\Models\Opd\IkuRevisiModel())->ambil($revisiId);
+
+        if ($row === null) {
+            return null;
+        }
+
+        return in_array((string) ($row['status'] ?? ''), ['berlaku', 'superseded'], true) ? $row : null;
+    }
+
 }

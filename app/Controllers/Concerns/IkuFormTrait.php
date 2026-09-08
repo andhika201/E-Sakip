@@ -139,6 +139,54 @@ trait IkuFormTrait
         return [$baru, $berubah];
     }
 
+
+    /**
+     * Keranjang sync yang memuat SELURUH isi sumber, apa pun hasil bandingnya.
+     *
+     * =====================================================================
+     * MENGAPA TIDAK CUKUP keranjangSyncPenuh()
+     *
+     * `keranjangSyncPenuh()` membuang kandidat bertanda 'sama', dan itu benar
+     * untuk sync yang MENAMBAHKAN: menimpa baris dengan nilai identik hanya
+     * menambah beban tulis.
+     *
+     * Tetapi tanda 'sama' itu dihitung terhadap IKU yang BERJALAN
+     * (`petaIkuTerpasang()`), bukan terhadap isi draft. Pada sync GANTI TOTAL
+     * draftnya sudah dikosongkan lebih dulu, sehingga kandidat yang tandanya
+     * 'sama' — yaitu justru yang isinya sudah cocok dengan IKU berjalan —
+     * tidak akan tersalin ke mana pun. Hasilnya draft yang berisi HANYA yang
+     * berbeda: kebalikan dari yang diminta.
+     *
+     * Karena itu di sini semuanya masuk keranjang 'baru'. Draft yang kosong
+     * membuat setiap kandidat memang benar-benar baru baginya.
+     *
+     * @return array{0: array<int,int[]>, 1: array<int,int[]>} [baru, berubah]
+     */
+    private function keranjangSyncSemua(array $kandidat): array
+    {
+        $baru = [];
+
+        foreach ($kandidat as $sasaran) {
+            $idSasaran = (int) ($sasaran['sumber_id'] ?? 0);
+
+            if ($idSasaran <= 0) {
+                continue;
+            }
+
+            foreach ($sasaran['indikator'] ?? [] as $ind) {
+                $idInd = (int) ($ind['sumber_id'] ?? 0);
+
+                if ($idInd > 0) {
+                    $baru[$idSasaran][] = $idInd;
+                }
+            }
+        }
+
+        // Keranjang 'berubah' sengaja dibiarkan kosong: tidak ada yang perlu
+        // diperbarui di tempat pada draft yang barusan dikosongkan.
+        return [$baru, []];
+    }
+
     /**
      * Versi sumber yang dipilih, DIVALIDASI terhadap daftar yang sah.
      *
@@ -179,6 +227,22 @@ trait IkuFormTrait
         }
 
         $id = (int) $mentah;
+
+        // 0 = "kondisi berjalan", pilihan yang SAH dan bukan id karangan.
+        //
+        // getKandidatSync() memang sudah menerima versi null sebagai perintah
+        // membaca Renstra/RPJMD berjalan, dan versiSumberDipilih() sudah
+        // memetakan id <= 0 ke sana. Yang belum ada hanyalah pengakuan di
+        // penjaga ini, sehingga memilihnya dari layar justru ditolak sebagai
+        // "tidak sah" — padahal itu jalur yang dipakai layar Sync selama ini.
+        //
+        // Ini bukan sekadar kenyamanan: pada lingkup kabupaten, satu-satunya
+        // versi RPJMD yang terbit membekukan NOL baris isi, jadi tanpa opsi
+        // "kondisi berjalan" daftar sumbernya kosong dan sync tidak pernah
+        // bisa dijalankan sama sekali.
+        if ($id === 0) {
+            return null;
+        }
 
         foreach ($tersedia as $v) {
             if ((int) $v['id'] === $id) {
@@ -336,6 +400,31 @@ trait IkuFormTrait
         if ($ditautkan > 0) {
             $pesan .= ' ' . $ditautkan . ' baris lama kini menyimpan jejak asalnya,'
                 . ' sehingga tidak lagi tersalin ganda bila redaksinya dirapikan.';
+        }
+
+        // Ganti total dinyatakan APA ADANYA, termasuk yang hilang.
+        //
+        // Ini satu-satunya jalur sync yang MEMBUANG isi, dan yang dibuang
+        // adalah salinan IKU berjalan yang tadi mengisi draft. Melaporkan
+        // hanya yang masuk akan membuat operator mengira tidak ada yang
+        // pergi — lalu baru menyadarinya saat memeriksa isi versi barunya.
+        $gantiInd = (int) ($stat['diganti_indikator'] ?? 0);
+
+        if ($gantiInd > 0) {
+            $pesan .= ' Isi draft diganti total: ' . $gantiInd
+                . ' indikator salinan IKU berjalan dibuang lebih dulu, sehingga versi ini'
+                . ' berisi persis isi sumbernya.';
+        }
+
+        $pulih = (int) ($stat['keterangan_pulih'] ?? 0);
+
+        if ($pulih > 0) {
+            $pesan .= ' Definisi, rumusan, sumber data, dan penanggung jawab pada '
+                . $pulih . ' indikator dikembalikan seperti semula.';
+        }
+
+        if (! empty($stat['dari_berjalan'])) {
+            $pesan .= ' Sumbernya kondisi berjalan, bukan arsip versi terbit.';
         }
 
         return $pesan;

@@ -249,6 +249,43 @@ class RpjmdController extends BaseController
 
     public function save()
     {
+        // =============================================================
+        // PERIODE WAJIB MASUK AKAL
+        //
+        // Berkas ini semula tidak punya satu pun aturan validasi — hanya
+        // penyaring script. `tahun_mulai`/`tahun_akhir` dicor langsung ke int,
+        // sehingga teks apa pun menjadi 0 dan periode terbalik (2029-2025)
+        // tersimpan tanpa keberatan.
+        //
+        // Periode adalah KUNCI pencocokan lintas modul: versi dokumen, sync
+        // IKU Kabupaten, cascading, dan pemilihan sumber LAKIP semuanya
+        // menjodohkan lewat (tahun_mulai, tahun_akhir). Baris berperiode
+        // terbalik tidak pernah cocok dengan apa pun, dan gejalanya muncul
+        // jauh dari sini.
+        //
+        // Aturannya sengaja disamakan dengan RenstraController agar dua
+        // dokumen yang periodenya harus saling bertemu tidak divalidasi
+        // dengan dua standar berbeda.
+        // =============================================================
+        if (! $this->validate([
+            'tahun_mulai' => 'required|integer|greater_than[1999]|less_than[2100]',
+            'tahun_akhir' => 'required|integer|greater_than_equal_to[{tahun_mulai}]|less_than[2100]',
+        ], [
+            'tahun_mulai' => [
+                'integer'      => 'Tahun mulai harus berupa angka.',
+                'greater_than' => 'Tahun mulai tidak masuk akal.',
+                'less_than'    => 'Tahun mulai tidak masuk akal.',
+            ],
+            'tahun_akhir' => [
+                'integer'               => 'Tahun akhir harus berupa angka.',
+                'greater_than_equal_to' => 'Tahun akhir tidak boleh lebih awal daripada tahun mulai.',
+                'less_than'             => 'Tahun akhir tidak masuk akal.',
+            ],
+        ])) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
         $db = \Config\Database::connect();
         $db->transBegin();
 
@@ -437,6 +474,20 @@ class RpjmdController extends BaseController
 
     public function update()
     {
+        // Aturan yang SAMA dengan save() — lihat catatan di sana. Dua jalur
+        // yang menulis kolom yang sama tidak boleh punya dua standar.
+        if (! $this->validate([
+            'tahun_mulai' => 'required|integer|greater_than[1999]|less_than[2100]',
+            'tahun_akhir' => 'required|integer|greater_than_equal_to[{tahun_mulai}]|less_than[2100]',
+        ], [
+            'tahun_akhir' => [
+                'greater_than_equal_to' => 'Tahun akhir tidak boleh lebih awal daripada tahun mulai.',
+            ],
+        ])) {
+            return redirect()->back()->withInput()
+                ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
         $db = \Config\Database::connect();
         $db->transBegin();
 

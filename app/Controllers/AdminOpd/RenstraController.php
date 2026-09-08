@@ -737,7 +737,7 @@ class RenstraController extends BaseController
             log_message('error', 'RENSTRA Update Error: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+                ->with('error', pesanGalatBerawalan($e, 'Terjadi kesalahan saat menyimpan data', 'opd.renstra'));
         }
     }
 
@@ -781,7 +781,7 @@ class RenstraController extends BaseController
                 return redirect()->back()->with('error', 'Gagal menghapus data');
             }
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Renstra gagal diproses', 'opd.renstra'));
         }
     }
 
@@ -959,7 +959,7 @@ class RenstraController extends BaseController
 
             return redirect()->back()
                 ->withInput()
-                ->with('error', $e->getMessage());
+                ->with('error', pesanGalat($e, 'opd.renstra'));
         }
     }
 }

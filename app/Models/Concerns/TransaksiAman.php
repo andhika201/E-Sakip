@@ -71,7 +71,26 @@ trait TransaksiAman
             $hasil = $kerja();
 
             if ($db->transStatus() === false) {
-                throw new RuntimeException('Transaksi ' . $namaOperasi . ' gagal pada salah satu query.');
+                // =====================================================
+                // GALAT ASLINYA DICATAT, BUKAN DIBUANG
+                //
+                // Di dalam transaksi, query yang gagal hanya menurunkan
+                // transStatus — pesan aslinya tidak ikut naik ke sini. Sebelum
+                // ini pesan itu HILANG SAMA SEKALI: pengguna menerima kalimat
+                // generik, dan yang memperbaiki tidak punya satu pun petunjuk
+                // tentang query mana yang gagal atau mengapa.
+                //
+                // `$db->error()` masih menyimpannya pada titik ini. Dicatat
+                // bersama kode rujukan yang sama dengan yang dilihat pengguna,
+                // sehingga keluhan "muncul ERR-A1B2C3" bisa langsung
+                // ditemukan di log tanpa menebak.
+                // =====================================================
+                $kode = $this->catatGagalTransaksi($db, $namaOperasi);
+
+                throw new RuntimeException(
+                    'Transaksi ' . $namaOperasi . ' gagal pada salah satu query.'
+                    . ($kode === '' ? '' : ' Kode referensi: ' . $kode)
+                );
             }
 
             $db->transCommit();
@@ -82,5 +101,65 @@ trait TransaksiAman
 
             throw $e;
         }
+    }
+
+    /**
+     * Catat galat basis data yang menggagalkan transaksi, kembalikan kodenya.
+     *
+     * Memakai helper galat terpusat bila tersedia supaya bentuk barisnya sama
+     * dengan galat lain — dan tetap bekerja tanpa helper itu, karena model
+     * dipakai juga dari perintah CLI yang tidak memuat helper controller.
+     */
+    private function catatGagalTransaksi($db, string $namaOperasi): string
+    {
+        $galat = $db->error();
+        $pesan = trim((string) ($galat['message'] ?? ''));
+        $nomor = (string) ($galat['code'] ?? '');
+
+        // =============================================================
+        // QUERY TERAKHIR IKUT DICATAT — NILAINYA DISAMARKAN
+        //
+        // `$db->error()` hanya menyimpan galat query TERAKHIR. Bila sesudah
+        // query yang gagal masih ada query lain yang berhasil, isinya sudah
+        // tergantikan dan yang tersisa hanya transStatus=false tanpa satu pun
+        // keterangan. Query terakhir tetap menunjukkan tabel dan pernyataan
+        // yang terlibat, dan itu jauh lebih berguna daripada tidak ada apa-apa.
+        //
+        // Seluruh literal string diganti '?' lebih dulu. Bentuk query — tabel
+        // dan kolomnya — itulah yang menolong menemukan sebab; NILAInya tidak,
+        // dan justru nilai itulah yang bisa membawa data pribadi atau hash
+        // kata sandi ke dalam berkas log yang dibaca banyak orang (§36).
+        // =============================================================
+        $query = (string) $db->getLastQuery();
+
+        if ($query !== '') {
+            // Pola sengaja SEDERHANA: setiap petik tunggal berpasangan
+            // dianggap satu literal. Kutip yang di-escape di dalam nilai akan
+            // membuatnya memotong lebih awal — dan itu justru menyamarkan
+            // LEBIH banyak, bukan lebih sedikit. Untuk penyamaran, arah gagal
+            // seperti itulah yang benar.
+            $query = (string) preg_replace("/'[^']*'/", "'?'", $query);
+            $query = mb_substr((string) preg_replace('/\s+/', ' ', $query), 0, 400);
+        }
+
+        if ($pesan === '' && $nomor === '' && $query === '') {
+            return '';
+        }
+
+        $kode = function_exists('kodeGalat')
+            ? kodeGalat()
+            : 'ERR-' . strtoupper(bin2hex(random_bytes(3)));
+
+        log_message('critical', sprintf(
+            '[GALAT] kode=%s | operasi=transaksi:%s | basis=%s | kode_db=%s | pesan=%s | query=%s',
+            $kode,
+            $namaOperasi,
+            $db->getDatabase(),
+            $nomor === '' ? '-' : $nomor,
+            $pesan === '' ? '-' : $pesan,
+            $query === '' ? '-' : $query
+        ));
+
+        return $kode;
     }
 }

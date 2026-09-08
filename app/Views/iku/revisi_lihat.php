@@ -270,18 +270,28 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
                 diberlakukan kembali ke IKU berjalan.
             <?php endif; ?>
         </div>
+        <?php /* Lingkup KABUPATEN menghapus langsung: yang meminta dan yang
+                 memutuskan adalah orang yang sama, jadi tidak ada pengawasan
+                 yang ditambahkan oleh langkah pengajuan. Lingkup OPD tetap
+                 mengajukan. Lihat IkuRevisiTrait::revisiMintaHapus(). */ ?>
+        <?php $langsung = empty($revisi['opd_id']); ?>
         <form method="post" action="<?= base_url($baseUrl . '/revisi/hapus/ajukan/' . (int) $revisi['id']) ?>"
               class="row g-2"
-              onsubmit="return confirm('Ajukan penghapusan versi ini kepada Admin Kabupaten?');">
+              onsubmit="return confirm('<?= $langsung
+                  ? 'Hapus versi ini sekarang? Tindakan ini tidak bisa dibatalkan.'
+                  : 'Ajukan penghapusan versi ini kepada Admin Kabupaten?' ?>');">
             <?= csrf_field() ?>
             <div class="col-md-9">
-                <input type="text" name="alasan" class="form-control form-control-sm" required
+                <input type="text" name="alasan" class="form-control form-control-sm"
+                       <?= $langsung ? '' : 'required' ?>
                        maxlength="500"
-                       placeholder="Alasan penghapusan — mis. versi ini dibuat karena salah pilih periode">
+                       placeholder="<?= $langsung
+                           ? 'Catatan alasan (opsional)'
+                           : 'Alasan penghapusan — mis. versi ini dibuat karena salah pilih periode' ?>">
             </div>
             <div class="col-md-3 d-grid">
                 <button class="btn btn-outline-danger btn-sm">
-                    <i class="fa-solid fa-trash me-1"></i>Ajukan Penghapusan
+                    <i class="fa-solid fa-trash me-1"></i><?= $langsung ? 'Hapus Versi' : 'Ajukan Penghapusan' ?>
                 </button>
             </div>
         </form>

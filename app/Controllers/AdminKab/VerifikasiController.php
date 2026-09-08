@@ -250,7 +250,7 @@ class VerifikasiController extends BaseController
         try {
             (new VersionApprovalService())->setujui((int) $baris['id'], $this->pengguna());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))->with(
@@ -280,7 +280,7 @@ class VerifikasiController extends BaseController
         try {
             (new VersionApprovalService())->kembalikan((int) $baris['id'], $catatan, $this->pengguna());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))->with(
@@ -304,7 +304,7 @@ class VerifikasiController extends BaseController
         try {
             (new VersionCorrectionService())->setujui((int) $id, $this->pengguna());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))->with(
@@ -331,7 +331,7 @@ class VerifikasiController extends BaseController
         try {
             (new VersionCorrectionService())->kembalikan((int) $id, $catatan, $this->pengguna());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))
@@ -484,7 +484,7 @@ class VerifikasiController extends BaseController
 
                 $svc->setujui((int) $id, $this->pengguna(), $this->request->getPost('catatan'));
             } catch (Throwable $e) {
-                return redirect()->back()->with('error', $e->getMessage());
+                return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
             }
 
             $pesan = 'Versi "' . $hasil['nama'] . '" (revisi ke-' . $hasil['nomor'] . ') dihapus'
@@ -506,7 +506,7 @@ class VerifikasiController extends BaseController
                 $this->request->getPost('catatan')
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))->with('success',
@@ -527,7 +527,7 @@ class VerifikasiController extends BaseController
                 (string) $this->request->getPost('catatan')
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))
@@ -547,7 +547,7 @@ class VerifikasiController extends BaseController
                 $this->request->getPost('catatan')
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))
@@ -658,7 +658,7 @@ class VerifikasiController extends BaseController
         try {
             $hasil = (new IkuRevisiModel())->sahkan((int) $id, $this->pengguna());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         $pesan = 'Revisi IKU disahkan dan berlaku mulai tahun ' . (int) $revisi['berlaku_mulai_tahun'] . '.';
@@ -694,7 +694,7 @@ class VerifikasiController extends BaseController
                 $this->pengguna()
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'kab.verifikasi'));
         }
 
         return redirect()->to(base_url('adminkab/verifikasi'))

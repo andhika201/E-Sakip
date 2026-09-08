@@ -121,7 +121,7 @@ class CascadingController extends BaseController
                     ->setJSON(['success' => false, 'message' => $e->getMessage()]);
             }
 
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'opd.cascading'));
         }
     }
 

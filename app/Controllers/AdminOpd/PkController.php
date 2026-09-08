@@ -613,7 +613,7 @@ class PkController extends BaseController
             log_message('error', 'SAVE EXCEPTION: ' . $e->getMessage());
 
             return redirect()->back()->withInput()
-                ->with('error', 'Exception: ' . $e->getMessage());
+                ->with('error', pesanGalatBerawalan($e, 'Perjanjian Kinerja gagal disimpan', 'opd.pk'));
         }
     }
 
@@ -823,7 +823,7 @@ class PkController extends BaseController
         } catch (\Exception $e) {
             log_message('error', "EXCEPTION UPDATE PK: {$e->getMessage()}");
             log_message('error', $e->getTraceAsString());
-            return redirect()->back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalatBerawalan($e, 'Perjanjian Kinerja gagal diproses', 'opd.pk'));
         }
     }
 
@@ -882,7 +882,7 @@ class PkController extends BaseController
                 ]);
             }
 
-            return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Perjanjian Kinerja gagal diproses', 'opd.pk'));
         }
     }
 }

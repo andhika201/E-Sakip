@@ -293,7 +293,7 @@ class ProgramPkController extends BaseController
             $spreadsheet = IOFactory::load($file->getTempName());
         } catch (\Throwable $e) {
             log_message('error', 'Gagal membaca file import Program PK: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'File Excel tidak dapat dibaca: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'File Excel tidak dapat dibaca', 'umum.programPk'));
         }
 
         $sheet = $sheetName !== ''
@@ -311,7 +311,7 @@ class ProgramPkController extends BaseController
         } catch (\Throwable $e) {
             log_message('error', 'Gagal mem-parse Lampiran 8: ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Isi file tidak dapat dibaca: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Isi file tidak dapat dibaca', 'umum.programPk'));
         }
 
         if (empty($hasilParse['units'])) {
@@ -345,7 +345,7 @@ class ProgramPkController extends BaseController
                 $db->transRollback();
                 log_message('error', 'Gagal import Program PK (seluruh OPD): ' . $e->getMessage());
 
-                return redirect()->back()->with('error', 'Import gagal, transaksi dibatalkan: ' . $e->getMessage());
+                return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Import gagal, transaksi dibatalkan', 'umum.programPk'));
             }
 
             return $this->pesanHasilSeluruhOpd($ring, $dryRun);
@@ -375,7 +375,7 @@ class ProgramPkController extends BaseController
             $db->transRollback();
             log_message('error', 'Gagal import Program PK: ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Import gagal, transaksi dibatalkan: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Import gagal, transaksi dibatalkan', 'umum.programPk'));
         }
 
         $ringkasan = sprintf(
@@ -624,7 +624,7 @@ class ProgramPkController extends BaseController
             $db->transRollback();
             log_message('error', 'Gagal finalisasi mapping unit ' . $unitId . ': ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Gagal memproses mapping: ' . $e->getMessage());
+            return redirect()->back()->with('error', pesanGalatBerawalan($e, 'Gagal memproses mapping', 'umum.programPk'));
         }
 
         $nama = (new OpdResolver($db))->namaOpd($opdId);
@@ -924,7 +924,7 @@ class ProgramPkController extends BaseController
             }
 
             log_message('error', 'Gagal menyimpan Program PK: ' . $e->getMessage());
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.programPk'));
         }
     }
 
@@ -1098,7 +1098,7 @@ class ProgramPkController extends BaseController
             }
 
             log_message('error', 'Gagal memperbarui Program PK ID ' . $id . ': ' . $e->getMessage());
-            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalatBerawalan($e, 'Gagal memperbarui data', 'umum.programPk'));
         }
     }
 

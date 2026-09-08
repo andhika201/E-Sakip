@@ -262,6 +262,21 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
             <button class="btn btn-outline-danger btn-sm"><i class="fa-solid fa-ban me-1"></i>Batalkan</button>
         </form>
     <?php endif; ?>
+
+    <?php if (! empty($keadaanHapus['boleh'])): ?>
+        <form method="post" action="<?= base_url($baseUrl . '/versi/hapus/' . (int) $versi['id']) ?>"
+              onsubmit="return confirm('Hapus versi ini beserta seluruh arsip isinya? Tindakan ini tidak bisa dibatalkan.')">
+            <?= csrf_field() ?>
+            <button class="btn btn-danger btn-sm"><i class="fa-solid fa-trash me-1"></i>Hapus Versi</button>
+        </form>
+    <?php elseif (! empty($keadaanHapus['penghalang'])): ?>
+        <?php /* Alasannya dinyatakan, bukan didiamkan: tombol yang hilang tanpa
+                keterangan membuat orang mengira layarnya rusak. */ ?>
+        <span class="badge bg-light text-secondary border" role="note"
+              title="<?= esc($keadaanHapus['alasan']) ?>">
+            <i class="fa-solid fa-lock me-1"></i>Tidak bisa dihapus
+        </span>
+    <?php endif; ?>
 </div>
 
 <?php if (! $bolehSunting && $versi['status'] === 'published'): ?>

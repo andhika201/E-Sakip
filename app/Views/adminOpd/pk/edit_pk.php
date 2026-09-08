@@ -24,7 +24,7 @@
                 <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Edit PK</h2>
 
                 <form id="pk-form" method="POST"
-                    action="<?= base_url('adminopd/pk/' . ($seg ?? $pk['jenis']) . '/update/' . $pk['pk_id']) ?>">
+                    action="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $pk['jenis']) . '/update/' . $pk['pk_id']) ?>">
                     <?= csrf_field() ?>
 
                     <!-- Informasi Umum PK -->
@@ -695,7 +695,7 @@
 
                     <!-- Tombol Aksi -->
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="<?= base_url('adminopd/pk/' . ($seg ?? $jenis)) ?>" class="btn btn-secondary">
+                        <a href="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis)) ?>" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Kembali
                         </a>
                         <button type="submit" class="btn btn-success">

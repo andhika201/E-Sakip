@@ -76,7 +76,7 @@
 
                         <!-- Tombol Tambah -->
                         <div class="col-lg-2 col-md-6 text-lg-end">
-                            <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/tambah') ?>"
+                            <a href="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis) . '/tambah') ?>"
                                 class="btn btn-outline-success w-100">
                                 <i class="fas fa-plus me-1"></i>
                                 Tambah
@@ -457,12 +457,12 @@
 
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/cetak/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis) . '/cetak/' . $pk_data['id']) ?>"
                             class="btn btn-primary btn-sm text-white" target="_blank">
                             <i class="fas fa-download me-1"></i> Download
                         </a>
 
-                        <a href="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/edit/' . $pk_data['id']) ?>"
+                        <a href="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis) . '/edit/' . $pk_data['id']) ?>"
                             class="btn btn-success btn-sm">
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
@@ -488,8 +488,11 @@
             });
         }
         window.base_url = "<?= base_url() ?>";
-        window.jenis = "<?= $jenis ?>";
-        window.roleBase = "<?= service('uri')->getSegment(1) ?>";
+        // pkSeg = segmen URL (mis. 'kecamatan'), BUKAN jenis data ('camat').
+        // URL aksi harus memakai segmen agar redirect non-AJAX mendarat di menu yang benar.
+        window.pkSeg = "<?= esc($seg ?? $jenis, 'js') ?>";
+        window.jenis = "<?= esc($jenis, 'js') ?>";
+        window.roleBase = "<?= esc($areaBase ?? service('uri')->getSegment(1), 'js') ?>";
     </script>
 
     <script src="<?= base_url('assets/js/adminopd/pk/pk_detail.js') ?>"></script>

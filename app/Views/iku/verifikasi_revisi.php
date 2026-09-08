@@ -273,7 +273,7 @@ $rincianSelisih = static function (array $selisih): string {
                                         </td>
                                         <?php foreach ($years as $th): ?>
                                             <td class="text-center">
-                                                <?= esc($ind['target'][(int) $th] ?? '-') ?>
+                                                <?= esc($ind['target'][(int) $th]['target'] ?? '-') ?>
                                             </td>
                                         <?php endforeach; ?>
                                     </tr>

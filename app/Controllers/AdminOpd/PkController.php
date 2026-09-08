@@ -21,6 +21,22 @@ class PkController extends BaseController
         $this->opdModel = new OpdModel();
     }
 
+    /**
+     * Basis area URL ('adminopd' | 'adminkab') diambil dari grup rute yang SEDANG
+     * diakses, bukan ditebak dari jenis PK. admin_kab membuka PK lewat /adminkab
+     * dan admin_opd lewat /adminopd; menebak dari $jenis membuat form edit milik
+     * admin_kab menembak /adminopd/... lalu ditolak filter auth (/unauthorized).
+     */
+    private function areaBase(): string
+    {
+        // Hanya dua grup rute yang memetakan controller ini (lihat Config\Routes).
+        // Daftar-putih dipakai supaya nilai ini tidak pernah ikut bentuk URL yang
+        // tak terduga saat dipasang jadi action form.
+        $seg = strtolower((string) $this->request->getUri()->getSegment(1));
+
+        return in_array($seg, ['adminkab', 'adminopd'], true) ? $seg : 'adminopd';
+    }
+
     private function jabatanPkPayload(array $post, string $side): array
     {
         $statusKey = 'status_jabatan_' . $side;
@@ -51,6 +67,7 @@ class PkController extends BaseController
         $seg = $jenis;                                       // segmen URL (utk link/redirect/judul)
         $isKecamatan = ($jenis === 'kecamatan');
         $jenis = $isKecamatan ? 'camat' : $jenis;           // jenis data (disimpan/di-query)
+        $areaBase = $this->areaBase();
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -127,6 +144,7 @@ class PkController extends BaseController
         $currentOpd = $this->opdModel->find($opdId);
 
         return view('adminOpd/pk/pk', [
+            'areaBase' => $areaBase,
             'pk_data' => $pkData,
             'pkRelasiList' => $pkRelasiList,
             'tampilkanProgram' => $tampilkanProgram,
@@ -213,6 +231,7 @@ class PkController extends BaseController
         $seg = $jenis;
         $isKecamatan = ($jenis === 'kecamatan');
         $jenis = $isKecamatan ? 'camat' : $jenis;
+        $areaBase = $this->areaBase();
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -251,6 +270,7 @@ class PkController extends BaseController
 
         // dd($kegiatanAdmin);
         return view('adminOpd/pk/tambah_pk', [
+            'areaBase' => $areaBase,
             'pegawaiOpd' => $pegawaiOpd,
             'current_opd' => $currentOpd,
             'program' => $program,
@@ -273,6 +293,7 @@ class PkController extends BaseController
         $seg = $jenis;
         $isKecamatan = ($jenis === 'kecamatan');
         $jenis = $isKecamatan ? 'camat' : $jenis;
+        $areaBase = $this->areaBase();
 
         $session = session();
         $opdId = $session->get('opd_id');
@@ -280,7 +301,7 @@ class PkController extends BaseController
             return redirect()->to('/login')->with('error', 'Silakan login terlebih dahulu');
         $pk = $this->pkModel->getPkById($id);
         if (!$pk)
-            return redirect()->to('/adminopd/pk/' . $seg)->with('error', 'Data PK tidak ditemukan');
+            return redirect()->to('/' . $areaBase . '/pk/' . $seg)->with('error', 'Data PK tidak ditemukan');
 
 
         $pegawaiOpd = $this->pegawaiModel->getPegawaiDenganJabatan($opdId, $jenis);
@@ -317,6 +338,7 @@ class PkController extends BaseController
         // dd($pk['sasaran_pk'][0]['indikator']);
 
         return view('adminOpd/pk/edit_pk', [
+            'areaBase' => $areaBase,
             'pk' => $pk,
             'pegawaiOpd' => $pegawaiOpd,
             'program' => $program,
@@ -601,9 +623,7 @@ class PkController extends BaseController
             }
 
             // Jika berhasil
-            $redirectBase = (strtolower($jenis) === 'bupati')
-                ? '/adminkab/pk/'
-                : '/adminopd/pk/';
+            $redirectBase = '/' . $this->areaBase() . '/pk/';
 
             return redirect()->to($redirectBase . $seg)
                 ->with('success', 'Data PK berhasil disimpan');
@@ -814,7 +834,7 @@ class PkController extends BaseController
 
             if ($ok) {
                 log_message('debug', "UPDATE SUCCESS ID {$id}");
-                $base = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
+                $base = '/' . $this->areaBase() . '/pk/';
                 return redirect()->to($base . $seg)->with('success', 'Data PK berhasil diperbarui.');
             }
 
@@ -869,7 +889,7 @@ class PkController extends BaseController
             }
 
             // fallback untuk non-AJAX
-            $redirectBase = (strtolower($jenis) === 'bupati') ? '/adminkab/pk/' : '/adminopd/pk/';
+            $redirectBase = '/' . $this->areaBase() . '/pk/';
             return redirect()->to($redirectBase . $seg)
                 ->with('success', 'Data PK berhasil dihapus.');
         } catch (\Exception $e) {

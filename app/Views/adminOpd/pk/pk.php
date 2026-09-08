@@ -495,7 +495,15 @@
         window.roleBase = "<?= esc($areaBase ?? service('uri')->getSegment(1), 'js') ?>";
     </script>
 
-    <script src="<?= base_url('assets/js/adminopd/pk/pk_detail.js') ?>"></script>
+    <?php
+    // Cache-bust berbasis filemtime — pola yang sama dipakai edit_pk.php &
+    // tambah_pk.php. Aset disajikan dengan Cache-Control: max-age=14400, jadi
+    // tanpa ?v= perbaikan pada pk_detail.js baru sampai ke browser sampai 4 jam
+    // kemudian; tombol Hapus sempat tetap gagal walau server sudah diperbarui.
+    $pkDetailJs = 'assets/js/adminopd/pk/pk_detail.js';
+    $pkDetailVer = is_file(FCPATH . $pkDetailJs) ? filemtime(FCPATH . $pkDetailJs) : time();
+    ?>
+    <script src="<?= base_url($pkDetailJs . '?v=' . $pkDetailVer) ?>"></script>
     </div>
 </body>
 

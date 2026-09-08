@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Date: Tue, 08 Sep 2026 08:48:46 GMT
+Content-Type: application/javascript
+Content-Length: 2378
+Connection: keep-alive
+Host: esakip.nanztech.my.id
+Accept-Ranges: bytes
+last-modified: Tue, 08 Sep 2026 08:48:46 GMT
+Cache-Control: max-age=14400
+cf-cache-status: EXPIRED
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=RhOvM7qF%2BAq105cw%2FyEuBFb%2Fe8rKLMKmoHMKuEUUrVerJtMtP7cCG4EAYq02C%2FatgoTNNUi0W08PPpJOe5U5tNh9MRAoy1ExkG7v3bqFYl56hgj9ughc4wl5VWbsKoAsr%2FbdYFr7RTM%3D"}]}
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Server: cloudflare
+CF-RAY: a37cb2307eb65fe6-SIN
+alt-svc: h3=":443"; ma=86400
+

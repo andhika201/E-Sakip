@@ -485,7 +485,7 @@ trait RenstraSiklusTrait
                 $db->transRollback();
             }
 
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.renstraSiklus'));
         }
 
         return redirect()->to(base_url('adminopd/renstra'))->with('success',
@@ -512,7 +512,7 @@ trait RenstraSiklusTrait
                 session()->get('user_id') ?? session()->get('id')
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.renstraSiklus'));
         }
 
         return redirect()->to(base_url('adminopd/renstra'))->with('success',
@@ -563,7 +563,7 @@ trait RenstraSiklusTrait
                 isset($keadaan['versi']['id']) ? (int) $keadaan['versi']['id'] : null
             );
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.renstraSiklus'));
         }
 
         return redirect()->to($kembali)->with('success',
@@ -599,7 +599,7 @@ trait RenstraSiklusTrait
         try {
             (new IzinSuntingService())->tarik((int) $id, $this->penggunaRenstra());
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.renstraSiklus'));
         }
 
         return redirect()->to($kembali)->with('success', 'Permohonan izin sunting ditarik.');

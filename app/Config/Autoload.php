@@ -88,5 +88,10 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['number', 'rbac', 'activity', 'setting'];
+    // 'galat' dimuat GLOBAL, bukan per-controller: penanganan galat terpusat
+    // hanya berguna bila tersedia di setiap tempat yang menangkap exception —
+    // termasuk trait yang dipakai bersama beberapa controller. Satu controller
+    // yang lupa mendaftarkannya berarti satu jalur yang kembali membocorkan
+    // pesan teknis, dan itu tidak akan terlihat sampai galatnya terjadi.
+    public $helpers = ['number', 'rbac', 'activity', 'setting', 'galat'];
 }

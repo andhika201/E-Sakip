@@ -2,10 +2,13 @@
 
 namespace App\Models\Opd;
 
+use App\Models\Concerns\TransaksiAman;
 use CodeIgniter\Model;
 
 class TargetModel extends Model
 {
+    use TransaksiAman;
+
     protected $table = 'target_rencana';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
@@ -588,6 +591,55 @@ class TargetModel extends Model
      * @param array<int|string, array<int, array{id?: int, teks: string, tw: array<int, string|null>}>> $map
      *        [baris_rencana => [ {id, teks, tw}, ... ]]
      */
+    /**
+     * Simpan Rencana Aksi BESERTA seluruh Sub-nya dalam SATU transaksi.
+     *
+     * =================================================================
+     * MENGAPA HARUS SATU
+     *
+     * Semula controller menyisipkan `target_rencana` lebih dulu, lalu
+     * memanggil saveSubRencana() secara terpisah — tanpa transaksi sama
+     * sekali di seluruh berkas itu. Kalau penyimpanan sub gagal di tengah,
+     * baris rencana aksinya tetap tertinggal: sebuah Rencana Aksi tanpa satu
+     * pun sub, yang di layar tampak seperti data yang sengaja dibuat kosong.
+     *
+     * Pemakainya melihat pesan gagal, mengulang dari awal, dan mendapat baris
+     * kedua — sementara yang pertama tetap di sana.
+     *
+     * @param array<string, mixed>                             $data induk
+     * @param array<int, array<int, array<string, mixed>>>     $sub  peta sub
+     *
+     * @return int id rencana aksi yang tersimpan
+     */
+    public function simpanDenganSub(array $data, array $sub): int
+    {
+        return $this->dalamTransaksi(function () use ($data, $sub) {
+            $id = (int) $this->insert($data, true);
+
+            if ($id <= 0) {
+                throw new \RuntimeException('Rencana aksi gagal disimpan.');
+            }
+
+            $this->saveSubRencana($id, $sub);
+
+            return $id;
+        }, 'penyimpanan rencana aksi beserta sub');
+    }
+
+    /**
+     * Perbarui Rencana Aksi BESERTA Sub-nya dalam satu transaksi.
+     *
+     * @param array<string, mixed>                         $data induk
+     * @param array<int, array<int, array<string, mixed>>> $sub  peta sub
+     */
+    public function perbaruiDenganSub(int $id, array $data, array $sub): void
+    {
+        $this->dalamTransaksi(function () use ($id, $data, $sub) {
+            $this->update($id, $data);
+            $this->saveSubRencana($id, $sub);
+        }, 'pembaruan rencana aksi beserta sub');
+    }
+
     public function saveSubRencana(int $targetId, array $map): int
     {
         $tabel     = $this->db->table('target_sub_rencana');
@@ -671,8 +723,57 @@ class TargetModel extends Model
             }
         }
 
+        // =============================================================
+        // SUB YANG CAPAIANNYA SUDAH TERISI TIDAK BOLEH DIHAPUS BEGITU SAJA
+        //
+        // Sub yang tidak ikut dikirim dianggap dibuang, dan capaian MONEV-nya
+        // ikut dibersihkan oleh hapusCapaianSubYatim(). Untuk sub yang memang
+        // masih kosong itu wajar. Untuk sub yang capaian triwulanannya SUDAH
+        // dilaporkan, itu berarti satu tekan tombol menghapus pekerjaan
+        // pelaporan satu tahun — permanen, dan satu-satunya pelindungnya
+        // hanyalah confirm() JavaScript pada tombolnya.
+        //
+        // Pada basis data ini 908 dari 1.672 sub sudah punya capaian terisi.
+        //
+        // Karena itu penghapusannya DITOLAK, bukan dijalankan diam-diam.
+        // Pemakai yang memang hendak membuangnya diminta mengosongkan
+        // capaiannya lebih dulu lewat MONEV — sebuah tindakan sadar, di layar
+        // yang memang memperlihatkan angka yang akan hilang.
+        //
+        // Sub yang baris MONEV-nya ada tetapi MASIH KOSONG tetap boleh
+        // dibuang: tidak ada yang hilang di sana.
+        //
+        // Dilempar sebagai galat, bukan dilewati diam-diam: melewatinya
+        // membuat pemakai mengira sub itu sudah terhapus padahal masih ada.
+        // =============================================================
         $idDihapus = array_diff($idLama, $idDipakai);
+
         if (!empty($idDihapus)) {
+            $berisi = $this->db->table('target_sub_rencana s')
+                ->select('s.id, s.sub_rencana_aksi')
+                ->join('monev m', 'm.target_sub_rencana_id = s.id')
+                ->whereIn('s.id', $idDihapus)
+                ->groupStart()
+                    ->where("TRIM(COALESCE(m.capaian_triwulan_1,'')) <> ''", null, false)
+                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_2,'')) <> ''", null, false)
+                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_3,'')) <> ''", null, false)
+                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_4,'')) <> ''", null, false)
+                ->groupEnd()
+                ->get()->getResultArray();
+
+            if ($berisi !== []) {
+                $nama = array_map(
+                    static fn ($r) => '"' . mb_substr(trim((string) $r['sub_rencana_aksi']), 0, 60) . '"',
+                    $berisi
+                );
+
+                throw new \RuntimeException(
+                    'Sub Rencana Aksi berikut tidak bisa dihapus karena capaian MONEV-nya sudah diisi: '
+                    . implode(', ', $nama) . '. Kosongkan dulu capaian triwulanannya lewat menu MONEV, '
+                    . 'baru sub itu bisa dibuang.'
+                );
+            }
+
             $this->db->table('target_sub_rencana')->whereIn('id', $idDihapus)->delete();
         }
 

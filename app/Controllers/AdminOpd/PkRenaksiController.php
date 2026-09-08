@@ -548,18 +548,26 @@ class PkRenaksiController extends BaseController
                 ->with('error', 'Sub rencana aksi mengandung karakter yang tidak diizinkan.');
         }
 
-        $newId = $this->targets->insert([
-            'opd_id'            => (int) $ctx['opd_id'],
-            'pk_indikator_id'   => $pi,
-            'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
-            // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
-            // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
-            // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
-            'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
-        ], true);
+        // Induk + seluruh sub dalam SATU transaksi. Sebelumnya induknya
+        // disisipkan lebih dulu lalu sub-nya menyusul terpisah, sehingga
+        // kegagalan di tengah meninggalkan Rencana Aksi tanpa satu pun sub —
+        // dan pemakainya, yang melihat pesan gagal, mengulang dari awal lalu
+        // mendapat baris kedua sementara yang pertama tetap di sana.
+        try {
+            $this->targets->simpanDenganSub([
+                'opd_id'            => (int) $ctx['opd_id'],
+                'pk_indikator_id'   => $pi,
+                'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
+                // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
+                // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
+                // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
+                'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
+            ], $subRencana);
+        } catch (\Throwable $e) {
+            log_message('error', '[RENAKSI SIMPAN] ' . $e->getMessage());
 
-        if ($newId) {
-            $this->targets->saveSubRencana((int) $newId, $subRencana);
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'Rencana aksi gagal disimpan', 'opd.pkRenaksi'));
         }
 
         return redirect()->to(base_url($this->renaksiUrl($jenis)))
@@ -642,15 +650,28 @@ class PkRenaksiController extends BaseController
                 ->with('error', 'Sub rencana aksi mengandung karakter yang tidak diizinkan.');
         }
 
-        $this->targets->update($id, [
-            'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
-            // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
-            // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
-            // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
-            'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
-        ]);
+        // Induk + sub satu transaksi, sama seperti save().
+        //
+        // CATATAN: ini membuat pembaruannya ATOMIK, dan sengaja TIDAK mengubah
+        // apa yang dihapus. Sub yang tidak ikut dikirim tetap dibuang seperti
+        // sebelumnya — termasuk capaian MONEV-nya lewat hapusCapaianSubYatim()
+        // di bawah. Pada basis data ini 908 dari 1.672 sub sudah punya capaian
+        // terisi, jadi mengubah perilaku penghapusan itu berarti menyentuh data
+        // pengguna dan menunggu keputusan pemilik sistem.
+        try {
+            $this->targets->perbaruiDenganSub($id, [
+                'rencana_aksi'      => $this->request->getPost('rencana_aksi'),
+                // target_triwulan_* tingkat indikator sengaja TIDAK ditulis lagi:
+                // targetnya kini per Sub Rencana Aksi (target_sub_rencana). Kolomnya
+                // dibiarkan apa adanya supaya nilai lama tidak tertimpa null.
+                'penanggung_jawab'  => $this->request->getPost('penanggung_jawab'),
+            ], $subRencana);
+        } catch (\Throwable $e) {
+            log_message('error', '[RENAKSI UBAH] ' . $e->getMessage());
 
-        $this->targets->saveSubRencana($id, $subRencana);
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'Rencana aksi gagal diperbarui', 'opd.pkRenaksi'));
+        }
         // Capaian MONEV milik sub yang dihapus ikut dibersihkan (kolomnya tanpa FK).
         $this->monev->hapusCapaianSubYatim($id);
 
@@ -1645,14 +1666,16 @@ class PkRenaksiController extends BaseController
         }
 
         $monevOpdId = ($jenis === 'bupati') ? null : (int) $detail['opd_id'];
-        foreach ($akanSimpan as $baris) {
-            $this->monev->upsertAnggaran(
-                $targetId,
-                $monevOpdId,
-                $baris['realisasi'],
-                $baris['level'],
-                $baris['ref_id']
-            );
+
+        // Seluruh unit ditulis dalam SATU transaksi — validasinya sudah
+        // all-or-nothing di atas, penulisannya kini ikut.
+        try {
+            $this->monev->upsertAnggaranBatch($targetId, $monevOpdId, $akanSimpan);
+        } catch (\Throwable $e) {
+            log_message('error', '[MONEV ANGGARAN] ' . $e->getMessage());
+
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'Realisasi anggaran gagal disimpan', 'opd.pkRenaksi'));
         }
 
         return redirect()->to(base_url($this->monevUrl($jenis)))

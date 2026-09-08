@@ -2,10 +2,13 @@
 
 namespace App\Models\Opd;
 
+use App\Models\Concerns\TransaksiAman;
 use CodeIgniter\Model;
 
 class MonevModel extends Model
 {
+    use TransaksiAman;
+
     protected $table = 'monev';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
@@ -703,6 +706,43 @@ class MonevModel extends Model
      * @param string|null            $refLevel  'program'|'kegiatan'|'subkegiatan'; null = baris warisan
      * @param int|null               $refId     id tabel MASTER unit terkait
      */
+    /**
+     * Simpan SELURUH baris realisasi anggaran satu Rencana Aksi sekaligus.
+     *
+     * =================================================================
+     * MENGAPA SATU TRANSAKSI
+     *
+     * Controller sudah memvalidasi seluruh baris LEBIH DULU sebelum menulis
+     * apa pun — itu benar, dan komentarnya menyebutkannya. Tetapi
+     * penulisannya sendiri berupa perulangan tanpa transaksi: kalau baris
+     * ketiga dari lima gagal di tingkat basis data, dua baris pertama sudah
+     * terlanjur tersimpan sementara pemakainya menerima pesan gagal.
+     *
+     * Yang tertinggal adalah keadaan yang paling menyesatkan: sebagian unit
+     * anggaran terisi angka baru, sebagian masih angka lama, dan tidak ada
+     * satu pun tanda unit mana yang mana.
+     *
+     * @param array<int, array{realisasi: array<int, float|null>, level: string, ref_id: int}> $baris
+     */
+    public function upsertAnggaranBatch(int $targetId, ?int $opdId, array $baris): void
+    {
+        if ($baris === []) {
+            return;
+        }
+
+        $this->dalamTransaksi(function () use ($targetId, $opdId, $baris) {
+            foreach ($baris as $b) {
+                $this->upsertAnggaran(
+                    $targetId,
+                    $opdId,
+                    $b['realisasi'],
+                    $b['level'],
+                    $b['ref_id']
+                );
+            }
+        }, 'penyimpanan realisasi anggaran');
+    }
+
     public function upsertAnggaran(
         int $targetRencanaId,
         ?int $opdId,

@@ -686,7 +686,9 @@ class IkuModel extends Model
     private function kandidatSasaranRpjmd(int $tahunMulai, int $tahunAkhir): array
     {
         $rows = $this->db->table('rpjmd_sasaran rs')
-            ->select('rs.id AS sumber_id, rs.sasaran_rpjmd AS sasaran, rs.status, rtuj.tujuan_rpjmd AS induk')
+            // `sumber_live_id` — lihat catatan pada kandidatIndikatorRpjmd().
+            ->select('rs.id AS sumber_id, rs.id AS sumber_live_id, '
+                . 'rs.sasaran_rpjmd AS sasaran, rs.status, rtuj.tujuan_rpjmd AS induk')
             ->join('rpjmd_tujuan rtuj', 'rtuj.id = rs.tujuan_id')
             ->join('rpjmd_misi rmis', 'rmis.id = rtuj.misi_id')
             ->where('rmis.tahun_mulai', $tahunMulai)
@@ -849,6 +851,48 @@ class IkuModel extends Model
      *
      * @return array<int,array<string,mixed>>
      */
+
+    /**
+     * Berapa sasaran yang tersedia dari sumber BERJALAN (bukan arsip versi).
+     *
+     * =====================================================================
+     * UNTUK APA
+     *
+     * Layar pembuatan versi IKU perlu tahu apakah "kondisi berjalan" layak
+     * ditawarkan sebagai sumber sync. Menawarkannya tanpa memeriksa isi akan
+     * menghasilkan pilihan yang begitu dipakai hanya melapor "tidak ada yang
+     * bisa disalin" — persis kebingungan yang sama dengan daftar versi kosong,
+     * hanya berpindah tempat.
+     *
+     * Sengaja hanya MENGHITUNG, tidak menyusun kandidat: getKandidatSync()
+     * membangun perbandingan lengkap dengan IKU terpasang, dan itu terlalu
+     * mahal untuk sekadar mengisi satu daftar pilihan per periode.
+     *
+     * @param string   $sumber 'rpjmd' | 'renstra'
+     * @param int|null $opdId  wajib untuk 'renstra'
+     */
+    public function sumberBerjalanBerisi(string $sumber, ?int $opdId, int $tahunMulai, int $tahunAkhir): int
+    {
+        if ($sumber === 'rpjmd') {
+            if (! $this->db->tableExists('rpjmd_sasaran')) {
+                return 0;
+            }
+
+            return $this->db->table('rpjmd_sasaran rs')
+                ->join('rpjmd_tujuan rtuj', 'rtuj.id = rs.tujuan_id')
+                ->join('rpjmd_misi rmis', 'rmis.id = rtuj.misi_id')
+                ->where('rmis.tahun_mulai', $tahunMulai)
+                ->where('rmis.tahun_akhir', $tahunAkhir)
+                ->countAllResults();
+        }
+
+        if ($opdId === null || ! $this->db->tableExists('renstra_sasaran')) {
+            return 0;
+        }
+
+        return count($this->kandidatSasaranRenstra($opdId, $tahunMulai, $tahunAkhir));
+    }
+
     public function versiRpjmdTersedia(int $tahunMulai, int $tahunAkhir): array
     {
         if (! $this->db->tableExists('dokumen_versi') || ! $this->db->tableExists('rpjmd_versi_sasaran')) {
@@ -946,6 +990,19 @@ class IkuModel extends Model
         $rows = $this->db->table('rpjmd_indikator_sasaran ris')
             ->select("
                 ris.id                                      AS sumber_id,
+                -- SILSILAH: id RPJMD BERJALAN yang menurunkan baris ini.
+                --
+                -- Kembarannya di jalur Renstra (kandidatIndikatorRenstra) dan di
+                -- jalur arsip (kandidatIndikatorRpjmdVersi) sudah memilihnya
+                -- sejak semula; hanya jalur RPJMD berjalan yang terlewat.
+                --
+                -- Akibat kelalaian itu berantai dan sunyi: imporKandidat()
+                -- menulis `source_ref_id` NULL, pengesahan meneruskan NULL ke
+                -- `iku_indikator.source_indikator_id`, dan Cascading Kabupaten
+                -- — yang menjembatani RPJMD ke IKU LEWAT kolom itu — berhenti
+                -- menemukan padanannya lalu diam-diam jatuh ke teks RPJMD.
+                -- Tidak ada galat; layarnya sekadar berhenti menampilkan IKU.
+                ris.id                                      AS sumber_live_id,
                 ris.sasaran_id                              AS sumber_sasaran_id,
                 ris.indikator_sasaran                       AS indikator,
                 ris.definisi_op                             AS definisi,

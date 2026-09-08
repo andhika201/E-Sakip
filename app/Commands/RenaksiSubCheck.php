@@ -112,6 +112,7 @@ class RenaksiSubCheck extends BaseCommand
             $this->ujiSunting($db, $targets, $targetId);
             $this->ujiHapus($db, $targets, $monev, $targetId);
             $this->ujiTepi($db, $targets, $targetId);
+            $this->ujiHapusBercapaian($db, $targets, $targetId);
             $this->ujiBacaPost();
         } catch (Throwable $e) {
             $this->gagal++;
@@ -303,6 +304,76 @@ class RenaksiSubCheck extends BaseCommand
 
         $this->cek('capaian milik sub yang dihapus ikut dibersihkan', $adaMonev($idB) === 0);
         $this->cek('capaian milik sub yang bertahan TIDAK ikut terbawa', $adaMonev($idA) === 1);
+
+        CLI::newLine();
+    }
+
+    /**
+     * Sub yang capaiannya SUDAH terisi tidak boleh terhapus diam-diam.
+     *
+     * =================================================================
+     * Sub yang tidak ikut dikirim dianggap dibuang, dan capaian MONEV-nya
+     * ikut dibersihkan. Untuk sub yang masih kosong itu wajar; untuk sub yang
+     * capaian triwulanannya sudah dilaporkan, itu berarti satu tekan tombol
+     * memusnahkan pekerjaan pelaporan — permanen.
+     *
+     * Aturan ini diputuskan pemilik sistem pada 6 September 2026 setelah
+     * diukur: 908 dari 1.672 sub pada basis data produksi sudah punya capaian
+     * terisi.
+     */
+    private function ujiHapusBercapaian($db, TargetModel $targets, int $targetId): void
+    {
+        CLI::write('== 6. HAPUS SUB YANG CAPAIANNYA SUDAH TERISI ==', 'yellow');
+
+        $targets->saveSubRencana($targetId, [
+            0 => [
+                ['id' => 0, 'teks' => 'Bercapaian', 'satuan' => '', 'tw' => [1 => '1']],
+                ['id' => 0, 'teks' => 'Masih kosong', 'satuan' => '', 'tw' => [1 => '1']],
+            ],
+        ]);
+
+        $baris = $this->baris($db, $targetId);
+        $idIsi  = (int) $baris[0]['id'];
+        $idNihil = (int) $baris[1]['id'];
+
+        $db->table('monev')->insert([
+            'target_rencana_id' => $targetId, 'target_sub_rencana_id' => $idIsi,
+            'capaian_triwulan_1' => '75', 'metode_perhitungan' => 'sum',
+        ]);
+        $db->table('monev')->insert([
+            'target_rencana_id' => $targetId, 'target_sub_rencana_id' => $idNihil,
+            'capaian_triwulan_1' => '', 'metode_perhitungan' => 'sum',
+        ]);
+
+        $ada = static fn (int $id): int => (int) $db->table('target_sub_rencana')
+            ->where('id', $id)->countAllResults();
+
+        // Membuang yang BERCAPAIAN: ditolak.
+        $pesan = '';
+
+        try {
+            $targets->saveSubRencana($targetId, [
+                0 => [['id' => $idNihil, 'teks' => 'Masih kosong', 'satuan' => '', 'tw' => [1 => '1']]],
+            ]);
+            $this->cek('membuang sub bercapaian DITOLAK', false, 'justru berhasil');
+        } catch (Throwable $e) {
+            $pesan = $e->getMessage();
+            $this->cek('membuang sub bercapaian DITOLAK', true);
+        }
+
+        $this->cek('pesannya menyebut sub yang menghalangi',
+            str_contains($pesan, 'Bercapaian'), $pesan);
+        $this->cek('sub itu masih ada', $ada($idIsi) === 1);
+        $this->cek('capaiannya tidak ikut hilang',
+            (int) $db->table('monev')->where('target_sub_rencana_id', $idIsi)->countAllResults() === 1);
+
+        // Membuang yang MASIH KOSONG: boleh — tidak ada yang hilang.
+        $targets->saveSubRencana($targetId, [
+            0 => [['id' => $idIsi, 'teks' => 'Bercapaian', 'satuan' => '', 'tw' => [1 => '1']]],
+        ]);
+
+        $this->cek('membuang sub yang masih kosong tetap BOLEH', $ada($idNihil) === 0);
+        $this->cek('sub bercapaian tidak ikut terbawa', $ada($idIsi) === 1);
 
         CLI::newLine();
     }

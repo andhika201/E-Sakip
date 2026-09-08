@@ -518,6 +518,257 @@ class DokumenVersiModel extends Model
             ->update($this->saring($data));
     }
 
+
+    /* =========================================================
+     * PENGHAPUSAN VERSI
+     * =======================================================*/
+
+    /**
+     * Tabel isi LIVE per modul — baris berjalan yang menyandang `version_id`.
+     *
+     * Kolom ini TIDAK ber-foreign key ke `dokumen_versi`, jadi basis data tidak
+     * akan menahan apa pun. Inilah rujukan paling berbahaya: menghapus versinya
+     * membuat isi yang masih tampil di layar menunjuk versi yang sudah tiada.
+     *
+     * @var array<string, array<string,string>> [modul => [tabel => sebutan]]
+     */
+    private const ISI_LIVE = [
+        'rpjmd' => [
+            'rpjmd_misi'              => 'misi RPJMD berjalan',
+            'rpjmd_tujuan'            => 'tujuan RPJMD berjalan',
+            'rpjmd_sasaran'           => 'sasaran RPJMD berjalan',
+            'rpjmd_indikator_tujuan'  => 'indikator tujuan RPJMD berjalan',
+            'rpjmd_indikator_sasaran' => 'indikator sasaran RPJMD berjalan',
+        ],
+        'renstra' => [
+            'renstra_tujuan'            => 'tujuan Renstra berjalan',
+            'renstra_sasaran'           => 'sasaran Renstra berjalan',
+            'renstra_indikator_tujuan'  => 'indikator tujuan Renstra berjalan',
+            'renstra_indikator_sasaran' => 'indikator sasaran Renstra berjalan',
+        ],
+    ];
+
+    /**
+     * Siapa saja yang masih merujuk sebuah versi dokumen — penghalang hapus.
+     *
+     * =====================================================================
+     * MENGAPA HARUS DIHITUNG SENDIRI
+     *
+     * Dari 13 foreign key yang menunjuk `dokumen_versi`, hanya sebagian yang
+     * benar-benar menjaga:
+     *
+     *   * arsip isi (`rpjmd_versi_*`, `renstra_versi_*`) ON DELETE CASCADE —
+     *     memang seharusnya ikut terhapus, jadi sengaja tidak didaftar;
+     *   * `version_submission_history` & `version_correction_requests`
+     *     RESTRICT — basis data memang menahannya, tetapi galatnya berupa
+     *     pesan SQL mentah. Didaftar di sini supaya penolakannya terbaca;
+     *   * `dokumen_versi.source_version_id` & `copied_from_version_id`
+     *     SET NULL — silsilah versi HILANG diam-diam tanpa satu pun galat.
+     *
+     * Sisanya sama sekali tanpa foreign key: isi live, izin sunting, arsip
+     * Renstra yang berjangkar ke RPJMD, dan seluruh rujukan `source_version_id`
+     * di IKU/LAKIP.
+     *
+     * =====================================================================
+     * `source_version_id` ITU POLIMORFIK — WAJIB DISARING `source_type`
+     *
+     * Satu kolom `source_version_id` dipakai bersama oleh sumber 'rpjmd',
+     * 'renstra', dan 'iku', dan penomorannya berjalan sendiri-sendiri.
+     * Menghitung tanpa `source_type` berarti versi RPJMD #1 tampak dirujuk
+     * oleh apa pun yang bersumber dari Renstra #1 atau revisi IKU #1 — pada
+     * basis data ini ada 4 baris LAKIP semacam itu, dan semuanya milik IKU.
+     * Tanpa saringan ini, penghapusan ditolak karena alasan yang keliru.
+     *
+     * @return array<string,int> [keterangan => jumlah] yang tidak kosong
+     */
+    public function penghalangHapus(int $versiId, string $modul): array
+    {
+        $db  = $this->db;
+        $ada = [];
+
+        // Hitung aman: lewati tabel/kolom yang belum ada di lingkungan ini.
+        $hitung = static function (string $tabel, array $kondisi) use ($db): int {
+            if (! $db->tableExists($tabel)) {
+                return 0;
+            }
+
+            foreach (array_keys($kondisi) as $kolom) {
+                if (! $db->fieldExists($kolom, $tabel)) {
+                    return 0;
+                }
+            }
+
+            return $db->table($tabel)->where($kondisi)->countAllResults();
+        };
+
+        // 1. Isi LIVE yang menyandang versi ini.
+        foreach (self::ISI_LIVE[$modul] ?? [] as $tabel => $sebutan) {
+            $n = $hitung($tabel, ['version_id' => $versiId]);
+
+            if ($n > 0) {
+                $ada[$sebutan] = $n;
+            }
+        }
+
+        // 2. Jejak siklus versi (FK RESTRICT — pasti menahan di tingkat basis).
+        $n = $hitung('version_submission_history', ['version_id' => $versiId]);
+
+        if ($n > 0) {
+            $ada['catatan riwayat pengajuan'] = $n;
+        }
+
+        $n = $hitung('version_correction_requests', ['version_id' => $versiId]);
+
+        if ($n > 0) {
+            $ada['permintaan koreksi'] = $n;
+        }
+
+        // 3. Izin sunting yang berjangkar ke versi ini.
+        $n = $hitung('dokumen_izin_sunting', ['version_id' => $versiId]);
+
+        if ($n > 0) {
+            $ada['izin sunting'] = $n;
+        }
+
+        // 4. Silsilah antarversi (FK SET NULL — hilang tanpa suara).
+        $n = $hitung('dokumen_versi', ['source_version_id' => $versiId]);
+
+        if ($n > 0) {
+            $ada['versi lain yang bersumber dari versi ini'] = $n;
+        }
+
+        $n = $hitung('dokumen_versi', ['copied_from_version_id' => $versiId]);
+
+        if ($n > 0) {
+            $ada['versi lain yang disalin dari versi ini'] = $n;
+        }
+
+        // 5. Arsip Renstra yang berjangkar ke sebuah versi RPJMD.
+        if ($modul === VersionScope::MODUL_RPJMD) {
+            $n = $hitung('renstra_versi_tujuan', ['rpjmd_version_id' => $versiId]);
+
+            if ($n > 0) {
+                $ada['tujuan Renstra terarsip yang berjangkar ke versi ini'] = $n;
+            }
+        }
+
+        // 6. Rujukan bersumber di IKU & LAKIP — SELALU dengan source_type.
+        $bersumber = [
+            'iku_sasaran'          => 'sasaran IKU berjalan yang bersumber dari versi ini',
+            'iku_indikator'        => 'indikator IKU berjalan yang bersumber dari versi ini',
+            'iku_revisi_sasaran'   => 'sasaran IKU terarsip yang bersumber dari versi ini',
+            'iku_revisi_indikator' => 'indikator IKU terarsip yang bersumber dari versi ini',
+            'lakip'                => 'baris LAKIP yang dinilai terhadap versi ini',
+            'lakip_snapshot'       => 'snapshot LAKIP yang dibekukan dari versi ini',
+            'lakip_snapshot_baris' => 'baris snapshot LAKIP yang menunjuk versi ini',
+        ];
+
+        foreach ($bersumber as $tabel => $sebutan) {
+            $n = $hitung($tabel, ['source_type' => $modul, 'source_version_id' => $versiId]);
+
+            if ($n > 0) {
+                $ada[$sebutan] = $n;
+            }
+        }
+
+        return $ada;
+    }
+
+    /**
+     * Alasan sebuah versi TIDAK boleh dihapus menurut statusnya, atau NULL.
+     *
+     * =====================================================================
+     * HANYA DRAFT DAN BATAL YANG BOLEH
+     *
+     * `published` ditolak karena §16: versi yang sudah ditetapkan bersifat
+     * tetap — ia jangkar bagi timeline, perbandingan antarversi, dan seluruh
+     * dokumen turunan. Yang keliru pada versi resmi diperbaiki lewat Izin
+     * Sunting atau versi baru, bukan dengan menghapus jejaknya.
+     *
+     * `pending_approval` ditolak karena sedang di meja verifikator: menghapus
+     * berkas yang sedang dinilai orang lain membuat antreannya menunjuk
+     * ketiadaan. Batalkan dulu, baru hapus.
+     */
+    public function alasanTolakHapus(array $versi): ?string
+    {
+        $status = (string) ($versi['status'] ?? '');
+
+        if ($status === self::STATUS_PUBLISHED) {
+            return 'Versi yang sudah ditetapkan tidak bisa dihapus. Ia menjadi '
+                . 'jangkar bagi dokumen turunan dan perbandingan antarversi. '
+                . 'Perbaiki lewat Izin Sunting atau buat versi baru.';
+        }
+
+        if ($status === self::STATUS_PENDING) {
+            return 'Versi ini sedang menunggu verifikasi. Batalkan dulu '
+                . 'pengajuannya, baru versinya bisa dihapus.';
+        }
+
+        return null;
+    }
+
+    /**
+     * HAPUS sebuah versi dokumen beserta arsip isinya.
+     *
+     * Arsip isi (`rpjmd_versi_*` / `renstra_versi_*`) ikut terhapus lewat
+     * foreign key ON DELETE CASCADE. Isi LIVE tidak pernah ikut — dan memang
+     * tidak boleh: penghalangHapus() sudah menolak versi yang masih menyandang
+     * baris live, jadi bila sampai di sini tidak ada satu pun yang menunjuknya.
+     *
+     * @return array{nama:string,arsip:int} ringkasan untuk pesan layar
+     *
+     * @throws RuntimeException bila versinya tidak ada, statusnya menolak,
+     *                          atau masih ada yang merujuknya
+     */
+    public function hapusVersi(int $versiId): array
+    {
+        return $this->dalamTransaksi(function () use ($versiId) {
+            $versi = $this->ambil($versiId);
+
+            if ($versi === null) {
+                throw new RuntimeException('Versi tidak ditemukan.');
+            }
+
+            $tolak = $this->alasanTolakHapus($versi);
+
+            if ($tolak !== null) {
+                throw new RuntimeException($tolak);
+            }
+
+            // Diperiksa ULANG di dalam transaksi, bukan hanya di layar: antara
+            // halaman dirender dan tombolnya ditekan, orang lain bisa saja
+            // menjadikan versi ini sumber versi barunya.
+            $penghalang = $this->penghalangHapus($versiId, (string) $versi['modul']);
+
+            if ($penghalang !== []) {
+                $rinci = [];
+
+                foreach ($penghalang as $apa => $n) {
+                    $rinci[] = $n . ' ' . $apa;
+                }
+
+                throw new RuntimeException('Masih dirujuk: ' . implode('; ', $rinci) . '.');
+            }
+
+            $arsip = 0;
+
+            foreach (['misi', 'tujuan', 'sasaran'] as $bagian) {
+                $tabel = $versi['modul'] . '_versi_' . $bagian;
+
+                if ($this->db->tableExists($tabel)) {
+                    $arsip += $this->db->table($tabel)->where('version_id', $versiId)->countAllResults();
+                }
+            }
+
+            $this->db->table($this->table)->where('id', $versiId)->delete();
+
+            return [
+                'nama'  => (string) ($versi['label'] ?? 'versi'),
+                'arsip' => $arsip,
+            ];
+        }, 'hapus versi dokumen');
+    }
+
     /** Hanya kolom yang diizinkan — mencegah controller menulis kolom generated. */
     private function saring(array $data): array
     {

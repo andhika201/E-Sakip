@@ -278,7 +278,7 @@ trait LakipSnapshotTrait
             return redirect()->to($this->kembaliLakip($scope) . (str_contains($this->kembaliLakip($scope), '?') ? '&' : '?') . 'snapshot=' . $id)
                 ->with('success', 'Snapshot LAKIP tahun ' . $scope['tahun'] . ' berhasil disiapkan.');
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 
@@ -301,7 +301,7 @@ trait LakipSnapshotTrait
             return redirect()->to($this->kembaliLakip($scope))
                 ->with('success', 'Snapshot LAKIP tahun ' . $scope['tahun'] . ' disinkronkan dengan data terbaru.');
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 
@@ -333,7 +333,7 @@ trait LakipSnapshotTrait
                 . 'RPJMD/Renstra/IKU disunting. Koreksi selanjutnya hanya lewat Penyesuaian Kebijakan.'
             );
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 
@@ -435,7 +435,7 @@ trait LakipSnapshotTrait
             return redirect()->to($this->kembaliLakip($scope))
                 ->with('success', 'Penyesuaian kebijakan tersimpan.' . $catatan);
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 
@@ -498,7 +498,7 @@ trait LakipSnapshotTrait
                 . 'IKU yang sedang berlaku BELUM berubah — buka modul IKU untuk menyunting lalu mengesahkannya.'
             );
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 
@@ -526,7 +526,7 @@ trait LakipSnapshotTrait
             return redirect()->to($this->kembaliLakip($scope))
                 ->with('success', 'Penyesuaian dicabut. Riwayatnya tetap tersimpan.');
         } catch (Throwable $e) {
-            return redirect()->to($this->kembaliLakip($scope))->with('error', $e->getMessage());
+            return redirect()->to($this->kembaliLakip($scope))->with('error', pesanGalat($e, 'umum.lakipSnapshot'));
         }
     }
 

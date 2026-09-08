@@ -103,11 +103,13 @@ $tahunIni = (int) date('Y');
                  draft tujuan. Empat langkah untuk satu niat, dan langkah pertamanya
                  adalah penolakan.
 
-                 Blok ini hanya dirender bila memang ADA versi Renstra yang bisa
-                 disalin. Lingkup kabupaten tidak bersumber dari Renstra, jadi di
-                 sana ia tidak muncul sama sekali.
+                 Blok ini dirender bila memang ADA versi sumber yang bisa disalin.
+                 Sumbernya mengikuti lingkup: Renstra untuk OPD, RPJMD untuk
+                 kabupaten. Labelnya memakai $namaSumber supaya layar tidak
+                 pernah menyebut "Renstra" kepada Admin Kabupaten.
             ===================================================================== */ ?>
         <?php $versiRenstra = $versiRenstra ?? []; ?>
+        <?php $namaSumber = $namaSumber ?? 'Renstra'; ?>
         <?php $adaVersi = array_filter($versiRenstra); ?>
 
         <?php if (! empty($adaVersi)): ?>
@@ -118,23 +120,26 @@ $tahunIni = (int) date('Y');
                                name="sync_renstra" id="sync_renstra"
                                <?= old('sync_renstra') ? 'checked' : '' ?>>
                         <label class="form-check-label fw-semibold" for="sync_renstra">
-                            Sekalian salin isi Renstra ke draft ini
+                            Sekalian salin isi <?= esc($namaSumber) ?> ke draft ini
                         </label>
                     </div>
                     <div class="form-text mb-2">
-                        Sasaran, indikator, satuan, dan target diambil dari versi Renstra yang
-                        Anda pilih. Keterangan yang sudah Anda ketik di IKU — definisi operasional,
-                        rumusan, sumber data, penanggung jawab — <strong>tidak ikut tertimpa</strong>.
+                        Draft ini akan berisi <strong>persis isi <?= esc($namaSumber) ?></strong> yang Anda
+                        pilih — sasaran, indikator, satuan, dan targetnya. Salinan IKU yang berlaku
+                        sekarang <strong>diganti seluruhnya</strong>, jadi indikator IKU yang tidak ada
+                        di <?= esc($namaSumber) ?> tidak ikut terbawa ke versi ini.
+                        Keterangan yang sudah Anda ketik — definisi operasional, rumusan, sumber data,
+                        penanggung jawab — tetap dikembalikan untuk indikator yang masih ada.
                         Hasilnya masuk ke draft ini, bukan ke IKU berjalan.
                     </div>
 
-                    <label class="form-label fw-semibold mb-1">Versi Renstra yang disalin</label>
+                    <label class="form-label fw-semibold mb-1">Versi <?= esc($namaSumber) ?> yang disalin</label>
                     <select name="renstra_versi" id="renstra_versi" class="form-select" disabled>
                         <option value="">— tidak ada versi pada periode ini —</option>
                     </select>
                     <div class="form-text">
                         IKU disalin <strong>sekali</strong> dari sumber ini lalu hidup sendiri —
-                        Renstra yang berubah kemudian tidak ikut mengubah IKU.
+                        <?= esc($namaSumber) ?> yang berubah kemudian tidak ikut mengubah IKU.
                     </div>
                 </div>
             </div>
@@ -246,7 +251,7 @@ $tahunIni = (int) date('Y');
                     if (!daftar.length) {
                         const o = document.createElement('option');
                         o.value = '';
-                        o.textContent = '— tidak ada versi Renstra pada periode ini —';
+                        o.textContent = '— tidak ada versi <?= esc($namaSumber) ?> pada periode ini —';
                         pilihVersi.appendChild(o);
                         pilihVersi.disabled = true;
                         if (centang) { centang.checked = false; centang.disabled = true; }

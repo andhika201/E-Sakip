@@ -134,3 +134,10 @@ _modules/*
 /*-backup.sql
 /dump*.sql
 /Data_server.sql
+
+# Patokan cacah data (data:cacah --simpan).
+#
+# Isinya jumlah baris basis data MESIN INI — berbeda di tiap lingkungan, dan
+# tidak ada gunanya dibagikan: patokan milik server produksi justru akan
+# melaporkan "berkurang" palsu di komputer pengembang.
+writable/cacah-*.json

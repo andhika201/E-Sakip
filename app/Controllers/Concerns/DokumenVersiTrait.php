@@ -295,7 +295,7 @@ trait DokumenVersiTrait
                 'created_by'             => session()->get('user_id') ?? session()->get('id'),
             ]);
         } catch (Throwable $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()
@@ -370,6 +370,7 @@ trait DokumenVersiTrait
             'bolehTetapkan' => $this->versiBoleh('publish')
                 && ($approval->bolehVerifikasi($baris) || $approval->bolehAjukan($baris)),
             'bolehBatalkan' => $approval->bolehBatalkan($baris) && $this->versiBoleh('update_draft'),
+            'keadaanHapus'  => $this->versiKeadaanHapus($baris),
             'daftarBanding' => $this->versi()->daftar($scope, [DokumenVersiModel::STATUS_PUBLISHED]),
         ]);
     }
@@ -434,7 +435,7 @@ trait DokumenVersiTrait
                 'dasar'           => $this->request->getPost('dasar'),
             ], session()->get('user_id') ?? session()->get('id'));
         } catch (Throwable $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()
@@ -472,7 +473,7 @@ trait DokumenVersiTrait
                 session()->get('user_id') ?? session()->get('id')
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()->back()->with('success', 'Permintaan koreksi dibatalkan.');
@@ -593,7 +594,7 @@ trait DokumenVersiTrait
                 $db->transRollback();
             }
 
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()
@@ -670,7 +671,7 @@ trait DokumenVersiTrait
                 $db->transRollback();
             }
 
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()->back()->with(
@@ -821,7 +822,7 @@ trait DokumenVersiTrait
                 $db->transRollback();
             }
 
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()
@@ -924,7 +925,7 @@ trait DokumenVersiTrait
         try {
             (new VersionApprovalService())->ajukan((int) $id, $this->penggunaSaatIni());
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()->back()->with(
@@ -970,7 +971,7 @@ trait DokumenVersiTrait
         try {
             (new VersionApprovalService())->setujui((int) $id, $this->penggunaSaatIni(), true);
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()->back()->with(
@@ -997,12 +998,158 @@ trait DokumenVersiTrait
                 $this->penggunaSaatIni()
             );
         } catch (Throwable $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         return redirect()
             ->to(base_url($this->versiBaseUrl() . '/versi'))
             ->with('success', 'Versi dibatalkan. Barisnya tetap tersimpan sebagai jejak.');
+    }
+
+
+    /* =========================================================
+     * HAPUS VERSI
+     * =======================================================*/
+
+    /**
+     * Bolehkah pengguna ini menghapus versi pada lingkup yang sedang dibuka?
+     *
+     * =====================================================================
+     * HANYA LINGKUP KABUPATEN — DAN INI GAGAL-TERTUTUP, BUKAN KELALAIAN
+     *
+     * Trait ini dipakai bersama RpjmdController (lingkup kabupaten) dan
+     * RenstraController (lingkup OPD). Untuk IKU, penghapusan versi milik OPD
+     * ditempuh lewat permohonan izin yang disetujui Admin Kabupaten lebih dulu
+     * — versi dokumen BELUM punya alur setara itu.
+     *
+     * Selama alurnya belum ada, lingkup OPD ditolak di sini. Membiarkannya
+     * lewat berarti sebuah OPD bisa memusnahkan versi Renstra-nya sendiri
+     * tanpa seorang pun menyetujui, dan itu justru penjagaan yang dibongkar,
+     * bukan fitur yang ditambah.
+     *
+     * =====================================================================
+     * MENGAPA `<modul>.delete`, BUKAN `<modul>.version.delete`
+     *
+     * `rpjmd.version.delete` TIDAK ADA di tabel permissions — tujuh
+     * `rpjmd.version.*` yang tersedia berhenti di create/pin/publish/submit/
+     * update_draft/verify/view. Menuntut izin yang tidak pernah diberikan
+     * kepada siapa pun berarti tombolnya tidak akan pernah muncul, dan
+     * penyebabnya tidak terlihat dari layar mana pun.
+     *
+     * `rpjmd.delete` sudah ada dan sudah dipegang admin_kab. Ini juga pilihan
+     * yang sama dengan penghapusan versi IKU Kabupaten, yang memakai
+     * `iku_kab.delete` dengan alasan persis sama.
+     */
+    protected function versiBolehHapus(): bool
+    {
+        // Dikunci ke MODULNYA, bukan sekadar ke lingkupnya.
+        //
+        // Menguji `versiOpdId() === null` saja tidak cukup:
+        // RenstraController::versiOpdId() membaca session('opd_id') dan
+        // mengembalikan NULL begitu sesi itu kosong. Sesi tanpa opd_id — sesi
+        // yang kedaluwarsa, peran yang salah pasang — akan lolos sebagai
+        // "lingkup kabupaten" dan memperoleh hak hapus yang tidak pernah
+        // dimaksudkan untuknya.
+        if ($this->versiModul() !== VersionScope::MODUL_RPJMD) {
+            return false;
+        }
+
+        if ($this->versiOpdId() !== null) {
+            return false;
+        }
+
+        return function_exists('user_can') && user_can($this->versiModul() . '.delete');
+    }
+
+    /**
+     * Keadaan penghapusan sebuah versi, untuk dipakai tampilan DAN aksi.
+     *
+     * Dihitung satu kali di satu tempat supaya tombol dan penyimpanan tidak
+     * pernah berbeda pendapat: kalau aturannya tersalin dua kali, yang terjadi
+     * adalah tombol muncul tapi aksinya menolak — atau sebaliknya.
+     *
+     * @return array{boleh:bool, alasan:string, penghalang:array<string,int>}
+     */
+    protected function versiKeadaanHapus(array $versi): array
+    {
+        $kosong = ['boleh' => false, 'alasan' => '', 'penghalang' => []];
+
+        if (! $this->versiBolehHapus()) {
+            return array_merge($kosong, [
+                'alasan' => $this->versiOpdId() !== null
+                    ? 'Penghapusan versi ' . $this->versiNamaDokumen()
+                        . ' hanya dapat dilakukan Admin Kabupaten.'
+                    : 'Anda tidak berwenang menghapus versi ' . $this->versiNamaDokumen() . '.',
+            ]);
+        }
+
+        $tolak = $this->versi()->alasanTolakHapus($versi);
+
+        if ($tolak !== null) {
+            return array_merge($kosong, ['alasan' => $tolak]);
+        }
+
+        $penghalang = $this->versi()->penghalangHapus(
+            (int) $versi['id'],
+            (string) $versi['modul']
+        );
+
+        if ($penghalang !== []) {
+            $rinci = [];
+
+            foreach ($penghalang as $apa => $n) {
+                $rinci[] = $n . ' ' . $apa;
+            }
+
+            return array_merge($kosong, [
+                'penghalang' => $penghalang,
+                'alasan'     => 'Belum bisa dihapus — masih dirujuk: ' . implode('; ', $rinci) . '.',
+            ]);
+        }
+
+        return [
+            'boleh'      => true,
+            'alasan'     => 'Penghapusan versi tidak bisa dibatalkan.',
+            'penghalang' => [],
+        ];
+    }
+
+    /** POST: hapus sebuah versi dokumen beserta arsip isinya. */
+    public function versiHapus($id = null)
+    {
+        if (! $this->versiBolehHapus()) {
+            return $this->versiTolakIzin();
+        }
+
+        $baris = $this->versiMilikSaya((int) $id);
+
+        if ($baris === null) {
+            return $this->versiTolak('Versi tidak ditemukan pada lingkup Anda.');
+        }
+
+        $keadaan = $this->versiKeadaanHapus($baris);
+
+        if (! $keadaan['boleh']) {
+            return redirect()
+                ->to(base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id))
+                ->with('error', $keadaan['alasan']);
+        }
+
+        try {
+            $ringkas = $this->versi()->hapusVersi((int) $id);
+        } catch (Throwable $e) {
+            return redirect()
+                ->to(base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id))
+                ->with('error', pesanGalatBerawalan($e, 'Versi tidak bisa dihapus', 'umum.dokumenVersi'));
+        }
+
+        $jejak = (int) $ringkas['arsip'] > 0
+            ? ' Beserta ' . (int) $ringkas['arsip'] . ' baris arsip isinya.'
+            : '';
+
+        return redirect()
+            ->to(base_url($this->versiBaseUrl() . '/versi'))
+            ->with('success', 'Versi "' . $ringkas['nama'] . '" dihapus.' . $jejak);
     }
 
     /* =========================================================
@@ -1090,7 +1237,7 @@ trait DokumenVersiTrait
         try {
             $this->versi()->tetapkanTampilanUtama((int) $id, $scope, $this->penggunaSaatIni());
         } catch (Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
         (new VersionAuditService())->catat((int) $id, 'tampilan_utama', [

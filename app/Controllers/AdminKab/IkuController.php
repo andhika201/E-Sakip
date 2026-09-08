@@ -165,7 +165,7 @@ class IkuController extends BaseController
                 'catatan' => $this->request->getPost('catatan') ?: null,
             ]);
         } catch (\Throwable $e) {
-            return redirect()->to($kembali)->with('error', $e->getMessage());
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'kab.iku'));
         }
 
         return redirect()->to($kembali)->with('success',
@@ -342,7 +342,7 @@ class IkuController extends BaseController
             log_message('error', '[IKU SYNC KAB] ' . $e->getMessage());
 
             return redirect()->to(base_url('adminkab/iku/sync?periode=' . $periode))
-                ->with('error', 'Gagal menyalin data RPJMD: ' . $e->getMessage());
+                ->with('error', pesanGalatBerawalan($e, 'Gagal menyalin data RPJMD', 'kab.iku'));
         }
 
         if ($muara['ke_revisi']) {
@@ -483,7 +483,7 @@ class IkuController extends BaseController
             log_message('error', '[IKU KETERANGAN KAB] ' . $e->getMessage());
 
             return redirect()->back()->withInput()
-                ->with('error', 'Gagal menyimpan keterangan: ' . $e->getMessage());
+                ->with('error', pesanGalatBerawalan($e, 'Gagal menyimpan keterangan', 'kab.iku'));
         }
 
         $pesanSasaran = '';

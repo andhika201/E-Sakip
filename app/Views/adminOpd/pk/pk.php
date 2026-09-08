@@ -210,6 +210,31 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+                    <?php
+                    /**
+                     * PENANDA RUJUKAN YATIM.
+                     *
+                     * `pk_program.program_id`, `pk_kegiatan.kegiatan_id` dan
+                     * `pk_subkegiatan.subkegiatan_id` tidak ber-FK, sedangkan master-nya
+                     * (`program_pk` -> `kegiatan_pk` -> `sub_kegiatan_pk`) saling cascade.
+                     * Kalau master dihapus/diganti, rujukan di sini menggantung dan query
+                     * PK yang memakai LEFT JOIN mengembalikan nama NULL + anggaran 0.
+                     *
+                     * Dulu barisnya tampil kosong melompong sehingga terlihat seperti bug
+                     * tampilan. Sekarang keadaannya dinyatakan terang-terangan berikut id
+                     * master yang hilang, supaya operator tahu harus memilih ulang.
+                     */
+                    $namaAtauYatim = static function ($nama, $idMaster = null): string {
+                        if (trim((string) $nama) !== '') {
+                            return esc($nama);
+                        }
+
+                        return '<span class="text-danger fst-italic">[data induk terhapus'
+                            . ($idMaster ? ' &mdash; id ' . esc($idMaster) : '')
+                            . '] pilih ulang lewat tombol Edit</span>';
+                    };
+                    ?>
+
                     <?php if (strtolower($jenis) === 'bupati'): ?>
                         <h4 class="h3 fw-bold text-success text-left mb-4">PROGRAM DAN ANGGARAN</h4>
                         <table class="table table-bordered table-striped text-center small">
@@ -289,6 +314,7 @@
                         
                                             if (!isset($programMap[$programKey])) {
                                                 $programMap[$programKey] = [
+                                                    'program_id' => $programKey,
                                                     'program_kegiatan' => $program['program_kegiatan'],
                                                     'kegiatan' => []
                                                 ];
@@ -314,7 +340,7 @@
                                     <!-- PROGRAM -->
                                     <tr class="table-light fw-bold">
                                         <td colspan="4">
-                                            PROGRAM: <?= esc($program['program_kegiatan']) ?>
+                                            PROGRAM: <?= $namaAtauYatim($program['program_kegiatan'], $program['program_id'] ?? null) ?>
                                         </td>
                                     </tr>
 
@@ -322,7 +348,7 @@
                                     <?php foreach ($program['kegiatan'] as $keg): ?>
                                         <tr>
                                             <td class="text-center"><?= $no++ ?></td>
-                                            <td><?= esc($keg['kegiatan']) ?></td>
+                                            <td><?= $namaAtauYatim($keg['kegiatan'], $keg['kegiatan_id'] ?? null) ?></td>
                                             <td class="text-end">
                                                 Rp <?= number_format($keg['anggaran'], 0, ',', '.') ?>
                                             </td>
@@ -361,6 +387,7 @@
                                         // init kegiatan
                                         if (!isset($grouped[$kegId])) {
                                             $grouped[$kegId] = [
+                                                'kegiatan_id' => $kegId,
                                                 'kegiatan' => $kegiatan['kegiatan'],
                                                 'subkegiatan' => []
                                             ];
@@ -372,6 +399,7 @@
                                             // cegah duplikat subkegiatan
                                             if (!isset($grouped[$kegId]['subkegiatan'][$subKey])) {
                                                 $grouped[$kegId]['subkegiatan'][$subKey] = [
+                                                    'subkegiatan_id' => $subKey,
                                                     'nama' => $sub['sub_kegiatan'],
                                                     'anggaran' => $sub['anggaran']
                                                 ];
@@ -403,14 +431,14 @@
                                     <!-- HEADER KEGIATAN (HANYA SEKALI) -->
                                     <tr class="table-secondary fw-bold">
                                         <td colspan="4">
-                                            KEGIATAN: <?= esc($kegiatan['kegiatan']) ?>
+                                            KEGIATAN: <?= $namaAtauYatim($kegiatan['kegiatan'], $kegiatan['kegiatan_id'] ?? null) ?>
                                         </td>
                                     </tr>
 
                                     <?php foreach ($kegiatan['subkegiatan'] as $sub): ?>
                                         <tr>
                                             <td class="text-center"><?= $no++ ?></td>
-                                            <td><?= esc($sub['nama']) ?></td>
+                                            <td><?= $namaAtauYatim($sub['nama'], $sub['subkegiatan_id'] ?? null) ?></td>
                                             <td class="text-end">
                                                 Rp <?= number_format($sub['anggaran'], 0, ',', '.') ?>
                                             </td>

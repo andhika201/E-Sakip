@@ -108,7 +108,7 @@
                 <h2 class="h3 fw-bold text-center mb-4" style="color: #00743e;">Tambah PK <?= strtoupper($judulPk) ?>
                 </h2>
                 <form id="pk-form" method="POST"
-                    action="<?= base_url(($jenis === 'bupati' ? 'adminkab/pk/' : 'adminopd/pk/') . ($seg ?? $jenis) . '/save') ?>">
+                    action="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis) . '/save') ?>">
                     <?= csrf_field() ?>
                     <section class="mb-4">
                         <h2 class="h5 fw-semibold mb-3">Informasi Umum PK</h2>

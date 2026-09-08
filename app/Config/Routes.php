@@ -368,10 +368,15 @@ $routes->group(
 
         // Program PK (master) dipindah ke grup super admin (auth:admin) di bawah.
 
-        // Tentang Kami
+        // Tentang Kami. Halamannya statis (tidak ada isi dari DB), jadi hanya
+        // rute tampilnya yang dipakai.
         $routes->get('tentang_kami', 'AdminKabupatenController::tentang_kami');
-        $routes->get('tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
-        $routes->post('tentang_kami/save', 'AdminKabupatenController::save_tentang_kami');
+        // edit/save dinonaktifkan: view 'adminKabupaten/edit_tentang_kami.php'
+        // tidak pernah ada (rute /edit selalu 500 ViewException) dan
+        // save_tentang_kami() hanya redirect tanpa menyimpan apa pun. Tidak ada
+        // tautan ke keduanya di view mana pun. Pola sama dgn capaian_pk di atas.
+        // $routes->get('tentang_kami/edit', 'AdminKabupatenController::edit_tentang_kami');
+        // $routes->post('tentang_kami/save', 'AdminKabupatenController::save_tentang_kami');
     }
 );
 

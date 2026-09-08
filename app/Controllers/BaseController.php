@@ -51,6 +51,18 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
 
+        // mPDF menolak HTML yang lebih panjang dari pcre.backtrack_limit
+        // (Mpdf::AdjustHTML) — bawaan PHP 1.000.000 karakter. Dokumen SAKIP yang
+        // lebar (log aktivitas, cetak MONEV/Cascading lintas OPD) rutin melewati
+        // itu dan gagal dengan MpdfException, bukan menghasilkan PDF. Batas ini
+        // hanya PLAFON untuk backtracking preg_*: menaikkannya tidak mengubah
+        // hasil pencocokan mana pun, hanya mengizinkan subjek yang lebih panjang.
+        // Dipasang di sini supaya seluruh jalur cetak (17 titik `new \Mpdf\Mpdf`)
+        // terlindungi sekaligus, termasuk yang ditambahkan nanti.
+        if ((int) ini_get('pcre.backtrack_limit') < 20000000) {
+            ini_set('pcre.backtrack_limit', '20000000');
+        }
+
         // Preload any models, libraries, etc, here.
 
         // E.g.: $this->session = service('session');

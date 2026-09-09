@@ -337,6 +337,24 @@
   .modal-content { border: 0; border-radius: 16px; box-shadow: 0 24px 60px rgba(16, 40, 24, .20); }
   .modal-header, .modal-footer { border-color: #eef1ee; }
 
+  /* ---- Modal yang isinya dibungkus <form> ----
+     Bootstrap menjadikan .modal-content kolom flex ber-max-height, dan
+     .modal-body yang menggulir HARUS jadi anak-flex LANGSUNG-nya. Bila
+     header/body/footer dibungkus <form>, rantai itu putus: form tetap
+     setinggi isinya (mis. 655px) sementara .modal-content sudah dipangkas
+     mengikuti layar (mis. 548px), sehingga tombol Simpan terdorong ke luar
+     kotak dan tidak bisa dijangkau — bahkan pada modal yang sudah diberi
+     kelas .modal-dialog-scrollable.
+     `min-height: 0` wajib: tanpa itu form menolak menyusut di bawah tinggi
+     isinya (bawaan min-height:auto pada item flex). */
+  .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+  }
+  .modal-content > form > .modal-body { overflow-y: auto; min-height: 0; }
+
   /* Kartu konten */
   main .bg-white { border-color: #eaefeb; }
 </style>

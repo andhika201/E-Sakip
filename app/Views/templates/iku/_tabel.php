@@ -41,10 +41,121 @@ $no          = 1;
 // hanyalah lencana yang bisa diklik tanpa akibat, berdiri di sebelah status
 // revisi yang justru punya arti.
 $totalKolom = 9 + ($show_opd ? 1 : 0) + max(1, count($years));
+
+// ---------------------------------------------------------------------
+// LEBAR KOLOM DIPATOK, bukan diserahkan ke penyesuaian otomatis browser.
+//
+// Tabel ini 13-15 kolom dan tiga di antaranya berisi paragraf (Definisi,
+// Formula, Sumber Data). Tanpa patokan, browser memberi ruang menurut panjang
+// isi TERPANJANG per kolom: Definisi Operasional yang isinya satu paragraf
+// justru terjepit jadi pita sempit setinggi belasan baris, sementara Satuan
+// dan tahun kebagian ruang berlebih. Lebarnya dalam piksel (bukan persen)
+// karena tabel memang lebih lebar dari layar dan digulir mendatar — persen
+// akan memerasnya kembali ke lebar layar.
+// Dipasangkan dengan `table-layout: fixed` di CSS bawah; tanpa itu patokan
+// ini hanya jadi usulan yang boleh diabaikan browser.
+// ---------------------------------------------------------------------
+$lebarKolom = [48];                                  // No
+if ($show_opd) {
+    $lebarKolom[] = 170;                             // OPD
+}
+$lebarKolom[] = 230;                                 // Sasaran
+$lebarKolom[] = 230;                                 // Indikator Kinerja Utama
+$lebarKolom[] = 300;                                 // Definisi Operasional
+$lebarKolom[] = 260;                                 // Formula / Rumusan
+$lebarKolom[] = 90;                                  // Satuan
+foreach (range(1, max(1, count($years))) as $ignored) {
+    $lebarKolom[] = 78;                              // satu kolom per tahun
+}
+$lebarKolom[] = 200;                                 // Sumber Data
+$lebarKolom[] = 180;                                 // Penanggung Jawab
+$lebarKolom[] = 96;                                  // Aksi
+
+$lebarTabel = array_sum($lebarKolom);
+
+/**
+ * Penyaji isi sel: kosong -> tanda pisah yang diredupkan, terisi -> teks aman.
+ *
+ * `nl2br` dipakai karena Definisi dan terutama Formula sering ditulis
+ * berbaris-baris (mis. keterangan tiap variabel di bawah rumusnya). Tanpa itu
+ * seluruhnya menyatu jadi satu paragraf dan rumusnya jadi sulit dibaca.
+ * esc() dijalankan LEBIH DULU, jadi nl2br hanya menambah <br> pada teks yang
+ * sudah aman — bukan sebaliknya.
+ */
+$sel = static function ($nilai): string {
+    $teks = trim((string) ($nilai ?? ''));
+
+    return $teks === ''
+        ? '<span class="kosong">&mdash;</span>'
+        : nl2br(esc($teks));
+};
 ?>
 
-<div class="table-responsive table-wrap mt-3">
-    <table class="table table-bordered table-striped align-middle small iku-table">
+<style>
+    /* Lebar kolom baru dipatuhi kalau tata letaknya `fixed`; `max-content`
+       membuat tabel selebar jumlah kolom lalu digulir di dalam pembungkusnya,
+       bukan diperas mengikuti lebar layar. */
+    .iku-table {
+        table-layout: fixed;
+        width: <?= $lebarTabel ?>px;
+        min-width: 100%;
+    }
+
+    /* Sel berisi paragraf dibaca dari atas, bukan dari tengah — rata tengah
+       membuat teks pendek (Indikator) mengambang di tengah baris yang
+       tingginya ditentukan kolom lain (Definisi), sehingga antar kolom tidak
+       sejajar. Kelas `align-middle` Bootstrap ber-!important, jadi kelas itu
+       DIBUANG dari <table> dan hanya dipasang pada sel yang memang perlu
+       (No, Sasaran ber-rowspan, Satuan, tahun, Aksi). */
+    /* Spesifisitas sengaja dinaikkan (`main .table.iku-table`): design kit di
+       templates/style.php memasang `main .table tbody td { vertical-align:
+       middle }` untuk SEMUA tabel, dan itu menang atas `.iku-table tbody td`.
+       Ditimpa di sini saja, bukan diubah di design kit — tabel lain memang
+       cocok rata tengah karena selnya pendek. Sel ber-kelas `align-middle`
+       (No, Sasaran, Satuan, tahun, Aksi) tetap di tengah karena utilitas
+       Bootstrap itu ber-!important. */
+    main .table.iku-table tbody td { vertical-align: top; }
+
+    /* Judul kolom boleh turun baris: dengan lebar yang sudah dipatok, `nowrap`
+       hanya akan membuat judul panjang menembus kolomnya. */
+    .iku-table thead th {
+        white-space: normal;
+        line-height: 1.25;
+        font-size: .78rem;
+        letter-spacing: .01em;
+    }
+
+    /* Rumus & sumber data kerap memuat kata sangat panjang (URL, formula tanpa
+       spasi) yang bisa mendorong lebar kolom. Dipaksa patah di dalam sel. */
+    .iku-table tbody td {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.4;
+    }
+
+    .iku-table td.kolom-angka { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+    /* Sasaran & indikator adalah tulang punggung pembacaan tabel ini. */
+    .iku-table td.kolom-utama { font-weight: 600; }
+
+    /* Nilai '-' (data kosong) diredupkan supaya mata langsung menangkap
+       kolom mana yang benar-benar terisi. */
+    .iku-table .kosong { color: #9aa0a6; }
+</style>
+
+<div class="d-flex justify-content-end">
+    <span class="text-muted small fst-italic petunjuk-gulir">
+        <i class="fas fa-arrows-left-right me-1"></i>Tabel dapat digeser ke samping untuk melihat kolom Sumber Data, Penanggung Jawab, dan Aksi.
+    </span>
+</div>
+
+<div class="table-responsive table-wrap mt-2">
+    <table class="table table-bordered table-striped small iku-table">
+        <colgroup>
+            <?php foreach ($lebarKolom as $lebar): ?>
+                <col style="width: <?= (int) $lebar ?>px;">
+            <?php endforeach; ?>
+        </colgroup>
         <thead class="table-success text-dark">
             <tr class="text-center">
                 <th rowspan="2" class="align-middle">No</th>
@@ -109,8 +220,8 @@ $totalKolom = 9 + ($show_opd ? 1 : 0) + max(1, count($years));
                             <?php endif; ?>
 
                             <?php if ($barisPertamaSasaran): ?>
-                                <td rowspan="<?= $barisSasaran ?>" class="text-start align-middle">
-                                    <?= esc($sasaran['sasaran'] ?? '-') ?>
+                                <td rowspan="<?= $barisSasaran ?>" class="text-start align-middle kolom-utama">
+                                    <?= $sel($sasaran['sasaran'] ?? null) ?>
                                 </td>
                             <?php endif; ?>
 
@@ -119,22 +230,23 @@ $totalKolom = 9 + ($show_opd ? 1 : 0) + max(1, count($years));
                                     Belum ada indikator pada sasaran ini.
                                 </td>
                             <?php else: ?>
-                                <td class="text-start"><?= esc($indikator['indikator'] ?? '-') ?></td>
-                                <td class="text-start"><?= esc(($indikator['definisi'] ?? '') !== '' ? $indikator['definisi'] : '-') ?></td>
-                                <td class="text-start"><?= esc(($indikator['rumusan_perhitungan'] ?? '') !== '' ? $indikator['rumusan_perhitungan'] : '-') ?></td>
-                                <td class="text-center"><?= esc(($indikator['satuan_nama'] ?? '') !== '' ? $indikator['satuan_nama'] : '-') ?></td>
+                                <td class="text-start kolom-utama"><?= $sel($indikator['indikator'] ?? null) ?></td>
+                                <td class="text-start"><?= $sel($indikator['definisi'] ?? null) ?></td>
+                                <td class="text-start"><?= $sel($indikator['rumusan_perhitungan'] ?? null) ?></td>
+                                <td class="text-center align-middle"><?= $sel($indikator['satuan_nama'] ?? null) ?></td>
 
                                 <?php if (empty($years)): ?>
-                                    <td class="text-center">-</td>
+                                    <td class="text-center align-middle kolom-angka"><span class="kosong">&mdash;</span></td>
                                 <?php else: ?>
                                     <?php foreach ($years as $tahun): ?>
-                                        <?php $nilai = $indikator['target'][(int) $tahun] ?? null; ?>
-                                        <td class="text-center"><?= esc(($nilai === null || $nilai === '') ? '-' : $nilai) ?></td>
+                                        <td class="text-center align-middle kolom-angka">
+                                            <?= $sel($indikator['target'][(int) $tahun] ?? null) ?>
+                                        </td>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
 
-                                <td class="text-start"><?= esc(($indikator['sumber_data'] ?? '') !== '' ? $indikator['sumber_data'] : '-') ?></td>
-                                <td class="text-start"><?= esc(($indikator['penanggung_jawab'] ?? '') !== '' ? $indikator['penanggung_jawab'] : '-') ?></td>
+                                <td class="text-start"><?= $sel($indikator['sumber_data'] ?? null) ?></td>
+                                <td class="text-start"><?= $sel($indikator['penanggung_jawab'] ?? null) ?></td>
 
                             <?php endif; ?>
 

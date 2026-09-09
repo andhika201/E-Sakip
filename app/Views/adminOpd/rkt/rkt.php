@@ -114,7 +114,36 @@
             <!-- FILTER -->
             <?php /* Grid: tiga filter + tombol tidak muat sebaris di layar
                sempit; w-50/w-25 dilepas karena lebar diatur kolom grid. */ ?>
+            <?php /* Versi Renstra yang dibaca halaman ini. Bawaannya Renstra
+                     berjalan; memilih versi menampilkan RKT sebagaimana
+                     dibaca pada masa versi itu — indikator, target, DAN isi
+                     filter di sebelahnya ikut mengikutinya. Blok ini hanya
+                     dirender bila memang ADA versi berarsip untuk OPD ini. */ ?>
+            <?php $versiRenstraList = $versiRenstraList ?? []; ?>
+
+            <?php if (! empty($versiRenstraDiabaikan)): ?>
+                <div class="alert alert-warning py-2 small">
+                    Versi Renstra yang Anda pilih tidak tersedia untuk OPD ini.
+                    Yang ditampilkan adalah <strong>Renstra berjalan</strong>.
+                </div>
+            <?php endif; ?>
+
             <div class="row g-2 align-items-center mb-4">
+                <?php if (! empty($versiRenstraList)): ?>
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <select id="versiRenstraFilter" class="form-select" onchange="applyFilter()">
+                            <option value="">RENSTRA BERJALAN (TERKINI)</option>
+                            <?php foreach ($versiRenstraList as $v): ?>
+                                <option value="<?= (int) $v['id'] ?>"
+                                    <?= (int) ($versiRenstraDipilih ?? 0) === (int) $v['id'] ? 'selected' : '' ?>>
+                                    <?= esc($v['label'] ?? ('V' . (int) $v['version_no'])) ?>
+                                    (<?= (int) $v['jumlah_sasaran'] ?> sasaran)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                <?php endif; ?>
+
                 <div class="col-12 col-md-6 col-xl-5">
 
                     <!-- Filter Indikator Sasaran Renstra -->
@@ -686,8 +715,15 @@
         const indikator = document.getElementById('indikatorFilter')?.value || 'all';
         const tahun     = document.getElementById('yearFilter')?.value || 'all';
         const status    = document.getElementById('statusFilter')?.value || 'all';
+        // Versi ikut dibawa: tanpa ini, mengubah filter apa pun akan
+        // diam-diam mengembalikan halaman ke Renstra berjalan.
+        const versi     = document.getElementById('versiRenstraFilter')?.value || '';
 
         const params = new URLSearchParams();
+
+        if (versi !== '') {
+            params.set('renstra_versi', versi);
+        }
 
         if (indikator !== 'all') {
             params.set('sasaran', indikator);

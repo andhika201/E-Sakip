@@ -211,6 +211,51 @@
                                 <i class="fas fa-file-pdf"></i> Cetak PDF
                             </a>
                         <?php endif; ?>
+                        <?php /* =====================================================
+                                 HAPUS RENSTRA SATU PERIODE
+
+                                 Hanya muncul setelah sebuah periode dipilih, dan
+                                 hanya bila periode itu MEMANG belum dipakai apa pun.
+                                 Yang terhalang tetap diberi keterangan — tombol yang
+                                 hilang tanpa alasan membuat orang mengira layarnya
+                                 rusak, lalu mencari jalan lain yang lebih berbahaya.
+                              ===================================================== */ ?>
+                        <?php
+                            $kunciPeriode = trim((string) ($filters['periode'] ?? ''));
+                            $kunciPeriode = preg_replace('/\s*-\s*/', '-', $kunciPeriode);
+                            $keadaanHapus = ($hapus_periode ?? [])[$kunciPeriode] ?? null;
+                        ?>
+                        <?php if ($kunciPeriode !== '' && $keadaanHapus !== null && ! $bacaArsip): ?>
+                            <?php if (! empty($keadaanHapus['boleh'])): ?>
+                                <?php
+                                    $isi = $keadaanHapus['isi'];
+                                    $rinci = $isi['tujuan'] . ' tujuan, ' . $isi['sasaran'] . ' sasaran, '
+                                        . $isi['indikator'] . ' indikator, ' . $isi['target'] . ' target tahunan';
+                                ?>
+                                <?php /* =========================================
+                                         TOMBOLNYA DI SINI, FORMNYA DI LUAR
+
+                                         Blok ini berada DI DALAM #filterForm.
+                                         Menaruh <form> di sini membuat form
+                                         bersarang — HTML tidak sah, dan peramban
+                                         membuang tag form bagian dalam. Tombolnya
+                                         lalu menjadi tombol submit form FILTER:
+                                         mengirim GET, halaman dimuat ulang, dan
+                                         tampak seolah tidak terjadi apa-apa.
+
+                                         Atribut `form=` menautkannya ke form yang
+                                         berdiri di luar, sesudah </form> filter.
+                                       ========================================= */ ?>
+                                <button type="submit" form="formHapusPeriode" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Hapus Periode
+                                </button>
+                            <?php elseif (! empty($keadaanHapus['penghalang'])): ?>
+                                <span class="btn btn-outline-secondary disabled"
+                                      title="<?= esc($keadaanHapus['alasan']) ?>">
+                                    <i class="fas fa-lock"></i> Periode dipakai
+                                </span>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <?php if (user_can('renstra.create') && ! $bacaArsip): ?>
                             <a href="<?= base_url('adminopd/renstra/tambah') ?>" class="btn btn-success">
                                 <i class="fas fa-plus"></i> Tambah RENSTRA
@@ -218,6 +263,20 @@
                         <?php endif; ?>
                     </div>
                 </form>
+
+                <?php /* Form hapus periode — sengaja DI LUAR #filterForm.
+                         Lihat catatan pada tombolnya di atas: form bersarang
+                         dibuang peramban, dan tombolnya berubah menjadi submit
+                         form filter yang tidak menghapus apa pun. */ ?>
+                <?php if ($kunciPeriode !== '' && $keadaanHapus !== null && ! $bacaArsip
+                    && ! empty($keadaanHapus['boleh'])): ?>
+                    <form id="formHapusPeriode" method="post"
+                          action="<?= base_url('adminopd/renstra/periode/hapus') ?>"
+                          onsubmit="return confirm('Hapus SELURUH Renstra periode <?= esc($kunciPeriode, 'js') ?>?\n\nYang terhapus: <?= esc($rinci, 'js') ?>, beserta versi dokumennya.\n\nTindakan ini TIDAK BISA dibatalkan.');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="periode" value="<?= esc($kunciPeriode) ?>">
+                    </form>
+                <?php endif; ?>
 
                 <?php if ($bacaArsip): ?>
                     <?php /* Spanduk ini bukan hiasan. Tabel di bawah bentuknya sama

@@ -498,6 +498,17 @@ $routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'],
     $routes->post('renstra/versi/ajukan/(:num)', 'AdminOpd\RenstraController::versiAjukan/$1');
     $routes->post('renstra/versi/tetapkan/(:num)', 'AdminOpd\RenstraController::versiTetapkan/$1');
     $routes->post('renstra/versi/batalkan/(:num)', 'AdminOpd\RenstraController::versiBatalkan/$1');
+    // HAPUS versi Renstra. Statusnya sudah menyaring: hanya draft & batal
+    // yang lolos, dan versiMilikSaya() menolak versi milik OPD lain.
+    $routes->post('renstra/versi/hapus/(:num)', 'AdminOpd\RenstraController::versiHapus/$1');
+
+    // HAPUS Renstra SATU PERIODE — POST saja, dan lingkupnya dari SESI.
+    //
+    // Rantai foreign key di bawahnya panjang dan sebagian CASCADE
+    // (renstra_target -> target_rencana -> sub/MONEV/anggaran), jadi
+    // penjagaannya ada di RenstraModel::penghalangHapusPeriode(), bukan di
+    // rute ini. Rute hanya memastikan metodenya POST dan ber-CSRF.
+    $routes->post('renstra/periode/hapus', 'AdminOpd\RenstraController::hapusPeriode');
 
     // Mengisi ISI draft versi Renstra, satu tujuan per pengiriman. Formnya
     // berkas view yang sama dengan "Tambah Renstra" (lihat RenstraVersiIsiTrait),

@@ -1042,23 +1042,36 @@ trait DokumenVersiTrait
      */
     protected function versiBolehHapus(): bool
     {
-        // Dikunci ke MODULNYA, bukan sekadar ke lingkupnya.
+        // =============================================================
+        // RPJMD (kabupaten) DAN RENSTRA (OPD) SAMA-SAMA BOLEH
         //
-        // Menguji `versiOpdId() === null` saja tidak cukup:
-        // RenstraController::versiOpdId() membaca session('opd_id') dan
-        // mengembalikan NULL begitu sesi itu kosong. Sesi tanpa opd_id — sesi
-        // yang kedaluwarsa, peran yang salah pasang — akan lolos sebagai
-        // "lingkup kabupaten" dan memperoleh hak hapus yang tidak pernah
-        // dimaksudkan untuknya.
-        if ($this->versiModul() !== VersionScope::MODUL_RPJMD) {
+        // Semula hanya RPJMD yang diizinkan, sebagai sikap gagal-tertutup:
+        // versi Renstra milik OPD tidak boleh dimusnahkan tanpa persetujuan,
+        // sementara alur persetujuannya belum ada.
+        //
+        // Yang membuat pembatasan itu tidak lagi diperlukan adalah aturan
+        // STATUS pada alasanTolakHapus(): `published` dan `pending_approval`
+        // sudah ditolak mentah-mentah. Yang tersisa hanyalah `draft` dan
+        // `cancelled` — keduanya belum menjadi dokumen resmi, dan draft
+        // memang milik penyusunnya sendiri. Tidak ada persetujuan yang
+        // dilangkahi, karena tidak ada yang pernah menyetujuinya.
+        //
+        // Lingkupnya tetap dijaga versiMilikSaya(), yang menolak versi milik
+        // OPD lain — jadi satu OPD tidak bisa membuang draft OPD lain.
+        // =============================================================
+        $modul = $this->versiModul();
+
+        if (! in_array($modul, [VersionScope::MODUL_RPJMD, VersionScope::MODUL_RENSTRA], true)) {
             return false;
         }
 
-        if ($this->versiOpdId() !== null) {
+        // RPJMD tidak berpemilik OPD; sesi yang membawa opd_id pada lingkup
+        // kabupaten berarti ada yang salah pasang, dan itu ditolak.
+        if ($modul === VersionScope::MODUL_RPJMD && $this->versiOpdId() !== null) {
             return false;
         }
 
-        return function_exists('user_can') && user_can($this->versiModul() . '.delete');
+        return function_exists('user_can') && user_can($modul . '.delete');
     }
 
     /**

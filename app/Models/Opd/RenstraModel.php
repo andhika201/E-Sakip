@@ -2,12 +2,16 @@
 
 namespace App\Models\Opd;
 
+use App\Models\Concerns\TransaksiAman;
 use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\Model;
 use CodeIgniter\Validation\ValidationInterface;
+use RuntimeException;
 
 class RenstraModel extends Model
 {
+    use TransaksiAman;
+
     protected $db;
 
     /**
@@ -2129,5 +2133,376 @@ class RenstraModel extends Model
             $db->transRollback();
             throw $e;
         }
+    }
+
+    /* =========================================================
+     * HAPUS RENSTRA SATU PERIODE
+     * =======================================================*/
+
+    /**
+     * Siapa saja yang masih merujuk isi Renstra sebuah OPD pada satu periode.
+     *
+     * =====================================================================
+     * MENGAPA PENGHALANG INI JAUH LEBIH PENTING DARIPADA YANG LAIN
+     *
+     * Menghapus isi Renstra bukan sekadar meninggalkan rujukan menggantung —
+     * sebagian foreign key-nya ON DELETE CASCADE, dan rantainya panjang:
+     *
+     *   renstra_target
+     *     -> target_rencana        (CASCADE)
+     *          -> target_sub_rencana   (CASCADE)
+     *          -> monev                (CASCADE)
+     *          -> monev_anggaran       (CASCADE)
+     *
+     * Artinya satu baris target Renstra yang terhapus bisa membawa serta
+     * seluruh Rencana Aksi beserta sub, capaian MONEV, dan realisasi
+     * anggarannya. Basis data mengerjakannya tanpa satu pun galat, dan tidak
+     * ada layar yang melaporkannya — pekerjaan berbulan-bulan lenyap diam-diam.
+     *
+     * `lakip_benchmark` dan `lakip_analisis_faktor` juga CASCADE.
+     * `lakip.renstra_target_id`, `cascading_sasaran_opd`, dan
+     * `iku_sasaran.renstra_tujuan_id` ber-SET NULL: barisnya selamat tetapi
+     * kehilangan jangkarnya, yang sama tidak terlihatnya.
+     *
+     * Karena itu penghapusan periode DITOLAK selama masih ada yang merujuk.
+     * Yang boleh dihapus hanyalah periode yang benar-benar belum dipakai
+     * apa pun — lazimnya periode yang salah dibuat.
+     *
+     * @return array<string,int> [keterangan => jumlah] yang tidak kosong
+     */
+    public function penghalangHapusPeriode(int $opdId, int $tahunMulai, int $tahunAkhir): array
+    {
+        $db  = $this->db;
+        $ada = [];
+
+        // Semua id isi Renstra pada lingkup ini, dikumpulkan sekali.
+        $sasaranIds = array_column($db->table('renstra_sasaran')
+            ->select('id')->where('opd_id', $opdId)
+            ->where('tahun_mulai', $tahunMulai)->where('tahun_akhir', $tahunAkhir)
+            ->get()->getResultArray(), 'id');
+
+        if ($sasaranIds === []) {
+            return ['(periode ini tidak punya isi)' => 0];
+        }
+
+        $indikatorIds = array_column($db->table('renstra_indikator_sasaran')
+            ->select('id')->whereIn('renstra_sasaran_id', $sasaranIds)
+            ->get()->getResultArray(), 'id');
+
+        $targetIds = $indikatorIds === [] ? [] : array_column($db->table('renstra_target')
+            ->select('id')->whereIn('renstra_indikator_id', $indikatorIds)
+            ->get()->getResultArray(), 'id');
+
+        $hitung = static function (string $tabel, string $kolom, array $ids) use ($db): int {
+            if ($ids === [] || ! $db->tableExists($tabel) || ! $db->fieldExists($kolom, $tabel)) {
+                return 0;
+            }
+
+            return $db->table($tabel)->whereIn($kolom, $ids)->countAllResults();
+        };
+
+        // 1. RENCANA AKSI — yang paling mahal bila terbawa cascade.
+        $n = $hitung('target_rencana', 'renstra_target_id', $targetIds);
+
+        if ($n > 0) {
+            $ada['Rencana Aksi (beserta sub, MONEV, & realisasi anggarannya)'] = $n;
+        }
+
+        // 2. RKT — TANPA foreign key, jadi basis data tidak menahannya.
+        $n = $hitung('rkt', 'indikator_id', $indikatorIds);
+
+        if ($n > 0) {
+            $ada['baris RKT'] = $n;
+        }
+
+        // 3. LAKIP.
+        $n = $hitung('lakip', 'renstra_target_id', $targetIds);
+
+        if ($n > 0) {
+            $ada['baris LAKIP'] = $n;
+        }
+
+        $n = $hitung('lakip_analisis_faktor', 'renstra_target_id', $targetIds);
+
+        if ($n > 0) {
+            $ada['analisis faktor LAKIP'] = $n;
+        }
+
+        $n = $hitung('lakip_benchmark', 'renstra_indikator_id', $indikatorIds);
+
+        if ($n > 0) {
+            $ada['pembanding LAKIP'] = $n;
+        }
+
+        // 4. IKU yang lahir dari Renstra ini.
+        $n = $hitung('iku_sasaran', 'source_sasaran_id', $sasaranIds);
+
+        if ($n > 0) {
+            $ada['sasaran IKU yang bersumber dari sini'] = $n;
+        }
+
+        $n = $hitung('iku_indikator', 'source_indikator_id', $indikatorIds);
+
+        if ($n > 0) {
+            $ada['indikator IKU yang bersumber dari sini'] = $n;
+        }
+
+        // 5. Cascading.
+        $n = $hitung('cascading_sasaran_opd', 'renstra_indikator_sasaran_id', $indikatorIds);
+
+        if ($n > 0) {
+            $ada['baris cascading'] = $n;
+        }
+
+        // 6. Arsip versi Renstra — jejak resmi yang tidak bisa disusun ulang.
+        $n = $hitung('renstra_versi_sasaran', 'source_sasaran_id', $sasaranIds);
+
+        if ($n > 0) {
+            $ada['sasaran terarsip pada versi Renstra'] = $n;
+        }
+
+        // 7. VERSI DOKUMEN PADA PERIODE INI.
+        //
+        // =============================================================
+        // YANG DITETAPKAN MENAHAN — KECUALI BILA IA MEMBEKUKAN NOL BARIS
+        //
+        // §16 melindungi REKAMAN sebuah versi resmi: isi yang dibekukannya,
+        // yang menjadi jangkar bagi LAKIP dan perbandingan antarversi.
+        //
+        // Versi yang ditetapkan tanpa mengarsipkan satu baris pun tidak
+        // merekam apa-apa. Ia lazimnya versi "Kondisi Awal" yang otomatis
+        // lahir saat sebuah periode dibuat — dan pada basis data ini 38 dari
+        // 39 versi Renstra terbit berbentuk begitu.
+        //
+        // Membiarkannya menahan berarti periode yang salah dibuat TIDAK
+        // PERNAH bisa dibersihkan lewat aplikasi, hanya lewat SQL langsung —
+        // yang justru jalan paling berbahaya. Jadi yang ditahan adalah versi
+        // yang benar-benar punya isi beku.
+        //
+        // `pending_approval` tetap menahan apa pun isinya: berkasnya sedang
+        // dinilai orang lain, dan menghapusnya membuat antrean verifikasi
+        // menunjuk ketiadaan.
+        // =============================================================
+        if ($db->tableExists('dokumen_versi')) {
+            $versiPeriode = $db->table('dokumen_versi')
+                ->select('id, status')
+                ->where('modul', 'renstra')->where('opd_key', $opdId)
+                ->where('periode_mulai', $tahunMulai)->where('periode_akhir', $tahunAkhir)
+                ->get()->getResultArray();
+
+            $menunggu = 0;
+            $berisi   = 0;
+
+            foreach ($versiPeriode as $v) {
+                if ($v['status'] === 'pending_approval') {
+                    $menunggu++;
+
+                    continue;
+                }
+
+                if ($v['status'] !== 'published') {
+                    continue;
+                }
+
+                $isiBeku = $db->table('renstra_versi_sasaran')
+                    ->where('version_id', (int) $v['id'])->countAllResults()
+                    + $db->table('renstra_versi_tujuan')
+                        ->where('version_id', (int) $v['id'])->countAllResults();
+
+                if ($isiBeku > 0) {
+                    $berisi++;
+                }
+            }
+
+            if ($menunggu > 0) {
+                $ada['versi Renstra yang sedang menunggu verifikasi'] = $menunggu;
+            }
+
+            if ($berisi > 0) {
+                $ada['versi Renstra yang sudah ditetapkan DAN berisi arsip'] = $berisi;
+            }
+
+            // Permintaan koreksi & izin sunting adalah jejak keputusan orang,
+            // bukan sekadar bangkai teknis — keduanya menahan.
+            $ids = array_column($versiPeriode, 'id');
+
+            $n = $hitung('version_correction_requests', 'version_id', $ids);
+
+            if ($n > 0) {
+                $ada['permintaan koreksi versi'] = $n;
+            }
+
+            $n = $hitung('dokumen_izin_sunting', 'version_id', $ids);
+
+            if ($n > 0) {
+                $ada['izin sunting versi'] = $n;
+            }
+
+            // Versi lain yang menjadikannya sumber/salinan.
+            if ($ids !== []) {
+                $n = $db->table('dokumen_versi')
+                    ->groupStart()->whereIn('source_version_id', $ids)
+                    ->orWhereIn('copied_from_version_id', $ids)->groupEnd()
+                    ->whereNotIn('id', $ids)
+                    ->countAllResults();
+
+                if ($n > 0) {
+                    $ada['versi lain yang bersumber dari versi periode ini'] = $n;
+                }
+            }
+        }
+
+        return $ada;
+    }
+
+    /**
+     * Ringkasan isi sebuah periode Renstra — untuk ditampilkan SEBELUM dihapus.
+     *
+     * @return array<string,int>
+     */
+    public function isiPeriode(int $opdId, int $tahunMulai, int $tahunAkhir): array
+    {
+        $db = $this->db;
+
+        $sasaranIds = array_column($db->table('renstra_sasaran')
+            ->select('id')->where('opd_id', $opdId)
+            ->where('tahun_mulai', $tahunMulai)->where('tahun_akhir', $tahunAkhir)
+            ->get()->getResultArray(), 'id');
+
+        if ($sasaranIds === []) {
+            return ['tujuan' => 0, 'sasaran' => 0, 'indikator' => 0, 'target' => 0];
+        }
+
+        $indikatorIds = array_column($db->table('renstra_indikator_sasaran')
+            ->select('id')->whereIn('renstra_sasaran_id', $sasaranIds)
+            ->get()->getResultArray(), 'id');
+
+        $tujuanIds = array_values(array_unique(array_filter(array_column(
+            $db->table('renstra_sasaran')->select('renstra_tujuan_id')
+                ->whereIn('id', $sasaranIds)->get()->getResultArray(),
+            'renstra_tujuan_id'
+        ))));
+
+        return [
+            'tujuan'    => count($tujuanIds),
+            'sasaran'   => count($sasaranIds),
+            'indikator' => count($indikatorIds),
+            'target'    => $indikatorIds === [] ? 0 : $this->db->table('renstra_target')
+                ->whereIn('renstra_indikator_id', $indikatorIds)->countAllResults(),
+        ];
+    }
+
+    /**
+     * HAPUS seluruh isi Renstra sebuah OPD pada satu periode.
+     *
+     * Menolak selama penghalangHapusPeriode() masih menemukan perujuk. Yang
+     * ikut terhapus hanya isi Renstra itu sendiri — indikator, target, sasaran,
+     * dan tujuan yang tidak lagi dipakai sasaran periode lain — beserta versi
+     * dokumennya yang masih draft/batal.
+     *
+     * @return array<string,int> ringkasan yang terhapus
+     *
+     * @throws RuntimeException bila masih ada yang merujuk
+     */
+    public function hapusPeriode(int $opdId, int $tahunMulai, int $tahunAkhir): array
+    {
+        return $this->dalamTransaksi(function () use ($opdId, $tahunMulai, $tahunAkhir) {
+            $db = $this->db;
+
+            // Diperiksa ULANG di dalam transaksi: antara layar dirender dan
+            // tombolnya ditekan, orang lain bisa saja membuat Rencana Aksi
+            // yang bergantung pada periode ini.
+            $penghalang = $this->penghalangHapusPeriode($opdId, $tahunMulai, $tahunAkhir);
+
+            if ($penghalang !== [] && ! isset($penghalang['(periode ini tidak punya isi)'])) {
+                $rinci = [];
+
+                foreach ($penghalang as $apa => $n) {
+                    $rinci[] = $n . ' ' . $apa;
+                }
+
+                throw new RuntimeException('Masih dirujuk: ' . implode('; ', $rinci) . '.');
+            }
+
+            $ringkas = $this->isiPeriode($opdId, $tahunMulai, $tahunAkhir);
+
+            $sasaranIds = array_column($db->table('renstra_sasaran')
+                ->select('id')->where('opd_id', $opdId)
+                ->where('tahun_mulai', $tahunMulai)->where('tahun_akhir', $tahunAkhir)
+                ->get()->getResultArray(), 'id');
+
+            if ($sasaranIds === []) {
+                throw new RuntimeException('Periode itu tidak punya isi Renstra.');
+            }
+
+            $tujuanIds = array_values(array_unique(array_filter(array_column(
+                $db->table('renstra_sasaran')->select('renstra_tujuan_id')
+                    ->whereIn('id', $sasaranIds)->get()->getResultArray(),
+                'renstra_tujuan_id'
+            ))));
+
+            // Indikator & target ikut lewat CASCADE dari sasaran; dituliskan
+            // eksplisit supaya urutannya tidak bergantung pada foreign key.
+            $indikatorIds = array_column($db->table('renstra_indikator_sasaran')
+                ->select('id')->whereIn('renstra_sasaran_id', $sasaranIds)
+                ->get()->getResultArray(), 'id');
+
+            if ($indikatorIds !== []) {
+                $db->table('renstra_target')->whereIn('renstra_indikator_id', $indikatorIds)->delete();
+                $db->table('renstra_indikator_sasaran')->whereIn('id', $indikatorIds)->delete();
+            }
+
+            $db->table('renstra_sasaran')->whereIn('id', $sasaranIds)->delete();
+
+            // TUJUAN hanya dibuang bila tidak lagi dipakai sasaran mana pun —
+            // termasuk sasaran periode LAIN. Tujuan dipakai bersama, dan
+            // membuangnya sekadar karena satu periodenya hilang akan menyeret
+            // periode lain ikut kosong.
+            $tujuanDibuang = 0;
+
+            foreach ($tujuanIds as $tid) {
+                $sisa = $db->table('renstra_sasaran')->where('renstra_tujuan_id', $tid)->countAllResults();
+
+                if ($sisa === 0) {
+                    $db->table('renstra_tujuan')->where('id', $tid)->delete();
+                    $tujuanDibuang++;
+                }
+            }
+
+            // Versi dokumen periode ini yang masih draft/batal ikut dibuang —
+            // yang published/menunggu sudah ditolak penghalang di atas.
+            $versi = 0;
+
+            if ($db->tableExists('dokumen_versi')) {
+                $idsVersi = array_column($db->table('dokumen_versi')
+                    ->select('id')
+                    ->where('modul', 'renstra')->where('opd_key', $opdId)
+                    ->where('periode_mulai', $tahunMulai)->where('periode_akhir', $tahunAkhir)
+                    ->get()->getResultArray(), 'id');
+
+                $versi = count($idsVersi);
+
+                if ($idsVersi !== []) {
+                    // `version_submission_history` ber-FK RESTRICT: tanpa
+                    // dibuang lebih dulu, penghapusan versinya gagal dengan
+                    // galat SQL mentah, bukan dengan penolakan yang terbaca.
+                    //
+                    // Riwayat pengajuan versi yang isinya kosong memang ikut
+                    // hilang bersama periodenya — itu dinyatakan terus terang
+                    // pada konfirmasi di layar, bukan dikerjakan diam-diam.
+                    if ($db->tableExists('version_submission_history')) {
+                        $db->table('version_submission_history')
+                            ->whereIn('version_id', $idsVersi)->delete();
+                    }
+
+                    $db->table('dokumen_versi')->whereIn('id', $idsVersi)->delete();
+                }
+            }
+
+            $ringkas['tujuan'] = $tujuanDibuang;
+            $ringkas['versi']  = $versi;
+
+            return $ringkas;
+        }, 'hapus Renstra satu periode');
     }
 }

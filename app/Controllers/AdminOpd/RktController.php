@@ -53,53 +53,38 @@ class RktController extends BaseController
             ->get()
             ->getRowArray();
 
-        // ------------ AMBIL INDIKATOR (RENSTRA) UNTUK OPD INI ------------
-        $indikators = $db->table('renstra_indikator_sasaran i')
-            ->select('i.*, s.sasaran, s.opd_id')
-            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
-            ->where('s.opd_id', $opdId)
-            ->orderBy('i.id', 'ASC')
-            ->get()
-            ->getResultArray();
+        // ------------ SUMBER RENSTRA: BERJALAN ATAU SEBUAH VERSI ------------
+        //
+        // Mengikuti pola LAKIP: operator memilih versi Renstra mana yang
+        // dibaca, dan seluruh halaman — tabel maupun filter indikator —
+        // mengikuti pilihan itu. Tanpa parameter, yang dibaca Renstra
+        // berjalan, persis perilaku sebelumnya.
+        $versiTersedia = $this->versiRenstraUntukRkt($db, (int) $opdId);
+        $versiDiminta  = $this->request->getGet('renstra_versi');
+        $versiDipilih  = $this->versiRenstraDipilih($versiDiminta, $versiTersedia);
 
-        // ------------ AMBIL TAHUN DARI RENSTRA_TARGET ------------
-        $targetYearsByInd = [];  // [indikator_id => [tahun1, tahun2, ...]]
-        $availableYears = [];  // semua tahun unik untuk dropdown
+        // Id yang DIKIRIM tetapi tidak sah tidak boleh diam-diam berubah
+        // menjadi "berjalan": operator akan mengira ia sedang melihat versi
+        // yang ia pilih.
+        $versiDiabaikan = $versiDipilih === null
+            && $versiDiminta !== null
+            && trim((string) $versiDiminta) !== ''
+            && (int) $versiDiminta > 0;
 
-        if (!empty($indikators)) {
-            $indikatorIds = array_column($indikators, 'id');
+        [$indikators, $targetYearsByInd] = $this->sumberRenstraRkt($db, (int) $opdId, $versiDipilih);
 
-            $rowsTarget = $db->table('renstra_target t')
-                // >>> PERBAIKAN DI SINI: pakai renstra_indikator_id
-                ->select('t.renstra_indikator_id AS indikator_id, t.tahun', false)
-                ->whereIn('t.renstra_indikator_id', $indikatorIds)
-                ->orderBy('t.tahun', 'ASC')
-                ->get()
-                ->getResultArray();
+        // ------------ TAHUN YANG TERSEDIA UNTUK DROPDOWN ------------
+        $availableYears = [];
 
-            foreach ($rowsTarget as $row) {
-                $id = (int) $row['indikator_id'];
-                $thn = (int) $row['tahun'];
-
-                if (!isset($targetYearsByInd[$id])) {
-                    $targetYearsByInd[$id] = [];
-                }
-
-                $targetYearsByInd[$id][] = $thn;
-                $availableYears[] = $thn;
-            }
-
-            // unik & urut per indikator
-            foreach ($targetYearsByInd as $id => $years) {
-                $years = array_values(array_unique($years));
-                sort($years);
-                $targetYearsByInd[$id] = $years;
-            }
-
-            // unik & urut untuk dropdown
-            $availableYears = array_values(array_unique($availableYears));
-            sort($availableYears);
+        foreach ($targetYearsByInd as $id => $years) {
+            $years = array_values(array_unique($years));
+            sort($years);
+            $targetYearsByInd[$id] = $years;
+            $availableYears = array_merge($availableYears, $years);
         }
+
+        $availableYears = array_values(array_unique($availableYears));
+        sort($availableYears);
 
         // kalau query tahun kosong, pakai 'all'
         if ($filterTahun === '' || $filterTahun === null) {
@@ -177,12 +162,43 @@ class RktController extends BaseController
 
         // ------------ DATA UNTUK FILTER DROPDOWN ------------
 
-        // Indikator (untuk filter)
-        $sasaranList = $db->table('renstra_indikator_sasaran')
-            ->select('id, indikator_sasaran')
-            ->orderBy('indikator_sasaran', 'ASC')
-            ->get()
-            ->getResultArray();
+        // Indikator (untuk filter) — DIAMBIL DARI SUMBER YANG SAMA.
+        //
+        // =========================================================
+        // DUA CACAT SEKALIGUS DIPERBAIKI DI SINI
+        //
+        // 1. Daftar ini semula membaca `renstra_indikator_sasaran` TANPA
+        //    saringan OPD sama sekali. Pada basis data ini dropdown-nya
+        //    memuat 128 indikator milik 38 OPD, sementara tabel di bawahnya
+        //    hanya menampilkan milik OPD sendiri — Dishub, misalnya, punya 1.
+        //    Selain membingungkan, itu memperlihatkan redaksi indikator OPD
+        //    lain kepada siapa pun yang membuka halaman RKT.
+        //
+        // 2. Daftarnya tidak mengikuti versi yang dipilih. Menyusunnya dari
+        //    $indikators membuat filter dan tabel dijamin bicara tentang
+        //    himpunan yang sama — kalau disusun terpisah, keduanya bisa
+        //    menyimpang tanpa ada yang menyadarinya.
+        // =========================================================
+        $sasaranList = [];
+        $sudah       = [];
+
+        foreach ($indikators as $ind) {
+            $id = (int) $ind['id'];
+
+            // Baris arsip tanpa silsilah tidak bisa dipakai memfilter: tidak
+            // ada baris RKT yang bisa ditemukannya.
+            if ($id <= 0 || isset($sudah[$id])) {
+                continue;
+            }
+
+            $sudah[$id]    = true;
+            $sasaranList[] = ['id' => $id, 'indikator_sasaran' => $ind['indikator_sasaran']];
+        }
+
+        usort($sasaranList, static fn ($a, $b) => strcasecmp(
+            (string) $a['indikator_sasaran'],
+            (string) $b['indikator_sasaran']
+        ));
 
         return view('adminOpd/rkt/rkt', [
             'title' => 'RENJA (RKT)',
@@ -194,7 +210,200 @@ class RktController extends BaseController
             'filter_tahun' => $filterTahun,     // 'all' atau tahun
             'filter_status' => $filterStatus,
             'currentOpd' => $currentOpd,
+            'versiRenstraList' => $versiTersedia,
+            'versiRenstraDipilih' => $versiDipilih,
+            'versiRenstraDiabaikan' => $versiDiabaikan,
         ]);
+    }
+
+
+    /* =========================================================
+     * SUMBER RENSTRA UNTUK RKT — BERJALAN ATAU SEBUAH VERSI
+     * =======================================================*/
+
+    /**
+     * Versi Renstra yang boleh dipilih RKT, untuk sebuah OPD.
+     *
+     * =====================================================================
+     * MEMAKAI MEKANISME YANG SAMA DENGAN LAKIP
+     *
+     * `VersionResolver::pilihanSumber()` adalah fasilitas yang sudah dipakai
+     * LAKIP untuk memilih versi sumbernya. Menyalin logikanya ke sini akan
+     * melahirkan dua aturan "versi mana yang boleh dipilih" yang diam-diam
+     * bisa menyimpang.
+     *
+     * =====================================================================
+     * YANG BERARSIP KOSONG DIBUANG
+     *
+     * Versi yang sudah ditetapkan belum tentu MEMBEKUKAN isinya: pada basis
+     * data ini hanya 1 dari 39 versi Renstra terbit yang punya baris arsip.
+     * Menawarkan 38 sisanya berarti menyodorkan pilihan yang begitu dipilih
+     * menampilkan tabel kosong — dan operator akan mengira Renstra-nya yang
+     * hilang, bukan arsipnya yang memang tidak pernah diisi.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    private function versiRenstraUntukRkt($db, int $opdId): array
+    {
+        if (! $db->tableExists('dokumen_versi') || ! $db->tableExists('renstra_versi_sasaran')) {
+            return [];
+        }
+
+        return $db->table('dokumen_versi d')
+            ->select('d.id, d.version_no, d.label, d.periode_mulai, d.periode_akhir,
+                      COUNT(rvs.id) AS jumlah_sasaran')
+            ->join('renstra_versi_sasaran rvs', 'rvs.version_id = d.id AND rvs.opd_id = ' . (int) $opdId, 'inner', false)
+            ->where('d.modul', 'renstra')
+            ->where('d.opd_key', $opdId)
+            ->where('d.status', 'published')
+            ->groupBy('d.id')
+            ->orderBy('d.version_no', 'DESC')
+            ->get()->getResultArray();
+    }
+
+    /**
+     * Indikator sasaran Renstra untuk RKT — dari versi terpilih atau berjalan.
+     *
+     * =====================================================================
+     * `id` SELALU id INDIKATOR BERJALAN, BUKAN id ARSIP
+     *
+     * Seluruh RKT menempel pada `rkt.indikator_id`, yang menunjuk
+     * `renstra_indikator_sasaran.id` — baris BERJALAN. Kalau membaca arsip
+     * lalu memakai id arsipnya, tidak ada satu pun baris RKT yang akan
+     * ketemu: tabelnya tampil lengkap tetapi kosong melompong di bawah
+     * setiap indikator, tanpa satu pun galat.
+     *
+     * Karena itu `source_indikator_id` yang dipakai sebagai identitas, dan
+     * arsipnya hanya menyumbang TEKS dan TARGET — persis pola yang dipakai
+     * Cascading saat menjembatani RPJMD ke IKU.
+     *
+     * Baris arsip yang tidak bersilsilah (`source_indikator_id` NULL) memang
+     * tidak bisa ditautkan ke RKT mana pun. Ia tetap ditampilkan — dengan
+     * penanda — supaya keberadaannya terbaca, bukan hilang diam-diam.
+     *
+     * @return array{0: array<int,array<string,mixed>>, 1: array<int,array<int,int>>}
+     *         [indikator, tahun target per indikator]
+     */
+    private function sumberRenstraRkt($db, int $opdId, ?int $versiId): array
+    {
+        // ---- KONDISI BERJALAN ------------------------------------------
+        if ($versiId === null) {
+            $indikators = $db->table('renstra_indikator_sasaran i')
+                ->select('i.*, s.sasaran, s.opd_id')
+                ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
+                ->where('s.opd_id', $opdId)
+                ->orderBy('i.id', 'ASC')
+                ->get()->getResultArray();
+
+            foreach ($indikators as &$ind) {
+                $ind['dari_versi']   = false;
+                $ind['tanpa_taut']   = false;
+            }
+            unset($ind);
+
+            $tahun = [];
+
+            if ($indikators !== []) {
+                $rows = $db->table('renstra_target t')
+                    ->select('t.renstra_indikator_id AS indikator_id, t.tahun', false)
+                    ->whereIn('t.renstra_indikator_id', array_column($indikators, 'id'))
+                    ->orderBy('t.tahun', 'ASC')
+                    ->get()->getResultArray();
+
+                foreach ($rows as $r) {
+                    $tahun[(int) $r['indikator_id']][] = (int) $r['tahun'];
+                }
+            }
+
+            return [$indikators, $tahun];
+        }
+
+        // ---- DARI ARSIP SEBUAH VERSI -----------------------------------
+        $rows = $db->table('renstra_versi_indikator_sasaran ri')
+            ->select('ri.id AS arsip_id, ri.source_indikator_id, ri.indikator_sasaran,
+                      ri.satuan, ri.satuan_nama, ri.baseline, ri.jenis_indikator,
+                      rs.sasaran, rs.opd_id')
+            ->join('renstra_versi_sasaran rs', 'rs.id = ri.versi_sasaran_id')
+            ->where('rs.version_id', $versiId)
+            ->where('rs.opd_id', $opdId)
+            ->orderBy('rs.urutan', 'ASC')->orderBy('ri.urutan', 'ASC')->orderBy('ri.id', 'ASC')
+            ->get()->getResultArray();
+
+        $indikators = [];
+        $arsipIds   = [];
+
+        foreach ($rows as $r) {
+            $live = $r['source_indikator_id'] !== null ? (int) $r['source_indikator_id'] : 0;
+
+            $indikators[] = [
+                // Identitas untuk penautan RKT: id BERJALAN. Nol berarti baris
+                // arsip ini tidak bersilsilah dan tidak akan menemukan RKT.
+                'id'                => $live,
+                'indikator_sasaran' => $r['indikator_sasaran'],
+                'satuan'            => $r['satuan'],
+                'satuan_nama'       => $r['satuan_nama'] ?? null,
+                'baseline'          => $r['baseline'],
+                'jenis_indikator'   => $r['jenis_indikator'],
+                'sasaran'           => $r['sasaran'],
+                'opd_id'            => (int) $r['opd_id'],
+                'dari_versi'        => true,
+                'tanpa_taut'        => $live === 0,
+                'arsip_id'          => (int) $r['arsip_id'],
+            ];
+
+            $arsipIds[] = (int) $r['arsip_id'];
+        }
+
+        // Target diambil dari ARSIP versi itu, bukan dari renstra_target
+        // berjalan: memilih sebuah versi lalu menampilkan target terkini
+        // berarti menampilkan campuran yang tidak pernah ada sebagai dokumen.
+        $tahun = [];
+
+        if ($arsipIds !== []) {
+            $rowsT = $db->table('renstra_versi_target')
+                ->select('versi_indikator_id, tahun')
+                ->whereIn('versi_indikator_id', $arsipIds)
+                ->orderBy('tahun', 'ASC')
+                ->get()->getResultArray();
+
+            $petaArsip = [];
+
+            foreach ($indikators as $ind) {
+                $petaArsip[$ind['arsip_id']] = (int) $ind['id'];
+            }
+
+            foreach ($rowsT as $r) {
+                $liveId = $petaArsip[(int) $r['versi_indikator_id']] ?? 0;
+
+                if ($liveId > 0) {
+                    $tahun[$liveId][] = (int) $r['tahun'];
+                }
+            }
+        }
+
+        return [$indikators, $tahun];
+    }
+
+    /** Versi terpilih, DIVALIDASI terhadap daftar yang sah untuk OPD ini. */
+    private function versiRenstraDipilih($nilai, array $tersedia): ?int
+    {
+        $id = (int) $nilai;
+
+        if ($id <= 0) {
+            return null;
+        }
+
+        foreach ($tersedia as $v) {
+            if ((int) $v['id'] === $id) {
+                return $id;
+            }
+        }
+
+        // Id yang dikirim tetapi tidak sah TIDAK diam-diam jatuh ke "berjalan":
+        // itu akan menampilkan sumber yang tidak pernah diminta siapa pun.
+        // Dikembalikan null, dan pemanggil memberi tahu bahwa pilihannya
+        // diabaikan.
+        return null;
     }
 
     public function cetak()
@@ -215,37 +424,28 @@ class RktController extends BaseController
             ->get()
             ->getRowArray();
 
-        $indikators = $db->table('renstra_indikator_sasaran i')
-            ->select('i.*, s.sasaran, s.opd_id')
-            ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'left')
-            ->where('s.opd_id', $opdId)
-            ->orderBy('i.id', 'ASC')
-            ->get()
-            ->getResultArray();
+        // Cetak MENGIKUTI versi yang sedang dilihat di layar.
+        //
+        // Kalau cetak selalu membaca Renstra berjalan, operator memilih sebuah
+        // versi lalu menerima cetakan yang disusun dari sumber lain — tanpa
+        // satu pun tanda bahwa isinya berbeda. Kekeliruan yang sama pernah
+        // ada pada ekspor Cascading dan sudah diperbaiki di sana.
+        $versiCetak = $this->versiRenstraDipilih(
+            $this->request->getGet('renstra_versi'),
+            $this->versiRenstraUntukRkt($db, (int) $opdId)
+        );
 
-        $targetYearsByInd = [];
+        [$indikators, $targetCetak] = $this->sumberRenstraRkt($db, (int) $opdId, $versiCetak);
+
+        // Target ikut dari sumber yang SAMA dengan indikatornya. Membaca
+        // renstra_target berjalan di sini akan mencampur teks arsip dengan
+        // target terkini — cetakan yang tidak pernah ada sebagai dokumen.
+        $targetYearsByInd = $targetCetak;
         $availableYears = [];
 
         if (!empty($indikators)) {
-            $indikatorIds = array_column($indikators, 'id');
-
-            $rowsTarget = $db->table('renstra_target t')
-                ->select('t.renstra_indikator_id AS indikator_id, t.tahun', false)
-                ->whereIn('t.renstra_indikator_id', $indikatorIds)
-                ->orderBy('t.tahun', 'ASC')
-                ->get()
-                ->getResultArray();
-
-            foreach ($rowsTarget as $row) {
-                $id = (int) $row['indikator_id'];
-                $thn = (int) $row['tahun'];
-
-                if (!isset($targetYearsByInd[$id])) {
-                    $targetYearsByInd[$id] = [];
-                }
-
-                $targetYearsByInd[$id][] = $thn;
-                $availableYears[] = $thn;
+            foreach ($targetYearsByInd as $years) {
+                $availableYears = array_merge($availableYears, $years);
             }
 
             foreach ($targetYearsByInd as $id => $years) {
@@ -321,11 +521,27 @@ class RktController extends BaseController
             $rktdata[] = $ind;
         }
 
-        $sasaranList = $db->table('renstra_indikator_sasaran')
-            ->select('id, indikator_sasaran')
-            ->orderBy('indikator_sasaran', 'ASC')
-            ->get()
-            ->getResultArray();
+        // Disusun dari $indikators, sama seperti di index(): disaring OPD dan
+        // mengikuti versi yang dipilih. Query lamanya membaca seluruh
+        // renstra_indikator_sasaran tanpa saringan apa pun.
+        $sasaranList = [];
+        $sudahCetak  = [];
+
+        foreach ($indikators as $ind) {
+            $id = (int) $ind['id'];
+
+            if ($id <= 0 || isset($sudahCetak[$id])) {
+                continue;
+            }
+
+            $sudahCetak[$id] = true;
+            $sasaranList[]   = ['id' => $id, 'indikator_sasaran' => $ind['indikator_sasaran']];
+        }
+
+        usort($sasaranList, static fn ($a, $b) => strcasecmp(
+            (string) $a['indikator_sasaran'],
+            (string) $b['indikator_sasaran']
+        ));
 
         $html = view('adminOpd/rkt/rkt_cetak', [
             'title' => 'RENJA (RKT)',

@@ -193,8 +193,26 @@ class LakipBenchmarkModel extends Model
                 ->join('iku_sasaran isa', 'isa.id = ii.iku_sasaran_id', 'left')
                 ->where('ii.id', $indikatorId);
 
+            // Indikator yang SUDAH DIHENTIKAN tetap sah untuk LAKIP tahun
+            // pelaporan yang masih dalam masa berlakunya. LAKIP selalu
+            // melaporkan tahun yang sudah lewat: begitu revisi IKU disahkan,
+            // indikator lama dicap `dihentikan_pada`, padahal tabel utama —
+            // yang mengikuti versi dokumen terpilih — masih menampilkannya.
+            // Menuntut `dihentikan_pada IS NULL` membuat SELURUH tombol pada
+            // tahun itu mati: layar menawarkan baris yang server selalu tolak.
+            // `berlaku_sampai` adalah batas resminya; bila kosong, tahun saat
+            // dihentikan dipakai sebagai penggantinya. Saringan lingkup
+            // (opd_id) di bawah TIDAK dilonggarkan.
             if ($this->db->fieldExists('dihentikan_pada', 'iku_indikator')) {
-                $b->where('ii.dihentikan_pada IS NULL', null, false);
+                $kolomBatas = $this->db->fieldExists('berlaku_sampai', 'iku_indikator')
+                    ? 'COALESCE(ii.berlaku_sampai, YEAR(ii.dihentikan_pada))'
+                    : 'YEAR(ii.dihentikan_pada)';
+
+                $b->where(
+                    '(ii.dihentikan_pada IS NULL OR ' . $kolomBatas . ' >= ' . (int) $tahun . ')',
+                    null,
+                    false
+                );
             }
 
             // Lingkup: IKU Kabupaten hidup di iku_sasaran.opd_id NULL,

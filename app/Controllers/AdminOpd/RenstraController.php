@@ -205,6 +205,19 @@ class RenstraController extends BaseController
             'title' => 'Rencana Strategis - ' . ($currentOpd['nama_opd'] ?? ''),
             'current_opd' => $currentOpd,
             'periode_master' => $periodeMaster,
+            // Keadaan hapus PER PERIODE, dihitung sekali di sini supaya
+            // tampilan tidak perlu menghitung ulang aturan sedestruktif ini.
+            'hapus_periode' => (function () use ($periodeMaster, $opdId) {
+                $peta = [];
+
+                foreach ($periodeMaster as $p) {
+                    $tm = (int) $p['tahun_mulai'];
+                    $ta = (int) $p['tahun_akhir'];
+                    $peta[$tm . '-' . $ta] = $this->keadaanHapusPeriode((int) $opdId, $tm, $ta);
+                }
+
+                return $peta;
+            })(),
             'renstra_data' => $renstraData,
             'filter_source' => $filterSource,
             'filters' => [
@@ -961,5 +974,129 @@ class RenstraController extends BaseController
                 ->withInput()
                 ->with('error', pesanGalat($e, 'opd.renstra'));
         }
+    }
+
+    /* =========================================================
+     * HAPUS RENSTRA SATU PERIODE
+     * =======================================================*/
+
+    /**
+     * Keadaan penghapusan sebuah periode — dipakai TAMPILAN dan AKSI.
+     *
+     * Dihitung di satu tempat supaya tombol dan penyimpanan tidak pernah
+     * berbeda pendapat: bila aturannya tersalin dua kali, yang terjadi adalah
+     * tombol muncul tetapi aksinya menolak — atau sebaliknya, yang jauh lebih
+     * berbahaya untuk operasi sedestruktif ini.
+     *
+     * @return array{boleh:bool, alasan:string, penghalang:array<string,int>, isi:array<string,int>}
+     */
+    protected function keadaanHapusPeriode(int $opdId, int $tm, int $ta): array
+    {
+        $model = $this->renstraModel;
+        $isi   = $model->isiPeriode($opdId, $tm, $ta);
+
+        $kosong = ['boleh' => false, 'alasan' => '', 'penghalang' => [], 'isi' => $isi];
+
+        if (! $this->bolehHapusPeriode()) {
+            return array_merge($kosong, [
+                'alasan' => 'Anda tidak berwenang menghapus Renstra.',
+            ]);
+        }
+
+        if (array_sum($isi) === 0) {
+            return array_merge($kosong, ['alasan' => 'Periode ini tidak punya isi Renstra.']);
+        }
+
+        $penghalang = $model->penghalangHapusPeriode($opdId, $tm, $ta);
+
+        if ($penghalang !== []) {
+            $rinci = [];
+
+            foreach ($penghalang as $apa => $n) {
+                $rinci[] = $n . ' ' . $apa;
+            }
+
+            return array_merge($kosong, [
+                'penghalang' => $penghalang,
+                'alasan'     => 'Belum bisa dihapus — masih dipakai: ' . implode('; ', $rinci) . '.',
+            ]);
+        }
+
+        return [
+            'boleh'      => true,
+            'alasan'     => 'Penghapusan tidak bisa dibatalkan.',
+            'penghalang' => [],
+            'isi'        => $isi,
+        ];
+    }
+
+    /** Kewenangan hapus Renstra — izin modul, bukan izin versi. */
+    protected function bolehHapusPeriode(): bool
+    {
+        return function_exists('user_can') && user_can('renstra.delete');
+    }
+
+    /**
+     * POST: hapus seluruh isi Renstra sebuah OPD pada satu periode.
+     *
+     * =====================================================================
+     * LINGKUP DIAMBIL DARI SESI, PERIODE DARI FORM
+     *
+     * OPD-nya TIDAK pernah datang dari permintaan. Menerima opd_id dari form
+     * berarti satu POST bisa menghapus Renstra OPD lain — dan operasi ini
+     * membawa serta tujuan, sasaran, indikator, dan targetnya sekaligus.
+     */
+    public function hapusPeriode()
+    {
+        if (! $this->bolehHapusPeriode()) {
+            return redirect()->to(base_url('adminopd/renstra'))
+                ->with('error', 'Anda tidak berwenang menghapus Renstra.');
+        }
+
+        $opdId = session()->get('opd_id');
+
+        if ($opdId === null || $opdId === '') {
+            return redirect()->to(base_url('adminopd/renstra'))
+                ->with('error', 'Lingkup OPD tidak dikenali.');
+        }
+
+        $periode = trim((string) $this->request->getPost('periode'));
+
+        if (! preg_match('/^(\d{4})\s*-\s*(\d{4})$/', $periode, $m)) {
+            return redirect()->to(base_url('adminopd/renstra'))
+                ->with('error', 'Periode yang dipilih tidak sah.');
+        }
+
+        $tm = (int) $m[1];
+        $ta = (int) $m[2];
+
+        $keadaan = $this->keadaanHapusPeriode((int) $opdId, $tm, $ta);
+
+        if (! $keadaan['boleh']) {
+            return redirect()->to(base_url('adminopd/renstra?periode=' . $tm . '-' . $ta))
+                ->with('error', $keadaan['alasan']);
+        }
+
+        try {
+            $ringkas = $this->renstraModel->hapusPeriode((int) $opdId, $tm, $ta);
+        } catch (\Throwable $e) {
+            return redirect()->to(base_url('adminopd/renstra?periode=' . $tm . '-' . $ta))
+                ->with('error', pesanGalatBerawalan($e, 'Renstra periode ' . $tm . '-' . $ta
+                    . ' tidak bisa dihapus', 'opd.renstra'));
+        }
+
+        $bagian = [];
+
+        foreach (['tujuan' => 'tujuan', 'sasaran' => 'sasaran',
+            'indikator' => 'indikator', 'target' => 'target tahunan',
+            'versi' => 'versi dokumen'] as $k => $sebut) {
+            if ((int) ($ringkas[$k] ?? 0) > 0) {
+                $bagian[] = $ringkas[$k] . ' ' . $sebut;
+            }
+        }
+
+        return redirect()->to(base_url('adminopd/renstra'))
+            ->with('success', 'Renstra periode ' . $tm . '-' . $ta . ' dihapus'
+                . ($bagian === [] ? '.' : ': ' . implode(', ', $bagian) . '.'));
     }
 }

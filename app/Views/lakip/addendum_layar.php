@@ -386,7 +386,7 @@ foreach ($indikatorRows as $r) {
 
     <!-- ============ MODAL: EFISIENSI PROGRAM ============ -->
     <div class="modal fade" id="modal-efisiensi" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <form method="post" action="<?= base_url($addendumBase . '/efisiensi/save') ?>" id="form-efisiensi">
                     <?= csrf_field() ?>

@@ -250,9 +250,69 @@ class JagaAsap extends BaseCommand
             }
 
             $this->cek('tanpa jejak galat: ' . $jalur, ! $jejak);
+            $this->cek('tanpa <form> bersarang: ' . $jalur, $this->formBersarang($r['isi']) === 0,
+                $this->formBersarang($r['isi']) . ' bersarang');
         }
 
         CLI::newLine();
+    }
+
+    /**
+     * Berapa <form> yang bersarang di dalam <form> lain.
+     *
+     * =====================================================================
+     * MENGAPA INI DIPERIKSA
+     *
+     * `<form>` di dalam `<form>` adalah HTML tidak sah, dan peramban MEMBUANG
+     * tag bagian dalam. Tombol submit-nya lalu menjadi milik form LUAR —
+     * biasanya form filter ber-GET — sehingga menekannya hanya memuat ulang
+     * halaman. Tidak ada galat, tidak ada tanda apa pun; tombolnya sekadar
+     * "tidak melakukan apa-apa".
+     *
+     * Yang membuatnya berbahaya: uji berbasis curl TIDAK bisa menangkapnya.
+     * curl mengirim POST langsung ke rutenya dan lolos, sementara peramban
+     * sungguhan tidak pernah sampai ke sana. Tombol "Hapus Periode" pada
+     * halaman Renstra pernah persis begitu — lulus seluruh uji HTTP, tetapi
+     * mati di tangan pemakai.
+     *
+     * Obatnya bukan menyarangkan form, melainkan menaruh form di luar lalu
+     * menautkan tombolnya dengan atribut `form="id"`.
+     */
+    private function formBersarang(string $html): int
+    {
+        $bersarang = 0;
+        $dalam     = 0;
+
+        // Pola ditulis TANPA \b.
+        //
+        // Versi pertama memakai `<form\b`, dan escaping-nya rusak di jalan:
+        // yang tersimpan di berkas bukan "\b" melainkan karakter BACKSPACE
+        // (0x08). Polanya jadi tidak pernah cocok, sehingga pemeriksa ini
+        // melaporkan "0 bersarang" untuk apa pun — termasuk HTML yang nyata-
+        // nyata bersarang. Uji yang selalu lulus lebih buruk daripada tidak
+        // ada sama sekali: ia memberi rasa aman yang keliru.
+        //
+        // `[\s>/]` sudah cukup membedakan `<form ...>` dari `<formfoo>`,
+        // tanpa escape yang bisa hancur diam-diam.
+        if (preg_match_all('#<form[\s>/]|</form\s*>#i', $html, $m) === false) {
+            return 0;
+        }
+
+        foreach ($m[0] as $tag) {
+            if (str_starts_with(strtolower($tag), '</form')) {
+                $dalam = max(0, $dalam - 1);
+
+                continue;
+            }
+
+            if ($dalam > 0) {
+                $bersarang++;
+            }
+
+            $dalam++;
+        }
+
+        return $bersarang;
     }
 
     /** Rute POST yang aman dipakai menguji CSRF: ditolak sebelum menyentuh data. */

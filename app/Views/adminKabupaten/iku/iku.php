@@ -7,17 +7,19 @@
     <title><?= esc($title ?? 'IKU - e-SAKIP') ?></title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
     <style>
+        /* Kepala tabel ikut menggantung saat digulir; lebar kolom & perataan
+           sel diatur di templates/iku/_tabel.php agar satu sumber, tidak
+           terpecah antara halaman OPD dan halaman Kabupaten.
+           `min-width` per sel yang dulu ada di sini sengaja DIBUANG: ia
+           menyamaratakan semua kolom teks, sehingga Definisi Operasional yang
+           berisi paragraf mendapat ruang sama sempit dengan Penanggung Jawab. */
         .iku-table thead th {
             position: sticky;
             top: 0;
             z-index: 2;
             vertical-align: middle;
-            white-space: nowrap;
         }
-        .iku-table th,
-        .iku-table td { vertical-align: middle; }
-        .iku-table td.text-start { min-width: 160px; }
-        .iku-table tbody tr:hover { background-color: #f3faf5; }
+        .iku-table tbody tr:hover > * { background-color: #f3faf5; }
         .table-wrap { max-height: 70vh; overflow: auto; }
     </style>
 </head>

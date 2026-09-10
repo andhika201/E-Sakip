@@ -127,8 +127,13 @@
                                                     class="btn btn-success btn-sm">
                                                     <i class="fas fa-edit me-1"></i>Edit
                                                 </a>
+                                                <?php
+                                                $labelBaris = $level === 'program'
+                                                    ? ($row['program_kegiatan'] ?? '-')
+                                                    : ($level === 'kegiatan' ? ($row['kegiatan'] ?? '-') : ($row['sub_kegiatan'] ?? '-'));
+                                                ?>
                                                 <button class="btn btn-danger btn-sm"
-                                                    onclick="confirmDelete(<?= $row['program_id'] ?? $row['id'] ?>)">
+                                                    onclick="confirmDelete(<?= (int) ($row['program_id'] ?? $row['id']) ?>, '<?= esc($labelBaris, 'js') ?>')">
                                                     <i class="fas fa-trash me-1"></i>Hapus
                                                 </button>
                                             </div>
@@ -155,8 +160,18 @@
 
     <script>
         // Function to confirm delete
-        function confirmDelete(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus program ini?')) {
+        var LABEL_LEVEL = <?= json_encode(ucfirst((string) $level)) ?>;
+
+        function confirmDelete(id, nama) {
+            // Dialog milik aplikasi, bukan confirm() bawaan peramban: bisa menyebut
+            // baris mana yang dihapus. Lihat app/Views/templates/konfirmasi.php.
+            Konfirmasi.hapus({
+                judul: 'Hapus ' + LABEL_LEVEL,
+                pesan: LABEL_LEVEL + ' ini akan dihapus permanen beserta pagu anggarannya.',
+                nama: nama || '',
+                rincian: ['Keterkaitannya dengan Perjanjian Kinerja yang memakai baris ini']
+            }).then(function (ya) {
+                if (!ya) { return; }
                 // POST (bukan GET) agar delete tidak bisa dipicu prefetch/crawler/link/<img>.
                 var form = document.createElement('form');
                 form.method = 'POST';
@@ -166,9 +181,11 @@
                 csrf.name = '<?= csrf_token() ?>';
                 csrf.value = '<?= csrf_hash() ?>';
                 form.appendChild(csrf);
+                // Sudah disetujui lewat dialog; jangan ditanya ulang jaring pengaman.
+                form.setAttribute('data-konfirmasi-lewati', '');
                 document.body.appendChild(form);
                 form.submit();
-            }
+            });
         }
 
         // Search functionality

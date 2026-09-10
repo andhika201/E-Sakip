@@ -101,7 +101,11 @@
                 </form>
 
                 <form id="formBersihkanLog" action="<?= base_url('adminkab/log-aktivitas/clear') ?>" method="post"
-                    onsubmit="return confirm('Hapus log lebih lama dari 90 hari?');">
+                    data-konfirmasi="Seluruh catatan aktivitas yang lebih lama dari 90 hari akan dihapus permanen."
+                    data-konfirmasi-judul="Bersihkan Log Aktivitas"
+                    data-konfirmasi-rincian="Jejak audit lama tidak dapat dipulihkan setelah dibersihkan"
+                    data-konfirmasi-ya="Ya, Bersihkan"
+                    data-konfirmasi-ketik="BERSIHKAN">
                     <?= csrf_field() ?>
                     <input type="hidden" name="days" value="90">
                 </form>

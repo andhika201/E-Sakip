@@ -130,7 +130,7 @@
                         placeholder="<?= casc_relabel('Masukkan indikator ESS IV') ?>">
                     <button type="button"
                         class="btn btn-delete btn-delete-indikator"
-                        onclick="this.parentElement.remove()">
+                        onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_relabel('Indikator ESS IV'), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -154,7 +154,7 @@
                         <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorBaruEs4(${sasaranBaruIndex})">
                             + <?= casc_relabel('Tambah Indikator ESS IV') ?>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.es4-group').remove()">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="Konfirmasi.buangBlok(this, '.es4-group', '<?= esc(casc_relabel('Sasaran ESS IV'), 'js') ?>')">
                             <i class="fas fa-trash"></i> Hapus
                         </button>
                     </div>
@@ -169,7 +169,7 @@
             let html = `
                 <div class="indikator-es4 d-flex gap-2 mt-2">
                     <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="<?= casc_relabel('Masukkan indikator ESS IV') ?>">
-                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="this.parentElement.remove()">
+                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_relabel('Indikator ESS IV'), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

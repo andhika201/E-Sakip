@@ -194,9 +194,10 @@ foreach ($indikatorRows as $r) {
                                                     data-json='<?= $aJson ?>' title="Edit analisis">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
+                                                <?php // Konfirmasinya menempel di form-nya, bukan di tombol: di sanalah
+                                                      // pengiriman benar-benar terjadi (lihat templates/konfirmasi.php). ?>
                                                 <button type="submit" form="form-analisis-hapus-<?= $aId ?>"
-                                                    class="btn btn-sm btn-danger" title="Hapus analisis"
-                                                    onclick="return confirm('Hapus baris analisis ini?');">
+                                                    class="btn btn-sm btn-danger" title="Hapus analisis">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -204,7 +205,11 @@ foreach ($indikatorRows as $r) {
                                         <?php // Hapus lewat POST (bukan tautan) supaya tidak bisa dipicu dari luar. ?>
                                         <?php if ($aId > 0): ?>
                                         <form id="form-analisis-hapus-<?= $aId ?>" class="d-none" method="post"
-                                            action="<?= base_url($addendumBase . '/analisis/delete/' . $aId) ?>">
+                                            action="<?= base_url($addendumBase . '/analisis/delete/' . $aId) ?>"
+                                            data-konfirmasi="Baris analisis faktor ini akan dihapus permanen dari LAKIP."
+                                            data-konfirmasi-judul="Hapus Analisis Faktor"
+                                            data-konfirmasi-nama="<?= esc($ind['indikator'], 'attr') ?>"
+                                            data-konfirmasi-rincian="Faktor pendukung, faktor penghambat, dan upaya peningkatan pada baris ini">
                                             <?= csrf_field() ?>
                                             <input type="hidden" name="tahun" value="<?= esc($tahunAddon, 'attr') ?>">
                                             <input type="hidden" name="mode" value="<?= esc($modeAddon, 'attr') ?>">
@@ -305,14 +310,18 @@ foreach ($indikatorRows as $r) {
                                         data-json='<?= $eJson ?>' title="Edit efisiensi program">
                                         <i class="fas fa-edit"></i>
                                     </button>
+                                    <?php // Konfirmasinya menempel di form-nya, bukan di tombol. ?>
                                     <button type="submit" form="form-efisiensi-hapus-<?= (int) $e['id'] ?>"
-                                        class="btn btn-sm btn-danger" title="Hapus"
-                                        onclick="return confirm('Hapus data efisiensi program ini?');">
+                                        class="btn btn-sm btn-danger" title="Hapus">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
                                 <form id="form-efisiensi-hapus-<?= (int) $e['id'] ?>" class="d-none" method="post"
-                                    action="<?= base_url($addendumBase . '/efisiensi/delete/' . (int) $e['id']) ?>">
+                                    action="<?= base_url($addendumBase . '/efisiensi/delete/' . (int) $e['id']) ?>"
+                                    data-konfirmasi="Data efisiensi program ini akan dihapus permanen dari LAKIP."
+                                    data-konfirmasi-judul="Hapus Efisiensi Program"
+                                    data-konfirmasi-nama="<?= esc($e['program_kegiatan'] ?? '-', 'attr') ?>"
+                                    data-konfirmasi-rincian="Anggaran, realisasi, dan nilai efisiensi yang sudah tercatat">
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="tahun" value="<?= esc($tahunAddon, 'attr') ?>">
                                     <input type="hidden" name="mode" value="<?= esc($modeAddon, 'attr') ?>">

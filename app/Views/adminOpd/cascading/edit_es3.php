@@ -137,15 +137,22 @@
         }
 
         function hapusIndikatorEs3(btn) {
+            const baris = btn.closest('.indikator-es3');
             const cnt = parseInt(btn.getAttribute('data-es4-count') || '0', 10);
-            if (cnt > 0) {
-                const ok = confirm(
-                    'Indikator ini memiliki ' + cnt + ' <?= casc_relabel('Sasaran Eselon IV') ?> di bawahnya.\n' +
-                    'Menghapus indikator ini akan MENGHAPUS seluruh Es4 tersebut saat Anda menekan Update.\n\nLanjutkan?'
-                );
-                if (!ok) return;
+            if (cnt === 0) {
+                // Tanpa anak: cukup aturan blok biasa (kosong dibuang langsung).
+                Konfirmasi.buangBlok(btn, '.indikator-es3', '<?= esc(casc_relabel('Indikator ESS III'), 'js') ?>');
+                return;
             }
-            btn.closest('.indikator-es3').remove();
+            // Punya anak Es4 -> dampaknya berantai, jadi dirinci lewat dialog bersama.
+            Konfirmasi.hapus({
+                judul: 'Hapus <?= esc(casc_relabel('Indikator ESS III'), 'js') ?>',
+                pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru berlaku setelah Anda menekan Update.',
+                nama: (baris.querySelector('input[type="text"], textarea') || {}).value || '',
+                rincian: [cnt + ' <?= esc(casc_relabel('Sasaran Eselon IV'), 'js') ?> di bawahnya ikut terhapus saat Update ditekan']
+            }).then(function (ya) {
+                if (ya) { baris.remove(); }
+            });
         }
 
         let sasaranBaruIndex = 0;
@@ -162,7 +169,7 @@
                         <button type="button" class="btn btn-sm btn-outline-success" onclick="addIndikatorBaruEs3(${sasaranBaruIndex})">
                             + <?= casc_relabel('Tambah Indikator ESS III') ?>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('.es3-group').remove()">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="Konfirmasi.buangBlok(this, '.es3-group', '<?= esc(casc_relabel('Sasaran ESS III'), 'js') ?>')">
                             <i class="fas fa-trash"></i> Hapus
                         </button>
                     </div>
@@ -177,7 +184,7 @@
             let html = `
                 <div class="indikator-es3 d-flex gap-2 mt-2">
                     <input type="text" name="sasaran_baru[${idx}][indikator][${indIdx}][nama]" class="form-control" placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
-                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="this.parentElement.remove()">
+                    <button type="button" class="btn btn-delete btn-delete-indikator" onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_relabel('Indikator ESS III'), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

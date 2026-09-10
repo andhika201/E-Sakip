@@ -26,7 +26,9 @@ function addIndikatorEditPelaksana() {
 // Hapus baris indikator Pelaksana. Pelaksana adalah jenjang TERAKHIR,
 // jadi tidak ada anak yang ikut terhapus — cukup buang barisnya.
 function hapusIndikatorPelaksana(btn) {
-    btn.closest('.indikator-pel').remove();
+    // Blok yang masih kosong dibuang langsung; yang sudah diketik dikonfirmasi
+    // lebih dulu (lihat app/Views/templates/konfirmasi.php).
+    Konfirmasi.buangBlok(btn, '.indikator-pel', 'Indikator ' + labelPelaksana());
 }
 
 /* =========================================================

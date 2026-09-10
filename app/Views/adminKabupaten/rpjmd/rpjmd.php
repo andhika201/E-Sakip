@@ -372,7 +372,7 @@
                                                                 <?php endif; ?>
                                                                 <?php if (user_can('rpjmd.delete')): ?>
                                                                 <button class="btn btn-danger btn-sm"
-                                                                    onclick="confirmDelete(<?= (int) ($misi['id'] ?? 0) ?>)">
+                                                                    onclick="confirmDelete(<?= (int) ($misi['id'] ?? 0) ?>, '<?= esc($misi['misi'] ?? '-', 'js') ?>')">
                                                                     <i class="fas fa-trash me-1"></i>Hapus
                                                                 </button>
                                                                 <?php endif; ?>
@@ -419,25 +419,42 @@
     <script>
         const periodData = <?= json_encode($rpjmd_grouped ?? []) ?>;
 
-        function confirmDelete(id) {
-            if (!confirm('Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.')) return;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '<?= base_url('adminkab/rpjmd/delete') ?>/' + id;
-            <?php if (csrf_token()): ?>
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '<?= csrf_token() ?>';
-                csrfInput.value = '<?= csrf_hash() ?>';
-                form.appendChild(csrfInput);
-            <?php endif; ?>
-            const methodInput = document.createElement('input');
-            methodInput.type = 'hidden';
-            methodInput.name = '_method';
-            methodInput.value = 'DELETE';
-            form.appendChild(methodInput);
-            document.body.appendChild(form);
-            form.submit();
+        function confirmDelete(id, nama) {
+            // Dialog milik aplikasi (templates/konfirmasi.php), bukan confirm()
+            // bawaan peramban: menghapus misi ikut membawa seluruh pohon di bawahnya,
+            // jadi dampaknya perlu dirinci sebelum orang menekan Ya.
+            Konfirmasi.hapus({
+                judul: 'Hapus Misi RPJMD',
+                pesan: 'Misi ini akan dihapus permanen beserta seluruh turunannya.',
+                nama: nama || '',
+                rincian: [
+                    'Seluruh tujuan dan sasaran di bawah misi ini',
+                    'Indikator beserta target tahunannya',
+                    'Kaitan ke Renstra dan Cascading yang merujuk sasaran tersebut'
+                ],
+                ketik: 'HAPUS'
+            }).then(function (ya) {
+                if (!ya) return;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '<?= base_url('adminkab/rpjmd/delete') ?>/' + id;
+                <?php if (csrf_token()): ?>
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '<?= csrf_token() ?>';
+                    csrfInput.value = '<?= csrf_hash() ?>';
+                    form.appendChild(csrfInput);
+                <?php endif; ?>
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+                // Sudah disetujui lewat dialog; jangan ditanya ulang jaring pengaman.
+                form.setAttribute('data-konfirmasi-lewati', '');
+                document.body.appendChild(form);
+                form.submit();
+            });
         }
 
         function updateTableHeaders(periodKey) {

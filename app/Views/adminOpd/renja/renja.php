@@ -212,7 +212,7 @@
                                                                 <i class="fas fa-edit me-1"></i>Edit
                                                             </a>
                                                             <button class="btn btn-danger btn-sm"
-                                                                onclick="confirmDelete(<?= $renja['id'] ?>)">
+                                                                onclick="confirmDelete(<?= (int) $renja['id'] ?>, '<?= esc($renja['sasaran_renja'] ?? '-', 'js') ?>')">
                                                                 <i class="fas fa-trash me-1"></i>Hapus
                                                             </button>
                                                         </div>
@@ -420,7 +420,8 @@
                                   <a href="<?= base_url('adminopd/renja/edit/') ?>${renja.id}" class="btn btn-success btn-sm">
                                       <i class="fas fa-edit me-1"></i>Edit
                                   </a>
-                                  <button class="btn btn-danger btn-sm" onclick="confirmDelete(${renja.id})">
+                                  <button class="btn btn-danger btn-sm" data-nama="${escapeAttr(renja.sasaran_renja)}"
+                                      onclick="confirmDelete(${renja.id}, this.dataset.nama)">
                                       <i class="fas fa-trash me-1"></i>Hapus
                                   </button>
                               </div>
@@ -439,6 +440,13 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // escapeHtml() tidak meloloskan tanda kutip, jadi tidak aman untuk NILAI
+        // atribut — sasaran yang memuat " akan memutus atributnya. Dipakai untuk
+        // data-nama pada tombol hapus yang dirakit di bawah.
+        function escapeAttr(text) {
+            return escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         // Function to populate renstra sasaran filter options
@@ -495,8 +503,15 @@
         }
 
         // Function to confirm delete
-        function confirmDelete(id) {
-            if (confirm('Apakah Anda yakin ingin menghapus data RENJA ini?')) {
+        function confirmDelete(id, nama) {
+            // Dialog milik aplikasi (templates/konfirmasi.php), bukan confirm() bawaan.
+            Konfirmasi.hapus({
+                judul: 'Hapus Renja',
+                pesan: 'Sasaran Renja ini akan dihapus permanen.',
+                nama: nama || '',
+                rincian: ['Seluruh indikator dan target tahunan di bawah sasaran ini']
+            }).then(function (ya) {
+                if (!ya) { return; }
                 // Dikirim sebagai POST, bukan window.location (GET): menghapus
                 // dengan sekadar membuka alamat membuat CSRF tak berlaku dan
                 // membiarkan prefetch peramban ikut memicunya.
@@ -510,9 +525,11 @@
                 t.value = '<?= csrf_hash() ?>';
                 f.appendChild(t);
 
+                // Sudah disetujui lewat dialog; jangan ditanya ulang jaring pengaman.
+                f.setAttribute('data-konfirmasi-lewati', '');
                 document.body.appendChild(f);
                 f.submit();
-            }
+            });
         }
 
         // Initialize on page load

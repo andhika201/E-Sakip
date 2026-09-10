@@ -224,7 +224,7 @@
                         </button>
                         <button type="button"
                             class="btn btn-sm btn-danger btn-delete"
-                            onclick="this.closest('.es3-group').remove()"
+                            onclick="Konfirmasi.buangBlok(this, '.es3-group', '<?= esc(casc_relabel('Sasaran ESS III'), 'js') ?>')"
                             title="Hapus">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -253,7 +253,7 @@
                         </button>
                         <button type="button"
                             class="btn btn-sm btn-danger btn-delete"
-                            onclick="this.closest('.indikator-es3').remove()"
+                            onclick="Konfirmasi.buangBlok(this, '.indikator-es3', '<?= esc(casc_relabel('Indikator ESS III'), 'js') ?>')"
                             title="Hapus">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -281,7 +281,7 @@
                         </button>
                         <button type="button"
                             class="btn btn-sm btn-danger btn-delete"
-                            onclick="this.closest('.es4-group').remove()"
+                            onclick="Konfirmasi.buangBlok(this, '.es4-group', '<?= esc(casc_relabel('Sasaran ESS IV'), 'js') ?>')"
                             title="Hapus">
                             <i class="fas fa-trash"></i>
                         </button>

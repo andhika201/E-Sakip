@@ -442,20 +442,44 @@ $gantiTampil = ! ($keRevisi ?? false) && ($akanDibuang > 0 || $dipertahankan !==
 
     <?php if (! $keRevisi && ($akanDibuang > 0 || $dipertahankan !== [])): ?>
         <script>
-            // Menghapus tidak boleh terjadi karena salah klik.
-            document.getElementById('sync-form')?.addEventListener('submit', function (e) {
-                var ganti = document.getElementById('sync-ganti');
-                if (!ganti || !ganti.checked) return;
+            // Menghapus tidak boleh terjadi karena salah klik. Dialognya milik
+            // aplikasi (app/Views/templates/konfirmasi.php) dan bersifat async,
+            // jadi pengiriman ditahan dulu lalu diulang setelah disetujui.
+            (function () {
+                var form = document.getElementById('sync-form');
+                if (!form) { return; }
 
-                var jml = <?= (int) $akanDibuang ?>;
-                if (!confirm('Mode Ganti aktif.\n\n' + jml + ' indikator IKU yang tidak ada di '
-                    + <?= json_encode((string) $sumber_label) ?>
-                    + ' akan DIBUANG beserta targetnya.\n'
-                    + 'Indikator yang sudah dipakai (cascading / LAKIP / arsip revisi) tetap dipertahankan.\n\n'
-                    + 'Lanjutkan?')) {
+                // Penanda lokal, bukan atribut data: penyadap global memakai
+                // data-konfirmasi-lolos untuk keperluannya sendiri dan akan
+                // menghapusnya sebelum penangan ini sempat membacanya.
+                var sudahDisetujui = false;
+
+                form.addEventListener('submit', function (e) {
+                    var ganti = document.getElementById('sync-ganti');
+                    if (!ganti || !ganti.checked) { return; }
+                    if (sudahDisetujui) { sudahDisetujui = false; return; }
+
                     e.preventDefault();
-                }
-            });
+                    Konfirmasi.hapus({
+                        judul: 'Sinkron Mode Ganti',
+                        pesan: 'Mode Ganti sedang aktif. Indikator IKU yang tidak ada di sumber akan dibuang beserta targetnya.',
+                        nama: <?= json_encode((string) $sumber_label) ?>,
+                        rincian: [
+                            <?= (int) $akanDibuang ?> + ' indikator IKU dibuang beserta seluruh targetnya',
+                            'Indikator yang sudah dipakai (cascading / LAKIP / arsip revisi) tetap dipertahankan'
+                        ],
+                        ya: 'Ya, Sinkron & Buang'
+                    }).then(function (ya) {
+                        if (!ya) { return; }
+                        sudahDisetujui = true;
+                        if (typeof form.requestSubmit === 'function') {
+                            form.requestSubmit();
+                        } else {
+                            form.submit();
+                        }
+                    });
+                });
+            })();
         </script>
     <?php endif; ?>
 

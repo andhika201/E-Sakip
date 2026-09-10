@@ -374,11 +374,19 @@ document.addEventListener('click', function(e) {
             return;
         }
         
-        if (confirm('Hapus sasaran renstra ini dan semua indikator sasarannya?')) {
-            e.target.closest('.sasaran-renstra-item').remove();
+        // Dialog milik aplikasi (app/Views/templates/konfirmasi.php).
+        const item = e.target.closest('.sasaran-renstra-item');
+        Konfirmasi.hapus({
+            judul: 'Hapus Sasaran Renstra',
+            pesan: 'Sasaran ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+            nama: (item.querySelector('input[type="text"], textarea') || {}).value || '',
+            rincian: ['Semua indikator sasaran beserta targetnya']
+        }).then(function (ya) {
+            if (!ya) { return; }
+            item.remove();
             updateLabels();
             updateFormNames();
-        }
+        });
     }
     
     // Tombol hapus indikator sasaran
@@ -391,11 +399,17 @@ document.addEventListener('click', function(e) {
             return;
         }
         
-        if (confirm('Hapus indikator sasaran ini?')) {
-            e.target.closest('.indikator-sasaran-item').remove();
+        const indItem = e.target.closest('.indikator-sasaran-item');
+        Konfirmasi.hapus({
+            judul: 'Hapus Indikator Sasaran',
+            pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+            nama: (indItem.querySelector('input[type="text"], textarea') || {}).value || ''
+        }).then(function (ya) {
+            if (!ya) { return; }
+            indItem.remove();
             updateLabels();
             updateFormNames();
-        }
+        });
     }
 });
 

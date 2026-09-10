@@ -175,9 +175,21 @@ class MasterController extends BaseController
                 'is_plt'       => $r['is_plt'],
             ], JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE), ENT_QUOTES);
 
-            $delUrl = base_url('adminkab/master/pegawai/delete/' . (int) $r['id']);
-            $aksi   = '<button class="btn btn-warning btn-sm" data-edit="modal-pegawai" data-json="' . $json . '"><i class="fas fa-edit"></i></button> '
-                . '<a href="' . $delUrl . '" onclick="return confirm(\'Yakin hapus data ini?\')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>';
+            // Hapus lewat form POST, bukan <a href>: rutenya memang hanya menerima
+            // POST/DELETE (Routes.php), sehingga tautan GET ini tidak pernah benar-benar
+            // menghapus. Selain itu tautan hapus bisa dipicu prefetch peramban tanpa
+            // CSRF. Konfirmasinya ikut dialog bersama — lihat templates/tombol_hapus.php.
+            $aksi = '<button class="btn btn-warning btn-sm" data-edit="modal-pegawai" data-json="' . $json . '"><i class="fas fa-edit"></i></button> '
+                . view('templates/tombol_hapus', [
+                    'url'     => base_url('adminkab/master/pegawai/delete/' . (int) $r['id']),
+                    'judul'   => 'Hapus Pegawai',
+                    'pesan'   => 'Data pegawai ini akan dihapus permanen dari master data.',
+                    'nama'    => $r['nama_pegawai'] . ' — NIP ' . ($r['nip_pegawai'] ?? '-'),
+                    'rincian' => array_filter([
+                        ($r['nama_opd'] ?? '') !== '' ? 'Unit kerja: ' . $r['nama_opd'] : '',
+                        ($r['nama_jabatan'] ?? '') !== '' ? 'Jabatan: ' . $r['nama_jabatan'] : '',
+                    ]),
+                ]);
 
             $data[] = [
                 'no'      => $no,

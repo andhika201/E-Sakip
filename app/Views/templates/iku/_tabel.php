@@ -262,7 +262,10 @@ $sel = static function ($nilai): string {
                                         <?php if (user_can($perm . '.delete')): ?>
                                             <form method="post" action="<?= base_url($base_url . '/delete/' . $sasaranId) ?>"
                                                   class="d-inline"
-                                                  onsubmit="return confirm('Hapus sasaran IKU ini beserta seluruh indikator dan targetnya?');">
+                                                  data-konfirmasi="Sasaran IKU ini akan dihapus permanen."
+                                                  data-konfirmasi-judul="Hapus Sasaran IKU"
+                                                  data-konfirmasi-nama="<?= esc($sasaran['sasaran'] ?? '-', 'attr') ?>"
+                                                  data-konfirmasi-rincian="<?= count($indikators) ?> indikator di bawah sasaran ini|Target tahunan tiap indikator|Program pendukung yang tertaut">
                                                 <?= csrf_field() ?>
                                                 <button type="submit" class="btn btn-danger btn-sm" title="Hapus IKU">
                                                     <i class="fas fa-trash"></i>

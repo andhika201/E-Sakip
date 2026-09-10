@@ -195,10 +195,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (removeBtn) {
-      if (confirm("Yakin ingin menghapus data ini?")) {
-        removeBtn.closest(".item")?.remove();
+      // Dialog milik aplikasi (app/Views/templates/konfirmasi.php).
+      const item = removeBtn.closest(".item");
+      Konfirmasi.hapus({
+        judul: "Hapus Baris",
+        pesan: "Baris ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.",
+        nama: (item?.querySelector('input[type="text"], textarea') || {}).value || "",
+        rincian: ["Seluruh baris turunan dan pagu anggaran di bawahnya"],
+      }).then((ya) => {
+        if (!ya) return;
+        item?.remove();
         renumberForm();
-      }
+      });
     }
   });
 

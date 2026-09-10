@@ -213,7 +213,7 @@
                         </button>
                         <button type="button"
                             class="btn btn-delete btn-delete-sasaran"
-                            onclick="this.closest('.es3-group').remove()">
+                            onclick="Konfirmasi.buangBlok(this, '.es3-group', '<?= esc(casc_relabel('Sasaran ESS III'), 'js') ?>')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -235,7 +235,7 @@
                         placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button"
                         class="btn btn-delete btn-delete-indikator"
-                        onclick="this.parentElement.remove()">
+                        onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_relabel('Indikator ESS III'), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -254,7 +254,7 @@
                         placeholder="<?= casc_relabel('Masukkan indikator ESS III') ?>">
                     <button type="button"
                         class="btn btn-delete btn-delete-indikator"
-                        onclick="this.parentElement.remove()">
+                        onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_relabel('Indikator ESS III'), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

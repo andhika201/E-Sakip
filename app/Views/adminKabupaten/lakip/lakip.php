@@ -440,16 +440,28 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                                                 <a class="btn btn-warning aksi-btn" href="<?= $editUrl ?>" title="Edit LAKIP">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <?php // lakip/status dan lakip/delete keduanya rute POST-only
+                                                      // (Routes.php), jadi keduanya lewat form — sama seperti
+                                                      // kembarannya di adminOpd/lakip/lakip.php. ?>
                                                 <?php if (!empty($changeStatusUrl)): ?>
-                                                    <a class="btn btn-info aksi-btn" href="<?= $changeStatusUrl ?>"
-                                                        title="Ubah status ke <?= esc($nextStatus) ?>">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </a>
+                                                    <?= view('templates/tombol_hapus', [
+                                                        'url'   => $changeStatusUrl,
+                                                        'judul' => 'Ubah status ke ' . ucfirst((string) $nextStatus),
+                                                        'pesan' => 'Status LAKIP ini akan diubah menjadi ' . ucfirst((string) $nextStatus) . '.',
+                                                        'nama'  => trim(($r['indikator_sasaran'] ?? '') . ' — Tahun ' . ($r['tahun'] ?? '-')),
+                                                        'jenis' => 'tanya',
+                                                        'ya'    => 'Ya, Ubah Status',
+                                                        'kelas' => 'btn btn-info aksi-btn',
+                                                        'ikon'  => 'fas fa-sync-alt',
+                                                    ]) ?>
                                                 <?php endif; ?>
-                                                <a class="btn btn-danger aksi-btn" href="<?= base_url($lakipBase . '/delete/' . $lakipItem['id']) . '?' . $q ?>"
-                                                    title="Hapus LAKIP" onclick="return confirm('Apakah Anda yakin ingin menghapus data LAKIP ini?');">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+                                                <?= view('templates/tombol_hapus', [
+                                                    'url'     => base_url($lakipBase . '/delete/' . (int) $lakipItem['id']) . '?' . $q,
+                                                    'judul'   => 'Hapus LAKIP',
+                                                    'pesan'   => 'Baris LAKIP ini akan dihapus permanen, termasuk realisasi dan analisis yang sudah diisi.',
+                                                    'nama'    => trim(($r['indikator_sasaran'] ?? '') . ' — Tahun ' . ($r['tahun'] ?? '-')),
+                                                    'kelas'   => 'btn btn-danger aksi-btn',
+                                                ]) ?>
                                             <?php endif; ?>
                                         </div>
                                     </td>

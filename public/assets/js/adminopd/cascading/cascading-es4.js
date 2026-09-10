@@ -118,15 +118,22 @@ function addIndikatorEditEs4() {
 // Hapus indikator ES IV; bila masih punya Pelaksana anak -> konfirmasi
 // (Pelaksana akan ikut terhapus saat Update ditekan).
 function hapusIndikatorEs4(btn) {
+    const baris = btn.closest('.indikator-es4');
     const cnt = parseInt(btn.getAttribute('data-pelaksana-count') || '0', 10);
-    if (cnt > 0) {
-        const ok = confirm(
-            'Indikator ini memiliki ' + cnt + ' Sasaran Pelaksana di bawahnya.\n' +
-            'Menghapus indikator ini akan MENGHAPUS seluruh Pelaksana tersebut saat Anda menekan Update.\n\nLanjutkan?'
-        );
-        if (!ok) return;
+    if (cnt === 0) {
+        baris.remove();
+        return;
     }
-    btn.closest('.indikator-es4').remove();
+    // Punya anak Pelaksana -> dampaknya berantai, jadi dirinci lewat dialog bersama
+    // (app/Views/templates/konfirmasi.php).
+    Konfirmasi.hapus({
+        judul: 'Hapus Indikator Eselon IV',
+        pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru berlaku setelah Anda menekan Update.',
+        nama: (baris.querySelector('input[type="text"], textarea') || {}).value || '',
+        rincian: [cnt + ' Sasaran Pelaksana di bawahnya ikut terhapus saat Update ditekan']
+    }).then(function (ya) {
+        if (ya) { baris.remove(); }
+    });
 }
 
 let sasaranBaruIndexEs4 = 0;

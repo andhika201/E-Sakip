@@ -344,8 +344,18 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
                         a.className = 'btn btn-outline-danger btn-sm';
                         a.innerHTML = '<i class="fas fa-trash me-1"></i>Hapus';
                         a.addEventListener('click', () => {
-                            if (!confirm('Hapus data pembanding untuk indikator ini?')) { return; }
-                            document.getElementById('bm-form-hapus-' + d.benchmark_id).submit();
+                            // form.submit() tidak memicu event submit, jadi jaring pengaman
+                            // di templates/konfirmasi.php tidak kebagian — dialognya
+                            // dipanggil di sini secara langsung.
+                            Konfirmasi.hapus({
+                                judul: 'Hapus Data Pembanding',
+                                pesan: 'Data pembanding provinsi dan nasional untuk indikator ini akan dihapus permanen.',
+                                nama: d.nama,
+                                rincian: ['Nilai provinsi & nasional', 'Sumber data dan catatan yang menyertainya']
+                            }).then((ya) => {
+                                if (!ya) { return; }
+                                document.getElementById('bm-form-hapus-' + d.benchmark_id).submit();
+                            });
                         });
                         wrap.appendChild(a);
                     }

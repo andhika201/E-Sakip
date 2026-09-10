@@ -1,6 +1,21 @@
-function deletePk(pkId) {
-    if (!confirm('Yakin ingin menghapus data PK ini?')) return;
+function deletePk(pkId, nama) {
+    // Dialog milik aplikasi (app/Views/templates/konfirmasi.php), bukan confirm()
+    // bawaan peramban. Sisa fungsi ini dijalankan setelah pengguna menekan "Ya".
+    Konfirmasi.hapus({
+        judul: 'Hapus Perjanjian Kinerja',
+        pesan: 'Dokumen Perjanjian Kinerja ini akan dihapus permanen.',
+        nama: nama || '',
+        rincian: [
+            'Seluruh sasaran, indikator, dan targetnya',
+            'Program/kegiatan beserta pagu anggaran yang menyertainya',
+            'Rencana aksi dan realisasi triwulanan yang sudah diisi'
+        ]
+    }).then(function (ya) {
+        if (ya) { deletePkLanjut(pkId); }
+    });
+}
 
+function deletePkLanjut(pkId) {
     const baseUrl = window.base_url ?? '/';
     // Segmen URL (mis. 'kecamatan'), bukan jenis data ('camat'). Fallback ke
     // window.jenis untuk halaman lama yang belum mengirim pkSeg.

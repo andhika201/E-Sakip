@@ -233,7 +233,10 @@ if ($jangkarIkuAda ?? false) {
                                 <a href="#"
                                     class="btn btn-danger btn-sm casc-act casc-del"
                                     data-url="<?= base_url('adminopd/cascading/delete-es3/' . $r['es3_id']) ?>"
-                                    data-confirm="<?= casc_relabel('Hapus Sasaran Eselon III ini beserta seluruh indikatornya?') ?>"
+                                    data-konfirmasi="<?= esc(casc_relabel('Sasaran Eselon III ini akan dihapus permanen.'), 'attr') ?>"
+                                    data-konfirmasi-judul="<?= esc(casc_relabel('Hapus Sasaran Eselon III'), 'attr') ?>"
+                                    data-konfirmasi-nama="<?= esc($r['es3_sasaran'] ?? '-', 'attr') ?>"
+                                    data-konfirmasi-rincian="<?= esc(casc_relabel('Seluruh indikator di bawah sasaran Eselon III ini'), 'attr') ?>"
                                     title="<?= casc_relabel('Hapus ESS III') ?>">
                                     <i class="fas fa-trash"></i>
                                 </a>
@@ -293,7 +296,10 @@ if ($jangkarIkuAda ?? false) {
                                     <a href="#"
                                         class="btn btn-danger btn-sm casc-act casc-del"
                                         data-url="<?= base_url('adminopd/cascading/delete-es4/' . $r['es4_id']) ?>"
-                                        data-confirm="<?= casc_relabel('Hapus Sasaran Eselon IV ini beserta seluruh indikatornya?') ?>"
+                                        data-konfirmasi="<?= esc(casc_relabel('Sasaran Eselon IV ini akan dihapus permanen.'), 'attr') ?>"
+                                        data-konfirmasi-judul="<?= esc(casc_relabel('Hapus Sasaran Eselon IV'), 'attr') ?>"
+                                        data-konfirmasi-nama="<?= esc($r['es4_sasaran'] ?? '-', 'attr') ?>"
+                                        data-konfirmasi-rincian="<?= esc(casc_relabel('Seluruh indikator di bawah sasaran Eselon IV ini'), 'attr') ?>"
                                         title="<?= casc_relabel('Hapus ESS IV') ?>">
                                         <i class="fas fa-trash"></i>
                                     </a>
@@ -346,7 +352,10 @@ if ($jangkarIkuAda ?? false) {
                                     <a href="#"
                                         class="btn btn-danger btn-sm casc-act casc-del"
                                         data-url="<?= base_url('adminopd/cascading/delete-pelaksana/' . $r['pelaksana_id']) ?>"
-                                        data-confirm="<?= esc('Hapus ' . casc_pelaksana_label('Sasaran ') . ' ini beserta seluruh indikatornya?', 'attr') ?>"
+                                        data-konfirmasi="<?= esc(casc_pelaksana_label('Sasaran ') . ' ini akan dihapus permanen.', 'attr') ?>"
+                                        data-konfirmasi-judul="<?= esc(casc_pelaksana_label('Hapus Sasaran '), 'attr') ?>"
+                                        data-konfirmasi-nama="<?= esc($r['pelaksana_sasaran'] ?? '-', 'attr') ?>"
+                                        data-konfirmasi-rincian="<?= esc('Seluruh indikator di bawah ' . casc_pelaksana_label('sasaran '), 'attr') ?>"
                                         title="<?= esc(casc_pelaksana_label('Hapus Sasaran '), 'attr') ?>">
                                         <i class="fas fa-trash"></i>
                                     </a>

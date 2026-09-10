@@ -45,7 +45,10 @@ $aksiTujuan = static function (array $t) use ($bolehIsiTujuan, $baseUrl, $versi)
         . ' class="btn btn-outline-warning btn-sm py-0 px-1" title="Sunting tujuan ini">'
         . '<i class="fa-solid fa-pen"></i></a>'
         . '<form method="post" action="' . base_url($baseUrl . '/versi/tujuan/hapus/' . $vid . '/' . $tid) . '"'
-        . ' onsubmit="return confirm(\'Hapus tujuan ini beserta seluruh sasaran, indikator, dan targetnya dari draft?\')">'
+        . ' data-konfirmasi="Tujuan ini akan dihapus dari draft versi."'
+        . ' data-konfirmasi-judul="Hapus Tujuan dari Draft"'
+        . ' data-konfirmasi-nama="' . esc((string) ($t['tujuan_rpjmd'] ?? $t['tujuan'] ?? '-'), 'attr') . '"'
+        . ' data-konfirmasi-rincian="Seluruh sasaran di bawah tujuan ini|Indikator beserta target tahunannya">'
         . csrf_field()
         . '<button class="btn btn-outline-danger btn-sm py-0 px-1" title="Hapus tujuan ini">'
         . '<i class="fa-solid fa-trash"></i></button></form>'
@@ -265,7 +268,11 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
 
     <?php if (! empty($keadaanHapus['boleh'])): ?>
         <form method="post" action="<?= base_url($baseUrl . '/versi/hapus/' . (int) $versi['id']) ?>"
-              onsubmit="return confirm('Hapus versi ini beserta seluruh arsip isinya? Tindakan ini tidak bisa dibatalkan.')">
+              data-konfirmasi="Versi dokumen ini akan dihapus permanen beserta seluruh arsip isinya."
+              data-konfirmasi-judul="Hapus Versi Dokumen"
+              data-konfirmasi-nama="<?= esc(trim(($namaDokumen ?? 'Versi') . ' — ' . ($versi['label'] ?? ('#' . (int) $versi['id']))), 'attr') ?>"
+              data-konfirmasi-rincian="Seluruh tujuan, sasaran, indikator, dan target yang diarsipkan di versi ini|Jejak riwayat versi ini"
+              data-konfirmasi-ketik="HAPUS">
             <?= csrf_field() ?>
             <button class="btn btn-danger btn-sm"><i class="fa-solid fa-trash me-1"></i>Hapus Versi</button>
         </form>

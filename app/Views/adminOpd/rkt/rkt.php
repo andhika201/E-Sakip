@@ -499,7 +499,10 @@
                                                                 <!-- Hapus -->
                                                                 <form action="<?= base_url('adminopd/rkt/delete-indikator') ?>"
                                                                     method="post"
-                                                                    onsubmit="return confirm('Yakin ingin menghapus seluruh RKT indikator ini?')">
+                                                                    data-konfirmasi="Seluruh baris RKT untuk indikator ini akan dihapus permanen."
+                                                                    data-konfirmasi-judul="Hapus RKT Indikator"
+                                                                    data-konfirmasi-nama="<?= esc($ind['indikator_sasaran'] ?? '-', 'attr') ?>"
+                                                                    data-konfirmasi-rincian="Target seluruh tahun pada indikator ini">
 
                                                                     <?= csrf_field() ?>
                                                                     <input type="hidden" name="indikator_id" value="<?= esc($ind['id']) ?>">

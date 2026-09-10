@@ -328,20 +328,34 @@ document.addEventListener('click', function(e) {
   
   // Tombol hapus sasaran RKPD
   if (e.target.classList.contains('remove-sasaran-rkpd') || e.target.closest('.remove-sasaran-rkpd')) {
-    if (confirm('Hapus sasaran RKPD ini dan semua indikator sasarannya?')) {
-      e.target.closest('.sasaran-rkpd-item').remove();
+    // Dialog milik aplikasi (app/Views/templates/konfirmasi.php).
+    const item = e.target.closest('.sasaran-rkpd-item');
+    Konfirmasi.hapus({
+      judul: 'Hapus Sasaran RKPD',
+      pesan: 'Sasaran ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+      nama: (item.querySelector('input[type="text"], textarea') || {}).value || '',
+      rincian: ['Semua indikator sasaran beserta targetnya']
+    }).then(function (ya) {
+      if (!ya) { return; }
+      item.remove();
       updateLabels();
       updateFormNames();
-    }
+    });
   }
   
   // Tombol hapus indikator sasaran RKPD
   if (e.target.classList.contains('remove-indikator-sasaran-rkpd') || e.target.closest('.remove-indikator-sasaran-rkpd')) {
-    if (confirm('Hapus indikator sasaran ini?')) {
-      e.target.closest('.indikator-sasaran-rkpd-item').remove();
+    const indItem = e.target.closest('.indikator-sasaran-rkpd-item');
+    Konfirmasi.hapus({
+      judul: 'Hapus Indikator Sasaran',
+      pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+      nama: (indItem.querySelector('input[type="text"], textarea') || {}).value || ''
+    }).then(function (ya) {
+      if (!ya) { return; }
+      indItem.remove();
       updateLabels();
       updateFormNames();
-    }
+    });
   }
 });
 

@@ -105,10 +105,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (confirm('Yakin ingin menghapus sasaran ini?')) {
+            // Dialog milik aplikasi (app/Views/templates/konfirmasi.php).
+            Konfirmasi.hapus({
+                judul: 'Hapus Sasaran PK',
+                pesan: 'Sasaran ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+                nama: (item.querySelector('input[name*="[sasaran]"], textarea[name*="[sasaran]"]') || {}).value || '',
+                rincian: ['Seluruh indikator dan target yang sudah diisi pada sasaran ini']
+            }).then(function (ya) {
+                if (!ya) { return; }
                 item.remove();
                 updateFormNames();
-            }
+            });
             return;
         }
 
@@ -126,10 +133,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (confirm('Yakin ingin menghapus indikator ini?')) {
+            Konfirmasi.hapus({
+                judul: 'Hapus Indikator PK',
+                pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+                nama: (indikatorItem.querySelector('input[name*="[indikator]"], textarea[name*="[indikator]"]') || {}).value || '',
+                rincian: ['Target yang sudah diisi untuk indikator ini']
+            }).then(function (ya) {
+                if (!ya) { return; }
                 indikatorItem.remove();
                 updateFormNames();
-            }
+            });
             return;
         }
     });

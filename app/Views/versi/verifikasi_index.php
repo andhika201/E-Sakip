@@ -184,9 +184,15 @@ $labelModul = static fn (string $m): string => match ($m) {
                                     <form method="post"
                                           action="<?= base_url('adminkab/verifikasi/izin/setujui/' . (int) $z['id']) ?>"
                                           class="mb-2"
-                                          onsubmit="return confirm('<?= $iniHapus
-                                              ? 'HAPUS versi ini sekarang? Arsip isinya ikut terhapus dan TIDAK BISA dikembalikan.'
-                                              : 'Beri izin sunting ' . esc(strtoupper($z['modul']), 'js') . '? Dokumen OPD ini akan terbuka untuk diperbaiki, sementara arsip versi yang sudah ditetapkan tetap utuh.' ?>')">
+                                          data-konfirmasi="<?= $iniHapus
+                                              ? 'Versi ini akan dihapus permanen sekarang juga.'
+                                              : 'Dokumen OPD ini akan terbuka untuk diperbaiki. Arsip versi yang sudah ditetapkan tetap utuh.' ?>"
+                                          data-konfirmasi-judul="<?= $iniHapus ? 'Setujui &amp; Hapus Versi' : 'Beri Izin Sunting' ?>"
+                                          data-konfirmasi-jenis="<?= $iniHapus ? 'hapus' : 'tanya' ?>"
+                                          data-konfirmasi-nama="<?= esc(strtoupper((string) $z['modul']) . ' — ' . ($z['nama_opd'] ?? 'OPD'), 'attr') ?>"
+                                          data-konfirmasi-rincian="<?= $iniHapus ? 'Seluruh arsip isi versi ini ikut terhapus dan tidak bisa dikembalikan' : '' ?>"
+                                          data-konfirmasi-ya="<?= $iniHapus ? 'Ya, Setujui &amp; Hapus' : 'Ya, Beri Izin' ?>"
+                                          data-konfirmasi-ketik="<?= $iniHapus ? 'HAPUS' : '' ?>">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm w-100 <?= $iniHapus ? 'btn-danger' : 'btn-success' ?>">
                                             <i class="fa-solid <?= $iniHapus ? 'fa-trash' : 'fa-unlock' ?> me-1"></i>

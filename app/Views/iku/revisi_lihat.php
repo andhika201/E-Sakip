@@ -277,9 +277,16 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
         <?php $langsung = empty($revisi['opd_id']); ?>
         <form method="post" action="<?= base_url($baseUrl . '/revisi/hapus/ajukan/' . (int) $revisi['id']) ?>"
               class="row g-2"
-              onsubmit="return confirm('<?= $langsung
-                  ? 'Hapus versi ini sekarang? Tindakan ini tidak bisa dibatalkan.'
-                  : 'Ajukan penghapusan versi ini kepada Admin Kabupaten?' ?>');">
+              data-konfirmasi="<?= $langsung
+                  ? 'Versi revisi IKU ini akan dihapus permanen sekarang juga.'
+                  : 'Permohonan penghapusan versi ini dikirim ke Admin Kabupaten untuk disetujui.' ?>"
+              data-konfirmasi-judul="<?= $langsung ? 'Hapus Versi Revisi IKU' : 'Ajukan Penghapusan Versi' ?>"
+              data-konfirmasi-jenis="<?= $langsung ? 'hapus' : 'peringatan' ?>"
+              data-konfirmasi-nama="<?= esc($revisi['nama'], 'attr') ?>"
+              data-konfirmasi-rincian="<?= $langsung
+                  ? esc('Seluruh arsip isi revisi ini' . ($revisi['status'] === 'berlaku' ? '|Versi penerusnya diberlakukan kembali ke IKU berjalan' : ''), 'attr')
+                  : 'Selama menunggu keputusan, revisi ini tidak bisa disunting' ?>"
+              data-konfirmasi-ya="<?= $langsung ? 'Ya, Hapus' : 'Ya, Ajukan' ?>">
             <?= csrf_field() ?>
             <div class="col-md-9">
                 <input type="text" name="alasan" class="form-control form-control-sm"

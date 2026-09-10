@@ -473,10 +473,17 @@ if ($tahunMulai !== '' && $tahunAkhir !== '' && (int) $tahunAkhir >= (int) $tahu
                 alert('Minimal satu indikator IKU harus ada.');
                 return;
             }
-            if (!confirm('Hapus indikator ini beserta targetnya?')) return;
-
-            item.remove();
-            nomoriUlang();
+            // Dialog milik aplikasi (app/Views/templates/konfirmasi.php).
+            Konfirmasi.hapus({
+                judul: 'Hapus Indikator IKU',
+                pesan: 'Indikator ini dikeluarkan dari formulir. Perubahan baru tersimpan setelah Anda menekan Simpan.',
+                nama: (item.querySelector('input[type="text"], textarea') || {}).value || '',
+                rincian: ['Target seluruh tahun untuk indikator ini']
+            }).then(function (ya) {
+                if (!ya) { return; }
+                item.remove();
+                nomoriUlang();
+            });
         });
     })();
 </script>

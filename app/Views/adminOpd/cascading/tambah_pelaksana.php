@@ -113,7 +113,7 @@
                             + <?= esc(casc_pelaksana_label('Tambah Indikator ')) ?>
                         </button>
                         <button type="button" class="btn btn-delete btn-delete-sasaran"
-                            onclick="this.closest('.pel-group').remove()">
+                            onclick="Konfirmasi.buangBlok(this, '.pel-group', '<?= esc(casc_pelaksana_label('Sasaran '), 'js') ?>')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -131,7 +131,7 @@
                         class="form-control"
                         placeholder="<?= esc(casc_pelaksana_label('Masukkan indikator '), 'attr') ?>">
                     <button type="button" class="btn btn-delete btn-delete-indikator"
-                        onclick="this.parentElement.remove()">
+                        onclick="Konfirmasi.buangBlok(this, '', '<?= esc(casc_pelaksana_label('Indikator '), 'js') ?>')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>`;

@@ -126,7 +126,7 @@
                             <i class="fas fa-edit me-1"></i> Edit
                         </a>
                         <button class="btn btn-danger btn-sm"
-                            onclick="deletePk(<?= $pk_data['id'] ?>, '<?= base_url() ?>')">
+                            onclick="deletePk(<?= (int) $pk_data['id'] ?>, '<?= esc('PK ' . ucwords((string) $pk_data['jenis']), 'js') ?>')">
                             <i class="fas fa-trash me-1"></i> Hapus
                         </button>
                     </div>

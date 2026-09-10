@@ -272,7 +272,11 @@
                     && ! empty($keadaanHapus['boleh'])): ?>
                     <form id="formHapusPeriode" method="post"
                           action="<?= base_url('adminopd/renstra/periode/hapus') ?>"
-                          onsubmit="return confirm('Hapus SELURUH Renstra periode <?= esc($kunciPeriode, 'js') ?>?\n\nYang terhapus: <?= esc($rinci, 'js') ?>, beserta versi dokumennya.\n\nTindakan ini TIDAK BISA dibatalkan.');">
+                          data-konfirmasi="Seluruh Renstra pada periode ini akan dihapus permanen, beserta versi dokumennya."
+                          data-konfirmasi-judul="Hapus Seluruh Renstra Periode"
+                          data-konfirmasi-nama="Periode <?= esc($kunciPeriode, 'attr') ?>"
+                          data-konfirmasi-rincian="<?= esc($rinci, 'attr') ?>|Seluruh versi dokumen Renstra periode ini"
+                          data-konfirmasi-ketik="HAPUS">
                         <?= csrf_field() ?>
                         <input type="hidden" name="periode" value="<?= esc($kunciPeriode) ?>">
                     </form>

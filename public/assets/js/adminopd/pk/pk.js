@@ -1,6 +1,22 @@
 // Delete PK function
-function deletePk(pkId) {
-    if (!confirm('Yakin ingin menghapus data PK ini?')) return;
+function deletePk(pkId, nama) {
+    // Dialog milik aplikasi (app/Views/templates/konfirmasi.php), bukan confirm()
+    // bawaan peramban. Sisa fungsi ini dijalankan setelah pengguna menekan "Ya".
+    Konfirmasi.hapus({
+        judul: 'Hapus Perjanjian Kinerja',
+        pesan: 'Dokumen Perjanjian Kinerja ini akan dihapus permanen.',
+        nama: nama || '',
+        rincian: [
+            'Seluruh sasaran, indikator, dan targetnya',
+            'Program/kegiatan beserta pagu anggaran yang menyertainya',
+            'Rencana aksi dan realisasi triwulanan yang sudah diisi'
+        ]
+    }).then(function (ya) {
+        if (ya) { deletePkLanjut(pkId); }
+    });
+}
+
+function deletePkLanjut(pkId) {
     const jenis = typeof window.jenis !== 'undefined' ? window.jenis : (window.pkJenis || 'administrator');
     if (typeof pkData === 'undefined') {
     console.warn('pkData not found, skipping pk.js');
@@ -75,6 +91,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const programText = pk.program.map(p => `• ${p.nama}`).join('<br>');
         const anggaranText = pk.program.map(p => `Rp ${Number(p.anggaran).toLocaleString('id-ID')}`).join('<br>');
 
+        // Nama untuk dialog konfirmasi: sasaran pertama PK ini.
+        const pkNama = (Object.values(pk.sasaran)[0] || {}).nama || '';
+        const pkNamaAttr = String(pkNama).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
         let isFirstRow = true;
         for (const sasaran of Object.values(pk.sasaran)) {
             for (const indikator of sasaran.indikator) {
@@ -98,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </td>
                     <td rowspan="${Object.values(pk.sasaran).reduce((t, s) => t + s.indikator.length, 0)}">
                         <a href="${base_url}adminopd/pk_admin/edit/${pkId}" class="btn btn-sm btn-success">Edit</a>
-                        <button class="btn btn-sm btn-danger" onclick="deletePk(${pkId})">Hapus</button>
+                        <button class="btn btn-sm btn-danger" data-nama="${pkNamaAttr}" onclick="deletePk(${pkId}, this.dataset.nama)">Hapus</button>
                     </td>
                 `;
                 tbody.appendChild(tr);

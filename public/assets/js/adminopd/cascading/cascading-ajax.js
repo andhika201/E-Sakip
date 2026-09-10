@@ -113,9 +113,9 @@
         // ---------- DELETE (AJAX) ----------
         $(document).on("click", ".casc-del", function (e) {
             e.preventDefault();
+            // Konfirmasi dijalankan penyadap global (templates/konfirmasi.php) pada
+            // fase capture, memakai atribut data-konfirmasi-* di tombolnya.
             var url = this.getAttribute("data-url") || this.getAttribute("href");
-            var msg = this.getAttribute("data-confirm") || "Yakin menghapus data ini?";
-            if (!confirm(msg)) return;
 
             var csrfName = $('meta[name="csrf-name"]').attr('content');
             var csrfHash = $('meta[name="csrf-hash"]').attr('content') || $('meta[name="csrf-token"]').attr('content');

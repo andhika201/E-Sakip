@@ -166,3 +166,11 @@ $f_devname  = setting('dev_name', 'DevTech');
 </footer>
 
 <?php endif; ?>
+
+<?php
+// Dialog konfirmasi bersama untuk seluruh tindakan menghapus. Ditaruh di sini
+// karena berkas ini satu-satunya yang di-include oleh KEEMPAT footer role
+// (adminKabupaten, adminOpd, templates, user) — jadi setiap halaman
+// interaktif otomatis mendapatkannya. Lihat templates/konfirmasi.php.
+echo $this->include('templates/konfirmasi');
+?>

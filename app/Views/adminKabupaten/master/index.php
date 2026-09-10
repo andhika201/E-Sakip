@@ -64,7 +64,6 @@
                 $isPane   = fn($n) => $n === $tab ? 'show active' : '';
                 // json aman untuk atribut (tombol edit)
                 $j = fn($row) => esc(json_encode($row, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE), 'attr');
-                $delConfirm = "onclick=\"return confirm('Yakin hapus data ini?')\"";
 
                 // Tombol "Sync dari SIMPEG" per-tab (hanya bila SIMPEG terkonfigurasi)
                 $syncBtn = function (string $entity, string $label) use ($simpegConfigured) {
@@ -127,7 +126,12 @@
                                         <td><?= esc($p['golongan'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-pangkat" data-json='<?= $j(['id'=>$p['id'],'nama_pangkat'=>$p['nama_pangkat'],'golongan'=>$p['golongan']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/pangkat/delete/' . (int)$p['id'])]) ?>
+                                            <?= view('templates/tombol_hapus', [
+                                                'url'   => base_url('adminkab/master/pangkat/delete/' . (int) $p['id']),
+                                                'judul' => 'Hapus Pangkat',
+                                                'pesan' => 'Pangkat ini akan dihapus permanen. Pegawai yang memakainya akan kehilangan data pangkatnya.',
+                                                'nama'  => $p['nama_pangkat'] . (($p['golongan'] ?? '') !== '' ? ' — Gol. ' . $p['golongan'] : ''),
+                                            ]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -155,7 +159,12 @@
                                         <td class="text-center"><?= esc($jb['eselon'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-jabatan" data-json='<?= $j(['id'=>$jb['id'],'nama_jabatan'=>$jb['nama_jabatan'],'opd_id'=>$jb['opd_id'],'eselon'=>$jb['eselon']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/jabatan/delete/' . (int)$jb['id'])]) ?>
+                                            <?= view('templates/tombol_hapus', [
+                                                'url'   => base_url('adminkab/master/jabatan/delete/' . (int) $jb['id']),
+                                                'judul' => 'Hapus Jabatan',
+                                                'pesan' => 'Jabatan ini akan dihapus permanen. Pegawai yang memakainya akan kehilangan data jabatannya.',
+                                                'nama'  => $jb['nama_jabatan'] . (($jb['nama_opd'] ?? '') !== '' ? ' — ' . $jb['nama_opd'] : ''),
+                                            ]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -189,7 +198,17 @@
                                         <td><?= esc($o['alamat_opd'] ?? '-') ?></td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-opd" data-json='<?= $j(['id'=>$o['id'],'nama_opd'=>$o['nama_opd'],'singkatan'=>$o['singkatan'],'jenis'=>$o['jenis'] ?? 'opd','alamat_opd'=>$o['alamat_opd']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/opd/delete/' . (int)$o['id'])]) ?>
+                                            <?= view('templates/tombol_hapus', [
+                                                'url'     => base_url('adminkab/master/opd/delete/' . (int) $o['id']),
+                                                'judul'   => 'Hapus Perangkat Daerah',
+                                                'pesan'   => 'Perangkat daerah ini akan dihapus permanen dari master data.',
+                                                'nama'    => $o['nama_opd'],
+                                                'rincian' => [
+                                                    'Akun pengguna, pegawai, dan jabatan yang tertaut ke OPD ini',
+                                                    'Seluruh dokumen kinerjanya: Renstra, Renja, RKT, PK, Cascading, LAKIP',
+                                                ],
+                                                'ketik'   => 'HAPUS',
+                                            ]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -220,7 +239,13 @@
                                         </td>
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-user" data-json='<?= $j(['id'=>$u['user_id'],'username'=>$u['username'],'email'=>$u['email'],'role'=>$u['role'],'opd_id'=>$u['opd_id'],'is_active'=>$u['is_active']]) ?>'><i class="fas fa-edit"></i></button>
-                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/user/delete/' . (int)$u['user_id'])]) ?>
+                                            <?= view('templates/tombol_hapus', [
+                                                'url'     => base_url('adminkab/master/user/delete/' . (int) $u['user_id']),
+                                                'judul'   => 'Hapus Pengguna',
+                                                'pesan'   => 'Akun ini akan dihapus permanen dan pemiliknya langsung kehilangan akses ke e-SAKIP.',
+                                                'nama'    => $u['username'] . ' — ' . ($u['role_label'] ?? $u['role']),
+                                                'rincian' => [($u['nama_opd'] ?? '') !== '' ? 'Unit kerja: ' . $u['nama_opd'] : ''],
+                                            ]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -250,7 +275,17 @@
                                         <td class="text-center text-nowrap">
                                             <button class="btn btn-warning btn-sm" data-edit="modal-role" data-json='<?= $j(['id'=>$r['id'],'name'=>$r['name'],'label'=>$r['label']]) ?>'><i class="fas fa-edit"></i></button>
                                             <?php if ((int)$r['is_system'] !== 1): ?>
-                                                <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/role/delete/' . (int)$r['id'])]) ?>
+                                                <?= view('templates/tombol_hapus', [
+                                                    'url'     => base_url('adminkab/master/role/delete/' . (int) $r['id']),
+                                                    'judul'   => 'Hapus Role',
+                                                    'pesan'   => 'Role ini beserta seluruh pemetaan permission-nya akan dihapus permanen.',
+                                                    'nama'    => ($r['label'] ?? $r['name']) . ' (' . $r['name'] . ')',
+                                                    'rincian' => array_filter([
+                                                        (int) ($r['perm_count'] ?? 0) > 0 ? (int) $r['perm_count'] . ' permission yang melekat pada role ini' : '',
+                                                        (int) ($r['user_count'] ?? 0) > 0 ? (int) $r['user_count'] . ' pengguna kehilangan hak akses role ini' : '',
+                                                    ]),
+                                                    'ketik'   => (int) ($r['user_count'] ?? 0) > 0 ? 'HAPUS' : '',
+                                                ]) ?>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -363,7 +398,13 @@
                                                     'nilai' => rtrim(rtrim(number_format((float) $sk['nilai'], 2, '.', ''), '0'), '.'),
                                                 ], $sSkala),
                                             ]) ?>'><i class="fas fa-edit"></i></button>
-                                            <?= view('templates/tombol_hapus', ['url' => base_url('adminkab/master/satuan/delete/' . (int)$s['id'])]) ?>
+                                            <?= view('templates/tombol_hapus', [
+                                                'url'     => base_url('adminkab/master/satuan/delete/' . (int) $s['id']),
+                                                'judul'   => 'Hapus Satuan',
+                                                'pesan'   => 'Satuan ini akan dihapus permanen. Indikator yang memakainya akan kehilangan satuannya.',
+                                                'nama'    => $s['satuan'],
+                                                'rincian' => [$sSkala !== [] ? count($sSkala) . ' skala predikat yang menyertainya' : ''],
+                                            ]) ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

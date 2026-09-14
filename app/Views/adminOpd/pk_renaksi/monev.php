@@ -1,6 +1,7 @@
 <?php
 helper('capaian'); // capaianFormatPersen() & capaianMetodeNama() untuk kolom Capaian Total
 helper('pk_unit'); // pk_bagi_baris() & label tingkat unit anggaran (Program/Kegiatan/Sub Kegiatan)
+helper('serapan'); // penanda serapan anggaran terhadap pagu
 
 $isBupati = ($jenis === 'bupati');
 $isOpd    = !$isBupati;
@@ -221,6 +222,7 @@ $filterQs = http_build_query(array_filter([
 
                 <div class="table-responsive">
                     <table class="table table-bordered text-center align-middle small">
+                        <?= serapan_gaya() ?>
                         <thead class="table-primary fw-bold text-dark">
                             <tr>
                                 <th rowspan="2">No</th>
@@ -452,7 +454,28 @@ $filterQs = http_build_query(array_filter([
                                                             </div>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td rowspan="<?= $span ?>" class="text-end text-nowrap align-top"><?= esc($rupiah($unit['anggaran'] ?? 0)) ?></td>
+                                                    <td rowspan="<?= $span ?>" class="text-end align-top">
+                                                        <div class="text-nowrap"><?= esc($rupiah($unit['anggaran'] ?? 0)) ?></div>
+                                                        <?php /* =========================================
+                                                                 PENANDA SERAPAN
+
+                                                                 Yang dibandingkan dengan pagu adalah TOTAL
+                                                                 seluruh bagian indikator pada unit ini —
+                                                                 bagian satu baris hampir tidak pernah
+                                                                 melampaui pagu sendirian.
+
+                                                                 Bentuk & panjang, bukan rona: seluruh warna
+                                                                 palet sudah dipakai status capaian, dan
+                                                                 `biru` di sana justru berarti "Melampaui
+                                                                 Target" yang BAIK. Lihat serapan_helper.php.
+                                                              ========================================= */ ?>
+                                                        <?php $tot = ($serapanUnit ?? [])[$refKey] ?? null; ?>
+                                                        <?php if ($tot !== null): ?>
+                                                            <div class="mt-1 text-start">
+                                                                <?= serapan_bar($unit['anggaran'] ?? 0, $tot, ['lebar' => '120px']) ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </td>
                                                     <?php foreach ([1, 2, 3, 4] as $q): ?>
                                                         <?php $rv = $realUnit['realisasi_triwulan_' . $q] ?? null; ?>
                                                         <td rowspan="<?= $span ?>" class="text-end text-nowrap align-top">

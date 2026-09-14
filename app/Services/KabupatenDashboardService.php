@@ -236,6 +236,81 @@ class KabupatenDashboardService
             'distribusi' => $this->getOpdStatusDistribution($statuses),
             'tren'       => $this->getBupatiIndicatorTrend($bupati),
             'misi'       => $misi,
+            // Ringkasan mutu data anggaran lintas OPD (§41, §42).
+            'anggaran_lebih_pagu' => $this->anggaranLebihPagu($tahun),
+        ];
+    }
+
+    /**
+     * OPD yang punya unit anggaran dengan realisasi melampaui pagunya.
+     *
+     * =====================================================================
+     * MASALAH MUTU DATA, BUKAN KINERJA
+     *
+     * Realisasi yang melampaui pagu berarti angkanya keliru — entah ada yang
+     * mengisi realisasi unit secara utuh padahal yang diminta bagiannya saja,
+     * entah pagunya belum diperbarui. Itu urusan validitas anggaran.
+     *
+     * Karena itu ia TIDAK boleh membuat OPD-nya dicap "Kinerja Kritis" (§38):
+     * indikatornya bisa saja berkinerja baik. Ringkasan ini berdiri sendiri
+     * supaya tampilan bisa menempatkannya sebagai kelengkapan/mutu data.
+     *
+     * Dihitung lewat AnggaranUnitService yang sama dengan Dashboard OPD dan
+     * form MONEV — kalau masing-masing menghitung sendiri, angka di layar
+     * Kabupaten bisa berbeda dengan yang ditemukan operator di formnya.
+     *
+     * @return array{jumlah_opd:int, jumlah_unit:int, total_selisih:float, opd:list<array<string,mixed>>}
+     */
+    private function anggaranLebihPagu(int $tahun): array
+    {
+        $unit = (new \App\Services\AnggaranUnitService($this->db))->unitLebihPagu(null, $tahun);
+
+        if ($unit === []) {
+            return ['jumlah_opd' => 0, 'jumlah_unit' => 0, 'total_selisih' => 0.0, 'opd' => []];
+        }
+
+        $namaOpd = [];
+
+        foreach ($this->db->table('opd')->select('id, nama_opd')->get()->getResultArray() as $o) {
+            $namaOpd[(int) $o['id']] = $o['nama_opd'];
+        }
+
+        $perOpd  = [];
+        $selisih = 0.0;
+
+        foreach ($unit as $u) {
+            $opdId = $u['opd_id'];
+            $kunci = $opdId === null ? 'kabupaten' : (string) $opdId;
+
+            $perOpd[$kunci] ??= [
+                'opd_id'      => $opdId,
+                'nama_opd'    => $opdId === null ? 'Kabupaten' : ($namaOpd[$opdId] ?? 'OPD #' . $opdId),
+                'jumlah_unit' => 0,
+                'selisih'     => 0.0,
+                'unit'        => [],
+            ];
+
+            $perOpd[$kunci]['jumlah_unit']++;
+            $perOpd[$kunci]['selisih'] += (float) $u['selisih'];
+            $perOpd[$kunci]['unit'][]   = [
+                'ref_level'       => $u['ref_level'],
+                'kode'            => $u['kode'],
+                'nama'            => $u['nama'],
+                'pagu'            => (float) $u['pagu'],
+                'total_realisasi' => (float) $u['total_realisasi'],
+                'selisih'         => (float) $u['selisih'],
+            ];
+
+            $selisih += (float) $u['selisih'];
+        }
+
+        usort($perOpd, static fn ($a, $b) => $b['selisih'] <=> $a['selisih']);
+
+        return [
+            'jumlah_opd'    => count($perOpd),
+            'jumlah_unit'   => count($unit),
+            'total_selisih' => $selisih,
+            'opd'           => array_values($perOpd),
         ];
     }
 

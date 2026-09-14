@@ -33,18 +33,57 @@
 
         <div class="bg-white rounded shadow-sm p-4" style="max-width:800px;margin:auto">
 
-            <h4 class="text-success mb-4">Tambah Mapping Cascading</h4>
+            <?php $sumber = $sumber_isian ?? ($existing_mapping ? 'manual' : 'kosong'); ?>
+            <h4 class="text-success mb-3"><?= $sumber === 'kosong' ? 'Tambah' : 'Edit' ?> Mapping Cascading</h4>
+
+            <?php /* Penolakan simpan (program bukan milik OPD, galat basis data, ...)
+                     dikembalikan ke halaman ini lewat redirect()->back(). Tanpa blok
+                     ini pesannya hilang: form tampil lagi seperti tidak terjadi apa-apa.
+                     Pesannya teks polos -> di-esc(). */ ?>
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger py-2 px-3 mb-3"><?= esc(session()->getFlashdata('error')) ?></div>
+            <?php endif; ?>
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success py-2 px-3 mb-3"><?= esc(session()->getFlashdata('success')) ?></div>
+            <?php endif; ?>
+
+            <?php if ($sumber === 'otomatis'): ?>
+                <div class="alert alert-info py-2 px-3 mb-3" style="font-size:.9rem">
+                    <i class="fas fa-wand-magic-sparkles me-1"></i>
+                    Isian di bawah adalah <strong>penurunan otomatis</strong> yang sedang tampil di Cascading:
+                    Perangkat Daerah dari rantai Renstra yang berjangkar ke sasaran ini, beserta seluruh program
+                    PK JPT-nya. Sesuaikan lalu <strong>Simpan</strong> &mdash; yang tersimpan akan
+                    <strong>menggantikan</strong> penurunan otomatis untuk indikator ini.
+                </div>
+            <?php elseif ($sumber === 'manual'): ?>
+                <div class="alert alert-warning py-2 px-3 mb-3" style="font-size:.9rem">
+                    <i class="fas fa-pen me-1"></i>
+                    Indikator ini sudah punya <strong>mapping manual</strong>; penurunan otomatis tidak dipakai lagi.
+                    Untuk kembali ke penurunan otomatis, tekan <em>Kembalikan ke otomatis</em> di bawah.
+                </div>
+            <?php endif; ?>
 
             <form action="<?= base_url('adminkab/cascading/save') ?>" method="post">
                 <?= csrf_field() ?>
 
-                <input type="hidden" name="indikator_id" value="<?= $indikator['id'] ?>">
+                <?php // indikator_id = id indikator IKU KABUPATEN (tulang punggung Cascading sejak 14 Sep 2026) ?>
+                <input type="hidden" name="indikator_id" value="<?= (int) $indikator['id'] ?>">
                 <input type="hidden" name="periode" value="<?= esc($periode ?? '') ?>">
 
+                <?php if (!empty($indikator['sasaran'])): ?>
+                    <div class="mb-3">
+                        <label>Sasaran IKU Kabupaten</label>
+                        <input type="text" class="form-control" value="<?= esc($indikator['sasaran']) ?>" readonly>
+                    </div>
+                <?php endif; ?>
+
                 <div class="mb-3">
-                    <label>Indikator</label>
+                    <label>Indikator IKU Kabupaten</label>
                     <input type="text" class="form-control" value="<?= esc($indikator['indikator_sasaran']) ?>"
                         readonly>
+                    <?php if (empty($indikator['rpjmd_indikator_id'])): ?>
+                        <div class="form-text">Indikator ini lahir di IKU (tidak punya padanan RPJMD).</div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="mb-3">
@@ -78,9 +117,31 @@
                     <button type="submit" class="btn btn-success">Simpan</button>
                     <a href="<?= base_url('adminkab/cascading?periode=' . $periode) ?>"
                         class="btn btn-secondary">Kembali</a>
+                    <?php if ($sumber === 'manual'): ?>
+                        <?php /* Tombol milik form TERPISAH di bawah (form="..."): <form> di
+                                 dalam <form> tidak sah dan dibuang peramban. */ ?>
+                        <button type="submit" form="form-hapus-mapping" class="btn btn-outline-danger float-end"
+                                title="Buang mapping manual; indikator kembali memakai penurunan otomatis">
+                            <i class="fas fa-rotate-left me-1"></i>Kembalikan ke otomatis
+                        </button>
+                    <?php endif; ?>
                 </div>
 
             </form>
+
+            <?php if ($sumber === 'manual'): ?>
+                <form id="form-hapus-mapping" method="post" action="<?= base_url('adminkab/cascading/hapus-mapping') ?>"
+                      data-konfirmasi="Mapping manual indikator ini pada tahun terpilih dibuang. Cascading kembali menampilkan penurunan otomatis dari Renstra & PK."
+                      data-konfirmasi-judul="Kembalikan ke Penurunan Otomatis"
+                      data-konfirmasi-jenis="peringatan"
+                      data-konfirmasi-nama="<?= esc($indikator['indikator_sasaran'], 'attr') ?>"
+                      data-konfirmasi-ya="Ya, Kembalikan">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="indikator_id" value="<?= (int) $indikator['id'] ?>">
+                    <input type="hidden" name="periode" value="<?= esc($periode ?? '') ?>">
+                    <input type="hidden" name="tahun" value="<?= (int) $selected_tahun ?>" id="tahun-hapus">
+                </form>
+            <?php endif; ?>
 
         </div>
 
@@ -90,201 +151,210 @@
 
 
     <script>
-        let opdOptions = `
-        <?php foreach ($opd_list as $o): ?>
-        <option value="<?= $o['id'] ?>">
-        <?= esc($o['nama_opd']) ?>
-        </option>
-        <?php endforeach; ?>
-        `;
-    </script>
-
-    <script>
-        const BASE_URL = "<?= base_url() ?>";
-    </script>
-    <script>
+        const BASE_URL = "<?= rtrim(base_url(), '/') ?>"; // tanpa "/" di ekor: template di bawah menambahkannya sendiri
         const EXISTING_MAPPING = <?= json_encode($existing_mapping ?? []) ?>;
+        // Daftar program per OPD untuk mapping yang sudah terpilih, disematkan
+        // server: halaman terbuka langsung utuh tanpa satu pun fetch.
+        const PROGRAM_AWAL = <?= json_encode((object) ($program_awal ?? []), JSON_UNESCAPED_UNICODE) ?>;
+        const OPD_OPTIONS = <?= json_encode(array_map(static fn ($o) => ['id' => (int) $o['id'], 'nama' => $o['nama_opd']], $opd_list), JSON_UNESCAPED_UNICODE) ?>;
     </script>
 
     <script>
-        function fetchProgramByGroup(group) {
-            let opdSelect = group.querySelector('.opd-select');
-            let opdId = opdSelect.value;
-            let tahun = document.getElementById('tahun').value;
+        /* =====================================================================
+           ALUR HALAMAN
+           - Buka halaman : kartu OPD + program dirakit dari PROGRAM_AWAL, sekali
+                            jadi, tanpa fetch. (Dulu: N fetch berurutan, kartu
+                            muncul satu-satu.)
+           - Ganti OPD    : kartu itu saja mengambil daftar programnya; selama
+                            menunggu tampil "Memuat daftar program…" dan tombol
+                            "+ Tambah Program" dinonaktifkan.
+           - Ganti tahun  : semua kartu mengambil ulang, PARALEL (Promise.all).
+           - Daftar program per (opd, tahun) di-cache; membuka OPD yang sama dua
+             kali tidak memanggil server lagi.
+           ===================================================================== */
+        var cacheProgram = {};   // "opd:tahun" => [ {id, program_kegiatan}, ... ]
+        var opdIndex = 0;
+
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function tahunTerpilih() {
+            return document.getElementById('tahun').value;
+        }
+
+        function opsiOpd(terpilih) {
+            var html = '<option value="">-- Pilih OPD --</option>';
+            OPD_OPTIONS.forEach(function (o) {
+                html += '<option value="' + o.id + '"' + (String(o.id) === String(terpilih) ? ' selected' : '') + '>' + esc(o.nama) + '</option>';
+            });
+            return html;
+        }
+
+        function opsiProgram(daftar, terpilih) {
+            var html = '<option value="">-- Pilih Program --</option>';
+            (daftar || []).forEach(function (p) {
+                html += '<option value="' + esc(p.id) + '"' + (String(p.id) === String(terpilih) ? ' selected' : '') + '>' + esc(p.program_kegiatan) + '</option>';
+            });
+            return html;
+        }
+
+        function barisProgram(idx, daftar, terpilih) {
+            return '<div class="input-group mb-2 program-item">'
+                + '<select name="opd[' + idx + '][program][]" class="form-select" required>' + opsiProgram(daftar, terpilih) + '</select>'
+                + '<button type="button" class="btn btn-danger remove-program" title="Hapus program ini">-</button>'
+                + '</div>';
+        }
+
+        /** Satu kartu OPD lengkap (select OPD + baris-baris program). */
+        function kartuOpd(idx, opdId, daftar, programTerpilih) {
+            var isi = '';
+            if (programTerpilih && programTerpilih.length) {
+                isi = '<label class="form-label mt-2 program-label">Program</label>';
+                programTerpilih.forEach(function (pid) { isi += barisProgram(idx, daftar, pid); });
+            }
+            return '<div class="card mb-3 opd-group shadow-sm">'
+                + '<div class="card-body">'
+                + '<div class="row mb-2">'
+                + '<div class="col-md-10"><label>OPD</label>'
+                + '<select name="opd[' + idx + '][id]" class="form-select opd-select" data-index="' + idx + '" required>' + opsiOpd(opdId) + '</select>'
+                + '</div>'
+                + '<div class="col-md-2 d-flex align-items-end">'
+                + '<button type="button" class="btn btn-danger w-100 remove-opd" title="Hapus OPD ini dari mapping">-</button>'
+                + '</div></div>'
+                + '<div class="program-container mb-2">' + isi + '</div>'
+                + '<div class="status-muat small text-muted mb-2" hidden><i class="fas fa-spinner fa-spin me-1"></i>Memuat daftar program&hellip;</div>'
+                + '<button type="button" class="btn btn-sm btn-outline-success add-program" data-index="' + idx + '">+ Tambah Program</button>'
+                + '</div></div>';
+        }
+
+        function setDaftar(group, daftar) {
+            group.dataset.programList = JSON.stringify(daftar || []);
+        }
+
+        function daftarGroup(group) {
+            try { return JSON.parse(group.dataset.programList || '[]'); } catch (e) { return []; }
+        }
+
+        function setMemuat(group, memuat) {
+            var st = group.querySelector('.status-muat');
+            var btn = group.querySelector('.add-program');
+            if (st) st.hidden = !memuat;
+            if (btn) btn.disabled = !!memuat;
+            group.querySelectorAll('.program-item select').forEach(function (s) { s.disabled = !!memuat; });
+        }
+
+        /** Ambil daftar program (opd, tahun) — dari cache bila ada. */
+        function ambilProgram(opdId, tahun) {
+            var kunci = opdId + ':' + tahun;
+            if (cacheProgram[kunci]) return Promise.resolve(cacheProgram[kunci]);
+            return fetch(BASE_URL + '/adminkab/cascading/get-pk-program-by-opd?opd_id=' + encodeURIComponent(opdId) + '&tahun=' + encodeURIComponent(tahun))
+                .then(function (r) { return r.ok ? r.json() : []; })
+                .then(function (d) { cacheProgram[kunci] = Array.isArray(d) ? d : []; return cacheProgram[kunci]; })
+                .catch(function () { return []; });
+        }
+
+        /**
+         * Muat ulang daftar program sebuah kartu. Baris program yang sudah ada
+         * DIPERTAHANKAN bila programnya masih ada di daftar baru; yang tidak
+         * ada lagi dibuang (mis. ganti tahun ke tahun yang PK-nya berbeda).
+         */
+        function muatUlangGroup(group) {
+            var sel = group.querySelector('.opd-select');
+            var opdId = sel.value, tahun = tahunTerpilih();
+            var container = group.querySelector('.program-container');
 
             if (!opdId || !tahun) {
-                group.dataset.programList = "[]";
-                group.querySelector('.program-container').innerHTML = '';
-                return;
+                setDaftar(group, []);
+                container.innerHTML = '';
+                return Promise.resolve();
             }
 
-            fetch(`${BASE_URL}/adminkab/cascading/get-pk-program-by-opd?opd_id=${opdId}&tahun=${tahun}`)
-                .then(res => res.json())
-                .then(data => {
-                    group.dataset.programList = JSON.stringify(data);
-                    group.querySelector('.program-container').innerHTML = '';
+            setMemuat(group, true);
+            return ambilProgram(opdId, tahun).then(function (daftar) {
+                setDaftar(group, daftar);
+                var ada = {};
+                daftar.forEach(function (p) { ada[String(p.id)] = true; });
+                var terpilih = [];
+                container.querySelectorAll('.program-item select').forEach(function (s) {
+                    if (s.value && ada[s.value]) terpilih.push(s.value);
                 });
+                var idx = sel.dataset.index;
+                var html = '';
+                if (terpilih.length) {
+                    html = '<label class="form-label mt-2 program-label">Program</label>';
+                    terpilih.forEach(function (pid) { html += barisProgram(idx, daftar, pid); });
+                }
+                container.innerHTML = html;
+            }).finally(function () { setMemuat(group, false); });
         }
 
-        let opdIndex = 0;
-
-        window.addOpdGroup = function () {
-            let opdContainer = document.getElementById('opd-container');
-            let html = `
-            <div class="card mb-3 opd-group shadow-sm">
-                <div class="card-body">
-                    <div class="row mb-2">
-                        <div class="col-md-10">
-                            <label>OPD</label>
-                            <select name="opd[${opdIndex}][id]"
-                                    class="form-select opd-select"
-                                    data-index="${opdIndex}"
-                                    required>
-                                <option value="">-- Pilih OPD --</option>
-                                \${opdOptions}
-                            </select>
-                        </div>
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="button"
-                                    class="btn btn-danger w-100 remove-opd">
-                                -
-                            </button>
-                        </div>
-                    </div>
-                    <div class="program-container mb-2"></div>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-success add-program"
-                            data-index="${opdIndex}">
-                        + Tambah Program
-                    </button>
-                </div>
-            </div>
-            `;
-            opdContainer.insertAdjacentHTML('beforeend', html);
-            opdIndex++;
-        }
+        window.addOpdGroup = function (opdId, daftar, programTerpilih) {
+            var wadah = document.getElementById('opd-container');
+            var idx = opdIndex++;
+            wadah.insertAdjacentHTML('beforeend', kartuOpd(idx, opdId || '', daftar || [], programTerpilih || []));
+            var group = wadah.lastElementChild;
+            setDaftar(group, daftar || []);
+            return group;
+        };
 
         document.addEventListener('change', function (e) {
             if (e.target.classList.contains('opd-select')) {
-                let group = e.target.closest('.opd-group');
-                fetchProgramByGroup(group);
+                var group = e.target.closest('.opd-group');
+                group.querySelector('.program-container').innerHTML = '';
+                muatUlangGroup(group);
             }
         });
 
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('remove-program')) {
-                e.target.closest('.input-group').remove();
+                var item = e.target.closest('.program-item');
+                var cont = item.parentElement;
+                item.remove();
+                if (!cont.querySelector('.program-item')) cont.innerHTML = '';
+                return;
             }
             if (e.target.classList.contains('remove-opd')) {
                 e.target.closest('.opd-group').remove();
+                return;
             }
-        });
-
-        document.addEventListener('click', function (e) {
             if (e.target.classList.contains('add-program')) {
-                let group = e.target.closest('.opd-group');
-                let idx = group.querySelector('.opd-select').dataset.index;
-                let container = group.querySelector('.program-container');
-                let list = JSON.parse(group.dataset.programList || "[]");
-                let tahun = document.getElementById('tahun').value;
-
-                if (!tahun) {
-                    alert("Pilih Tahun terlebih dahulu!");
+                var group = e.target.closest('.opd-group');
+                var sel = group.querySelector('.opd-select');
+                if (!sel.value) { alert('Pilih OPD terlebih dahulu.'); return; }
+                if (!tahunTerpilih()) { alert('Pilih Tahun terlebih dahulu!'); return; }
+                var daftar = daftarGroup(group);
+                if (!daftar.length) {
+                    alert('Tidak ada Program Kegiatan untuk OPD ini di tahun ' + tahunTerpilih() + '.');
                     return;
                 }
-
-                if (list.length === 0) {
-                    alert("Tidak ada Program Kegiatan untuk OPD ini di tahun " + tahun);
-                    return;
-                }
-
-                let opt = '<option value="">-- Pilih Program --</option>';
-                list.forEach(p => {
-                    opt += `<option value="\${p.id}">
-                            \${p.program_kegiatan}
-                        </option>`;
-                });
-
-                let wrapper = document.createElement('div');
-                wrapper.classList.add('input-group', 'mb-2','program-item');
-                wrapper.innerHTML = `
-                <select name="opd[\${idx}][program][]"
-                        class="form-select"
-                        required>
-                    \${opt}
-                </select>
-                <button type="button"
-                        class="btn btn-danger remove-program">
-                    -
-                </button>
-                `;
-
+                var container = group.querySelector('.program-container');
                 if (!container.querySelector('.program-label')) {
-                    container.insertAdjacentHTML(
-                        "afterbegin",
-                        `<label class="form-label mt-2 program-label">Program</label>`
-                    );
+                    container.insertAdjacentHTML('afterbegin', '<label class="form-label mt-2 program-label">Program</label>');
                 }
-                container.appendChild(wrapper);
+                container.insertAdjacentHTML('beforeend', barisProgram(sel.dataset.index, daftar, ''));
             }
         });
 
         document.getElementById('tahun').addEventListener('change', function () {
-            document.querySelectorAll('.opd-group').forEach(group => {
-                fetchProgramByGroup(group);
-            });
+            var th = document.getElementById('tahun-hapus');
+            if (th) th.value = this.value;
+            // Semua kartu sekaligus, bukan bergiliran.
+            Promise.all(Array.prototype.map.call(document.querySelectorAll('.opd-group'), muatUlangGroup));
         });
 
-        window.onload = async function () {
-            if (!EXISTING_MAPPING) return;
-            for (let opdId in EXISTING_MAPPING) {
-                addOpdGroup();
-                let lastGroup = document.querySelectorAll('.opd-group');
-                let group = lastGroup[lastGroup.length - 1];
-                let opdSelect = group.querySelector('.opd-select');
-                opdSelect.value = opdId;
-                await loadExistingPrograms(opdSelect, EXISTING_MAPPING[opdId]);
-            }
-        }
-
-        async function loadExistingPrograms(opdSelect, programs) {
-            let opdId = opdSelect.value;
-            let tahun = document.getElementById('tahun').value;
-            let group = opdSelect.closest('.opd-group');
-            let container = group.querySelector('.program-container');
-
-            let res = await fetch(
-                `\${BASE_URL}/adminkab/cascading/get-pk-program-by-opd?opd_id=\${opdId}&tahun=\${tahun}`
-            );
-            let data = await res.json();
-            group.dataset.programList = JSON.stringify(data);
-            container.innerHTML = '';
-
-            programs.forEach(pid => {
-                let options = '<option value="">-- Pilih Program --</option>';
-                data.forEach(p => {
-                    options += `
-                        <option value="\${p.id}" \${p.id == pid ? 'selected' : ''}>
-                            \${p.program_kegiatan}
-                        </option>
-                    `;
-                });
-
-                container.innerHTML += `
-                    <div class="input-group mb-2">
-                        <select name="opd[\${opdSelect.dataset.index}][program][]"
-                                class="form-select"
-                                required>
-                            \${options}
-                        </select>
-                        <button type="button"
-                                class="btn btn-danger remove-program">
-                            -
-                        </button>
-                    </div>
-                `;
+        // Buka halaman: rakit dari data yang disematkan — tanpa fetch, sekali jadi.
+        (function () {
+            var ada = false;
+            Object.keys(EXISTING_MAPPING || {}).forEach(function (opdId) {
+                var daftar = PROGRAM_AWAL[opdId] || [];
+                cacheProgram[opdId + ':' + tahunTerpilih()] = daftar;
+                addOpdGroup(opdId, daftar, (EXISTING_MAPPING[opdId] || []).map(String));
+                ada = true;
             });
-        }
+            if (!ada) addOpdGroup('', [], []);
+        })();
     </script>
     </div>
 </body>

@@ -719,7 +719,8 @@ class IkuRevisiModel extends Model
         array $baris,
         array $baru = [],
         bool $izinBerlaku = false,
-        array $sasaranBaru = []
+        array $sasaranBaru = [],
+        array $sasaranUbah = []
     ): void {
         $revisi = $this->ambil($revisiId);
 
@@ -756,7 +757,12 @@ class IkuRevisiModel extends Model
         $tahunMulai = (int) $revisi['tahun_mulai'];
         $tahunAkhir = (int) $revisi['tahun_akhir'];
 
-        $this->dalamTransaksi(function () use ($revisiId, $baris, $baru, $sasaranBaru, $tahunMulai, $tahunAkhir) {
+        // Lingkup ditentukan revisinya, bukan kiriman form: kabupaten = opd_id NULL.
+        $lingkupKabupaten = ! isset($revisi['opd_id']) || $revisi['opd_id'] === null || $revisi['opd_id'] === '';
+
+        $this->dalamTransaksi(function () use (
+            $revisiId, $baris, $baru, $sasaranBaru, $sasaranUbah, $tahunMulai, $tahunAkhir, $lingkupKabupaten
+        ) {
             $db  = $this->db;
             $now = date('Y-m-d H:i:s');
 
@@ -871,7 +877,51 @@ class IkuRevisiModel extends Model
             // MELAHIRKAN sasaran live dari baris arsip ber-sumber_sasaran_id
             // NULL, jadi tidak ada yang perlu diubah di sisi itu.
             // =========================================================
-            $this->sisipkanSasaranBaru($revisiId, (array) $sasaranBaru, $tahunMulai, $tahunAkhir, $now);
+            $this->sisipkanSasaranBaru(
+                $revisiId, (array) $sasaranBaru, $tahunMulai, $tahunAkhir, $now, $lingkupKabupaten
+            );
+
+            // =========================================================
+            // JANGKAR RPJMD SASARAN YANG SUDAH ADA (lingkup kabupaten)
+            //
+            // Sasaran IKU Kabupaten yang lahir di IKU — bukan hasil sync
+            // RPJMD — tidak punya tujuan/misi untuk dituruni, dan sampai
+            // 14 Sep 2026 tidak ada satu pun layar untuk memberinya jangkar:
+            // form revisi hanya mengenal sasaran BARU. Blok ini menerima
+            // `sasaran[<id arsip>][rpjmd_tujuan_id]` dari form revisi dan
+            // menulisnya ke arsip; terapkanKeLive() menyalinnya ke baris
+            // live lewat kolomTujuanLive() saat revisi disahkan.
+            //
+            // Hanya kolom jangkar yang disentuh. Teks sasaran tetap tidak
+            // bisa diubah dari sini — itu bukan penyuntingan yang alur
+            // revisi tawarkan, dan membukanya diam-diam mengubah makna
+            // "sahkan".
+            // =========================================================
+            if ($lingkupKabupaten && $sasaranUbah !== []
+                && $db->fieldExists('rpjmd_tujuan_id', 'iku_revisi_sasaran')) {
+                foreach ($sasaranUbah as $arsipSasaranId => $isi) {
+                    $arsipSasaranId = (int) $arsipSasaranId;
+
+                    if ($arsipSasaranId <= 0 || ! is_array($isi) || ! array_key_exists('rpjmd_tujuan_id', $isi)) {
+                        continue;
+                    }
+
+                    $tujuanId = (int) $isi['rpjmd_tujuan_id'];
+
+                    if ($tujuanId > 0 && $db->table('rpjmd_tujuan')->where('id', $tujuanId)->countAllResults() < 1) {
+                        throw new RuntimeException('Tujuan RPJMD yang dipilih tidak ditemukan.');
+                    }
+
+                    // Pencegah IDOR: baris arsip harus milik revisi ini.
+                    $db->table('iku_revisi_sasaran')
+                        ->where('id', $arsipSasaranId)
+                        ->where('revisi_id', $revisiId)
+                        ->update([
+                            'rpjmd_tujuan_id' => $tujuanId > 0 ? $tujuanId : null,
+                            'updated_at'      => $now,
+                        ]);
+                }
+            }
 
             return true;
         }, 'penyimpanan suntingan draft revisi');
@@ -1009,7 +1059,8 @@ class IkuRevisiModel extends Model
         array $sasaranBaru,
         int $tahunMulai,
         int $tahunAkhir,
-        string $now
+        string $now,
+        bool $lingkupKabupaten = false
     ): void {
         if ($sasaranBaru === []) {
             return;
@@ -1070,11 +1121,36 @@ class IkuRevisiModel extends Model
 
             $tujuanId = (int) ($isi['renstra_tujuan_id'] ?? 0);
 
-            if ($tujuanId <= 0 && $this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
+            // Lingkup OPD: tujuan Renstra WAJIB (alasannya di docblock).
+            //
+            // Lingkup KABUPATEN: jangkar tujuan RPJMD sengaja OPSIONAL —
+            // keputusan pemilik sistem, 14 Sep 2026: sasaran yang belum punya
+            // padanan RPJMD boleh lahir dengan jangkar kosong, dan Cascading
+            // Kabupaten menampilkannya dengan kolom Misi/Tujuan kosong
+            // (bukan menyembunyikannya) sampai diisi lewat form revisi.
+            if (! $lingkupKabupaten && $tujuanId <= 0
+                && $this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
                 throw new RuntimeException(
                     'Sasaran baru "' . mb_substr($teks, 0, 60) . '" belum memilih Tujuan Renstra. '
                     . 'Tanpa itu sasaran ini tidak punya tempat di Cascading.'
                 );
+            }
+
+            if ($lingkupKabupaten) {
+                // Jangkar Renstra tidak bermakna di kabupaten; buang apa pun
+                // yang ikut terkirim, dan pastikan tujuan RPJMD-nya memang ada.
+                $isi['renstra_tujuan_id'] = null;
+                $rpjmdTujuanId = (int) ($isi['rpjmd_tujuan_id'] ?? 0);
+
+                if ($rpjmdTujuanId > 0 && $db->table('rpjmd_tujuan')
+                    ->where('id', $rpjmdTujuanId)->countAllResults() < 1) {
+                    throw new RuntimeException(
+                        'Tujuan RPJMD yang dipilih untuk sasaran baru "' . mb_substr($teks, 0, 60)
+                        . '" tidak ditemukan.'
+                    );
+                }
+            } else {
+                $isi['rpjmd_tujuan_id'] = null;
             }
 
             $db->table('iku_revisi_sasaran')->insert($this->kolomTujuanArsip($isi) + [
@@ -3034,14 +3110,21 @@ class IkuRevisiModel extends Model
      */
     private function kolomTujuanArsip(array $sumber): array
     {
-        if (! $this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
-            return [];
+        $kolom = [];
+
+        if ($this->db->fieldExists('renstra_tujuan_id', 'iku_revisi_sasaran')) {
+            $kolom['renstra_tujuan_id'] = ! empty($sumber['renstra_tujuan_id'])
+                ? (int) $sumber['renstra_tujuan_id'] : null;
         }
 
-        return [
-            'renstra_tujuan_id' => ! empty($sumber['renstra_tujuan_id'])
-                ? (int) $sumber['renstra_tujuan_id'] : null,
-        ];
+        // Padanan lingkup kabupaten (jangkar ke tujuan RPJMD). Lihat
+        // db/update_2026-09-14_jangkar_rpjmd_iku_kabupaten.sql.
+        if ($this->db->fieldExists('rpjmd_tujuan_id', 'iku_revisi_sasaran')) {
+            $kolom['rpjmd_tujuan_id'] = ! empty($sumber['rpjmd_tujuan_id'])
+                ? (int) $sumber['rpjmd_tujuan_id'] : null;
+        }
+
+        return $kolom;
     }
 
     /**
@@ -3056,15 +3139,17 @@ class IkuRevisiModel extends Model
      */
     private function kolomTujuanLive(array $arsip): array
     {
-        if (! $this->db->fieldExists('renstra_tujuan_id', 'iku_sasaran')
-            || ! array_key_exists('renstra_tujuan_id', $arsip)) {
-            return [];
+        $kolom = [];
+
+        foreach (['renstra_tujuan_id', 'rpjmd_tujuan_id'] as $nama) {
+            if (! $this->db->fieldExists($nama, 'iku_sasaran') || ! array_key_exists($nama, $arsip)) {
+                continue;
+            }
+
+            $kolom[$nama] = ! empty($arsip[$nama]) ? (int) $arsip[$nama] : null;
         }
 
-        return [
-            'renstra_tujuan_id' => ! empty($arsip['renstra_tujuan_id'])
-                ? (int) $arsip['renstra_tujuan_id'] : null,
-        ];
+        return $kolom;
     }
 
     /** Kunci pembanding teks: beda spasi & huruf besar bukan indikator berbeda. */

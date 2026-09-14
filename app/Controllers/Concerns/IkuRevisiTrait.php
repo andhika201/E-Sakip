@@ -1199,6 +1199,10 @@ trait IkuRevisiTrait
             // sehingga daftarnya kosong — dan kartu sasaran baru pun tidak
             // ditawarkan di sana.
             'tujuanOptions'  => $this->tujuanUntukSasaranBaru($revisi),
+            // Lingkup KABUPATEN: padanannya adalah tujuan RPJMD — dipakai kartu
+            // sasaran baru DAN pilihan jangkar pada sasaran yang sudah ada tetapi
+            // belum berjangkar. Kosong di lingkup OPD.
+            'tujuanRpjmdOptions' => $this->tujuanRpjmdUntukKabupaten($revisi),
             'bolehSahkan'    => $this->bolehSahkanRevisi(),
             'perluVerifikasi' => $this->revisiPerluVerifikasi(),
             'baseUrl'        => $this->revisiBaseUrl(),
@@ -1226,6 +1230,28 @@ trait IkuRevisiTrait
 
         return $this->ikuModel->tujuanRenstraOpd(
             $opd,
+            (int) $revisi['tahun_mulai'],
+            (int) $revisi['tahun_akhir']
+        );
+    }
+
+    /**
+     * Tujuan RPJMD periode revisi ini — jangkar Cascading bagi sasaran IKU
+     * KABUPATEN yang lahir di IKU. Kosong di lingkup OPD, dan kosong pula
+     * bila basis datanya belum menjalankan
+     * db/update_2026-09-14_jangkar_rpjmd_iku_kabupaten.sql (layar lalu
+     * tidak menawarkan pilihan yang tidak bisa disimpan).
+     *
+     * @return array<int, array{id:int, tujuan:string, misi:string, misi_id:int}>
+     */
+    private function tujuanRpjmdUntukKabupaten(array $revisi): array
+    {
+        if ($this->revisiOpdId() !== null
+            || ! db_connect()->fieldExists('rpjmd_tujuan_id', 'iku_revisi_sasaran')) {
+            return [];
+        }
+
+        return $this->ikuModel->tujuanRpjmdKab(
             (int) $revisi['tahun_mulai'],
             (int) $revisi['tahun_akhir']
         );
@@ -1315,7 +1341,11 @@ trait IkuRevisiTrait
                 $baris,
                 $this->request->getPost('baru') ?? [],
                 $bawahIzin,
-                $sasaranBaru
+                $sasaranBaru,
+                // sasaran[<id arsip>][rpjmd_tujuan_id] — jangkar RPJMD untuk
+                // sasaran kabupaten yang sudah ada; model menolaknya di luar
+                // lingkup kabupaten.
+                (array) ($this->request->getPost('sasaran') ?? [])
             );
 
             // Menyunting di bawah izin TIDAK langsung mengubah IKU berjalan.

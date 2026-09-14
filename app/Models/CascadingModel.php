@@ -10,6 +10,7 @@ class CascadingModel extends Model
     protected $table = 'rpjmd_cascading';
     protected $primaryKey = 'id';
     protected $allowedFields = [
+        'iku_indikator_id',
         'indikator_sasaran_id',
         'opd_id',
         'pk_program_id',
@@ -25,244 +26,475 @@ class CascadingModel extends Model
     }
 
     // =====================================================================
-    // SUMBER TAMPILAN CASCADING KABUPATEN: IKU Kabupaten dulu, RPJMD sebagai
-    // jaring pengaman. Kembaran SASARAN_ES2_SELECT dkk. pada cascading OPD.
+    // TULANG PUNGGUNG CASCADING KABUPATEN: IKU KABUPATEN
     //
-    // Nama kolom hasil TIDAK berubah (`sasaran_rpjmd`, `indikator_sasaran`,
-    // `satuan`, `baseline`): view kabupaten, ekspor Excel, cetak, API, dan
-    // analisis AI membacanya dengan nama itu.
+    // Sampai 14 Sep 2026 tulang punggungnya RPJMD (misi -> tujuan -> sasaran
+    // -> indikator RPJMD) dan IKU hanya "ditempelkan" bila silsilahnya ketemu.
+    // Asumsinya: IKU adalah PILIHAN indikator RPJMD. Asumsi itu bocor begitu
+    // IKU menyusun ulang: lima indikator "Produksi Pangan" yang IKU buang
+    // tetap tampil dari RPJMD, sedangkan "Indeks Ketahanan Pangan" yang IKU
+    // tambahkan tidak pernah tampil — dokumen yang dinilai LAKIP tidak sama
+    // dengan yang dicascading.
+    //
+    // Kini barisnya adalah SASARAN & INDIKATOR IKU KABUPATEN. RPJMD tinggal
+    // menyumbang Misi dan Tujuan lewat JANGKAR sasaran, dengan urutan:
+    //   1. silsilah sasaran   (iku_sasaran.source_sasaran_id, hasil sync)
+    //   2. silsilah indikator (iku_indikator.source_indikator_id -> sasaran RPJMD)
+    //   3. jangkar manual     (iku_sasaran.rpjmd_tujuan_id, diisi di form revisi)
+    // Sasaran tanpa ketiganya TETAP TAMPIL — kolom Misi/Tujuan-nya kosong,
+    // bukan disembunyikan (keputusan pemilik sistem, 14 Sep 2026): yang
+    // kosong terlihat, dan ada layar untuk mengisinya.
+    //
+    // Nama kolom hasil TIDAK berubah (`misi`, `tujuan_rpjmd`, `sasaran_rpjmd`,
+    // `indikator_sasaran`, `satuan`, `baseline`, `targets`, ...): view
+    // kabupaten, ekspor Excel, cetak, halaman publik, dan pohon kinerja
+    // membacanya dengan nama itu. `sasaran_id` dan `indikator_id` kini id IKU.
     // =====================================================================
 
-    private const SASARAN_KAB_SELECT   = "COALESCE(NULLIF(iks.sasaran, ''), s.sasaran_rpjmd)";
-    private const INDIKATOR_KAB_SELECT = "COALESCE(NULLIF(iki.indikator, ''), i.indikator_sasaran)";
-    private const SATUAN_KAB_SELECT    = "COALESCE(satiku.satuan, NULLIF(iki.satuan, ''), i.satuan)";
-    private const BASELINE_KAB_SELECT  = "COALESCE(NULLIF(iki.baseline, ''), i.baseline)";
-
     /**
-     * @param int|null $ikuRevisiId Versi IKU Kabupaten yang dibaca.
-     *                              null = IKU Kabupaten BERJALAN.
+     * Sasaran IKU Kabupaten satu periode beserta JANGKAR RPJMD-nya.
+     *
+     * @return array<int, array<string,mixed>> dikunci id sasaran IKU, terurut
+     *         urutan dokumen; tiap baris memuat: id, sasaran, source_type,
+     *         source_sasaran_id, rpjmd_tujuan_id, rpjmd_sasaran_id (jangkar
+     *         terpilih), tujuan_id, misi_id, jangkar ('silsilah'|'indikator'|
+     *         'tujuan'|''), es2_versi_status
      */
-    public function getMatrix($start, $end, ?int $ikuRevisiId = null)
+    private function sasaranKabIku(int $start, int $end, ?int $ikuRevisiId = null): array
     {
-        // ==========================================================
-        // 1. BACKBONE RPJMD: Misi -> Tujuan -> Sasaran -> Indikator
-        //    Selalu tampil walau OPD belum di-mapping.
-        //    (Tidak lagi memakai WHERE pada tabel LEFT JOIN yang
-        //     dulu menyebabkan baris RPJMD tanpa mapping menghilang.)
-        // ==========================================================
-        // Server yang belum menjalankan db/update_2026-08-28_silsilah_iku_kabupaten.sql
-        // tidak punya kolom jejaknya. Tanpa penjaga ini seluruh menu Cascading
-        // Kabupaten mati dengan "Unknown column" — perilaku lamanya masih sah.
-        $adaSilsilahIku = $this->db->fieldExists('source_indikator_id', 'iku_indikator');
+        $db = $this->db;
 
-        $dariVersi = $adaSilsilahIku && $ikuRevisiId !== null && $ikuRevisiId > 0
-            && $this->db->tableExists('iku_revisi_indikator');
-
-        $sasaranKab   = $adaSilsilahIku
-            ? ($dariVersi ? "COALESCE(NULLIF(rvs.sasaran, ''), " . self::SASARAN_KAB_SELECT . ")" : self::SASARAN_KAB_SELECT)
-            : 's.sasaran_rpjmd';
-        $indikatorKab = $adaSilsilahIku
-            ? ($dariVersi ? "COALESCE(NULLIF(rvi.indikator, ''), " . self::INDIKATOR_KAB_SELECT . ")" : self::INDIKATOR_KAB_SELECT)
-            : 'i.indikator_sasaran';
-        $satuanKab    = $adaSilsilahIku
-            ? ($dariVersi ? "COALESCE(rvi.satuan_nama, NULLIF(rvi.satuan, ''), " . self::SATUAN_KAB_SELECT . ")" : self::SATUAN_KAB_SELECT)
-            : 'i.satuan';
-        $baselineKab  = $adaSilsilahIku
-            ? ($dariVersi ? "COALESCE(NULLIF(rvi.baseline, ''), " . self::BASELINE_KAB_SELECT . ")" : self::BASELINE_KAB_SELECT)
-            : 'i.baseline';
-        $lineageKab   = $adaSilsilahIku ? 'iki.id' : 'NULL';
-
-        // Penanda perubahan pada versi terpilih — sama artinya dengan yang
-        // dipakai cascading OPD.
-        $statusVersiKab = $dariVersi
-            ? "CASE WHEN iki.id IS NULL THEN ''
-                    WHEN rvi.id IS NULL THEN 'tidak_ada'
-                    ELSE COALESCE(NULLIF(rvi.jenis_perubahan, ''), 'tetap') END"
-            : "''";
-
-        $backboneQ = $this->db->table('rpjmd_misi m')
-            ->select("
-                m.id as misi_id,
-                m.misi,
-
-                t.id as tujuan_id,
-                t.tujuan_rpjmd,
-
-                s.id as sasaran_id,
-                {$sasaranKab} as sasaran_rpjmd,
-                s.csf,
-
-                i.id as indikator_id,
-                {$indikatorKab} as indikator_sasaran,
-                {$satuanKab} as satuan,
-                {$baselineKab} as baseline,
-                {$lineageKab} as iku_indikator_id,
-                {$statusVersiKab} as es2_versi_status
-            ", false)
-            ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
-            ->join('rpjmd_sasaran s', 's.tujuan_id = t.id', 'left')
-            ->join('rpjmd_indikator_sasaran i', 'i.sasaran_id = s.id', 'left')
-            ->where('m.tahun_mulai', (int) $start)
-            ->where('m.tahun_akhir', (int) $end)
-            ->orderBy('m.id', 'ASC')
-            ->orderBy('t.id', 'ASC')
-            ->orderBy('s.id', 'ASC')
-            ->orderBy('i.id', 'ASC');
-
-        // Jembatan ke IKU Kabupaten. Baris RPJMD yang punya padanan IKU
-        // ditampilkan memakai teks & satuan IKU — dokumen itulah yang resmi
-        // dinilai LAKIP. Yang tidak punya padanan tetap tampil apa adanya dari
-        // RPJMD: IKU memang PILIHAN indikator utama, bukan salinan penuh.
-        if ($adaSilsilahIku) {
-            $backboneQ
-                ->join(
-                    'iku_indikator iki',
-                    "iki.source_indikator_id = i.id AND iki.source_type = 'rpjmd'
-                     AND iki.dihentikan_pada IS NULL",
-                    'left',
-                    false
-                )
-                ->join(
-                    'iku_sasaran iks',
-                    'iks.id = iki.iku_sasaran_id AND iks.opd_id IS NULL',
-                    'left',
-                    false
-                )
-                ->join(
-                    'satuan satiku',
-                    "satiku.id = iki.satuan AND iki.satuan REGEXP '^[0-9]+$'",
-                    'left',
-                    false
-                );
-
-            if ($dariVersi) {
-                $backboneQ
-                    ->join(
-                        'iku_revisi_indikator rvi',
-                        'rvi.sumber_indikator_id = iki.id AND rvi.revisi_id = ' . (int) $ikuRevisiId,
-                        'left',
-                        false
-                    )
-                    ->join('iku_revisi_sasaran rvs', 'rvs.id = rvi.revisi_sasaran_id', 'left');
-            }
-        }
-
-        $backbone = $backboneQ->get()->getResultArray();
-
-        if (empty($backbone)) {
+        if (! $db->tableExists('iku_sasaran')) {
             return [];
         }
 
-        // ==========================================================
-        // 2-3b. Sumber data OPD & Program (helper bersama, dipakai juga
-        //       oleh getPohonKinerja agar pohon SELARAS dengan cascading).
-        // ==========================================================
-        $opdBySasaran      = $this->opdBySasaranMap();              // sasaran_id => [opd_id => nama_opd]
-        $manualByIndikator = $this->manualMappingMap($start, $end); // indikator_id => [opd_id => ['nama_opd','programs']]
-        $programByOpd      = $this->programByOpdMap();              // opd_id => [program_kegiatan,...]
+        $adaJangkar = $db->fieldExists('rpjmd_tujuan_id', 'iku_sasaran');
+        $dariVersi  = $ikuRevisiId !== null && $ikuRevisiId > 0 && $db->tableExists('iku_revisi_sasaran');
 
-        // ==========================================================
-        // 4. RAKIT BARIS FLAT untuk view
-        //    Gabung OPD otomatis (renstra) + OPD mapping manual.
-        //    Program: utamakan mapping manual, fallback ke PK otomatis.
-        // ==========================================================
-        $rows = [];
+        $q = $db->table('iku_sasaran iks')
+            ->select('iks.id, iks.source_type, iks.source_sasaran_id, iks.urutan'
+                . ($adaJangkar ? ', iks.rpjmd_tujuan_id' : ', NULL AS rpjmd_tujuan_id')
+                . ($dariVersi
+                    ? ", COALESCE(NULLIF(rvs.sasaran, ''), iks.sasaran) AS sasaran"
+                    : ', iks.sasaran'), false)
+            ->where('iks.opd_id IS NULL', null, false)
+            ->where('iks.tahun_mulai', $start)
+            ->where('iks.tahun_akhir', $end)
+            ->where('iks.dihentikan_pada IS NULL', null, false)
+            ->orderBy('iks.urutan', 'ASC')
+            ->orderBy('iks.id', 'ASC');
 
-        foreach ($backbone as $b) {
-            $sasaranId = $b['sasaran_id'];
-            $indikatorId = $b['indikator_id'];
+        if ($dariVersi) {
+            // Teks versi terpilih menimpa teks berjalan — persis perlakuan
+            // lama pada tempelan IKU.
+            $q->join(
+                'iku_revisi_sasaran rvs',
+                'rvs.sumber_sasaran_id = iks.id AND rvs.revisi_id = ' . (int) $ikuRevisiId,
+                'left',
+                false
+            );
+        }
 
-            // Gabungan OPD: dari renstra (otomatis) + dari mapping manual
-            $opdSet = $opdBySasaran[$sasaranId] ?? [];
-            foreach ($manualByIndikator[$indikatorId] ?? [] as $opdId => $info) {
-                $opdSet[$opdId] = $info['nama_opd'];
+        $sasaran = [];
+
+        foreach ($q->get()->getResultArray() as $r) {
+            $sasaran[(int) $r['id']] = $r + [
+                'rpjmd_sasaran_id' => null,
+                'tujuan_id'        => null,
+                'misi_id'          => null,
+                'jangkar'          => '',
+            ];
+        }
+
+        if ($sasaran === []) {
+            return [];
+        }
+
+        // --- jangkar 1: silsilah sasaran -------------------------------
+        foreach ($sasaran as &$s) {
+            if (($s['source_type'] ?? '') === 'rpjmd' && ! empty($s['source_sasaran_id'])) {
+                $s['rpjmd_sasaran_id'] = (int) $s['source_sasaran_id'];
+                $s['jangkar']          = 'silsilah';
             }
+        }
+        unset($s);
 
-            // Indikator dianggap "mapped" bila ada mapping manual apa pun
-            $isMapped = !empty($manualByIndikator[$indikatorId]) ? 1 : 0;
+        // --- jangkar 2: silsilah indikator ------------------------------
+        // Sasaran yang lahir di IKU bisa saja menampung indikator hasil sync
+        // (kasus nyata: "Lingkungan Hidup" tanpa silsilah sasaran, tetapi
+        // IKLH & IRB-nya bersilsilah). Sasaran RPJMD indikator itu menjadi
+        // jangkarnya. Yang pertama menang: satu sasaran satu jangkar.
+        $tanpaJangkar = array_keys(array_filter($sasaran, static fn ($s) => $s['rpjmd_sasaran_id'] === null));
 
-            asort($opdSet); // urutkan OPD berdasarkan nama
+        if ($tanpaJangkar !== [] && $db->fieldExists('source_indikator_id', 'iku_indikator')) {
+            $rows = $db->table('iku_indikator iki')
+                ->select('iki.iku_sasaran_id, ris.sasaran_id AS rpjmd_sasaran_id')
+                ->join('rpjmd_indikator_sasaran ris', 'ris.id = iki.source_indikator_id')
+                ->whereIn('iki.iku_sasaran_id', $tanpaJangkar)
+                ->where('iki.source_type', 'rpjmd')
+                ->where('iki.dihentikan_pada IS NULL', null, false)
+                ->orderBy('iki.urutan', 'ASC')
+                ->orderBy('iki.id', 'ASC')
+                ->get()->getResultArray();
 
-            if (empty($opdSet)) {
-                // Tidak ada OPD sama sekali -> baris tetap tampil (kolom OPD kosong)
-                $rows[] = $b + [
-                    'nama_opd' => null,
-                    'program_kegiatan' => null,
-                    'is_mapped' => $isMapped,
-                ];
-                continue;
-            }
+            foreach ($rows as $r) {
+                $sid = (int) $r['iku_sasaran_id'];
 
-            foreach ($opdSet as $opdId => $namaOpd) {
-                // Program: utamakan mapping manual; jika tidak ada, pakai
-                // program PK otomatis milik OPD tsb (hybrid).
-                $manualPrograms = $manualByIndikator[$indikatorId][$opdId]['programs'] ?? [];
-                $programs = !empty($manualPrograms)
-                    ? $manualPrograms
-                    : ($programByOpd[$opdId] ?? []);
-
-                if (empty($programs)) {
-                    // OPD muncul otomatis tapi tidak punya program (manual maupun PK)
-                    $rows[] = $b + [
-                        'nama_opd' => $namaOpd,
-                        'program_kegiatan' => null,
-                        'is_mapped' => $isMapped,
-                    ];
-                } else {
-                    foreach ($programs as $prog) {
-                        $rows[] = $b + [
-                            'nama_opd' => $namaOpd,
-                            'program_kegiatan' => $prog,
-                            'is_mapped' => $isMapped,
-                        ];
-                    }
+                if (isset($sasaran[$sid]) && $sasaran[$sid]['rpjmd_sasaran_id'] === null) {
+                    $sasaran[$sid]['rpjmd_sasaran_id'] = (int) $r['rpjmd_sasaran_id'];
+                    $sasaran[$sid]['jangkar']          = 'indikator';
                 }
             }
         }
 
-        // ==========================================================
-        // 5. AMBIL & ATTACH TARGET per indikator
-        // ==========================================================
-        $indikatorIds = array_values(array_unique(array_filter(array_column($rows, 'indikator_id'))));
+        // --- turunkan tujuan & misi dari sasaran RPJMD ------------------
+        $idSasaranRpjmd = array_values(array_unique(array_filter(array_column($sasaran, 'rpjmd_sasaran_id'))));
+        $tujuanDariSasaran = [];
 
-        if (empty($indikatorIds)) {
-            return $rows;
-        }
-
-        $targets = $this->db->table('rpjmd_target')
-            ->select('indikator_sasaran_id, tahun, target_tahunan')
-            ->whereIn('indikator_sasaran_id', $indikatorIds)
-            ->get()
-            ->getResultArray();
-
-        $targetMap = [];
-        foreach ($targets as $t) {
-            $targetMap[$t['indikator_sasaran_id']][$t['tahun']] = $t['target_tahunan'];
-        }
-
-        // Target IKU menang atas target RPJMD untuk baris yang berjembatan:
-        // percuma menampilkan teks indikator dari IKU tetapi angkanya dari
-        // RPJMD — satu baris jadi memuat dua dokumen sekaligus.
-        $targetIku = [];
-        $idIku     = array_values(array_unique(array_filter(array_column($rows, 'iku_indikator_id'))));
-
-        if ($idIku !== [] && $this->db->tableExists('iku_target')) {
-            foreach ($this->db->table('iku_target')
-                ->select('iku_indikator_id, tahun, target')
-                ->whereIn('iku_indikator_id', $idIku)
-                ->get()->getResultArray() as $t) {
-                $targetIku[(int) $t['iku_indikator_id']][$t['tahun']] = $t['target'];
+        if ($idSasaranRpjmd !== []) {
+            foreach ($db->table('rpjmd_sasaran')->select('id, tujuan_id')
+                ->whereIn('id', $idSasaranRpjmd)->get()->getResultArray() as $r) {
+                $tujuanDariSasaran[(int) $r['id']] = (int) $r['tujuan_id'];
             }
         }
 
-        foreach ($rows as &$r) {
-            $ikuId = (int) ($r['iku_indikator_id'] ?? 0);
-
-            $r['targets'] = $ikuId > 0 && ! empty($targetIku[$ikuId])
-                ? $targetIku[$ikuId]
-                : ($targetMap[$r['indikator_id']] ?? []);
+        foreach ($sasaran as &$s) {
+            if ($s['rpjmd_sasaran_id'] !== null && isset($tujuanDariSasaran[$s['rpjmd_sasaran_id']])) {
+                $s['tujuan_id'] = $tujuanDariSasaran[$s['rpjmd_sasaran_id']];
+            } elseif (! empty($s['rpjmd_tujuan_id'])) {
+                // --- jangkar 3: manual, tujuan saja ---------------------
+                $s['rpjmd_sasaran_id'] = null;
+                $s['tujuan_id']        = (int) $s['rpjmd_tujuan_id'];
+                $s['jangkar']          = 'tujuan';
+            }
         }
-        unset($r);
+        unset($s);
+
+        $idTujuan = array_values(array_unique(array_filter(array_column($sasaran, 'tujuan_id'))));
+
+        if ($idTujuan !== []) {
+            $misiDariTujuan = [];
+
+            foreach ($db->table('rpjmd_tujuan')->select('id, misi_id')
+                ->whereIn('id', $idTujuan)->get()->getResultArray() as $r) {
+                $misiDariTujuan[(int) $r['id']] = (int) $r['misi_id'];
+            }
+
+            foreach ($sasaran as &$s) {
+                if ($s['tujuan_id'] !== null) {
+                    $s['misi_id'] = $misiDariTujuan[$s['tujuan_id']] ?? null;
+
+                    // Tujuan yang tidak ada (terhapus) = tidak berjangkar.
+                    if ($s['misi_id'] === null) {
+                        $s['tujuan_id'] = null;
+                        $s['jangkar']   = '';
+                    }
+                }
+            }
+            unset($s);
+        }
+
+        return $sasaran;
+    }
+
+    /**
+     * Indikator IKU Kabupaten milik sasaran-sasaran di atas.
+     *
+     * @param int[] $sasaranIds
+     *
+     * @return array<int, array<string,mixed>> dikunci id indikator IKU; memuat
+     *         id, iku_sasaran_id, indikator, satuan, baseline, source_type,
+     *         source_indikator_id (rpjmd), es2_versi_status
+     */
+    private function indikatorKabIku(array $sasaranIds, ?int $ikuRevisiId = null): array
+    {
+        $db = $this->db;
+
+        if ($sasaranIds === [] || ! $db->tableExists('iku_indikator')) {
+            return [];
+        }
+
+        $dariVersi  = $ikuRevisiId !== null && $ikuRevisiId > 0 && $db->tableExists('iku_revisi_indikator');
+        $adaSumber  = $db->fieldExists('source_indikator_id', 'iku_indikator');
+
+        $q = $db->table('iku_indikator iki')
+            ->select('iki.id, iki.iku_sasaran_id, iki.urutan, iki.source_type'
+                . ($adaSumber ? ', iki.source_indikator_id' : ', NULL AS source_indikator_id')
+                . ($dariVersi
+                    ? ", COALESCE(NULLIF(rvi.indikator, ''), iki.indikator) AS indikator
+                       , COALESCE(rvi.satuan_nama, NULLIF(rvi.satuan, ''), satiku.satuan, NULLIF(iki.satuan, '')) AS satuan
+                       , COALESCE(NULLIF(rvi.baseline, ''), iki.baseline) AS baseline
+                       , CASE WHEN rvi.id IS NULL THEN 'tidak_ada'
+                              ELSE COALESCE(NULLIF(rvi.jenis_perubahan, ''), 'tetap') END AS es2_versi_status"
+                    : ", iki.indikator
+                       , COALESCE(satiku.satuan, NULLIF(iki.satuan, '')) AS satuan
+                       , iki.baseline
+                       , '' AS es2_versi_status"), false)
+            ->join('satuan satiku', "satiku.id = iki.satuan AND iki.satuan REGEXP '^[0-9]+$'", 'left', false)
+            ->whereIn('iki.iku_sasaran_id', $sasaranIds)
+            ->where('iki.dihentikan_pada IS NULL', null, false)
+            ->orderBy('iki.iku_sasaran_id', 'ASC')
+            ->orderBy('iki.urutan', 'ASC')
+            ->orderBy('iki.id', 'ASC');
+
+        if ($dariVersi) {
+            $q->join(
+                'iku_revisi_indikator rvi',
+                'rvi.sumber_indikator_id = iki.id AND rvi.revisi_id = ' . (int) $ikuRevisiId,
+                'left',
+                false
+            );
+        }
+
+        $indikator = [];
+
+        foreach ($q->get()->getResultArray() as $r) {
+            $indikator[(int) $r['id']] = $r;
+        }
+
+        return $indikator;
+    }
+
+    /**
+     * Teks Misi & Tujuan RPJMD satu periode, untuk dipasangkan ke jangkar.
+     *
+     * @return array{misi: array<int,string>, tujuan: array<int,array{teks:string, misi_id:int}>}
+     */
+    private function misiTujuanRpjmd(int $start, int $end): array
+    {
+        $misi   = [];
+        $tujuan = [];
+
+        $rows = $this->db->table('rpjmd_misi m')
+            ->select('m.id AS misi_id, m.misi, t.id AS tujuan_id, t.tujuan_rpjmd')
+            ->join('rpjmd_tujuan t', 't.misi_id = m.id', 'left')
+            ->where('m.tahun_mulai', $start)
+            ->where('m.tahun_akhir', $end)
+            ->orderBy('m.id', 'ASC')
+            ->orderBy('t.id', 'ASC')
+            ->get()->getResultArray();
+
+        foreach ($rows as $r) {
+            $misi[(int) $r['misi_id']] = (string) $r['misi'];
+
+            if ($r['tujuan_id'] !== null) {
+                $tujuan[(int) $r['tujuan_id']] = ['teks' => (string) $r['tujuan_rpjmd'], 'misi_id' => (int) $r['misi_id']];
+            }
+        }
+
+        return ['misi' => $misi, 'tujuan' => $tujuan];
+    }
+
+    /**
+     * Target per indikator IKU: iku_target dulu; bila kosong, target RPJMD
+     * indikator sumbernya (silsilah) — supaya baris hasil sync yang targetnya
+     * belum disalin tidak tampil kosong.
+     *
+     * @param array<int, array<string,mixed>> $indikator hasil indikatorKabIku()
+     *
+     * @return array<int, array<int|string, mixed>> [id indikator IKU => [tahun => target]]
+     */
+    private function targetKabIku(array $indikator): array
+    {
+        $db  = $this->db;
+        $ids = array_keys($indikator);
+        $map = [];
+
+        if ($ids === []) {
+            return [];
+        }
+
+        if ($db->tableExists('iku_target')) {
+            foreach ($db->table('iku_target')->select('iku_indikator_id, tahun, target')
+                ->whereIn('iku_indikator_id', $ids)->get()->getResultArray() as $t) {
+                $map[(int) $t['iku_indikator_id']][$t['tahun']] = $t['target'];
+            }
+        }
+
+        $butuhRpjmd = [];
+
+        foreach ($indikator as $id => $i) {
+            if (empty($map[$id]) && ! empty($i['source_indikator_id'])) {
+                $butuhRpjmd[(int) $i['source_indikator_id']][] = $id;
+            }
+        }
+
+        if ($butuhRpjmd !== []) {
+            foreach ($db->table('rpjmd_target')->select('indikator_sasaran_id, tahun, target_tahunan')
+                ->whereIn('indikator_sasaran_id', array_keys($butuhRpjmd))->get()->getResultArray() as $t) {
+                foreach ($butuhRpjmd[(int) $t['indikator_sasaran_id']] as $id) {
+                    $map[$id][$t['tahun']] = $t['target_tahunan'];
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Matriks Cascading Kabupaten: satu baris per (indikator IKU, OPD, program).
+     *
+     * Bentuk barisnya sama dengan sebelum 14 Sep 2026 — lihat catatan di atas.
+     * Baris sasaran yang belum berjangkar membawa `misi_id`, `tujuan_id`,
+     * `misi`, `tujuan_rpjmd` = NULL dan `jangkar` = ''.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function getMatrix($start, $end, ?int $ikuRevisiId = null)
+    {
+        $start = (int) $start;
+        $end   = (int) $end;
+
+        $sasaran = $this->sasaranKabIku($start, $end, $ikuRevisiId);
+
+        if ($sasaran === []) {
+            return [];
+        }
+
+        $indikator = $this->indikatorKabIku(array_keys($sasaran), $ikuRevisiId);
+        $rpjmd     = $this->misiTujuanRpjmd($start, $end);
+        $targets   = $this->targetKabIku($indikator);
+
+        // CSF tersimpan pada sasaran RPJMD (rpjmd_sasaran.csf); ikut tampil
+        // untuk sasaran yang berjangkar ke sana.
+        $csf = [];
+        $idSasaranRpjmd = array_values(array_unique(array_filter(array_column($sasaran, 'rpjmd_sasaran_id'))));
+
+        if ($idSasaranRpjmd !== []) {
+            foreach ($this->db->table('rpjmd_sasaran')->select('id, csf')
+                ->whereIn('id', $idSasaranRpjmd)->get()->getResultArray() as $r) {
+                $csf[(int) $r['id']] = $r['csf'];
+            }
+        }
+
+        // Sumber OPD & Program — helper bersama dengan pohon kinerja.
+        $opdBySasaran      = $this->opdBySasaranMap();              // sasaran RPJMD => [opd_id => nama]
+        $manualByIndikator = $this->manualMappingMap($start, $end); // indikator IKU => [opd_id => [...]]
+        $programByOpd      = $this->programByOpdMap();              // opd_id => [program,...]
+
+        // Indikator per sasaran, urutan dokumen.
+        $indPerSasaran = [];
+
+        foreach ($indikator as $id => $i) {
+            $indPerSasaran[(int) $i['iku_sasaran_id']][] = $id;
+        }
+
+        // Urutan baris: Misi -> Tujuan -> urutan sasaran IKU; yang belum
+        // berjangkar di EKOR, supaya tidak menyela dokumen.
+        $urut = array_values($sasaran);
+        usort($urut, static function ($a, $b) {
+            $ka = [$a['misi_id'] === null ? 1 : 0, (int) $a['misi_id'], (int) $a['tujuan_id'], (int) $a['urutan'], (int) $a['id']];
+            $kb = [$b['misi_id'] === null ? 1 : 0, (int) $b['misi_id'], (int) $b['tujuan_id'], (int) $b['urutan'], (int) $b['id']];
+
+            return $ka <=> $kb;
+        });
+
+        $rows = [];
+
+        foreach ($urut as $s) {
+            $sid    = (int) $s['id'];
+            $tujuan = $s['tujuan_id'] !== null ? ($rpjmd['tujuan'][$s['tujuan_id']] ?? null) : null;
+
+            $dasar = [
+                'misi_id'          => $s['misi_id'],
+                'misi'             => $s['misi_id'] !== null ? ($rpjmd['misi'][$s['misi_id']] ?? null) : null,
+                'tujuan_id'        => $s['tujuan_id'],
+                'tujuan_rpjmd'     => $tujuan['teks'] ?? null,
+                'sasaran_id'       => $sid,
+                'sasaran_rpjmd'    => $s['sasaran'],
+                'csf'              => $s['rpjmd_sasaran_id'] !== null ? ($csf[$s['rpjmd_sasaran_id']] ?? null) : null,
+                'rpjmd_sasaran_id' => $s['rpjmd_sasaran_id'],
+                'jangkar'          => $s['jangkar'],
+            ];
+
+            $daftarInd = $indPerSasaran[$sid] ?? [];
+
+            if ($daftarInd === []) {
+                // Sasaran tanpa indikator tetap tampil satu baris.
+                $rows[] = $dasar + [
+                    'indikator_id'       => null,
+                    'indikator_sasaran'  => null,
+                    'satuan'             => null,
+                    'baseline'           => null,
+                    'iku_indikator_id'   => null,
+                    'rpjmd_indikator_id' => null,
+                    'es2_versi_status'   => '',
+                    'nama_opd'           => null,
+                    'program_kegiatan'   => null,
+                    'is_mapped'          => 0,
+                    'targets'            => [],
+                ];
+                continue;
+            }
+
+            foreach ($daftarInd as $iid) {
+                $i = $indikator[$iid];
+
+                $b = $dasar + [
+                    'indikator_id'       => $iid,
+                    'indikator_sasaran'  => $i['indikator'],
+                    'satuan'             => $i['satuan'],
+                    'baseline'           => $i['baseline'],
+                    // Dipertahankan: view lama menandai "dari IKU" lewat kolom ini.
+                    'iku_indikator_id'   => $iid,
+                    'rpjmd_indikator_id' => ! empty($i['source_indikator_id']) ? (int) $i['source_indikator_id'] : null,
+                    'es2_versi_status'   => $i['es2_versi_status'] ?? '',
+                    'targets'            => $targets[$iid] ?? [],
+                ];
+
+                // =====================================================
+                // OPD & PROGRAM: MANUAL MENGGANTIKAN OTOMATIS (sejak 14 Sep 2026)
+                //
+                // Tanpa mapping manual, kolom Perangkat Daerah/Program diisi
+                // PENURUNAN OTOMATIS: OPD dari rantai Renstra yang berjangkar
+                // ke sasaran RPJMD ini, programnya seluruh program PK JPT tiap
+                // OPD. Begitu pemakai menyimpan mapping manual untuk indikator
+                // ini, mapping itulah satu-satunya yang tampil.
+                //
+                // Dulu keduanya DIGABUNG (OPD otomatis ∪ manual). Akibatnya
+                // tombol "Edit" tidak bisa membuang OPD yang tidak relevan —
+                // apa pun yang dihapus di form muncul lagi dari penurunan
+                // otomatis, dan layar terbaca "sudah ada data" padahal form
+                // editnya kosong. Form edit kini terisi dari penurunan
+                // otomatis (lihat CascadingController::tambah()), jadi yang
+                // disimpan adalah keadaan utuh, bukan tambalan.
+                // =====================================================
+                $manual   = $manualByIndikator[$iid] ?? [];
+                $isMapped = $manual !== [] ? 1 : 0;
+
+                if ($manual !== []) {
+                    $opdSet = [];
+                    foreach ($manual as $opdId => $info) {
+                        $opdSet[$opdId] = $info['nama_opd'];
+                    }
+                } else {
+                    $opdSet = $s['rpjmd_sasaran_id'] !== null ? ($opdBySasaran[$s['rpjmd_sasaran_id']] ?? []) : [];
+                }
+
+                asort($opdSet);
+
+                if ($opdSet === []) {
+                    $rows[] = $b + ['nama_opd' => null, 'program_kegiatan' => null, 'is_mapped' => $isMapped];
+                    continue;
+                }
+
+                foreach ($opdSet as $opdId => $namaOpd) {
+                    // Program: manual bila ada mapping; selain itu seluruh
+                    // program PK JPT milik OPD itu (penurunan otomatis).
+                    $manualPrograms = $manual[$opdId]['programs'] ?? [];
+                    $programs = $manual !== [] ? $manualPrograms : ($programByOpd[$opdId] ?? []);
+
+                    if ($programs === []) {
+                        $rows[] = $b + ['nama_opd' => $namaOpd, 'program_kegiatan' => null, 'is_mapped' => $isMapped];
+                        continue;
+                    }
+
+                    foreach ($programs as $prog) {
+                        $rows[] = $b + ['nama_opd' => $namaOpd, 'program_kegiatan' => $prog, 'is_mapped' => $isMapped];
+                    }
+                }
+            }
+        }
 
         return $rows;
     }
@@ -280,6 +512,10 @@ class CascadingModel extends Model
             ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'inner')
             ->join('opd o', 'o.id = rs.opd_id', 'inner')
             ->where('rt.rpjmd_sasaran_id IS NOT NULL')
+            // OPD sistem (BAGIAN ADMIN dkk.) tidak pernah menjadi penanggung
+            // jawab; ia sempat muncul di kolom Perangkat Daerah karena punya
+            // baris Renstra uji yang berjangkar ke sasaran RPJMD.
+            ->whereNotIn('rs.opd_id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
             ->groupBy('rt.rpjmd_sasaran_id, rs.opd_id, o.nama_opd')
             ->orderBy('o.nama_opd', 'ASC')
             ->get()
@@ -332,13 +568,56 @@ class CascadingModel extends Model
     }
 
     /**
+     * Kolom kunci mapping manual: `iku_indikator_id` sejak
+     * db/update_2026-09-14_jangkar_rpjmd_iku_kabupaten.sql; basis data yang
+     * belum dimigrasi masih berkunci indikator RPJMD (`indikator_sasaran_id`)
+     * — di sana mapping hanya bisa dibuat untuk indikator IKU yang punya
+     * silsilah RPJMD, dan kuncinya diterjemahkan lewat silsilah itu.
+     */
+    private function kolomKunciMapping(): string
+    {
+        return $this->db->fieldExists('iku_indikator_id', 'rpjmd_cascading')
+            ? 'iku_indikator_id'
+            : 'indikator_sasaran_id';
+    }
+
+    /**
+     * Peta id indikator RPJMD -> id indikator IKU Kabupaten (silsilah), untuk
+     * membaca mapping lama pada basis data yang belum dimigrasi.
+     *
+     * @return array<int,int>
+     */
+    private function ikuDariRpjmdIndikator(): array
+    {
+        if (! $this->db->fieldExists('source_indikator_id', 'iku_indikator')) {
+            return [];
+        }
+
+        $peta = [];
+
+        foreach ($this->db->table('iku_indikator iki')
+            ->select('iki.id, iki.source_indikator_id')
+            ->join('iku_sasaran iks', 'iks.id = iki.iku_sasaran_id')
+            ->where('iks.opd_id IS NULL', null, false)
+            ->where('iki.source_type', 'rpjmd')
+            ->where('iki.source_indikator_id IS NOT NULL', null, false)
+            ->get()->getResultArray() as $r) {
+            $peta[(int) $r['source_indikator_id']] = (int) $r['id'];
+        }
+
+        return $peta;
+    }
+
+    /**
      * Mapping manual cascading (rpjmd_cascading) untuk satu periode.
-     * @return array indikator_id => [ opd_id => ['nama_opd' => ..., 'programs' => [...] ] ]
+     * @return array indikator IKU => [ opd_id => ['nama_opd' => ..., 'programs' => [...] ] ]
      */
     private function manualMappingMap($start, $end): array
     {
+        $kunci = $this->kolomKunciMapping();
+
         $rows = $this->db->table('rpjmd_cascading map')
-            ->select('map.indikator_sasaran_id, map.opd_id, o.nama_opd, p.program_kegiatan')
+            ->select("map.{$kunci} AS kunci, map.opd_id, o.nama_opd, p.program_kegiatan", false)
             ->join('pk_program pp', 'pp.id = map.pk_program_id', 'left')
             ->join('program_pk p', 'p.id = pp.program_id', 'left')
             ->join('opd o', 'o.id = map.opd_id', 'left')
@@ -347,9 +626,20 @@ class CascadingModel extends Model
             ->get()
             ->getResultArray();
 
+        // DB lama: kunci RPJMD diterjemahkan ke indikator IKU-nya.
+        $terjemah = $kunci === 'iku_indikator_id' ? null : $this->ikuDariRpjmdIndikator();
+
         $map = [];
         foreach ($rows as $row) {
-            $ind = $row['indikator_sasaran_id'];
+            $ind = (int) $row['kunci'];
+
+            if ($terjemah !== null) {
+                if (! isset($terjemah[$ind])) {
+                    continue;
+                }
+                $ind = $terjemah[$ind];
+            }
+
             $opd = $row['opd_id'];
             if (!isset($map[$ind][$opd])) {
                 $map[$ind][$opd] = ['nama_opd' => $row['nama_opd'], 'programs' => []];
@@ -359,6 +649,88 @@ class CascadingModel extends Model
             }
         }
         return $map;
+    }
+
+    /**
+     * Indikator IKU Kabupaten untuk layar mapping (tambah/edit cascading).
+     *
+     * @return array{id:int, indikator_sasaran:string, satuan:?string, sasaran:string,
+     *               iku_sasaran_id:int, rpjmd_indikator_id:?int}|null
+     */
+    public function indikatorIkuKab(int $ikuIndikatorId): ?array
+    {
+        if ($ikuIndikatorId <= 0 || ! $this->db->tableExists('iku_indikator')) {
+            return null;
+        }
+
+        $adaSumber = $this->db->fieldExists('source_indikator_id', 'iku_indikator');
+
+        $r = $this->db->table('iku_indikator iki')
+            ->select('iki.id, iki.indikator AS indikator_sasaran, iki.iku_sasaran_id, iks.sasaran'
+                . ", COALESCE(satiku.satuan, NULLIF(iki.satuan, '')) AS satuan"
+                . ($adaSumber ? ', iki.source_indikator_id AS rpjmd_indikator_id' : ', NULL AS rpjmd_indikator_id'), false)
+            ->join('iku_sasaran iks', 'iks.id = iki.iku_sasaran_id')
+            ->join('satuan satiku', "satiku.id = iki.satuan AND iki.satuan REGEXP '^[0-9]+$'", 'left', false)
+            ->where('iki.id', $ikuIndikatorId)
+            ->where('iks.opd_id IS NULL', null, false)
+            ->get()->getRowArray();
+
+        if (! $r) {
+            return null;
+        }
+
+        $r['id']                 = (int) $r['id'];
+        $r['iku_sasaran_id']     = (int) $r['iku_sasaran_id'];
+        $r['rpjmd_indikator_id'] = ! empty($r['rpjmd_indikator_id']) ? (int) $r['rpjmd_indikator_id'] : null;
+
+        return $r;
+    }
+
+    /**
+     * Penurunan OTOMATIS untuk satu indikator IKU Kabupaten — OPD dari rantai
+     * Renstra yang berjangkar ke sasaran RPJMD-nya, beserta program PK JPT
+     * tiap OPD pada tahun yang diminta. Inilah yang tampil di Cascading
+     * selama indikator itu belum punya mapping manual, dan inilah isi awal
+     * form mapping supaya "Edit" berangkat dari keadaan yang terlihat.
+     *
+     * @return array<int, list<int>> [opd_id => [pk_program.id, ...]] (program bisa kosong)
+     */
+    public function penurunanOtomatis(int $ikuIndikatorId, int $start, int $end, int $tahun): array
+    {
+        $ind = $this->indikatorIkuKab($ikuIndikatorId);
+
+        if ($ind === null) {
+            return [];
+        }
+
+        $sasaran = $this->sasaranKabIku($start, $end)[$ind['iku_sasaran_id']] ?? null;
+
+        if ($sasaran === null || $sasaran['rpjmd_sasaran_id'] === null) {
+            return [];
+        }
+
+        $hasil = [];
+
+        foreach (array_keys($this->opdBySasaranMap()[$sasaran['rpjmd_sasaran_id']] ?? []) as $opdId) {
+            $hasil[(int) $opdId] = array_map(
+                'intval',
+                array_column($this->getPkProgramByOpd((int) $opdId, $tahun), 'id')
+            );
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Bolehkah indikator IKU ini dipetakan pada basis data ini?
+     *
+     * Selalu boleh setelah migrasi. Sebelum migrasi, hanya indikator yang punya
+     * silsilah RPJMD — kuncinya masih `indikator_sasaran_id` NOT NULL.
+     */
+    public function bolehDipetakan(array $indikatorIku): bool
+    {
+        return $this->kolomKunciMapping() === 'iku_indikator_id'
+            || ! empty($indikatorIku['rpjmd_indikator_id']);
     }
 
     public function getPkProgramByOpd($opdId, $tahun)
@@ -377,14 +749,32 @@ class CascadingModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    /**
+     * @param list<array{iku_indikator_id:int, indikator_sasaran_id:?int, opd_id:int, pk_program_id:int, tahun:int}> $data
+     */
     public function saveBatchMapping(array $data)
     {
         if (empty($data))
             return false;
 
-        return $this->db->table($this->table)
-            ->ignore(true)
-            ->insertBatch($data);
+        if ($this->kolomKunciMapping() !== 'iku_indikator_id') {
+            // DB lama: kolom iku_indikator_id belum ada; baris tanpa silsilah
+            // RPJMD tidak bisa disimpan (kuncinya NOT NULL).
+            $data = array_values(array_filter(array_map(static function ($d) {
+                unset($d['iku_indikator_id']);
+                return $d;
+            }, $data), static fn ($d) => ! empty($d['indikator_sasaran_id'])));
+
+            if ($data === []) {
+                return false;
+            }
+        }
+
+        // Tanpa INSERT IGNORE: kembar sudah dirapikan pemanggil, dan galat
+        // (FK, kolom) harus sampai ke pemanggil supaya transaksinya dibatalkan
+        // — bukan dibungkam lalu dilaporkan "berhasil".
+        return $this->db->table($this->table)->insertBatch($data);
     }
 
     public function isProgramBelongsToOpd($programId, $opdId)
@@ -398,20 +788,38 @@ class CascadingModel extends Model
             ->countAllResults() > 0;
     }
 
-    public function getExistingMapping($indikatorId, $tahun)
+    /**
+     * @param int      $ikuIndikatorId   indikator IKU Kabupaten
+     * @param int|null $rpjmdIndikatorId silsilahnya (kunci pada DB yang belum dimigrasi)
+     */
+    public function getExistingMapping($ikuIndikatorId, $tahun, ?int $rpjmdIndikatorId = null)
     {
+        $kunci = $this->kolomKunciMapping();
+        $nilai = $kunci === 'iku_indikator_id' ? (int) $ikuIndikatorId : (int) $rpjmdIndikatorId;
+
+        if ($nilai <= 0) {
+            return [];
+        }
+
         return $this->db->table('rpjmd_cascading c')
             ->select('c.opd_id, c.pk_program_id')
-            ->where('c.indikator_sasaran_id', $indikatorId)
+            ->where('c.' . $kunci, $nilai)
             ->where('c.tahun', $tahun)
             ->get()
             ->getResultArray();
     }
 
-    public function deleteByIndikatorAndYear($indikatorId, $tahun)
+    public function deleteByIndikatorAndYear($ikuIndikatorId, $tahun, ?int $rpjmdIndikatorId = null)
     {
+        $kunci = $this->kolomKunciMapping();
+        $nilai = $kunci === 'iku_indikator_id' ? (int) $ikuIndikatorId : (int) $rpjmdIndikatorId;
+
+        if ($nilai <= 0) {
+            return false;
+        }
+
         return $this->db->table($this->table)
-            ->where('indikator_sasaran_id', $indikatorId)
+            ->where($kunci, $nilai)
             ->where('tahun', $tahun)
             ->delete();
     }
@@ -1218,12 +1626,25 @@ class CascadingModel extends Model
 
 
     /**
-     * Get hierarchical tree data for Pohon Kinerja PDF
-     * Misi → Tujuan → Indikator Tujuan + CSF → Sasaran → Indikator Sasaran
+     * Pohon Kinerja Kabupaten: Misi -> Tujuan (+ indikator tujuan RPJMD)
+     *  -> Sasaran IKU -> Indikator IKU -> OPD -> Program.
+     *
+     * Misi, tujuan, dan indikator tujuan tetap dari RPJMD — IKU tidak punya
+     * tingkat tujuan. Sasaran & indikatornya dari IKU Kabupaten, dipasangkan
+     * ke tujuan lewat jangkar yang sama dengan getMatrix() (lihat catatan di
+     * sana). Sasaran yang belum berjangkar dikumpulkan dalam satu simpul
+     * Misi semu di EKOR pohon: tampak, dan jelas kenapa ia di sana.
+     *
+     * Bentuk simpulnya tidak berubah dari sebelum 14 Sep 2026 — view pohon dan
+     * cetaknya membaca kunci yang sama (`misi`, `tujuan_rpjmd`,
+     * `indikator_tujuan`, `sasaran_rpjmd`, `csf`, `indikator_sasaran`, `opd`).
      */
     public function getPohonKinerja($tahunMulai, $tahunAkhir)
     {
-        // 1. Get all Misi for the period
+        $tahunMulai = (int) $tahunMulai;
+        $tahunAkhir = (int) $tahunAkhir;
+
+        // 1. Misi & Tujuan RPJMD (+ indikator tujuan) — kerangka pohon.
         $misiList = $this->db->table('rpjmd_misi')
             ->where('tahun_mulai', $tahunMulai)
             ->where('tahun_akhir', $tahunAkhir)
@@ -1235,131 +1656,169 @@ class CascadingModel extends Model
             return [];
         }
 
-        $misiIds = array_column($misiList, 'id');
-
-        // 2. Get all Tujuan for these Misi
+        $misiIds    = array_column($misiList, 'id');
         $tujuanList = $this->db->table('rpjmd_tujuan')
             ->whereIn('misi_id', $misiIds)
             ->orderBy('id', 'ASC')
             ->get()
             ->getResultArray();
 
-        $tujuanIds = array_column($tujuanList, 'id');
+        $groupedIndikatorTujuan = [];
 
-        // 3. Get all Indikator Tujuan and Sasaran for these Tujuan
-        $indikatorTujuanList = [];
-        $sasaranList = [];
-        $sasaranIds = [];
-        
-        if (!empty($tujuanIds)) {
-            $indikatorTujuanList = $this->db->table('rpjmd_indikator_tujuan')
-                ->whereIn('tujuan_id', $tujuanIds)
-                ->orderBy('id', 'ASC')
-                ->get()
-                ->getResultArray();
-
-            $sasaranList = $this->db->table('rpjmd_sasaran')
-                ->whereIn('tujuan_id', $tujuanIds)
-                ->orderBy('id', 'ASC')
-                ->get()
-                ->getResultArray();
-
-            $sasaranIds = array_column($sasaranList, 'id');
+        if (! empty($tujuanList)) {
+            foreach ($this->db->table('rpjmd_indikator_tujuan')
+                ->whereIn('tujuan_id', array_column($tujuanList, 'id'))
+                ->orderBy('id', 'ASC')->get()->getResultArray() as $indTuj) {
+                $groupedIndikatorTujuan[$indTuj['tujuan_id']][] = $indTuj;
+            }
         }
 
-        // 4. Get all Indikator Sasaran for these Sasaran
-        $indikatorSasaranList = [];
-        if (!empty($sasaranIds)) {
-            $indikatorSasaranList = $this->db->table('rpjmd_indikator_sasaran')
-                ->whereIn('sasaran_id', $sasaranIds)
-                ->orderBy('id', 'ASC')
-                ->get()
-                ->getResultArray();
+        // 2. Sasaran & indikator IKU Kabupaten, berjangkar.
+        $sasaran   = $this->sasaranKabIku($tahunMulai, $tahunAkhir);
+        $indikator = $this->indikatorKabIku(array_keys($sasaran));
+
+        $csf = [];
+        $idSasaranRpjmd = array_values(array_unique(array_filter(array_column($sasaran, 'rpjmd_sasaran_id'))));
+
+        if ($idSasaranRpjmd !== []) {
+            foreach ($this->db->table('rpjmd_sasaran')->select('id, csf')
+                ->whereIn('id', $idSasaranRpjmd)->get()->getResultArray() as $r) {
+                $csf[(int) $r['id']] = $r['csf'];
+            }
         }
 
-        // --- SUMBER OPD & PROGRAM (logika identik dengan cascading getMatrix) ---
+        // --- SUMBER OPD & PROGRAM (identik dengan getMatrix) ---
         $opdBySasaran      = $this->opdBySasaranMap();
         $manualByIndikator = $this->manualMappingMap($tahunMulai, $tahunAkhir);
         $programByOpd      = $this->programByOpdMap();
 
-        // --- GROUPING IN MEMORY ---
+        $indPerSasaran = [];
 
-        // Group Indikator Sasaran by sasaran_id
-        $groupedIndikatorSasaran = [];
-        foreach ($indikatorSasaranList as $indSas) {
-            $groupedIndikatorSasaran[$indSas['sasaran_id']][] = $indSas;
+        foreach ($indikator as $id => $i) {
+            $indPerSasaran[(int) $i['iku_sasaran_id']][] = [
+                'id'                 => $id,
+                'sasaran_id'         => (int) $i['iku_sasaran_id'],
+                'indikator_sasaran'  => $i['indikator'],
+                'satuan'             => $i['satuan'],
+                'baseline'           => $i['baseline'],
+                'rpjmd_indikator_id' => ! empty($i['source_indikator_id']) ? (int) $i['source_indikator_id'] : null,
+            ];
         }
 
-        // Group Sasaran by tujuan_id + lampirkan Indikator Sasaran & cabang OPD/Program
-        $groupedSasaran = [];
-        foreach ($sasaranList as $sasaran) {
-            $sid = $sasaran['id'];
-            $indikatorSasaran = $groupedIndikatorSasaran[$sid] ?? [];
-            $indIds = array_column($indikatorSasaran, 'id');
+        $groupedSasaran = [];  // tujuan_id => [simpul sasaran]
+        $tanpaJangkar   = [];  // simpul sasaran yang belum berjangkar
 
-            // OPD: otomatis dari Renstra + union OPD dari mapping manual indikator sasaran ini
-            $opdSet = $opdBySasaran[$sid] ?? [];
+        foreach ($sasaran as $sid => $s) {
+            $indikatorSasaran = $indPerSasaran[$sid] ?? [];
+            $indIds           = array_column($indikatorSasaran, 'id');
+
+            // OPD per sasaran = gabungan per indikatornya, dengan aturan yang
+            // sama seperti getMatrix(): indikator yang punya mapping manual
+            // menyumbang mapping itu SAJA; indikator tanpa mapping menyumbang
+            // penurunan otomatis (OPD Renstra + program PK JPT).
+            $otomatis = $s['rpjmd_sasaran_id'] !== null ? ($opdBySasaran[$s['rpjmd_sasaran_id']] ?? []) : [];
+            $opdSet   = [];
+            $progManual = [];   // opd_id => [program manual...]
+            $pakaiOtomatis = []; // opd_id => true bila ada indikator tanpa manual
+
             foreach ($indIds as $ind) {
-                foreach ($manualByIndikator[$ind] ?? [] as $opdId => $info) {
+                $manual = $manualByIndikator[$ind] ?? [];
+
+                if ($manual === []) {
+                    foreach ($otomatis as $opdId => $nama) {
+                        $opdSet[$opdId]        = $nama;
+                        $pakaiOtomatis[$opdId] = true;
+                    }
+                    continue;
+                }
+
+                foreach ($manual as $opdId => $info) {
                     $opdSet[$opdId] = $info['nama_opd'];
+                    foreach ($info['programs'] as $pg) {
+                        if (! in_array($pg, $progManual[$opdId] ?? [], true)) {
+                            $progManual[$opdId][] = $pg;
+                        }
+                    }
+                }
+            }
+
+            if ($indIds === []) {
+                $opdSet = $otomatis;
+                foreach ($otomatis as $opdId => $nama) {
+                    $pakaiOtomatis[$opdId] = true;
                 }
             }
             asort($opdSet);
 
-            // Program per OPD: utamakan mapping manual (gabungan indikator sasaran ini),
-            // jika tidak ada pakai program PK otomatis (hybrid, sama seperti cascading).
             $opdNodes = [];
+
             foreach ($opdSet as $opdId => $namaOpd) {
-                $manualProgs = [];
-                foreach ($indIds as $ind) {
-                    foreach ($manualByIndikator[$ind][$opdId]['programs'] ?? [] as $pg) {
-                        if (!in_array($pg, $manualProgs, true)) {
-                            $manualProgs[] = $pg;
+                $programs = $progManual[$opdId] ?? [];
+
+                if (isset($pakaiOtomatis[$opdId])) {
+                    foreach ($programByOpd[$opdId] ?? [] as $pg) {
+                        if (! in_array($pg, $programs, true)) {
+                            $programs[] = $pg;
                         }
                     }
                 }
-                $opdNodes[] = [
-                    'nama_opd' => $namaOpd,
-                    'programs' => !empty($manualProgs) ? $manualProgs : ($programByOpd[$opdId] ?? []),
-                ];
+
+                $opdNodes[] = ['nama_opd' => $namaOpd, 'programs' => $programs];
             }
 
-            $groupedSasaran[$sasaran['tujuan_id']][] = [
-                'id' => $sid,
-                'sasaran_rpjmd' => $sasaran['sasaran_rpjmd'],
-                'csf' => $sasaran['csf'] ?? '',
+            $simpul = [
+                'id'                => $sid,
+                'sasaran_rpjmd'     => $s['sasaran'],
+                'csf'               => $s['rpjmd_sasaran_id'] !== null ? ($csf[$s['rpjmd_sasaran_id']] ?? '') : '',
+                'jangkar'           => $s['jangkar'],
+                'rpjmd_sasaran_id'  => $s['rpjmd_sasaran_id'],
                 'indikator_sasaran' => $indikatorSasaran,
-                'opd' => $opdNodes,
+                'opd'               => $opdNodes,
             ];
+
+            if ($s['tujuan_id'] !== null) {
+                $groupedSasaran[$s['tujuan_id']][] = $simpul;
+            } else {
+                $tanpaJangkar[] = $simpul;
+            }
         }
 
-        // Group Indikator Tujuan by tujuan_id
-        $groupedIndikatorTujuan = [];
-        foreach ($indikatorTujuanList as $indTuj) {
-            $groupedIndikatorTujuan[$indTuj['tujuan_id']][] = $indTuj;
-        }
-
-        // Group Tujuan by misi_id and attach Sasaran & Indikator Tujuan
+        // 3. Rakit pohon.
         $groupedTujuan = [];
+
         foreach ($tujuanList as $tujuan) {
-            $tujuanNode = [
-                'id' => $tujuan['id'],
-                'tujuan_rpjmd' => $tujuan['tujuan_rpjmd'],
+            $groupedTujuan[$tujuan['misi_id']][] = [
+                'id'               => $tujuan['id'],
+                'tujuan_rpjmd'     => $tujuan['tujuan_rpjmd'],
                 'indikator_tujuan' => $groupedIndikatorTujuan[$tujuan['id']] ?? [],
-                'sasaran' => $groupedSasaran[$tujuan['id']] ?? []
+                'sasaran'          => $groupedSasaran[$tujuan['id']] ?? [],
             ];
-            $groupedTujuan[$tujuan['misi_id']][] = $tujuanNode;
         }
 
-        // Assemble final tree
         $tree = [];
+
         foreach ($misiList as $misi) {
-            $misiNode = [
-                'id' => $misi['id'],
-                'misi' => $misi['misi'],
-                'tujuan' => $groupedTujuan[$misi['id']] ?? []
+            $tree[] = [
+                'id'     => $misi['id'],
+                'misi'   => $misi['misi'],
+                'tujuan' => $groupedTujuan[$misi['id']] ?? [],
             ];
-            $tree[] = $misiNode;
+        }
+
+        if ($tanpaJangkar !== []) {
+            // Misi semu: id 0 tidak pernah dipakai RPJMD. Teksnya menjelaskan
+            // keadaannya sekaligus jalan keluarnya.
+            $tree[] = [
+                'id'     => 0,
+                'misi'   => 'Sasaran IKU yang belum dijangkarkan ke RPJMD',
+                'jangkar_kosong' => true,
+                'tujuan' => [[
+                    'id'               => 0,
+                    'tujuan_rpjmd'     => 'Belum ada Tujuan RPJMD — jangkarkan lewat IKU Kabupaten › Revisi',
+                    'indikator_tujuan' => [],
+                    'sasaran'          => $tanpaJangkar,
+                ]],
+            ];
         }
 
         return $tree;

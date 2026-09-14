@@ -199,8 +199,8 @@ class CascadingController extends BaseController
                     $versiIkuList
                 );
 
-                // Matriks RPJMD penuh (Misi -> Tujuan -> Sasaran -> Indikator -> Program
-                // -> Perangkat Daerah) + target & kondisi akhir — selaras Cetak Cascading.
+                // Matriks bertulang punggung IKU KABUPATEN (sasaran & indikator IKU),
+                // Misi/Tujuan RPJMD lewat jangkar — selaras Cetak & Excel Cascading.
                 $rows = $this->cascadingModel->getMatrix($start, $end, $versiIkuDipilih);
                 $tree = $this->cascadingModel->getPohonKinerja($start, $end);
                 $visi = $this->ambilVisi($start, $end);
@@ -506,14 +506,23 @@ class CascadingController extends BaseController
             return redirect()->back()->with('error', 'Indikator tidak ditemukan');
         }
 
-        // ambil indikator rpjmd
-        $indikator = $this->db->table('rpjmd_indikator_sasaran')
-            ->where('id', $indikatorId)
-            ->get()
-            ->getRowArray();
+        // Sejak 14 Sep 2026 barisnya indikator IKU KABUPATEN (tulang punggung
+        // Cascading Kabupaten), bukan indikator RPJMD.
+        $indikator = $this->cascadingModel->indikatorIkuKab((int) $indikatorId);
 
         if (!$indikator) {
-            return redirect()->back()->with('error', 'Indikator tidak ditemukan');
+            return redirect()->back()->with('error', 'Indikator IKU tidak ditemukan');
+        }
+
+        if (! $this->cascadingModel->bolehDipetakan($indikator)) {
+            // Basis data belum menjalankan db/update_2026-09-14_jangkar_rpjmd_iku_kabupaten.sql:
+            // mapping masih berkunci indikator RPJMD, jadi indikator yang lahir
+            // di IKU belum bisa dipetakan di sini.
+            return redirect()->back()->with(
+                'error',
+                'Indikator ini lahir di IKU (tanpa silsilah RPJMD) dan belum bisa dipetakan sebelum '
+                . 'basis data menjalankan pembaruan 2026-09-14 (jangkar RPJMD IKU Kabupaten).'
+            );
         }
 
         $opdList = $this->db->table('opd')
@@ -535,7 +544,12 @@ class CascadingController extends BaseController
             // cari tahun mapping existing
             $existYear = $this->db->table('rpjmd_cascading')
                 ->select('tahun')
-                ->where('indikator_sasaran_id', $indikatorId)
+                ->where(
+                    $this->db->fieldExists('iku_indikator_id', 'rpjmd_cascading') ? 'iku_indikator_id' : 'indikator_sasaran_id',
+                    $this->db->fieldExists('iku_indikator_id', 'rpjmd_cascading')
+                        ? (int) $indikator['id']
+                        : (int) ($indikator['rpjmd_indikator_id'] ?? 0)
+                )
                 ->orderBy('tahun', 'DESC')
                 ->get()
                 ->getRow();
@@ -557,7 +571,7 @@ class CascadingController extends BaseController
         // AMBIL MAPPING LAMA
         // ===========================
         $existing = $this->cascadingModel
-            ->getExistingMapping($indikatorId, $tahun);
+            ->getExistingMapping((int) $indikator['id'], $tahun, $indikator['rpjmd_indikator_id']);
 
         // ===========================
         // GROUP BY OPD
@@ -573,10 +587,41 @@ class CascadingController extends BaseController
             $grouped[$row['opd_id']][] = $row['pk_program_id'];
         }
 
+        // ===========================
+        // BELUM ADA MAPPING MANUAL -> ISI AWAL DARI PENURUNAN OTOMATIS
+        //
+        // Yang tampil di tabel Cascading untuk indikator ini adalah OPD dari
+        // rantai Renstra + seluruh program PK JPT-nya. Form "Edit" harus
+        // berangkat dari keadaan yang terlihat itu, bukan dari kertas kosong;
+        // begitu disimpan, mapping manual MENGGANTIKAN penurunan otomatis
+        // (lihat CascadingModel::getMatrix()).
+        // ===========================
+        $sumberIsian = 'manual';
+
+        if ($grouped === [] && $periode && strpos($periode, '-') !== false) {
+            $grouped = $this->cascadingModel->penurunanOtomatis(
+                (int) $indikator['id'], (int) $start, (int) $end, (int) $tahun
+            );
+            $sumberIsian = $grouped !== [] ? 'otomatis' : 'kosong';
+        }
+
+        // Daftar program tiap OPD yang sudah terpilih DISEMATKAN ke halaman.
+        // Sebelumnya halaman terbuka kosong lalu mengambilnya lewat N fetch
+        // berurutan — kartu demi kartu muncul menyusul, terasa lambat dan
+        // "bertahap". Dengan ini kartu langsung utuh; fetch hanya terjadi bila
+        // pemakai mengganti OPD atau tahun.
+        $programAwal = [];
+
+        foreach (array_keys($grouped) as $opdId) {
+            $programAwal[(int) $opdId] = $this->cascadingModel->getPkProgramByOpd((int) $opdId, (int) $tahun);
+        }
+
         return view('adminKabupaten/cascading/tambah_cascading', [
             'indikator' => $indikator,
             'opd_list' => $opdList,
             'existing_mapping' => $grouped,
+            'program_awal' => $programAwal,
+            'sumber_isian' => $sumberIsian,
             'years' => $years,
             'periode' => $periode,
             'selected_tahun' => $tahun
@@ -585,7 +630,7 @@ class CascadingController extends BaseController
 
     public function save()
     {
-        $indikatorId = $this->request->getPost('indikator_id');
+        $indikatorId = (int) $this->request->getPost('indikator_id');
         $tahun = $this->request->getPost('tahun');
         $opdData = $this->request->getPost('opd');
 
@@ -595,55 +640,169 @@ class CascadingController extends BaseController
                 ->with('error', 'Data tidak lengkap');
         }
 
+        // indikator_id = indikator IKU Kabupaten. Silsilah RPJMD-nya ikut
+        // disimpan (bila ada) — kunci pada DB yang belum dimigrasi, dan jejak
+        // untuk pelaporan lama.
+        $indikator = $this->cascadingModel->indikatorIkuKab($indikatorId);
+
+        if (!$indikator) {
+            return redirect()->back()->with('error', 'Indikator IKU tidak ditemukan');
+        }
+
+        if (! $this->cascadingModel->bolehDipetakan($indikator)) {
+            return redirect()->back()->with(
+                'error',
+                'Indikator ini lahir di IKU dan belum bisa dipetakan sebelum basis data '
+                . 'menjalankan pembaruan 2026-09-14 (jangkar RPJMD IKU Kabupaten).'
+            );
+        }
+
+        // periode dikirim via hidden field form (POST); fallback ke query string
+        $periode = $this->request->getPost('periode') ?: $this->request->getGet('periode');
+        $tahun   = (int) $tahun;
+
+        // =============================================================
+        // KIRIMAN DIPERIKSA SEBELUM MENYENTUH BASIS DATA
+        //
+        // - OPD harus OPD sungguhan yang boleh dipilih (bukan OPD sistem);
+        // - program harus MILIK OPD itu pada tahun itu — isProgramBelongsToOpd()
+        //   sudah ada sejak awal tetapi tidak pernah dipanggil, sehingga POST
+        //   yang dikarang bisa memetakan program OPD lain;
+        // - pasangan yang sama dua kali dalam satu kiriman dirapikan di sini,
+        //   bukan diserahkan ke INSERT IGNORE — IGNORE juga membungkam galat
+        //   FK, dan pemakai tetap membaca "berhasil" padahal tidak ada yang
+        //   tersimpan.
+        // =============================================================
+        $opdSah = array_map('intval', array_column(
+            $this->db->table('opd')->select('id')
+                ->whereNotIn('id', \App\Models\OpdModel::EXCLUDED_OPD_IDS)
+                ->get()->getResultArray(),
+            'id'
+        ));
+
         $insertBatch = [];
+        $sudah       = [];
 
         foreach ($opdData as $opd) {
+            $opdId    = (int) ($opd['id'] ?? 0);
+            $programs = (array) ($opd['program'] ?? []);
 
-            $opdId = $opd['id'] ?? null;
-            $programs = $opd['program'] ?? [];
-
-            if (!$opdId || empty($programs))
+            if ($opdId <= 0 || $programs === []) {
                 continue;
+            }
+
+            if (! in_array($opdId, $opdSah, true)) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'Perangkat Daerah dengan id ' . $opdId . ' tidak dikenali.');
+            }
 
             foreach ($programs as $programId) {
+                $programId = (int) $programId;
 
-
-                if (!$programId)
+                if ($programId <= 0) {
                     continue;
+                }
+
+                if (! $this->cascadingModel->isProgramBelongsToOpd($programId, $opdId)) {
+                    return redirect()->back()->withInput()->with(
+                        'error',
+                        'Program (id ' . $programId . ') bukan milik Perangkat Daerah yang dipilih. '
+                        . 'Pilih program dari daftar milik OPD itu.'
+                    );
+                }
+
+                $kunci = $opdId . ':' . $programId;
+
+                if (isset($sudah[$kunci])) {
+                    continue;
+                }
+
+                $sudah[$kunci] = true;
 
                 $insertBatch[] = [
-                    'indikator_sasaran_id' => $indikatorId,
-                    'opd_id' => $opdId,
-                    'pk_program_id' => $programId,
-                    'tahun' => $tahun
+                    'iku_indikator_id'     => (int) $indikator['id'],
+                    'indikator_sasaran_id' => $indikator['rpjmd_indikator_id'],
+                    'opd_id'               => $opdId,
+                    'pk_program_id'        => $programId,
+                    'tahun'                => $tahun,
                 ];
             }
         }
 
-        // ==============================
-        // 🔥 EDIT MODE FIX
-        // ==============================
-        // HAPUS MAPPING LAMA DULU
-
-        $this->db->transStart();
-
-        $this->cascadingModel
-            ->deleteByIndikatorAndYear($indikatorId, $tahun);
-        
-        if (!empty($insertBatch)) {
-            $this->cascadingModel
-                ->saveBatchMapping($insertBatch);
+        if ($insertBatch === []) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Tidak ada pasangan Perangkat Daerah & Program yang bisa disimpan. '
+                    . 'Untuk membuang mapping manual, pakai tombol "Kembalikan ke otomatis".');
         }
 
-        $this->db->transComplete();
+        // =============================================================
+        // SATU TRANSAKSI: mapping lama dibuang, yang baru ditulis — keduanya
+        // atau tidak sama sekali. Kegagalannya DILAPORKAN, bukan ditelan:
+        // transComplete() yang hasilnya tidak diperiksa (perilaku lama)
+        // membuat pemakai membaca "berhasil" saat tidak ada yang tersimpan.
+        // =============================================================
+        $db = $this->db;
+        $db->transBegin();
 
+        try {
+            $this->cascadingModel
+                ->deleteByIndikatorAndYear((int) $indikator['id'], $tahun, $indikator['rpjmd_indikator_id']);
 
-        // periode dikirim via hidden field form (POST); fallback ke query string
-        $periode = $this->request->getPost('periode') ?: $this->request->getGet('periode');
+            $ok = $this->cascadingModel->saveBatchMapping($insertBatch);
+
+            if ($ok === false || $db->error()['code'] !== 0) {
+                // Galat TEKNIS, bukan aturan bisnis: dilempar sebagai
+                // DatabaseException supaya pesanGalat() menyembunyikan teks
+                // MySQL (nama basis data/tabel) dan menampilkan kode rujukan.
+                throw new \CodeIgniter\Database\Exceptions\DatabaseException(
+                    'Mapping tidak tersimpan: ' . ($db->error()['message'] ?: 'galat basis data')
+                );
+            }
+
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', '[CASCADING KAB MAPPING] ' . $e->getMessage());
+
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'Mapping Cascading gagal disimpan', 'kab.cascading'));
+        }
 
         return redirect()->to(
             base_url('adminkab/cascading?periode=' . $periode)
-        )->with('success', 'Mapping Cascading berhasil disimpan');
+        )->with('success', 'Mapping Cascading berhasil disimpan: ' . count($insertBatch) . ' pasangan Perangkat Daerah & Program.');
+    }
+
+    /**
+     * Buang mapping manual satu indikator IKU pada satu tahun — Cascading
+     * kembali memakai penurunan otomatis (OPD Renstra + program PK JPT).
+     *
+     * Ada karena mapping manual MENGGANTIKAN penurunan otomatis: tanpa pintu
+     * ini, sekali disimpan tidak ada jalan kembali (save() menolak kiriman
+     * tanpa OPD).
+     */
+    public function hapusMapping()
+    {
+        if (! user_can('cascading_kab.update')) {
+            return redirect()->back()->with('error', 'Anda tidak berwenang mengubah mapping cascading.');
+        }
+
+        $indikatorId = (int) $this->request->getPost('indikator_id');
+        $tahun       = (int) $this->request->getPost('tahun');
+        $periode     = (string) ($this->request->getPost('periode') ?: $this->request->getGet('periode'));
+
+        $indikator = $indikatorId > 0 ? $this->cascadingModel->indikatorIkuKab($indikatorId) : null;
+
+        if (! $indikator || $tahun <= 0) {
+            return redirect()->back()->with('error', 'Indikator atau tahun tidak dikenali.');
+        }
+
+        $this->cascadingModel->deleteByIndikatorAndYear(
+            (int) $indikator['id'], $tahun, $indikator['rpjmd_indikator_id']
+        );
+
+        return redirect()->to(base_url('adminkab/cascading?periode=' . $periode))
+            ->with('success', 'Mapping manual dihapus. Indikator ini kembali memakai penurunan otomatis dari Renstra & PK.');
     }
 
     public function excel()

@@ -149,17 +149,53 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
     </ul>
   </div>
 <?php endif; ?>
-<?php /* VERIFIKASI — hanya muncul bagi yang berwenang menyetujui versi (§47).
-         Badge angka memakai versi_pending_count() yang di-cache per request dan
-         mengembalikan 0 bila tabel registri belum terpasang. */ ?>
-<?php if (versi_boleh_verifikasi()): ?>
-  <?php $jmlPending = versi_pending_count(); ?>
-  <a class="<?= $linkCls ?> d-flex justify-content-between align-items-center" href="<?= base_url('adminkab/verifikasi') ?>">
-    <span><i class="fas fa-gavel"></i> Verifikasi</span>
-    <?php if ($jmlPending > 0): ?>
-      <span class="badge bg-danger rounded-pill"><?= $jmlPending ?></span>
-    <?php endif; ?>
-  </a>
+<?php /* VERIFIKASI — dropdown berisi semua yang menunggu KEPUTUSAN admin
+         kabupaten: pengajuan versi dokumen (§47) dan permintaan perbaikan LAKIP
+         OPD. Sejak 14 Sep 2026 permintaan perbaikan pindah ke sini dari
+         "Pelaporan Kinerja" — ia memang bukan pelaporan, melainkan hal yang
+         harus diputuskan.
+         Tiap anak muncul hanya bagi yang berwenang; lencana di tombol induk
+         menjumlahkan keduanya supaya terlihat tanpa membuka dropdown.
+         versi_pending_count() di-cache per request dan mengembalikan 0 bila
+         tabel registri belum terpasang. */ ?>
+<?php
+$bolehVerifVersi = versi_boleh_verifikasi();
+$bolehPerbaikan  = user_can('lakip_opd.buka_kunci');
+$jmlPending      = $bolehVerifVersi ? versi_pending_count() : 0;
+$jmlVerifikasi   = (int) $jmlPending + (int) $lakipMenunggu;
+?>
+<?php if ($bolehVerifVersi || $bolehPerbaikan): ?>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddVerifKab" data-bs-toggle="dropdown" aria-expanded="false">
+      <span><i class="fas fa-gavel"></i> Verifikasi</span>
+      <?php if ($jmlVerifikasi > 0): ?>
+        <span class="badge bg-danger rounded-pill ms-auto me-2"><?= $jmlVerifikasi ?></span>
+      <?php endif; ?>
+    </button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddVerifKab">
+      <?php if ($bolehVerifVersi): ?>
+        <li>
+          <a class="dropdown-item d-flex justify-content-between align-items-center" href="<?= base_url('adminkab/verifikasi') ?>">
+            <span>Pengajuan Versi Dokumen</span>
+            <?php if ($jmlPending > 0): ?>
+              <span class="badge bg-danger rounded-pill"><?= (int) $jmlPending ?></span>
+            <?php endif; ?>
+          </a>
+        </li>
+      <?php endif; ?>
+      <?php if ($bolehPerbaikan): ?>
+        <li>
+          <a class="dropdown-item d-flex justify-content-between align-items-center"
+             href="<?= base_url('adminkab/lakip/permintaan') ?>">
+            <span>Permintaan Perbaikan LAKIP</span>
+            <?php if ($lakipMenunggu > 0): ?>
+              <span class="badge bg-danger rounded-pill"><?= (int) $lakipMenunggu ?></span>
+            <?php endif; ?>
+          </a>
+        </li>
+      <?php endif; ?>
+    </ul>
+  </div>
 <?php endif; ?>
 <?php if (user_can('target_kab.view') || user_can('monev_kab.view') || user_can('pk_bupati.view')): ?>
   <div class="dropdown">
@@ -182,17 +218,7 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
     <button class="<?= $ddBtn ?>" type="button" id="ddLaporKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-file-lines"></i> Pelaporan Kinerja</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddLaporKab">
       <li><a class="dropdown-item" href="<?= base_url('adminkab/lakip') ?>">LAKIP</a></li>
-      <?php if (user_can('lakip_opd.buka_kunci')): ?>
-        <li>
-          <a class="dropdown-item d-flex justify-content-between align-items-center"
-             href="<?= base_url('adminkab/lakip/permintaan') ?>">
-            <span>Permintaan Perbaikan</span>
-            <?php if ($lakipMenunggu > 0): ?>
-              <span class="badge bg-danger rounded-pill"><?= (int) $lakipMenunggu ?></span>
-            <?php endif; ?>
-          </a>
-        </li>
-      <?php endif; ?>
+      <?php /* "Permintaan Perbaikan LAKIP" kini di dropdown Verifikasi. */ ?>
     </ul>
   </div>
 <?php endif; ?>

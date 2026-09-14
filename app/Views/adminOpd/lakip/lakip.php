@@ -314,6 +314,7 @@
                                         <option value="<?= (int) $v['id'] ?>"
                                             <?= ! empty($sl['versi']) && (int) $sl['versi']['id'] === (int) $v['id'] ? 'selected' : '' ?>>
                                             V<?= (int) $v['version_no'] ?> — <?= esc($v['label']) ?>
+                                            <?= ! empty($v['masa']) ? ' · ' . esc($v['masa']) : '' ?>
                                             <?= ! empty($v['rekomendasi']) ? ' (rekomendasi)' : '' ?>
                                         </option>
                                     <?php endforeach; ?>

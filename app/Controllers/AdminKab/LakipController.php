@@ -342,7 +342,10 @@ class LakipController extends BaseController
             'lakipBase' => $this->lakipBaseUrl(),
             'sumberLakip' => $pilihanSumberKab ?? $pilihanSumberOpd ?? null,
         ],
-            $this->dataPengesahanKab((int) $tahun, $mode, $opdId)
+            // ?opd_id= (dropdown "semua OPD") tiba sebagai string kosong, dan
+            // dataPengesahanKab() bertipe ?int — string kosong bukan null,
+            // jadi TypeError. Dinormalkan: kosong/0 = null (lingkup kabupaten).
+            $this->dataPengesahanKab((int) $tahun, $mode, ! empty($opdId) ? (int) $opdId : null)
         ));
     }
 
@@ -1150,11 +1153,16 @@ class LakipController extends BaseController
         // benar-benar berada.
         $barisLakip = $this->lakipModel->find($lakipId);
 
-        if ($barisLakip && ($tolak = $this->tolakBilaDisahkan(
+        // Alasan yang sama dengan status(): id yang tidak ada jangan berbuah "berhasil".
+        if (! $barisLakip) {
+            return redirect()->back()->withInput()->with('error', 'Data LAKIP tidak ditemukan.');
+        }
+
+        if ($tolak = $this->tolakBilaDisahkan(
             (int) ($barisLakip['tahun'] ?? 0),
             (string) ($barisLakip['mode'] ?? 'kabupaten'),
             isset($barisLakip['opd_id']) ? (int) $barisLakip['opd_id'] : null
-        ))) {
+        )) {
             return $tolak;
         }
 
@@ -1190,11 +1198,18 @@ class LakipController extends BaseController
 
         $lakip = $this->lakipModel->find((int) $id);
 
-        if ($lakip && ($tolak = $this->tolakBilaDisahkan(
+        // Baris yang tidak ada tidak boleh berbuah "berhasil": update() pada
+        // id kosong memang tidak menyentuh apa pun, tetapi pemakai membaca
+        // pesan sukses untuk perubahan yang tidak pernah terjadi.
+        if (! $lakip) {
+            return redirect()->back()->with('error', 'Data LAKIP tidak ditemukan.');
+        }
+
+        if ($tolak = $this->tolakBilaDisahkan(
             (int) ($lakip['tahun'] ?? 0),
             (string) ($lakip['mode'] ?? 'kabupaten'),
             isset($lakip['opd_id']) ? (int) $lakip['opd_id'] : null
-        ))) {
+        )) {
             return $tolak;
         }
 

@@ -156,8 +156,12 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                 <?php if ($mode === 'kabupaten' && ($sumberLakip ?? null) !== null): ?>
                     <?php $sl = $sumberLakip; ?>
                     <div class="col-md-4">
+                        <?php /* Filter layar ini tidak dibungkus <form>; navigasinya lewat
+                                 filterData(). Pemilih sumber & versi pernah memakai
+                                 this.form.submit() (salinan layar OPD) — this.form null,
+                                 jadi mengganti versi tidak pernah berbuah apa-apa. */ ?>
                         <label class="form-label fw-semibold text-secondary mb-1">Dinilai terhadap</label>
-                        <select name="sumber" class="form-select" onchange="this.form.submit()">
+                        <select name="sumber" id="sumber_filter" class="form-select" onchange="filterData({ sumberBaru: true })">
                             <?php foreach ($sl['pilihan_sumber'] as $p): ?>
                                 <option value="<?= esc($p['nilai']) ?>"
                                     <?= $sl['sumber'] === $p['nilai'] ? 'selected' : '' ?>
@@ -173,11 +177,12 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                     <?php if (! empty($sl['daftar_versi'])): ?>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold text-secondary mb-1">Versi yang dipakai</label>
-                            <select name="sumber_versi" class="form-select" onchange="this.form.submit()">
+                            <select name="sumber_versi" id="sumber_versi_filter" class="form-select" onchange="filterData()">
                                 <?php foreach ($sl['daftar_versi'] as $v): ?>
                                     <option value="<?= (int) $v['id'] ?>"
                                         <?= (int) ($sl['versi']['id'] ?? 0) === (int) $v['id'] ? 'selected' : '' ?>>
-                                        V<?= (int) ($v['version_no'] ?? 0) ?> — <?= esc($v['label'] ?? '') ?><?= ! empty($v['rekomendasi'])
+                                        V<?= (int) ($v['version_no'] ?? 0) ?> — <?= esc($v['label'] ?? '') ?><?= ! empty($v['masa'])
+                                            ? ' · ' . esc($v['masa']) : '' ?><?= ! empty($v['rekomendasi'])
                                             ? ' (rekomendasi)' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -189,6 +194,21 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                         <div class="col-12">
                             <div class="alert alert-warning py-2 mb-0 small">
                                 <i class="fas fa-circle-info me-1"></i><?= esc($sl['catatan']) ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (! empty($sl['alasan_wajib'])): ?>
+                        <?php /* §27 (kembaran layar OPD): memilih selain rekomendasi harus
+                                 disadari, bukan terjadi diam-diam. Sejak 14 Sep 2026 dropdown
+                                 versi menawarkan SEMUA revisi resmi, jadi peringatan ini yang
+                                 menjaga pilihannya tetap sengaja. */ ?>
+                        <div class="col-12">
+                            <div class="alert alert-warning py-2 mb-0 small">
+                                <i class="fas fa-circle-exclamation me-1"></i>
+                                Anda memakai versi IKU yang <strong>bukan rekomendasi</strong> untuk tahun laporan ini
+                                (rekomendasi = revisi yang masa berlakunya memuat tahun <?= esc((string) ($filters['tahun'] ?? '')) ?>).
+                                Pastikan itu memang disengaja &mdash; capaian akan dinilai terhadap target versi tersebut.
                             </div>
                         </div>
                     <?php endif; ?>
@@ -491,18 +511,30 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
     <?= $this->include('adminKabupaten/templates/footer.php'); ?>
 
     <script>
-        function filterData() {
+        /**
+         * Navigasi filter. `opsi.sumberBaru` = pemakai baru mengganti SUMBER
+         * (IKU/RPJMD): versi lama tidak ikut dikirim, karena id versi milik
+         * sumber lain tidak bermakna — server lalu memilih rekomendasi.
+         */
+        function filterData(opsi) {
+            opsi = opsi || {};
             const params = new URLSearchParams();
 
             const mode = document.getElementById('mode_filter')?.value || 'kabupaten';
             const opd = document.getElementById('opd_filter')?.value || '';
             const thn = document.getElementById('tahun_filter')?.value || '';
             const sts = document.getElementById('status_filter')?.value || '';
+            const sumber = document.getElementById('sumber_filter')?.value || '';
+            const versi = document.getElementById('sumber_versi_filter')?.value || '';
 
             params.set('mode', mode);
             if (mode === 'opd') params.set('opd_id', opd);
             if (thn) params.set('tahun', thn);
             if (sts) params.set('status', sts);
+            // Pemilih sumber/versi hanya ada di mode kabupaten; ikut hanya bila
+            // masih di mode itu (ganti mode = mulai dari bawaan).
+            if (mode === 'kabupaten' && sumber) params.set('sumber', sumber);
+            if (mode === 'kabupaten' && versi && !opsi.sumberBaru) params.set('sumber_versi', versi);
 
             window.location.href = '?' + params.toString();
         }

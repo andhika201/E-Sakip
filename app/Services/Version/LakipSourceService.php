@@ -146,11 +146,18 @@ class LakipSourceService
     /**
      * Versi IKU yang bisa dipakai LAKIP tahun $tahun.
      *
-     * Yang ditawarkan hanya revisi yang PERNAH RESMI (`berlaku` atau
-     * `superseded`) dan masa berlakunya memuat tahun laporan. Draft dan
-     * pengajuan yang belum diputuskan tidak pernah muncul (§2.11, §27):
-     * menawarkan pilihan yang pasti ditolak saat disimpan hanya membuang
-     * waktu operator.
+     * Yang ditawarkan: SEMUA revisi yang PERNAH RESMI (`berlaku` atau
+     * `superseded`) dan periodenya memuat tahun laporan. Draft dan pengajuan
+     * yang belum diputuskan tidak pernah muncul (§2.11, §27): menawarkan
+     * pilihan yang pasti ditolak saat disimpan hanya membuang waktu operator.
+     *
+     * Sampai 14 Sep 2026 daftarnya juga disaring MASA BERLAKU (revisi yang
+     * berlaku pada tahun itu saja), sehingga dropdown "Versi yang dipakai"
+     * praktis hanya berisi satu pilihan — pemakai tidak bisa menilai LAKIP
+     * terhadap revisi lain walau punya alasan. Kini masa berlaku hanya
+     * menentukan REKOMENDASI; memilih selain rekomendasi tetap wajib beralasan
+     * saat disimpan (§27), jadi pagarnya tidak hilang, hanya pindah ke tempat
+     * yang tepat.
      *
      * @return array<int,array<string,mixed>> bentuknya disamakan dengan
      *         VersionResolver::pilihanSumber() supaya tampilan tidak perlu
@@ -168,11 +175,6 @@ class LakipSourceService
         $rows = $this->db->table('iku_revisi')
             ->where('opd_key', $opdKey)
             ->whereIn('status', ['berlaku', 'superseded'])
-            ->where('berlaku_mulai_tahun <=', $tahun)
-            ->groupStart()
-                ->where('berlaku_sampai_tahun IS NULL', null, false)
-                ->orWhere('berlaku_sampai_tahun >=', $tahun)
-            ->groupEnd()
             ->where('tahun_mulai <=', $tahun)
             ->where('tahun_akhir >=', $tahun)
             ->orderBy('berlaku_mulai_tahun', 'DESC')
@@ -183,19 +185,33 @@ class LakipSourceService
             return [];
         }
 
-        // Rekomendasi = revisi yang benar-benar berlaku pada tahun laporan.
-        // Bila lebih dari satu memenuhi (garis waktunya bermasalah), tidak ada
-        // yang ditandai — persis seperti perlakuan VersionResolver.
-        $rekomendasi = count($rows) === 1 ? (int) $rows[0]['id'] : null;
+        // Rekomendasi = revisi yang benar-benar berlaku pada tahun laporan
+        // (masa berlakunya memuat tahun itu). Bila lebih dari satu memenuhi
+        // (garis waktunya bermasalah), tidak ada yang ditandai — persis
+        // seperti perlakuan VersionResolver.
+        $berlakuPadaTahun = static function (array $r) use ($tahun): bool {
+            $mulai  = (int) $r['berlaku_mulai_tahun'];
+            $sampai = $r['berlaku_sampai_tahun'] !== null ? (int) $r['berlaku_sampai_tahun'] : null;
+
+            return $mulai <= $tahun && ($sampai === null || $sampai >= $tahun);
+        };
+
+        $kandidat    = array_values(array_filter($rows, $berlakuPadaTahun));
+        $rekomendasi = count($kandidat) === 1 ? (int) $kandidat[0]['id'] : null;
 
         foreach ($rows as &$r) {
-            $r['version_no']     = (int) $r['nomor'];
-            $r['label']          = (string) ($r['nama'] ?? ('Revisi ke-' . $r['nomor']));
-            $r['effective_from'] = (int) $r['berlaku_mulai_tahun'];
-            $r['effective_to']   = $r['berlaku_sampai_tahun'] !== null
+            $r['version_no']       = (int) $r['nomor'];
+            $r['label']            = (string) ($r['nama'] ?? ('Revisi ke-' . $r['nomor']));
+            $r['effective_from']   = (int) $r['berlaku_mulai_tahun'];
+            $r['effective_to']     = $r['berlaku_sampai_tahun'] !== null
                 ? (int) $r['berlaku_sampai_tahun'] : null;
-            $r['rekomendasi']    = $rekomendasi !== null && (int) $r['id'] === $rekomendasi;
-            $r['badge']          = $r['status'] === 'berlaku' ? 'CURRENT' : 'HISTORICAL';
+            $r['berlaku_pada_tahun'] = $berlakuPadaTahun($r);
+            $r['rekomendasi']      = $rekomendasi !== null && (int) $r['id'] === $rekomendasi;
+            $r['badge']            = $r['status'] === 'berlaku' ? 'CURRENT' : 'HISTORICAL';
+            // Teks masa berlaku untuk dropdown: "berlaku 2026–…" / "berlaku 2025".
+            $r['masa']             = 'berlaku ' . $r['effective_from']
+                . ($r['effective_to'] === null ? '–…'
+                    : ($r['effective_to'] === $r['effective_from'] ? '' : '–' . $r['effective_to']));
         }
         unset($r);
 

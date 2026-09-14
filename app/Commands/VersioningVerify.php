@@ -3032,20 +3032,40 @@ class VersioningVerify extends BaseCommand
             'berlaku_mulai_tahun' => self::MULAI + 2, 'berlaku_sampai_tahun' => null,
         ]);
 
-        // Tahun pertama: hanya revisi 1 yang memayungi.
+        // Sejak 14 Sep 2026: SEMUA revisi resmi yang periodenya memuat tahun
+        // laporan ditawarkan (pemakai bebas memilih, §27 mewajibkan alasan bila
+        // bukan rekomendasi); masa berlaku hanya menentukan REKOMENDASI.
+        $cariId = static function (array $daftar, int $id): ?array {
+            foreach ($daftar as $v) {
+                if ((int) $v['id'] === $id) {
+                    return $v;
+                }
+            }
+
+            return null;
+        };
+
+        // Tahun pertama: keduanya ditawarkan; yang berlaku (revisi 1) direkomendasikan.
         $th1 = $sumber->pilihanVersi('iku', 'opd', $opd, self::MULAI);
 
-        $this->cek('tahun awal dilayani satu revisi', count($th1) === 1);
-        $this->cek('yang dilayani adalah revisi pertama', (int) $th1[0]['id'] === $r1);
-        $this->cek('ditandai sebagai rekomendasi', $th1[0]['rekomendasi'] === true);
-        $this->cek('revisi lama diberi lencana HISTORICAL', $th1[0]['badge'] === 'HISTORICAL');
+        $this->cek('tahun awal menawarkan kedua revisi resmi', count($th1) === 2);
+        $this->cek('revisi pertama direkomendasikan pada tahun awal',
+            ($cariId($th1, $r1)['rekomendasi'] ?? null) === true);
+        $this->cek('revisi kedua TIDAK direkomendasikan pada tahun awal',
+            ($cariId($th1, $r2)['rekomendasi'] ?? null) === false);
+        $this->cek('revisi lama diberi lencana HISTORICAL', ($cariId($th1, $r1)['badge'] ?? '') === 'HISTORICAL');
+        $this->cek('yang direkomendasikan hanya satu',
+            count(array_filter($th1, static fn ($v) => ! empty($v['rekomendasi']))) === 1);
 
-        // Tahun ketiga: revisi 2.
+        // Tahun ketiga: keduanya ditawarkan; revisi 2 yang direkomendasikan.
         $th3 = $sumber->pilihanVersi('iku', 'opd', $opd, self::MULAI + 2);
 
-        $this->cek('tahun ketiga dilayani revisi kedua',
-            count($th3) === 1 && (int) $th3[0]['id'] === $r2);
-        $this->cek('revisi berjalan diberi lencana CURRENT', $th3[0]['badge'] === 'CURRENT');
+        $this->cek('tahun ketiga menawarkan kedua revisi resmi', count($th3) === 2);
+        $this->cek('revisi kedua direkomendasikan pada tahun ketiga',
+            ($cariId($th3, $r2)['rekomendasi'] ?? null) === true);
+        $this->cek('revisi berjalan diberi lencana CURRENT', ($cariId($th3, $r2)['badge'] ?? '') === 'CURRENT');
+        $this->cek('teks masa berlaku tersedia untuk dropdown',
+            ($cariId($th3, $r2)['masa'] ?? '') === 'berlaku ' . (self::MULAI + 2) . '–…');
 
         // Bentuknya harus sama dengan pilihan sumber lain supaya tampilan
         // tidak perlu tahu registrinya yang mana.
@@ -3066,7 +3086,7 @@ class VersioningVerify extends BaseCommand
         ]);
 
         $this->cek('draft tidak ikut ditawarkan',
-            count($sumber->pilihanVersi('iku', 'opd', $opd, self::MULAI + 3)) === 1);
+            count($sumber->pilihanVersi('iku', 'opd', $opd, self::MULAI + 3)) === 2);
 
         $this->db->table('iku_revisi')->where('opd_id', $opd)->delete();
         $this->bersihkanRenstraUji();

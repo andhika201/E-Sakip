@@ -229,6 +229,9 @@ class KabupatenDashboardService
                 'batas_hari'  => self::HARI_TERLAMBAT,
             ],
             'pk_bupati'  => $pkBupati,
+            // Kartu 1 "Capaian PK Bupati" membaca LAKIP tahun yang sudah
+            // jatuh tempo, bukan MONEV PK Bupati — lihat getBupatiLakipAchievement().
+            'lakip_bupati' => $this->getBupatiLakipAchievement($tahun),
             'opd'        => $ringkas,
             'opd_list'   => array_values($statuses),
             'belum_update' => $telat,
@@ -390,6 +393,55 @@ class KabupatenDashboardService
             'indikator'   => $daftar,
             'tahun'       => $tahun,
         ];
+    }
+
+    /**
+     * Kartu 1 (versi tampil) — Capaian PK Bupati DARI LAKIP KABUPATEN.
+     *
+     * =====================================================================
+     * MENGAPA LAKIP, BUKAN MONEV PK BUPATI
+     *
+     * getBupatiPkAchievement() menilai PK Bupati dari MONEV triwulanan. Selama
+     * dokumen PK Bupati tahun itu belum ada atau MONEV-nya tidak diisi, kartu
+     * hanya berbunyi "Belum ada PK Bupati" — padahal capaian kinerja Bupati
+     * sudah dilaporkan resmi lewat LAKIP Kabupaten. Kartu ini karena itu
+     * membaca LAKIP tahun yang SUDAH JATUH TEMPO:
+     *
+     *   dashboard 2026 (tahun berjalan) -> LAKIP 2025 (satu tahun ke belakang)
+     *   dashboard 2025 (sudah lewat)    -> LAKIP 2025 (tahun itu sendiri)
+     *
+     * Aturannya dash_tahun_lakip_jatuh_tempo() — yang sama dengan tagihan
+     * LAKIP di Prioritas Tindak Lanjut OPD — supaya dua bagian dashboard
+     * tidak menunjuk tahun LAKIP yang berbeda.
+     *
+     * Hasil getBupatiPkAchievement() TETAP dipakai panel Prioritas, Misi, dan
+     * Tren; hanya kartu + drawer-nya yang berpindah ke sini.
+     * =====================================================================
+     *
+     * @return array<string, mixed>
+     */
+    public function getBupatiLakipAchievement(int $tahun): array
+    {
+        $tahunLakip = dash_tahun_lakip_jatuh_tempo($tahun);
+        $ringkas    = (new LakipKabupatenCapaianService())->ringkasan($tahunLakip);
+
+        $kritis = 0;
+        foreach ($ringkas['indikator'] as $i) {
+            if ($i['is_valid'] && ($i['status']['code'] ?? '') === 'critical') {
+                $kritis++;
+            }
+        }
+
+        $ringkas['kritis']      = $kritis;
+        $ringkas['tahun_dash']  = $tahun;
+        $ringkas['tahun_lakip'] = $tahunLakip;
+        $ringkas['status']      = $ringkas['can_compute']
+            ? getAchievementStatus((float) $ringkas['total'])
+            : dash_status_nonnumeric($ringkas['ada'] ? 'belum_valid' : 'belum_ada_data');
+        $ringkas['label']       = $ringkas['final'] ? 'Final' : 'Sementara';
+        $ringkas['url']         = base_url($this->linkArea . '/lakip?mode=kabupaten&tahun=' . $tahunLakip);
+
+        return $ringkas;
     }
 
     /**

@@ -194,9 +194,10 @@
                             $hasil = ($realisasi / $target) * 100;
                         }
 
-                        // indikator negatif (turun = baik)
+                        // indikator negatif (turun = baik): target / realisasi, rumus yang
+                        // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
                         elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                            $hasil = (($target - ($realisasi - $target)) / $target) * 100;
+                            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
                         } else {
                             return null;
                         }
@@ -206,9 +207,10 @@
                             return null;
                         }
 
-                        // batasi nilai ekstrem (opsional tapi disarankan)
-                        if ($hasil < 0)
-                            $hasil = 0;
+                        // batasi nilai ekstrem ke ATAS saja. Negatif dibiarkan:
+                        // realisasi minus terhadap target plus memang capaian
+                        // minus — dipotong ke 0% menyembunyikan melesetnya,
+                        // dan cetak/Excel serta dashboard menampilkannya apa adanya.
                         if ($hasil > 200)
                             $hasil = 200;
 

@@ -19,8 +19,14 @@ if (!function_exists('hitungCapaianLakip')) {
             return ($realisasi / $target) * 100;
         }
 
+        // Indikator negatif (semakin rendah semakin baik): target / realisasi.
+        // Rumus yang SAMA dengan metode "Trend Turun" pada MONEV
+        // (calculateCapaianTotalPercentage) — sebelumnya LAKIP memakai
+        // (2×target − realisasi)/target, sehingga Indeks Risiko Bencana target
+        // 88,82 realisasi 135,15 tampil 47,84% di LAKIP tetapi 65,72% di MONEV.
+        // Realisasi 0 = target tercapai sempurna -> 100%, seperti MONEV.
         if ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-            return (($target - ($realisasi - $target)) / $target) * 100;
+            return $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
         }
 
         return null;

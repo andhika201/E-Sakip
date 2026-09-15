@@ -243,14 +243,15 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                     if ($jenis === 'indikator positif' || $jenis === 'positif') {
                         $hasil = ($realisasi / $target) * 100;
                     }
-                    // indikator negatif (semakin kecil semakin baik)
+                    // indikator negatif (semakin kecil semakin baik): target / realisasi,
+                    // rumus yang sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
                     elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                        $hasil = (($target - ($realisasi - $target)) / $target) * 100;
+                        $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
                     } else {
                         return null;
                     }
 
-                    return max(0, min($hasil, 200)); // clamp 0–200%
+                    return min($hasil, 200); // batas atas 200%; negatif dibiarkan (sama dengan cetak/Excel & dashboard)
                 }
 
             }

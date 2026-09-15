@@ -59,17 +59,22 @@ $action   = $isEdit
     : $baseUrl . '/save';
 
 // Nilai prefill (edit pakai $detail, tambah pakai old())
+// old() meng-esc() nilainya secara bawaan. Di sini SEMUA pemakainya sudah
+// meng-esc() sendiri (value="…"), membandingkan mentah ($pjVal === nama
+// OPD), atau memasukkannya ke JSON untuk skrip — jadi escape bawaan itu
+// justru merusak: "&" jadi "&amp;amp;" di kotak isian, dan nama OPD ber-"&"
+// tidak pernah terpilih lagi setelah galat validasi. Nilai mentah dikembalikan.
 $val = function (string $k) use ($isEdit, $detail, $ctx) {
     if ($isEdit) {
         $default = $detail[$k] ?? '';
         if ($k === 'penanggung_jawab' && $default === '') {
             $default = $ctx['pejabat_jabatan'] ?? '';
         }
-        return old($k, $default);
+        return old($k, $default, false);
     }
 
     $default = ($k === 'penanggung_jawab') ? ($ctx['pejabat_jabatan'] ?? '') : '';
-    return old($k, $default);
+    return old($k, $default, false);
 };
 $tahun  = $ctx['tahun'] ?? ($ctx['indikator_tahun'] ?? '-');
 
@@ -115,6 +120,28 @@ $labelUnit = $labelUnitHeader
            menahannya di baris pertama, tetapi hasilnya justru rusak: sudut
            kanan bawah grup menganga dan sisanya tampak menggantung. Meregang
            membuat satu baris sub tetap terbaca sebagai satu kesatuan kotak. */
+
+        /* Sub yang DIKEMBALIKAN ke form setelah penghapusannya ditolak
+           (capaian MONEV-nya sudah tersimpan). Ditandai jelas: inilah baris
+           yang tadi "hilang" dari layar padahal masih ada di basis data. */
+        .sub-item.sub-ditolak .input-group > .form-control,
+        .sub-item.sub-ditolak .input-group > .form-select,
+        .sub-item.sub-ditolak .input-group > .input-group-text {
+            border-color: #dc3545;
+        }
+
+        .sub-item.sub-ditolak .sub-ditolak-ket {
+            color: #b02a37;
+            font-size: .8125rem;
+            margin: .125rem 0 .25rem 2.25rem;
+        }
+
+        /* Sub yang capaian MONEV-nya tersimpan: tombol hapusnya tetap ada
+           (menekan memunculkan penjelasan), tetapi tampil lebih redup supaya
+           terbaca "tidak semudah itu". */
+        .sub-item.sub-bermonev .remove-sub {
+            opacity: .55;
+        }
     </style>
 </head>
 
@@ -128,7 +155,40 @@ $labelUnit = $labelUnitHeader
             <h2 class="h3 fw-bold text-center mb-4" style="color:#00743e;"><?= esc($judul) ?></h2>
 
             <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger mb-3"><?= session()->getFlashdata('error') ?></div>
+                <?php // Pesannya teks polos dan ikut membawa nama sub ketikan pemakai — di-esc(). ?>
+                <div class="alert alert-danger mb-3"><?= esc(session()->getFlashdata('error')) ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($subDitolak)): ?>
+                <?php /* Sub yang penghapusannya DITOLAK server. Baris-barisnya
+                         dipasang kembali ke form oleh skrip di bawah (ditandai
+                         merah); panel ini menjelaskan mengapa dan membuka
+                         jalan pintas ke layar MONEV tempat capaiannya bisa
+                         dikosongkan. Semua teks di sini diketik pemakai, jadi
+                         di-esc(). */ ?>
+                <div class="alert alert-warning mb-3" id="panel-sub-ditolak">
+                    <div class="fw-semibold mb-1">
+                        <i class="fas fa-rotate-left me-1"></i>
+                        <?= count($subDitolak) ?> sub rencana aksi dikembalikan ke form
+                    </div>
+                    <div class="small mb-2">
+                        Sub berikut tidak bisa dibuang karena capaian MONEV-nya sudah tersimpan.
+                        Kalau memang hendak dihapus, kosongkan dulu capaiannya lewat tautan
+                        <em>Buka MONEV</em>, lalu simpan ulang form ini.
+                    </div>
+                    <ul class="small mb-0 ps-3">
+                        <?php foreach ($subDitolak as $d): ?>
+                            <li class="mb-1">
+                                &ldquo;<?= esc($d['teks']) ?>&rdquo;
+                                <span class="text-muted">(<?= esc($d['ringkas']) ?>)</span>
+                                &mdash;
+                                <a href="<?= esc($d['monev_url']) ?>" target="_blank" rel="noopener">
+                                    Buka MONEV <i class="fas fa-arrow-up-right-from-square fa-xs"></i>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
             <?php endif; ?>
 
             <form action="<?= $action ?>" method="post" novalidate>
@@ -309,10 +369,27 @@ $labelUnit = $labelUnitHeader
                 JSON_UNESCAPED_UNICODE
             ) ?>;
             var initialSub = <?= json_encode($subRencana ?? [], JSON_UNESCAPED_UNICODE) ?>;
-            var oldSub = <?= json_encode((string) (old('sub_rencana_json') ?? '')) ?>;
+            // old() TANPA escape: nilainya JSON yang akan di-JSON.parse. Dengan
+            // escape bawaan, tanda kutipnya jadi &quot; literal di dalam <script>
+            // (entitas HTML tidak didekode di sana), parse selalu gagal, dan form
+            // diam-diam kembali ke data tersimpan — suntingan pemakai hilang
+            // setiap kali ada galat. json_encode() sudah mengamankannya untuk
+            // skrip ("</" menjadi "<\/").
+            var oldSub = <?= json_encode((string) (old('sub_rencana_json', '', false) ?? '')) ?>;
             if (oldSub) {
                 try { initialSub = JSON.parse(oldSub); } catch (err) { /* pakai data tersimpan */ }
             }
+
+            // Capaian MONEV yang sudah tersimpan, per id sub: { "191": {"1":"0","2":"25"} }.
+            // Hanya triwulan terisi yang ada. Definisinya SAMA dengan penjaga
+            // server (MonevModel::capaianTerisiPerSub) — form tidak pernah
+            // membolehkan apa yang server akan tolak.
+            var MONEV = <?= json_encode((object) ($subMonev ?? []), JSON_UNESCAPED_UNICODE) ?>;
+            var MONEV_URL = <?= json_encode((string) ($monevInputUrl ?? '')) ?>;
+
+            // Sub yang baru saja ditolak penghapusannya oleh server. Dipasang
+            // kembali ke barisnya setelah form dibangun dari old().
+            var SUB_DITOLAK = <?= json_encode(array_values($subDitolak ?? []), JSON_UNESCAPED_UNICODE) ?>;
 
             var list = document.getElementById('renaksi-list');
             var joined = document.getElementById('rencana_aksi_joined');
@@ -400,7 +477,9 @@ $labelUnit = $labelUnitHeader
                         ? '<option value="' + esc(satuan) + '" selected>' + esc(satuan) + ' (di luar master)</option>'
                         : '');
 
-                return '<div class="sub-item mb-2" data-id="' + esc(id) + '">'
+                var kelasTambahan = (id && MONEV[id]) ? ' sub-bermonev' : '';
+
+                return '<div class="sub-item mb-2' + kelasTambahan + '" data-id="' + esc(id) + '">'
                     + '<div class="input-group input-group-sm mb-1">'
                     + '<span class="input-group-text sub-no bg-white text-muted"></span>'
                     // Textarea, bukan input satu baris. Sub rencana aksi sering
@@ -419,10 +498,75 @@ $labelUnit = $labelUnitHeader
                     + '<select class="form-select sub-satuan flex-grow-0 flex-shrink-1"'
                     + ' style="flex-basis:220px;min-width:130px"'
                     + ' title="Satuan target triwulan sub ini">' + satOpts + '</select>'
-                    + '<button type="button" class="btn btn-outline-danger remove-sub" title="Hapus sub"><i class="fas fa-times"></i></button>'
+                    + '<button type="button" class="btn btn-outline-danger remove-sub" title="'
+                    + (kelasTambahan ? 'Capaian MONEV sudah tersimpan &mdash; lihat keterangan' : 'Hapus sub')
+                    + '"><i class="fas fa-times"></i></button>'
                     + '</div>'
                     + '<div class="row g-1 ps-4">' + twHtml + '</div>'
                     + '</div>';
+            }
+
+            /** "TW I: 0, TW II: 25" dari peta capaian satu sub. */
+            function ringkasCapaian(peta) {
+                var rom = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+                var bagian = [];
+                [1, 2, 3, 4].forEach(function (q) {
+                    if (peta && peta[q] !== undefined && peta[q] !== null && String(peta[q]) !== '') {
+                        bagian.push('TW ' + rom[q] + ': ' + peta[q]);
+                    }
+                });
+                return bagian.join(', ');
+            }
+
+            /** Rincian untuk dialog: satu baris per triwulan terisi. */
+            function rincianCapaian(peta) {
+                var rom = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' };
+                var baris = [];
+                [1, 2, 3, 4].forEach(function (q) {
+                    if (peta && peta[q] !== undefined && peta[q] !== null && String(peta[q]) !== '') {
+                        baris.push('Triwulan ' + rom[q] + ': ' + peta[q]);
+                    }
+                });
+                return baris;
+            }
+
+            /**
+             * Dialog konfirmasi milik aplikasi (templates/konfirmasi.php).
+             * Kalau karena suatu hal belum termuat, jatuh ke confirm() bawaan
+             * — tetap bertanya, hanya tanpa rinciannya.
+             */
+            function tanya(o) {
+                if (window.Konfirmasi && typeof window.Konfirmasi.tanya === 'function') {
+                    return window.Konfirmasi.tanya(o);
+                }
+                var teks = (o.judul ? o.judul + '\n\n' : '') + (o.pesan || '')
+                    + (o.nama ? '\n\n' + o.nama : '')
+                    + (o.rincian && o.rincian.length ? '\n- ' + o.rincian.join('\n- ') : '');
+                return Promise.resolve(window.confirm(teks));
+            }
+
+            /**
+             * Sub yang capaian MONEV-nya tersimpan TIDAK dihapus dari form —
+             * server toh akan menolaknya, dan menghilangkannya dari layar hanya
+             * menjebak pemakai (lihat SUB_DITOLAK). Yang ditawarkan: buka MONEV.
+             */
+            function jelaskanBermonev(teks, id) {
+                var url = MONEV_URL ? MONEV_URL + '?sub=' + encodeURIComponent(id) : '';
+                return tanya({
+                    jenis: 'peringatan',
+                    judul: 'Capaian MONEV sudah tersimpan',
+                    pesan: 'Sub rencana aksi ini tidak bisa dihapus selama capaian MONEV-nya masih terisi. '
+                        + 'Kosongkan dulu capaiannya di menu MONEV, lalu simpan ulang form ini.',
+                    nama: teks,
+                    rincian: rincianCapaian(MONEV[id]),
+                    rincianJudul: 'Capaian yang tersimpan',
+                    ya: url ? 'Buka MONEV' : 'Mengerti',
+                    tidak: 'Tutup',
+                    permanen: false
+                }).then(function (ya) {
+                    if (ya && url) { window.open(url, '_blank', 'noopener'); }
+                    return false;
+                });
             }
 
             function rowHtml(val, subs) {
@@ -536,6 +680,109 @@ $labelUnit = $labelUnitHeader
                 addRow(line, subs);
             });
 
+            /**
+             * PASANG KEMBALI SUB YANG DITOLAK SERVER.
+             *
+             * Form di atas dibangun dari old() — kiriman yang ditolak — dan di
+             * kiriman itu sub-nya memang sudah tidak ada. Tanpa langkah ini
+             * pemakai melihat form "sudah bersih", menekan Simpan, dan ditolak
+             * lagi dengan pesan yang sama.
+             *
+             * Untuk tiap sub: cari butir induknya (indeks baris_rencana, dicek
+             * teksnya; kalau tidak cocok, cari butir bertekst sama di mana pun;
+             * kalau butirnya ikut dihapus, butirnya dibuat lagi). Lalu, kalau di
+             * butir itu ada sub BARU (id 0) berteks sama — pemakai menghapus lalu
+             * mengetik ulang — sub baru itu yang "diadopsi" memakai id lama,
+             * supaya tidak jadi dua. Selain itu, barisnya disisipkan kembali.
+             */
+            function pulihkanSubDitolak() {
+                if (!SUB_DITOLAK.length) return;
+
+                SUB_DITOLAK.forEach(function (d) {
+                    var id = String(d.id);
+                    if (d.capaian) MONEV[id] = d.capaian;
+
+                    var items = list.querySelectorAll('.renaksi-item');
+                    var butirTeks = String(d.butir || '').trim();
+                    var item = null;
+
+                    var kandidat = items[d.baris_rencana];
+                    if (kandidat) {
+                        var inp = kandidat.querySelector('.renaksi-input');
+                        if (inp && (butirTeks === '' || inp.value.trim() === butirTeks)) item = kandidat;
+                    }
+                    if (!item && butirTeks !== '') {
+                        Array.prototype.some.call(items, function (it) {
+                            var i2 = it.querySelector('.renaksi-input');
+                            if (i2 && i2.value.trim() === butirTeks) { item = it; return true; }
+                            return false;
+                        });
+                    }
+                    if (!item) {
+                        addRow(butirTeks, []);
+                        item = list.lastElementChild;
+                    }
+
+                    var wrap = item.querySelector('.sub-list');
+                    if (!wrap) return;
+
+                    // Sudah ada dengan id yang sama DI MANA PUN di form (mis. tombol
+                    // Kembali peramban, atau form terbangun dari data tersimpan)?
+                    // Cukup ditandai di tempatnya — jangan sampai jadi dua.
+                    var sudah = list.querySelector('.sub-item[data-id="' + id + '"]');
+
+                    if (!sudah) {
+                        var teksSub = String(d.teks || '').trim();
+                        Array.prototype.some.call(wrap.querySelectorAll('.sub-item'), function (si) {
+                            var sid = si.getAttribute('data-id');
+                            var ta  = si.querySelector('.sub-input');
+                            if ((!sid || sid === '0') && ta && ta.value.trim() === teksSub) {
+                                si.setAttribute('data-id', id);
+                                sudah = si;
+                                return true;
+                            }
+                            return false;
+                        });
+                    }
+
+                    if (!sudah) {
+                        var t = d.tw || {};
+                        wrap.insertAdjacentHTML('beforeend', subRowHtml({
+                            id: d.id,
+                            teks: d.teks || '',
+                            satuan: d.satuan || '',
+                            tw: [t[1] || '', t[2] || '', t[3] || '', t[4] || '']
+                        }));
+                        sudah = wrap.lastElementChild;
+                        tumbuhkanSemua(sudah);
+                    }
+
+                    sudah.classList.add('sub-ditolak', 'sub-bermonev');
+
+                    if (!sudah.querySelector('.sub-ditolak-ket')) {
+                        var ket = document.createElement('div');
+                        ket.className = 'sub-ditolak-ket';
+                        ket.textContent = 'Dikembalikan: capaian MONEV sudah tersimpan (' + ringkasCapaian(d.capaian) + '). ';
+                        if (d.monev_url) {
+                            var a = document.createElement('a');
+                            a.href = d.monev_url;
+                            a.target = '_blank';
+                            a.rel = 'noopener';
+                            a.textContent = 'Buka MONEV';
+                            ket.appendChild(a);
+                        }
+                        var grup = sudah.querySelector('.input-group');
+                        if (grup && grup.nextSibling) sudah.insertBefore(ket, grup.nextSibling);
+                        else sudah.appendChild(ket);
+                    }
+                });
+
+                renumber();
+                sync();
+            }
+
+            pulihkanSubDitolak();
+
             document.getElementById('add-renaksi').addEventListener('click', function () { addRow('', []); });
 
             list.addEventListener('click', function (e) {
@@ -551,26 +798,109 @@ $labelUnit = $labelUnitHeader
                 }
 
                 if (e.target.closest('.remove-sub')) {
-                    e.target.closest('.sub-item').remove();
-                    renumber();
-                    sync();
+                    var subEl  = e.target.closest('.sub-item');
+                    var subId  = subEl.getAttribute('data-id') || '';
+                    var subTa  = subEl.querySelector('.sub-input');
+                    var subTxt = subTa ? subTa.value.trim() : '';
+
+                    // Capaian MONEV-nya tersimpan: jelaskan, jangan dihapus.
+                    if (subId && MONEV[subId]) {
+                        jelaskanBermonev(subTxt, subId);
+                        return;
+                    }
+
+                    // Sub yang masih kosong tidak perlu ditanya — tidak ada yang hilang.
+                    if (subTxt === '') {
+                        subEl.remove();
+                        renumber();
+                        sync();
+                        return;
+                    }
+
+                    tanya({
+                        jenis: 'hapus',
+                        judul: 'Hapus Sub Rencana Aksi',
+                        pesan: 'Sub ini dibuang dari daftar dan ikut terhapus saat form disimpan.',
+                        nama: subTxt,
+                        permanen: false
+                    }).then(function (ya) {
+                        if (!ya) return;
+                        subEl.remove();
+                        renumber();
+                        sync();
+                    });
                     return;
                 }
 
                 if (e.target.closest('.remove-renaksi')) {
-                    var items = list.querySelectorAll('.renaksi-item');
-                    if (items.length > 1) {
-                        e.target.closest('.renaksi-item').remove();
-                    } else {
-                        // sisa satu butir: kosongkan saja, jangan sampai form tanpa baris
-                        var item = e.target.closest('.renaksi-item');
-                        var inp = item.querySelector('.renaksi-input');
-                        if (inp) inp.value = '';
-                        var sl = item.querySelector('.sub-list');
-                        if (sl) sl.innerHTML = '';
+                    var items  = list.querySelectorAll('.renaksi-item');
+                    var item   = e.target.closest('.renaksi-item');
+                    var inp    = item.querySelector('.renaksi-input');
+                    var butir  = inp ? inp.value.trim() : '';
+                    var subEls = item.querySelectorAll('.sub-item');
+
+                    // Ada sub di butir ini yang capaian MONEV-nya tersimpan?
+                    // Butirnya tidak bisa dibuang utuh — sub itu akan ditolak server.
+                    var bermonev = [];
+                    Array.prototype.forEach.call(subEls, function (si) {
+                        var sid = si.getAttribute('data-id') || '';
+                        var ta  = si.querySelector('.sub-input');
+                        if (sid && MONEV[sid]) {
+                            bermonev.push((ta ? ta.value.trim() : '') + ' (' + ringkasCapaian(MONEV[sid]) + ')');
+                        }
+                    });
+
+                    if (bermonev.length) {
+                        tanya({
+                            jenis: 'peringatan',
+                            judul: 'Butir ini punya capaian MONEV',
+                            pesan: 'Rencana aksi ini tidak bisa dihapus utuh: ' + bermonev.length
+                                + ' sub di dalamnya sudah punya capaian MONEV tersimpan. '
+                                + 'Kosongkan dulu capaiannya di menu MONEV, atau hapus sub lainnya saja.',
+                            nama: butir,
+                            rincian: bermonev,
+                            rincianJudul: 'Sub yang menahan',
+                            ya: 'Mengerti',
+                            tidak: 'Tutup',
+                            permanen: false
+                        });
+                        return;
                     }
-                    renumber();
-                    sync();
+
+                    function buangButir() {
+                        if (items.length > 1) {
+                            item.remove();
+                        } else {
+                            // sisa satu butir: kosongkan saja, jangan sampai form tanpa baris
+                            if (inp) inp.value = '';
+                            var sl = item.querySelector('.sub-list');
+                            if (sl) sl.innerHTML = '';
+                        }
+                        renumber();
+                        sync();
+                    }
+
+                    // Butir yang masih kosong tanpa sub berisi: langsung saja.
+                    var subBerisi = 0;
+                    Array.prototype.forEach.call(subEls, function (si) {
+                        var ta = si.querySelector('.sub-input');
+                        if (ta && ta.value.trim() !== '') subBerisi++;
+                    });
+                    if (butir === '' && subBerisi === 0) {
+                        buangButir();
+                        return;
+                    }
+
+                    tanya({
+                        jenis: 'hapus',
+                        judul: 'Hapus Rencana Aksi',
+                        pesan: 'Butir ini beserta seluruh sub-nya dibuang dari daftar dan ikut terhapus saat form disimpan.',
+                        nama: butir,
+                        rincian: subBerisi ? [subBerisi + ' sub rencana aksi'] : [],
+                        permanen: false
+                    }).then(function (ya) {
+                        if (ya) buangButir();
+                    });
                 }
             });
 

@@ -57,6 +57,10 @@ class OpdDashboardService
         'indikator_belum_valid' => ['kunci' => 'belum_valid',     'label' => 'indikator belum dapat dihitung',      'warna' => 'abu'],
         'anggaran_belum'        => ['kunci' => 'anggaran_belum',  'label' => 'realisasi anggaran belum diperbarui', 'warna' => 'biru'],
         'verifikasi'            => ['kunci' => 'verifikasi',      'label' => 'laporan LAKIP belum final',           'warna' => 'abu'],
+        // Masalah VALIDITAS ANGKA ANGGARAN, bukan capaian kinerja (§38).
+        // Sengaja tidak memakai kunci 'kritis': indikatornya bisa saja
+        // berkinerja baik, yang keliru adalah angka realisasinya.
+        'anggaran_melebihi_pagu' => ['kunci' => 'anggaran_lebih', 'label' => 'realisasi anggaran melebihi pagu',    'warna' => 'merah'],
     ];
 
     private $db;
@@ -1966,6 +1970,41 @@ class OpdDashboardService
                 'Realisasi anggaran', 'biru', $urlMon, 'Perbarui Realisasi', $i['indikator_id']);
         }
 
+        // =============================================================
+        // REALISASI MELEBIHI PAGU (§37, §38, §39)
+        //
+        // Satu unit anggaran boleh dipakai beberapa indikator, dan tiap
+        // indikator mengisi BAGIANnya. Bila jumlah seluruh bagian melampaui
+        // pagu unitnya, angkanya pasti keliru — entah ada yang mengisi
+        // realisasi unit secara utuh, entah pagunya belum diperbarui.
+        //
+        // Dilaporkan PER UNIT, bukan per indikator: satu unit yang dipakai
+        // 10 indikator adalah SATU masalah, dan memecahnya jadi 10 butir
+        // akan membuat "perlu perhatian" tampak sepuluh kali lebih genting
+        // daripada keadaan sebenarnya.
+        // =============================================================
+        foreach ($this->unitLebihPagu($opdId, $tahun) as $u) {
+            $rp = static fn ($n) => 'Rp' . number_format((float) $n, 0, ',', '.');
+
+            $out[] = $this->insight(
+                70,
+                'anggaran_melebihi_pagu',
+                trim((string) ($u['kode'] ?? '')) !== ''
+                    ? $u['kode'] . ' — ' . $u['nama']
+                    : (string) $u['nama'],
+                'Pagu ' . $rp($u['pagu']) . ', realisasi ' . $rp($u['total_realisasi'])
+                    . ' (lebih ' . $rp($u['selisih']) . ')'
+                    . ($u['jumlah_indikator'] > 1
+                        ? ' dari ' . $u['jumlah_indikator'] . ' indikator yang memakainya.'
+                        : '.'),
+                'Melebihi pagu',
+                'merah',
+                $urlMon,
+                'Perbaiki Realisasi',
+                null
+            );
+        }
+
         // Status verifikasi/pelaporan — memakai status LAKIP yang memang ada,
         // bukan status verifikasi karangan (lihat verificationInfo()).
         //
@@ -1993,6 +2032,26 @@ class OpdDashboardService
     }
 
     /** @return array<string, mixed> */
+    /**
+     * Unit anggaran yang realisasinya melampaui pagu, untuk lingkup dashboard.
+     *
+     * Dibungkus di sini supaya dashboard dan form MONEV membaca dari SATU
+     * sumber (AnggaranUnitService). Kalau masing-masing menghitung sendiri,
+     * angka "2 unit perlu diperbaiki" di dashboard bisa berbeda dengan yang
+     * benar-benar ditemukan operator saat membuka formnya.
+     *
+     * @return list<array<string,mixed>>
+     */
+    private function unitLebihPagu(?int $opdId, ?int $tahun): array
+    {
+        static $cache = [];
+
+        $kunci = ($opdId ?? 'null') . ':' . ($tahun ?? 'null');
+
+        return $cache[$kunci] ??= (new \App\Services\AnggaranUnitService($this->db))
+            ->unitLebihPagu($opdId, $tahun);
+    }
+
     private function insight(
         int $severity,
         string $code,

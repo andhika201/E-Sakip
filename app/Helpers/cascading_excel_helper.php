@@ -119,7 +119,7 @@ if (!function_exists('cascading_kab_excel')) {
     /** Cascading Kabupaten (getMatrix): Tujuan/Sasaran/Indikator/Satuan/Baseline/Target per tahun/Program/OPD. */
     function cascading_kab_excel(array $rows, array $years, string $periode): void
     {
-        $headers = ['Tujuan RPJMD', 'Sasaran RPJMD', 'Indikator Sasaran', 'Satuan', 'Baseline'];
+        $headers = ['Tujuan RPJMD', 'Sasaran IKU Kabupaten', 'Indikator IKU', 'Satuan', 'Baseline'];
         foreach ($years as $y) {
             $headers[] = (string) $y;
         }
@@ -128,8 +128,10 @@ if (!function_exists('cascading_kab_excel')) {
 
         $data = [];
         foreach ($rows as $rw) {
+            // Tujuan NULL = sasaran IKU belum dijangkarkan ke RPJMD (bukan data hilang).
+            $tujuan = $rw['tujuan_rpjmd'] ?? null;
             $row = [
-                _casc_txt($rw['tujuan_rpjmd'] ?? '-'),
+                _casc_txt($tujuan !== null && $tujuan !== '' ? $tujuan : '(belum dijangkarkan ke RPJMD)'),
                 _casc_txt($rw['sasaran_rpjmd'] ?? '-'),
                 _casc_txt($rw['indikator_sasaran'] ?? '-'),
                 _casc_txt($rw['satuan'] ?? '-'),

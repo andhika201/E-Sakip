@@ -194,9 +194,10 @@
                             $hasil = ($realisasi / $target) * 100;
                         }
 
-                        // indikator negatif (turun = baik)
+                        // indikator negatif (turun = baik): target / realisasi, rumus yang
+                        // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
                         elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                            $hasil = (($target - ($realisasi - $target)) / $target) * 100;
+                            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
                         } else {
                             return null;
                         }
@@ -206,9 +207,10 @@
                             return null;
                         }
 
-                        // batasi nilai ekstrem (opsional tapi disarankan)
-                        if ($hasil < 0)
-                            $hasil = 0;
+                        // batasi nilai ekstrem ke ATAS saja. Negatif dibiarkan:
+                        // realisasi minus terhadap target plus memang capaian
+                        // minus — dipotong ke 0% menyembunyikan melesetnya,
+                        // dan cetak/Excel serta dashboard menampilkannya apa adanya.
                         if ($hasil > 200)
                             $hasil = 200;
 
@@ -314,6 +316,7 @@
                                         <option value="<?= (int) $v['id'] ?>"
                                             <?= ! empty($sl['versi']) && (int) $sl['versi']['id'] === (int) $v['id'] ? 'selected' : '' ?>>
                                             V<?= (int) $v['version_no'] ?> — <?= esc($v['label']) ?>
+                                            <?= ! empty($v['masa']) ? ' · ' . esc($v['masa']) : '' ?>
                                             <?= ! empty($v['rekomendasi']) ? ' (rekomendasi)' : '' ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -530,10 +533,18 @@
                                                         <?php // Ubah status & hapus DUA-DUANYA menulis ke basis data,
                                                               // jadi keduanya lewat POST — lihat templates/tombol_hapus.php. ?>
                                                         <?php if ($changeStatusUrl && $nextStatus): ?>
+                                                            <?php /* Partial tombol_hapus dipakai karena bentuknya form POST,
+                                                                     tetapi ini BUKAN penghapusan: jenis & label tombol harus
+                                                                     disebut, kalau tidak dialognya memakai bawaan hapus
+                                                                     ("Ya, Hapus", ikon tong sampah, "tidak dapat dibatalkan").
+                                                                     Disamakan dengan adminKabupaten/lakip/lakip.php. */ ?>
                                                             <?= view('templates/tombol_hapus', [
                                                                 'url'   => $changeStatusUrl . $qsBase,
-                                                                'pesan' => 'Ubah status LAKIP menjadi ' . ucfirst($nextStatus) . '?',
+                                                                'pesan' => 'Status LAKIP ini akan diubah menjadi ' . ucfirst($nextStatus) . '.',
                                                                 'judul' => 'Ubah status ke ' . ucfirst($nextStatus),
+                                                                'nama'  => trim(($indikator['indikator_sasaran'] ?? '') . ' — Tahun ' . ($filters['tahun'] ?? '-')),
+                                                                'jenis' => 'tanya',
+                                                                'ya'    => 'Ya, Ubah Status',
                                                                 'kelas' => 'btn btn-sm btn-info',
                                                                 'ikon'  => 'fas fa-sync-alt',
                                                             ]) ?>

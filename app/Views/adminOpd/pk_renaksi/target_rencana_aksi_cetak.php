@@ -233,7 +233,7 @@ $splitAksi = function ($text) {
             ?>
             <?php foreach ($grouped as $rows): ?>
                 <?php
-                $sasaran = $rows[0]['sasaran_renstra'] ?? '-';
+                $sasaran = $rows[0]['sasaran_renstra'] ?? '';
                 $sasTotal = count($rows);
                 $autoOpds = ($autoPd ?? [])[$normSas($sasaran)] ?? [];
                 if (empty($autoOpds)) {
@@ -260,10 +260,10 @@ $splitAksi = function ($text) {
                             <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
                             <?php $sasPrinted = true; ?>
                         <?php endif; ?>
-                        <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                        <td class="c nowrap"><?= esc($row['indikator_tahun'] ?? '-') ?></td>
-                        <td class="c"><?= esc($row['satuan'] ?? '-') ?></td>
-                        <td class="c"><?= esc($row['indikator_target'] ?? '-') ?></td>
+                        <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
+                        <td class="c nowrap"><?= esc($row['indikator_tahun'] ?? '') ?></td>
+                        <td class="c"><?= esc($row['satuan'] ?? '') ?></td>
+                        <td class="c"><?= esc($row['indikator_target'] ?? '') ?></td>
                         <?php if (!$pdPrinted): ?>
                             <td rowspan="<?= $sasTotal ?>" class="text-start">
                                 <?php if ($isManual): ?>
@@ -378,7 +378,7 @@ $splitAksi = function ($text) {
             ?>
             <?php foreach ($grouped as $rows): ?>
                 <?php
-                $sasaran = $rows[0]['sasaran_renstra'] ?? '-';
+                $sasaran = $rows[0]['sasaran_renstra'] ?? '';
                 $opdKey  = $rows[0]['opd_id'] ?? ($rows[0]['nama_opd'] ?? '-');
                 $indCounts = [];
                 $sasTotal = 0;
@@ -420,13 +420,13 @@ $splitAksi = function ($text) {
                                 <?php $noPrinted = true; ?>
                             <?php endif; ?>
                             <?php if ($showOpd && $newOpd): ?>
-                                <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
+                                <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '') ?></td>
                                 <?php $curOpdKey = $opdKey; $newOpd = false; ?>
                             <?php endif; ?>
                             <?php if (!$sasPrinted): ?>
                                 <?php if ($showPejabat): ?>
                                     <td rowspan="<?= $sasTotal ?>" class="text-start">
-                                        <div><strong><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></strong></div>
+                                        <div><strong><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '')) ?></strong></div>
                                         <span class="badge-lite"><?= esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
                                     </td>
                                 <?php endif; ?>
@@ -434,9 +434,9 @@ $splitAksi = function ($text) {
                                 <?php $sasPrinted = true; ?>
                             <?php endif; ?>
                             <?php if ($k === 0): ?>
-                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                                <td rowspan="<?= $n ?>" class="c nowrap"><?= esc($row['indikator_tahun'] ?? '-') ?></td>
-                                <td rowspan="<?= $n ?>" class="c"><?= esc($row['satuan'] ?? '-') ?></td>
+                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
+                                <td rowspan="<?= $n ?>" class="c nowrap"><?= esc($row['indikator_tahun'] ?? '') ?></td>
+                                <td rowspan="<?= $n ?>" class="c"><?= esc($row['satuan'] ?? '') ?></td>
 
                             <?php endif; ?>
 
@@ -463,7 +463,7 @@ $splitAksi = function ($text) {
                                     <?php if ($tandaiTingkat): ?>
                                         <div><span class="badge-lite"><?= esc($unit['level_label']) ?></span></div>
                                     <?php endif; ?>
-                                    <?= esc(!empty($unit['kode']) ? '[' . $unit['kode'] . '] ' : '') ?><?= esc($namaUnitSel !== '' ? $namaUnitSel : '-') ?>
+                                    <?= esc(!empty($unit['kode']) ? '[' . $unit['kode'] . '] ' : '') ?><?= esc($namaUnitSel) ?>
                                 </td>
                                 <td rowspan="<?= $span ?>" class="text-start nowrap">
                                     <?= esc($rupiah($unit['anggaran'] ?? 0)) ?>
@@ -474,28 +474,28 @@ $splitAksi = function ($text) {
                                 <?php // Rencana Aksi membentang setinggi seluruh sub rencana aksinya ?>
                                 <?php if ($subIdx === 0): ?>
                                     <td rowspan="<?= $spanButir[$butirIdx] ?? 1 ?>" class="text-start">
-                                        <?= ($items[$butirIdx] ?? '') !== '' ? esc(($butirIdx + 1) . '. ' . $items[$butirIdx]) : '-' ?>
+                                        <?= ($items[$butirIdx] ?? '') !== '' ? esc(($butirIdx + 1) . '. ' . $items[$butirIdx]) : '' ?>
                                     </td>
                                 <?php endif; ?>
 
                                 <?php $sub = $subsRow[$butirIdx][$subIdx] ?? null; ?>
                                 <td rowspan="<?= $spanRow ?>" class="text-start">
-                                    <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '-' ?>
+                                    <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '' ?>
                                 </td>
 
                                 <td rowspan="<?= $spanRow ?>">
-                                    <?= ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '-' ?>
+                                    <?= ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '' ?>
                                 </td>
 
                                 <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini ?>
                                 <?php foreach ([1, 2, 3, 4] as $q): ?>
                                     <?php $nilaiTw = $sub['tw'][$q] ?? null; ?>
-                                    <td rowspan="<?= $spanRow ?>" class="c"><?= ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '-' ?></td>
+                                    <td rowspan="<?= $spanRow ?>" class="c"><?= ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '' ?></td>
                                 <?php endforeach; ?>
                             <?php endif; ?>
 
                             <?php if ($k === 0): ?>
-                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
+                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['penanggung_jawab'] ?? '') ?></td>
                             <?php endif; ?>
                         </tr>
                     <?php endfor; ?>

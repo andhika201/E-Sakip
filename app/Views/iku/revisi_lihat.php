@@ -49,7 +49,10 @@ $tanda = static function (string $jenis): array {
                 <form method="post"
                       action="<?= base_url($baseUrl . '/revisi/berlaku/' . (int) $revisi['id']) ?>"
                       class="d-flex align-items-center gap-1 mt-2"
-                      onsubmit="return confirm('Ubah tahun mulai berlaku revisi ini? Masa berlaku revisi sebelumnya ikut disesuaikan.');">
+                      data-konfirmasi="Tahun mulai berlaku revisi ini diubah. Masa berlaku revisi sebelumnya ikut disesuaikan."
+                      data-konfirmasi-judul="Ubah Tahun Berlaku"
+                      data-konfirmasi-jenis="tanya"
+                      data-konfirmasi-ya="Ya, Ubah">
                     <?= csrf_field() ?>
                     <?php
                     /* SELURUH tahun periode ditawarkan, tahun pertama termasuk.
@@ -194,7 +197,10 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
                 &mdash; alasan: <?= esc($keadaanIzin['izin']['alasan'] ?? '') ?>
             </div>
             <form method="post" action="<?= $aksiIzin . '/tarik/' . (int) $keadaanIzin['izin']['id'] ?>"
-                  onsubmit="return confirm('Tarik permohonan izin sunting?');">
+                  data-konfirmasi="Permohonan izin sunting ditarik kembali."
+                  data-konfirmasi-judul="Tarik Permohonan"
+                  data-konfirmasi-jenis="tanya"
+                  data-konfirmasi-ya="Ya, Tarik">
                 <?= csrf_field() ?>
                 <button class="btn btn-outline-secondary btn-sm">
                     <i class="fa-solid fa-rotate-left me-1"></i>Tarik Permohonan
@@ -249,7 +255,13 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
             <form method="post"
                   action="<?= $aksiIzin . '/tarik/' . (int) $keadaanHapus['permohonan']['id'] ?>"
                   class="mt-2"
-                  onsubmit="return confirm('Tarik permohonan penghapusan ini?');">
+                  <?php /* Eksplisit: kata "penghapusan" pernah membuat dialognya
+                           berjudul "Konfirmasi Hapus", padahal ini justru MENARIK
+                           permohonan hapus. */ ?>
+                  data-konfirmasi="Permohonan penghapusan versi ini ditarik kembali. Versinya tetap ada."
+                  data-konfirmasi-judul="Tarik Permohonan Penghapusan"
+                  data-konfirmasi-jenis="tanya"
+                  data-konfirmasi-ya="Ya, Tarik">
                 <?= csrf_field() ?>
                 <button class="btn btn-outline-secondary btn-sm">
                     <i class="fa-solid fa-rotate-left me-1"></i>Tarik Permohonan

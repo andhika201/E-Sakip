@@ -2,6 +2,7 @@
 
 namespace App\Models\Opd;
 
+use App\Exceptions\SubBermonev;
 use App\Models\Concerns\TransaksiAman;
 use CodeIgniter\Model;
 
@@ -730,8 +731,10 @@ class TargetModel extends Model
         // ikut dibersihkan oleh hapusCapaianSubYatim(). Untuk sub yang memang
         // masih kosong itu wajar. Untuk sub yang capaian triwulanannya SUDAH
         // dilaporkan, itu berarti satu tekan tombol menghapus pekerjaan
-        // pelaporan satu tahun — permanen, dan satu-satunya pelindungnya
-        // hanyalah confirm() JavaScript pada tombolnya.
+        // pelaporan satu tahun — permanen. Form-nya kini menahan lebih dulu
+        // (dialog Konfirmasi yang menyebut capaiannya), tetapi form bisa
+        // basi: capaian bisa diisi dari tab lain setelah form dibuka. Penjaga
+        // ini yang terakhir, dan yang menentukan.
         //
         // Pada basis data ini 908 dari 1.672 sub sudah punya capaian terisi.
         //
@@ -746,31 +749,50 @@ class TargetModel extends Model
         // Dilempar sebagai galat, bukan dilewati diam-diam: melewatinya
         // membuat pemakai mengira sub itu sudah terhapus padahal masih ada.
         // =============================================================
-        $idDihapus = array_diff($idLama, $idDipakai);
+        $idDihapus = array_values(array_diff($idLama, $idDipakai));
 
         if (!empty($idDihapus)) {
-            $berisi = $this->db->table('target_sub_rencana s')
-                ->select('s.id, s.sub_rencana_aksi')
-                ->join('monev m', 'm.target_sub_rencana_id = s.id')
-                ->whereIn('s.id', $idDihapus)
-                ->groupStart()
-                    ->where("TRIM(COALESCE(m.capaian_triwulan_1,'')) <> ''", null, false)
-                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_2,'')) <> ''", null, false)
-                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_3,'')) <> ''", null, false)
-                    ->orWhere("TRIM(COALESCE(m.capaian_triwulan_4,'')) <> ''", null, false)
-                ->groupEnd()
-                ->get()->getResultArray();
+            // Definisi "terisi" satu-satunya ada di MonevModel::capaianTerisiPerSub()
+            // — form sunting dan dialog konfirmasinya memakai yang sama, supaya
+            // form tidak pernah membolehkan apa yang server tolak.
+            $terisi = (new MonevModel())->capaianTerisiPerSub($idDihapus);
 
-            if ($berisi !== []) {
-                $nama = array_map(
-                    static fn ($r) => '"' . mb_substr(trim((string) $r['sub_rencana_aksi']), 0, 60) . '"',
-                    $berisi
-                );
+            if ($terisi !== []) {
+                $baris = $this->db->table('target_sub_rencana')
+                    ->select('id, baris_rencana, sub_rencana_aksi')
+                    ->whereIn('id', array_keys($terisi))
+                    ->orderBy('baris_rencana', 'ASC')
+                    ->orderBy('urutan', 'ASC')
+                    ->get()->getResultArray();
 
-                throw new \RuntimeException(
-                    'Sub Rencana Aksi berikut tidak bisa dihapus karena capaian MONEV-nya sudah diisi: '
-                    . implode(', ', $nama) . '. Kosongkan dulu capaian triwulanannya lewat menu MONEV, '
-                    . 'baru sub itu bisa dibuang.'
+                $ditolak = [];
+                $nama    = [];
+
+                foreach ($baris as $r) {
+                    $id      = (int) $r['id'];
+                    $capaian = $terisi[$id] ?? [];
+                    $teks    = trim((string) $r['sub_rencana_aksi']);
+
+                    $ditolak[] = [
+                        'id'            => $id,
+                        'teks'          => $teks,
+                        'baris_rencana' => (int) $r['baris_rencana'],
+                        'capaian'       => $capaian,
+                    ];
+
+                    // Nilainya ikut disebut. "Sudah diisi" saja membingungkan
+                    // ketika yang tersimpan adalah 0, 0, 0 — bagi pemakai itu
+                    // terlihat kosong, padahal 0 memang diketik dan dihitung
+                    // sebagai capaian nol (lihat capaianTerisiPerSub()).
+                    $nama[] = '"' . mb_substr($teks, 0, 60) . '" ('
+                        . SubBermonev::ringkasCapaian($capaian) . ')';
+                }
+
+                throw new SubBermonev(
+                    $ditolak,
+                    'Sub Rencana Aksi berikut tidak bisa dihapus karena capaian MONEV-nya sudah tersimpan: '
+                    . implode(', ', $nama) . '. Sub itu dikembalikan ke form. Untuk membuangnya, '
+                    . 'kosongkan dulu capaian triwulanannya lewat menu MONEV.'
                 );
             }
 

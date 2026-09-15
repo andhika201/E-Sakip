@@ -122,6 +122,11 @@
               });
             });
             bar.querySelector('.pg-size').addEventListener('change', function () { pageSize = parseInt(this.value, 10); page = 1; render(); });
+
+            // Kait untuk skrip lain yang menyusun tampilan PER HALAMAN (mis.
+            // penggabungan sel OPD di tabel LAKIP lintas OPD): dipicu setiap
+            // kali baris yang tampil berubah. Sama dengan footer adminKabupaten.
+            table.dispatchEvent(new CustomEvent('pager:render', { bubbles: true }));
           }
 
           render();

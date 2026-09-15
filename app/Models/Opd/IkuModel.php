@@ -1819,14 +1819,43 @@ class IkuModel extends Model
      */
     private function kolomTujuanMandiri(array $data): array
     {
-        if (! $this->db->fieldExists('renstra_tujuan_id', 'iku_sasaran')) {
-            return [];
+        $kolom = [];
+
+        if ($this->db->fieldExists('renstra_tujuan_id', 'iku_sasaran')) {
+            $kolom['renstra_tujuan_id'] = ! empty($data['renstra_tujuan_id'])
+                ? (int) $data['renstra_tujuan_id'] : null;
         }
 
-        return [
-            'renstra_tujuan_id' => ! empty($data['renstra_tujuan_id'])
-                ? (int) $data['renstra_tujuan_id'] : null,
-        ];
+        // Padanan lingkup KABUPATEN: sasaran IKU yang lahir di IKU (bukan hasil
+        // sync RPJMD) menyebut tujuan RPJMD penaungnya di sini. Lihat
+        // db/update_2026-09-14_jangkar_rpjmd_iku_kabupaten.sql.
+        if ($this->db->fieldExists('rpjmd_tujuan_id', 'iku_sasaran')) {
+            $kolom['rpjmd_tujuan_id'] = ! empty($data['rpjmd_tujuan_id'])
+                ? (int) $data['rpjmd_tujuan_id'] : null;
+        }
+
+        return $kolom;
+    }
+
+    /**
+     * Tujuan RPJMD satu periode, untuk dropdown jangkar sasaran IKU Kabupaten.
+     *
+     * Disertai teks misinya supaya pemakai tidak menebak-nebak: dua tujuan
+     * bisa berbunyi mirip di bawah misi yang berbeda.
+     *
+     * @return array<int, array{id:int, tujuan:string, misi:string, misi_id:int}>
+     */
+    public function tujuanRpjmdKab(int $tahunMulai, int $tahunAkhir): array
+    {
+        return $this->db->table('rpjmd_tujuan t')
+            ->select('t.id, t.tujuan_rpjmd AS tujuan, m.misi, m.id AS misi_id')
+            ->join('rpjmd_misi m', 'm.id = t.misi_id')
+            ->where('m.tahun_mulai', $tahunMulai)
+            ->where('m.tahun_akhir', $tahunAkhir)
+            ->orderBy('m.id', 'ASC')
+            ->orderBy('t.id', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
     /**

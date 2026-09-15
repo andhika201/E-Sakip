@@ -229,6 +229,9 @@ class KabupatenDashboardService
                 'batas_hari'  => self::HARI_TERLAMBAT,
             ],
             'pk_bupati'  => $pkBupati,
+            // Kartu 1 "Capaian PK Bupati" membaca LAKIP tahun yang sudah
+            // jatuh tempo, bukan MONEV PK Bupati — lihat getBupatiLakipAchievement().
+            'lakip_bupati' => $this->getBupatiLakipAchievement($tahun),
             'opd'        => $ringkas,
             'opd_list'   => array_values($statuses),
             'belum_update' => $telat,
@@ -236,6 +239,81 @@ class KabupatenDashboardService
             'distribusi' => $this->getOpdStatusDistribution($statuses),
             'tren'       => $this->getBupatiIndicatorTrend($bupati),
             'misi'       => $misi,
+            // Ringkasan mutu data anggaran lintas OPD (§41, §42).
+            'anggaran_lebih_pagu' => $this->anggaranLebihPagu($tahun),
+        ];
+    }
+
+    /**
+     * OPD yang punya unit anggaran dengan realisasi melampaui pagunya.
+     *
+     * =====================================================================
+     * MASALAH MUTU DATA, BUKAN KINERJA
+     *
+     * Realisasi yang melampaui pagu berarti angkanya keliru — entah ada yang
+     * mengisi realisasi unit secara utuh padahal yang diminta bagiannya saja,
+     * entah pagunya belum diperbarui. Itu urusan validitas anggaran.
+     *
+     * Karena itu ia TIDAK boleh membuat OPD-nya dicap "Kinerja Kritis" (§38):
+     * indikatornya bisa saja berkinerja baik. Ringkasan ini berdiri sendiri
+     * supaya tampilan bisa menempatkannya sebagai kelengkapan/mutu data.
+     *
+     * Dihitung lewat AnggaranUnitService yang sama dengan Dashboard OPD dan
+     * form MONEV — kalau masing-masing menghitung sendiri, angka di layar
+     * Kabupaten bisa berbeda dengan yang ditemukan operator di formnya.
+     *
+     * @return array{jumlah_opd:int, jumlah_unit:int, total_selisih:float, opd:list<array<string,mixed>>}
+     */
+    private function anggaranLebihPagu(int $tahun): array
+    {
+        $unit = (new \App\Services\AnggaranUnitService($this->db))->unitLebihPagu(null, $tahun);
+
+        if ($unit === []) {
+            return ['jumlah_opd' => 0, 'jumlah_unit' => 0, 'total_selisih' => 0.0, 'opd' => []];
+        }
+
+        $namaOpd = [];
+
+        foreach ($this->db->table('opd')->select('id, nama_opd')->get()->getResultArray() as $o) {
+            $namaOpd[(int) $o['id']] = $o['nama_opd'];
+        }
+
+        $perOpd  = [];
+        $selisih = 0.0;
+
+        foreach ($unit as $u) {
+            $opdId = $u['opd_id'];
+            $kunci = $opdId === null ? 'kabupaten' : (string) $opdId;
+
+            $perOpd[$kunci] ??= [
+                'opd_id'      => $opdId,
+                'nama_opd'    => $opdId === null ? 'Kabupaten' : ($namaOpd[$opdId] ?? 'OPD #' . $opdId),
+                'jumlah_unit' => 0,
+                'selisih'     => 0.0,
+                'unit'        => [],
+            ];
+
+            $perOpd[$kunci]['jumlah_unit']++;
+            $perOpd[$kunci]['selisih'] += (float) $u['selisih'];
+            $perOpd[$kunci]['unit'][]   = [
+                'ref_level'       => $u['ref_level'],
+                'kode'            => $u['kode'],
+                'nama'            => $u['nama'],
+                'pagu'            => (float) $u['pagu'],
+                'total_realisasi' => (float) $u['total_realisasi'],
+                'selisih'         => (float) $u['selisih'],
+            ];
+
+            $selisih += (float) $u['selisih'];
+        }
+
+        usort($perOpd, static fn ($a, $b) => $b['selisih'] <=> $a['selisih']);
+
+        return [
+            'jumlah_opd'    => count($perOpd),
+            'jumlah_unit'   => count($unit),
+            'total_selisih' => $selisih,
+            'opd'           => array_values($perOpd),
         ];
     }
 
@@ -315,6 +393,55 @@ class KabupatenDashboardService
             'indikator'   => $daftar,
             'tahun'       => $tahun,
         ];
+    }
+
+    /**
+     * Kartu 1 (versi tampil) — Capaian PK Bupati DARI LAKIP KABUPATEN.
+     *
+     * =====================================================================
+     * MENGAPA LAKIP, BUKAN MONEV PK BUPATI
+     *
+     * getBupatiPkAchievement() menilai PK Bupati dari MONEV triwulanan. Selama
+     * dokumen PK Bupati tahun itu belum ada atau MONEV-nya tidak diisi, kartu
+     * hanya berbunyi "Belum ada PK Bupati" — padahal capaian kinerja Bupati
+     * sudah dilaporkan resmi lewat LAKIP Kabupaten. Kartu ini karena itu
+     * membaca LAKIP tahun yang SUDAH JATUH TEMPO:
+     *
+     *   dashboard 2026 (tahun berjalan) -> LAKIP 2025 (satu tahun ke belakang)
+     *   dashboard 2025 (sudah lewat)    -> LAKIP 2025 (tahun itu sendiri)
+     *
+     * Aturannya dash_tahun_lakip_jatuh_tempo() — yang sama dengan tagihan
+     * LAKIP di Prioritas Tindak Lanjut OPD — supaya dua bagian dashboard
+     * tidak menunjuk tahun LAKIP yang berbeda.
+     *
+     * Hasil getBupatiPkAchievement() TETAP dipakai panel Prioritas, Misi, dan
+     * Tren; hanya kartu + drawer-nya yang berpindah ke sini.
+     * =====================================================================
+     *
+     * @return array<string, mixed>
+     */
+    public function getBupatiLakipAchievement(int $tahun): array
+    {
+        $tahunLakip = dash_tahun_lakip_jatuh_tempo($tahun);
+        $ringkas    = (new LakipKabupatenCapaianService())->ringkasan($tahunLakip);
+
+        $kritis = 0;
+        foreach ($ringkas['indikator'] as $i) {
+            if ($i['is_valid'] && ($i['status']['code'] ?? '') === 'critical') {
+                $kritis++;
+            }
+        }
+
+        $ringkas['kritis']      = $kritis;
+        $ringkas['tahun_dash']  = $tahun;
+        $ringkas['tahun_lakip'] = $tahunLakip;
+        $ringkas['status']      = $ringkas['can_compute']
+            ? getAchievementStatus((float) $ringkas['total'])
+            : dash_status_nonnumeric($ringkas['ada'] ? 'belum_valid' : 'belum_ada_data');
+        $ringkas['label']       = $ringkas['final'] ? 'Final' : 'Sementara';
+        $ringkas['url']         = base_url($this->linkArea . '/lakip?mode=kabupaten&tahun=' . $tahunLakip);
+
+        return $ringkas;
     }
 
     /**

@@ -140,7 +140,11 @@ $badge = static function (string $status): array {
                                 <?php if (! empty($perluVerifikasi)): ?>
                                     <form method="post" class="d-inline"
                                           action="<?= base_url($baseUrl . '/revisi/ajukan/' . (int) $r['id']) ?>"
-                                          onsubmit="return confirm('Ajukan revisi ini untuk disahkan Admin Kabupaten? Selama menunggu, isinya tidak bisa disunting.');">
+                                          data-konfirmasi="Revisi ini dikirim ke Admin Kabupaten untuk disahkan. Selama menunggu, isinya tidak bisa disunting."
+                                          data-konfirmasi-judul="Ajukan Revisi"
+                                          data-konfirmasi-jenis="tanya"
+                                          data-konfirmasi-nama="<?= esc($r['nama'] ?? '', 'attr') ?>"
+                                          data-konfirmasi-ya="Ya, Ajukan">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-primary mb-1">
                                             <i class="fa-solid fa-paper-plane"></i> Ajukan
@@ -149,7 +153,15 @@ $badge = static function (string $status): array {
                                 <?php elseif ($bolehSahkan): ?>
                                     <form method="post" class="d-inline"
                                           action="<?= base_url($baseUrl . '/revisi/sahkan/' . (int) $r['id']) ?>"
-                                          onsubmit="return confirm('Sahkan revisi ini? Isinya akan diterapkan ke IKU berjalan, dan revisi sebelumnya menjadi arsip. Data lama TIDAK dihapus.');">
+                                          <?php /* Atribut eksplisit, bukan onsubmit confirm() lama: pesan yang
+                                                   memuat "TIDAK dihapus" pernah ditebak bernada hapus oleh
+                                                   penyelaras dialog — muncul "Konfirmasi Hapus" pada tombol Sahkan. */ ?>
+                                          data-konfirmasi="Isi revisi ini diterapkan ke IKU berjalan; revisi sebelumnya menjadi arsip. Data lama tetap tersimpan."
+                                          data-konfirmasi-judul="Sahkan Revisi IKU"
+                                          data-konfirmasi-jenis="tanya"
+                                          data-konfirmasi-nama="<?= esc($r['nama'] ?? '', 'attr') ?>"
+                                          data-konfirmasi-rincian="IKU berjalan mengikuti isi revisi ini|Revisi yang berlaku sekarang menjadi arsip (tidak dihapus)"
+                                          data-konfirmasi-ya="Ya, Sahkan">
                                         <?= csrf_field() ?>
                                         <button class="btn btn-sm btn-success mb-1">
                                             <i class="fa-solid fa-check"></i> Sahkan
@@ -159,7 +171,11 @@ $badge = static function (string $status): array {
 
                                 <form method="post" class="d-inline"
                                       action="<?= base_url($baseUrl . '/revisi/batalkan/' . (int) $r['id']) ?>"
-                                      onsubmit="return confirm('Batalkan draft ini? Jejaknya tetap tersimpan.');">
+                                      data-konfirmasi="Draft ini dibatalkan dan tidak bisa dilanjutkan. Jejaknya tetap tersimpan."
+                                      data-konfirmasi-judul="Batalkan Draft"
+                                      data-konfirmasi-jenis="peringatan"
+                                      data-konfirmasi-nama="<?= esc($r['nama'] ?? '', 'attr') ?>"
+                                      data-konfirmasi-ya="Ya, Batalkan">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger mb-1">
                                         <i class="fa-solid fa-xmark"></i> Batalkan
@@ -170,7 +186,11 @@ $badge = static function (string $status): array {
                             <?php if ($r['status'] === 'menunggu' && $bolehRevisi): ?>
                                 <form method="post" class="d-inline"
                                       action="<?= base_url($baseUrl . '/revisi/tarik/' . (int) $r['id']) ?>"
-                                      onsubmit="return confirm('Tarik pengajuan? Revisi kembali jadi draft dan bisa disunting.');">
+                                      data-konfirmasi="Pengajuan ditarik. Revisi kembali menjadi draft dan bisa disunting lagi."
+                                      data-konfirmasi-judul="Tarik Pengajuan"
+                                      data-konfirmasi-jenis="tanya"
+                                      data-konfirmasi-nama="<?= esc($r['nama'] ?? '', 'attr') ?>"
+                                      data-konfirmasi-ya="Ya, Tarik">
                                     <?= csrf_field() ?>
                                     <button class="btn btn-sm btn-outline-danger mb-1">
                                         <i class="fa-solid fa-rotate-left"></i> Tarik Pengajuan

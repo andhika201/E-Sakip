@@ -27,7 +27,13 @@ $baseUrl   = base_url($monevPath);
 // supaya view ini tidak pecah kalau dipanggil dari jalur yang belum diperbarui.
 $units           = $units ?? ($programPk ?? []);
 $anggaranUnit    = $anggaranUnit ?? [];
+helper('serapan'); // penanda serapan anggaran terhadap pagu
+
 $anggaranWarisan = $anggaranWarisan ?? ($anggaran ?? null);
+
+// Rincian unit + indikator pemakainya, disiapkan controller.
+$unitDetail  = $unitDetail ?? [];
+$targetIdIni = $targetIdIni ?? 0;
 
 // Eselon di halaman ini sudah pasti satu, jadi labelnya tunggal (tanpa badge).
 $labelUnit = $labelUnitHeader
@@ -117,32 +123,67 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
                                 Atur dulu lewat menu Program Perjanjian Kinerja.
                             </div>
                         <?php else: ?>
+
+<?php /* =====================================================================
+         LEBAR KOLOM DIPATOK DI SATU TEMPAT
+
+         Sebelumnya hanya Pagu (180px) dan TW (4 x 140px) yang dipatok, sehingga
+         kolom nama unit menerima sisa ruang apa adanya. Pada layar biasa sisanya
+         tinggal sempit, dan blok "dipakai bersama" di dalamnya patah satu-dua
+         kata per baris — barisnya jadi setinggi layar dan kolom input yang
+         justru jadi tujuan utama terdorong keluar pandangan.
+
+         Sekarang tabelnya diberi lebar minimum dan kolom namanya diberi jatah
+         nyata; bila layar tak cukup, pembungkus .table-responsive yang menggeser
+         mendatar — bukan kolomnya yang dihimpit.
+   ===================================================================== */ ?>
+<?= serapan_gaya() ?>
+<style>
+    #tabel-anggaran { min-width: 940px; }
+    #tabel-anggaran .kolom-kode { width: 72px; }
+    #tabel-anggaran .kolom-pagu { width: 190px; }
+    #tabel-anggaran .kolom-tw   { width: 132px; }
+    #tabel-anggaran .kolom-unit { min-width: 300px; }
+
+    /* Nama unit boleh memenuhi lebarnya; hanya kata yang benar-benar panjang
+       yang dipenggal. */
+    #tabel-anggaran .nama-unit { overflow-wrap: anywhere; }
+
+    /* Kepala unit dibedakan tipis dari baris indikator di bawahnya —
+       cukup untuk terbaca sebagai kelompok, tanpa menambah kebisingan. */
+    #tabel-anggaran .baris-unit > td { background: #f8f9fa; }
+    #tabel-anggaran .baris-indikator > td { border-top-style: dotted; }
+    #tabel-anggaran .baris-ini > td { background: rgba(13, 110, 253, .04); }
+
+    /* Sisa pagu — satu angka yang menentukan berapa boleh diketik di sebelah
+       kanan, jadi ia diberi bobot, bukan diselipkan sebagai teks kecil. */
+    #tabel-anggaran .baris-sisa { font-size: .875rem; font-weight: 600; white-space: nowrap; }
+    #tabel-anggaran .sisa-aman  { color: var(--bs-success, #198754); }
+    #tabel-anggaran .sisa-lebih { color: var(--bs-danger, #dc3545); }
+
+    #tabel-anggaran td { vertical-align: top; }
+    #tabel-anggaran .realisasi-input { min-width: 110px; }
+</style>
                             <div class="table-responsive">
-                                <table class="table table-sm table-bordered align-middle mb-1" id="tabel-anggaran">
+                                <table class="table table-sm table-bordered mb-1" id="tabel-anggaran">
                                     <thead class="table-light">
                                         <tr>
-                                            <th style="width:90px;">Kode</th>
-                                            <th><?= esc($labelUnit) ?></th>
-                                            <th class="text-end" style="width:180px;">Pagu</th>
+                                            <th class="kolom-kode">Kode</th>
+                                            <th><?= esc($labelUnit) ?> / Indikator</th>
                                             <?php foreach ($triwulan as $q => $label): ?>
-                                                <th class="text-end" style="width:140px;">TW <?= $label ?></th>
+                                                <th class="text-end kolom-tw">TW <?= $label ?></th>
                                             <?php endforeach; ?>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php if ($anggaranWarisan): ?>
                                             <?php // Baris WARISAN: realisasi lama yang belum dirinci per unit.
-                                                  // Sengaja terkunci & tidak ikut ter-submit (input disabled). ?>
+                                                  // Terkunci & tidak ikut ter-submit. ?>
                                             <tr class="table-light text-muted">
-                                                <td class="text-nowrap"><em>&mdash;</em></td>
-                                                <td class="text-start">
+                                                <td colspan="2">
                                                     <em>Realisasi lama, belum dirinci per <?= esc(strtolower($labelUnit)) ?></em>
-                                                    <div class="small">
-                                                        <i class="fas fa-lock me-1"></i>
-                                                        Terkunci &mdash; angka historis tidak diubah dari sini.
-                                                    </div>
+                                                    <i class="fas fa-lock ms-1" title="Angka historis tidak diubah dari sini"></i>
                                                 </td>
-                                                <td class="text-end text-nowrap"><em>&mdash;</em></td>
                                                 <?php foreach ($triwulan as $q => $label): ?>
                                                     <td class="text-end">
                                                         <input type="text" class="form-control form-control-sm text-end bg-light"
@@ -153,51 +194,90 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
                                             </tr>
                                         <?php endif; ?>
 
-                                        <?php foreach ($units as $unit): ?>
-                                            <?php
-                                            $refKey = (string) ($unit['ref_key'] ?? '');
-                                            $pagu   = (float) ($unit['anggaran'] ?? 0);
-                                            ?>
-                                            <tr class="unit-row" data-pagu="<?= esc((string) $pagu) ?>">
-                                                <td class="text-nowrap">
+                                        <?php foreach ($unitDetail as $refKey => $u): ?>
+                                            <?php $unit = $u['unit']; $pagu = (float) $u['pagu']; ?>
+
+                                            <?php /* =========================================
+                                                     KEPALA UNIT — identitas & pagu, tanpa input.
+                                                     Barisnya sendiri agar nama unit yang panjang
+                                                     punya lebar penuh, bukan terhimpit di samping
+                                                     lima kolom angka.
+                                                  ========================================= */ ?>
+                                            <tr class="baris-unit">
+                                                <td class="text-nowrap align-middle">
                                                     <?= esc($unit['kode'] ?? '-') ?>
                                                     <input type="hidden" name="unit[<?= esc($refKey) ?>][level]"
                                                            value="<?= esc((string) ($unit['level'] ?? '')) ?>">
                                                     <input type="hidden" name="unit[<?= esc($refKey) ?>][ref_id]"
                                                            value="<?= (int) ($unit['ref_id'] ?? 0) ?>">
                                                 </td>
-                                                <td class="text-start">
-                                                    <?= esc($unit['nama'] ?? ($unit['program'] ?? '-')) ?>
+                                                <td class="align-middle">
+                                                    <span class="fw-semibold"><?= esc($unit['nama'] ?? '-') ?></span>
                                                     <?php if (!empty($unit['fallback'])): ?>
-                                                        <?php // Tingkat aslinya kosong sehingga turun tingkat — dijujurkan
-                                                              // supaya penginput tahu angkanya menempel di tingkat mana. ?>
-                                                        <div class="small text-muted">
-                                                            <i class="fas fa-level-down-alt me-1"></i>
+                                                        <span class="badge bg-light text-muted border fw-normal ms-1"
+                                                              title="Tingkat asli PK ini tidak punya data">
                                                             tingkat <?= esc(strtolower((string) ($unit['level_label'] ?? ''))) ?>
-                                                        </div>
+                                                        </span>
                                                     <?php endif; ?>
                                                 </td>
-                                                <td class="text-end text-nowrap">
-                                                    <?= esc($rupiah($pagu)) ?>
-                                                    <div class="small text-muted serapan-unit">&mdash;</div>
+                                                <td colspan="4" class="align-middle">
+                                                    <div class="d-flex align-items-center justify-content-end gap-3">
+                                                        <span class="text-nowrap">Pagu <span class="fw-semibold"><?= esc($rupiah($pagu)) ?></span></span>
+                                                        <div class="serapan-unit" style="width:180px"
+                                                             data-unit="<?= esc($refKey) ?>"
+                                                             data-pagu="<?= esc((string) $pagu) ?>"></div>
+                                                    </div>
                                                 </td>
-                                                <?php foreach ($triwulan as $q => $label): ?>
-                                                    <td class="text-end">
-                                                        <input type="text"
-                                                               name="realisasi[<?= esc($refKey) ?>][<?= $q ?>]"
-                                                               class="form-control form-control-sm text-end realisasi-input"
-                                                               data-q="<?= $q ?>" inputmode="numeric" placeholder="0"
-                                                               title="Realisasi Triwulan <?= $label ?>"
-                                                               value="<?= esc($val($refKey, $q)) ?>">
-                                                    </td>
-                                                <?php endforeach; ?>
                                             </tr>
+
+                                            <?php /* Satu baris per indikator pemakai unit ini (§20, §22).
+                                                     Inilah pengganti kotak "dipakai bersama" yang dulu
+                                                     menjejalkan daftar indikator ke kolom sempit. */ ?>
+                                            <?php foreach ($u['baris'] as $b): ?>
+                                                <tr class="baris-indikator<?= $b['ini'] ? ' baris-ini' : '' ?>"
+                                                    data-unit="<?= esc($refKey) ?>">
+                                                    <td></td>
+                                                    <td class="small">
+                                                        <?= esc($b['nama']) ?>
+                                                        <?php if ($b['ini']): ?>
+                                                            <span class="badge bg-primary ms-1">Indikator saat ini</span>
+                                                        <?php elseif ($b['target_rencana_id'] === null): ?>
+                                                            <span class="text-muted ms-1">&mdash; Rencana Aksi belum ada</span>
+                                                        <?php elseif (!$b['boleh_sunting']): ?>
+                                                            <span class="badge bg-light text-muted border fw-normal ms-1">
+                                                                <?= esc(strtoupper((string) $b['pk_jenis'])) ?> &mdash; hanya lihat
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <?php foreach ($triwulan as $q => $label): ?>
+                                                        <td class="text-end">
+                                                            <?php if ($b['boleh_sunting']): ?>
+                                                                <input type="text"
+                                                                       name="realisasi[<?= (int) $b['target_rencana_id'] ?>][<?= esc($refKey) ?>][<?= $q ?>]"
+                                                                       class="form-control form-control-sm text-end realisasi-input"
+                                                                       data-q="<?= $q ?>" data-unit="<?= esc($refKey) ?>"
+                                                                       inputmode="numeric" placeholder="0"
+                                                                       title="TW <?= $label ?> &mdash; <?= esc($b['nama'], 'attr') ?>"
+                                                                       value="<?= esc((string) ($b['realisasi'][$q] ?? '')) ?>">
+                                                            <?php elseif ($b['target_rencana_id'] === null): ?>
+                                                                <span class="text-muted">&mdash;</span>
+                                                            <?php else: ?>
+                                                                <span class="small text-muted nilai-kunci"
+                                                                      data-unit="<?= esc($refKey) ?>"
+                                                                      data-nilai="<?= esc((string) ($b['realisasi'][$q] ?? 0)) ?>">
+                                                                    <?= ($b['realisasi'][$q] ?? null) !== null
+                                                                        ? esc($rupiah($b['realisasi'][$q])) : '&mdash;' ?>
+                                                                </span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    <?php endforeach; ?>
+                                                </tr>
+                                            <?php endforeach; ?>
                                         <?php endforeach; ?>
                                     </tbody>
                                     <tfoot>
                                         <tr class="fw-semibold">
-                                            <td colspan="2" class="text-end">Total</td>
-                                            <td class="text-end text-nowrap"><?= esc($rupiah($totalPagu)) ?></td>
+                                            <td colspan="2" class="text-end">Total seluruh indikator</td>
                                             <?php foreach ($triwulan as $q => $label): ?>
                                                 <td class="text-end text-nowrap" id="total-tw-<?= $q ?>">Rp 0</td>
                                             <?php endforeach; ?>
@@ -245,59 +325,162 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
     <script>
         (function () {
             var totalPagu = <?= json_encode((float) $totalPagu) ?>;
-            var rows = document.querySelectorAll('#tabel-anggaran .unit-row');
-            var totalEl = document.getElementById('total-realisasi');
-            var sisaEl = document.getElementById('sisa-pagu');
-            if (!rows.length) return;
+            var totalEl   = document.getElementById('total-realisasi');
+            var sisaEl    = document.getElementById('sisa-pagu');
+            var tabel     = document.getElementById('tabel-anggaran');
+
+            if (!tabel) return;
+
+            // =========================================================
+            // ANGKA SAJA — DISARING SAAT DIKETIK
+            //
+            // Kolom `monev_anggaran.realisasi_triwulan_*` bertipe
+            // decimal(15,0): tidak ada pecahan sen sama sekali. Jadi yang
+            // diterima hanya DIGIT; huruf, koma, minus, dan tanda apa pun
+            // dibuang saat itu juga, bukan ditolak belakangan setelah
+            // pemakai menekan Simpan.
+            //
+            // Titik yang muncul adalah PEMISAH RIBUAN yang kita pasang
+            // sendiri, bukan yang diketik pemakai — dan server membuangnya
+            // lagi (rupiahKeAngka) sebelum menyimpan. Nilainya tidak pernah
+            // berubah karena diformat.
+            // =========================================================
+            function hanyaDigit(teks) {
+                return String(teks || '').replace(/\D+/g, '');
+            }
 
             function keAngka(teks) {
-                teks = String(teks || '').replace(/[Rr]p|\s|\./g, '').replace(',', '.');
-                var n = parseFloat(teks);
-                return isNaN(n) ? 0 : n;
+                var d = hanyaDigit(teks);
+                return d === '' ? 0 : parseInt(d, 10);
+            }
+
+            function ribuan(digit) {
+                return digit.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             }
 
             function format(n) {
                 var negatif = n < 0;
-                var teks = Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                return (negatif ? '-Rp ' : 'Rp ') + teks;
+                return (negatif ? '-Rp ' : 'Rp ') + ribuan(Math.round(Math.abs(n)).toString());
+            }
+
+            /**
+             * Rapikan isi sebuah input sambil MENJAGA POSISI KURSOR.
+             *
+             * Menulis ulang value memindahkan kursor ke ujung. Kalau itu
+             * dibiarkan, menyisipkan satu digit di tengah angka akan
+             * melemparkan kursor ke belakang setiap ketukan — praktis
+             * membuat penyuntingan angka panjang mustahil.
+             *
+             * Yang dihitung adalah jumlah DIGIT sebelum kursor, bukan jumlah
+             * karakter: titik ribuan bertambah/berkurang sendiri saat
+             * diformat, sehingga posisi karakter tidak bisa dipakai.
+             */
+            function rapikan(inp) {
+                var awal    = inp.selectionStart;
+                var sebelum = inp.value;
+                var digitKiri = hanyaDigit(sebelum.slice(0, awal === null ? sebelum.length : awal)).length;
+
+                var digit = hanyaDigit(sebelum);
+
+                // Nol di depan dibuang, tetapi "0" tunggal dipertahankan:
+                // 0 berarti "sudah diisi dengan nol", berbeda dari kosong.
+                digit = digit.replace(/^0+(?=\d)/, '');
+
+                var baru = digit === '' ? '' : ribuan(digit);
+
+                if (baru === sebelum) {
+                    return;
+                }
+
+                inp.value = baru;
+
+                if (awal === null || inp.selectionStart === null) {
+                    return;
+                }
+
+                var lewat = 0;
+                var pos   = 0;
+
+                while (pos < baru.length && lewat < digitKiri) {
+                    if (/\d/.test(baru[pos])) lewat++;
+                    pos++;
+                }
+
+                try { inp.setSelectionRange(pos, pos); } catch (e) { /* input tak mendukung */ }
+            }
+
+            // Cermin serapan_bar() di PHP — barnya ikut berubah saat diketik.
+            // Lihat app/Helpers/serapan_helper.php.
+            function barSerapan(pagu, realisasi) {
+                if (!(pagu > 0)) {
+                    return realisasi > 0
+                        ? '<div class="small text-danger fw-semibold">'
+                            + '<i class="fas fa-triangle-exclamation me-1"></i>pagu belum diisi, realisasi '
+                            + format(realisasi) + '</div>'
+                        : '<div class="small text-muted">pagu belum diisi</div>';
+                }
+
+                var persen = realisasi / pagu * 100;
+                var lebih  = realisasi > pagu;
+                var dalam  = lebih ? (pagu / realisasi * 100) : Math.max(0, persen);
+                var luar   = lebih ? (100 - dalam) : 0;
+
+                var html = '<div class="serapan-jalur' + (lebih ? ' serapan-lebih' : '') + '">'
+                    + '<div class="serapan-isi" style="width:' + dalam.toFixed(2) + '%"></div>';
+
+                if (luar > 0) {
+                    html += '<div class="serapan-luber" style="width:' + luar.toFixed(2) + '%"></div>';
+                }
+
+                html += '</div><div class="serapan-ket small '
+                    + (lebih ? 'text-danger fw-semibold' : 'text-muted') + '">';
+                html += lebih
+                    ? '<i class="fas fa-triangle-exclamation me-1"></i>'
+                        + '<span class="serapan-nilai">' + persen.toFixed(1).replace('.', ',') + '%</span>'
+                        + ' &mdash; lebih <span class="serapan-nilai">' + format(realisasi - pagu) + '</span>'
+                    : persen.toFixed(1).replace('.', ',') + '% terserap';
+
+                return html + '</div>';
             }
 
             function hitung() {
-                var total = 0;
+                var total   = 0;
                 var totalTw = { 1: 0, 2: 0, 3: 0, 4: 0 };
+                var perUnit = {};
 
-                Array.prototype.forEach.call(rows, function (row) {
-                    // Serapan dihitung PER UNIT: pagu unit ini lawan realisasinya sendiri.
-                    var pagu = parseFloat(row.getAttribute('data-pagu')) || 0;
-                    var subtotal = 0;
-
-                    Array.prototype.forEach.call(row.querySelectorAll('.realisasi-input'), function (inp) {
+                // Dijumlah PER UNIT lintas indikator: plafon pagu berlaku pada
+                // jumlah seluruh bagian, bukan pada satu baris.
+                Array.prototype.forEach.call(
+                    tabel.querySelectorAll('.realisasi-input'),
+                    function (inp) {
+                        var unit  = inp.getAttribute('data-unit') || '';
                         var nilai = keAngka(inp.value);
-                        subtotal += nilai;
-                        var q = inp.getAttribute('data-q');
+                        var q     = inp.getAttribute('data-q');
+
+                        perUnit[unit] = (perUnit[unit] || 0) + nilai;
+                        total += nilai;
                         if (totalTw[q] !== undefined) totalTw[q] += nilai;
-                    });
-
-                    total += subtotal;
-
-                    var info = row.querySelector('.serapan-unit');
-                    if (info) {
-                        if (subtotal === 0) {
-                            info.textContent = '—';
-                            info.className = 'small text-muted serapan-unit';
-                        } else if (pagu > 0) {
-                            var persen = (subtotal / pagu * 100).toFixed(1);
-                            info.textContent = format(subtotal) + ' (' + persen + '%)';
-                            info.className = subtotal > pagu
-                                ? 'small text-danger fw-semibold serapan-unit'
-                                : 'small text-muted serapan-unit';
-                        } else {
-                            // Pagu 0/kosong: persentase tidak bermakna, tampilkan nilainya saja.
-                            info.textContent = format(subtotal);
-                            info.className = 'small text-muted serapan-unit';
-                        }
                     }
-                });
+                );
+
+                // Baris yang hanya bisa dilihat tetap menekan pagu unitnya.
+                Array.prototype.forEach.call(
+                    tabel.querySelectorAll('.nilai-kunci'),
+                    function (el) {
+                        var unit  = el.getAttribute('data-unit') || '';
+                        var nilai = parseFloat(el.getAttribute('data-nilai')) || 0;
+                        perUnit[unit] = (perUnit[unit] || 0) + nilai;
+                    }
+                );
+
+                Array.prototype.forEach.call(
+                    tabel.querySelectorAll('.serapan-unit'),
+                    function (info) {
+                        var kunci = info.getAttribute('data-unit') || '';
+                        var pagu  = parseFloat(info.getAttribute('data-pagu')) || 0;
+                        info.innerHTML = barSerapan(pagu, perUnit[kunci] || 0);
+                    }
+                );
 
                 [1, 2, 3, 4].forEach(function (q) {
                     var el = document.getElementById('total-tw-' + q);
@@ -317,9 +500,22 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
                 }
             }
 
-            Array.prototype.forEach.call(document.querySelectorAll('#tabel-anggaran .realisasi-input'), function (i) {
-                i.addEventListener('input', hitung);
+            Array.prototype.forEach.call(tabel.querySelectorAll('.realisasi-input'), function (i) {
+                // Nilai dari server dirapikan sekali di awal supaya tampilannya
+                // seragam dengan yang baru diketik.
+                i.value = i.value === '' ? '' : ribuan(hanyaDigit(i.value));
+
+                i.addEventListener('input', function () {
+                    rapikan(i);
+                    hitung();
+                });
+
+                // Tempel (paste) tidak memicu 'input' di sebagian peramban lama.
+                i.addEventListener('paste', function () {
+                    setTimeout(function () { rapikan(i); hitung(); }, 0);
+                });
             });
+
             hitung();
         })();
     </script>

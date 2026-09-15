@@ -610,7 +610,7 @@ $filterQs = http_build_query(array_filter([
                                     ?>
                                     <?php foreach ($grouped as $rows): ?>
                                         <?php
-                                        $sasaran    = $rows[0]['sasaran_renstra'] ?? '-';
+                                        $sasaran    = $rows[0]['sasaran_renstra'] ?? '';
                                         $sasTotal   = count($rows);
                                         $autoOpds   = ($autoPd ?? [])[$normSas($sasaran)] ?? [];
                                         if (empty($autoOpds)) { // fallback: cocokkan lewat teks INDIKATOR (atasi typo/beda teks sasaran)
@@ -641,10 +641,10 @@ $filterQs = http_build_query(array_filter([
                                                     <td rowspan="<?= $sasTotal ?>" class="text-start va-top c-sasaran"><?= esc($sasaran) ?></td>
                                                     <?php $sasPrinted = true; ?>
                                                 <?php endif; ?>
-                                                <td class="text-start c-indikator"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                                                <td class="c-tahun"><?= esc($row['indikator_tahun'] ?? '-') ?></td>
-                                                <td class="c-satuan"><?= esc($row['satuan'] ?? '-') ?></td>
-                                                <td class="c-target"><?= esc($row['indikator_target'] ?? '-') ?></td>
+                                                <td class="text-start c-indikator"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
+                                                <td class="c-tahun"><?= esc($row['indikator_tahun'] ?? '') ?></td>
+                                                <td class="c-satuan"><?= esc($row['satuan'] ?? '') ?></td>
+                                                <td class="c-target"><?= esc($row['indikator_target'] ?? '') ?></td>
                                                 <?php if (!$pdPrinted): ?>
                                                     <td rowspan="<?= $sasTotal ?>" class="text-start va-top c-pd">
                                                         <?php if ($isManual): ?>
@@ -698,7 +698,7 @@ $filterQs = http_build_query(array_filter([
                                 <?php else: ?>
                                     <?php foreach ($grouped as $rows): ?>
                                         <?php
-                                        $sasaran = $rows[0]['sasaran_renstra'] ?? '-';
+                                        $sasaran = $rows[0]['sasaran_renstra'] ?? '';
                                         $opdKey  = $rows[0]['opd_id'] ?? ($rows[0]['nama_opd'] ?? '-');
                                         // jumlah baris per indikator = jumlah item renaksi (min 1); total utk rowspan sasaran/pejabat
                                         $indCounts = [];
@@ -750,14 +750,14 @@ $filterQs = http_build_query(array_filter([
                                                         <?php $noPrinted = true; ?>
                                                     <?php endif; ?>
                                                     <?php if ($awalOpd): ?>
-                                                        <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start va-top c-opd"><?= esc($row['nama_opd'] ?? '-') ?></td>
+                                                        <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start va-top c-opd"><?= esc($row['nama_opd'] ?? '') ?></td>
                                                         <?php $curOpdKey = $opdKey;
                                                         $newOpd = false; ?>
                                                     <?php endif; ?>
                                                     <?php if (!$sasPrinted): ?>
                                                         <?php if ($showPejabat): ?>
                                                             <td rowspan="<?= $sasTotal ?>" class="text-start va-top c-pejabat">
-                                                                <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '-')) ?></div>
+                                                                <div class="fw-semibold"><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '')) ?></div>
                                                                 <span class="badge bg-success-subtle text-success border border-success-subtle mt-1"><?= esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
                                                             </td>
                                                         <?php endif; ?>
@@ -765,10 +765,10 @@ $filterQs = http_build_query(array_filter([
                                                         <?php $sasPrinted = true; ?>
                                                     <?php endif; ?>
                                                     <?php if ($k === 0): ?>
-                                                        <td rowspan="<?= $n ?>" class="text-start va-top c-indikator"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                                                        <td rowspan="<?= $n ?>" class="va-top c-tahun"><?= esc($row['indikator_tahun'] ?? '-') ?></td>
-                                                        <td rowspan="<?= $n ?>" class="va-top c-satuan"><?= esc($row['satuan'] ?? '-') ?></td>
-                                                        <td rowspan="<?= $n ?>" class="va-top c-target"><?= esc($row['indikator_target'] ?? '-') ?></td>
+                                                        <td rowspan="<?= $n ?>" class="text-start va-top c-indikator"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
+                                                        <td rowspan="<?= $n ?>" class="va-top c-tahun"><?= esc($row['indikator_tahun'] ?? '') ?></td>
+                                                        <td rowspan="<?= $n ?>" class="va-top c-satuan"><?= esc($row['satuan'] ?? '') ?></td>
+                                                        <td rowspan="<?= $n ?>" class="va-top c-target"><?= esc($row['indikator_target'] ?? '') ?></td>
 
                                                     <?php endif; ?>
 
@@ -792,7 +792,7 @@ $filterQs = http_build_query(array_filter([
                                                         $tampilBadge  = ($unitHeaderGenerik ?? false) || $unitFallback;
                                                         ?>
                                                         <td rowspan="<?= $span ?>" class="text-start prog-cell c-unit">
-                                                            <?= esc($unit['nama'] ?? ($unit['program'] ?? '-')) ?>
+                                                            <?= esc($unit['nama'] ?? ($unit['program'] ?? '')) ?>
                                                             <?php if ($tampilBadge && !empty($unit['level_label'])): ?>
                                                                 <span class="badge <?= $unitFallback ? 'bg-warning-subtle text-warning border border-warning-subtle' : 'bg-success-subtle text-success border border-success-subtle' ?> fw-normal ms-1"
                                                                     <?= $unitFallback ? 'title="Tingkat aslinya kosong, ditampilkan dari tingkat di atasnya"' : '' ?>><?= esc($unit['level_label']) ?></span>
@@ -810,32 +810,32 @@ $filterQs = http_build_query(array_filter([
                                                             <td rowspan="<?= $spanButir[$butirIdx] ?? 1 ?>" class="text-start va-top c-renaksi">
                                                                 <?php
                                                                 $txt = $items[$butirIdx] ?? '';
-                                                                echo ($txt !== '') ? esc(($butirIdx + 1) . '. ' . $txt) : '<span class="text-muted">-</span>';
+                                                                echo ($txt !== '') ? esc(($butirIdx + 1) . '. ' . $txt) : '';
                                                                 ?>
                                                             </td>
                                                         <?php endif; ?>
 
                                                         <?php $sub = $subsRow[$butirIdx][$subIdx] ?? null; ?>
                                                         <td rowspan="<?= $spanRow ?>" class="text-start sub-cell va-top c-sub">
-                                                            <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '<span class="text-muted">-</span>' ?>
+                                                            <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '' ?>
                                                         </td>
 
                                                         <td rowspan="<?= $spanRow ?>" class="va-top c-subsat">
                                                             <?= ($sub !== null && ($sub['satuan'] ?? '') !== '')
                                                                 ? esc($sub['satuan'])
-                                                                : '<span class="text-muted">-</span>' ?>
+                                                                : '' ?>
                                                         </td>
 
                                                         <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini
                                                         ?>
                                                         <?php foreach ([1, 2, 3, 4] as $q): ?>
                                                             <?php $nilaiTw = $sub['tw'][$q] ?? null; ?>
-                                                            <td rowspan="<?= $spanRow ?>" class="tw-cell va-top c-tw<?= $q ?>"><?= ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '<span class="text-muted">-</span>' ?></td>
+                                                            <td rowspan="<?= $spanRow ?>" class="tw-cell va-top c-tw<?= $q ?>"><?= ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '' ?></td>
                                                         <?php endforeach; ?>
                                                     <?php endif; ?>
 
                                                     <?php if ($k === 0): ?>
-                                                        <td rowspan="<?= $n ?>" class="text-start va-top c-pj"><?= esc($row['penanggung_jawab'] ?? '-') ?></td>
+                                                        <td rowspan="<?= $n ?>" class="text-start va-top c-pj"><?= esc($row['penanggung_jawab'] ?? '') ?></td>
                                                         <td rowspan="<?= $n ?>" class="va-top c-aksi">
                                                             <?php if ($canWrite ?? true): ?>
                                                                 <?php if (empty($row['target_id'])): ?>

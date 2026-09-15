@@ -374,6 +374,9 @@ $js = static fn ($v) => json_encode(
       <?php else: ?>
         <?php
           $pkB   = $dash['pk_bupati'];
+          // Kartu Capaian PK Bupati membaca LAKIP Kabupaten tahun yang sudah
+          // jatuh tempo (lihat KabupatenDashboardService::getBupatiLakipAchievement).
+          $lkB   = $dash['lakip_bupati'];
           $opdR  = $dash['opd'];
           $telat = $dash['belum_update'];
           $prio  = $dash['prioritas'];
@@ -391,31 +394,26 @@ $js = static fn ($v) => json_encode(
                 <div class="kpi-title">Capaian PK Bupati</div>
               </div>
               <div>
-                <?php if (!$pkB['ada']): ?>
-                  <div class="kpi-num sm text-muted">Belum ada PK Bupati</div>
-                  <div class="kpi-sub mt-2"><div>Tahun <?= (int) $tahun ?> belum memiliki dokumen PK Bupati.</div></div>
-                <?php elseif ($pkB['can_compute']): ?>
-                  <div class="kpi-num" style="color:<?= esc($pkB['status']['color_hex']) ?>"><?= esc(capaianFormatPersen($pkB['total'])) ?></div>
+                <?php if (!$lkB['ada']): ?>
+                  <div class="kpi-num sm text-muted">Belum ada LAKIP <?= (int) $lkB['tahun_lakip'] ?></div>
+                  <div class="kpi-sub mt-2"><div>LAKIP Kabupaten tahun <?= (int) $lkB['tahun_lakip'] ?> belum memiliki indikator untuk dinilai.</div></div>
+                <?php elseif ($lkB['can_compute']): ?>
+                  <div class="kpi-num" style="color:<?= esc($lkB['status']['color_hex']) ?>"><?= esc(capaianFormatPersen($lkB['total'])) ?></div>
                   <div class="kpi-sub mt-2">
-                    <div><?= (int) $pkB['valid'] ?> dari <?= (int) $pkB['wajib'] ?> indikator valid</div>
-                    <?php if ($pkB['verifikasi']['available'] ?? false): ?>
-                      <div class="fw-semibold" style="color:<?= esc($pkB['status']['color_hex']) ?>">
-                        <?= esc($pkB['label']) ?><?= $pkB['belum_verifikasi'] > 0 ? ' — ' . (int) $pkB['belum_verifikasi'] . ' belum diverifikasi' : '' ?>
-                      </div>
-                    <?php endif; ?>
+                    <div>LAKIP Kabupaten <?= (int) $lkB['tahun_lakip'] ?> &middot; <?= esc($lkB['sumber_label'] ?? '') ?></div>
+                    <div><?= (int) $lkB['valid'] ?> dari <?= (int) $lkB['wajib'] ?> indikator terhitung<?= $lkB['kritis'] > 0 ? ' &middot; ' . (int) $lkB['kritis'] . ' kritis' : '' ?></div>
+                    <div class="fw-semibold" style="color:<?= esc($lkB['status']['color_hex']) ?>"><?= esc($lkB['label']) ?></div>
                   </div>
                 <?php else: ?>
                   <div class="kpi-num sm text-muted">Belum dapat dihitung</div>
                   <div class="kpi-sub mt-2">
-                    <div><?= (int) $pkB['valid'] ?> dari <?= (int) $pkB['wajib'] ?> indikator valid</div>
-                    <div class="fw-semibold text-warning-emphasis"><?= (int) $pkB['belum_valid'] ?> indikator perlu dilengkapi</div>
-                    <?php if ($pkB['formula_gap'] > 0): ?>
-                      <div><span class="dot" style="background:#8a968f"></span><?= (int) $pkB['formula_gap'] ?> formula belum tersedia</div>
-                    <?php endif; ?>
+                    <div>LAKIP Kabupaten <?= (int) $lkB['tahun_lakip'] ?> &middot; <?= esc($lkB['sumber_label'] ?? '') ?></div>
+                    <div><?= (int) $lkB['valid'] ?> dari <?= (int) $lkB['wajib'] ?> indikator terhitung</div>
+                    <div class="fw-semibold text-warning-emphasis"><?= (int) $lkB['belum_valid'] ?> indikator perlu dilengkapi<?= $lkB['belum_input'] > 0 ? ' (' . (int) $lkB['belum_input'] . ' belum ada realisasi)' : '' ?></div>
                   </div>
                 <?php endif; ?>
               </div>
-              <div class="kpi-foot">Lihat indikator PK Bupati <i class="fas fa-chevron-right ms-1" style="font-size:.65rem"></i></div>
+              <div class="kpi-foot">Lihat indikator LAKIP <?= (int) $lkB['tahun_lakip'] ?> <i class="fas fa-chevron-right ms-1" style="font-size:.65rem"></i></div>
             </button>
           </div>
 
@@ -647,6 +645,7 @@ $js = static fn ($v) => json_encode(
       ],
       'kab'   => $fokusMode ? null : [
         'pk_bupati'    => $dash['pk_bupati'],
+        'lakip_bupati' => $dash['lakip_bupati'],
         'opd'          => $dash['opd'],
         'opd_list'     => $dash['opd_list'],
         'belum_update' => $dash['belum_update'],
@@ -678,11 +677,11 @@ $js = static fn ($v) => json_encode(
       var romawi = ['', 'I', 'II', 'III', 'IV'];
 
       var rp = function (n) {
-        if (n === null || n === undefined) return '-';
+        if (n === null || n === undefined) return ''; // nilai kosong dibiarkan kosong, tanpa tanda strip
         return 'Rp ' + Number(n).toLocaleString('id-ID', { maximumFractionDigits: 0 });
       };
       var pct = function (n) {
-        if (n === null || n === undefined || isNaN(n)) return '-';
+        if (n === null || n === undefined || isNaN(n)) return '';
         return Number(n).toFixed(2).replace('.', ',').replace(/,00$/, '') + '%';
       };
       var esc = function (s) {
@@ -729,7 +728,7 @@ $js = static fn ($v) => json_encode(
         return '<div class="ind-card">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;">' + esc(o.nama_opd) + '</div>' +
-            '<div class="ind-pct">' + (o.can_compute ? pct(o.percentage) : '—') + '</div>' +
+            '<div class="ind-pct">' + (o.can_compute ? pct(o.percentage) : '') + '</div>' +
           '</div>' +
           '<div class="ind-meta">' +
             '<span>' + o.valid + '/' + o.indikator + ' indikator valid</span>' +
@@ -748,10 +747,10 @@ $js = static fn ($v) => json_encode(
         return '<div class="ind-card" data-pkbupati="' + i.indikator_id + '" role="button">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;line-height:1.35;">' + esc(i.indikator) + '</div>' +
-            '<div class="ind-pct">' + (i.percentage_teks || '—') + '</div>' +
+            '<div class="ind-pct">' + (i.percentage_teks || '') + '</div>' +
           '</div>' +
           '<div class="ind-meta">' +
-            '<span>Target: <strong>' + esc(i.target_tahunan || '-') + '</strong> ' + esc(i.satuan || '') + '</span>' +
+            '<span>Target: <strong>' + esc(i.target_tahunan || '') + '</strong> ' + esc(i.satuan || '') + '</span>' +
             '<span>Metode: ' + esc(i.metode_nama) + '</span>' +
             '<span>' + (i.pengampu && i.pengampu.length ? i.pengampu.length + ' OPD pengampu' : 'OPD pengampu belum ditetapkan') + '</span>' +
           '</div>' +
@@ -759,6 +758,28 @@ $js = static fn ($v) => json_encode(
             '<span class="badge-soft" style="background:#f1f3f2;color:#6b7a70;">' + (i.is_valid ? 'Valid' : 'Belum valid') + '</span>' +
             // Lencana status verifikasi hanya bila mekanismenya ada (lihat verificationInfo()).
             (i.verification.available ? '<span class="badge-soft" style="background:#fdf0e6;color:#e07b39;">' + esc(i.verification.label) + '</span>' : '') +
+          '</div>' +
+          (i.reason ? '<div class="ins-why mt-2"><i class="fas fa-circle-info me-1"></i>' + esc(i.reason) + '</div>' : '') +
+        '</div>';
+      }
+
+      /* Baris indikator LAKIP Kabupaten (drawer Capaian PK Bupati): target &
+         realisasi tahunan, tanpa drill-down triwulan — LAKIP tidak punya itu. */
+      function kartuIndikatorLakip(i) {
+        var stLakip = i.status_lakip ? i.status_lakip.charAt(0).toUpperCase() + i.status_lakip.slice(1) : 'Belum diinput';
+        return '<div class="ind-card">' +
+          '<div class="d-flex justify-content-between gap-2 align-items-start">' +
+            '<div class="fw-bold" style="font-size:.87rem;line-height:1.35;">' + esc(i.indikator) + '</div>' +
+            '<div class="ind-pct">' + (i.percentage_teks || '') + '</div>' +
+          '</div>' +
+          '<div class="ind-meta"><span class="text-muted">' + esc(i.sasaran) + '</span></div>' +
+          '<div class="ind-meta">' +
+            '<span>Target: <strong>' + esc(i.target || '') + '</strong> ' + esc(i.satuan || '') + '</span>' +
+            '<span>Realisasi: <strong>' + esc(i.realisasi || '') + '</strong> ' + esc(i.satuan || '') + '</span>' +
+            '<span>Jenis: ' + esc((i.jenis || '').replace(/^indikator\s+/i, '') || '') + '</span>' +
+          '</div>' +
+          '<div class="d-flex flex-wrap gap-2 mt-2">' + badge(i.status) +
+            '<span class="badge-soft" style="background:#f1f3f2;color:#6b7a70;">LAKIP: ' + esc(stLakip) + '</span>' +
           '</div>' +
           (i.reason ? '<div class="ins-why mt-2"><i class="fas fa-circle-info me-1"></i>' + esc(i.reason) + '</div>' : '') +
         '</div>';
@@ -806,8 +827,8 @@ $js = static fn ($v) => json_encode(
             var isi = ['I', 'II', 'III', 'IV'].map(function (r, k) {
               var t = b.targets[k + 1], c = b.capaian[k + 1];
               return '<div class="d-flex justify-content-between" style="font-size:.79rem;padding:3px 0;border-bottom:1px dashed #eef2ef;">' +
-                '<span class="text-muted">TW ' + r + '</span><span>Target <strong>' + esc(t === null || t === '' ? '-' : t) +
-                '</strong> &middot; Realisasi <strong>' + esc(c === null || c === '' ? '-' : c) + '</strong></span></div>';
+                '<span class="text-muted">TW ' + r + '</span><span>Target <strong>' + esc(t === null || t === '' ? '' : t) +
+                '</strong> &middot; Realisasi <strong>' + esc(c === null || c === '' ? '' : c) + '</strong></span></div>';
             }).join('');
             return '<div class="drawer-section"><div class="fw-bold mb-2" style="font-size:.83rem;">' + esc(b.label || 'Rencana Aksi PK Bupati') + '</div>' + isi +
               (b.validity.reason ? '<div class="ins-why mt-2"><i class="fas fa-circle-info me-1"></i>' + esc(b.validity.reason) + '</div>' : '') + '</div>';
@@ -822,7 +843,7 @@ $js = static fn ($v) => json_encode(
                   ? p.indikator.map(function (x) {
                       return '<div class="d-flex justify-content-between gap-2" style="font-size:.79rem;padding:4px 0;border-bottom:1px dashed #eef2ef;">' +
                         '<span>' + esc(x.indikator) + (x.turunan ? ' <span class="badge-soft" style="background:#f1f3f2;color:#6b7a70;">' + x.turunan + ' turunan Eselon III/IV</span>' : '') + '</span>' +
-                        '<span class="text-nowrap">' + (x.percentage_teks || '—') + '</span></div>';
+                        '<span class="text-nowrap">' + (x.percentage_teks || '') + '</span></div>';
                     }).join('')
                   : '<div class="text-muted" style="font-size:.79rem;">PK pimpinan OPD ini belum tersedia pada tahun terpilih.</div>';
                 return '<div class="drawer-section"><div class="d-flex justify-content-between align-items-start gap-2 mb-2">' +
@@ -844,13 +865,13 @@ $js = static fn ($v) => json_encode(
                 (d.verification.available ? '<span class="badge-soft" style="background:#fdf0e6;color:#e07b39;">' + esc(d.verification.label) + '</span>' : '') + '</div>' +
               '<dl class="drawer-dl mb-0">' +
                 '<dt>Sasaran PK Bupati</dt><dd>' + esc(d.sasaran) + '</dd>' +
-                '<dt>Satuan</dt><dd>' + esc(d.satuan || '-') + '</dd>' +
-                '<dt>Target tahunan</dt><dd>' + esc(d.target_tahunan || '-') + '</dd>' +
+                '<dt>Satuan</dt><dd>' + esc(d.satuan || '') + '</dd>' +
+                '<dt>Target tahunan</dt><dd>' + esc(d.target_tahunan || '') + '</dd>' +
                 '<dt>Formula / metode</dt><dd>' + esc(d.metode_nama) + '</dd>' +
                 '<dt>Realisasi PK</dt><dd>' + (d.percentage_teks || 'belum dapat dihitung') + '</dd>' +
                 '<dt>Anggaran</dt><dd>' + esc(d.anggaran_teks) + '</dd>' +
                 '<dt>Realisasi anggaran</dt><dd>' + (d.realisasi_teks || 'belum dilaporkan') + '</dd>' +
-                '<dt>Pembaruan terakhir</dt><dd>' + esc(d.updated_at || '-') + '</dd>' +
+                '<dt>Pembaruan terakhir</dt><dd>' + esc(d.updated_at || '') + '</dd>' +
               '</dl>' +
               (d.validity.reason ? '<div class="ins-why mt-3"><i class="fas fa-circle-info me-1"></i>' + esc(d.validity.reason) + '</div>' : '') +
             '</div>' +
@@ -1072,9 +1093,9 @@ $js = static fn ($v) => json_encode(
         return '<div class="ind-card">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;line-height:1.35;">' + esc(i.indikator) + '</div>' +
-            '<div class="ind-pct">' + (i.percentage_teks || '—') + '</div></div>' +
+            '<div class="ind-pct">' + (i.percentage_teks || '') + '</div></div>' +
           '<div class="ind-meta">' +
-            '<span>Target: <strong>' + esc(i.target_tahunan || '-') + '</strong> ' + esc(i.satuan || '') + '</span>' +
+            '<span>Target: <strong>' + esc(i.target_tahunan || '') + '</strong> ' + esc(i.satuan || '') + '</span>' +
             '<span>Metode: ' + esc(i.metode_nama) + '</span>' +
             (i.capaian_terakhir ? '<span>Capaian TW ' + romawi[i.capaian_terakhir.triwulan] + ': <strong>' + esc(i.capaian_terakhir.nilai) + '</strong></span>' : '<span>Capaian: belum ada</span>') +
           '</div>' +
@@ -1180,18 +1201,23 @@ $js = static fn ($v) => json_encode(
       /* ---------------- Isi drawer dari data tertanam ---------------- */
       var builders = {
         pk_bupati: function () {
-          var b = D.kab.pk_bupati;
+          // Kartu Capaian PK Bupati membaca LAKIP Kabupaten tahun jatuh tempo,
+          // bukan MONEV PK Bupati (lihat getBupatiLakipAchievement()).
+          var b = D.kab.lakip_bupati;
           if (!b.ada) {
-            return { t: 'PK Bupati', s: '', html: kosong('Belum ada Perjanjian Kinerja Bupati untuk tahun ' + D.tahun + '.', 'fa-file-signature') };
+            return { t: 'Capaian PK Bupati', s: 'LAKIP ' + b.tahun_lakip, html: kosong('LAKIP Kabupaten tahun ' + b.tahun_lakip + ' belum memiliki indikator untuk dinilai.', 'fa-file-lines') };
           }
           var kepala = '<div class="drawer-section"><dl class="drawer-dl mb-0">' +
             '<dt>Capaian PK Bupati</dt><dd>' + (b.can_compute ? pct(b.total) : 'belum dapat dihitung') + '</dd>' +
-            '<dt>Indikator valid</dt><dd>' + b.valid + ' dari ' + b.wajib + '</dd>' +
-            // "Status nilai" & catatannya hanya bila mekanisme verifikasi ada.
-            (b.verifikasi && b.verifikasi.available ? '<dt>Status nilai</dt><dd>' + esc(b.label) + '</dd>' : '') +
-            (b.formula_gap ? '<dt>Formula belum tersedia</dt><dd>' + b.formula_gap + ' indikator</dd>' : '') +
-            '</dl>' + (b.verifikasi && b.verifikasi.available ? '<p class="text-muted mt-3 mb-0" style="font-size:.75rem;">' + esc(b.verifikasi.note) + '</p>' : '') + '</div>';
-          return { t: 'Indikator PK Bupati', s: b.valid + ' dari ' + b.wajib + ' indikator valid', html: kepala + b.indikator.map(kartuIndikatorBupati).join('') };
+            '<dt>Sumber</dt><dd>LAKIP Kabupaten ' + b.tahun_lakip + ' &middot; ' + esc(b.sumber_label || '') + (b.versi_label ? ' (' + esc(b.versi_label) + ')' : '') + '</dd>' +
+            '<dt>Indikator terhitung</dt><dd>' + b.valid + ' dari ' + b.wajib + '</dd>' +
+            (b.kritis ? '<dt>Kritis</dt><dd>' + b.kritis + ' indikator</dd>' : '') +
+            '<dt>Status nilai</dt><dd>' + esc(b.label) + (b.terkunci ? ' — arsip beku' : (b.disahkan ? ' — disahkan' : '')) + '</dd>' +
+            '</dl>' +
+            '<p class="text-muted mt-3 mb-0" style="font-size:.75rem;">Capaian dihitung dari target &amp; realisasi tahunan pada LAKIP Kabupaten (rumus dan angka sama dengan menu LAKIP). Capaian per indikator ditampilkan apa adanya (bisa minus); pada rata-rata, kontribusi tiap indikator dibatasi 0–200% supaya satu indikator ekstrem tidak menyeret total. ' +
+            (b.tahun_lakip !== D.tahun ? 'LAKIP tahun ' + D.tahun + ' baru dapat disusun setelah tahunnya berakhir, sehingga yang ditampilkan adalah LAKIP terakhir yang sudah jatuh tempo.' : '') + '</p>' +
+            '<a class="btn btn-sm btn-outline-success mt-3" href="' + esc(b.url) + '">Buka LAKIP ' + b.tahun_lakip + '</a></div>';
+          return { t: 'Indikator LAKIP Kabupaten ' + b.tahun_lakip, s: b.valid + ' dari ' + b.wajib + ' indikator terhitung', html: kepala + b.indikator.map(kartuIndikatorLakip).join('') };
         },
         opd: function () {
           var o = D.kab.opd;
@@ -1244,7 +1270,7 @@ $js = static fn ($v) => json_encode(
           var kepala = '<div class="drawer-section"><dl class="drawer-dl mb-0">' +
             '<dt>Pagu anggaran</dt><dd>' + rp(a.anggaran) + '</dd>' +
             '<dt>Realisasi s.d. TW ' + romawi[a.triwulan] + '</dt><dd>' + (a.realisasi === null ? 'belum dilaporkan' : rp(a.realisasi)) + '</dd>' +
-            '<dt>Penyerapan</dt><dd>' + (a.persen === null ? '-' : pct(a.persen)) + '</dd>' +
+            '<dt>Penyerapan</dt><dd>' + (a.persen === null ? '' : pct(a.persen)) + '</dd>' +
             '</dl><p class="text-muted mt-3 mb-0" style="font-size:.75rem;">Realisasi kosong berarti <strong>belum dilaporkan</strong> — tidak dianggap 0. ' +
             'Efisiensi anggaran tetap diinput manual pada modul LAKIP.</p>' +
             (a.program_lain_count ? '<div class="alert alert-warning mt-3 mb-0 py-2 px-3" style="font-size:.76rem;">' +
@@ -1259,7 +1285,7 @@ $js = static fn ($v) => json_encode(
               (p.milik_opd_lain ? ' <span class="badge-soft" style="background:#fdf0e6;color:#e07b39;">milik PD lain — tidak dihitung</span>' : '') + '</div>' +
               '<div class="ind-meta"><span>Anggaran: <strong>' + rp(p.anggaran) + '</strong></span>' +
               '<span>Realisasi: <strong>' + (p.realisasi === null ? 'belum dilaporkan' : rp(p.realisasi)) + '</strong></span>' +
-              '<span>Penyerapan: <strong>' + (serap === null ? '-' : pct(serap)) + '</strong></span></div>' +
+              '<span>Penyerapan: <strong>' + (serap === null ? '' : pct(serap)) + '</strong></span></div>' +
               '<div class="ind-meta"><span>Mendukung: ' + p.indikator.map(function (x) { return esc(x.nama); }).join('; ') + '</span></div></div>';
           }).join('') : kosong('Belum ada program pendukung pada Perjanjian Kinerja.');
 

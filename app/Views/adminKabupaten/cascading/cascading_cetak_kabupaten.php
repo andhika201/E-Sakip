@@ -14,7 +14,9 @@ foreach ($rows as $r) {
     $si = $r['sasaran_id']   ?? ('s' . $ti);
     $ii = $r['indikator_id'] ?? ('i' . $si);
 
-    if (!isset($tree[$mi])) $tree[$mi] = ['misi' => $r['misi'] ?? '-', 'tujuan' => []];
+    // misi_id NULL = sasaran IKU belum berjangkar ke RPJMD: diberi label, bukan "-",
+    // supaya cetakan tidak terbaca seolah datanya hilang. Dikelompokkan di ekor.
+    if (!isset($tree[$mi])) $tree[$mi] = ['misi' => $r['misi'] ?? '(Sasaran IKU belum dijangkarkan ke RPJMD)', 'tujuan' => []];
     if (!isset($tree[$mi]['tujuan'][$ti])) $tree[$mi]['tujuan'][$ti] = ['nama' => $r['tujuan_rpjmd'] ?? '-', 'sasaran' => []];
     $tj = &$tree[$mi]['tujuan'][$ti];
     if (!isset($tj['sasaran'][$si])) $tj['sasaran'][$si] = ['nama' => $r['sasaran_rpjmd'] ?? '-', 'indikator' => []];
@@ -34,6 +36,7 @@ foreach ($rows as $r) {
     if ($prog !== '') $ind['opd'][$opdKey]['programs'][] = $prog;
     unset($tj, $ss, $ind);
 }
+if (isset($tree[0])) { $ekor = $tree[0]; unset($tree[0]); $tree[0] = $ekor; }
 
 // Rowspan = jumlah baris leaf (1 baris = 1 program; OPD tanpa program tetap 1 baris)
 $opdRows  = fn($opd) => max(1, count($opd['programs']));

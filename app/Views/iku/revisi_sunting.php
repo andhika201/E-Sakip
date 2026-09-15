@@ -391,6 +391,58 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
                     </span>
                 </div>
 
+                <?php /* ==========================================================
+                         JANGKAR RPJMD — hanya lingkup KABUPATEN, hanya sasaran yang
+                         TIDAK punya silsilah sasaran RPJMD (lahir di IKU).
+
+                         Sasaran hasil sync RPJMD sudah tahu tujuannya lewat
+                         silsilahnya; menawarkan pilihan di sana hanya membuka
+                         jalan bagi dua jawaban yang bertentangan. Sasaran yang
+                         lahir di IKU tidak punya siapa-siapa untuk ditanya — di
+                         sinilah pemakai menyebut tujuan RPJMD penaungnya, supaya
+                         barisnya di Cascading Kabupaten tidak lagi berkolom
+                         Misi/Tujuan kosong. Boleh dikosongkan (keputusan pemilik
+                         sistem, 14 Sep 2026): baris tetap tampil, hanya kosong.
+                       ========================================================== */ ?>
+                <?php $tanpaSilsilahRpjmd = empty($sas['source_ref_id']) || ($sas['source_type'] ?? '') !== 'rpjmd'; ?>
+                <?php if (! empty($tujuanRpjmdOptions) && $tanpaSilsilahRpjmd): ?>
+                    <?php $jangkarTerpilih = (string) old("sasaran.{$sasId}.rpjmd_tujuan_id", $sas['rpjmd_tujuan_id'] ?? ''); ?>
+                    <div class="border rounded p-3 mb-3 <?= $jangkarTerpilih === '' ? 'border-warning bg-warning-subtle' : 'bg-light' ?>">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold mb-1" for="jangkar-<?= $sasId ?>">
+                                    <i class="fa-solid fa-anchor me-1"></i>Tujuan RPJMD penaung
+                                    <?php if ($jangkarTerpilih === ''): ?>
+                                        <span class="badge bg-warning text-dark ms-1">belum dijangkarkan</span>
+                                    <?php endif; ?>
+                                </label>
+                                <select name="sasaran[<?= $sasId ?>][rpjmd_tujuan_id]" id="jangkar-<?= $sasId ?>" class="form-select">
+                                    <option value="">— belum dijangkarkan (kolom Misi/Tujuan di Cascading kosong) —</option>
+                                    <?php $misiSebelum = null; ?>
+                                    <?php foreach ($tujuanRpjmdOptions as $t): ?>
+                                        <?php if ($misiSebelum !== (int) $t['misi_id']): ?>
+                                            <?php if ($misiSebelum !== null): ?></optgroup><?php endif; ?>
+                                            <optgroup label="Misi: <?= esc(mb_substr((string) $t['misi'], 0, 90)) ?>">
+                                            <?php $misiSebelum = (int) $t['misi_id']; ?>
+                                        <?php endif; ?>
+                                        <option value="<?= (int) $t['id'] ?>" <?= $jangkarTerpilih === (string) $t['id'] ? 'selected' : '' ?>>
+                                            <?= esc($t['tujuan']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                    <?php if ($misiSebelum !== null): ?></optgroup><?php endif; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-text">
+                                    Sasaran ini lahir di IKU, bukan salinan RPJMD, jadi Cascading Kabupaten
+                                    tidak tahu di bawah Misi/Tujuan mana ia berdiri. Pilihan ini yang
+                                    menentukannya; berlaku setelah revisi disahkan.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <?php foreach ($sas['indikator'] as $n => $ind): ?>
                     <?php $id = (int) $ind['id']; ?>
                     <div class="indikator-item border rounded p-3 bg-light mb-3 indikator-kartu
@@ -448,12 +500,13 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
              dalam kartunya. Pemakai membaca dokumen dari atas ke bawah, lalu
              menemukan tombol tambah tepat di tempat isian barunya akan muncul.
 
-             Hanya ditawarkan bila ada Tujuan Renstra yang bisa dipilih. Lingkup
-             KABUPATEN tidak punya Renstra, jadi daftarnya kosong dan blok ini
-             tidak dirender sama sekali — lebih jujur daripada menampilkan tombol
-             yang pasti berujung galat.
+             Lingkup OPD: hanya ditawarkan bila ada Tujuan Renstra yang bisa
+             dipilih (wajib). Lingkup KABUPATEN: ditawarkan bila daftar tujuan
+             RPJMD tersedia; jangkarnya OPSIONAL — sasaran boleh lahir tanpa
+             jangkar dan tampil di Cascading dengan kolom Misi/Tujuan kosong.
         ===================================================================== */ ?>
-    <?php if (! empty($tujuanOptions)): ?>
+    <?php $kabupatenSasaranBaru = empty($tujuanOptions) && ! empty($tujuanRpjmdOptions); ?>
+    <?php if (! empty($tujuanOptions) || $kabupatenSasaranBaru): ?>
         <div class="wadah-sasaran-baru"></div>
 
         <div class="d-grid mb-4">
@@ -461,8 +514,8 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
                 <i class="fa-solid fa-plus me-1"></i>Tambah Sasaran
             </button>
             <div class="form-text text-center mt-1">
-                Sasaran yang lahir di IKU, bukan salinan Renstra. Ia ikut diperiksa
-                dan baru berlaku setelah revisi ini disahkan.
+                Sasaran yang lahir di IKU, bukan salinan <?= $kabupatenSasaranBaru ? 'RPJMD' : 'Renstra' ?>.
+                Ia ikut diperiksa dan baru berlaku setelah revisi ini disahkan.
             </div>
         </div>
 
@@ -487,21 +540,47 @@ $bawahIzin = ! empty($keadaanIzin['sedang_disunting']);
                                       class="form-control isian-sasaran" required
                                       placeholder="Rumusan sasaran yang hendak ditambahkan"></textarea>
                         </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold">
-                                Tujuan Renstra <span class="text-danger">*</span>
-                            </label>
-                            <select name="sasaran_baru[s__S__][renstra_tujuan_id]" class="form-select" required>
-                                <option value="">— pilih tujuan —</option>
-                                <?php foreach ($tujuanOptions as $t): ?>
-                                    <option value="<?= (int) $t['id'] ?>"><?= esc($t['tujuan']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="form-text">
-                                Menentukan letaknya di Cascading. Tanpa ini barisnya
-                                muncul di luar blok Tujuan mana pun.
+                        <?php if ($kabupatenSasaranBaru): ?>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">
+                                    <i class="fa-solid fa-anchor me-1"></i>Tujuan RPJMD penaung
+                                </label>
+                                <select name="sasaran_baru[s__S__][rpjmd_tujuan_id]" class="form-select">
+                                    <option value="">— belum dijangkarkan —</option>
+                                    <?php $misiSebelum = null; ?>
+                                    <?php foreach ($tujuanRpjmdOptions as $t): ?>
+                                        <?php if ($misiSebelum !== (int) $t['misi_id']): ?>
+                                            <?php if ($misiSebelum !== null): ?></optgroup><?php endif; ?>
+                                            <optgroup label="Misi: <?= esc(mb_substr((string) $t['misi'], 0, 90)) ?>">
+                                            <?php $misiSebelum = (int) $t['misi_id']; ?>
+                                        <?php endif; ?>
+                                        <option value="<?= (int) $t['id'] ?>"><?= esc($t['tujuan']) ?></option>
+                                    <?php endforeach; ?>
+                                    <?php if ($misiSebelum !== null): ?></optgroup><?php endif; ?>
+                                </select>
+                                <div class="form-text">
+                                    Menentukan letaknya di Cascading Kabupaten. Boleh dikosongkan
+                                    dulu — barisnya tetap tampil, dengan kolom Misi/Tujuan kosong,
+                                    dan bisa dijangkarkan kemudian dari layar ini.
+                                </div>
                             </div>
-                        </div>
+                        <?php else: ?>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">
+                                    Tujuan Renstra <span class="text-danger">*</span>
+                                </label>
+                                <select name="sasaran_baru[s__S__][renstra_tujuan_id]" class="form-select" required>
+                                    <option value="">— pilih tujuan —</option>
+                                    <?php foreach ($tujuanOptions as $t): ?>
+                                        <option value="<?= (int) $t['id'] ?>"><?= esc($t['tujuan']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">
+                                    Menentukan letaknya di Cascading. Tanpa ini barisnya
+                                    muncul di luar blok Tujuan mana pun.
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="wadah-indikator-sasaran-baru"></div>

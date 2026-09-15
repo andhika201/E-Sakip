@@ -649,6 +649,23 @@ define('ESAKIP_KONFIRMASI_TERPASANG', true);
         var POLA_AMAN = /^[^()\[\]{};=]*$/;
         var POLA_NADA_HAPUS = /hapus|dihapus|dibuang|hilang|musnah|bersihkan|delete/i;
 
+        /* Kata penghapusan yang DINEGASIKAN atau hanya DISEBUT bukan nada hapus:
+         *   "Data lama TIDAK dihapus."          -> menenangkan, bukan mengancam
+         *   "Tarik permohonan penghapusan ini?" -> menarik permohonan, bukan menghapus
+         * Dulu keduanya dibaca sebagai penghapusan: dialognya berjudul
+         * "Konfirmasi Hapus" dan berkata "tidak dapat dibatalkan" pada tombol
+         * SAHKAN — persis kebalikan dari maksud kalimatnya. Bagian-bagian itu
+         * dibuang dulu sebelum nadanya ditebak. */
+        var POLA_NEGASI_HAPUS = /\b(tidak|tak|bukan|tanpa|jangan)\b(\s+\w+){0,2}?\s+(di|meng|ter|peng)?(hapus|buang|hilang|musnah|bersihkan)\w*/gi;
+        var POLA_SEBUT_HAPUS  = /\b(permohonan|pengajuan|permintaan|usulan)\s+(peng)?hapus\w*/gi;
+
+        function nadaHapus(pesan) {
+            var bersih = String(pesan)
+                .replace(POLA_NEGASI_HAPUS, ' ')
+                .replace(POLA_SEBUT_HAPUS, ' ');
+            return POLA_NADA_HAPUS.test(bersih);
+        }
+
         function migrasiConfirmLama(el, atribut) {
             if (!el || !el.getAttribute) { return false; }
             var isi = el.getAttribute(atribut);
@@ -667,7 +684,7 @@ define('ESAKIP_KONFIRMASI_TERPASANG', true);
 
             el.removeAttribute(atribut);
             el.setAttribute('data-konfirmasi', pesan);
-            el.setAttribute('data-konfirmasi-jenis', POLA_NADA_HAPUS.test(pesan) ? 'hapus' : 'tanya');
+            el.setAttribute('data-konfirmasi-jenis', nadaHapus(pesan) ? 'hapus' : 'tanya');
             return true;
         }
 

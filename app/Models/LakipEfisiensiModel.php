@@ -113,13 +113,20 @@ class LakipEfisiensiModel extends Model
         }
 
         $b = $this->db->table($this->table . ' e')
-            ->select('e.*, pr.kode_program, pr.program_kegiatan, pr.anggaran AS anggaran_sumber')
+            // nama_opd ikut dibawa: tampilan lintas OPD (admin_kab, "semua OPD")
+            // menampilkan kolom OPD di kiri tabel. opd_id 0 (tingkat kabupaten)
+            // tidak punya baris di tabel opd -> NULL, view yang memberi label.
+            ->select('e.*, pr.kode_program, pr.program_kegiatan, pr.anggaran AS anggaran_sumber, o.nama_opd')
             ->join('program_pk pr', 'pr.id = e.program_id', 'left')
+            ->join('opd o', 'o.id = e.opd_id', 'left')
             ->where('e.tahun', $tahun);
 
         // opd_id 0 = tingkat kabupaten. null = lintas OPD (admin_kab), tak difilter.
         if ($opdId !== null) {
             $b->where('e.opd_id', (int) $opdId);
+        } else {
+            // Lintas OPD: dikelompokkan per OPD dulu supaya kolom OPD terbaca.
+            $b->orderBy('o.nama_opd', 'ASC');
         }
 
         return $b->orderBy('pr.kode_program', 'ASC')

@@ -3,7 +3,9 @@
 namespace App\Models\Opd;
 
 use App\Models\Concerns\TransaksiAman;
+use App\Services\AnggaranUnitService;
 use CodeIgniter\Model;
+use RuntimeException;
 
 class MonevModel extends Model
 {
@@ -614,6 +616,70 @@ class MonevModel extends Model
         return $map;
     }
 
+    /**
+     * Capaian triwulanan yang SUDAH TERISI, per sub rencana aksi.
+     *
+     * =====================================================================
+     * SATU DEFINISI "TERISI" UNTUK SEMUA
+     *
+     * Dipakai oleh tiga tempat yang harus sepakat: penjaga penghapusan sub
+     * (TargetModel::saveSubRencana), form sunting rencana aksi (menandai
+     * sub mana yang tidak bisa dibuang sebelum pemakai mencoba), dan dialog
+     * konfirmasinya. Kalau ketiganya menghitung sendiri-sendiri, suatu hari
+     * form membolehkan apa yang server tolak — persis jebakan yang sedang
+     * diperbaiki.
+     *
+     * "0" DIHITUNG TERISI. Form MONEV menyimpan isian kosong sebagai NULL,
+     * jadi "0" hanya ada kalau memang diketik: itu capaian nol yang
+     * dilaporkan, bukan ketiadaan laporan. Sama dengan capaianTerisi() di
+     * capaian_helper — yang juga menghitung "0" sebagai triwulan terisi
+     * saat menghitung Capaian Total.
+     *
+     * PK Bupati bisa punya beberapa baris monev untuk satu sub (satu per
+     * OPD pendukung). Nilai pertama yang terisi per triwulan yang diambil;
+     * untuk keperluan "boleh dihapus atau tidak" satu nilai pun sudah cukup.
+     *
+     * @param int[] $subIds
+     *
+     * @return array<int, array<int, string>> [sub_id => [triwulan => nilai]];
+     *         hanya triwulan terisi yang ada; sub tanpa isian tidak muncul
+     */
+    public function capaianTerisiPerSub(array $subIds): array
+    {
+        $subIds = array_values(array_unique(array_filter(array_map('intval', $subIds))));
+        if ($subIds === []) {
+            return [];
+        }
+
+        $rows = $this->db->table($this->table)
+            ->select('target_sub_rencana_id, capaian_triwulan_1, capaian_triwulan_2,
+                      capaian_triwulan_3, capaian_triwulan_4')
+            ->whereIn('target_sub_rencana_id', $subIds)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $peta = [];
+
+        foreach ($rows as $row) {
+            $subId = (int) $row['target_sub_rencana_id'];
+
+            foreach ([1, 2, 3, 4] as $q) {
+                $nilai = $row['capaian_triwulan_' . $q] ?? null;
+
+                if ($nilai === null || trim((string) $nilai) === '') {
+                    continue;
+                }
+
+                if (! isset($peta[$subId][$q])) {
+                    $peta[$subId][$q] = trim((string) $nilai);
+                }
+            }
+        }
+
+        return $peta;
+    }
+
     /* ==========================================================
      * REALISASI ANGGARAN (tabel monev_anggaran)
      *
@@ -839,5 +905,208 @@ class MonevModel extends Model
 
         $id = $this->insert($data, true);
         return $this->find($id);
+    }
+
+    /* =========================================================
+     * SIMPAN REALISASI DENGAN PLAFON PAGU (§24, §28, §29, §30)
+     * =======================================================*/
+
+    /**
+     * Simpan realisasi beberapa rencana aksi sekaligus, dengan plafon pagu.
+     *
+     * =====================================================================
+     * KENAPA TIDAK CUKUP MEMVALIDASI ANGKA YANG DIKIRIM
+     *
+     * Satu unit anggaran boleh dipakai beberapa indikator, dan tiap indikator
+     * mengisi BAGIANnya sendiri. Batasnya berlaku pada JUMLAH seluruh bagian:
+     *
+     *     A baru 300jt + B tersimpan 600jt  >  pagu 800jt   -> ditolak
+     *
+     * Memvalidasi hanya angka A akan meloloskannya (§28). Jadi yang dihitung
+     * adalah keadaan AKHIR yang diusulkan: bagian yang sedang diubah diambil
+     * dari kiriman, sisanya dibaca dari basis data.
+     *
+     * =====================================================================
+     * KENAPA HARUS DIKUNCI, BUKAN SEKADAR DIPERIKSA DULU
+     *
+     * Dua penyunting pada unit yang sama, masing-masing melihat sisa pagu
+     * 100jt, masing-masing menyimpan 80jt — dua-duanya lolos pemeriksaan yang
+     * dilakukan SEBELUM transaksi, dan hasil akhirnya 160jt melampaui pagu.
+     *
+     * Karena itu baris MASTER unitnya dikunci `FOR UPDATE` di dalam transaksi
+     * sebelum sibling dibaca. Penyimpan kedua akan mengantre, lalu membaca
+     * angka yang sudah termasuk simpanan pertama (§30).
+     *
+     * Unit dikunci berurutan menurut kuncinya supaya dua permintaan yang
+     * menyentuh dua unit yang sama tidak saling menunggu terbalik.
+     *
+     * @param array<int, array<string, array<int, string|null>>> $perTarget
+     *        [target_rencana_id => [ref_key => [1..4 => nilai]]]
+     * @param int $tahun tahun PK — bagian dari lingkup unit (§31)
+     *
+     * @return array{disimpan:int, unit:int}
+     *
+     * @throws RuntimeException bila ada unit yang totalnya melampaui pagu
+     */
+    public function simpanAnggaranTervalidasi(array $perTarget, ?int $opdId, int $tahun): array
+    {
+        $perTarget = array_filter($perTarget, static fn ($v) => is_array($v) && $v !== []);
+
+        if ($perTarget === []) {
+            return ['disimpan' => 0, 'unit' => 0];
+        }
+
+        return $this->dalamTransaksi(function () use ($perTarget, $opdId, $tahun) {
+            $svc = new AnggaranUnitService($this->db);
+
+            // --- 1. kumpulkan unit yang tersentuh, beserta usulan nilainya --
+            $usulan = [];   // ref_key => [target_id => total bagian]
+            $unitRef = [];  // ref_key => [level, ref_id]
+
+            foreach ($perTarget as $targetId => $baris) {
+                foreach ($baris as $refKey => $realisasi) {
+                    [$level, $refId] = array_pad(explode(':', (string) $refKey, 2), 2, null);
+                    $level = (string) $level;
+                    $refId = (int) $refId;
+
+                    if ($level === '' || $refId <= 0) {
+                        continue; // baris warisan (':0') tidak disentuh
+                    }
+
+                    $jumlah = 0.0;
+
+                    for ($q = 1; $q <= 4; $q++) {
+                        $nilai = $realisasi[$q] ?? null;
+
+                        // NULL tetap NULL (belum diisi); untuk penjumlahan
+                        // nominal ia dihitung 0 tanpa mengubah simpanannya (§26).
+                        if ($nilai !== null && trim((string) $nilai) !== '') {
+                            $jumlah += (float) $nilai;
+                        }
+                    }
+
+                    $unitRef[$refKey]              = ['level' => $level, 'ref_id' => $refId];
+                    $usulan[$refKey][(int) $targetId] = $jumlah;
+                }
+            }
+
+            if ($usulan === []) {
+                return ['disimpan' => 0, 'unit' => 0];
+            }
+
+            // --- 2. KUNCI master tiap unit, urut, lalu validasi -------------
+            ksort($usulan);
+
+            foreach ($usulan as $refKey => $bagian) {
+                $level = $unitRef[$refKey]['level'];
+                $refId = $unitRef[$refKey]['ref_id'];
+
+                $this->kunciMasterUnit($level, $refId);
+
+                $pagu = $svc->pagu($level, $refId);
+
+                if ($pagu === null) {
+                    // Master unitnya sudah tidak ada. Ditolak, bukan
+                    // diperlakukan sebagai pagu 0 — keduanya beda sebab dan
+                    // beda cara memperbaikinya.
+                    throw new RuntimeException(
+                        'Unit anggaran (' . $refKey . ') tidak ditemukan lagi pada master. '
+                        . 'Muat ulang halaman Perjanjian Kinerja.'
+                    );
+                }
+
+                // Bagian indikator LAIN dibaca SESUDAH kunci dipegang.
+                $lain  = $svc->totalTerpakai($level, $refId, $opdId, $tahun, array_keys($bagian));
+                $total = $lain + array_sum($bagian);
+
+                // Pembandingan uang: dibulatkan ke rupiah utuh lebih dulu.
+                // Kolomnya decimal(15,0), jadi pecahan tidak pernah tersimpan
+                // dan membandingkan float mentah bisa menolak nilai yang
+                // sebenarnya tepat sama dengan pagu (§61).
+                if (round($total) > round($pagu)) {
+                    throw new RuntimeException($this->pesanLebihPagu(
+                        $svc,
+                        $level,
+                        $refId,
+                        $pagu,
+                        $total,
+                        $lain
+                    ));
+                }
+            }
+
+            // --- 3. baru menulis --------------------------------------------
+            $disimpan = 0;
+
+            foreach ($perTarget as $targetId => $baris) {
+                foreach ($baris as $refKey => $realisasi) {
+                    [$level, $refId] = array_pad(explode(':', (string) $refKey, 2), 2, null);
+
+                    if ((string) $level === '' || (int) $refId <= 0) {
+                        continue;
+                    }
+
+                    $this->upsertAnggaran((int) $targetId, $opdId, $realisasi, (string) $level, (int) $refId);
+                    $disimpan++;
+                }
+            }
+
+            return ['disimpan' => $disimpan, 'unit' => count($usulan)];
+        }, 'penyimpanan realisasi anggaran');
+    }
+
+    /**
+     * Kunci baris master sebuah unit sampai transaksi selesai.
+     *
+     * `SELECT ... FOR UPDATE` dipakai karena yang perlu diantrekan adalah
+     * PEMBACAAN sibling-nya, bukan penulisannya: dua penyimpan boleh menulis
+     * baris `monev_anggaran` yang berbeda, tetapi tidak boleh sama-sama
+     * menghitung sisa pagu dari keadaan sebelum yang lain menulis.
+     */
+    private function kunciMasterUnit(string $level, int $refId): void
+    {
+        $tabel = match ($level) {
+            'kegiatan'    => 'kegiatan_pk',
+            'subkegiatan' => 'sub_kegiatan_pk',
+            default       => 'program_pk',
+        };
+
+        // Query mentah: query builder CI4 tidak punya FOR UPDATE.
+        $this->db->query('SELECT id FROM `' . $tabel . '` WHERE id = ? FOR UPDATE', [$refId]);
+    }
+
+    /** Kalimat penolakan yang menyebut angkanya, bukan sekadar "melebihi pagu". */
+    private function pesanLebihPagu(
+        AnggaranUnitService $svc,
+        string $level,
+        int $refId,
+        float $pagu,
+        float $total,
+        float $lain
+    ): string {
+        helper('number');
+
+        $sebut = match ($level) {
+            'kegiatan'    => 'Kegiatan',
+            'subkegiatan' => 'Sub Kegiatan',
+            default       => 'Program',
+        };
+
+        $rp = static fn (float $n): string => 'Rp' . number_format($n, 0, ',', '.');
+
+        $pesan = 'Total realisasi ' . $sebut . ' ini melebihi pagunya. '
+            . 'Pagu ' . $rp($pagu) . ', total yang akan tersimpan ' . $rp($total)
+            . ' (lebih ' . $rp($total - $pagu) . ').';
+
+        if ($lain > 0) {
+            $pesan .= ' Sebagian sudah diisi indikator lain sebesar ' . $rp($lain)
+                . ', jadi sisa yang masih bisa diisi di sini ' . $rp(max(0, $pagu - $lain)) . '.';
+        }
+
+        if ($pagu <= 0) {
+            $pesan .= ' Pagu unit ini 0 — periksa dulu anggarannya di Perjanjian Kinerja.';
+        }
+
+        return $pesan;
     }
 }

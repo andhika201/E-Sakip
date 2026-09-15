@@ -58,6 +58,33 @@ $rupiahAddon = static function ($nilai) {
     return 'Rp ' . number_format((float) $nilai, 0, ',', '.');
 };
 
+// TAMPILAN LINTAS OPD (admin_kab, mode OPD tanpa OPD terpilih): kedua tabel
+// diberi kolom OPD di paling kiri, karena barisnya berasal dari banyak OPD
+// dan tanpa itu tidak terbaca milik siapa. Saat satu OPD dipilih, atau di
+// layar admin_opd, kolomnya tidak perlu.
+$lintasOpd = $modeAddon === 'opd' && $opdAddon === 0;
+
+// Nama OPD cadangan dari $opdList (ada di layar admin_kab) untuk baris yang
+// tidak membawa nama_opd — mis. baris efisiensi dari snapshot beku.
+$namaOpdDariId = [];
+foreach ((array) ($opdList ?? []) as $o) {
+    if (isset($o['id'])) {
+        $namaOpdDariId[(int) $o['id']] = (string) ($o['nama_opd'] ?? '');
+    }
+}
+$kunciOpdBaris = static fn (array $baris): string => (string) (int) ($baris['opd_id'] ?? 0);
+$namaOpdBaris = static function (array $baris) use ($namaOpdDariId): string {
+    $nama = trim((string) ($baris['nama_opd'] ?? ''));
+    if ($nama !== '') {
+        return $nama;
+    }
+    $id = (int) ($baris['opd_id'] ?? 0);
+    if ($id === 0) {
+        return 'Kabupaten';
+    }
+    return $namaOpdDariId[$id] ?? ('OPD #' . $id);
+};
+
 // Indikator unik per target — tabel analisis mengikuti indikator tahun aktif.
 $daftarIndikator = [];
 foreach ($indikatorRows as $r) {
@@ -70,6 +97,7 @@ foreach ($indikatorRows as $r) {
         'indikator' => (string) ($r['indikator_sasaran'] ?? '-'),
         'sasaran'   => (string) ($r['sasaran'] ?? ($r['sasaran_rpjmd'] ?? '')),
         'nama_opd'  => (string) ($r['nama_opd'] ?? ''),
+        'opd_id'    => (int) ($r['opd_id'] ?? 0),
     ];
 }
 ?>
@@ -120,21 +148,31 @@ foreach ($indikatorRows as $r) {
     <?php endif; ?>
 
     <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center small align-middle">
+        <table class="table table-bordered table-striped text-center small align-middle"<?= $lintasOpd ? ' data-gabung-opd' : '' ?>>
             <thead class="table-success">
                 <tr>
+                    <?php if ($lintasOpd): ?>
+                        <th class="border p-2" style="width:14%;">OPD</th>
+                    <?php endif; ?>
                     <th class="border p-2" style="width:4%;">NO</th>
-                    <th class="border p-2" style="width:22%;">INDIKATOR</th>
-                    <th class="border p-2" style="width:23%;">FAKTOR PENDUKUNG KEBERHASILAN/KEGAGALAN,<br>PENURUNAN/PENINGKATAN KINERJA</th>
+                    <th class="border p-2" style="width:<?= $lintasOpd ? 18 : 22 ?>%;">INDIKATOR</th>
+                    <th class="border p-2" style="width:<?= $lintasOpd ? 20 : 23 ?>%;">FAKTOR PENDUKUNG KEBERHASILAN/KEGAGALAN,<br>PENURUNAN/PENINGKATAN KINERJA</th>
                     <th class="border p-2" style="width:23%;">FAKTOR PENGHAMBAT</th>
                     <th class="border p-2" style="width:23%;">UPAYA UNTUK MENINGKATKAN PENCAPAIAN KINERJA</th>
                     <th class="border p-2" style="width:5%;">AKSI</th>
                 </tr>
             </thead>
             <tbody>
-                <?php $noA = 1; ?>
+                <?php $noA = 1; $opdSebelumA = null; ?>
                 <?php foreach ($daftarIndikator as $ind): ?>
                     <?php
+                    // Lintas OPD: nomor mulai dari 1 lagi tiap ganti OPD (barisnya
+                    // sudah terurut per OPD), supaya sejalan dengan sel OPD yang
+                    // digabung di kirinya.
+                    if ($lintasOpd && $opdSebelumA !== $kunciOpdBaris($ind)) {
+                        $noA = 1;
+                        $opdSebelumA = $kunciOpdBaris($ind);
+                    }
                     $daftar = $analisisMap[$ind['target_id']] ?? [];
                     $jumlah = max(1, count($daftar));
                     $indJson = htmlspecialchars(json_encode([
@@ -145,6 +183,9 @@ foreach ($indikatorRows as $r) {
 
                     <?php if (empty($daftar)): ?>
                         <tr>
+                            <?php if ($lintasOpd): ?>
+                                <td class="text-start align-middle sel-opd" data-opd="<?= esc($kunciOpdBaris($ind), 'attr') ?>" data-span="1"><?= esc($namaOpdBaris($ind)) ?></td>
+                            <?php endif; ?>
                             <td><?= $noA++ ?></td>
                             <td class="text-start"><?= esc($ind['indikator']) ?></td>
                             <td colspan="3" class="text-muted fst-italic">Belum ada analisis faktor untuk indikator ini.</td>
@@ -174,6 +215,9 @@ foreach ($indikatorRows as $r) {
                             ?>
                             <tr>
                                 <?php if ($i === 0): ?>
+                                    <?php if ($lintasOpd): ?>
+                                        <td rowspan="<?= $jumlah ?>" class="align-middle text-start sel-opd" data-opd="<?= esc($kunciOpdBaris($ind), 'attr') ?>" data-span="<?= $jumlah ?>"><?= esc($namaOpdBaris($ind)) ?></td>
+                                    <?php endif; ?>
                                     <td rowspan="<?= $jumlah ?>" class="align-middle"><?= $noA++ ?></td>
                                     <td rowspan="<?= $jumlah ?>" class="align-middle text-start"><?= esc($ind['indikator']) ?></td>
                                 <?php endif; ?>
@@ -228,7 +272,7 @@ foreach ($indikatorRows as $r) {
 
                 <?php if (empty($daftarIndikator)): ?>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="<?= $lintasOpd ? 7 : 6 ?>" class="text-center text-muted">
                             Belum ada indikator pada tahun ini, jadi belum ada yang bisa dianalisis.
                         </td>
                     </tr>
@@ -269,11 +313,14 @@ foreach ($indikatorRows as $r) {
     <?php endif; ?>
 
     <div class="table-responsive">
-        <table class="table table-bordered table-striped text-center small align-middle">
+        <table class="table table-bordered table-striped text-center small align-middle"<?= $lintasOpd ? ' data-gabung-opd' : '' ?>>
             <thead class="table-success">
                 <tr>
+                    <?php if ($lintasOpd): ?>
+                        <th class="border p-2" style="width:16%;">OPD</th>
+                    <?php endif; ?>
                     <th class="border p-2" style="width:5%;">NO</th>
-                    <th class="border p-2" style="width:43%;">NAMA PROGRAM</th>
+                    <th class="border p-2" style="width:<?= $lintasOpd ? 27 : 43 ?>%;">NAMA PROGRAM</th>
                     <th class="border p-2" style="width:16%;">ANGGARAN</th>
                     <th class="border p-2" style="width:16%;">REALISASI</th>
                     <th class="border p-2" style="width:14%;">EFISIENSI</th>
@@ -281,9 +328,13 @@ foreach ($indikatorRows as $r) {
                 </tr>
             </thead>
             <tbody>
-                <?php $noE = 1; ?>
+                <?php $noE = 1; $opdSebelumE = null; ?>
                 <?php foreach ($efisiensiRows as $e): ?>
                     <?php
+                    if ($lintasOpd && $opdSebelumE !== $kunciOpdBaris($e)) {
+                        $noE = 1;
+                        $opdSebelumE = $kunciOpdBaris($e);
+                    }
                     $eJson = htmlspecialchars(json_encode([
                         'id'         => (int) $e['id'],
                         'program_id' => (int) $e['program_id'],
@@ -293,6 +344,9 @@ foreach ($indikatorRows as $r) {
                     ], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
                     ?>
                     <tr>
+                        <?php if ($lintasOpd): ?>
+                            <td class="text-start align-middle sel-opd" data-opd="<?= esc($kunciOpdBaris($e), 'attr') ?>" data-span="1"><?= esc($namaOpdBaris($e)) ?></td>
+                        <?php endif; ?>
                         <td><?= $noE++ ?></td>
                         <td class="text-start">
                             <?= esc($e['program_kegiatan'] ?? '-') ?>
@@ -336,7 +390,7 @@ foreach ($indikatorRows as $r) {
 
                 <?php if (empty($efisiensiRows)): ?>
                     <tr>
-                        <td colspan="6" class="text-center text-muted">
+                        <td colspan="<?= $lintasOpd ? 7 : 6 ?>" class="text-center text-muted">
                             Belum ada data efisiensi program pada tahun ini.
                         </td>
                     </tr>
@@ -344,6 +398,59 @@ foreach ($indikatorRows as $r) {
             </tbody>
         </table>
     </div>
+
+<?php if ($lintasOpd): ?>
+<script>
+/* =====================================================================
+   GABUNG SEL OPD — dihitung PER HALAMAN, bukan di HTML.
+
+   Paginator otomatis (templates/footer.php) memotong tabel per SATUAN, dan
+   satuannya dibaca dari rowspan sel pertama tiap baris. Kalau sel OPD
+   di-rowspan lintas indikator di HTML, satuan halaman menjadi satu OPD
+   utuh (halaman jadi sangat tidak rata), atau — lebih buruk — batas
+   halaman memotong OPD di tengah sehingga baris di halaman berikutnya
+   kehilangan sel OPD-nya dan seluruh kolom bergeser.
+
+   Maka di HTML tiap indikator/program tetap membawa sel OPD-nya sendiri
+   (satuan paginasi tetap per indikator), dan penggabungan dilakukan di
+   sini: di antara baris yang SEDANG TAMPIL, sel OPD yang sama berurutan
+   digabung (rowspan dijumlahkan, sel berikutnya disembunyikan). Dihitung
+   ulang setiap paginator merender (event `pager:render`) — dan sekali saat
+   halaman selesai dimuat untuk tabel yang tidak dipaginasi.
+   ===================================================================== */
+(function () {
+    function gabungOpd(table) {
+        var sel = table.querySelectorAll('tbody td.sel-opd');
+        // 1. pulihkan keadaan asli
+        sel.forEach(function (c) {
+            c.style.display = '';
+            c.rowSpan = parseInt(c.getAttribute('data-span'), 10) || 1;
+        });
+        // 2. gabungkan yang berurutan & sama, hanya di antara baris yang tampil
+        var induk = null;
+        sel.forEach(function (c) {
+            if (c.parentNode.style.display === 'none') { induk = null; return; }
+            if (induk && induk.getAttribute('data-opd') === c.getAttribute('data-opd')) {
+                induk.rowSpan += c.rowSpan;
+                c.style.display = 'none';
+            } else {
+                induk = c;
+            }
+        });
+    }
+    function semua() {
+        document.querySelectorAll('table[data-gabung-opd]').forEach(gabungOpd);
+    }
+    document.addEventListener('pager:render', function (e) {
+        if (e.target && e.target.hasAttribute && e.target.hasAttribute('data-gabung-opd')) gabungOpd(e.target);
+    });
+    // `load` (bukan DOMContentLoaded): paginator membaca rowspan sel pertama
+    // saat DOMContentLoaded untuk menentukan satuan halaman — penggabungan
+    // tidak boleh mendahuluinya.
+    window.addEventListener('load', semua);
+})();
+</script>
+<?php endif; ?>
 </div>
 
 <?php if ($canWrite): ?>

@@ -291,6 +291,7 @@ $routes->group(
         $routes->get('cascading/cetak', 'AdminKab\CascadingController::cetak');
         $routes->get('cascading/excel', 'AdminKab\CascadingController::excel');
         $routes->post('cascading/save-csf', 'AdminKab\CascadingController::saveCsf');
+        $routes->post('cascading/hapus-mapping', 'AdminKab\CascadingController::hapusMapping');
         // Pengesahan LAKIP Kabupaten (kunci tahun) — kembaran sisi OPD.
         $routes->post('lakip/pengesahan/sahkan', 'AdminKab\LakipController::pengesahanSahkan');
         $routes->post('lakip/pengesahan/ajukan', 'AdminKab\LakipController::pengesahanAjukan');

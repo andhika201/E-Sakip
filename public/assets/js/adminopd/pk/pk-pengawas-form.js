@@ -25,6 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (jQuery(this).hasClass("select2-hidden-accessible")) {
           jQuery(this).select2("destroy");
         }
+        // Dropdown master (Program/Kegiatan/Sub Kegiatan, data-master) memakai
+        // Select2 ringan dari pk-master-select.js; yang lain Select2 biasa.
+        if (window.PkMasterSelect && window.PkMasterSelect.init(this)) return;
+
         jQuery(this).select2({
           width: "100%",
           dropdownParent: jQuery(this).parent(),
@@ -100,6 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el.tagName === "SELECT") el.selectedIndex = 0;
       else el.value = "";
     });
+  }
+
+  // Dropdown master di template hanya boleh berisi "Pilih ...": option terpilih
+  // baris asal ikut ter-clone (atribut selected) dan terpilih lagi di tiap
+  // baris baru — selectedIndex = 0 di atas tidak menghapus atributnya.
+  if (window.PkMasterSelect) {
+    [tplSasaran, tplIndikator, tplKegiatan, tplSubkeg].forEach((t) => window.PkMasterSelect.bersihkan(t));
   }
 
 

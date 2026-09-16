@@ -1,3 +1,35 @@
+<?php
+// Dropdown master (Program/Kegiatan/Sub Kegiatan) TIDAK lagi menyalin seluruh
+// master ke tiap <select>; daftarnya dikirim sekali sebagai window.pkMaster dan
+// tiap select hanya memuat option terpilih. Lihat app/Helpers/pk_form_helper.php.
+helper('pk_form');
+// Hanya master yang dipakai jenis PK ini (kunci = data-master pada <select>);
+// daftar sub kegiatan saja ~3.000 baris, tidak perlu ikut ke form JPT.
+$pkMasterSumber = [
+    'program'       => [$program ?? [], 'program_kegiatan'],
+    'jptProgram'    => [$jptProgram ?? [], 'program_kegiatan'],
+    'kegiatan'      => [$kegiatan ?? [], 'kegiatan'],
+    'kegiatanAdmin' => [$kegiatanAdmin ?? [], 'kegiatan'],
+    'subkegiatan'   => [$subkegiatan ?? [], 'sub_kegiatan'],
+];
+if (in_array($jenis, ['jpt', 'camat'], true)) {
+    $pkMasterPakai = ['program'];
+} elseif ($jenis === 'administrator') {
+    $pkMasterPakai = ['jptProgram', 'kegiatan'];
+} elseif ($jenis === 'pengawas') {
+    // Sub kegiatan dipakai kedua varian; kecamatan memilih kegiatan dari master
+    // umum + program camat, OPD lain dari kegiatan PK administrator sendiri.
+    $pkMasterPakai = ($isKecamatanOpd ?? false)
+        ? ['jptProgram', 'kegiatan', 'subkegiatan']
+        : ['kegiatanAdmin', 'subkegiatan'];
+} else {
+    $pkMasterPakai = [];
+}
+$pkMaster = [];
+foreach ($pkMasterPakai as $kunci) {
+    $pkMaster[$kunci] = pk_master_daftar($pkMasterSumber[$kunci][0], $pkMasterSumber[$kunci][1]);
+}
+?>
 <!DOCTYPE html>
 <html lang="id">
 
@@ -360,18 +392,9 @@
                                                             <div class="col-md-6">
                                                                 <label class="form-label">Program</label>
                                                                 <select
-                                                                    class="form-select select2 program-select mb-3 border-secondary"
+                                                                    class="form-select select2 program-select mb-3 border-secondary" data-master="program"
                                                                     required>
                                                                     <option value="">Pilih Program</option>
-                                                                    <?php if (isset($program) && !empty($program)): ?>
-                                                                        <?php foreach ($program as $programItem): ?>
-                                                                            <option value="<?= $programItem['id'] ?>"
-                                                                                data-anggaran="<?= $programItem['anggaran'] ?>">
-                                                                                <?= esc($programItem['program_kegiatan']) ?> — Rp
-                                                                                <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
-                                                                    <?php endif; ?>
                                                                 </select>
                                                             </div>
                                                             <div class="col-md-3">
@@ -403,16 +426,9 @@
                                                                 <div class="col-md-6">
                                                                     <label class="form-label">Program</label>
                                                                     <select
-                                                                        class="form-select select2 program-select border-secondary"
+                                                                        class="form-select select2 program-select border-secondary" data-master="jptProgram"
                                                                         required>
                                                                         <option value="">Pilih Program</option>
-                                                                        <?php foreach ($jptProgram as $programItem): ?>
-                                                                            <option value="<?= $programItem['id'] ?>">
-                                                                                <?= esc($programItem['program_kegiatan']) ?> —
-                                                                                Rp
-                                                                                <?= number_format($programItem['anggaran'], 0, ',', '.') ?>
-                                                                            </option>
-                                                                        <?php endforeach; ?>
                                                                     </select>
                                                                 </div>
 
@@ -430,16 +446,9 @@
                                                                         <div class="col-md-6">
                                                                             <label class="form-label">Kegiatan</label>
                                                                             <select
-                                                                                class="form-select select2 kegiatan-select border-secondary"
+                                                                                class="form-select select2 kegiatan-select border-secondary" data-master="kegiatan"
                                                                                 required>
                                                                                 <option value="">Pilih Kegiatan</option>
-                                                                                <?php foreach ($kegiatan as $kegiatanItem): ?>
-                                                                                    <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                        data-anggaran="<?= $kegiatanItem['anggaran'] ?>">
-                                                                                        <?= esc($kegiatanItem['kegiatan']) ?> —
-                                                                                        Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
                                                                             </select>
                                                                         </div>
                                                                         <div class="col-md-3">
@@ -485,28 +494,17 @@
                                                                     <div class="col-md-6">
                                                                         <label class="form-label">Program (Camat)</label>
                                                                         <select
-                                                                            class="form-select select2 program-select border-secondary"
+                                                                            class="form-select select2 program-select border-secondary" data-master="jptProgram"
                                                                             required>
                                                                             <option value="">Pilih Program Camat</option>
-                                                                            <?php foreach ($jptProgram as $prog): ?>
-                                                                                <option value="<?= $prog['id'] ?>">
-                                                                                    <?= esc($prog['program_kegiatan']) ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
                                                                         </select>
                                                                     </div>
                                                                     <div class="col-md-5">
                                                                         <label class="form-label">Kegiatan</label>
                                                                         <select
-                                                                            class="form-select select2 kegiatan-select border-secondary"
+                                                                            class="form-select select2 kegiatan-select border-secondary" data-master="kegiatan"
                                                                             required>
                                                                             <option value="">Pilih Kegiatan</option>
-                                                                            <?php foreach ($kegiatan as $kegiatanItem): ?>
-                                                                                <option value="<?= $kegiatanItem['id'] ?>">
-                                                                                    <?= esc($kegiatanItem['kegiatan']) ?> —
-                                                                                    Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
                                                                         </select>
                                                                     </div>
                                                                     <div class="col-md-1 d-flex align-items-end">
@@ -523,17 +521,10 @@
                                                                         <input type="hidden" class="program-id-hidden">
 
                                                                         <select
-                                                                            class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown"
+                                                                            class="form-select select2 kegiatan-select border-secondary kegiatan-dropdown" data-master="kegiatanAdmin"
                                                                             required>
                                                                             <option value="">Pilih Kegiatan</option>
 
-                                                                            <?php foreach ($kegiatanAdmin as $kegiatanItem): ?>
-                                                                                <option value="<?= $kegiatanItem['id'] ?>"
-                                                                                    data-program="<?= $kegiatanItem['program_id'] ?>">
-                                                                                    <?= esc($kegiatanItem['kegiatan']) ?> —
-                                                                                    Rp<?= number_format($kegiatanItem['anggaran'], 0, ',', '.') ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
 
                                                                         </select>
                                                                     </div>
@@ -555,16 +546,9 @@
                                                                             <label class="form-label">Sub Kegiatan</label>
 
                                                                             <select
-                                                                                class="form-select select2 subkeg-select border-secondary"
+                                                                                class="form-select select2 subkeg-select border-secondary" data-master="subkegiatan"
                                                                                 required>
                                                                                 <option value="">Pilih Sub Kegiatan</option>
-                                                                                <?php foreach ($subkegiatan as $sk): ?>
-                                                                                    <option value="<?= $sk['id'] ?>"
-                                                                                        data-anggaran="<?= $sk['anggaran'] ?>">
-                                                                                        <?= esc($sk['sub_kegiatan']) ?> —
-                                                                                        Rp<?= number_format($sk['anggaran'], 0, ',', '.') ?>
-                                                                                    </option>
-                                                                                <?php endforeach; ?>
                                                                             </select>
                                                                         </div>
 
@@ -699,105 +683,9 @@
     </script>
 
     <script>
-        // satuan dropdown
-        window.satuanDropdownTemplate = `<?php
-                                            if (isset($satuan) && !empty($satuan)) {
-                                                foreach ($satuan as $s) {
-                                                    echo '<option value="' . $s['id'] . '">' . esc($s['satuan']) . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada satuan</option>';
-                                            }
-                                            ?>`;
-
-        // program dropdown
-        window.programDropdownTemplate = `<?php
-                                            if (isset($program) && !empty($program)) {
-                                                foreach ($program as $programItem) {
-
-                                                    $anggaran = isset($programItem['anggaran'])
-                                                        ? (int) $programItem['anggaran']
-                                                        : 0;
-
-                                                    echo '<option value="' . $programItem['id'] . '" data-anggaran="' . $anggaran . '">'
-                                                        . esc($programItem['program_kegiatan']) . ' - Rp ' . number_format($anggaran, 0, ',', '.')
-                                                        . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada program</option>';
-                                            }
-                                            ?>`;
-
-
-        //program jpt dropdown
-        window.jptProgramDropdownTemplate = `<?php
-                                                if (isset($jptProgram) && !empty($jptProgram)) {
-                                                    foreach ($jptProgram as $programItem) {
-
-                                                        $anggaran = isset($programItem['anggaran'])
-                                                            ? number_format($programItem['anggaran'], 0, ',', '.')
-                                                            : '0';
-
-                                                        echo '<option value="' . $programItem['id'] . '">'
-                                                            . esc($programItem['program_kegiatan'])
-                                                            . ' - Rp ' . $anggaran
-                                                            . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada program</option>';
-                                                }
-                                                ?>`;
-
-
-        // kegiatan dropdown
-        window.kegiatanDropdownTemplate = `<?php
-                                            if (isset($kegiatan) && !empty($kegiatan)) {
-                                                foreach ($kegiatan as $kegiatanItem) {
-
-                                                    $anggaran = isset($kegiatanItem['anggaran'])
-                                                        ? (int) $kegiatanItem['anggaran']
-                                                        : 0;
-
-                                                    echo '<option value="' . $kegiatanItem['id'] . '" '
-                                                        . 'data-anggaran="' . $anggaran . '">'
-                                                        . esc($kegiatanItem['kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
-                                                        . '</option>';
-                                                }
-                                            } else {
-                                                echo '<option value="" disabled>Tidak ada kegiatan</option>';
-                                            }
-                                            ?>`;
-
-        // kegiatan admin dropdown
-        window.kegiatanAdminDropdownTemplate = `<?php
-                                                if (!empty($kegiatanAdmin)) {
-                                                    foreach ($kegiatanAdmin as $kegiatanItem) {
-                                                        echo '<option value="' . $kegiatanItem['id'] . '" '
-                                                            . 'data-program="' . $kegiatanItem['program_id'] . '">'
-                                                            . esc($kegiatanItem['kegiatan'])
-                                                            . '</option>';
-                                                    }
-                                                }
-                                                ?>`;
-
-        // subkegiatan dropdown
-        window.subkegiatanDropdownTemplate = `<?php
-                                                if (isset($subkegiatan) && !empty($subkegiatan)) {
-                                                    foreach ($subkegiatan as $sk) {
-
-                                                        $anggaran = isset($sk['anggaran'])
-                                                            ? (int) $sk['anggaran']
-                                                            : 0;
-
-                                                        echo '<option value="' . $sk['id'] . '" '
-                                                            . 'data-anggaran="' . $anggaran . '">'
-                                                            . esc($sk['sub_kegiatan']) . ' — Rp ' . number_format($anggaran, 0, ',', '.')
-                                                            . '</option>';
-                                                    }
-                                                } else {
-                                                    echo '<option value="" disabled>Tidak ada sub kegiatan</option>';
-                                                }
-                                                ?>`;
+        // Daftar master dropdown Program/Kegiatan/Sub Kegiatan, dikirim SEKALI.
+        // Dibaca pk-master-select.js; bentuknya dari app/Helpers/pk_form_helper.php.
+        window.pkMaster = <?= json_encode($pkMaster, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     </script>
 
     <script>
@@ -896,6 +784,11 @@
     }
 
     if (!empty($jsFile)) {
+        // Select2 ringan untuk dropdown master — WAJIB dimuat sebelum skrip form.
+        $helperJs = 'assets/js/adminopd/pk/pk-master-select.js';
+        $helperVer = file_exists(FCPATH . $helperJs) ? filemtime(FCPATH . $helperJs) : time();
+        echo '<script src="' . base_url($helperJs . '?v=' . $helperVer) . '"></script>';
+
         $fullPath = FCPATH . $jsFile;
         $version = file_exists($fullPath) ? filemtime($fullPath) : time();
         echo '<script src="' . base_url($jsFile . '?v=' . $version) . '"></script>';

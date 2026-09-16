@@ -31,6 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (jQuery(this).hasClass("select2-hidden-accessible")) {
           jQuery(this).select2("destroy");
         }
+        // Dropdown master (Program/Kegiatan/Sub Kegiatan, data-master) memakai
+        // Select2 ringan dari pk-master-select.js; yang lain Select2 biasa.
+        if (window.PkMasterSelect && window.PkMasterSelect.init(this)) return;
+
         jQuery(this).select2({
           width: "100%",
           dropdownParent: jQuery(this).parent(),
@@ -91,6 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el.tagName === "SELECT") el.selectedIndex = 0;
       else el.value = "";
     });
+    // Option terpilih baris asal ikut ter-clone (atribut selected); buang
+    // supaya baris baru mulai dari "Pilih ...".
+    if (window.PkMasterSelect) window.PkMasterSelect.bersihkan(tpl);
   });
 
   /* ============ UPDATE NAME ============ */

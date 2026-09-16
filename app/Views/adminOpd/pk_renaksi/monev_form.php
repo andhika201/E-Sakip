@@ -319,22 +319,22 @@ $labelSkala = static function ($nilai) use ($skala) {
                         totalCapaian += b.achievement;
                         totalTarget += keAngka(b.target);
                     });
-                    // Pembagi 0 -> BELUM DAPAT DINILAI, bukan 0% dan bukan 100%.
-                    // Cerminan persis capaian_helper.php; bila salah satunya
-                    // diubah tanpa yang lain, pratinjau di form akan berbeda
-                    // dari angka yang tersimpan — dan pemakainya percaya yang
-                    // dilihatnya, bukan yang dihitung server.
+                    // Pembagi 0 -> ditulis 0% (bukan "-"), permintaan klien
+                    // 16 Sep 2026. Cerminan persis capaian_helper.php; bila
+                    // salah satunya diubah tanpa yang lain, pratinjau di form
+                    // akan berbeda dari angka yang tersimpan — dan pemakainya
+                    // percaya yang dilihatnya, bukan yang dihitung server.
                     //
                     // Ditandai bermasalah = false: ini bukan kesalahan input,
                     // jadi tulisannya tidak boleh merah.
                     if (Math.abs(totalTarget) < 1e-9) {
                         if (Math.abs(totalCapaian) < 1e-9) {
-                            return tampilkan(null, 'Belum dapat dinilai. Target kumulatif sampai Triwulan ' +
-                                ROMAWI[akhir.quarter] + ' masih 0.', false);
+                            return tampilkan(0, 'Target kumulatif sampai Triwulan ' +
+                                ROMAWI[akhir.quarter] + ' masih 0, Capaian Total ditulis 0%.', false);
                         }
-                        return tampilkan(null, 'Belum dapat dinilai. Realisasi ' + angkaRingkas(totalCapaian) +
+                        return tampilkan(0, 'Realisasi ' + angkaRingkas(totalCapaian) +
                             ' sudah tercatat, namun target kumulatif sampai Triwulan ' +
-                            ROMAWI[akhir.quarter] + ' masih 0.', false);
+                            ROMAWI[akhir.quarter] + ' masih 0; Capaian Total ditulis 0%.', false);
                     }
                     return tampilkan(totalCapaian / totalTarget * 100,
                         'Dihitung dari akumulasi ' + terisiList.length + ' triwulan yang telah diisi.', false);
@@ -356,11 +356,12 @@ $labelSkala = static function ($nilai) use ($skala) {
                 // trend_naik & trend_flat
                 if (Math.abs(target) < 1e-9) {
                     if (Math.abs(capaian) < 1e-9) {
-                        return tampilkan(null, 'Belum dapat dinilai. Target Triwulan ' +
-                            ROMAWI[akhir.quarter] + ' masih 0.', false);
+                        return tampilkan(0, 'Target Triwulan ' +
+                            ROMAWI[akhir.quarter] + ' masih 0, Capaian Total ditulis 0%.', false);
                     }
-                    return tampilkan(null, 'Belum dapat dinilai. Realisasi ' + angkaRingkas(capaian) +
-                        ' sudah tercatat, namun target Triwulan ' + ROMAWI[akhir.quarter] + ' masih 0.', false);
+                    return tampilkan(0, 'Realisasi ' + angkaRingkas(capaian) +
+                        ' sudah tercatat, namun target Triwulan ' + ROMAWI[akhir.quarter] +
+                        ' masih 0; Capaian Total ditulis 0%.', false);
                 }
                 return tampilkan(capaian / target * 100, pesan, false);
             }

@@ -263,8 +263,10 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
         //   incomplete    data wajib belum lengkap / tidak terbaca
         //
         // `percentage` dan `error` dipertahankan apa adanya supaya pemanggil
-        // lama tetap jalan: not_evaluable memberi percentage null TANPA error,
-        // sehingga tidak ada layar lama yang mendadak menampilkan pesan merah.
+        // lama tetap jalan: not_evaluable memberi percentage 0 TANPA error
+        // (sejak 16 Sep 2026; sebelumnya null), sehingga MONEV menampilkan
+        // "0%" dan tidak ada layar lama yang mendadak menampilkan pesan merah.
+        // Pemanggil yang merata-rata WAJIB memeriksa `status` lebih dulu.
         // =============================================================
         $hasil = [
             'percentage'              => null,
@@ -288,9 +290,18 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
             return $hasil;
         };
 
-        /** Data lengkap, tetapi tidak ada pembagi yang sah. Bukan kegagalan. */
+        /**
+         * Data lengkap, tetapi pembaginya (target) masih 0. Bukan kegagalan.
+         *
+         * `percentage` DITULIS 0, bukan null (permintaan klien 16 Sep 2026:
+         * Capaian Total pada MONEV harus tampil "0%", bukan "-", untuk baris
+         * yang targetnya masih 0). Yang membedakannya dari 0% sungguhan adalah
+         * `status` = not_evaluable: dashboard membaca status itu lebih dulu dan
+         * MENGELUARKAN barisnya dari rata-rata, jadi 0 di sini tidak pernah
+         * menyeret OPD ke pita Kritis — lihat dash_hitung_indikator().
+         */
         $takTerukur = static function (array $hasil, string $kode, string $pesan): array {
-            $hasil['percentage']              = null;
+            $hasil['percentage']              = 0.0;
             $hasil['error']                   = null;
             $hasil['status']                  = 'not_evaluable';
             $hasil['reason_code']             = $kode;
@@ -352,41 +363,28 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
             }
 
             // =====================================================
-            // TARGET 0 DAN CAPAIAN 0 -> 0%  (keputusan klien, 3 Sep 2026)
+            // TARGET KUMULATIF 0 -> DITULIS 0%, STATUS "BELUM DAPAT DINILAI"
             //
-            // Pembagi 0 secara matematis tidak terdefinisi, dan sebelumnya
-            // Capaian Total ditolak dengan "Total target triwulan bernilai 0".
-            // Kalimat itu benar untuk baris yang seluruh targetnya memang
-            // kosong, tetapi menyesatkan untuk kasus yang jauh lebih sering:
-            // target ADA namun jatuh tempo di triwulan yang belum dilaporkan
-            // (mis. target 0-0-1-0, baru TW1-TW2 yang diisi). Operator lalu
-            // mencari kesalahan yang tidak ada.
+            // Riwayat kebijakannya bolak-balik, jadi dicatat lengkap:
             //
-            // Klien memutuskan: bila targetnya 0 DAN capaiannya juga 0,
-            // Capaian Total ditulis 0%, bukan ditolak.
+            //   sebelum 5 Sep 2026  ditolak sebagai error "Total target
+            //                       triwulan bernilai 0" — menyesatkan untuk
+            //                       kasus yang paling sering: target ADA tetapi
+            //                       jatuh tempo di triwulan yang belum
+            //                       dilaporkan (0-0-1-0, baru TW1-TW2 diisi).
+            //   5 Sep 2026          percentage null + status not_evaluable;
+            //                       MONEV menampilkan "-", dashboard
+            //                       mengeluarkannya dari rata-rata.
+            //   16 Sep 2026         klien: "-" membingungkan operator, tulis
+            //                       0% saja. Dipenuhi dengan percentage 0 TANPA
+            //                       mengubah status — dashboard tetap
+            //                       mengeluarkannya, sehingga 0 ini tidak
+            //                       menyeret indikator ke pita Kritis.
             //
-            // KONSEKUENSI YANG PERLU DIINGAT saat membaca dashboard: 0% masuk
-            // pita "Kritis" (0-59,99). Jadi sub yang pekerjaannya baru jatuh
-            // tempo di TW3/TW4 akan menyumbang 0% ke rata-rata indikatornya
-            // sepanjang tahun berjalan. Itu memang yang diminta; bila kelak
-            // dirasa terlalu keras, yang perlu diubah adalah pita statusnya
-            // atau perlakuan "belum jatuh tempo" pada agregat indikator —
-            // bukan rumus ini.
-            //
-            // =====================================================
-            // PEMBAGI 0 PADA AKUMULASI -> BELUM DAPAT DINILAI
-            //
-            // "Akumulasi / Jumlah" menjawab bagaimana nilai antar-triwulan
-            // digabung, BUKAN apakah semakin besar semakin baik. Karena arahnya
-            // tidak diketahui, target kumulatif 0 tidak boleh diterjemahkan
-            // menjadi angka apa pun:
-            //
-            //   0 dari 0  bukan 0% (tidak ada yang gagal dikerjakan)
-            //             bukan 100% (tidak ada yang dituntut)
-            //   7 dari 0  bukan 100% — 7 dibagi 0 tidak menghasilkan persen
-            //
-            // Keduanya keadaan yang SAH: targetnya memang baru jatuh tempo di
-            // triwulan berikutnya. Begitu triwulan bertarget ikut dinilai,
+            // Pembagi 0 memang tidak menghasilkan persen (0 dari 0 bukan 0%
+            // maupun 100%; 7 dari 0 bukan 100%), karena itu status
+            // not_evaluable dipertahankan sebagai penanda "angka 0 ini bukan
+            // hasil pengukuran". Begitu triwulan bertarget ikut dinilai,
             // pembaginya muncul dan persentasenya dihitung seperti biasa —
             // termasuk bila hasilnya di atas 100%.
             //
@@ -401,11 +399,11 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
                     $hasil,
                     $nol ? 'zero_target' : 'actual_without_target',
                     $nol
-                        ? 'Belum dapat dinilai. Target kumulatif sampai Triwulan '
-                            . capaianRomawi($akhir['quarter']) . ' masih 0.'
-                        : 'Belum dapat dinilai. Realisasi ' . capaianAngkaRingkas($totalCapaian)
+                        ? 'Target kumulatif sampai Triwulan ' . capaianRomawi($akhir['quarter'])
+                            . ' masih 0, Capaian Total ditulis 0%.'
+                        : 'Realisasi ' . capaianAngkaRingkas($totalCapaian)
                             . ' sudah tercatat, namun target kumulatif sampai Triwulan '
-                            . capaianRomawi($akhir['quarter']) . ' masih 0.'
+                            . capaianRomawi($akhir['quarter']) . ' masih 0; Capaian Total ditulis 0%.'
                 );
             }
 
@@ -460,11 +458,11 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
                 $hasil,
                 $nol ? 'zero_target' : 'actual_without_target',
                 $nol
-                    ? 'Belum dapat dinilai. Target Triwulan ' . capaianRomawi($akhir['quarter'])
-                        . ' masih 0.'
-                    : 'Belum dapat dinilai. Realisasi ' . capaianAngkaRingkas($capaian)
+                    ? 'Target Triwulan ' . capaianRomawi($akhir['quarter'])
+                        . ' masih 0, Capaian Total ditulis 0%.'
+                    : 'Realisasi ' . capaianAngkaRingkas($capaian)
                         . ' sudah tercatat, namun target Triwulan '
-                        . capaianRomawi($akhir['quarter']) . ' masih 0.'
+                        . capaianRomawi($akhir['quarter']) . ' masih 0; Capaian Total ditulis 0%.'
             );
         }
 

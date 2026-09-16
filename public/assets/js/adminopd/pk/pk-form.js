@@ -21,6 +21,10 @@ function initPkForm() {
           jQuery(this).select2("destroy");
         }
 
+        // Dropdown master (Program/Kegiatan/Sub Kegiatan, data-master) memakai
+        // Select2 ringan dari pk-master-select.js; yang lain Select2 biasa.
+        if (window.PkMasterSelect && window.PkMasterSelect.init(this)) return;
+
         jQuery(this).select2({
           width: "100%",
           dropdownParent: jQuery(this).parent(),
@@ -82,6 +86,14 @@ function initPkForm() {
   if (templateSasaran) clearFormControls(templateSasaran);
   if (templateIndikator) clearFormControls(templateIndikator);
   if (templateProgramItem) clearFormControls(templateProgramItem);
+
+  // Dropdown master di template hanya boleh berisi "Pilih ...": option terpilih
+  // baris asal ikut ter-clone (atribut selected) dan terpilih lagi di tiap
+  // baris baru — selectedIndex = 0 tidak menghapus atributnya.
+  if (window.PkMasterSelect) {
+    [templateSasaran, templateIndikator, templateProgramItem]
+      .forEach((t) => window.PkMasterSelect.bersihkan(t));
+  }
 
   // --------- Naming helper ----------
   function updateFormNames() {

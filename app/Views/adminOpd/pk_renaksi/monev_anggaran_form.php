@@ -8,8 +8,13 @@
  * Pagunya read-only karena ikut Perjanjian Kinerja; yang diinput hanya realisasinya.
  *
  * Bentuk POST yang dibaca controller (monevAnggaranSave):
- *   realisasi[<ref_key>][1..4]
+ *   realisasi[<target_rencana_id>][<ref_key>][1..4]
  *   unit[<ref_key>][level] & unit[<ref_key>][ref_id]  (hanya dicocokkan)
+ *
+ * Satu unit bisa memuat beberapa baris indikator (dipakai bersama). Baris
+ * saudara hanya diberi input bila ia memang mencatat realisasi pada unit ini
+ * ($b['boleh_sunting']); yang mencatat di tingkat lain ($b['tingkat_lain'])
+ * tampil read-only — controller menolak ref_key yang bukan unit indikator itu.
  *
  * @var array      $detail          baris target_rencana + konteks PK (memuat pk_jenis)
  * @var array      $units           daftar unit anggaran indikator ini
@@ -243,6 +248,14 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
                                                             <span class="badge bg-primary ms-1">Indikator saat ini</span>
                                                         <?php elseif ($b['target_rencana_id'] === null): ?>
                                                             <span class="text-muted ms-1">&mdash; Rencana Aksi belum ada</span>
+                                                        <?php elseif (!empty($b['tingkat_lain'])): ?>
+                                                            <?php /* Saudara yang mencatat realisasi di tingkat lain
+                                                                     (mis. pengawas -> Sub Kegiatan). Tidak diberi input
+                                                                     karena controller menolak ref_key yang bukan unitnya. */ ?>
+                                                            <span class="badge bg-light text-muted border fw-normal ms-1"
+                                                                  title="Realisasi indikator ini diisi dari MONEV indikator tersebut, pada unit tingkat <?= esc($b['tingkat_lain'], 'attr') ?>">
+                                                                dicatat pada tingkat <?= esc($b['tingkat_lain']) ?>
+                                                            </span>
                                                         <?php elseif (!$b['boleh_sunting']): ?>
                                                             <span class="badge bg-light text-muted border fw-normal ms-1">
                                                                 <?= esc(strtoupper((string) $b['pk_jenis'])) ?> &mdash; hanya lihat
@@ -260,13 +273,13 @@ $triwulan = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV'];
                                                                        title="TW <?= $label ?> &mdash; <?= esc($b['nama'], 'attr') ?>"
                                                                        value="<?= esc((string) ($b['realisasi'][$q] ?? '')) ?>">
                                                             <?php elseif ($b['target_rencana_id'] === null): ?>
-                                                                <span class="text-muted">&mdash;</span>
+                                                                <?php /* belum ada renaksi: sel dibiarkan kosong */ ?>
                                                             <?php else: ?>
                                                                 <span class="small text-muted nilai-kunci"
                                                                       data-unit="<?= esc($refKey) ?>"
                                                                       data-nilai="<?= esc((string) ($b['realisasi'][$q] ?? 0)) ?>">
                                                                     <?= ($b['realisasi'][$q] ?? null) !== null
-                                                                        ? esc($rupiah($b['realisasi'][$q])) : '&mdash;' ?>
+                                                                        ? esc($rupiah($b['realisasi'][$q])) : '' ?>
                                                                 </span>
                                                             <?php endif; ?>
                                                         </td>

@@ -1687,6 +1687,46 @@ class PkRenaksiController extends BaseController
 
         $anggaranSemua = $this->monev->getAnggaranForTargets(array_values(array_unique($targetSemua)));
 
+        // =============================================================
+        // SAUDARA HANYA DIBERI INPUT BILA IA MEMANG MENCATAT DI UNIT INI
+        //
+        // petaUnitIndikator() menghitung "pemakai" lewat rantai PK, sehingga
+        // indikator pengawas yang sub kegiatannya bernaung di Kegiatan X ikut
+        // terdaftar sebagai pemakai Kegiatan X. Padahal realisasinya dicatat
+        // pada Sub Kegiatan-nya sendiri (tingkat unit ikut pk.jenis), dan
+        // monevAnggaranSave() hanya menerima ref_key yang ada dalam daftar
+        // unit indikator itu sendiri. Bila baris seperti itu diberi kolom
+        // input, SELURUH simpanan ditolak — "Unit anggaran tidak dikenali
+        // untuk salah satu indikator" (Dinas Perikanan 2026: indikator
+        // administrator pada Kegiatan 254 bersaudara dengan indikator
+        // pengawas yang unitnya Sub Kegiatan 871).
+        //
+        // Daftar unit sah tiap saudara dihitung SEKALI (satu batch), dan
+        // hanya saudara yang unitnya memuat ref_key ini yang bisa disunting.
+        // Yang lain tetap tampil read-only, disertai tingkat tempat
+        // realisasinya dicatat, supaya operator tahu ke mana harus mengisi.
+        // =============================================================
+        $indSaudara = [];
+
+        foreach ($peta as $u) {
+            foreach ($u['indikator'] as $i) {
+                $indSaudara[] = (int) $i['pk_indikator_id'];
+            }
+        }
+
+        $indSaudara   = array_values(array_unique(array_filter($indSaudara)));
+        $refSaudara   = []; // pk_indikator_id => [ref_key => true]
+        $levelSaudara = []; // pk_indikator_id => tingkat unit yang dipakainya
+
+        $unitSaudara = $indSaudara !== [] ? $this->targets->getUnitPkByIndikator($indSaudara) : [];
+
+        foreach ($unitSaudara as $indId => $daftar) {
+            foreach ($daftar as $u) {
+                $refSaudara[(int) $indId][(string) $u['ref_key']] = true;
+                $levelSaudara[(int) $indId] ??= (string) $u['level'];
+            }
+        }
+
         $unitDetail = [];
 
         foreach ($units as $unit) {
@@ -1707,9 +1747,17 @@ class PkRenaksiController extends BaseController
             ]];
 
             foreach ($daftarInd as $ind) {
-                $tid  = $ind['target_rencana_id'] === null ? null : (int) $ind['target_rencana_id'];
-                $ini  = $tid !== null && $tid === (int) $targetId;
-                $real = $tid !== null ? ($anggaranSemua[$tid][$refKey] ?? null) : null;
+                $tid   = $ind['target_rencana_id'] === null ? null : (int) $ind['target_rencana_id'];
+                $ini   = $tid !== null && $tid === (int) $targetId;
+                $real  = $tid !== null ? ($anggaranSemua[$tid][$refKey] ?? null) : null;
+                $indId = (int) ($ind['pk_indikator_id'] ?? 0);
+
+                // Realisasi saudara ini memang dicatat pada unit ini? Indikator
+                // yang dibuka selalu ya — ref_key-nya berasal dari unitnya sendiri.
+                $catatDiSini = $indId === $pkIndikatorId || isset($refSaudara[$indId][$refKey]);
+                $tingkatLain = $catatDiSini
+                    ? null
+                    : pk_unit_label_dari_level($levelSaudara[$indId] ?? pk_unit_level($ind['pk_jenis'] ?? null));
 
                 // =====================================================
                 // BOLEH DISUNTING = PUNYA RENCANA AKSI + BERHAK MENULIS
@@ -1729,6 +1777,9 @@ class PkRenaksiController extends BaseController
                 //
                 // Kepemilikan OPD tetap diperiksa ULANG per target saat
                 // menyimpan — daftar ini hanya menentukan apa yang tampil.
+                //
+                // Syarat ketiga, $catatDiSini, menjaga agar form hanya
+                // mengirim ref_key yang akan diterima monevAnggaranSave().
                 // =====================================================
 
                 $baris[] = [
@@ -1736,7 +1787,10 @@ class PkRenaksiController extends BaseController
                     'nama'              => $ind['nama'] ?? '-',
                     'ini'               => $ini,
                     'pk_jenis'          => $ind['pk_jenis'] ?? null,
-                    'boleh_sunting'     => $tid !== null && $bolehTulis,
+                    'boleh_sunting'     => $tid !== null && $bolehTulis && $catatDiSini,
+                    // Label tingkat tempat realisasi saudara ini dicatat, bila
+                    // bukan di unit ini (mis. 'Sub Kegiatan'); null bila di sini.
+                    'tingkat_lain'      => $tingkatLain,
                     'realisasi'         => [
                         1 => $real['realisasi_triwulan_1'] ?? null,
                         2 => $real['realisasi_triwulan_2'] ?? null,
@@ -1868,8 +1922,22 @@ class PkRenaksiController extends BaseController
                 $refKey = (string) $refKey;
 
                 if (!isset($sahLain[$refKey])) {
-                    return redirect()->back()->withInput()
-                        ->with('error', 'Unit anggaran tidak dikenali untuk salah satu indikator.');
+                    // Form yang sedang dipakai tidak lagi memberi input pada
+                    // saudara yang mencatat di tingkat lain (lihat
+                    // monevAnggaranForm), jadi ini hanya tersisa untuk form
+                    // usang atau POST yang diubah. Sebutkan indikator dan
+                    // tingkatnya supaya galatnya bisa ditelusuri, bukan
+                    // sekadar "salah satu indikator".
+                    $tingkat = pk_unit_label_dari_level(
+                        $unitLain[0]['level'] ?? pk_unit_level($detailLain['pk_jenis'] ?? null)
+                    );
+
+                    return redirect()->back()->withInput()->with(
+                        'error',
+                        'Unit anggaran "' . $refKey . '" tidak dikenali untuk indikator "'
+                            . ($detailLain['indikator_sasaran'] ?? ('#' . $tid))
+                            . '" — realisasinya dicatat pada tingkat ' . $tingkat . '.'
+                    );
                 }
 
                 if (!is_array($nilaiTriwulan)) {

@@ -297,7 +297,18 @@ class RpjmdModel extends Model
 
     public function getCompleteRpjmdStructure()
     {
-        return $this->buildRpjmdTreeBatched($this->getAllMisi());
+        // Halaman & cetak RPJMD menampilkan potret VERSI TERKINI: baris yang
+        // sudah dihentikan (dipensiunkan oleh versi yang ditetapkan) tidak lagi
+        // ikut. Setelah sebuah versi diterapkan, baris live yang aktif memang
+        // sama dengan isi versi itu; menyaring yang dihentikan membuat tampilan
+        // = versi RPJMD terbaru yang berlaku. Daftar misi untuk dropdown di
+        // tempat lain (getAllMisi) tidak terpengaruh.
+        $misi = array_values(array_filter(
+            $this->getAllMisi(),
+            static fn ($m) => empty($m['dihentikan_pada'])
+        ));
+
+        return $this->buildRpjmdTreeBatched($misi, null, true);
     }
 
     public function getRpjmdByYear($tahun)
@@ -317,7 +328,7 @@ class RpjmdModel extends Model
      * @param array    $misiList daftar misi (sudah diambil pemanggil: getAllMisi / getMisiByYear)
      * @param int|null $tahun    bila diisi, target (tujuan & sasaran) difilter tahun tsb (mode getRpjmdByYear)
      */
-    private function buildRpjmdTreeBatched(array $misiList, $tahun = null): array
+    private function buildRpjmdTreeBatched(array $misiList, $tahun = null, bool $hanyaAktif = false): array
     {
         if (empty($misiList)) {
             return $misiList;
@@ -325,16 +336,27 @@ class RpjmdModel extends Model
 
         $misiIds = array_column($misiList, 'id');
 
+        // Penyaring "hanya baris aktif": dipakai tampilan versi-terkini supaya
+        // baris yang sudah dihentikan tidak ikut. Target (rpjmd_target*) tidak
+        // punya kolom dihentikan_pada, jadi tidak disaring di sini.
+        $aktif = static function ($builder) use ($hanyaAktif) {
+            if ($hanyaAktif) {
+                $builder->where('dihentikan_pada IS NULL', null, false);
+            }
+
+            return $builder;
+        };
+
         // TUJUAN per misi
-        $tujuanRows = $this->db->table('rpjmd_tujuan')
-            ->whereIn('misi_id', $misiIds)
+        $tujuanRows = $aktif($this->db->table('rpjmd_tujuan')
+            ->whereIn('misi_id', $misiIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray();
         $tujuanIds = array_column($tujuanRows, 'id');
 
         // INDIKATOR TUJUAN per tujuan
-        $itRows = !empty($tujuanIds) ? $this->db->table('rpjmd_indikator_tujuan')
-            ->whereIn('tujuan_id', $tujuanIds)
+        $itRows = !empty($tujuanIds) ? $aktif($this->db->table('rpjmd_indikator_tujuan')
+            ->whereIn('tujuan_id', $tujuanIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $itIds = array_column($itRows, 'id');
@@ -352,15 +374,15 @@ class RpjmdModel extends Model
         }
 
         // SASARAN per tujuan
-        $sasaranRows = !empty($tujuanIds) ? $this->db->table('rpjmd_sasaran')
-            ->whereIn('tujuan_id', $tujuanIds)
+        $sasaranRows = !empty($tujuanIds) ? $aktif($this->db->table('rpjmd_sasaran')
+            ->whereIn('tujuan_id', $tujuanIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $sasaranIds = array_column($sasaranRows, 'id');
 
         // INDIKATOR SASARAN per sasaran
-        $isRows = !empty($sasaranIds) ? $this->db->table('rpjmd_indikator_sasaran')
-            ->whereIn('sasaran_id', $sasaranIds)
+        $isRows = !empty($sasaranIds) ? $aktif($this->db->table('rpjmd_indikator_sasaran')
+            ->whereIn('sasaran_id', $sasaranIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $isIds = array_column($isRows, 'id');

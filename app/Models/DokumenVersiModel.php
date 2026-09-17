@@ -709,15 +709,33 @@ class DokumenVersiModel extends Model
     {
         $status = (string) ($versi['status'] ?? '');
 
-        if ($status === self::STATUS_PUBLISHED) {
-            return 'Versi yang sudah ditetapkan tidak bisa dihapus. Ia menjadi '
-                . 'jangkar bagi dokumen turunan dan perbandingan antarversi. '
-                . 'Perbaiki lewat Izin Sunting atau buat versi baru.';
-        }
-
         if ($status === self::STATUS_PENDING) {
             return 'Versi ini sedang menunggu verifikasi. Batalkan dulu '
                 . 'pengajuannya, baru versinya bisa dihapus.';
+        }
+
+        // =============================================================
+        // PUBLISHED: HANYA YANG SUDAH HISTORICAL YANG BOLEH DIHAPUS
+        //
+        // Versi yang sedang berlaku (effective_to kosong) atau akan berlaku
+        // (mulai di masa depan) TETAP dilindungi — ia potret dokumen yang
+        // dipakai sekarang/nanti. Tetapi versi yang masa berlakunya SUDAH
+        // BERAKHIR (berlabel HISTORICAL: ada penerus dan penerusnya sudah
+        // mulai) boleh dihapus — asalkan tidak ada yang merujuknya, yang
+        // dijaga terpisah oleh penghalangHapus() (LAKIP, IKU, turunan, dsb).
+        // Penilaian "historical" memakai aturan yang sama persis dengan
+        // VersionResolver::badge(): effective_to terisi DAN sudah lewat.
+        // =============================================================
+        if ($status === self::STATUS_PUBLISHED) {
+            $sampai  = $versi['effective_to'] ?? null;
+            $hariIni = date('Y-m-d');
+            $historis = $sampai !== null && $sampai !== '' && (string) $sampai <= $hariIni;
+
+            if (! $historis) {
+                return 'Versi ini sedang atau akan berlaku, jadi tidak bisa dihapus — ia potret '
+                    . 'dokumen yang dipakai sekarang. Hanya versi yang masa berlakunya sudah '
+                    . 'berakhir (berlabel HISTORICAL) yang dapat dihapus.';
+            }
         }
 
         return null;
@@ -793,6 +811,15 @@ class DokumenVersiModel extends Model
             }
 
             $this->db->table($this->table)->where('id', $versiId)->delete();
+
+            // Versi published yang dihapus meninggalkan celah/effective_to basi
+            // pada pendahulunya. Timeline dihitung ulang supaya tiap versi yang
+            // tersisa berakhir tepat saat penerusnya mulai (yang terakhir tetap
+            // terbuka) — tidak ada rentang yang menunjuk versi yang sudah tiada.
+            if (($versi['status'] ?? '') === self::STATUS_PUBLISHED) {
+                (new \App\Services\Version\VersionTimelineService($this->db))
+                    ->hitungUlang(VersionScope::dariBaris($versi));
+            }
 
             return [
                 'nama'       => (string) ($versi['label'] ?? 'versi'),

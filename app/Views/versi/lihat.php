@@ -91,71 +91,120 @@ foreach ($isi as $akar) {
     </a>
 </div>
 
+<?php
+/* =====================================================================
+   RINGKAS (17 Sep 2026). Dulu ada TIGA kotak terpisah di sini:
+   "tidak ikut", "belum bisa diajukan", dan "dampak bila ditetapkan".
+   Isinya tumpang tindih — bentrok tanggal muncul dua kali — sehingga
+   layar penuh peringatan dan operator bingung mana yang harus dikerjakan.
+
+   Sekarang:
+   - "tidak ikut" diringkas satu baris + rincian yang bisa dibuka (keadaan
+     normal, tidak perlu memenuhi layar);
+   - "belum bisa" + "dampak" digabung jadi SATU kotak status, dan baris
+     bentrok tanggal yang sudah disebut galat validasi tidak diulang lagi.
+   ===================================================================== */
+$galat  = $galatValidasi ?? [];
+$pt     = $praTinjau ?? null;
+$dampak = [];
+
+if ($pt !== null && ! empty($pt['peringatan'])) {
+    foreach ($pt['peringatan'] as $p) {
+        // Baris bentrok tanggal sudah diwakili daftar galat — jangan diulang.
+        if (! empty($pt['bentrok']) && $galat !== [] && mb_strpos($p, 'Penerbitan akan ditolak') !== false) {
+            continue;
+        }
+        $dampak[] = $p;
+    }
+}
+
+$adaTautanTanggal = ! empty($bolehKeterangan) || ! empty($bolehTanggalBaseline);
+?>
+
 <?php if (! empty($takTerbekukan)): ?>
-    <?php /* Menu dokumen menampilkan SEMUA baris, termasuk yang sudah dihentikan;
-             versi hanya memuat yang hidup pada periodenya. Selisihnya harus
-             tertulis di sini — pemakai yang menghitung 15 di menu dan 11 di
-             versi tidak punya cara lain untuk tahu ke mana 4 sisanya. */ ?>
-    <div class="kotak-jejak awas mb-3" id="baris-tak-terbekukan">
-        <div class="fw-semibold mb-1">
-            <i class="fa-solid fa-circle-info me-1"></i>
-            <?= count($takTerbekukan) ?> indikator sasaran di menu <?= esc($namaDokumen) ?> tidak ada di versi ini
-        </div>
-        <div class="small text-secondary mb-2">
-            Menu <?= esc($namaDokumen) ?> menampilkan seluruh baris, termasuk yang sudah dihentikan atau
-            berperiode lain. Versi hanya memuat baris yang masih hidup pada periode
-            <?= (int) $versi['periode_mulai'] ?>&ndash;<?= (int) $versi['periode_akhir'] ?>. Inilah yang tidak ikut, dan mengapa:
-        </div>
-        <div class="table-responsive">
-            <table class="table table-sm table-bordered small mb-0 bg-white" data-no-paginate>
-                <thead class="table-light">
-                    <tr>
-                        <th style="width:36px">#</th>
-                        <th>Indikator Sasaran</th>
-                        <th>Sasaran</th>
-                        <th>Mengapa tidak ikut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($takTerbekukan as $k => $b): ?>
+    <div class="kotak-jejak mb-3 small">
+        <i class="fa-solid fa-circle-info me-1 text-secondary"></i>
+        <?= count($takTerbekukan) ?> indikator sasaran tidak ikut ke versi ini &mdash; baris yang sudah
+        dihentikan atau beda periode. Ini wajar.
+        <a href="#" role="button" data-bs-toggle="collapse" data-bs-target="#detailTakIkut"
+           onclick="return false;">Lihat rincian</a>
+        <div class="collapse mt-2" id="detailTakIkut">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered small mb-0 bg-white" data-no-paginate>
+                    <thead class="table-light">
                         <tr>
-                            <td class="text-center"><?= $k + 1 ?></td>
-                            <td><?= esc($b['teks']) ?></td>
-                            <td class="text-secondary"><?= esc($b['induk']) ?></td>
-                            <td><?= esc($b['alasan']) ?></td>
+                            <th style="width:30px">#</th><th>Indikator</th><th>Sasaran</th><th>Alasan</th>
+                            <?php if (! empty($bolehSunting)): ?><th style="width:160px">Aksi</th><?php endif; ?>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php if (! empty($bolehSunting)): ?>
-            <div class="small text-secondary mt-2">
-                Bila salah satunya memang masih harus berlaku, tambahkan kembali lewat
-                <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $versi['id']) ?>">Sunting Isi Draft</a>.
+                    </thead>
+                    <tbody>
+                        <?php foreach ($takTerbekukan as $k => $b): ?>
+                            <tr>
+                                <td class="text-center"><?= $k + 1 ?></td>
+                                <td><?= esc($b['teks']) ?></td>
+                                <td class="text-secondary"><?= esc($b['induk']) ?></td>
+                                <td><?= esc($b['alasan']) ?></td>
+                                <?php if (! empty($bolehSunting)): ?>
+                                    <td class="text-center">
+                                        <?php if (! empty($b['boleh_aktifkan'])): ?>
+                                            <?php /* Menghidupkan baris LIVE yang sama (bawa source id),
+                                                     bukan membuat baris kembar — lihat
+                                                     RpjmdVersiModel::aktifkanKembaliIndikator(). */ ?>
+                                            <form method="post"
+                                                  action="<?= base_url($baseUrl . '/versi/aktifkan-indikator/' . (int) $versi['id']) ?>"
+                                                  onsubmit="return confirm('Aktifkan kembali indikator ini di versi ini? Ia akan hidup lagi begitu versi ditetapkan.');">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="live_id" value="<?= (int) $b['id'] ?>">
+                                                <button class="btn btn-outline-success btn-sm py-0 px-1">
+                                                    <i class="fa-solid fa-rotate-left me-1"></i>Aktifkan kembali
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <span class="text-secondary sel-kecil">&mdash;</span>
+                                        <?php endif; ?>
+                                    </td>
+                                <?php endif; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
+            <?php if (! empty($bolehSunting)): ?>
+                <div class="text-secondary mt-2">
+                    Perlu salah satunya kembali? Tambahkan lewat
+                    <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $versi['id']) ?>">Sunting Isi Draft</a>.
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($galat !== [] || $dampak !== []): ?>
+    <div class="kotak-jejak <?= $galat !== [] ? 'awas' : 'beku' ?> mb-3">
+        <?php if ($galat !== []): ?>
+            <div class="fw-semibold text-danger mb-1">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i>Versi belum bisa diajukan/ditetapkan
+            </div>
+            <ul class="small mb-0">
+                <?php foreach ($galat as $g): ?><li><?= esc($g) ?></li><?php endforeach; ?>
+            </ul>
+            <?php if ($adaTautanTanggal): ?>
+                <div class="small mt-2">
+                    <a href="<?= base_url($baseUrl . '/versi/keterangan/' . (int) $versi['id']) ?>">
+                        <i class="fa-solid fa-calendar-day me-1"></i>Ubah tanggal berlaku
+                    </a> untuk memperbaikinya.
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
-    </div>
-<?php endif; ?>
 
-<?php if (! empty($galatValidasi)): ?>
-    <div class="kotak-jejak awas mb-3">
-        <div class="fw-semibold text-danger mb-1">Versi ini belum bisa diajukan</div>
-        <ul class="small mb-0">
-            <?php foreach ($galatValidasi as $g): ?><li><?= esc($g) ?></li><?php endforeach; ?>
-        </ul>
-    </div>
-<?php endif; ?>
-
-<?php if ($praTinjau !== null && ! empty($praTinjau['peringatan'])): ?>
-    <div class="kotak-jejak <?= $praTinjau['boleh_terbit'] ? 'beku' : 'awas' ?> mb-3">
-        <div class="fw-semibold mb-1">Dampak bila versi ini ditetapkan</div>
-        <ul class="small mb-0">
-            <?php foreach ($praTinjau['peringatan'] as $p): ?><li><?= esc($p) ?></li><?php endforeach; ?>
-        </ul>
-        <?php if (! empty($praTinjau['tahun_terdampak'])): ?>
-            <div class="small text-secondary mt-2">
-                Tahun yang akan dipayungi versi ini:
-                <strong><?= esc(implode(', ', $praTinjau['tahun_terdampak'])) ?></strong>
+        <?php if ($dampak !== []): ?>
+            <div class="small <?= $galat !== [] ? 'mt-2 text-secondary' : '' ?>">
+                <?php if ($galat === []): ?>
+                    <span class="fw-semibold">Yang perlu diketahui bila ditetapkan:</span>
+                <?php endif; ?>
+                <ul class="mb-0">
+                    <?php foreach ($dampak as $p): ?><li><?= esc($p) ?></li><?php endforeach; ?>
+                </ul>
             </div>
         <?php endif; ?>
     </div>
@@ -303,6 +352,19 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
         </form>
     <?php endif; ?>
 
+    <?php /* Versi terkini (published, effective_to kosong) boleh diterapkan
+             ulang ke data berjalan — memperbaiki kasus versi retrospektif yang
+             lalu digeser menjadi terkini sehingga tabel berjalan tertinggal. */ ?>
+    <?php if (! empty($bolehTerapkanUlang)): ?>
+        <form method="post" action="<?= base_url($baseUrl . '/versi/terapkan-ulang/' . (int) $versi['id']) ?>"
+              onsubmit="return confirm('Terapkan isi versi ini ke data berjalan? Tabel <?= esc($namaDokumen) ?> akan disamakan dengan versi ini.');">
+            <?= csrf_field() ?>
+            <button class="btn btn-outline-success btn-sm" title="Samakan data berjalan dengan versi terkini ini">
+                <i class="fa-solid fa-rotate me-1"></i>Terapkan ke Data Berjalan
+            </button>
+        </form>
+    <?php endif; ?>
+
     <?php if ($bolehBatalkan): ?>
         <form method="post" action="<?= base_url($baseUrl . '/versi/batalkan/' . (int) $versi['id']) ?>"
               onsubmit="return confirm('Batalkan versi ini? Barisnya tetap tersimpan sebagai jejak.')">
@@ -350,6 +412,56 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
         <?php foreach ($ringkas as $nama => $jml): ?>
             <span><?= esc(ucwords(str_replace('_', ' ', $nama))) ?>: <strong><?= (int) $jml ?></strong></span>
         <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<?php
+/* Indikator TUJUAN (khusus RPJMD) ditampilkan terpisah dari tabel Sasaran di
+   bawah. Tanpa ini, indikator tujuan yang ikut dibekukan ke arsip versi tidak
+   pernah terlihat di layar Lihat maupun disunting — persis celah yang membuat
+   editor versi RPJMD terasa lebih miskin dari sumbernya. */
+$adaIndTujuan = ($versi['modul'] ?? '') === 'rpjmd' && array_filter(
+    $tujuanSemua,
+    static fn ($t) => ! empty($t['indikator_tujuan'])
+);
+?>
+<?php if (! empty($adaIndTujuan)): ?>
+    <div class="fw-semibold mb-2"><i class="fa-solid fa-bullseye me-1 text-primary"></i>Indikator Tujuan</div>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle small revisi-tabel" data-no-paginate>
+            <thead class="table-primary">
+                <tr>
+                    <th>Tujuan</th>
+                    <th>Indikator Tujuan</th>
+                    <th style="width:240px">Target per Tahun</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($tujuanSemua as $t): ?>
+                    <?php
+                    $indTujuan  = $t['indikator_tujuan'] ?? [];
+                    $namaTujuan = $t['tujuan_rpjmd'] ?? $t['tujuan'] ?? '';
+                    if (empty($indTujuan)) { continue; }
+                    ?>
+                    <?php foreach ($indTujuan as $k => $it): ?>
+                        <tr>
+                            <?php if ($k === 0): ?>
+                                <td rowspan="<?= count($indTujuan) ?>"><?= esc($namaTujuan) ?></td>
+                            <?php endif; ?>
+                            <td><?= esc($it['indikator_tujuan'] ?? '') ?></td>
+                            <td class="sel-kecil">
+                                <?php foreach ($it['target'] ?? [] as $tg): ?>
+                                    <span class="d-inline-block me-2">
+                                        <?= esc($tg['tahun']) ?>:
+                                        <strong><?= esc($tg['target_tahunan'] ?? $tg['target'] ?? '') ?></strong>
+                                    </span>
+                                <?php endforeach; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 <?php endif; ?>
 

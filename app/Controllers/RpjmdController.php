@@ -832,9 +832,11 @@ class RpjmdController extends BaseController
             $db->transRollback();
             log_message('error', 'UPDATE RPJMD ERROR: ' . $e->getMessage());
 
+            // Alasan bisnis (mis. pagar dependen saat baris dibuang dari form)
+            // harus sampai ke pengguna; galat teknis tetap disamarkan.
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Gagal memperbarui RPJMD');
+                ->with('error', pesanGalatBerawalan($e, 'Gagal memperbarui RPJMD', 'kab.rpjmd'));
         }
     }
 
@@ -854,9 +856,16 @@ class RpjmdController extends BaseController
             return $tolak;
         }
 
-        if (!$this->rpjmdModel->deleteMisi($misiId)) {
+        try {
+            if (!$this->rpjmdModel->deleteMisi($misiId)) {
+                return redirect()->back()
+                    ->with('error', 'Gagal menghapus RPJMD. Data relasi bermasalah.');
+            }
+        } catch (\Throwable $e) {
+            // Pagar dependen (RuntimeException berpesan Indonesia) diteruskan
+            // apa adanya; galat teknis disamarkan lewat kode rujukan.
             return redirect()->back()
-                ->with('error', 'Gagal menghapus RPJMD. Data relasi bermasalah.');
+                ->with('error', pesanGalatBerawalan($e, 'RPJMD gagal dihapus', 'kab.rpjmd'));
         }
 
         return redirect()->to(base_url('adminkab/rpjmd'))
@@ -924,7 +933,7 @@ class RpjmdController extends BaseController
         } catch (\Throwable $e) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => pesanGalatBerawalan($e, 'Gagal mengubah status RPJMD', 'kab.rpjmd'),
             ]);
         }
     }

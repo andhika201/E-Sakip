@@ -904,15 +904,23 @@ class CascadingController extends BaseController
 
     public function saveEs4()
     {
-        $indikatorEs3Id = $this->request->getPost('es3_indikator_id');
-        $parentId = $this->request->getPost('parent_id');
-        $renstraIndikatorId = $this->request->getPost('renstra_indikator_sasaran_id');
+        $indikatorEs3Id = (int) $this->request->getPost('es3_indikator_id');
+        $sasaranData    = $this->request->getPost('sasaran');
 
-        $sasaranData = $this->request->getPost('sasaran');
-
-        $opdId = session()->get('opd_id');
-
-        if (!$sasaranData) {
+        // Induk (parent Es3, jangkar Renstra/IKU, opd_id) DITURUNKAN dari
+        // indikator Es3 di basis data — bukan dari kiriman form. Sebelumnya
+        // `parent_id` & `renstra_indikator_sasaran_id` dipercaya apa adanya,
+        // sehingga Es4 bisa ditempelkan ke Es3 milik OPD lain. Polanya sama
+        // dengan savePelaksana().
+        $induk = $this->konteksIndikatorEs3($indikatorEs3Id);
+        if (!$induk) {
+            return redirect()->back()->withInput()->with('error', 'Indikator Eselon III tidak valid.');
+        }
+        if (!$this->canAccessOpd($induk['opd_id'] ?? null)) {
+            return redirect()->to('adminopd/cascading')
+                ->with('error', 'Anda tidak memiliki akses ke data OPD lain.');
+        }
+        if (empty($sasaranData) || !is_array($sasaranData)) {
             return redirect()->back()->with('error', 'Data sasaran kosong');
         }
 
@@ -923,14 +931,23 @@ class CascadingController extends BaseController
             if (empty($es4['nama']))
                 continue;
 
-            $this->insertCascadingRow([
-                'opd_id' => $opdId,
-                'renstra_indikator_sasaran_id' => $renstraIndikatorId,
-                'parent_id' => $parentId,
-                'es3_indikator_id' => $indikatorEs3Id,
-                'level' => 'es4',
-                'nama_sasaran' => $es4['nama']
-            ]);
+            $baris = [
+                'opd_id'                       => $induk['opd_id'],
+                'renstra_indikator_sasaran_id' => $induk['renstra_indikator_sasaran_id'],
+                'parent_id'                    => $induk['es3_id'],
+                'es3_indikator_id'             => $induk['es3_indikator_id'],
+                'level'                        => 'es4',
+                'nama_sasaran'                 => $es4['nama'],
+            ];
+            // Jangkar IKU diteruskan dari induk bila ada (lihat catatan pada
+            // updateEs3): hanya bila terisi, supaya insertCascadingRow() tidak
+            // berhenti mengisinya.
+            if (!empty($induk['iku_indikator_id'])) {
+                $baris['iku_indikator_id'] = $induk['iku_indikator_id'];
+                $baris['source_type']      = $induk['source_type'] ?? 'iku';
+            }
+
+            $this->insertCascadingRow($baris);
 
             $es4Id = $this->db->insertID();
 
@@ -1042,8 +1059,32 @@ class CascadingController extends BaseController
 
     public function updateEs3($id)
     {
-        $nama = $this->request->getPost('nama');
-        $indikator = $this->request->getPost('indikator') ?? [];
+        // Otorisasi objek: baris HARUS ada, berjenjang es3, dan milik OPD
+        // pengguna — sama seperti deleteEs3(). Sebelumnya UPDATE langsung
+        // ke `WHERE id` dari URL, sehingga id milik OPD lain pun tertulis.
+        $sasaranLama = $this->db->table('cascading_sasaran_opd')
+            ->where('id', (int) $id)->where('level', 'es3')
+            ->get()->getRowArray();
+
+        if (!$sasaranLama || !$this->canAccessOpd($sasaranLama['opd_id'] ?? null)) {
+            $pesan = $sasaranLama ? 'Anda tidak memiliki akses ke data OPD lain.' : 'Data tidak ditemukan.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode($sasaranLama ? 403 : 404)
+                    ->setJSON(['success' => false, 'message' => $pesan]);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', $pesan);
+        }
+
+        $nama = trim((string) $this->request->getPost('nama'));
+        if ($nama === '') {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Nama Sasaran Eselon III wajib diisi.']);
+            }
+            return redirect()->back()->withInput()->with('error', 'Nama Sasaran Eselon III wajib diisi.');
+        }
+
+        $indikator = $this->request->getPost('indikator');
+        $indikator = is_array($indikator) ? $indikator : [];
 
         $this->db->transStart();
 
@@ -1103,15 +1144,14 @@ class CascadingController extends BaseController
                 ->delete();
         }
 
-        $this->db->transComplete();
-
-        // insert sasaran baru (jika ada)
+        // insert sasaran baru (jika ada) — MASIH di dalam transaksi yang sama.
+        // Dulu transComplete() dipanggil sebelum blok ini, sehingga Es3 baru
+        // beserta indikatornya ditulis di luar transaksi: gagal di tengah
+        // meninggalkan separuh data tanpa bisa dibatalkan.
         $sasaranBaru = $this->request->getPost('sasaran_baru');
-        if (!empty($sasaranBaru)) {
-            $currentSasaran = $this->db->table('cascading_sasaran_opd')
-                ->where('id', $id)
-                ->get()->getRowArray();
-                
+        if (!empty($sasaranBaru) && is_array($sasaranBaru)) {
+            $currentSasaran = $sasaranLama;
+
             if ($currentSasaran) {
                 foreach ($sasaranBaru as $es3) {
                     if (empty($es3['nama'])) continue;
@@ -1150,9 +1190,23 @@ class CascadingController extends BaseController
             }
         }
 
+        $this->db->transComplete();
+
+        // Transaksi yang MUNDUR tidak boleh dilaporkan berhasil.
+        if ($this->db->transStatus() === false) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Sasaran Eselon III gagal diperbarui. Perubahan dikembalikan seperti semula.',
+                ]);
+            }
+            return redirect()->back()->withInput()
+                ->with('error', 'Sasaran Eselon III gagal diperbarui. Perubahan dikembalikan seperti semula.');
+        }
+
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([
-                'success' => $this->db->transStatus() !== false,
+                'success' => true,
                 'message' => 'Sasaran Eselon III berhasil diperbarui.',
             ]);
         }
@@ -1161,10 +1215,30 @@ class CascadingController extends BaseController
     }
     public function updateEs4($id)
     {
-        $nama = $this->request->getPost('nama');
-        $indikator = $this->request->getPost('indikator');
+        // Otorisasi objek — lihat catatan pada updateEs3().
+        $sasaranLama = $this->db->table('cascading_sasaran_opd')
+            ->where('id', (int) $id)->where('level', 'es4')
+            ->get()->getRowArray();
 
-        $indikator = $indikator ?? [];
+        if (!$sasaranLama || !$this->canAccessOpd($sasaranLama['opd_id'] ?? null)) {
+            $pesan = $sasaranLama ? 'Anda tidak memiliki akses ke data OPD lain.' : 'Data tidak ditemukan.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode($sasaranLama ? 403 : 404)
+                    ->setJSON(['success' => false, 'message' => $pesan]);
+            }
+            return redirect()->to('adminopd/cascading')->with('error', $pesan);
+        }
+
+        $nama = trim((string) $this->request->getPost('nama'));
+        if ($nama === '') {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Nama Sasaran Eselon IV wajib diisi.']);
+            }
+            return redirect()->back()->withInput()->with('error', 'Nama Sasaran Eselon IV wajib diisi.');
+        }
+
+        $indikator = $this->request->getPost('indikator');
+        $indikator = is_array($indikator) ? $indikator : [];
 
         $this->db->transStart();
 
@@ -1228,10 +1302,8 @@ class CascadingController extends BaseController
 
         // insert sasaran baru (jika ada)
         $sasaranBaru = $this->request->getPost('sasaran_baru');
-        if (!empty($sasaranBaru)) {
-            $currentSasaran = $this->db->table('cascading_sasaran_opd')
-                ->where('id', $id)
-                ->get()->getRowArray();
+        if (!empty($sasaranBaru) && is_array($sasaranBaru)) {
+            $currentSasaran = $sasaranLama;
                 
             if ($currentSasaran) {
                 foreach ($sasaranBaru as $es4) {
@@ -1262,9 +1334,21 @@ class CascadingController extends BaseController
 
         $this->db->transComplete();
 
+        // Transaksi yang MUNDUR tidak boleh dilaporkan berhasil.
+        if ($this->db->transStatus() === false) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Sasaran Eselon IV gagal diperbarui. Perubahan dikembalikan seperti semula.',
+                ]);
+            }
+            return redirect()->back()->withInput()
+                ->with('error', 'Sasaran Eselon IV gagal diperbarui. Perubahan dikembalikan seperti semula.');
+        }
+
         if ($this->request->isAJAX()) {
             return $this->response->setJSON([
-                'success' => $this->db->transStatus() !== false,
+                'success' => true,
                 'message' => 'Sasaran Eselon IV berhasil diperbarui.',
             ]);
         }
@@ -1344,6 +1428,35 @@ class CascadingController extends BaseController
      * Konteks satu indikator ES IV + pemeriksaan kepemilikan OPD.
      * Dipakai semua aksi Pelaksana supaya id dari URL tidak pernah dipercaya.
      */
+    /**
+     * Konteks satu indikator Eselon III: sasaran Es3 induknya + opd_id +
+     * jangkar sumber. Dipakai saveEs4() agar tidak ada satu pun kolom induk
+     * yang diambil dari request.
+     */
+    private function konteksIndikatorEs3(int $indikatorEs3Id): ?array
+    {
+        if ($indikatorEs3Id <= 0) {
+            return null;
+        }
+
+        $adaIku = $this->db->fieldExists('iku_indikator_id', 'cascading_sasaran_opd');
+
+        return $this->db->table('cascading_indikator_opd i')
+            ->select('
+                i.id  as es3_indikator_id,
+                i.indikator as indikator_es3,
+                s.id  as es3_id,
+                s.opd_id,
+                s.nama_sasaran as sasaran_es3,
+                s.renstra_indikator_sasaran_id
+            ' . ($adaIku ? ', s.iku_indikator_id, s.source_type' : ''))
+            ->join('cascading_sasaran_opd s', 's.id = i.cascading_sasaran_id')
+            ->where('i.id', $indikatorEs3Id)
+            ->where('s.level', 'es3')
+            ->get()
+            ->getRowArray() ?: null;
+    }
+
     private function konteksIndikatorEs4(int $indikatorEs4Id): ?array
     {
         return $this->db->table('cascading_indikator_opd i')

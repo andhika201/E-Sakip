@@ -236,6 +236,12 @@ class DashboardThresholdModel extends Model
         }
 
         $this->db->transComplete();
+
+        // Rollback tidak boleh lewat diam-diam — pemanggil menulis log
+        // aktivitas "diperbarui" dan menampilkan "berhasil".
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException('Ambang status tidak tersimpan: transaksi dibatalkan.');
+        }
     }
 
     /** Kembalikan seluruh ambang ke konfigurasi bawaan. */

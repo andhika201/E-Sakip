@@ -85,7 +85,12 @@ class DashboardThresholdController extends BaseController
             return redirect()->back()->withInput()->with('error', implode(' ', $errors));
         }
 
-        $this->model->simpanSemua($rows, (int) session()->get('user_id') ?: null);
+        try {
+            $this->model->simpanSemua($rows, (int) session()->get('user_id') ?: null);
+        } catch (\Throwable $e) {
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'Ambang status gagal disimpan', 'kab.dashboardThreshold'));
+        }
 
         log_activity(
             'update',
@@ -103,7 +108,12 @@ class DashboardThresholdController extends BaseController
 
     public function reset()
     {
-        $this->model->resetToDefault((int) session()->get('user_id') ?: null);
+        try {
+            $this->model->resetToDefault((int) session()->get('user_id') ?: null);
+        } catch (\Throwable $e) {
+            return redirect()->back()
+                ->with('error', pesanGalatBerawalan($e, 'Ambang status gagal dikembalikan', 'kab.dashboardThreshold'));
+        }
 
         log_activity('reset', 'dashboard_threshold', 'Ambang status capaian dikembalikan ke konfigurasi bawaan.');
 

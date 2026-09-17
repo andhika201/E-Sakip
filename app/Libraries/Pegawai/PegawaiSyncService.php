@@ -131,6 +131,7 @@ class PegawaiSyncService
             $byName[$this->key($nama)] = $local;
         }
         $this->db->transComplete();
+        $this->pastikanTransaksiSukses('opd');
 
         return ['opd_baru' => $baru, 'opd_update' => $update];
     }
@@ -163,6 +164,7 @@ class PegawaiSyncService
             $byName[$this->key($nama)] = $local;
         }
         $this->db->transComplete();
+        $this->pastikanTransaksiSukses('pangkat');
 
         return ['pangkat_baru' => $baru, 'pangkat_update' => $update];
     }
@@ -197,6 +199,7 @@ class PegawaiSyncService
             $byName[$this->key($nama)] = $local;
         }
         $this->db->transComplete();
+        $this->pastikanTransaksiSukses('jabatan');
 
         return ['jabatan_baru' => $baru, 'jabatan_update' => $update];
     }
@@ -262,6 +265,7 @@ class PegawaiSyncService
             }
         }
         $this->db->transComplete();
+        $this->pastikanTransaksiSukses('pegawai');
 
         return ['pegawai_baru' => $baru, 'pegawai_update' => $update, 'pegawai_dilewati' => $skip];
     }
@@ -295,6 +299,33 @@ class PegawaiSyncService
     }
 
     /* ===================== HELPERS ===================== */
+
+    /**
+     * Transaksi yang di-rollback TIDAK boleh dilaporkan sebagai "N baru, M
+     * diperbarui". Query yang gagal di dalam transStart() tidak melempar
+     * apa pun di CI4 — ia hanya menurunkan transStatus — dan karena status
+     * itu lengket, pada mode 'all' kegagalan di satu entitas ikut membatalkan
+     * entitas berikutnya secara diam-diam. Di sini dijadikan galat terang.
+     */
+    protected function pastikanTransaksiSukses(string $entitas): void
+    {
+        if ($this->db->transStatus() !== false) {
+            return;
+        }
+
+        $galat = $this->db->error();
+        log_message('error', '[SYNC ' . strtoupper($entitas) . '] transaksi dibatalkan: '
+            . ($galat['message'] ?? '-') . ' | ' . $this->db->getLastQuery());
+
+        // Pulihkan status supaya percobaan berikutnya pada request yang sama
+        // (bila ada) tidak ikut ditolak.
+        $this->db->resetTransStatus();
+
+        throw new \RuntimeException(
+            'Sinkron ' . $entitas . ' dibatalkan: ada data yang gagal ditulis, tidak ada perubahan yang disimpan. '
+            . 'Periksa log aplikasi untuk rinciannya.'
+        );
+    }
 
     /**
      * Bangun dua peta lokal: by simpeg_id dan by nama(normalisasi) -> id.

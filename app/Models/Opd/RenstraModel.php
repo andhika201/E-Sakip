@@ -309,12 +309,12 @@ class RenstraModel extends Model
                 ->where('indikator_tujuan_id', $id)
                 ->delete();
 
-            $result = $this->db->table('renstra_indikator_tujuan')
+            $this->db->table('renstra_indikator_tujuan')
                 ->where('id', $id)
                 ->delete();
 
             $this->db->transComplete();
-            return $result;
+            return $this->db->transStatus() !== false;
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -1218,10 +1218,10 @@ class RenstraModel extends Model
                 $this->deleteIndikatorSasaran($indikator['id']);
             }
 
-            $result = $this->db->table('renstra_sasaran')->delete(['id' => $id]);
+            $this->db->table('renstra_sasaran')->delete(['id' => $id]);
 
             $this->db->transComplete();
-            return $result;
+            return $this->db->transStatus() !== false;
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -1275,11 +1275,11 @@ class RenstraModel extends Model
             $this->db->table('renstra_target')
                 ->delete(['renstra_indikator_id' => $id]);
 
-            $result = $this->db->table('renstra_indikator_sasaran')
+            $this->db->table('renstra_indikator_sasaran')
                 ->delete(['id' => $id]);
 
             $this->db->transComplete();
-            return $result;
+            return $this->db->transStatus() !== false;
         } catch (\Exception $e) {
             $this->db->transRollback();
             throw $e;
@@ -1511,6 +1511,28 @@ class RenstraModel extends Model
 
     public function deleteCompleteRenstra($sasaranId)
     {
+        // =============================================================
+        // PAGAR DEPENDEN: renstra_target -> target_rencana -> monev ber-FK
+        // ON DELETE CASCADE; lakip.renstra_target_id & cascading jadi NULL;
+        // rkt tanpa FK. Dulu semuanya lenyap/yatim tanpa peringatan — itulah
+        // asal "baris realisasi yatim" pada LAKIP. Sekarang ditolak selama
+        // masih ada yang bergantung, sama seperti hapus periode.
+        // =============================================================
+        $penghalang = $this->penghalangHapusSasaran([(int) $sasaranId], false);
+
+        if ($penghalang !== []) {
+            $rinci = [];
+
+            foreach ($penghalang as $apa => $n) {
+                $rinci[] = $n . ' ' . $apa;
+            }
+
+            throw new \RuntimeException(
+                'Sasaran Renstra ini belum bisa dihapus — masih dipakai: ' . implode('; ', $rinci)
+                . '. Lepaskan dulu keterkaitannya pada dokumen hilir.'
+            );
+        }
+
         $this->db->transStart();
 
         try {
@@ -2170,19 +2192,27 @@ class RenstraModel extends Model
      *
      * @return array<string,int> [keterangan => jumlah] yang tidak kosong
      */
-    public function penghalangHapusPeriode(int $opdId, int $tahunMulai, int $tahunAkhir): array
+    /**
+     * Penghalang penghapusan sejumlah SASARAN Renstra: apa saja di hilir yang
+     * akan ikut terhapus lewat FK CASCADE (Rencana Aksi, MONEV) atau
+     * kehilangan jangkar (LAKIP, cascading), atau yang tanpa FK sama sekali
+     * (RKT). Dipakai penghalangHapusPeriode() dan deleteCompleteRenstra().
+     *
+     * @param int[] $sasaranIds
+     * @param bool  $termasukArsip true = rujukan arsip versi ikut menahan (hapus
+     *                             periode); false = tidak (hapus per baris —
+     *                             arsip menyimpan salinannya sendiri)
+     * @return array<string,int> label => jumlah; kosong berarti aman dihapus
+     */
+    public function penghalangHapusSasaran(array $sasaranIds, bool $termasukArsip = true): array
     {
         $db  = $this->db;
         $ada = [];
 
-        // Semua id isi Renstra pada lingkup ini, dikumpulkan sekali.
-        $sasaranIds = array_column($db->table('renstra_sasaran')
-            ->select('id')->where('opd_id', $opdId)
-            ->where('tahun_mulai', $tahunMulai)->where('tahun_akhir', $tahunAkhir)
-            ->get()->getResultArray(), 'id');
+        $sasaranIds = array_values(array_unique(array_map('intval', $sasaranIds)));
 
         if ($sasaranIds === []) {
-            return ['(periode ini tidak punya isi)' => 0];
+            return [];
         }
 
         $indikatorIds = array_column($db->table('renstra_indikator_sasaran')
@@ -2255,11 +2285,39 @@ class RenstraModel extends Model
         }
 
         // 6. Arsip versi Renstra — jejak resmi yang tidak bisa disusun ulang.
-        $n = $hitung('renstra_versi_sasaran', 'source_sasaran_id', $sasaranIds);
+        $n = $termasukArsip ? $hitung('renstra_versi_sasaran', 'source_sasaran_id', $sasaranIds) : 0;
 
         if ($n > 0) {
             $ada['sasaran terarsip pada versi Renstra'] = $n;
         }
+
+        return $ada;
+    }
+
+    public function penghalangHapusPeriode(int $opdId, int $tahunMulai, int $tahunAkhir): array
+    {
+        $db  = $this->db;
+        $ada = [];
+
+        // Semua id isi Renstra pada lingkup ini, dikumpulkan sekali.
+        $sasaranIds = array_column($db->table('renstra_sasaran')
+            ->select('id')->where('opd_id', $opdId)
+            ->where('tahun_mulai', $tahunMulai)->where('tahun_akhir', $tahunAkhir)
+            ->get()->getResultArray(), 'id');
+
+        if ($sasaranIds === []) {
+            return ['(periode ini tidak punya isi)' => 0];
+        }
+
+        $ada = $this->penghalangHapusSasaran($sasaranIds);
+
+        $hitung = static function (string $tabel, string $kolom, array $ids) use ($db): int {
+            if ($ids === [] || ! $db->tableExists($tabel) || ! $db->fieldExists($kolom, $tabel)) {
+                return 0;
+            }
+
+            return $db->table($tabel)->whereIn($kolom, $ids)->countAllResults();
+        };
 
         // 7. VERSI DOKUMEN PADA PERIODE INI.
         //

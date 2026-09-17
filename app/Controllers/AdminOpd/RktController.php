@@ -685,14 +685,25 @@ class RktController extends BaseController
         // tombol penyelesaiannya. Status baru hanya boleh berpindah lewat
         // updateStatus(), yang memang memeriksa keadaan seluruh barisnya.
         unset($data['status']);
+
+        // Tanpa satu pun program yang dipilih, saveRkt() tidak menulis apa-apa
+        // tetapi transaksinya "sukses" — dulu dilaporkan "berhasil disimpan".
+        $programs   = is_array($data['program'] ?? null) ? $data['program'] : [];
+        $adaProgram = array_filter($programs, static fn ($p) => !empty($p['program_id']));
+        if ($adaProgram === []) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Pilih minimal satu Program sebelum menyimpan RKT.');
+        }
+
         $rktModel = new \App\Models\RktModel();
         try {
             if ($rktModel->saveRkt($data)) {
                 return redirect()->to('/adminopd/rkt')->with('success', 'Data berhasil disimpan');
             } else {
-                log_message('error', 'Gagal menyimpan data RKT: ' . print_r($data, true));
+                log_message('error', 'Gagal menyimpan data RKT (transaksi dibatalkan) indikator_id='
+                    . (int) ($data['indikator_id'] ?? 0) . ' opd_id=' . (int) ($data['opd_id'] ?? 0));
 
-                return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data');
+                return redirect()->back()->withInput()->with('error', 'RKT tidak tersimpan: transaksi dibatalkan. Coba lagi atau hubungi administrator.');
             }
 
         } catch (\Exception $e) {

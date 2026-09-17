@@ -1205,6 +1205,15 @@ class LakipOpdController extends BaseController
                 ->select('tahun')->where('id', (int) $targetId)
                 ->get()->getRowArray();
 
+            if (!$rpjmdTarget) {
+                return redirect()->back()->withInput()->with('error', 'Target RPJMD tidak ditemukan.');
+            }
+
+            // Kunci tahun dari target, bukan dari POST — lihat cabang Renstra.
+            if ($tolak = $this->tolakBilaDisahkan((int) $rpjmdTarget['tahun'], 'kabupaten', null)) {
+                return $tolak;
+            }
+
             $data = [
                 'renstra_target_id' => null,
                 'rpjmd_target_id' => (int) $targetId,
@@ -1236,6 +1245,29 @@ class LakipOpdController extends BaseController
                 ->where('rt.id', (int) $targetId)
                 ->get()->getRowArray();
 
+            if (!$ikatan) {
+                return redirect()->back()->withInput()->with('error', 'Target Renstra tidak ditemukan.');
+            }
+
+            // Kepemilikan diperiksa terhadap DOKUMEN, bukan dipercaya dari id
+            // kiriman. Peran ber-OPD hanya boleh menulis untuk target milik
+            // OPD-nya; peran lintas OPD (admin) bebas — sama dengan update().
+            if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)
+                && (int) ($ikatan['opd_id'] ?? 0) !== (int) $opdId) {
+                return redirect()->to(base_url('adminopd/lakip'))
+                    ->with('error', 'Akses ditolak: target Renstra itu bukan milik OPD Anda.');
+            }
+
+            // Kunci tahun diperiksa ULANG dengan tahun & OPD dari target, bukan
+            // dari POST `tahun` — karena tahun yang tersimpan memang diambil dari
+            // target. Pemeriksaan awal di atas memakai tahun kiriman form, yang
+            // bisa saja berbeda dari tahun target (sama seperti AdminKab).
+            if ($tolak = $this->tolakBilaDisahkan(
+                (int) $ikatan['tahun'], 'opd', (int) ($ikatan['opd_id'] ?? 0)
+            )) {
+                return $tolak;
+            }
+
             $data = [
                 'renstra_target_id' => (int) $targetId,
                 'rpjmd_target_id' => null,
@@ -1253,7 +1285,14 @@ class LakipOpdController extends BaseController
             ];
         }
 
-        $this->lakipModel->insert($data);
+        try {
+            if (!$this->lakipModel->insert($data)) {
+                throw new \RuntimeException('Data LAKIP tidak tersimpan. Periksa kembali isian Anda.');
+            }
+        } catch (\Throwable $e) {
+            return redirect()->back()->withInput()
+                ->with('error', pesanGalatBerawalan($e, 'LAKIP gagal disimpan', 'opd.lakip'));
+        }
 
         return redirect()->to(base_url('adminopd/lakip'))
             ->with('success', 'Data LAKIP berhasil disimpan.');
@@ -1504,7 +1543,7 @@ class LakipOpdController extends BaseController
 
             session()->setFlashdata('success', 'Data LAKIP berhasil diperbarui');
         } catch (\Throwable $e) {
-            session()->setFlashdata('error', 'Gagal mengupdate data LAKIP: ' . $e->getMessage());
+            session()->setFlashdata('error', pesanGalatBerawalan($e, 'Gagal mengupdate data LAKIP', 'opd.lakip'));
         }
 
         return redirect()->to(base_url('adminopd/lakip'));

@@ -530,6 +530,27 @@ class PkModel extends Model
 
             // commit
             $db->transComplete();
+
+            // =====================================================
+            // TRANSAKSI YANG MUNDUR TIDAK BOLEH MENGEMBALIKAN ID
+            //
+            // Query yang gagal DI DALAM transStart() tidak melempar apa pun
+            // di CI4 — ia hanya menurunkan transStatus, lalu transComplete()
+            // diam-diam me-rollback. Sebelum ini $pkId (id dari INSERT pk yang
+            // sudah dibatalkan) tetap dikembalikan, sehingga controller
+            // menampilkan "Data PK berhasil disimpan" untuk PK yang tidak ada.
+            // =====================================================
+            if ($db->transStatus() === false) {
+                $galat = $db->error();
+                log_message('error', 'saveCompletePk: transaksi dibatalkan. '
+                    . ($galat['message'] ?? '') . ' | ' . $db->getLastQuery());
+
+                throw new \RuntimeException(
+                    'Perjanjian Kinerja tidak tersimpan: salah satu bagian (sasaran/indikator/program/misi) gagal ditulis. '
+                    . 'Tidak ada data yang tersimpan.'
+                );
+            }
+
             return $pkId;
         } catch (\Exception $e) {
             $db->transRollback();
@@ -926,7 +947,9 @@ class PkModel extends Model
             }
 
             $db->transComplete();
-            return true;
+
+            // Sama seperti saveCompletePk(): rollback tidak boleh dilaporkan true.
+            return $db->transStatus() !== false;
         } catch (\Exception $e) {
             $db->transRollback();
             throw $e;

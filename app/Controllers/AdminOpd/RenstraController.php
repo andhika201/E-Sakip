@@ -693,8 +693,19 @@ class RenstraController extends BaseController
             $renstraTujuanId = (int) $sasaranLama['renstra_tujuan_id'];
 
             // ============================
-            // PROSES UPDATE + INSERT
+            // PROSES UPDATE + INSERT — SATU TRANSAKSI
+            //
+            // updateRenstraFull() dan createCompleteRenstra() masing-masing
+            // membuka transaksinya sendiri. Tanpa pembungkus ini, sasaran
+            // ke-2 yang gagal meninggalkan sasaran ke-1 sudah ter-commit:
+            // pengguna melihat "gagal", mengulang, dan mendapat data ganda.
+            // Transaksi bersarang di CI4 hanya menaikkan penghitung, jadi
+            // commit/rollback nyata terjadi di lapisan terluar ini.
             // ============================
+            $db = \Config\Database::connect();
+            $db->transBegin();
+            $db->resetTransStatus();
+
             foreach ($post['sasaran_renstra'] as $index => $sr) {
 
                 $sasaranText = $sr['sasaran'] ?? '';
@@ -744,9 +755,17 @@ class RenstraController extends BaseController
                 }
             }
 
+            if ($db->transStatus() === false) {
+                throw new \RuntimeException('Perubahan Renstra dibatalkan: salah satu query gagal.');
+            }
+            $db->transCommit();
+
             return redirect()->to(base_url('adminopd/renstra'))
                 ->with('success', 'Data Renstra berhasil diperbarui dan sasaran baru berhasil ditambahkan');
         } catch (\Exception $e) {
+            if (isset($db) && $db->transDepth > 0) {
+                $db->transRollback();
+            }
             log_message('error', 'RENSTRA Update Error: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
@@ -841,6 +860,17 @@ class RenstraController extends BaseController
                 return $this->response->setJSON(['success' => false, 'message' => 'Data tidak ditemukan']);
             }
 
+            // Otorisasi objek: sasaran Renstra milik semua OPD hidup di tabel
+            // yang sama. Tanpa pemeriksaan ini, satu POST {id} sudah cukup
+            // untuk membalik status Renstra OPD lain — delete() di atas sudah
+            // memeriksanya sejak semula, yang ini terlewat.
+            if (!$this->canAccessOpd($currentRenstra['opd_id'] ?? null)) {
+                return $this->response->setStatusCode(403)->setJSON([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk mengubah status Renstra OPD lain.',
+                ]);
+            }
+
             // Toggle status
             $currentStatus = $currentRenstra['status'] ?? 'draft';
             $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
@@ -858,7 +888,10 @@ class RenstraController extends BaseController
                 return $this->response->setJSON(['success' => false, 'message' => 'Gagal mengupdate status']);
             }
         } catch (\Exception $e) {
-            return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()]);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => pesanGalatBerawalan($e, 'Gagal mengubah status Renstra', 'opd.renstra'),
+            ]);
         }
     }
     public function editTujuan($tujuanId)

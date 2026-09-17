@@ -489,10 +489,10 @@ class RenjaModel extends Model
                 // Delete using existing delete method (which handles cascade)
                 $this->deleteSasaran($sasaran['id']);
             }
-            
+
             $this->db->transComplete();
-            return true;
-            
+            return $this->db->transStatus() !== false;
+
         } catch (\Exception $e) {
             $this->db->transRollback();
             log_message('error', 'Error deleting complete RENJA: ' . $e->getMessage());

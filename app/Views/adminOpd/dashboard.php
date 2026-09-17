@@ -79,7 +79,7 @@ $js = static fn ($v) => json_encode(
           <?php if (!empty($scope['can_pick'])): ?>
             <div class="col-12 col-md-4 col-lg-3">
               <label for="f-opd" class="form-label mb-1">Perangkat Daerah</label>
-              <select name="opd_id" id="f-opd" class="form-select">
+              <select name="opd_id" id="f-opd" class="form-select" onchange="this.form.submit()">
                 <option value="">— Pilih Perangkat Daerah —</option>
                 <?php foreach ($scope['opd_list'] as $o): ?>
                   <option value="<?= (int) $o['id'] ?>" <?= (int) $o['id'] === (int) ($scope['opd_id'] ?? 0) ? 'selected' : '' ?>>
@@ -92,7 +92,7 @@ $js = static fn ($v) => json_encode(
 
           <div class="col-6 col-md-3 col-lg-2">
             <label for="f-tahun" class="form-label mb-1">Tahun</label>
-            <select name="tahun" id="f-tahun" class="form-select">
+            <select name="tahun" id="f-tahun" class="form-select" onchange="this.form.submit()">
               <?php foreach ($tahunList as $t): ?>
                 <option value="<?= (int) $t ?>" <?= (int) $t === (int) $tahun ? 'selected' : '' ?>><?= (int) $t ?></option>
               <?php endforeach; ?>
@@ -101,7 +101,7 @@ $js = static fn ($v) => json_encode(
 
           <div class="col-6 col-md-3 col-lg-2">
             <label for="f-tw" class="form-label mb-1">Triwulan</label>
-            <select name="triwulan" id="f-tw" class="form-select">
+            <select name="triwulan" id="f-tw" class="form-select" onchange="this.form.submit()">
               <?php foreach ([1, 2, 3, 4] as $q): ?>
                 <option value="<?= $q ?>" <?= $q === (int) $triwulan ? 'selected' : '' ?>>s.d. Triwulan <?= $romawi[$q] ?></option>
               <?php endforeach; ?>
@@ -111,7 +111,7 @@ $js = static fn ($v) => json_encode(
           <?php if (!empty($pejabatList)): ?>
             <div class="col-12 col-md-6 col-lg-3">
               <label for="f-pejabat" class="form-label mb-1">Pejabat / Unit</label>
-              <select name="pejabat_id" id="f-pejabat" class="form-select">
+              <select name="pejabat_id" id="f-pejabat" class="form-select" onchange="this.form.submit()">
                 <option value="">Seluruh unit</option>
                 <?php foreach ($pejabatList as $p): ?>
                   <option value="<?= (int) $p['id'] ?>" <?= (int) $p['id'] === (int) $pejabatId ? 'selected' : '' ?>>
@@ -121,10 +121,6 @@ $js = static fn ($v) => json_encode(
               </select>
             </div>
           <?php endif; ?>
-
-          <div class="col-12 col-lg-2 d-grid">
-            <button type="submit" class="btn btn-success"><i class="fas fa-filter me-1"></i> Terapkan</button>
-          </div>
         </div>
       </form>
 

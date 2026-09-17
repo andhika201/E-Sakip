@@ -7,6 +7,9 @@
     <style>
         td.text-center, th.text-center { text-align: center; }
         td.text-left, th.text-left { text-align: left; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.pdf-table tbody tr:nth-child(even) td { background: #fff; }
+        table.pdf-table td.vm { vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -26,7 +29,12 @@
         'namaUnit' => 'Kabupaten Pringsewu',
     ]) ?>
 
-    <?php $showOpdCol = ($mode === 'opd' && $opdFilter === null); ?>
+    <?php
+    $showOpdCol = ($mode === 'opd' && $opdFilter === null);
+    // pdf_td_gabung()/pdf_teks(): kolom OPD/Sasaran TANPA rowspan supaya mPDF
+    // bebas memotong halaman di baris mana pun (lihat app/Helpers/pdf_helper.php).
+    helper('pdf');
+    ?>
 
     <table class="pdf-table">
         <thead>
@@ -65,34 +73,21 @@
                             foreach ($sasGroups as $rowsTmp) {
                                 $opdRowspan += count($rowsTmp);
                             }
-                            $printedOpd = false;
+                            $opdKe = 0; // posisi baris di dalam grup OPD
                             ?>
 
                             <?php foreach ($sasGroups as $sasaran => $rows): ?>
-                                <?php
-                                $sasRowspan = count($rows);
-                                $printedSasaran = false;
-                                ?>
+                                <?php $sasRowspan = count($rows); ?>
 
-                                <?php foreach ($rows as $row): ?>
+                                <?php foreach (array_values($rows) as $sasKe => $row): ?>
                                     <tr>
                                         <td class="text-center"><?= $no++ ?></td>
 
                                         <!-- OPD -->
-                                        <?php if (!$printedOpd): ?>
-                                            <td rowspan="<?= $opdRowspan ?>" class="text-left">
-                                                <?= esc($opdName) ?>
-                                            </td>
-                                            <?php $printedOpd = true; ?>
-                                        <?php endif; ?>
+                                        <?= pdf_td_gabung($opdKe++, $opdRowspan, pdf_teks($opdName), 'text-left') ?>
 
                                         <!-- Sasaran -->
-                                        <?php if (!$printedSasaran): ?>
-                                            <td rowspan="<?= $sasRowspan ?>" class="text-left">
-                                                <strong><?= esc($sasaran) ?></strong>
-                                            </td>
-                                            <?php $printedSasaran = true; ?>
-                                        <?php endif; ?>
+                                        <?= pdf_td_gabung($sasKe, $sasRowspan, '<strong>' . pdf_teks($sasaran) . '</strong>', 'text-left') ?>
 
                                         <!-- Data -->
                                         <td class="text-left"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
@@ -117,19 +112,13 @@
                         <?php foreach ($grouped as $sasaran => $rows): ?>
                             <?php
                             $rowspan = count($rows);
-                            $printed = false;
                             ?>
-                            <?php foreach ($rows as $row): ?>
+                            <?php foreach (array_values($rows) as $sasKe => $row): ?>
                                 <tr>
                                     <td class="text-center"><?= $no++ ?></td>
 
                                     <!-- Sasaran -->
-                                    <?php if (!$printed): ?>
-                                        <td rowspan="<?= $rowspan ?>" class="text-left">
-                                            <strong><?= esc($sasaran) ?></strong>
-                                        </td>
-                                        <?php $printed = true; ?>
-                                    <?php endif; ?>
+                                    <?= pdf_td_gabung($sasKe, $rowspan, '<strong>' . pdf_teks($sasaran) . '</strong>', 'text-left') ?>
 
                                     <!-- Data -->
                                     <td class="text-left"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
@@ -154,19 +143,13 @@
                     <?php foreach ($grouped as $sasaran => $rows): ?>
                         <?php
                         $rowspan = count($rows);
-                        $printed = false;
                         ?>
-                        <?php foreach ($rows as $row): ?>
+                        <?php foreach (array_values($rows) as $sasKe => $row): ?>
                             <tr>
                                 <td class="text-center"><?= $no++ ?></td>
 
                                 <!-- Sasaran RPJMD -->
-                                <?php if (!$printed): ?>
-                                    <td rowspan="<?= $rowspan ?>" class="text-left">
-                                        <strong><?= esc($sasaran) ?></strong>
-                                    </td>
-                                    <?php $printed = true; ?>
-                                <?php endif; ?>
+                                <?= pdf_td_gabung($sasKe, $rowspan, '<strong>' . pdf_teks($sasaran) . '</strong>', 'text-left') ?>
 
                                 <!-- Data -->
                                 <td class="text-left"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>

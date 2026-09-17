@@ -917,7 +917,7 @@ class CascadingController extends BaseController
             $filename = 'Cascading-Kabupaten-' . $periode . '.pdf';
         }
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'              => 'utf-8',
             'format'            => 'A3-L', // A3 landscape: 14 kolom cascading hanya terbaca di A3 (A4 -> disusutkan mpdf jd kecil)
             'margin_left'       => 7,

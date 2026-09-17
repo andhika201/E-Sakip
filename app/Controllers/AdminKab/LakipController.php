@@ -473,7 +473,7 @@ class LakipController extends BaseController
         // ============================================================
         // Orientasi POTRAIT (A4 tegak). Margin kiri/kanan dipersempit agar
         // tabel LAKIP yang lebar tetap lega di kertas potrait.
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
             'margin_left' => 8,

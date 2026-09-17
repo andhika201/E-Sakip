@@ -49,11 +49,11 @@
                 <!-- FILTER -->
                 <form method="get" class="row g-2 mb-3">
                     <div class="col-12 col-md-4 col-xl-2">
-                        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari user / deskripsi / IP..."
+                        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari user / deskripsi / IP... (Enter)"
                             value="<?= esc($filters['q'] ?? '') ?>">
                     </div>
                     <div class="col-6 col-md-4 col-xl-2">
-                        <select name="action" class="form-select form-select-sm">
+                        <select name="action" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">Semua Aksi</option>
                             <?php foreach (($actions ?? []) as $a): ?>
                                 <option value="<?= esc($a) ?>" <?= ($filters['action'] ?? '') === $a ? 'selected' : '' ?>><?= esc($a) ?></option>
@@ -61,7 +61,7 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-4 col-xl-2">
-                        <select name="module" class="form-select form-select-sm">
+                        <select name="module" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">Semua Modul</option>
                             <?php foreach (($modules ?? []) as $m): ?>
                                 <option value="<?= esc($m) ?>" <?= ($filters['module'] ?? '') === $m ? 'selected' : '' ?>><?= esc($m) ?></option>
@@ -69,7 +69,7 @@
                         </select>
                     </div>
                     <div class="col-6 col-md-4 col-xl-2">
-                        <select name="user" class="form-select form-select-sm">
+                        <select name="user" class="form-select form-select-sm" onchange="this.form.submit()">
                             <option value="">Semua User</option>
                             <?php foreach (($users ?? []) as $u): ?>
                                 <option value="<?= esc($u) ?>" <?= ($filters['user'] ?? '') === $u ? 'selected' : '' ?>><?= esc($u) ?></option>
@@ -80,13 +80,14 @@
                        (~140px) dan tidak bisa menyusut; kalau dijejalkan berdua
                        dalam satu kolom sempit, kolomnya jebol. Jadi dipisah. */ ?>
                     <div class="col-6 col-md-4 col-xl-2">
-                        <input type="date" name="from" class="form-control form-control-sm" value="<?= esc($filters['from'] ?? '') ?>" title="Dari tanggal" aria-label="Dari tanggal">
+                        <input type="date" name="from" class="form-control form-control-sm" onchange="this.form.submit()" value="<?= esc($filters['from'] ?? '') ?>" title="Dari tanggal" aria-label="Dari tanggal">
                     </div>
                     <div class="col-6 col-md-4 col-xl-2">
-                        <input type="date" name="to" class="form-control form-control-sm" value="<?= esc($filters['to'] ?? '') ?>" title="Sampai tanggal" aria-label="Sampai tanggal">
+                        <input type="date" name="to" class="form-control form-control-sm" onchange="this.form.submit()" value="<?= esc($filters['to'] ?? '') ?>" title="Sampai tanggal" aria-label="Sampai tanggal">
                     </div>
                     <div class="col-12 d-flex flex-wrap gap-2">
-                        <button class="btn btn-success btn-sm"><i class="fas fa-filter me-1"></i> Filter</button>
+                        <?php // Filter diterapkan otomatis saat pilihan berubah; kotak cari cukup Enter. ?>
+                        <noscript><button class="btn btn-success btn-sm"><i class="fas fa-filter me-1"></i> Filter</button></noscript>
                         <a href="<?= base_url('adminkab/log-aktivitas') ?>" class="btn btn-outline-secondary btn-sm">Reset</a>
                         <?php /* Tombol ini milik form "bersihkan log" di bawah.
                            Sebelumnya <form> ditulis BERSARANG di dalam form

@@ -1,5 +1,8 @@
 <?php
 helper(['number', 'lakip']);
+// pdf_td_gabung()/pdf_teks(): kolom induk (No/Sasaran) TANPA rowspan supaya
+// mPDF bebas memotong halaman di baris mana pun (lihat app/Helpers/pdf_helper.php).
+helper('pdf');
 
 $filters = $filters ?? [];
 $tahunAktif = (string) ($filters['tahun'] ?? '');
@@ -41,7 +44,8 @@ $statusLabel = static function ($status) {
             line-height: 1.15;
         }
         table.lakip-print-table thead { display: table-header-group; }
-        table.lakip-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.lakip-print-table tbody tr:nth-child(even) td { background: #fff; }
         table.lakip-print-table th,
         table.lakip-print-table td {
             padding: 2px 3px;
@@ -136,10 +140,11 @@ $statusLabel = static function ($status) {
             <?php $no = 1; ?>
             <?php foreach ($dataSource as $row): ?>
                 <?php
-                $sasaranText = $row['sasaran'] ?? ($row['sasaran_rpjmd'] ?? '-');
+                $sasaranText = $row['sasaran'] ?? ($row['sasaran_rpjmd'] ?? '');
                 $indikatorList = $row['indikator_sasaran'] ?? [];
                 $indikatorCount = count($indikatorList);
-                $firstRow = true;
+                $noSas = $indikatorCount > 0 ? $no++ : null; // sasaran tanpa indikator tidak bernomor (tak ada barisnya)
+                $indKe = -1; // posisi baris di dalam grup sasaran (mulai 0)
                 ?>
                 <?php foreach ($indikatorList as $indikator): ?>
                     <?php
@@ -186,20 +191,18 @@ $statusLabel = static function ($status) {
                     $realisasiCalc = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realisasiNow;
                     $capaianPersen = hitungCapaianLakip($targetCalc, $realisasiCalc, $jenisIndikator);
                     ?>
+                    <?php $indKe++; ?>
                     <tr>
-                        <?php if ($firstRow): ?>
-                            <td rowspan="<?= $indikatorCount ?>" class="text-center"><?= $no++ ?></td>
-                            <td rowspan="<?= $indikatorCount ?>" class="text-start"><?= esc($sasaranText) ?></td>
-                            <?php $firstRow = false; ?>
-                        <?php endif; ?>
-                        <td class="text-start"><?= esc($indikator['indikator_sasaran'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($indikator['satuan'] ?? '-') ?></td>
+                        <?= pdf_td_gabung($indKe, $indikatorCount, (string) $noSas, 'text-center', '', 0) ?>
+                        <?= pdf_td_gabung($indKe, $indikatorCount, pdf_teks($sasaranText), 'text-start') ?>
+                        <td class="text-start"><?= pdf_teks($indikator['indikator_sasaran'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($indikator['satuan'] ?? '') ?></td>
                         <td class="text-center"><?= esc($tahunRow) ?></td>
-                        <td class="text-center"><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
-                        <td class="text-center"><?= ($targetTahun !== null && $targetTahun !== '') ? esc((string) $targetTahun) : '-' ?></td>
-                        <td class="text-center"><?= $realisasiNow !== null ? esc((string) $realisasiNow) : '-' ?></td>
-                        <td class="text-center"><?= $capaianPersen === null ? '-' : formatAngkaID($capaianPersen, 2) . '%' ?></td>
+                        <td class="text-center"><?= esc($lakipItem['target_lalu'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '') ?></td>
+                        <td class="text-center"><?= ($targetTahun !== null && $targetTahun !== '') ? esc((string) $targetTahun) : '' ?></td>
+                        <td class="text-center"><?= $realisasiNow !== null ? esc((string) $realisasiNow) : '' ?></td>
+                        <td class="text-center"><?= $capaianPersen === null ? '' : formatAngkaID($capaianPersen, 2) . '%' ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endforeach; ?>

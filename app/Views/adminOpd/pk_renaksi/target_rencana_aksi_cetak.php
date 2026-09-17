@@ -9,6 +9,10 @@ $showPejabat = $isOpd;
 // Helper unit PK (Program / Kegiatan / Sub Kegiatan). Controller sudah memuatnya,
 // pemanggilan ini hanya pengaman bila view dirender dari tempat lain.
 helper('pk_unit');
+// pdf_td_gabung(): kolom induk TANPA rowspan. Rowspan setinggi satu sasaran /
+// indikator membuat mPDF menyusutkan seluruh tabel sampai tak terbaca (atau
+// meluber keluar halaman) begitu bloknya lebih tinggi dari satu halaman.
+helper('pdf');
 
 // Judul kolom unit dikirim controller; nilai bawaan dipertahankan supaya view
 // tetap aman bila dipanggil dari kode lama.
@@ -152,7 +156,8 @@ $splitAksi = function ($text) {
             line-height: 1.16;
         }
         table.renaksi-print-table thead { display: table-header-group; }
-        table.renaksi-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.renaksi-print-table tbody tr:nth-child(even) td { background: #fff; }
         table.renaksi-print-table th,
         table.renaksi-print-table td {
             padding: 2.6px 3px;
@@ -164,7 +169,8 @@ $splitAksi = function ($text) {
             font-size: 6.8px;
             line-height: 1.1;
             padding: 3px 2px;
-            white-space: nowrap;
+            /* Judul kolom boleh turun baris: nowrap memaksa lebar minimum kolom,
+               dan begitu jumlahnya melebihi lebar kertas mPDF menyusutkan SELURUH tabel. */
         }
         .text-start { text-align: left; }
         .nowrap { white-space: nowrap; }
@@ -201,8 +207,8 @@ $splitAksi = function ($text) {
     <div class="filter-note"><?= esc(implode(' | ', $filterLabels)) ?></div>
 <?php endif; ?>
 
-<table class="pdf-table renaksi-print-table">
-    <?php if ($isBupati): ?>
+<?php if ($isBupati): ?>
+    <table class="pdf-table renaksi-print-table">
         <colgroup>
             <col style="width:4%;">
             <col style="width:20%;">
@@ -246,42 +252,31 @@ $splitAksi = function ($text) {
                 $manualOpds  = ($manualPd ?? [])[$pkSasaranId] ?? [];
                 $isManual    = !empty($manualOpds);
                 $displayOpds = $isManual ? $manualOpds : $autoOpds;
-                $sasPrinted = false;
-                $pdPrinted = false;
-                $noPrinted = false;
+
+                // Isi kolom PD pendukung disusun sekali; pdf_td_gabung() yang
+                // memutuskan di baris mana ia dicetak.
+                $pdHtml = '';
+                if ($isManual) {
+                    $pdHtml .= '<div class="mb-1"><span class="badge-lite badge-manual">Diatur manual</span></div>';
+                }
+                if (empty($displayOpds)) {
+                    $pdHtml .= '<span class="pdf-muted">Belum ditetapkan</span>';
+                } else {
+                    foreach ($displayOpds as $o) {
+                        $pdHtml .= '<div class="mb-1"><strong>' . pdf_teks($o['nama']) . '</strong></div>';
+                    }
+                }
                 ?>
-                <?php foreach ($rows as $row): ?>
+                <?php foreach (array_values($rows) as $sasKe => $row): ?>
                     <tr>
-                        <?php if (!$noPrinted): ?>
-                            <td rowspan="<?= $sasTotal ?>" class="c nowrap"><?= $no ?></td>
-                            <?php $noPrinted = true; ?>
-                        <?php endif; ?>
-                        <?php if (!$sasPrinted): ?>
-                            <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
-                            <?php $sasPrinted = true; ?>
-                        <?php endif; ?>
-                        <td class="text-start"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
+                        <?= pdf_td_gabung($sasKe, $sasTotal, (string) $no, 'c nowrap', '', 0) ?>
+                        <?= pdf_td_gabung($sasKe, $sasTotal, pdf_teks($sasaran), 'text-start') ?>
+                        <td class="text-start"><?= pdf_teks($row['indikator_sasaran'] ?? '') ?></td>
                         <td class="c nowrap"><?= esc($row['indikator_tahun'] ?? '') ?></td>
                         <td class="c"><?= esc($row['satuan'] ?? '') ?></td>
                         <td class="c"><?= esc($row['indikator_target'] ?? '') ?></td>
-                        <?php if (!$pdPrinted): ?>
-                            <td rowspan="<?= $sasTotal ?>" class="text-start">
-                                <?php if ($isManual): ?>
-                                    <div class="mb-1"><span class="badge-lite badge-manual">Diatur manual</span></div>
-                                <?php endif; ?>
-                                <?php if (empty($displayOpds)): ?>
-                                    <span class="pdf-muted">Belum ditetapkan</span>
-                                <?php else: ?>
-                                    <?php foreach ($displayOpds as $o): ?>
-                                        <div class="mb-1">
-                                            <strong><?= esc($o['nama']) ?></strong>
-                                        </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </td>
-                            <td rowspan="<?= $sasTotal ?>" class="c"><span class="pdf-muted">-</span></td>
-                            <?php $pdPrinted = true; ?>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($sasKe, $sasTotal, $pdHtml, 'text-start') ?>
+                        <?= pdf_td_gabung($sasKe, $sasTotal, '', 'c') ?>
                     </tr>
                 <?php endforeach; ?>
                 <?php $no++; ?>
@@ -290,7 +285,15 @@ $splitAksi = function ($text) {
             <tr><td colspan="8" class="c pdf-muted">Belum ada indikator PK Bupati untuk filter ini.</td></tr>
         <?php endif; ?>
         </tbody>
+    </table>
     <?php else: ?>
+        <?php
+        // Kepala tabel (colgroup + thead) ditangkap sekali supaya bisa diulang:
+        // cetak lintas-OPD (admin_kab/bupati) dipecah menjadi SATU TABEL PER OPD.
+        // mPDF menahan seluruh sel satu tabel di memori sampai tabel selesai;
+        // satu tabel raksasa untuk semua OPD (>50 ribu sel) menghabiskan >600 MB.
+        ob_start();
+        ?>
         <colgroup>
             <?php // Satu <col> untuk tiap <th>; lebar dinormalkan ke total 100%.
                   // Kolom terakhir mengambil sisa pembulatan agar totalnya persis 100%. ?>
@@ -327,13 +330,19 @@ $splitAksi = function ($text) {
         </tr>
         <tr><th>I</th><th>II</th><th>III</th><th>IV</th></tr>
         </thead>
-        <tbody>
+        <?php
+        $kepalaTabel = ob_get_clean();
+        $bukaTabel   = '<table class="pdf-table renaksi-print-table">' . $kepalaTabel . '<tbody>';
+        ?>
+        <?= $bukaTabel ?>
         <?php if (!empty($grouped)): ?>
             <?php
             $no = 1;
             // Tinggi 1 indikator = yang TERTINGGI antara jumlah baris rencana aksi
             // (tiap butir setinggi jumlah sub-nya, min 1) dan jumlah unit. Sisi yang
-            // lebih pendek diregangkan lewat rowspan — sama dengan tampilan layar.
+            // lebih pendek diregangkan — sama dengan tampilan layar — tetapi di
+            // cetakan regangan itu diwujudkan lewat sel gabungan visual per baris,
+            // BUKAN rowspan (lihat catatan helper('pdf') di atas).
             $subMap     = $subMap ?? [];
             $programMap = $programMap ?? [];
             $barisFor = function ($row) use ($splitAksi, $subMap, $programMap) {
@@ -375,23 +384,37 @@ $splitAksi = function ($text) {
                 }
             }
             $curOpdKey = null;
+            $opdKe     = 0; // posisi baris di dalam grup OPD (kolom OPD, admin_kab)
             ?>
             <?php foreach ($grouped as $rows): ?>
                 <?php
                 $sasaran = $rows[0]['sasaran_renstra'] ?? '';
                 $opdKey  = $rows[0]['opd_id'] ?? ($rows[0]['nama_opd'] ?? '-');
-                $indCounts = [];
                 $sasTotal = 0;
-                foreach ($rows as $ri => $r) {
+                foreach ($rows as $r) {
                     [, , $c] = $barisFor($r);
-                    $indCounts[$ri] = $c;
                     $sasTotal += $c;
                 }
-                $newOpd = ($showOpd && $opdKey !== $curOpdKey);
-                $sasPrinted = false;
-                $noPrinted = false;
+                if ($showOpd && $opdKey !== $curOpdKey) {
+                    if ($curOpdKey !== null) {
+                        echo '</tbody></table>', $bukaTabel; // tabel baru per OPD
+                    }
+                    $curOpdKey = $opdKey;
+                    $opdKe     = 0;
+                }
+                $opdTotal = $opdTotals[$opdKey] ?? $sasTotal;
+                $sasKe    = 0; // posisi baris di dalam grup sasaran
+
+                $pejabatHtml = '';
+                if ($showPejabat) {
+                    $pejabatHtml = '<div><strong>'
+                        . pdf_teks(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? ''))
+                        . '</strong></div><span class="badge-lite">'
+                        . esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? ''))
+                        . '</span>';
+                }
                 ?>
-                <?php foreach ($rows as $ri => $row): ?>
+                <?php foreach ($rows as $row): ?>
                     <?php
                     [$items, $barisButir, $n] = $barisFor($row);
                     $subsRow = $subMap[(int) ($row['target_id'] ?? 0)] ?? [];
@@ -403,101 +426,90 @@ $splitAksi = function ($text) {
                         }
                     }
                     [$spanUnit, $mulaiUnit] = pk_bagi_baris($units, $n);
+                    $petaUnit = pdf_grup_per_baris($spanUnit, $mulaiUnit, $n);
 
                     // Baris rencana aksi dibagi rata dengan cara yang sama, supaya
                     // sisa tinggi ketika unit lebih banyak TIDAK jadi blok kosong.
                     [$spanBaris, $mulaiBaris, $spanButir] = pk_bagi_renaksi($barisRender, $n);
+                    $petaSub = pdf_grup_per_baris($spanBaris, $mulaiBaris, $n);
+
+                    // Posisi tiap baris di dalam grup BUTIR rencana aksinya
+                    // (satu butir membentang setinggi seluruh sub-nya).
+                    $petaButir = [];
+                    $butirSkrg = null;
+                    $butirKe   = 0;
+                    for ($k = 0; $k < $n; $k++) {
+                        $ri       = $petaSub[$k][0];
+                        $butirIdx = $ri !== null ? ($barisRender[$ri][0] ?? null) : null;
+                        if ($k === 0 || $butirIdx !== $butirSkrg) {
+                            $butirSkrg = $butirIdx;
+                            $butirKe   = 0;
+                        } else {
+                            $butirKe++;
+                        }
+                        $petaButir[$k] = [$butirIdx, $butirKe, (int) ($spanButir[$butirIdx] ?? 1)];
+                    }
                     ?>
                     <?php for ($k = 0; $k < $n; $k++): ?>
                         <?php
-                        $riBaris             = $mulaiBaris[$k] ?? null;
-                        [$butirIdx, $subIdx] = $riBaris !== null ? $barisRender[$riBaris] : [null, null];
-                        $spanRow             = $riBaris !== null ? ($spanBaris[$riBaris] ?? 1) : 1;
+                        [$riBaris, $subKe, $subJumlah]      = $petaSub[$k];
+                        [$butirIdx, $butirKe, $butirJumlah] = $petaButir[$k];
+                        $subIdx = $riBaris !== null ? ($barisRender[$riBaris][1] ?? 0) : 0;
+                        $sub    = ($butirIdx !== null) ? ($subsRow[$butirIdx][$subIdx] ?? null) : null;
                         ?>
                         <tr>
-                            <?php if (!$noPrinted): ?>
-                                <td rowspan="<?= $sasTotal ?>" class="c nowrap"><?= $no ?></td>
-                                <?php $noPrinted = true; ?>
+                            <?= pdf_td_gabung($sasKe, $sasTotal, (string) $no, 'c nowrap', '', 0) ?>
+                            <?php if ($showOpd): ?>
+                                <?= pdf_td_gabung($opdKe, $opdTotal, pdf_teks($row['nama_opd'] ?? ''), 'text-start') ?>
                             <?php endif; ?>
-                            <?php if ($showOpd && $newOpd): ?>
-                                <td rowspan="<?= $opdTotals[$opdKey] ?? $sasTotal ?>" class="text-start"><?= esc($row['nama_opd'] ?? '') ?></td>
-                                <?php $curOpdKey = $opdKey; $newOpd = false; ?>
+                            <?php if ($showPejabat): ?>
+                                <?= pdf_td_gabung($sasKe, $sasTotal, $pejabatHtml, 'text-start') ?>
                             <?php endif; ?>
-                            <?php if (!$sasPrinted): ?>
-                                <?php if ($showPejabat): ?>
-                                    <td rowspan="<?= $sasTotal ?>" class="text-start">
-                                        <div><strong><?= esc(!empty($rows[0]['pejabat_jabatan']) ? $rows[0]['pejabat_jabatan'] : ($rows[0]['pejabat_nama'] ?? '')) ?></strong></div>
-                                        <span class="badge-lite"><?= esc($eselonLabel(!empty($eselon ?? null) ? $eselon : ($rows[0]['pk_jenis'] ?? ''), $rows[0]['pejabat_eselon'] ?? null, $rows[0]['pejabat_jabatan'] ?? '')) ?></span>
-                                    </td>
-                                <?php endif; ?>
-                                <td rowspan="<?= $sasTotal ?>" class="text-start"><?= esc($sasaran) ?></td>
-                                <?php $sasPrinted = true; ?>
-                            <?php endif; ?>
-                            <?php if ($k === 0): ?>
-                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['indikator_sasaran'] ?? '') ?></td>
-                                <td rowspan="<?= $n ?>" class="c nowrap"><?= esc($row['indikator_tahun'] ?? '') ?></td>
-                                <td rowspan="<?= $n ?>" class="c"><?= esc($row['satuan'] ?? '') ?></td>
+                            <?= pdf_td_gabung($sasKe, $sasTotal, pdf_teks($sasaran), 'text-start') ?>
 
-                            <?php endif; ?>
+                            <?= pdf_td_gabung($k, $n, pdf_teks($row['indikator_sasaran'] ?? ''), 'text-start') ?>
+                            <?= pdf_td_gabung($k, $n, esc($row['indikator_tahun'] ?? ''), 'c nowrap') ?>
+                            <?= pdf_td_gabung($k, $n, esc($row['satuan'] ?? ''), 'c') ?>
 
                             <?php // Unit (Program/Kegiatan/Sub Kegiatan) & anggaran: tinggi indikator
-                                  // dibagi rata lewat rowspan, jadi sejajar dan tanpa sel kosong. ?>
+                                  // dibagi rata antar unit, jadi sejajar dan tanpa sel kosong. ?>
                             <?php if (empty($units)): ?>
-                                <?php if ($k === 0): ?>
-                                    <td rowspan="<?= $n ?>" class="c">-</td>
-                                    <td rowspan="<?= $n ?>" class="c">-</td>
-                                <?php endif; ?>
-                            <?php elseif (isset($mulaiUnit[$k])): ?>
+                                <?= pdf_td_gabung($k, $n, '', 'c') ?>
+                                <?= pdf_td_gabung($k, $n, '', 'c') ?>
+                            <?php else: ?>
                                 <?php
-                                $ui   = $mulaiUnit[$k];
-                                $unit = $units[$ui];
-                                $span = $spanUnit[$ui] ?? 1;
+                                [$ui, $unitKe, $unitJumlah] = $petaUnit[$k];
+                                $unit = $units[$ui] ?? [];
                                 // 'program' tetap dipakai sebagai alias 'nama' demi data lama.
                                 $namaUnitSel = (string) ($unit['nama'] ?? ($unit['program'] ?? ''));
                                 // Tandai tingkat unit bila tabel memuat campuran eselon, atau bila
                                 // unit ini turun tingkat karena tingkat aslinya kosong.
                                 $tandaiTingkat = ($unitHeaderGenerik || !empty($unit['fallback']))
                                     && !empty($unit['level_label']);
+                                $unitHtml = ($tandaiTingkat ? '<div><span class="badge-lite">' . esc($unit['level_label']) . '</span></div>' : '')
+                                    . pdf_teks(!empty($unit['kode']) ? '[' . $unit['kode'] . '] ' : '') . pdf_teks($namaUnitSel);
                                 ?>
-                                <td rowspan="<?= $span ?>" class="text-start">
-                                    <?php if ($tandaiTingkat): ?>
-                                        <div><span class="badge-lite"><?= esc($unit['level_label']) ?></span></div>
-                                    <?php endif; ?>
-                                    <?= esc(!empty($unit['kode']) ? '[' . $unit['kode'] . '] ' : '') ?><?= esc($namaUnitSel) ?>
-                                </td>
-                                <td rowspan="<?= $span ?>" class="text-start nowrap">
-                                    <?= esc($rupiah($unit['anggaran'] ?? 0)) ?>
-                                </td>
+                                <?= pdf_td_gabung($unitKe, $unitJumlah, $unitHtml, 'text-start') ?>
+                                <?php // Tanpa nowrap: angka rupiah boleh turun baris setelah "Rp" —
+                                      // lebar minimum kolom yang dipaksa nowrap membuat mPDF menyusutkan seluruh tabel. ?>
+                                <?= pdf_td_gabung($unitKe, $unitJumlah, esc($rupiah($unit['anggaran'] ?? 0)), 'text-start') ?>
                             <?php endif; ?>
 
-                            <?php if ($butirIdx !== null): ?>
-                                <?php // Rencana Aksi membentang setinggi seluruh sub rencana aksinya ?>
-                                <?php if ($subIdx === 0): ?>
-                                    <td rowspan="<?= $spanButir[$butirIdx] ?? 1 ?>" class="text-start">
-                                        <?= ($items[$butirIdx] ?? '') !== '' ? esc(($butirIdx + 1) . '. ' . $items[$butirIdx]) : '' ?>
-                                    </td>
-                                <?php endif; ?>
+                            <?php // Rencana Aksi membentang setinggi seluruh sub rencana aksinya ?>
+                            <?= pdf_td_gabung($butirKe, $butirJumlah, ($items[$butirIdx] ?? '') !== '' ? pdf_teks(($butirIdx + 1) . '. ' . $items[$butirIdx]) : '', 'text-start') ?>
 
-                                <?php $sub = $subsRow[$butirIdx][$subIdx] ?? null; ?>
-                                <td rowspan="<?= $spanRow ?>" class="text-start">
-                                    <?= $sub !== null ? esc(($subIdx + 1) . '. ' . $sub['teks']) : '' ?>
-                                </td>
+                            <?= pdf_td_gabung($subKe, $subJumlah, $sub !== null ? pdf_teks(($subIdx + 1) . '. ' . $sub['teks']) : '', 'text-start') ?>
+                            <?= pdf_td_gabung($subKe, $subJumlah, ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '') ?>
 
-                                <td rowspan="<?= $spanRow ?>">
-                                    <?= ($sub !== null && ($sub['satuan'] ?? '') !== '') ? esc($sub['satuan']) : '' ?>
-                                </td>
+                            <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini ?>
+                            <?php foreach ([1, 2, 3, 4] as $q): ?>
+                                <?php $nilaiTw = $sub['tw'][$q] ?? null; ?>
+                                <?= pdf_td_gabung($subKe, $subJumlah, ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '', 'c') ?>
+                            <?php endforeach; ?>
 
-                                <?php // Target Triwulan mengikuti SUB rencana aksi pada baris ini ?>
-                                <?php foreach ([1, 2, 3, 4] as $q): ?>
-                                    <?php $nilaiTw = $sub['tw'][$q] ?? null; ?>
-                                    <td rowspan="<?= $spanRow ?>" class="c"><?= ($nilaiTw !== null && $nilaiTw !== '') ? esc($nilaiTw) : '' ?></td>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-
-                            <?php if ($k === 0): ?>
-                                <td rowspan="<?= $n ?>" class="text-start"><?= esc($row['penanggung_jawab'] ?? '') ?></td>
-                            <?php endif; ?>
+                            <?= pdf_td_gabung($k, $n, pdf_teks($row['penanggung_jawab'] ?? ''), 'text-start') ?>
                         </tr>
+                        <?php $sasKe++; $opdKe++; ?>
                     <?php endfor; ?>
                 <?php endforeach; ?>
                 <?php $no++; ?>
@@ -511,7 +523,7 @@ $splitAksi = function ($text) {
             </tr>
         <?php endif; ?>
         </tbody>
-    <?php endif; ?>
-</table>
+    </table>
+<?php endif; ?>
 </body>
 </html>

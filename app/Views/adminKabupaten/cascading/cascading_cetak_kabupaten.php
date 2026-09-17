@@ -1,4 +1,10 @@
 <?php
+// pdf_td_gabung(): Indikator & Perangkat Daerah kini juga TANPA rowspan (seperti
+// Misi/Tujuan/Sasaran): satu indikator bisa punya puluhan baris program lintas
+// OPD, dan blok rowspan yang tak muat di sisa halaman dipindah utuh oleh mPDF —
+// menyisakan halaman setengah kosong (lihat app/Helpers/pdf_helper.php).
+helper('pdf');
+
 $periodeTxt = !empty($years) ? (min($years) . ' – ' . max($years)) : '-';
 $tahunAkhir = $tahun_akhir ?? (!empty($years) ? max($years) : null);
 $rows       = $rows ?? [];
@@ -63,18 +69,14 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
         table.pdf-table td, table.pdf-table th { font-size: 14.5px; padding: 7px 7px; overflow-wrap: break-word; word-wrap: break-word; }
         table.pdf-table thead th { font-size: 13px; }
         /* Sel gabungan (angka/indikator/perangkat daerah/kolom induk) di-tengah vertikal */
-        table.pdf-table td.c, table.pdf-table td.vmid, table.pdf-table td.casc-parent { vertical-align: middle; }
+        table.pdf-table td.c, table.pdf-table td.vmid, table.pdf-table td.vm { vertical-align: middle; }
         table.pdf-table td .no { color: #d35400; font-weight: bold; } /* penomoran oranye spt contoh */
         /* Tampilan bersih & profesional: nonaktifkan zebra */
         table.pdf-table tbody tr:nth-child(even) td { background: #fff; }
-        /* Kolom induk (Misi/Tujuan/Sasaran): garis dalam grup dibuat SAMAR (tipis)
-           & pemisah antar-grup tegas -> terlihat "menyatu" TANPA rowspan besar
-           (rowspan besar memicu halaman kosong di mpdf). Garis dibiarkan ADA
-           (bukan none) supaya tidak hilang/terpotong saat pindah halaman. */
-        /* Kolom induk tampil MENYATU: hilangkan garis dalam grup (tak ada kotak kosong),
-           garis pemisah hanya di awal tiap grup (Misi/Tujuan/Sasaran baru). */
-        table.pdf-table td.casc-parent { border-top: none; border-bottom: none; }
-        table.pdf-table td.casc-parent.grp-start { border-top: 0.5px solid #6b7a70; }
+        /* Kolom induk (Misi/Tujuan/Sasaran/Indikator/PD) = sel gabungan visual
+           pdf_td_gabung() (kelas .vm, CSS di templates/pdf_style.php): tampak
+           menyatu TANPA rowspan besar (rowspan besar memicu halaman kosong /
+           penyusutan di mpdf), dan labelnya diulang pada grup yang sangat tinggi. */
     </style>
 </head>
 
@@ -127,37 +129,39 @@ $colCount = 6 + 2 + count($years) + 1; // Misi..PD + Satuan,KondisiAwal + Target
             <?php if (empty($tree)): ?>
                 <tr><td colspan="<?= $colCount ?>" class="c pdf-muted">Tidak ada data cascading.</td></tr>
             <?php else: ?>
-                <?php $miNo = 0; foreach ($tree as $m): $miNo++; $mSpan = $misiRows($m); $mMid = intdiv($mSpan - 1, 2); $mRow = 0; ?>
-                    <?php $tuNo = 0; foreach ($m['tujuan'] as $t): $tuNo++; $tSpan = $tujRows($t); $tMid = intdiv($tSpan - 1, 2); $tRow = 0; ?>
-                        <?php $saNo = 0; foreach ($t['sasaran'] as $s): $saNo++; $sSpan = $sasRows($s); $sMid = intdiv($sSpan - 1, 2); $sRow = 0; ?>
+                <?php $miNo = 0; foreach ($tree as $m): $miNo++; $mSpan = $misiRows($m); $mRow = 0;
+                    $misiHtml = '<span class="no">' . $miNo . '.</span> ' . nl2br(pdf_teks($m['misi'])); ?>
+                    <?php $tuNo = 0; foreach ($m['tujuan'] as $t): $tuNo++; $tSpan = $tujRows($t); $tRow = 0;
+                        $tujuanHtml = '<span class="no">' . $tuNo . '.</span> ' . nl2br(pdf_teks($t['nama'])); ?>
+                        <?php $saNo = 0; foreach ($t['sasaran'] as $s): $saNo++; $sSpan = $sasRows($s); $sRow = 0;
+                            $sasaranHtml = '<span class="no">' . $saNo . '.</span> ' . nl2br(pdf_teks($s['nama'])); ?>
                             <?php
                             $inNo = 0;
                             foreach ($s['indikator'] as $ind):
-                                $inNo++; $iSpan = $indRows($ind); $iPr = false;
+                                $inNo++; $iSpan = $indRows($ind); $iRow = 0;
                                 $targets      = $ind['targets'];
                                 $kondisiAkhir = ($tahunAkhir !== null) ? ($targets[$tahunAkhir] ?? null) : null;
+                                $indHtml = '<span class="no">' . $inNo . '.</span> ' . ($ind['nama'] !== null ? nl2br(pdf_teks($ind['nama'])) : '-');
                                 ?>
-                                <?php foreach ($ind['opd'] as $opd): $oSpan = $opdRows($opd); $oPr = false;
+                                <?php foreach ($ind['opd'] as $opd): $oSpan = $opdRows($opd); $oRow = 0;
                                     $progs = !empty($opd['programs']) ? $opd['programs'] : [null]; ?>
                                     <?php $pNo = 0; foreach ($progs as $prog): $pNo++; ?>
                                         <tr>
-                                            <?php // Misi/Tujuan/Sasaran: tulis SEKALI di baris pertama grup (tanpa rowspan) agar mpdf tak menghasilkan halaman kosong pada data besar. Indikator & Perangkat Daerah tetap di-merge (rowspan kecil, aman). ?>
-                                            <td class="text-start casc-parent<?= $mRow === 0 ? ' grp-start' : '' ?>"><?php if ($mRow === $mMid): ?><span class="no"><?= $miNo ?>.</span> <?= nl2br(esc($m['misi'])) ?><?php endif; $mRow++; ?></td>
-                                            <td class="text-start casc-parent<?= $tRow === 0 ? ' grp-start' : '' ?>"><?php if ($tRow === $tMid): ?><span class="no"><?= $tuNo ?>.</span> <?= nl2br(esc($t['nama'])) ?><?php endif; $tRow++; ?></td>
-                                            <td class="text-start casc-parent<?= $sRow === 0 ? ' grp-start' : '' ?>"><?php if ($sRow === $sMid): ?><span class="no"><?= $saNo ?>.</span> <?= nl2br(esc($s['nama'])) ?><?php endif; $sRow++; ?></td>
-                                            <?php if (!$iPr): ?><td rowspan="<?= $iSpan ?>" class="text-start vmid"><span class="no"><?= $inNo ?>.</span> <?= $ind['nama'] !== null ? nl2br(esc($ind['nama'])) : '-' ?></td><?php endif; ?>
-                                            <td class="text-start"><?php if ($prog !== null): ?><span class="no"><?= $pNo ?>.</span> <?= nl2br(esc($prog)) ?><?php else: ?>-<?php endif; ?></td>
-                                            <?php if (!$oPr): ?><td rowspan="<?= $oSpan ?>" class="text-start vmid"><?= $opd['nama'] !== '' ? nl2br(esc($opd['nama'])) : '-' ?></td><?php $oPr = true; endif; ?>
-                                            <?php if (!$iPr): ?>
-                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($ind['satuan'] ?? '-') ?></td>
-                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($ind['baseline'] ?? '-') ?></td>
-                                                <?php foreach ($years as $y): ?>
-                                                    <td class="c" rowspan="<?= $iSpan ?>"><?= esc($targets[$y] ?? '-') ?></td>
-                                                <?php endforeach; ?>
-                                                <td class="c" rowspan="<?= $iSpan ?>"><?= esc($kondisiAkhir ?? '-') ?></td>
-                                                <?php $iPr = true; ?>
-                                            <?php endif; ?>
+                                            <?php // Misi/Tujuan/Sasaran: sel gabungan tanpa rowspan agar mpdf tak menghasilkan halaman kosong pada data besar. ?>
+                                            <?= pdf_td_gabung($mRow++, $mSpan, $misiHtml, 'text-start') ?>
+                                            <?= pdf_td_gabung($tRow++, $tSpan, $tujuanHtml, 'text-start') ?>
+                                            <?= pdf_td_gabung($sRow++, $sSpan, $sasaranHtml, 'text-start') ?>
+                                            <?= pdf_td_gabung($iRow, $iSpan, $indHtml, 'text-start') ?>
+                                            <td class="text-start"><?php if ($prog !== null): ?><span class="no"><?= $pNo ?>.</span> <?= nl2br(pdf_teks($prog)) ?><?php else: ?>-<?php endif; ?></td>
+                                            <?= pdf_td_gabung($oRow, $oSpan, $opd['nama'] !== '' ? nl2br(pdf_teks($opd['nama'])) : '-', 'text-start') ?>
+                                            <?= pdf_td_gabung($iRow, $iSpan, esc($ind['satuan'] ?? '-'), 'c') ?>
+                                            <?= pdf_td_gabung($iRow, $iSpan, esc($ind['baseline'] ?? '-'), 'c') ?>
+                                            <?php foreach ($years as $y): ?>
+                                                <?= pdf_td_gabung($iRow, $iSpan, esc($targets[$y] ?? '-'), 'c') ?>
+                                            <?php endforeach; ?>
+                                            <?= pdf_td_gabung($iRow, $iSpan, esc($kondisiAkhir ?? '-'), 'c') ?>
                                         </tr>
+                                        <?php $iRow++; $oRow++; ?>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
                             <?php endforeach; ?>

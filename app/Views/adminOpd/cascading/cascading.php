@@ -157,7 +157,7 @@
                     <form method="GET" action="<?= base_url('adminopd/cascading') ?>"
                         class="d-flex flex-column flex-md-row gap-2 align-items-stretch align-items-md-center">
                         <input type="hidden" name="view" value="<?= esc($view) ?>">
-                        <select name="periode" class="form-select" style="flex:1;">
+                        <select name="periode" class="form-select" style="flex:1;" onchange="this.form.submit()">
                             <option value="">-- Pilih Periode --</option>
                             <?php foreach ($periode_master ?? [] as $p): ?>
                                 <?php $key = $p['tahun_mulai'] . '-' . $p['tahun_akhir']; ?>
@@ -171,7 +171,7 @@
                                  IKU BERJALAN; memilih versi lama menampilkan
                                  cascading sebagaimana dibaca pada masa itu. */ ?>
                         <?php if (! empty($versiIkuList)): ?>
-                            <select name="iku_versi" class="form-select" style="flex:1;">
+                            <select name="iku_versi" class="form-select" style="flex:1;" onchange="this.form.submit()">
                                 <option value="">IKU berjalan (terkini)</option>
                                 <?php foreach ($versiIkuList as $v): ?>
                                     <option value="<?= (int) $v['id'] ?>"
@@ -185,9 +185,6 @@
                         <?php endif; ?>
 
                         <div class="d-flex gap-2 flex-wrap">
-                            <button type="submit" class="btn btn-success text-nowrap">
-                                <i class="fas fa-search"></i> Tampilkan
-                            </button>
                             <a href="<?= base_url('adminopd/cascading?view=' . $view) ?>" class="btn btn-outline-secondary text-nowrap">
                                 <i class="fas fa-undo"></i> Reset
                             </a>

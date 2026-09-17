@@ -209,7 +209,7 @@ class RpjmdController extends BaseController
             'tahun_akhir' => $periodData['tahun_akhir'] ?? null,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A3-L',
             'margin_left'   => 8,

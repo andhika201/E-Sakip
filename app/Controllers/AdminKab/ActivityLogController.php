@@ -88,7 +88,7 @@ class ActivityLogController extends BaseController
             'maxRows'   => $maxRows,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'              => 'utf-8',
             'format'            => 'A4-L',
             'default_font_size' => 8,

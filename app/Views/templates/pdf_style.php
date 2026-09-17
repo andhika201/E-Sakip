@@ -3,6 +3,13 @@
  * CSS standar untuk semua dokumen cetak PDF (Mpdf).
  * Include di <head> view cetak: <?= $this->include('templates/pdf_style') ?>
  * Tema hijau e-SAKIP, tipografi rapi, tabel bersih, blok tanda tangan.
+ *
+ * GOTCHA mPDF: kelas pada satu elemen diterapkan menurut urutan ABJAD, bukan
+ * urutan di stylesheet. Untuk <table class="pdf-table X">, aturan `table.X`
+ * hanya menimpa `table.pdf-table` bila "X" > "pdf-table" secara abjad
+ * (renaksi-/rkt-/rpjmd-/rkpd-print-table menang; iku-/lakip-/monev-/
+ * cascading-print-table KALAH, sehingga font tabelnya tetap 9px dari sini).
+ * Bila perlu memaksa, pakai selector majemuk `table.pdf-table.X`.
  */
 ?>
 <style>
@@ -31,6 +38,13 @@
     table.pdf-table td.c, table.pdf-table th.c { text-align: center; }
     table.pdf-table td.r { text-align: right; }
     .pdf-muted { color: #8a958d; }
+
+    /* ===== SEL GABUNGAN VISUAL (pengganti rowspan besar; lihat app/Helpers/pdf_helper.php) =====
+       Nama kelas sengaja diawali "vm" agar mPDF, yang menerapkan kelas menurut urutan abjad,
+       memasang vm-awal/vm-akhir SETELAH vm. */
+    table.pdf-table td.vm { border-top: none; border-bottom: none; background: #fff; }
+    table.pdf-table td.vm-awal { border-top: 0.5px solid #6b7a70; }
+    table.pdf-table td.vm-akhir { border-bottom: 0.5px solid #6b7a70; }
 
     /* ===== TANDA TANGAN ===== */
     .pdf-ttd { width: 100%; margin-top: 26px; border-collapse: collapse; }

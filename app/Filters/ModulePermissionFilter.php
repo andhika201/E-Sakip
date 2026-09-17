@@ -98,7 +98,7 @@ class ModulePermissionFilter implements FilterInterface
             return user_can('dashboard.view') ? null : $this->deny();
         }
 
-        $actions = $this->actionsFor($path);
+        $actions = $this->actionsFor($path, strtolower($request->getMethod()));
         foreach ($actions as $a) {
             if (user_can($module . '.' . $a)) {
                 return; // punya salah satu izin -> lolos
@@ -108,8 +108,25 @@ class ModulePermissionFilter implements FilterInterface
         return $this->deny();
     }
 
-    /** @return string[] daftar aksi yang relevan (any-of) */
-    private function actionsFor(string $path): array
+    /**
+     * @return string[] daftar aksi yang relevan (any-of)
+     *
+     * =================================================================
+     * METODE TULIS TIDAK PERNAH JATUH KE 'view'
+     *
+     * Aksi diturunkan dari kata kunci path. Rute tulis yang path-nya tidak
+     * memuat satu pun kata kunci (mis. `iku/revisi/sahkan`,
+     * `rpjmd/versi/hapus`, `lakip/snapshot/finalkan`, `cascading/hapus-mapping`)
+     * dulu jatuh ke ['view'] — dan role baca-saja seperti admin_inspektorat,
+     * yang memang punya *.view, lolos dari filter ini. Yang menahannya
+     * tinggal user_can() di dalam masing-masing controller; satu handler
+     * baru tanpa pagar akan langsung terbuka.
+     *
+     * Karena itu untuk POST/PUT/PATCH/DELETE tanpa kata kunci, yang dituntut
+     * adalah salah satu izin tulis (create/update/delete), bukan view.
+     * =================================================================
+     */
+    private function actionsFor(string $path, string $method = 'get'): array
     {
         $p = strtolower($path);
         if (strpos($p, 'delete') !== false)      { return ['delete']; }
@@ -119,6 +136,9 @@ class ModulePermissionFilter implements FilterInterface
         if (strpos($p, 'setcapaian') !== false)  { return ['update']; }
         if (strpos($p, 'update') !== false || strpos($p, 'edit') !== false || strpos($p, 'status') !== false) {
             return ['update'];
+        }
+        if (in_array($method, ['post', 'put', 'patch', 'delete'], true)) {
+            return ['create', 'update', 'delete']; // mutasi tanpa kata kunci: wajib izin tulis
         }
         return ['view']; // index, cetak, capaian (listing), dll.
     }

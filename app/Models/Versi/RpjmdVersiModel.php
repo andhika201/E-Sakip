@@ -55,6 +55,15 @@ class RpjmdVersiModel extends ArsipVersiModel
                 'tabel' => 'rpjmd_versi_tujuan', 'teks' => 'tujuan_rpjmd',
                 'fk' => 'versi_misi_id', 'induk' => 'misi', 'extra' => [],
             ],
+            // Indikator TUJUAN (setara indikator sasaran, tapi menggantung di
+            // tujuan). Didaftar tepat setelah 'tujuan' supaya penambahan baris
+            // baru — yang berjalan akar->daun — menemukan induknya sudah ada.
+            // `jenis_default` mengisi kolom jenis_perubahan yang NOT NULL.
+            'indikator_tujuan' => [
+                'tabel' => 'rpjmd_versi_indikator_tujuan', 'teks' => 'indikator_tujuan',
+                'fk' => 'versi_tujuan_id', 'induk' => 'tujuan', 'extra' => [],
+                'target_key' => 'target_tujuan', 'jenis_default' => self::UBAH_BARU,
+            ],
             'sasaran' => [
                 'tabel' => 'rpjmd_versi_sasaran', 'teks' => 'sasaran_rpjmd',
                 'fk' => 'versi_tujuan_id', 'induk' => 'tujuan', 'extra' => ['csf'],
@@ -63,10 +72,15 @@ class RpjmdVersiModel extends ArsipVersiModel
                 'tabel' => 'rpjmd_versi_indikator_sasaran', 'teks' => 'indikator_sasaran',
                 'fk' => 'versi_sasaran_id', 'induk' => 'sasaran',
                 'extra' => ['definisi_op', 'satuan', 'jenis_indikator', 'baseline'],
+                'target_key' => 'target',
             ],
             'target' => [
                 'tabel' => 'rpjmd_versi_target',
                 'fk' => 'versi_indikator_id', 'nilai' => 'target_tahunan',
+            ],
+            'target_tujuan' => [
+                'tabel' => 'rpjmd_versi_target_tujuan',
+                'fk' => 'versi_indikator_tujuan_id', 'nilai' => 'target_tahunan',
             ],
         ];
     }
@@ -503,6 +517,218 @@ class RpjmdVersiModel extends ArsipVersiModel
             ->where('dihentikan_pada IS NULL', null, false)->countAllResults();
 
         return ['misi' => count($misi), 'sasaran' => count($sasaran), 'indikator' => $indikator];
+    }
+
+    /**
+     * =====================================================================
+     * MENGAPA VERSI INI LEBIH SEDIKIT DARI MENU RPJMD?
+     *
+     * Menu RPJMD (RpjmdModel::getCompleteRpjmdStructure) menampilkan SELURUH
+     * baris — termasuk yang sudah dihentikan (`dihentikan_pada` terisi) —
+     * tanpa penanda apa pun. Pembekuan versi (bekukanDariLive) hanya
+     * mengambil baris yang masih hidup pada periode lingkupnya. Dua layar itu
+     * benar menurut aturannya masing-masing, tetapi pemakai melihat "15 di
+     * menu, 11 di versi" dan mengira pembekuannya gagal.
+     *
+     * Fungsi ini menyebut baris yang tidak ikut, satu per satu, dengan
+     * alasannya: dihentikan sendiri, ikut induknya yang dihentikan, misinya
+     * di luar periode versi, atau (untuk draft yang sudah disunting/disalin)
+     * memang tidak ada di versi ini. Yang dijawab adalah "kenapa", bukan
+     * sekadar "berapa".
+     * =====================================================================
+     */
+    public function barisLiveTakTerbekukan(int $versiId, VersionScope $scope): array
+    {
+        if (! $this->siap()) {
+            return [];
+        }
+
+        $adaDiArsip = array_map('intval', $this->kolomId(
+            $this->db->table('rpjmd_versi_indikator_sasaran')
+                ->select('source_indikator_id AS id')
+                ->where('version_id', $versiId)
+                ->where('source_indikator_id IS NOT NULL', null, false)
+                ->get()->getResultArray()
+        ));
+
+        $rows = $this->db->table('rpjmd_indikator_sasaran i')
+            ->select('i.id, i.indikator_sasaran, i.dihentikan_pada, i.berlaku_sampai, i.alasan_dihentikan, '
+                . 's.id AS sasaran_id, s.sasaran_rpjmd, s.dihentikan_pada AS s_stop, '
+                . 't.id AS tujuan_id, t.tujuan_rpjmd, t.dihentikan_pada AS t_stop, '
+                . 'm.id AS misi_id, m.misi, m.dihentikan_pada AS m_stop, m.tahun_mulai, m.tahun_akhir')
+            ->join('rpjmd_sasaran s', 's.id = i.sasaran_id', 'left')
+            ->join('rpjmd_tujuan t', 't.id = s.tujuan_id', 'left')
+            ->join('rpjmd_misi m', 'm.id = t.misi_id', 'left')
+            ->orderBy('m.id', 'ASC')->orderBy('t.id', 'ASC')->orderBy('s.id', 'ASC')->orderBy('i.id', 'ASC')
+            ->get()->getResultArray();
+
+        $mulai = $scope->periodeMulai();
+        $akhir = $scope->periodeAkhir();
+        $out   = [];
+
+        foreach ($rows as $r) {
+            if (in_array((int) $r['id'], $adaDiArsip, true)) {
+                continue;
+            }
+
+            $periodeMisi = (int) $r['tahun_mulai'] . '-' . (int) $r['tahun_akhir'];
+
+            if ($r['misi_id'] === null) {
+                $alasan = 'Indikator ini tidak tersambung ke misi mana pun (sasaran/tujuan/misinya sudah tidak ada).';
+            } elseif ((int) $r['tahun_mulai'] !== $mulai || (int) $r['tahun_akhir'] !== $akhir) {
+                $alasan = 'Misinya berperiode ' . $periodeMisi . ', bukan ' . $mulai . '-' . $akhir
+                    . ' — ia milik versi periode lain.';
+            } elseif ($r['dihentikan_pada'] !== null) {
+                $alasan = 'Indikator ini sudah DIHENTIKAN pada ' . $this->tanggalRingkas($r['dihentikan_pada'])
+                    . ($r['berlaku_sampai'] !== null ? ' (berlaku sampai ' . (int) $r['berlaku_sampai'] . ')' : '')
+                    . ($r['alasan_dihentikan'] ? ': ' . $r['alasan_dihentikan'] : '.');
+            } elseif ($r['s_stop'] !== null) {
+                $alasan = 'Sasarannya sudah dihentikan pada ' . $this->tanggalRingkas($r['s_stop']) . '.';
+            } elseif ($r['t_stop'] !== null) {
+                $alasan = 'Tujuannya sudah dihentikan pada ' . $this->tanggalRingkas($r['t_stop']) . '.';
+            } elseif ($r['m_stop'] !== null) {
+                $alasan = 'Misinya sudah dihentikan pada ' . $this->tanggalRingkas($r['m_stop']) . '.';
+            } else {
+                $alasan = 'Masih hidup di RPJMD berjalan, tetapi tidak ada di versi ini — '
+                    . 'dihapus saat draft disunting, atau versi ini disalin dari versi lain / dimulai dari kosong.';
+            }
+
+            // Bisa "diaktifkan kembali" ke versi ini bila yang dihentikan adalah
+            // INDIKATORNYA SENDIRI (bukan induknya), induknya masih hidup, dan
+            // periodenya cocok — sehingga sasaran penampungnya pasti ada di arsip
+            // versi ini. Baris yang tersingkir karena induk/periode tidak masuk
+            // kategori ini (harus dibereskan di tingkat induknya lebih dulu).
+            $bolehAktifkan = $r['dihentikan_pada'] !== null
+                && $r['s_stop'] === null && $r['t_stop'] === null && $r['m_stop'] === null
+                && (int) $r['tahun_mulai'] === $mulai && (int) $r['tahun_akhir'] === $akhir;
+
+            $out[] = [
+                'tingkat'         => 'indikator_sasaran',
+                'id'              => (int) $r['id'],
+                'teks'            => (string) $r['indikator_sasaran'],
+                'induk'           => (string) ($r['sasaran_rpjmd'] ?? '-'),
+                'misi'            => (string) ($r['misi'] ?? '-'),
+                'alasan'          => $alasan,
+                'dihentikan_pada' => $r['dihentikan_pada'] ?? $r['s_stop'] ?? $r['t_stop'] ?? $r['m_stop'],
+                'berlaku_sampai'  => $r['berlaku_sampai'] !== null ? (int) $r['berlaku_sampai'] : null,
+                'boleh_aktifkan'  => $bolehAktifkan,
+            ];
+        }
+
+        return $out;
+    }
+
+    private function tanggalRingkas(?string $tanggal): string
+    {
+        if ($tanggal === null || $tanggal === '') {
+            return '-';
+        }
+
+        $ts = strtotime($tanggal);
+
+        return $ts ? date('d M Y', $ts) : $tanggal;
+    }
+
+    /**
+     * =====================================================================
+     * AKTIFKAN KEMBALI SEBUAH INDIKATOR YANG SUDAH DIHENTIKAN
+     *
+     * Indikator yang dipensiunkan hidup HANYA di tabel live (dihentikan_pada
+     * terisi) dan tidak ada di versi mana pun. "Salin dari kondisi berjalan"
+     * sengaja melewatinya (versi = potret yang aktif), dan menambahkannya
+     * manual lewat Sunting akan membuat baris LIVE KEMBAR saat versi diterapkan
+     * (baris baru itu tak punya source_indikator_id, jadi upsert tidak
+     * mengenalinya sebagai yang lama).
+     *
+     * Fungsi ini menyisipkan baris arsip yang MEMBAWA source_indikator_id-nya,
+     * sehingga saat versi ditetapkan, terapkanKeLive() meng-upsert baris LIVE
+     * yang SAMA dan menghidupkannya kembali (dihentikan_pada dikosongkan) —
+     * bukan menduplikasi. jenis_perubahan sengaja 'tetap', bukan 'dihentikan':
+     * bila tetap 'dihentikan', penerapan justru akan melewatinya lagi.
+     * =====================================================================
+     *
+     * @return array{indikator:string, target:int}
+     */
+    public function aktifkanKembaliIndikator(int $versiId, int $liveIndikatorId): array
+    {
+        $this->pastikanDalamTransaksi('aktifkan kembali indikator');
+
+        $live = $this->db->table('rpjmd_indikator_sasaran')
+            ->where('id', $liveIndikatorId)->get()->getRowArray();
+
+        if ($live === null) {
+            throw new RuntimeException('Indikator tidak ditemukan.');
+        }
+
+        // Sudah ada di versi ini? jangan gandakan.
+        $sudah = $this->db->table('rpjmd_versi_indikator_sasaran')
+            ->where('version_id', $versiId)
+            ->where('source_indikator_id', $liveIndikatorId)
+            ->countAllResults() > 0;
+
+        if ($sudah) {
+            throw new RuntimeException('Indikator ini sudah ada di versi ini.');
+        }
+
+        // Sasaran penampungnya HARUS sudah ada di arsip versi ini.
+        $arsipSasaran = $this->db->table('rpjmd_versi_sasaran')
+            ->select('id')
+            ->where('version_id', $versiId)
+            ->where('source_sasaran_id', (int) $live['sasaran_id'])
+            ->get()->getRowArray();
+
+        if ($arsipSasaran === null) {
+            throw new RuntimeException(
+                'Sasaran induk indikator ini belum ada di versi ini, jadi indikatornya belum '
+                . 'bisa diaktifkan di sini. Sertakan dulu sasarannya.'
+            );
+        }
+
+        $now  = $this->sekarang();
+        $urut = $this->urutanBerikutSasaran((int) $arsipSasaran['id'], $versiId);
+
+        $arsipIndId = $this->sisip('rpjmd_versi_indikator_sasaran', [
+            'version_id'            => $versiId,
+            'versi_sasaran_id'      => (int) $arsipSasaran['id'],
+            'source_indikator_id'   => (int) $live['id'],
+            'indikator_sasaran'     => (string) $live['indikator_sasaran'],
+            'definisi_op'           => $this->kosongJadiNull($live['definisi_op'] ?? null),
+            'satuan'                => $this->kosongJadiNull($live['satuan'] ?? null),
+            'satuan_nama'           => $this->namaSatuan($live['satuan'] ?? null),
+            'jenis_indikator'       => $this->kosongJadiNull($live['jenis_indikator'] ?? null),
+            'baseline'              => $this->kosongJadiNull($live['baseline'] ?? null),
+            'urutan'                => $urut,
+            'jenis_perubahan'       => self::UBAH_TETAP,
+            'perubahan_substansial' => (int) ($live['perubahan_substansial'] ?? 0),
+            'created_at'            => $now,
+        ]);
+
+        $jml = 0;
+
+        foreach ($this->db->table('rpjmd_target')
+            ->where('indikator_sasaran_id', (int) $live['id'])
+            ->orderBy('tahun', 'ASC')->get()->getResultArray() as $tg) {
+            $this->sisip('rpjmd_versi_target', [
+                'versi_indikator_id' => $arsipIndId,
+                'tahun'              => (int) $tg['tahun'],
+                'target_tahunan'     => $this->kosongJadiNull($tg['target_tahunan']),
+                'created_at'         => $now,
+            ]);
+            $jml++;
+        }
+
+        return ['indikator' => (string) $live['indikator_sasaran'], 'target' => $jml];
+    }
+
+    private function urutanBerikutSasaran(int $arsipSasaranId, int $versiId): int
+    {
+        $row = $this->db->table('rpjmd_versi_indikator_sasaran')
+            ->selectMax('urutan', 'maks')
+            ->where('version_id', $versiId)
+            ->where('versi_sasaran_id', $arsipSasaranId)
+            ->get()->getRowArray();
+
+        return (int) ($row['maks'] ?? -1) + 1;
     }
 
     /* =========================================================

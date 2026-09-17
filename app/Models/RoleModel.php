@@ -103,5 +103,11 @@ class RoleModel extends Model
         }
 
         $db->transComplete();
+
+        // Rollback tidak boleh lewat diam-diam: pemanggil mengira izin sudah
+        // tersimpan padahal tabelnya kembali seperti semula.
+        if ($db->transStatus() === false) {
+            throw new \RuntimeException('Izin role #' . $roleId . ' gagal disimpan; perubahan dibatalkan.');
+        }
     }
 }

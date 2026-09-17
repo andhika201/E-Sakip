@@ -946,13 +946,40 @@ class PkRenaksiController extends BaseController
         $opdIds = is_array($opdIds) ? $opdIds : [];
         $opdIds = array_values(array_unique(array_filter(array_map('intval', $opdIds), static fn($v) => $v > 0)));
 
-        $tbl = $this->db->table('pk_sasaran_opd');
-        $tbl->where('pk_sasaran_id', $pkSasaranId)->delete();
-        if (!empty($opdIds)) {
-            $tbl->insertBatch(array_map(static fn($id) => [
-                'pk_sasaran_id' => $pkSasaranId,
-                'opd_id'        => $id,
-            ], $opdIds));
+        // Hanya id OPD yang memang ada. pk_sasaran_opd.opd_id ber-FK ke opd:
+        // id karangan membuat INSERT gagal — dan sebelum ini DELETE-nya sudah
+        // telanjur jalan di luar transaksi, jadi daftar lama ikut lenyap.
+        if ($opdIds !== []) {
+            $sah = array_map('intval', array_column(
+                $this->db->table('opd')->select('id')->whereIn('id', $opdIds)->get()->getResultArray(),
+                'id'
+            ));
+            $tidakSah = array_diff($opdIds, $sah);
+            if ($tidakSah !== []) {
+                return redirect()->to(base_url($this->renaksiUrl($jenis)))
+                    ->with('error', 'Perangkat Daerah tidak dikenali: ' . implode(', ', $tidakSah) . '.');
+            }
+        }
+
+        // Hapus + tulis ulang dalam SATU transaksi; kegagalan apa pun
+        // mengembalikan daftar lama.
+        $this->db->transException(true)->transBegin();
+        try {
+            $tbl = $this->db->table('pk_sasaran_opd');
+            $tbl->where('pk_sasaran_id', $pkSasaranId)->delete();
+            if (!empty($opdIds)) {
+                $tbl->insertBatch(array_map(static fn($id) => [
+                    'pk_sasaran_id' => $pkSasaranId,
+                    'opd_id'        => $id,
+                ], $opdIds));
+            }
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', '[PK BUPATI PD PENDUKUNG] ' . $e->getMessage());
+
+            return redirect()->to(base_url($this->renaksiUrl($jenis)))
+                ->with('error', pesanGalatBerawalan($e, 'Perangkat Daerah pendukung gagal disimpan', 'kab.pkRenaksi'));
         }
 
         return redirect()->to(base_url($this->renaksiUrl($jenis)))

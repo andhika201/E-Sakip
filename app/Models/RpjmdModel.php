@@ -297,7 +297,18 @@ class RpjmdModel extends Model
 
     public function getCompleteRpjmdStructure()
     {
-        return $this->buildRpjmdTreeBatched($this->getAllMisi());
+        // Halaman & cetak RPJMD menampilkan potret VERSI TERKINI: baris yang
+        // sudah dihentikan (dipensiunkan oleh versi yang ditetapkan) tidak lagi
+        // ikut. Setelah sebuah versi diterapkan, baris live yang aktif memang
+        // sama dengan isi versi itu; menyaring yang dihentikan membuat tampilan
+        // = versi RPJMD terbaru yang berlaku. Daftar misi untuk dropdown di
+        // tempat lain (getAllMisi) tidak terpengaruh.
+        $misi = array_values(array_filter(
+            $this->getAllMisi(),
+            static fn ($m) => empty($m['dihentikan_pada'])
+        ));
+
+        return $this->buildRpjmdTreeBatched($misi, null, true);
     }
 
     public function getRpjmdByYear($tahun)
@@ -317,7 +328,7 @@ class RpjmdModel extends Model
      * @param array    $misiList daftar misi (sudah diambil pemanggil: getAllMisi / getMisiByYear)
      * @param int|null $tahun    bila diisi, target (tujuan & sasaran) difilter tahun tsb (mode getRpjmdByYear)
      */
-    private function buildRpjmdTreeBatched(array $misiList, $tahun = null): array
+    private function buildRpjmdTreeBatched(array $misiList, $tahun = null, bool $hanyaAktif = false): array
     {
         if (empty($misiList)) {
             return $misiList;
@@ -325,16 +336,27 @@ class RpjmdModel extends Model
 
         $misiIds = array_column($misiList, 'id');
 
+        // Penyaring "hanya baris aktif": dipakai tampilan versi-terkini supaya
+        // baris yang sudah dihentikan tidak ikut. Target (rpjmd_target*) tidak
+        // punya kolom dihentikan_pada, jadi tidak disaring di sini.
+        $aktif = static function ($builder) use ($hanyaAktif) {
+            if ($hanyaAktif) {
+                $builder->where('dihentikan_pada IS NULL', null, false);
+            }
+
+            return $builder;
+        };
+
         // TUJUAN per misi
-        $tujuanRows = $this->db->table('rpjmd_tujuan')
-            ->whereIn('misi_id', $misiIds)
+        $tujuanRows = $aktif($this->db->table('rpjmd_tujuan')
+            ->whereIn('misi_id', $misiIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray();
         $tujuanIds = array_column($tujuanRows, 'id');
 
         // INDIKATOR TUJUAN per tujuan
-        $itRows = !empty($tujuanIds) ? $this->db->table('rpjmd_indikator_tujuan')
-            ->whereIn('tujuan_id', $tujuanIds)
+        $itRows = !empty($tujuanIds) ? $aktif($this->db->table('rpjmd_indikator_tujuan')
+            ->whereIn('tujuan_id', $tujuanIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $itIds = array_column($itRows, 'id');
@@ -352,15 +374,15 @@ class RpjmdModel extends Model
         }
 
         // SASARAN per tujuan
-        $sasaranRows = !empty($tujuanIds) ? $this->db->table('rpjmd_sasaran')
-            ->whereIn('tujuan_id', $tujuanIds)
+        $sasaranRows = !empty($tujuanIds) ? $aktif($this->db->table('rpjmd_sasaran')
+            ->whereIn('tujuan_id', $tujuanIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $sasaranIds = array_column($sasaranRows, 'id');
 
         // INDIKATOR SASARAN per sasaran
-        $isRows = !empty($sasaranIds) ? $this->db->table('rpjmd_indikator_sasaran')
-            ->whereIn('sasaran_id', $sasaranIds)
+        $isRows = !empty($sasaranIds) ? $aktif($this->db->table('rpjmd_indikator_sasaran')
+            ->whereIn('sasaran_id', $sasaranIds))
             ->orderBy('id', 'ASC')
             ->get()->getResultArray() : [];
         $isIds = array_column($isRows, 'id');
@@ -526,8 +548,198 @@ class RpjmdModel extends Model
     /* =====================================================
      |  DELETE RPJMD - SUPER AMAN
      ===================================================== */
+    // =====================================================================
+    // PAGAR DEPENDEN SEBELUM HAPUS
+    //
+    // `renstra_tujuan.rpjmd_sasaran_id` ber-FK ON DELETE CASCADE ke
+    // rpjmd_sasaran, dan rantainya menurun: renstra_sasaran -> indikator ->
+    // renstra_target -> target_rencana -> monev. Menghapus SATU sasaran RPJMD
+    // berarti menghapus Renstra beberapa OPD beserta rencana aksi dan
+    // capaiannya — tanpa satu pun galat, karena basis data memang diminta
+    // melakukannya. Pada data nyata satu misi mengikat 66 tujuan Renstra di
+    // 21 Perangkat Daerah.
+    //
+    // Karena itu penghapusan (juga lewat jalur "baris dibuang dari form
+    // sunting") DITOLAK selama masih ada yang bergantung, dan pemakai diberi
+    // tahu apa saja yang menahan. Polanya sama dengan
+    // RenstraModel::penghalangHapusPeriode().
+    // =====================================================================
+
+    /**
+     * Hitung baris pada tabel $tabel yang kolom $kolom-nya ada di $ids.
+     * Tabel/kolom yang belum ada pada skema dianggap 0 (skema lokal drift).
+     */
+    private function hitungDependen(string $tabel, string $kolom, array $ids, array $syarat = []): int
+    {
+        $db = $this->db;
+
+        if ($ids === [] || ! $db->tableExists($tabel) || ! $db->fieldExists($kolom, $tabel)) {
+            return 0;
+        }
+
+        $b = $db->table($tabel)->whereIn($kolom, $ids);
+
+        foreach ($syarat as $k => $v) {
+            if (! $db->fieldExists($k, $tabel)) {
+                return 0;
+            }
+            $b->where($k, $v);
+        }
+
+        return $b->countAllResults();
+    }
+
+    /**
+     * Penghalang penghapusan sejumlah INDIKATOR sasaran RPJMD.
+     *
+     * @param int[] $indikatorIds
+     * @return array<string,int> label => jumlah; kosong berarti aman dihapus
+     */
+    public function penghalangHapusIndikatorSasaran(array $indikatorIds): array
+    {
+        $indikatorIds = array_values(array_unique(array_map('intval', $indikatorIds)));
+
+        if ($indikatorIds === []) {
+            return [];
+        }
+
+        $targetIds = array_column($this->db->table('rpjmd_target')
+            ->select('id')->whereIn('indikator_sasaran_id', $indikatorIds)
+            ->get()->getResultArray(), 'id');
+
+        $ada = [];
+
+        $n = $this->hitungDependen('target_rencana', 'rpjmd_target_id', $targetIds);
+        if ($n > 0) { $ada['Rencana Aksi PK Bupati (beserta MONEV-nya)'] = $n; }
+
+        $n = $this->hitungDependen('lakip', 'rpjmd_target_id', $targetIds);
+        if ($n > 0) { $ada['baris LAKIP Kabupaten'] = $n; }
+
+        $n = $this->hitungDependen('lakip_analisis_faktor', 'rpjmd_target_id', $targetIds);
+        if ($n > 0) { $ada['analisis faktor LAKIP'] = $n; }
+
+        $n = $this->hitungDependen('lakip_benchmark', 'rpjmd_indikator_id', $indikatorIds);
+        if ($n > 0) { $ada['pembanding LAKIP'] = $n; }
+
+        $n = $this->hitungDependen('rpjmd_cascading', 'indikator_sasaran_id', $indikatorIds);
+        if ($n > 0) { $ada['mapping Cascading Kabupaten'] = $n; }
+
+        $n = $this->hitungDependen('iku_indikator', 'source_indikator_id', $indikatorIds);
+        if ($n > 0) { $ada['indikator IKU yang bersumber dari sini'] = $n; }
+
+        // Arsip versi (rpjmd_versi_*) sengaja TIDAK menahan: arsip menyimpan
+        // salinannya sendiri, dan saat izin sunting pengguna memang perlu
+        // membuang baris yang pernah diarsipkan.
+
+        return $ada;
+    }
+
+    /**
+     * Penghalang penghapusan sejumlah SASARAN RPJMD (termasuk indikatornya).
+     *
+     * @param int[] $sasaranIds
+     * @return array<string,int>
+     */
+    public function penghalangHapusSasaran(array $sasaranIds): array
+    {
+        $sasaranIds = array_values(array_unique(array_map('intval', $sasaranIds)));
+
+        if ($sasaranIds === []) {
+            return [];
+        }
+
+        $db  = $this->db;
+        $ada = [];
+
+        // 1. RENSTRA — yang paling mahal bila terbawa cascade.
+        if ($db->tableExists('renstra_tujuan')) {
+            $baris = $db->table('renstra_tujuan rt')
+                ->select('COUNT(*) AS n, COUNT(DISTINCT rs.opd_id) AS opd')
+                ->join('renstra_sasaran rs', 'rs.renstra_tujuan_id = rt.id', 'left')
+                ->whereIn('rt.rpjmd_sasaran_id', $sasaranIds)
+                ->get()->getRowArray();
+
+            if ((int) ($baris['n'] ?? 0) > 0) {
+                $ada['tujuan Renstra (' . (int) $baris['opd'] . ' Perangkat Daerah, beserta sasaran, indikator, target, Rencana Aksi & MONEV-nya)']
+                    = (int) $baris['n'];
+            }
+        }
+
+        // 2. RKPD/RENJA — tanpa FK, dihapus manual oleh deleteSasaran().
+        $n = $this->hitungDependen('rkpd_sasaran', 'rpjmd_sasaran_id', $sasaranIds);
+        if ($n > 0) { $ada['sasaran RKPD'] = $n; }
+
+        // 3. IKU Kabupaten yang lahir dari sasaran ini.
+        $n = $this->hitungDependen('iku_sasaran', 'source_sasaran_id', $sasaranIds, ['source_type' => 'rpjmd']);
+        if ($n > 0) { $ada['sasaran IKU yang bersumber dari sini'] = $n; }
+
+        // 4. Turunan lewat indikatornya.
+        $indikatorIds = array_column($db->table('rpjmd_indikator_sasaran')
+            ->select('id')->whereIn('sasaran_id', $sasaranIds)
+            ->get()->getResultArray(), 'id');
+
+        foreach ($this->penghalangHapusIndikatorSasaran($indikatorIds) as $apa => $n) {
+            $ada[$apa] = ($ada[$apa] ?? 0) + $n;
+        }
+
+        return $ada;
+    }
+
+    /** @return array<string,int> */
+    public function penghalangHapusTujuan(int $tujuanId): array
+    {
+        $sasaranIds = array_column($this->db->table('rpjmd_sasaran')
+            ->select('id')->where('tujuan_id', $tujuanId)
+            ->get()->getResultArray(), 'id');
+
+        return $this->penghalangHapusSasaran($sasaranIds);
+    }
+
+    /** @return array<string,int> */
+    public function penghalangHapusMisi(int $misiId): array
+    {
+        $tujuanIds = array_column($this->db->table('rpjmd_tujuan')
+            ->select('id')->where('misi_id', $misiId)
+            ->get()->getResultArray(), 'id');
+
+        if ($tujuanIds === []) {
+            return [];
+        }
+
+        $sasaranIds = array_column($this->db->table('rpjmd_sasaran')
+            ->select('id')->whereIn('tujuan_id', $tujuanIds)
+            ->get()->getResultArray(), 'id');
+
+        return $this->penghalangHapusSasaran($sasaranIds);
+    }
+
+    /**
+     * Lempar RuntimeException (pesan untuk pengguna) bila $penghalang tidak kosong.
+     *
+     * @param array<string,int> $penghalang
+     */
+    private function tolakBilaAdaPenghalang(array $penghalang, string $apaYangDihapus): void
+    {
+        if ($penghalang === []) {
+            return;
+        }
+
+        $rinci = [];
+
+        foreach ($penghalang as $apa => $n) {
+            $rinci[] = $n . ' ' . $apa;
+        }
+
+        throw new \RuntimeException(
+            $apaYangDihapus . ' belum bisa dihapus — masih dipakai: ' . implode('; ', $rinci)
+            . '. Lepaskan dulu keterkaitannya pada dokumen hilir, atau hubungi administrator.'
+        );
+    }
+
     public function deleteMisi(int $misiId): bool
     {
+        $this->tolakBilaAdaPenghalang($this->penghalangHapusMisi($misiId), 'Misi RPJMD ini');
+
         $this->db->transBegin();
 
         try {
@@ -635,6 +847,10 @@ class RpjmdModel extends Model
 
     public function deleteTujuan($id, $internal = false)
     {
+        // Dipanggil juga dari jalur sunting (baris tujuan dibuang dari form):
+        // pagarnya tetap berlaku — lihat catatan di atas deleteMisi().
+        $this->tolakBilaAdaPenghalang($this->penghalangHapusTujuan((int) $id), 'Tujuan RPJMD ini');
+
         if (!$internal) {
             $this->db->transStart();
         }
@@ -732,6 +948,8 @@ class RpjmdModel extends Model
 
     public function deleteSasaran($id, $internal = false)
     {
+        $this->tolakBilaAdaPenghalang($this->penghalangHapusSasaran([(int) $id]), 'Sasaran RPJMD ini');
+
         if (!$internal) {
             $this->db->transStart();
         }
@@ -790,13 +1008,10 @@ class RpjmdModel extends Model
 
     public function createIndikatorSasaran($data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
-        file_put_contents($debugFile, "=== CREATE INDIKATOR SASARAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
         foreach (['sasaran_id', 'indikator_sasaran', 'definisi_op', 'satuan'] as $f) {
             if (empty($data[$f])) {
                 $err = "Field {$f} harus diisi";
-                file_put_contents($debugFile, "VALIDATION ERROR: {$err}\n", FILE_APPEND);
                 throw new \InvalidArgumentException($err);
             }
         }
@@ -815,7 +1030,6 @@ class RpjmdModel extends Model
         $ok = $this->db->table('rpjmd_indikator_sasaran')->insert($insert);
         $id = (int) $this->db->insertID();
 
-        file_put_contents($debugFile, "Insert result: " . ($ok ? 'TRUE' : 'FALSE') . " | ID: {$id}\n", FILE_APPEND);
 
         if (!$ok) {
             $err = $this->db->error();
@@ -826,8 +1040,6 @@ class RpjmdModel extends Model
 
     public function updateIndikatorSasaran($id, $data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
-        file_put_contents($debugFile, "=== UPDATE INDIKATOR SASARAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
         // normalisasi jenis_indikator jika ada di data
         if (array_key_exists('jenis_indikator', $data)) {
@@ -838,16 +1050,16 @@ class RpjmdModel extends Model
             ->where('id', (int) $id)
             ->update($data);
 
-        file_put_contents(
-            $debugFile,
-            "Update result: " . ($ok ? 'TRUE' : 'FALSE') . " | Affected: " . $this->db->affectedRows() . "\n",
-            FILE_APPEND
-        );
         return $ok;
     }
 
     public function deleteIndikatorSasaran($id, $internal = false)
     {
+        $this->tolakBilaAdaPenghalang(
+            $this->penghalangHapusIndikatorSasaran([(int) $id]),
+            'Indikator sasaran RPJMD ini'
+        );
+
         if (!$internal) {
             $this->db->transStart();
         }
@@ -875,13 +1087,10 @@ class RpjmdModel extends Model
 
     public function createTargetTahunan($data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
-        file_put_contents($debugFile, "=== CREATE TARGET TAHUNAN - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
         foreach (['indikator_sasaran_id', 'tahun'] as $f) {
             if (empty($data[$f])) {
                 $err = "Field {$f} harus diisi";
-                file_put_contents($debugFile, "VALIDATION ERROR: {$err}\n", FILE_APPEND);
                 throw new \InvalidArgumentException($err);
             }
         }
@@ -898,7 +1107,6 @@ class RpjmdModel extends Model
         $ok = $this->db->table('rpjmd_target')->insert($insert);
         $id = (int) $this->db->insertID();
 
-        file_put_contents($debugFile, "Insert result: " . ($ok ? 'TRUE' : 'FALSE') . " | ID: {$id}\n", FILE_APPEND);
 
         if (!$ok) {
             $err = $this->db->error();
@@ -919,11 +1127,8 @@ class RpjmdModel extends Model
 
     public function deleteTargetTahunanByIndikatorId($indikatorSasaranId)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
-        file_put_contents($debugFile, "=== DELETE TARGET BY INDIKATOR (SASARAN) - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
         $res = $this->db->table('rpjmd_target')->delete(['indikator_sasaran_id' => (int) $indikatorSasaranId]);
-        file_put_contents($debugFile, "Delete result: " . ($res ? 'TRUE' : 'FALSE') . " | Affected: " . $this->db->affectedRows() . "\n", FILE_APPEND);
         return $res;
     }
 
@@ -1099,8 +1304,6 @@ class RpjmdModel extends Model
 
     public function updateCompleteRpjmdTransaction($misiId, $data)
     {
-        $debugFile = WRITEPATH . 'debug_rpjmd_model.txt';
-        file_put_contents($debugFile, "\n=== UPDATE COMPLETE RPJMD TRANSACTION - " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
 
         try {
             $this->db->transStart();
@@ -1322,14 +1525,11 @@ class RpjmdModel extends Model
 
             $this->db->transComplete();
             if ($this->db->transStatus() === false) {
-                file_put_contents($debugFile, "ERROR: DB transaction failed\n", FILE_APPEND);
                 throw new \Exception("Database transaction failed");
             }
 
-            file_put_contents($debugFile, "SUCCESS: Update completed\n", FILE_APPEND);
             return true;
         } catch (\Exception $e) {
-            file_put_contents($debugFile, "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
             $this->db->transRollback();
             throw $e;
         }

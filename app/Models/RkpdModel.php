@@ -274,10 +274,12 @@ class RkpdModel extends Model
             }
             
             // Delete the sasaran
-            $result = $this->db->table('rkpd_sasaran')->delete(['id' => $id]);
-            
+            $this->db->table('rkpd_sasaran')->delete(['id' => $id]);
+
             $this->db->transComplete();
-            return $result;
+            // Hasil transaksi, bukan hasil query terakhir: bila salah satu
+            // delete di atas gagal, seluruhnya sudah di-rollback.
+            return $this->db->transStatus() !== false;
             
         } catch (\Exception $e) {
             $this->db->transRollback();
@@ -536,10 +538,10 @@ class RkpdModel extends Model
                 // Delete using existing delete method (which handles cascade)
                 $this->deleteSasaran($sasaran['id']);
             }
-            
+
             $this->db->transComplete();
-            return true;
-            
+            return $this->db->transStatus() !== false;
+
         } catch (\Exception $e) {
             $this->db->transRollback();
             log_message('error', 'Error deleting complete RKPD: ' . $e->getMessage());

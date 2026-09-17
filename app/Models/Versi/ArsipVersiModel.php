@@ -107,6 +107,21 @@ abstract class ArsipVersiModel
     abstract public function hitungLiveAktif(VersionScope $scope): array;
 
     /**
+     * Baris LIVE pada periode ini yang TIDAK ada di arsip versi $versiId,
+     * beserta alasannya — bahan panel "kenapa versi ini lebih sedikit dari
+     * yang tampil di menu dokumennya".
+     *
+     * Bawaan kosong: modul yang belum menyediakannya tidak menampilkan panel.
+     *
+     * @return array<int,array{tingkat:string,id:int,teks:string,induk:string,misi:string,
+     *                         alasan:string,dihentikan_pada:?string,berlaku_sampai:?int}>
+     */
+    public function barisLiveTakTerbekukan(int $versiId, VersionScope $scope): array
+    {
+        return [];
+    }
+
+    /**
      * Peta tabel & kolom arsip per tingkat.
      *
      * Dipakai `simpanSuntingan()` supaya satu penyunting melayani RPJMD maupun
@@ -182,8 +197,15 @@ abstract class ArsipVersiModel
                     }
                 }
 
-                if ($tingkat === 'indikator' && isset($nilai['target'])) {
-                    $n['target'] += $this->simpanTargetArsip($versiId, $id, (array) $nilai['target'], $now);
+                // Target ditulis untuk tingkat mana pun yang MENYATAKAN punya
+                // tabel target lewat `target_key` (indikator sasaran -> target;
+                // indikator tujuan RPJMD -> target_tujuan). Dulu dipatok
+                // 'indikator', sehingga target indikator tujuan tak pernah bisa
+                // disunting.
+                if (isset($cfg['target_key']) && isset($nilai['target'])) {
+                    $n['target'] += $this->simpanTargetArsip(
+                        $versiId, $id, (array) $nilai['target'], $now, (string) $cfg['target_key'], (string) $cfg['tabel']
+                    );
                 }
             }
         }
@@ -203,8 +225,10 @@ abstract class ArsipVersiModel
                     if ($baruId > 0) {
                         $n['ditambah']++;
 
-                        if ($tingkat === 'indikator' && isset($nilai['target'])) {
-                            $n['target'] += $this->simpanTargetArsip($versiId, $baruId, (array) $nilai['target'], $now);
+                        if (isset($cfg['target_key']) && isset($nilai['target'])) {
+                            $n['target'] += $this->simpanTargetArsip(
+                                $versiId, $baruId, (array) $nilai['target'], $now, (string) $cfg['target_key'], (string) $cfg['tabel']
+                            );
                         }
                     }
                 }
@@ -357,6 +381,13 @@ abstract class ArsipVersiModel
             $row['satuan_nama']             = $this->namaSatuan($nilai['satuan'] ?? null);
         }
 
+        // Tingkat yang tabelnya punya kolom `jenis_perubahan` NOT NULL tetapi
+        // BUKAN indikator sasaran (mis. indikator tujuan RPJMD) mendapat nilai
+        // bawaannya di sini — tanpa ini penyisipan gagal karena kolom wajib.
+        if (! isset($row['jenis_perubahan']) && array_key_exists('jenis_default', $cfg)) {
+            $row['jenis_perubahan'] = (string) $cfg['jenis_default'];
+        }
+
         return $this->sisip($cfg['tabel'], $this->lengkapiBarisBaru($tingkat, $row, $versiId));
     }
 
@@ -393,16 +424,24 @@ abstract class ArsipVersiModel
      * disentuh hanyalah usulan. Yang tidak pernah dihapus adalah target di
      * tabel LIVE (lihat terapkanTarget).
      */
-    private function simpanTargetArsip(int $versiId, int $indikatorArsipId, array $target, string $now): int
-    {
-        $cfg = $this->petaKolom()['target'] ?? null;
+    private function simpanTargetArsip(
+        int $versiId,
+        int $indikatorArsipId,
+        array $target,
+        string $now,
+        string $targetKey = 'target',
+        ?string $indukTabel = null
+    ): int {
+        $cfg = $this->petaKolom()[$targetKey] ?? null;
 
         if ($cfg === null) {
             return 0;
         }
 
         // Pagar lingkup lewat induknya: tabel target tidak punya version_id.
-        $indukTabel = $this->petaKolom()['indikator']['tabel'];
+        // Induknya bisa indikator sasaran ATAU indikator tujuan, jadi tabelnya
+        // ikut diberikan pemanggil; bawaannya indikator sasaran (perilaku lama).
+        $indukTabel = $indukTabel ?? $this->petaKolom()['indikator']['tabel'];
 
         $milikVersi = $this->db->table($indukTabel)
             ->where('id', $indikatorArsipId)->where('version_id', $versiId)

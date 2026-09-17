@@ -48,6 +48,43 @@ class MasterController extends BaseController
         );
     }
 
+    /**
+     * Hitung pemakaian sebuah baris master di tabel lain.
+     *
+     * @param array<string,array{0:string,1:string}> $peta label => [tabel, kolom]
+     * @return array<string,int> label => jumlah (hanya yang > 0)
+     */
+    private function pemakaian(int $id, array $peta): array
+    {
+        $ada = [];
+
+        foreach ($peta as $label => [$tabel, $kolom]) {
+            if (! $this->db->tableExists($tabel) || ! $this->db->fieldExists($kolom, $tabel)) {
+                continue;
+            }
+
+            $n = $this->db->table($tabel)->where($kolom, $id)->countAllResults();
+
+            if ($n > 0) {
+                $ada[$label] = $n;
+            }
+        }
+
+        return $ada;
+    }
+
+    /** Susun kalimat penolakan dari hasil pemakaian(). */
+    private function pesanMasihDipakai(string $apa, array $ada): string
+    {
+        $rinci = [];
+
+        foreach ($ada as $label => $n) {
+            $rinci[] = $n . ' ' . $label;
+        }
+
+        return $apa . ' tidak bisa dihapus karena masih dipakai: ' . implode('; ', $rinci) . '.';
+    }
+
     private function back(string $tab, string $type, string $msg)
     {
         return redirect()->to('adminkab/master?tab=' . $tab)->with($type, $msg);
@@ -254,7 +291,19 @@ class MasterController extends BaseController
 
     public function pegawaiDelete($id = null)
     {
-        $this->db->table('pegawai')->where('id', (int) $id)->delete();
+        $id  = (int) $id;
+        // pk.pihak_1/pihak_2 & pegawai.atasan_id TANPA foreign key: baris yang
+        // menunjuk pegawai terhapus jadi yatim (kop PK kosong) tanpa peringatan.
+        $ada = $this->pemakaian($id, [
+            'Perjanjian Kinerja sebagai pihak pertama' => ['pk', 'pihak_1'],
+            'Perjanjian Kinerja sebagai pihak kedua'   => ['pk', 'pihak_2'],
+            'pegawai yang menjadikannya atasan'        => ['pegawai', 'atasan_id'],
+        ]);
+        if ($ada !== []) {
+            return $this->back('pegawai', 'error', $this->pesanMasihDipakai('Pegawai', $ada));
+        }
+
+        $this->db->table('pegawai')->where('id', $id)->delete();
         return $this->back('pegawai', 'success', 'Data pegawai dihapus.');
     }
 
@@ -281,7 +330,13 @@ class MasterController extends BaseController
 
     public function pangkatDelete($id = null)
     {
-        $this->db->table('pangkat')->where('id', (int) $id)->delete();
+        $id  = (int) $id;
+        $ada = $this->pemakaian($id, ['pegawai' => ['pegawai', 'pangkat_id']]);
+        if ($ada !== []) {
+            return $this->back('pangkat', 'error', $this->pesanMasihDipakai('Pangkat', $ada));
+        }
+
+        $this->db->table('pangkat')->where('id', $id)->delete();
         return $this->back('pangkat', 'success', 'Pangkat dihapus.');
     }
 
@@ -319,7 +374,13 @@ class MasterController extends BaseController
 
     public function jabatanDelete($id = null)
     {
-        $this->db->table('jabatan')->where('id', (int) $id)->delete();
+        $id  = (int) $id;
+        $ada = $this->pemakaian($id, ['pegawai' => ['pegawai', 'jabatan_id']]);
+        if ($ada !== []) {
+            return $this->back('jabatan', 'error', $this->pesanMasihDipakai('Jabatan', $ada));
+        }
+
+        $this->db->table('jabatan')->where('id', $id)->delete();
         return $this->back('jabatan', 'success', 'Jabatan dihapus.');
     }
 
@@ -362,11 +423,39 @@ class MasterController extends BaseController
     public function opdDelete($id = null)
     {
         $id = (int) $id;
-        $dipakai = $this->db->table('pegawai')->where('opd_id', $id)->countAllResults()
-            + $this->db->table('users')->where('opd_id', $id)->countAllResults();
-        if ($dipakai > 0) {
-            return $this->back('opd', 'error', "OPD tidak bisa dihapus karena masih dipakai {$dipakai} pegawai/user.");
+
+        // =============================================================
+        // Dulu hanya pegawai & user yang dihitung. Padahal FK ON DELETE
+        // CASCADE dari `opd` menjalar ke renstra_sasaran, iku_sasaran,
+        // cascading_sasaran_opd, target_rencana, monev, rpjmd_cascading —
+        // dan pk/lakip/rkt (tanpa FK) menjadi yatim. Satu klik pada OPD yang
+        // kebetulan belum punya user cukup untuk melenyapkan seluruh
+        // dokumen kinerjanya tanpa satu pun peringatan.
+        // =============================================================
+        $ada = $this->pemakaian($id, [
+            'pegawai'                    => ['pegawai', 'opd_id'],
+            'user'                       => ['users', 'opd_id'],
+            'sasaran Renstra'            => ['renstra_sasaran', 'opd_id'],
+            'sasaran IKU'                => ['iku_sasaran', 'opd_id'],
+            'Perjanjian Kinerja'         => ['pk', 'opd_id'],
+            'baris Cascading'            => ['cascading_sasaran_opd', 'opd_id'],
+            'Rencana Aksi'               => ['target_rencana', 'opd_id'],
+            'capaian MONEV'              => ['monev', 'opd_id'],
+            'realisasi anggaran MONEV'   => ['monev_anggaran', 'opd_id'],
+            'baris LAKIP'                => ['lakip', 'opd_id'],
+            'baris RKT'                  => ['rkt', 'opd_id'],
+            'Program PK'                 => ['program_pk', 'opd_id'],
+            'mapping Cascading Kabupaten' => ['rpjmd_cascading', 'opd_id'],
+            'versi dokumen'              => ['dokumen_versi', 'opd_id'],
+            'revisi IKU'                 => ['iku_revisi', 'opd_id'],
+            'snapshot LAKIP'             => ['lakip_snapshot', 'opd_id'],
+            'pengesahan LAKIP'           => ['lakip_pengesahan', 'opd_id'],
+        ]);
+
+        if ($ada !== []) {
+            return $this->back('opd', 'error', $this->pesanMasihDipakai('OPD', $ada));
         }
+
         $this->db->table('opd')->where('id', $id)->delete();
         return $this->back('opd', 'success', 'OPD dihapus.');
     }
@@ -384,6 +473,9 @@ class MasterController extends BaseController
 
         if ($username === '' || $email === '' || $role === '') {
             return $this->back('user', 'error', 'Username, email, dan role wajib diisi.');
+        }
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return $this->back('user', 'error', 'Format email tidak valid.');
         }
         // role harus ada di tabel roles
         $roleExists = $this->db->table('roles')->where('name', $role)->countAllResults();
@@ -465,12 +557,35 @@ class MasterController extends BaseController
 
         if ($id) {
             $row = $this->db->table('roles')->where('id', $id)->get()->getRowArray();
+            if (!$row) {
+                return $this->back('role', 'error', 'Role tidak ditemukan.');
+            }
             // role sistem: jangan ubah slug (dipakai users.role & AuthFilter)
-            if ($row && (int) $row['is_system'] === 1) {
+            if ((int) $row['is_system'] === 1) {
                 unset($payload['name']);
             }
-            $this->db->table('roles')->where('id', $id)->update($payload);
-            return $this->back('role', 'success', 'Role diperbarui.');
+
+            // users.role menunjuk roles.name lewat STRING. Mengganti slug tanpa
+            // ikut memperbarui users.role membuat semua pemegang role itu
+            // kehilangan akses seketika (user_can() tak menemukan rolenya).
+            // Keduanya ditulis dalam satu transaksi.
+            $slugLama = (string) $row['name'];
+            $slugBaru = (string) ($payload['name'] ?? $slugLama);
+
+            $this->db->transException(true)->transBegin();
+            try {
+                $this->db->table('roles')->where('id', $id)->update($payload);
+                if ($slugBaru !== $slugLama) {
+                    $this->db->table('users')->where('role', $slugLama)->update(['role' => $slugBaru]);
+                }
+                $this->db->transCommit();
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                return $this->back('role', 'error', pesanGalatBerawalan($e, 'Role gagal diperbarui', 'admin.role'));
+            }
+
+            return $this->back('role', 'success', 'Role diperbarui.'
+                . ($slugBaru !== $slugLama ? ' Slug pada akun pengguna ikut disesuaikan.' : ''));
         }
         $payload['is_system'] = 0;
         $payload['created_at'] = date('Y-m-d H:i:s');
@@ -492,8 +607,15 @@ class MasterController extends BaseController
         if ($dipakai > 0) {
             return $this->back('role', 'error', "Role masih dipakai {$dipakai} user.");
         }
-        $this->db->table('role_permissions')->where('role_id', $id)->delete();
-        $this->db->table('roles')->where('id', $id)->delete();
+        $this->db->transException(true)->transBegin();
+        try {
+            $this->db->table('role_permissions')->where('role_id', $id)->delete();
+            $this->db->table('roles')->where('id', $id)->delete();
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return $this->back('role', 'error', pesanGalatBerawalan($e, 'Role gagal dihapus', 'admin.role'));
+        }
         return $this->back('role', 'success', 'Role dihapus.');
     }
 
@@ -508,15 +630,32 @@ class MasterController extends BaseController
             'id'
         ));
 
-        foreach ($roles as $r) {
-            $rid = (int) $r['id'];
-            if ($r['name'] === 'admin') {
-                // super admin selalu punya semua izin (checkbox-nya disabled di form)
-                $this->roleModel->syncPermissions($rid, $allPids);
-                continue;
+        // Seluruh matriks = SATU transaksi. syncPermissions() membuka
+        // transaksinya sendiri per role tanpa memeriksa hasilnya; bila satu
+        // role gagal, transStatus yang lengket membuat role berikutnya ikut
+        // di-rollback diam-diam sementara layar tetap berkata "disimpan".
+        // Dengan transException(true) kegagalan pertama langsung dilempar.
+        $sah = array_fill_keys($allPids, true);
+
+        $this->db->transException(true)->transBegin();
+        try {
+            foreach ($roles as $r) {
+                $rid = (int) $r['id'];
+                if ($r['name'] === 'admin') {
+                    // super admin selalu punya semua izin (checkbox-nya disabled di form)
+                    $this->roleModel->syncPermissions($rid, $allPids);
+                    continue;
+                }
+                $checked = $matrix[$rid] ?? [];
+                $checked = is_array($checked) ? array_map('intval', $checked) : [];
+                // hanya id permission yang memang terdaftar
+                $checked = array_values(array_filter($checked, static fn ($pid) => isset($sah[$pid])));
+                $this->roleModel->syncPermissions($rid, $checked);
             }
-            $checked = $matrix[$rid] ?? [];
-            $this->roleModel->syncPermissions($rid, is_array($checked) ? $checked : []);
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return $this->back('role', 'error', pesanGalatBerawalan($e, 'Matriks permission gagal disimpan', 'admin.role'));
         }
 
         return $this->back('role', 'success', 'Matriks permission disimpan.');
@@ -609,7 +748,16 @@ class MasterController extends BaseController
 
     public function satuanDelete($id = null)
     {
-        $this->db->table('satuan')->where('id', (int) $id)->delete();
+        $id  = (int) $id;
+        // pk_indikator.id_satuan ber-FK ON DELETE SET NULL: indikator PK
+        // kehilangan satuannya diam-diam, dan capaian berpredikat (WTP/WDP)
+        // tak bisa dinilai lagi.
+        $ada = $this->pemakaian($id, ['indikator Perjanjian Kinerja' => ['pk_indikator', 'id_satuan']]);
+        if ($ada !== []) {
+            return $this->back('satuan', 'error', $this->pesanMasihDipakai('Satuan', $ada));
+        }
+
+        $this->db->table('satuan')->where('id', $id)->delete();
         return $this->back('satuan', 'success', 'Satuan dihapus.');
     }
 }

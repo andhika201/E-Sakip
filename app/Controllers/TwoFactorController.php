@@ -120,6 +120,15 @@ class TwoFactorController extends BaseController
         $user = $this->db()->table('users')->where('user_id', $pendingId)->get()->getRowArray();
         $code = (string) $this->request->getPost('code');
 
+        // Kode TOTP hanya 6 digit: tanpa pembatasan, ruang pencariannya
+        // bisa dihabiskan dengan POST berulang. 5 percobaan per menit per akun.
+        $throttler = service('throttler');
+        $kunci     = 'twofa_' . (int) $pendingId;
+
+        if ($throttler->check($kunci, 5, MINUTE) === false) {
+            return redirect()->to('2fa/verify')->with('error', 'Terlalu banyak percobaan. Coba lagi dalam satu menit.');
+        }
+
         if (!$user || empty($user['two_factor_secret']) || !Totp::verify($user['two_factor_secret'], $code)) {
             helper('activity');
             log_activity('login_gagal', 'auth', 'Kode 2FA salah', [
@@ -142,21 +151,24 @@ class TwoFactorController extends BaseController
             return redirect()->to('/login')->with('error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
         }
 
-        // selesaikan login
+        // selesaikan login — ID sesi diganti (lihat mulai_sesi_login()).
         session()->remove('twofa_user_id');
-        session()->set([
-            'user_id'    => $user['user_id'],
-            'username'   => $user['username'],
-            'role'       => $user['role'],
-            'opd_id'     => $user['opd_id'] ?? null,
-            'isLoggedIn' => true,
-        ]);
+        mulai_sesi_login($user);
+        $throttler->remove($kunci);
 
         helper('activity');
         log_activity('login', 'auth', 'Login berhasil (2FA)');
 
-        return in_array($user['role'], ['admin_opd', 'admin_kecamatan'], true)
-            ? redirect()->to('/adminopd/dashboard')
-            : redirect()->to('/adminkab/dashboard');
+        // Pemetaan role -> dashboard yang sama dengan LoginController; dulu
+        // di sini hanya dua cabang, sehingga `bupati` dikirim ke /adminkab
+        // dan langsung ditolak filter.
+        $tujuan = dashboard_path_by_role($user['role'] ?? null);
+
+        if ($tujuan === null) {
+            session()->destroy();
+            return redirect()->to('/login')->with('error', 'Role tidak dikenali. Hubungi administrator.');
+        }
+
+        return redirect()->to($tujuan);
     }
 }

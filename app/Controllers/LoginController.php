@@ -40,6 +40,28 @@ class LoginController extends BaseController
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
 
+        // =============================================================
+        // PEMBATASAN PERCOBAAN (brute force)
+        //
+        // Per pasangan IP + username: 5 percobaan per menit. Tanpa ini,
+        // tebakan kata sandi bisa diulang tanpa batas — dan kode TOTP 2FA
+        // (6 digit) bisa dihabiskan ruang pencariannya.
+        // =============================================================
+        $throttler = service('throttler');
+        $kunci     = 'login_' . md5($this->request->getIPAddress() . '|' . strtolower((string) $username));
+
+        if ($throttler->check($kunci, 5, MINUTE) === false) {
+            log_activity('login_gagal', 'auth', 'Login dibatasi (terlalu banyak percobaan): ' . $username, [
+                'user_id'  => null,
+                'username' => $username,
+                'role'     => null,
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Terlalu banyak percobaan login. Coba lagi dalam satu menit.');
+        }
+
         // Cari user di database
         $userModel = model(UserModel::class);
         $user      = $userModel->where('username', $username)->first();
@@ -64,14 +86,10 @@ class LoginController extends BaseController
                 return redirect()->to('2fa/verify');
             }
 
-            // Simpan data sesi — JANGAN simpan password
-            session()->set([
-                'user_id'   => $user['user_id'],
-                'username'  => $user['username'],
-                'role'      => $user['role'],
-                'opd_id'    => $user['opd_id'] ?? null,
-                'isLoggedIn' => true,
-            ]);
+            // Simpan data sesi — JANGAN simpan password. ID sesi diganti
+            // (lihat mulai_sesi_login()).
+            mulai_sesi_login($user);
+            $throttler->remove($kunci);
 
             log_activity('login', 'auth', 'Login berhasil');
 
@@ -105,19 +123,13 @@ class LoginController extends BaseController
      */
     private function redirectByRole(string $role)
     {
-        switch ($role) {
-            case 'admin_kab':
-            case 'admin':               // superadmin juga ke dashboard kab
-            case 'admin_inspektorat':   // inspektorat: view read-only level kabupaten
-                return redirect()->to('/adminkab/dashboard');
-            case 'admin_opd':
-            case 'admin_kecamatan':     // kecamatan pakai modul & dashboard OPD
-                return redirect()->to('/adminopd/dashboard');
-            case 'bupati':              // dashboard eksekutif read-only, area rute sendiri
-                return redirect()->to('/bupati/dashboard');
-            default:
-                session()->destroy();
-                return redirect()->to('/login')->with('error', 'Role tidak dikenali. Hubungi administrator.');
+        $tujuan = dashboard_path_by_role($role); // pemetaan tunggal di rbac_helper
+
+        if ($tujuan === null) {
+            session()->destroy();
+            return redirect()->to('/login')->with('error', 'Role tidak dikenali. Hubungi administrator.');
         }
+
+        return redirect()->to($tujuan);
     }
 }

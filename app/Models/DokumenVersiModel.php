@@ -559,9 +559,12 @@ class DokumenVersiModel extends Model
      *
      *   * arsip isi (`rpjmd_versi_*`, `renstra_versi_*`) ON DELETE CASCADE —
      *     memang seharusnya ikut terhapus, jadi sengaja tidak didaftar;
-     *   * `version_submission_history` & `version_correction_requests`
-     *     RESTRICT — basis data memang menahannya, tetapi galatnya berupa
-     *     pesan SQL mentah. Didaftar di sini supaya penolakannya terbaca;
+     *   * `version_correction_requests` RESTRICT — basis data memang
+     *     menahannya, tetapi galatnya berupa pesan SQL mentah. Didaftar di
+     *     sini supaya penolakannya terbaca. `version_submission_history`
+     *     juga RESTRICT, tetapi itu riwayat milik versi ini sendiri —
+     *     dibuang oleh hapusVersi(), bukan dijadikan penghalang (lihat
+     *     catatan di badan fungsi);
      *   * `dokumen_versi.source_version_id` & `copied_from_version_id`
      *     SET NULL — silsilah versi HILANG diam-diam tanpa satu pun galat.
      *
@@ -610,13 +613,26 @@ class DokumenVersiModel extends Model
             }
         }
 
-        // 2. Jejak siklus versi (FK RESTRICT — pasti menahan di tingkat basis).
-        $n = $hitung('version_submission_history', ['version_id' => $versiId]);
-
-        if ($n > 0) {
-            $ada['catatan riwayat pengajuan'] = $n;
-        }
-
+        // 2. Jejak siklus versi.
+        //
+        // =============================================================
+        // RIWAYAT MILIK VERSI ITU SENDIRI BUKAN PENGHALANG
+        //
+        // `version_submission_history` dulu ikut dihitung di sini. Akibatnya
+        // TIDAK ADA versi yang pernah bisa dihapus: setiap versi lahir dengan
+        // satu baris `created`, jadi tombolnya selalu berbunyi "masih dirujuk:
+        // 1 catatan riwayat pengajuan" — untuk draft yang baru dibuat sedetik
+        // sebelumnya sekalipun. Aturan status sudah membatasi penghapusan
+        // pada draft dan batal; riwayat keduanya adalah catatan pembuatan &
+        // penyuntingan oleh penyusunnya sendiri, bukan rujukan pihak lain.
+        //
+        // FK-nya RESTRICT, jadi hapusVersi() yang membuang riwayat itu lebih
+        // dulu (di transaksi yang sama) dan mengembalikan ringkasannya untuk
+        // dicatat ke activity_logs — jejaknya pindah tempat, tidak lenyap.
+        //
+        // Permintaan koreksi TETAP penghalang: ia diajukan orang lain atas
+        // versi ini, dan hanya ada pada versi yang sudah ditetapkan.
+        // =============================================================
         $n = $hitung('version_correction_requests', ['version_id' => $versiId]);
 
         if ($n > 0) {
@@ -693,15 +709,33 @@ class DokumenVersiModel extends Model
     {
         $status = (string) ($versi['status'] ?? '');
 
-        if ($status === self::STATUS_PUBLISHED) {
-            return 'Versi yang sudah ditetapkan tidak bisa dihapus. Ia menjadi '
-                . 'jangkar bagi dokumen turunan dan perbandingan antarversi. '
-                . 'Perbaiki lewat Izin Sunting atau buat versi baru.';
-        }
-
         if ($status === self::STATUS_PENDING) {
             return 'Versi ini sedang menunggu verifikasi. Batalkan dulu '
                 . 'pengajuannya, baru versinya bisa dihapus.';
+        }
+
+        // =============================================================
+        // PUBLISHED: HANYA YANG SUDAH HISTORICAL YANG BOLEH DIHAPUS
+        //
+        // Versi yang sedang berlaku (effective_to kosong) atau akan berlaku
+        // (mulai di masa depan) TETAP dilindungi — ia potret dokumen yang
+        // dipakai sekarang/nanti. Tetapi versi yang masa berlakunya SUDAH
+        // BERAKHIR (berlabel HISTORICAL: ada penerus dan penerusnya sudah
+        // mulai) boleh dihapus — asalkan tidak ada yang merujuknya, yang
+        // dijaga terpisah oleh penghalangHapus() (LAKIP, IKU, turunan, dsb).
+        // Penilaian "historical" memakai aturan yang sama persis dengan
+        // VersionResolver::badge(): effective_to terisi DAN sudah lewat.
+        // =============================================================
+        if ($status === self::STATUS_PUBLISHED) {
+            $sampai  = $versi['effective_to'] ?? null;
+            $hariIni = date('Y-m-d');
+            $historis = $sampai !== null && $sampai !== '' && (string) $sampai <= $hariIni;
+
+            if (! $historis) {
+                return 'Versi ini sedang atau akan berlaku, jadi tidak bisa dihapus — ia potret '
+                    . 'dokumen yang dipakai sekarang. Hanya versi yang masa berlakunya sudah '
+                    . 'berakhir (berlabel HISTORICAL) yang dapat dihapus.';
+            }
         }
 
         return null;
@@ -760,11 +794,41 @@ class DokumenVersiModel extends Model
                 }
             }
 
+            // Riwayat milik versi ini dibuang lebih dulu — FK-nya RESTRICT
+            // (lihat penghalangHapus). Ringkasannya dibawa pulang supaya
+            // pemanggil bisa mencatatnya ke activity_logs.
+            $riwayat = [];
+
+            if ($this->db->tableExists('version_submission_history')) {
+                foreach ($this->db->table('version_submission_history')
+                    ->select('aksi, oleh_nama, pada')
+                    ->where('version_id', $versiId)
+                    ->orderBy('id', 'ASC')->get()->getResultArray() as $r) {
+                    $riwayat[] = $r['aksi'] . ' (' . ($r['oleh_nama'] ?? '?') . ', ' . $r['pada'] . ')';
+                }
+
+                $this->db->table('version_submission_history')->where('version_id', $versiId)->delete();
+            }
+
             $this->db->table($this->table)->where('id', $versiId)->delete();
 
+            // Versi published yang dihapus meninggalkan celah/effective_to basi
+            // pada pendahulunya. Timeline dihitung ulang supaya tiap versi yang
+            // tersisa berakhir tepat saat penerusnya mulai (yang terakhir tetap
+            // terbuka) — tidak ada rentang yang menunjuk versi yang sudah tiada.
+            if (($versi['status'] ?? '') === self::STATUS_PUBLISHED) {
+                (new \App\Services\Version\VersionTimelineService($this->db))
+                    ->hitungUlang(VersionScope::dariBaris($versi));
+            }
+
             return [
-                'nama'  => (string) ($versi['label'] ?? 'versi'),
-                'arsip' => $arsip,
+                'nama'       => (string) ($versi['label'] ?? 'versi'),
+                'version_no' => (int) ($versi['version_no'] ?? 0),
+                'status'     => (string) ($versi['status'] ?? ''),
+                'modul'      => (string) ($versi['modul'] ?? ''),
+                'periode'    => (int) ($versi['periode_mulai'] ?? 0) . '-' . (int) ($versi['periode_akhir'] ?? 0),
+                'arsip'      => $arsip,
+                'riwayat'    => $riwayat,
             ];
         }, 'hapus versi dokumen');
     }

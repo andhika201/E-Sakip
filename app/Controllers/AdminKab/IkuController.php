@@ -572,7 +572,7 @@ class IkuController extends BaseController
             $this->ikuModel->deleteComplete((int) $sasaranId);
             session()->setFlashdata('success', 'IKU berhasil dihapus.');
         } catch (\Throwable $e) {
-            session()->setFlashdata('error', 'Gagal menghapus IKU: ' . $e->getMessage());
+            session()->setFlashdata('error', pesanGalatBerawalan($e, 'Gagal menghapus IKU', 'kab.iku'));
         }
 
         return redirect()->to(base_url('adminkab/iku?mode=kabupaten'));

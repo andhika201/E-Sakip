@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RPJMD e-SAKIP</title>
     <?= $this->include('adminKabupaten/templates/style.php'); ?>
+    <style>
+        /* Kolom STATUS pada tabel RPJMD disembunyikan atas permintaan.
+           Menyembunyikan seluruh sel berkelas ini (header + body) tidak
+           mengganggu rowspan kolom lain. Hapus blok ini untuk menampilkannya
+           kembali. */
+        .kolom-status { display: none !important; }
+    </style>
 </head>
 
 <body data-no-paginate class="bg-light min-vh-100 d-flex flex-column position-relative">
@@ -95,11 +102,84 @@
                     </div>
                 </div>
 
+                <?php /* =====================================================
+                         KUNCI RPJMD BERJALAN (RpjmdSiklusTrait).
+                         Satu banner per periode; JS menampilkan yang sesuai
+                         periode terpilih dan menonaktifkan tombol aksinya.
+                      ===================================================== */ ?>
+                <?php if (! empty($rpjmd_kunci)): ?>
+                    <?php foreach ($rpjmd_kunci as $pk => $sk): ?>
+                        <?php
+                        $bagian = array_pad(explode('-', (string) $pk), 2, 0);
+                        $pTm = (int) $bagian[0];
+                        $pTa = (int) $bagian[1];
+                        ?>
+                        <div class="rpjmd-kunci-banner" data-lock-periode="<?= esc($pk, 'attr') ?>"
+                             data-terkunci="<?= ! empty($sk['terkunci']) ? '1' : '0' ?>" style="display:none">
+                            <?php if (! empty($sk['terkunci'])): ?>
+                                <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <div>
+                                        <i class="fas fa-lock me-1"></i><strong>RPJMD periode <?= esc($pk) ?> terkunci.</strong>
+                                        <div class="small mt-1"><?= esc($sk['alasan']) ?></div>
+                                    </div>
+                                    <?php if (! empty($sk['boleh_minta_izin']) && user_can('rpjmd.update')): ?>
+                                        <button class="btn btn-outline-danger btn-sm flex-shrink-0" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#bukaKunci<?= (int) $pTm ?>_<?= (int) $pTa ?>">
+                                            <i class="fas fa-unlock me-1"></i>Buka Kunci untuk Menyunting
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if (! empty($sk['boleh_minta_izin']) && user_can('rpjmd.update')): ?>
+                                    <div class="collapse mb-3" id="bukaKunci<?= (int) $pTm ?>_<?= (int) $pTa ?>">
+                                        <form method="post" action="<?= base_url('adminkab/rpjmd/izin-sunting/ajukan') ?>"
+                                              class="border rounded p-3">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="tahun_mulai" value="<?= (int) $pTm ?>">
+                                            <input type="hidden" name="tahun_akhir" value="<?= (int) $pTa ?>">
+                                            <label class="form-label small fw-semibold mb-1">Alasan membuka kunci (wajib dicatat)</label>
+                                            <textarea name="alasan" rows="2" required
+                                                      class="form-control form-control-sm mb-2"
+                                                      placeholder="mis. memperbaiki salah ketik indikator, menyesuaikan target ..."></textarea>
+                                            <button class="btn btn-danger btn-sm">
+                                                <i class="fas fa-unlock me-1"></i>Buka &amp; Mulai Menyunting
+                                            </button>
+                                        </form>
+                                    </div>
+                                <?php endif; ?>
+                            <?php elseif (! empty($sk['sedang_disunting'])): ?>
+                                <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                    <div>
+                                        <i class="fas fa-unlock me-1"></i><strong>RPJMD periode <?= esc($pk) ?> sedang dibuka untuk disunting.</strong>
+                                        <div class="small mt-1">
+                                            Perubahan pada tabel berjalan diizinkan sementara.
+                                            Bila perubahan ini perlu dibekukan sebagai riwayat, buat <strong>Versi Baru</strong>.
+                                            Tekan Selesai untuk mengunci kembali.
+                                            <?php if (! empty($sk['izin']['alasan'])): ?>
+                                                <br>Alasan pembukaan: <em><?= esc($sk['izin']['alasan']) ?></em>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <?php if (user_can('rpjmd.update')): ?>
+                                        <form method="post" action="<?= base_url('adminkab/rpjmd/izin-sunting/selesai') ?>" class="flex-shrink-0">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="tahun_mulai" value="<?= (int) $pTm ?>">
+                                            <input type="hidden" name="tahun_akhir" value="<?= (int) $pTa ?>">
+                                            <button class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-lock me-1"></i>Selesai Menyunting
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped text-center small">
                         <thead class="table-success">
                             <tr>
-                                <th rowspan="2" class="border p-2 align-middle">STATUS</th>
+                                <th rowspan="2" class="border p-2 align-middle kolom-status">STATUS</th>
                                 <th rowspan="2" class="border p-2 align-middle">VISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">MISI</th>
                                 <th rowspan="2" class="border p-2 align-middle">TUJUAN</th>
@@ -196,6 +276,10 @@
                                                             $rightRows[] = [
                                                                 'sasaran' => ($idx === 0) ? ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => $countIs] : null,
                                                                 'indikator' => $is['indikator_sasaran'] ?? '-',
+                                                                // Baris yang sudah dihentikan tetap tampil (perilaku lama),
+                                                                // tetapi diberi penanda — versi dokumen tidak memuatnya.
+                                                                'dihentikan' => $is['dihentikan_pada'] ?? null,
+                                                                'berlaku_sampai' => $is['berlaku_sampai'] ?? null,
                                                                 'baseline' => $is['baseline'] ?? '-',
                                                                 'definisi' => $is['definisi_op'] ?? '-',
                                                                 'satuan' => $is['satuan'] ?? '-',
@@ -258,7 +342,7 @@
                                                     data-status="<?= esc($misi['status'] ?? 'draft') ?>">
 
                                                     <?php if (!$misiCellsPrinted): ?>
-                                                        <td class="border p-2 align-top text-center" rowspan="<?= $misiRowspan ?>">
+                                                        <td class="border p-2 align-top text-center kolom-status" rowspan="<?= $misiRowspan ?>">
                                                             <?php
                                                             $status = $misi['status'] ?? 'draft';
                                                             $badgeClass = $status === 'selesai' ? 'bg-success' : 'bg-warning text-dark';
@@ -314,7 +398,14 @@
                                                     <?php endif; ?>
 
                                                     <!-- INDIKATOR SASARAN + (DEF OP dinonaktifkan) + SATUAN -->
-                                                    <td class="border p-2 align-top text-start"><?= esc($right['indikator']) ?></td>
+                                                    <td class="border p-2 align-top text-start">
+                                                        <?= esc($right['indikator']) ?>
+                                                        <?php if (! empty($right['dihentikan'])): ?>
+                                                            <span class="badge bg-secondary ms-1" title="Dihentikan pada <?= esc(date('d M Y', strtotime($right['dihentikan']))) ?>. Tidak lagi ikut ke versi RPJMD yang dibuat dari kondisi berjalan.">
+                                                                <i class="fa-solid fa-ban me-1"></i>Dihentikan<?= ! empty($right['berlaku_sampai']) ? ' s.d. ' . (int) $right['berlaku_sampai'] : '' ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['baseline'] ?? '-') ?></td>
                                                     <!-- DEFINISI OPERASIONAL dinonaktifkan sementara:
                                                          <td class="border p-2 align-top text-start"> $right['definisi'] </td> -->
@@ -359,6 +450,9 @@
                                                                     class="btn btn-success btn-sm">
                                                                     <i class="fas fa-edit me-1"></i>Edit
                                                                 </a>
+                                                                <?php /* Tombol "Set Draft"/"Set Selesai" disembunyikan dulu atas
+                                                                         permintaan. Untuk mengaktifkan kembali: ubah false -> true. */ ?>
+                                                                <?php if (false): ?>
                                                                 <?php
                                                                 $curStatus = $misi['status'] ?? 'draft';
                                                                 $toggleClass = $curStatus === 'selesai' ? 'btn-warning' : 'btn-info';
@@ -369,6 +463,7 @@
                                                                     onclick="toggleStatus(<?= (int) ($misi['id'] ?? 0) ?>)">
                                                                     <i class="<?= $toggleIcon ?> me-1"></i><?= $toggleText ?>
                                                                 </button>
+                                                                <?php endif; ?>
                                                                 <?php endif; ?>
                                                                 <?php if (user_can('rpjmd.delete')): ?>
                                                                 <button class="btn btn-danger btn-sm"
@@ -486,6 +581,33 @@
             rowSasaran.innerHTML = '';
         }
 
+        // Kunci RPJMD: tampilkan banner periode terpilih & nonaktifkan tombol
+        // aksinya bila terkunci. Penjaga sebenarnya ada di controller; ini
+        // hanya cerminan supaya tidak ada tombol yang menipu.
+        function applyRpjmdLock(periode) {
+            var terkunci = false;
+            document.querySelectorAll('.rpjmd-kunci-banner').forEach(function (b) {
+                var cocok = b.getAttribute('data-lock-periode') === periode;
+                b.style.display = cocok ? '' : 'none';
+                if (cocok && b.getAttribute('data-terkunci') === '1') { terkunci = true; }
+            });
+            document.querySelectorAll('.periode-row[data-periode="' + periode + '"]').forEach(function (row) {
+                row.querySelectorAll('a.btn, button.btn').forEach(function (el) {
+                    if (terkunci) {
+                        el.classList.add('disabled');
+                        el.style.pointerEvents = 'none';
+                        el.style.opacity = '0.45';
+                        if (el.tagName === 'BUTTON') { el.disabled = true; }
+                    } else {
+                        el.classList.remove('disabled');
+                        el.style.pointerEvents = '';
+                        el.style.opacity = '';
+                        if (el.tagName === 'BUTTON') { el.disabled = false; }
+                    }
+                });
+            });
+        }
+
         function filterByPeriode() {
             const filterValue = document.getElementById('periodFilter').value;
             const statusFilterValue = document.getElementById('statusFilter').value;
@@ -509,6 +631,7 @@
             yearCellsTujuan.forEach(c => { if (c.getAttribute('data-periode') === filterValue) c.style.display = ''; });
             yearCellsSasaran.forEach(c => { if (c.getAttribute('data-periode') === filterValue) c.style.display = ''; });
 
+            applyRpjmdLock(filterValue);
             updateTableHeaders(filterValue);
             updateDataSummary(filterValue, statusFilterValue);
         }

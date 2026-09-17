@@ -107,7 +107,7 @@ $kelasBadge = static function (string $badge): string {
                                 <th style="width:150px">Status</th>
                                 <th style="width:140px">Dibuat</th>
                                 <th style="width:130px">Sumber</th>
-                                <th style="width:150px">Aksi</th>
+                                <th style="width:250px">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -157,10 +157,41 @@ $kelasBadge = static function (string $badge): string {
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a href="<?= base_url($baseUrl . '/versi/lihat/' . (int) $v['id']) ?>"
-                                           class="btn btn-outline-primary btn-sm">
-                                            <i class="fa-solid fa-eye me-1"></i>Lihat
-                                        </a>
+                                        <?php /* Sunting & Hapus dihitung controller dengan aturan yang sama
+                                                 dengan halaman Lihat. Draft: bisa disunting dan dihapus.
+                                                 Sudah ditetapkan: hanya Lihat — perbaikannya lewat Izin
+                                                 Sunting, dan versinya tidak bisa dihapus (§16). */ ?>
+                                        <div class="d-flex flex-wrap gap-1 align-items-center">
+                                            <a href="<?= base_url($baseUrl . '/versi/lihat/' . (int) $v['id']) ?>"
+                                               class="btn btn-outline-primary btn-sm" title="Lihat isi versi">
+                                                <i class="fa-solid fa-eye me-1"></i>Lihat
+                                            </a>
+                                            <?php if (! empty($v['boleh_sunting'])): ?>
+                                                <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $v['id']) ?>"
+                                                   class="btn btn-warning btn-sm" title="Sunting isi draft">
+                                                    <i class="fa-solid fa-pen me-1"></i>Sunting
+                                                </a>
+                                            <?php endif; ?>
+                                            <?php if (! empty($v['keadaan_hapus']['boleh'])): ?>
+                                                <form method="post" action="<?= base_url($baseUrl . '/versi/hapus/' . (int) $v['id']) ?>"
+                                                      class="d-inline"
+                                                      data-konfirmasi="Versi dokumen ini akan dihapus permanen beserta seluruh arsip isinya."
+                                                      data-konfirmasi-judul="Hapus Versi Dokumen"
+                                                      data-konfirmasi-nama="<?= esc(trim($namaDokumen . ' ' . $periode . ' — V' . (int) $v['version_no'] . ' ' . ($v['label'] ?? '')), 'attr') ?>"
+                                                      data-konfirmasi-rincian="Seluruh tujuan, sasaran, indikator, dan target yang diarsipkan di versi ini|Jejak riwayat versi ini (dipindahkan ke log aktivitas)"
+                                                      data-konfirmasi-ketik="HAPUS">
+                                                    <?= csrf_field() ?>
+                                                    <button class="btn btn-outline-danger btn-sm" title="Hapus versi ini">
+                                                        <i class="fa-solid fa-trash me-1"></i>Hapus
+                                                    </button>
+                                                </form>
+                                            <?php elseif (! empty($v['keadaan_hapus']['alasan']) && $v['badge'] !== 'CURRENT' && $v['badge'] !== 'HISTORICAL' && $v['badge'] !== 'UPCOMING'): ?>
+                                                <span class="badge bg-light text-secondary border" role="note"
+                                                      title="<?= esc($v['keadaan_hapus']['alasan'], 'attr') ?>">
+                                                    <i class="fa-solid fa-lock me-1"></i>Tidak bisa dihapus
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

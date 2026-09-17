@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Controllers\Concerns\DokumenVersiTrait;
+use App\Controllers\Concerns\RpjmdSiklusTrait;
 use App\Models\RpjmdModel;
 use App\Services\Version\VersionScope;
 
@@ -13,6 +14,9 @@ class RpjmdController extends BaseController
     // Seluruh method lama di bawah TIDAK tersentuh: trait hanya menambah
     // method baru berawalan `versi*`.
     use DokumenVersiTrait;
+
+    // Kunci RPJMD berjalan + izin sunting (sejajar RenstraSiklusTrait).
+    use RpjmdSiklusTrait;
 
     protected $rpjmdModel;
 
@@ -24,6 +28,12 @@ class RpjmdController extends BaseController
     /* =========================================================
      *  LINGKUP VERSI — RPJMD selalu tingkat kabupaten
      * =======================================================*/
+
+    /** RPJMD menyunting draft dengan tampilan mirip halaman Tambah RPJMD. */
+    protected function versiSuntingView(): string
+    {
+        return 'versi/sunting_rpjmd';
+    }
 
     protected function versiModul(): string
     {
@@ -127,6 +137,9 @@ class RpjmdController extends BaseController
 
         $data['rpjmd_grouped'] = $groupedData;
         $data['rpjmd_data'] = $allMisi;
+
+        // Keadaan kunci per periode (RpjmdSiklusTrait) untuk banner & tombol.
+        $data['rpjmd_kunci'] = $this->rpjmdKunciPerPeriode();
 
         // Ringkasan
         $summary = $this->rpjmdModel->getRpjmdSummary();
@@ -284,6 +297,15 @@ class RpjmdController extends BaseController
         ])) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
+        // KUNCI: periode yang sudah punya versi resmi tidak boleh ditulisi
+        // langsung. Diperiksa dari periode POST (lihat RpjmdSiklusTrait).
+        if ($tolak = $this->rpjmdPastikanBoleh($this->rpjmdKeadaan(
+            (int) $this->request->getPost('tahun_mulai'),
+            (int) $this->request->getPost('tahun_akhir')
+        ))) {
+            return $tolak;
         }
 
         $db = \Config\Database::connect();
@@ -486,6 +508,14 @@ class RpjmdController extends BaseController
         ])) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
+        // KUNCI: sama seperti save(). Diperiksa dari periode POST.
+        if ($tolak = $this->rpjmdPastikanBoleh($this->rpjmdKeadaan(
+            (int) $this->request->getPost('tahun_mulai'),
+            (int) $this->request->getPost('tahun_akhir')
+        ))) {
+            return $tolak;
         }
 
         $db = \Config\Database::connect();
@@ -802,9 +832,11 @@ class RpjmdController extends BaseController
             $db->transRollback();
             log_message('error', 'UPDATE RPJMD ERROR: ' . $e->getMessage());
 
+            // Alasan bisnis (mis. pagar dependen saat baris dibuang dari form)
+            // harus sampai ke pengguna; galat teknis tetap disamarkan.
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Gagal memperbarui RPJMD');
+                ->with('error', pesanGalatBerawalan($e, 'Gagal memperbarui RPJMD', 'kab.rpjmd'));
         }
     }
 
@@ -819,9 +851,21 @@ class RpjmdController extends BaseController
                 ->with('error', 'Data RPJMD tidak ditemukan');
         }
 
-        if (!$this->rpjmdModel->deleteMisi($misiId)) {
+        // KUNCI: hapus pun tertutup bila periodenya sudah punya versi resmi.
+        if ($tolak = $this->rpjmdPastikanBoleh($this->rpjmdKeadaanDariMisi($misiId))) {
+            return $tolak;
+        }
+
+        try {
+            if (!$this->rpjmdModel->deleteMisi($misiId)) {
+                return redirect()->back()
+                    ->with('error', 'Gagal menghapus RPJMD. Data relasi bermasalah.');
+            }
+        } catch (\Throwable $e) {
+            // Pagar dependen (RuntimeException berpesan Indonesia) diteruskan
+            // apa adanya; galat teknis disamarkan lewat kode rujukan.
             return redirect()->back()
-                ->with('error', 'Gagal menghapus RPJMD. Data relasi bermasalah.');
+                ->with('error', pesanGalatBerawalan($e, 'RPJMD gagal dihapus', 'kab.rpjmd'));
         }
 
         return redirect()->to(base_url('adminkab/rpjmd'))
@@ -858,6 +902,17 @@ class RpjmdController extends BaseController
                 ]);
             }
 
+            // KUNCI: ubah status pun terhalang bila periodenya sudah punya
+            // versi resmi. updateStatus mengembalikan JSON, jadi penolakannya
+            // pun JSON — bukan redirect.
+            $keadaan = $this->rpjmdKeadaanDariMisi($id);
+            if (! empty($keadaan['terkunci'])) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => $keadaan['alasan'],
+                ]);
+            }
+
             $currentStatus = $currentMisi['status'] ?? 'draft';
             $newStatus = $currentStatus === 'draft' ? 'selesai' : 'draft';
 
@@ -878,7 +933,7 @@ class RpjmdController extends BaseController
         } catch (\Throwable $e) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => pesanGalatBerawalan($e, 'Gagal mengubah status RPJMD', 'kab.rpjmd'),
             ]);
         }
     }

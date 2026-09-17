@@ -273,6 +273,15 @@ $routes->group(
         // rpjmd.version.pin — tanpa dua rute ini POST-nya mendarat 404.
         $routes->post('rpjmd/versi/jadikan-utama/(:num)', 'RpjmdController::versiJadikanUtama/$1');
         $routes->post('rpjmd/versi/lepas-utama/(:num)', 'RpjmdController::versiLepasUtama/$1');
+        // Aktifkan kembali indikator yang sudah dihentikan ke dalam draft versi.
+        $routes->post('rpjmd/versi/aktifkan-indikator/(:num)', 'RpjmdController::versiAktifkanIndikator/$1');
+        // Terapkan ulang versi terkini ke data berjalan (sinkronkan bila tertinggal).
+        $routes->post('rpjmd/versi/terapkan-ulang/(:num)', 'RpjmdController::versiTerapkanUlang/$1');
+
+        // Izin sunting RPJMD (kunci dokumen berjalan). Swalayan: dibuka &
+        // ditutup Admin Kabupaten sendiri (RpjmdSiklusTrait).
+        $routes->post('rpjmd/izin-sunting/ajukan', 'RpjmdController::izinSuntingAjukan');
+        $routes->post('rpjmd/izin-sunting/selesai', 'RpjmdController::izinSuntingSelesai');
 
         $routes->get('rpjmd/cetak', 'RpjmdController::cetak');
         $routes->get('rpjmd', 'RpjmdController::index');

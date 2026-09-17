@@ -422,7 +422,6 @@ class PkController extends BaseController
         }
 
         $post = $this->request->getPost();
-        log_message('debug', 'POST RAW: ' . json_encode($post));
         $now = date('Y-m-d');
         $tanggal = $post['tanggal_pk'] ?? $now;
 
@@ -658,8 +657,18 @@ class PkController extends BaseController
             return redirect()->back()->with('error', 'Anda tidak memiliki akses untuk mengubah PK OPD lain.');
         }
 
+        // Validasi penandatangan — aturan yang SAMA dengan save(). Dua jalur
+        // yang menulis kolom yang sama tidak boleh punya dua standar.
+        $validation = \Config\Services::validation();
+        $validation->setRules(strtolower((string) $pk['jenis']) === 'bupati'
+            ? ['pegawai_1_id' => 'permit_empty|numeric', 'pegawai_2_id' => 'permit_empty|numeric']
+            : ['pegawai_1_id' => 'required|numeric',     'pegawai_2_id' => 'required|numeric']);
+        if (!$validation->run($this->request->getPost())) {
+            return redirect()->back()->withInput()
+                ->with('validation', $validation->getErrors());
+        }
+
         $post = $this->request->getPost();
-        log_message('debug', "POST DATA: " . json_encode($post));
         $session = session();
         $jenis = $pk['jenis'];
         $tahun = $post['tahun'] ?? $pk['tahun'];
@@ -714,7 +723,7 @@ class PkController extends BaseController
         // --------------------------
         // LOG: After basic structure
         // --------------------------
-        log_message('debug', "SAVE DATA AWAL: " . json_encode($saveData));
+
 
         // ============================
         // Parse Sasaran → Indikator → Program/Kegiatan/Subkegiatan
@@ -741,7 +750,7 @@ class PkController extends BaseController
                     ];
 
                     // logging indikator
-                    log_message('debug', "Parsing indikator [{$sIndex}][{$iIndex}]: " . json_encode($indikatorData));
+
 
                     if (in_array($jenis, ['jpt', 'camat'], true)) {
                         foreach ($ind['program'] ?? [] as $p) {
@@ -819,7 +828,7 @@ class PkController extends BaseController
         // --------------------------
         // LOG: Final SAVE DATA
         // --------------------------
-        log_message('debug', "FINAL SAVE DATA: " . json_encode($saveData));
+
 
         // ============================
         // EXECUTE UPDATE
@@ -859,7 +868,7 @@ class PkController extends BaseController
         $pkModel = new PkModel();
         $pk = $pkModel->find($id);
 
-        log_message('debug', 'Hasil find: ' . json_encode($pk));
+
         $isAjax = $this->request->isAJAX();
 
         $pk = $this->pkModel->find($id);

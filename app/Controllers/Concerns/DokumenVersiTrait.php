@@ -181,8 +181,10 @@ trait DokumenVersiTrait
         }
 
         $resolver = new VersionResolver();
+        $approval = new VersionApprovalService();
         $periode  = $this->versiPeriodeTersedia();
         $blok     = [];
+        $bolehSuntingDraft = $this->versiBoleh('update_draft');
 
         foreach ($periode as $p) {
             $scope = $this->versiScope($p['periode']);
@@ -206,6 +208,11 @@ trait DokumenVersiTrait
             foreach ($daftar as &$d) {
                 $d['badge']  = $resolver->badge($d);
                 $d['rentang'] = $resolver->rentangTeks($d);
+                // Sunting & hapus langsung dari daftar — aturannya SAMA persis
+                // dengan yang dipakai halaman Lihat, supaya tombol di dua
+                // tempat tidak pernah berbeda pendapat.
+                $d['boleh_sunting'] = $approval->bolehSunting($d) && $bolehSuntingDraft;
+                $d['keadaan_hapus'] = $this->versiKeadaanHapus($d);
             }
             unset($d);
 
@@ -336,6 +343,9 @@ trait DokumenVersiTrait
             'rentang'       => $resolver->rentangTeks($baris),
             'isi'           => $arsip !== null && $arsip->siap() ? $arsip->isi((int) $id) : [],
             'ringkas'       => $arsip !== null && $arsip->siap() ? $arsip->ringkas((int) $id) : [],
+            // Baris berjalan yang tidak ikut ke versi ini, dengan alasannya —
+            // supaya "menu menampilkan 15, versi memuat 11" terjawab di layar.
+            'takTerbekukan' => $arsip !== null && $arsip->siap() ? $arsip->barisLiveTakTerbekukan((int) $id, $scope) : [],
             'riwayat'       => (new VersionAuditService())->riwayat((int) $id),
             'praTinjau'     => $baris['status'] === DokumenVersiModel::STATUS_DRAFT
                 ? $timeline->praTinjau($scope, (string) $baris['effective_from'], (int) $id)
@@ -370,6 +380,12 @@ trait DokumenVersiTrait
             'bolehTetapkan' => $this->versiBoleh('publish')
                 && ($approval->bolehVerifikasi($baris) || $approval->bolehAjukan($baris)),
             'bolehBatalkan' => $approval->bolehBatalkan($baris) && $this->versiBoleh('update_draft'),
+            // Terapkan-ulang: hanya untuk versi terkini (published, ujung timeline)
+            // oleh pemegang izin publish. Flag tersendiri karena bolehTetapkan
+            // hanya benar untuk draft/pending, bukan published.
+            'bolehTerapkanUlang' => $baris['status'] === DokumenVersiModel::STATUS_PUBLISHED
+                && ($baris['effective_to'] ?? null) === null
+                && $this->versiBoleh('publish'),
             'keadaanHapus'  => $this->versiKeadaanHapus($baris),
             'daftarBanding' => $this->versi()->daftar($scope, [DokumenVersiModel::STATUS_PUBLISHED]),
         ]);
@@ -575,10 +591,15 @@ trait DokumenVersiTrait
             }
 
             if ($tanggal !== '') {
+                // RPJMD: tanggal draft yang bentrok cukup DIPERINGATI, tetap
+                // boleh disimpan (lihat ubahTanggalBerlaku). Renstra tetap ketat.
+                $bentrokDraftLunak = $this->versiModul() === VersionScope::MODUL_RPJMD;
+
                 (new VersionTimelineService($db))->ubahTanggalBerlaku(
                     (int) $id,
                     $tanggal,
-                    $alasan !== '' ? $alasan : null
+                    $alasan !== '' ? $alasan : null,
+                    $bentrokDraftLunak
                 );
             }
 
@@ -732,6 +753,16 @@ trait DokumenVersiTrait
      * SUNTING ISI DRAFT (§9)
      * =======================================================*/
 
+    /**
+     * Berkas view untuk menyunting isi draft. Seam: RPJMD memakai tampilan
+     * sendiri (versi/sunting_rpjmd) yang meniru layout "Tambah RPJMD"; modul
+     * lain (Renstra) tetap memakai versi/sunting yang generik.
+     */
+    protected function versiSuntingView(): string
+    {
+        return 'versi/sunting';
+    }
+
     public function versiSunting($id = null)
     {
         if (! $this->versiBoleh('update_draft')) {
@@ -747,7 +778,7 @@ trait DokumenVersiTrait
         $scope = VersionScope::dariBaris($baris);
         $arsip = (new ArsipRegistry())->untuk($scope->modul());
 
-        return view('versi/sunting', [
+        return view($this->versiSuntingView(), [
             'title'        => 'Sunting ' . $baris['label'],
             'judulHalaman' => 'Sunting Draft: ' . $baris['label'],
             'namaDokumen'  => $this->versiNamaDokumen(),
@@ -760,6 +791,141 @@ trait DokumenVersiTrait
             'satuanOpsi'   => $this->versiSatuanOpsi(),
             'indikatorAsal' => $this->versiIndikatorUntukLineage($scope),
         ]);
+    }
+
+    /**
+     * Terapkan ULANG isi versi terkini ke tabel berjalan.
+     *
+     * Dibutuhkan karena versi yang terbit RETROSPEKTIF tidak diterapkan saat
+     * penetapan (§60); bila kemudian ia menjadi versi terkini (mis. tanggalnya
+     * digeser ke ujung), tabel berjalan bisa tertinggal. Aksi ini menyamakan
+     * data berjalan dengan versi terkini. Hanya untuk versi PUBLISHED yang
+     * benar-benar sedang berlaku (ujung timeline, effective_to kosong).
+     */
+    public function versiTerapkanUlang($id = null)
+    {
+        if (! $this->versiBoleh('publish')) {
+            return $this->versiTolakIzin();
+        }
+
+        $baris = $this->versiMilikSaya((int) $id);
+
+        if ($baris === null) {
+            return $this->versiTolak('Versi tidak ditemukan pada lingkup Anda.');
+        }
+
+        $kembali = base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id);
+
+        if (($baris['status'] ?? '') !== DokumenVersiModel::STATUS_PUBLISHED
+            || ($baris['effective_to'] ?? null) !== null) {
+            return redirect()->to($kembali)->with('error',
+                'Hanya versi yang sedang berlaku (terkini) yang bisa diterapkan ke data berjalan.');
+        }
+
+        $scope = VersionScope::dariBaris($baris);
+        $arsip = (new ArsipRegistry())->untuk($scope->modul());
+
+        if ($arsip === null || ! $arsip->siap()) {
+            return redirect()->to($kembali)->with('error', 'Arsip modul ini tidak tersedia.');
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            $db->transBegin();
+            $db->resetTransStatus();
+
+            $mulai = (string) ($baris['effective_from'] ?? '');
+            $tahun = $mulai !== '' && strtotime($mulai) !== false
+                ? (int) date('Y', strtotime($mulai))
+                : $scope->periodeMulai();
+
+            $arsip->terapkanKeLive((int) $id, $scope, $tahun);
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+
+                return redirect()->to($kembali)->with('error', 'Penerapan ke data berjalan gagal.');
+            }
+
+            $db->transCommit();
+
+            (new VersionAuditService())->catat((int) $id, VersionAuditService::AKSI_APPLIED, [
+                'ringkasan' => 'Diterapkan ulang ke data berjalan atas permintaan.',
+                'oleh'      => session()->get('user_id') ?? session()->get('id'),
+            ]);
+        } catch (Throwable $e) {
+            if (isset($db) && $db->transDepth > 0) {
+                $db->transRollback();
+            }
+
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.dokumenVersi'));
+        }
+
+        return redirect()->to($kembali)->with('success',
+            'Isi versi ini sudah diterapkan ke data berjalan. Halaman ' . $this->versiNamaDokumen()
+            . ' kini mengikuti versi ini.');
+    }
+
+    /**
+     * Aktifkan kembali sebuah indikator yang sudah dihentikan ke dalam DRAFT
+     * ini — dipakai dari panel "tidak ikut" pada halaman Lihat. Hanya berlaku
+     * untuk arsip yang mendukungnya (RPJMD).
+     */
+    public function versiAktifkanIndikator($id = null)
+    {
+        if (! $this->versiBoleh('update_draft')) {
+            return $this->versiTolakIzin();
+        }
+
+        $baris = $this->versiDraftMilikSaya((int) $id);
+
+        if (! is_array($baris)) {
+            return $baris;
+        }
+
+        $scope   = VersionScope::dariBaris($baris);
+        $arsip   = (new ArsipRegistry())->untuk($scope->modul());
+        $kembali = base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id);
+        $liveId  = (int) $this->request->getPost('live_id');
+
+        if ($arsip === null || ! $arsip->siap() || ! method_exists($arsip, 'aktifkanKembaliIndikator')) {
+            return redirect()->to($kembali)->with('error', 'Modul ini tidak mendukung aktifkan-kembali indikator.');
+        }
+
+        if ($liveId <= 0) {
+            return redirect()->to($kembali)->with('error', 'Indikator yang mau diaktifkan tidak sah.');
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            $db->transBegin();
+            $db->resetTransStatus();
+
+            $hasil = $arsip->aktifkanKembaliIndikator((int) $id, $liveId);
+
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+
+                return redirect()->to($kembali)->with('error', 'Gagal mengaktifkan indikator.');
+            }
+
+            $db->transCommit();
+
+            (new VersionAuditService())->catat((int) $id, VersionAuditService::AKSI_EDITED_DRAFT, [
+                'ringkasan' => 'Indikator diaktifkan kembali ke draft: ' . $hasil['indikator'],
+                'oleh'      => session()->get('user_id') ?? session()->get('id'),
+            ]);
+        } catch (Throwable $e) {
+            if (isset($db) && $db->transDepth > 0) {
+                $db->transRollback();
+            }
+
+            return redirect()->to($kembali)->with('error', pesanGalat($e, 'umum.dokumenVersi'));
+        }
+
+        return redirect()->to($kembali)->with('success',
+            'Indikator "' . $hasil['indikator'] . '" diaktifkan kembali di versi ini beserta '
+            . $hasil['target'] . ' targetnya. Ia akan hidup lagi begitu versi ini ditetapkan.');
     }
 
     public function versiSuntingSimpan($id = null)
@@ -784,6 +950,11 @@ trait DokumenVersiTrait
         $data = [
             'misi'      => (array) ($this->request->getPost('misi') ?? []),
             'tujuan'    => (array) ($this->request->getPost('tujuan') ?? []),
+            // Indikator tujuan hanya ada pada RPJMD; pada Renstra POST-nya
+            // kosong sehingga tidak berpengaruh. Tanpa baris ini, suntingan
+            // teks/target indikator tujuan tak pernah terbaca — hanya jalur
+            // 'hapus' dan 'baru' yang generik yang sempat jalan.
+            'indikator_tujuan' => (array) ($this->request->getPost('indikator_tujuan') ?? []),
             'sasaran'   => (array) ($this->request->getPost('sasaran') ?? []),
             'indikator' => (array) ($this->request->getPost('indikator') ?? []),
             'hapus'     => (array) ($this->request->getPost('hapus') ?? []),
@@ -1154,6 +1325,20 @@ trait DokumenVersiTrait
             return redirect()
                 ->to(base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id))
                 ->with('error', pesanGalatBerawalan($e, 'Versi tidak bisa dihapus', 'umum.dokumenVersi'));
+        }
+
+        // Riwayat versinya ikut terhapus (FK RESTRICT), jadi jejaknya
+        // dipindahkan ke activity_logs: siapa menghapus versi apa, berstatus
+        // apa, berisi berapa baris, dan apa saja riwayat yang ikut hilang.
+        if (function_exists('log_activity')) {
+            log_activity(
+                'hapus_versi',
+                $this->versiModul(),
+                'Hapus versi ' . $this->versiNamaDokumen() . ' ' . $ringkas['periode']
+                . ' V' . $ringkas['version_no'] . ' "' . $ringkas['nama'] . '" (status ' . $ringkas['status']
+                . ', ' . (int) $ringkas['arsip'] . ' baris arsip; riwayat: '
+                . ($ringkas['riwayat'] !== [] ? implode('; ', $ringkas['riwayat']) : '-') . ')'
+            );
         }
 
         $jejak = (int) $ringkas['arsip'] > 0

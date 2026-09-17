@@ -138,6 +138,76 @@ $nilaiSatuan = static function ($ind) {
                             </div>
                         </div>
 
+                        <?php /* =====================================================
+                                 INDIKATOR TUJUAN — khusus RPJMD.
+                                 Renstra tidak punya indikator di tingkat tujuan, jadi
+                                 seksi ini hanya muncul untuk modul rpjmd. Backend
+                                 (RpjmdVersiModel::petaKolom) sudah mengenal tingkat
+                                 'indikator_tujuan' + target_tujuan-nya.
+                              ===================================================== */ ?>
+                        <?php if (($modul ?? '') === 'rpjmd'): ?>
+                            <div class="border-start border-3 border-primary ps-3 mb-3">
+                                <div class="small fw-semibold text-primary mb-1">Indikator Tujuan</div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered align-middle small tabel-sunting mb-2">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width:40%">Indikator Tujuan</th>
+                                                <th>Target per Tahun</th>
+                                                <th style="width:76px">Keluarkan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($t['indikator_tujuan'] ?? [] as $it): ?>
+                                                <?php
+                                                $itId    = (int) $it['id'];
+                                                $itTarget = [];
+                                                foreach ($it['target'] ?? [] as $tg) {
+                                                    $itTarget[(int) $tg['tahun']] = $tg['target_tahunan'] ?? $tg['target'] ?? '';
+                                                }
+                                                ?>
+                                                <tr>
+                                                    <td>
+                                                        <textarea name="indikator_tujuan[<?= $itId ?>][teks]" rows="2"
+                                                                  class="form-control form-control-sm"><?= esc($it['indikator_tujuan'] ?? '') ?></textarea>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex flex-wrap gap-1">
+                                                            <?php foreach ($tahun as $th): ?>
+                                                                <div style="width:80px">
+                                                                    <label class="sel-kecil text-secondary"><?= $th ?></label>
+                                                                    <input type="text" class="form-control form-control-sm"
+                                                                           name="indikator_tujuan[<?= $itId ?>][target][<?= $th ?>]"
+                                                                           value="<?= esc($itTarget[$th] ?? '') ?>">
+                                                                </div>
+                                                            <?php endforeach; ?>
+                                                        </div>
+                                                        <div class="form-text sel-kecil">
+                                                            Kosongkan untuk menghapus target tahun itu dari versi ini.
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <input class="form-check-input tandai-hapus" type="checkbox"
+                                                               name="hapus[]" value="indikator_tujuan:<?= $itId ?>">
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="kotak-tambah" data-tambah="indikator_tujuan" data-induk="<?= $tujuanId ?>">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small fw-semibold text-secondary">Tambah indikator tujuan</span>
+                                        <button type="button" class="btn btn-outline-success btn-sm tombol-tambah">
+                                            <i class="fa-solid fa-plus me-1"></i>Tambah
+                                        </button>
+                                    </div>
+                                    <div class="wadah-baru mt-2"></div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <?php foreach ($t['sasaran'] ?? [] as $s): ?>
                             <?php $sasaranId = (int) $s['id']; ?>
                             <div class="border-start border-3 border-success ps-3 mb-3">
@@ -363,6 +433,10 @@ $nilaiSatuan = static function ($ind) {
                + '</select></div>'
                + '<div class="col-12">' + inputTarget(prefix) + '</div>'
                + '</div>';
+        } else if (tingkat === 'indikator_tujuan') {
+            h += '<label class="sel-kecil text-secondary">Indikator Tujuan</label>'
+               + '<textarea name="' + prefix + '[teks]" rows="2" class="form-control form-control-sm"></textarea>'
+               + inputTarget(prefix);
         } else if (tingkat === 'sasaran') {
             h += '<div class="row g-2">'
                + '<div class="col-md-7"><label class="sel-kecil text-secondary">Sasaran</label>'

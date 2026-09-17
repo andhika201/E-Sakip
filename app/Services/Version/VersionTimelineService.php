@@ -218,7 +218,7 @@ class VersionTimelineService
      *
      * @return array{dari:string, ke:string, perubahan:array}
      */
-    public function ubahTanggalBerlaku(int $versiId, string $tanggalBaru, ?string $alasan = null): array
+    public function ubahTanggalBerlaku(int $versiId, string $tanggalBaru, ?string $alasan = null, bool $bentrokDraftLunak = false): array
     {
         $this->pastikanDalamTransaksi('perubahan tanggal berlaku');
 
@@ -245,12 +245,26 @@ class VersionTimelineService
             );
         }
 
+        // Versi terkini (ujung timeline) SEBELUM tanggal diubah. Dipakai untuk
+        // mendeteksi bila perubahan tanggal ini memindahkan "siapa yang berlaku
+        // sekarang" — lihat penerapan ulang di bawah.
+        $ujungSebelum = null;
+        if ($baris['status'] === DokumenVersiModel::STATUS_PUBLISHED) {
+            foreach ($this->versi->publishedUrutMaju($scope) as $p) {
+                if (($p['effective_to'] ?? null) === null) {
+                    $ujungSebelum = (int) $p['id'];
+                }
+            }
+        }
+
         // Bentrok diperiksa hanya terhadap versi PUBLISHED lain — draft boleh
         // berbagi tanggal karena belum mengikat apa pun; yang ditolak §6 adalah
         // dua versi RESMI yang mulai bersamaan.
         if ($baris['status'] === DokumenVersiModel::STATUS_PUBLISHED) {
+            // Versi resmi tetap ketat: §6 melarang dua versi published mulai
+            // pada tanggal yang sama (ditegakkan pula oleh UNIQUE di basis).
             $this->tolakBentrokTanggal($scope, $baru, $versiId);
-        } else {
+        } elseif (! $bentrokDraftLunak) {
             foreach ($this->versi->publishedUrutMaju($scope) as $p) {
                 if ((string) $p['effective_from'] === $baru) {
                     throw new RuntimeException(
@@ -261,6 +275,11 @@ class VersionTimelineService
                 }
             }
         }
+        // $bentrokDraftLunak = true (dipakai RPJMD): tanggal draft yang bentrok
+        // BOLEH disimpan — cuma diperingati di halaman versi. Draft belum
+        // mengikat apa pun; bentroknya baru benar-benar menghalangi saat
+        // penetapan (validasi() + tolakBentrokTanggal tetap menjaga di sana),
+        // jadi operator bisa menyimpan dulu lalu membetulkan tanggalnya.
 
         $this->db->table('dokumen_versi')->where('id', $versiId)->update([
             'effective_from' => $baru,
@@ -270,6 +289,44 @@ class VersionTimelineService
         $perubahan = $baris['status'] === DokumenVersiModel::STATUS_PUBLISHED
             ? $this->hitungUlang($scope)
             : [];
+
+        // =====================================================================
+        // TERAPKAN ULANG BILA VERSI TERKINI BERPINDAH
+        //
+        // Versi yang terbit RETROSPEKTIF (di tengah timeline) sengaja TIDAK
+        // diterapkan ke tabel berjalan saat penetapan (§60). Tetapi bila
+        // tanggalnya kemudian digeser sehingga ia menjadi versi TERKINI (ujung
+        // timeline), isinya WAJIB diterapkan — kalau tidak, tabel berjalan
+        // tertinggal pada isi versi lama sementara sistem menyatakan versi baru
+        // yang berlaku. (Inilah kasus "V5 memuat 5 indikator, halaman hanya 1".)
+        // =====================================================================
+        if ($baris['status'] === DokumenVersiModel::STATUS_PUBLISHED) {
+            $ujungSesudah = null;
+
+            foreach ($this->versi->publishedUrutMaju($scope) as $p) {
+                if (($p['effective_to'] ?? null) === null) {
+                    $ujungSesudah = $p;
+                }
+            }
+
+            if ($ujungSesudah !== null && (int) $ujungSesudah['id'] !== $ujungSebelum) {
+                $arsip = (new ArsipRegistry())->untuk($scope->modul());
+
+                if ($arsip !== null && $arsip->siap()) {
+                    $mulaiUjung = (string) ($ujungSesudah['effective_from'] ?? '');
+                    $tahunUjung = $mulaiUjung !== '' && strtotime($mulaiUjung) !== false
+                        ? (int) date('Y', strtotime($mulaiUjung))
+                        : $scope->periodeMulai();
+
+                    $arsip->terapkanKeLive((int) $ujungSesudah['id'], $scope, $tahunUjung);
+
+                    $this->audit->catat((int) $ujungSesudah['id'], VersionAuditService::AKSI_APPLIED, [
+                        'ringkasan' => 'Diterapkan ke data berjalan karena menjadi versi terkini '
+                            . 'setelah tanggal berlaku digeser.',
+                    ]);
+                }
+            }
+        }
 
         $this->audit->catat($versiId, VersionAuditService::AKSI_EDITED_DRAFT, [
             'ringkasan'      => 'Tanggal mulai berlaku diubah dari ' . $lama . ' menjadi ' . $baru,

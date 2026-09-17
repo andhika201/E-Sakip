@@ -103,16 +103,50 @@ class LakipOpdController extends BaseController
             return $sumber !== '' ? $sumber : 'rpjmd';
         }
 
-        // Hanya JENIS sumbernya yang dipakai di sini (untuk menyaring
-        // penyesuaian kebijakan), bukan versinya — karena itu lingkup OPD
-        // sengaja dibiarkan null: melewatkannya hanya akan menyiratkan bahwa
-        // id versi yang dikembalikan sudah tervalidasi untuk OPD tertentu,
-        // padahal nilai itu memang dibuang di baris ini.
-        [$sumber] = $this->sumberDariPermintaan(
-            'opd',
-            null,
-            (int) ($this->request->getGet('tahun') ?: date('Y'))
-        );
+        // =====================================================================
+        // LINGKUP OPD WAJIB IKUT — JANGAN null
+        //
+        // Dulu lingkupnya sengaja dikosongkan dengan alasan "hanya jenis
+        // sumbernya yang dipakai, bukan versinya". Itu keliru: jenis sumbernya
+        // pun ditentukan oleh lingkup. sumberDariPermintaan() memanggil
+        // paksaIkuBilaAda(), yang bertanya "adakah versi IKU untuk OPD ini?"
+        // lewat pilihanVersiIku() — dan di sana opdId null dibaca sebagai
+        // opd_key 0, yaitu IKU KABUPATEN. Kabupaten selalu punya versi IKU,
+        // jadi setiap OPD dipaksa ke 'iku' walaupun layarnya sendiri sedang
+        // (dan dengan jujur) menampilkan Renstra karena IKU OPD itu belum
+        // punya versi — persis kecamatan.
+        //
+        // Akibatnya di OPD seperti itu: tombol Analisis Faktor mengirim id
+        // renstra_target, server mencarinya di iku_indikator, lalu menolak
+        // "Indikator tidak ditemukan pada tahun & unit yang dipilih"; dan
+        // analisis yang pernah tersimpan (source_type renstra) ikut lenyap
+        // dari layar karena disaring sebagai 'iku'.
+        //
+        // Lingkupnya diambil persis seperti lakipScope()/lakipScopeFromPost():
+        // peran tingkat OPD terkunci pada OPD sesinya; admin kabupaten memakai
+        // opd_id yang dipilihnya (POST saat menyimpan, GET saat menampilkan).
+        // Tahun juga dibaca dari POST lebih dulu — aksi simpan tidak membawa
+        // query string, dan menilai "adakah IKU" pada tahun berjalan untuk
+        // LAKIP tahun lalu adalah pertanyaan yang salah.
+        // =====================================================================
+        $session = session();
+        $role    = (string) $session->get('role');
+
+        if (in_array($role, ['admin_opd', 'admin_kecamatan'], true)) {
+            $opdId = (int) $session->get('opd_id');
+        } else {
+            $opdRaw = $this->request->getPost('opd_id');
+            if ($opdRaw === null || $opdRaw === '') {
+                $opdRaw = $this->request->getGet('opd_id');
+            }
+            $opdId = ($opdRaw === null || $opdRaw === '') ? 0 : (int) $opdRaw;
+        }
+
+        $tahun = (int) ($this->request->getPost('tahun')
+            ?: $this->request->getGet('tahun')
+            ?: date('Y'));
+
+        [$sumber] = $this->sumberDariPermintaan('opd', $opdId > 0 ? $opdId : null, $tahun);
 
         return $sumber !== '' ? $sumber : null;
     }

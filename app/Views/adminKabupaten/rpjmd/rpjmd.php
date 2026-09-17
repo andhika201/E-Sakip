@@ -196,6 +196,10 @@
                                                             $rightRows[] = [
                                                                 'sasaran' => ($idx === 0) ? ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => $countIs] : null,
                                                                 'indikator' => $is['indikator_sasaran'] ?? '-',
+                                                                // Baris yang sudah dihentikan tetap tampil (perilaku lama),
+                                                                // tetapi diberi penanda — versi dokumen tidak memuatnya.
+                                                                'dihentikan' => $is['dihentikan_pada'] ?? null,
+                                                                'berlaku_sampai' => $is['berlaku_sampai'] ?? null,
                                                                 'baseline' => $is['baseline'] ?? '-',
                                                                 'definisi' => $is['definisi_op'] ?? '-',
                                                                 'satuan' => $is['satuan'] ?? '-',
@@ -314,7 +318,14 @@
                                                     <?php endif; ?>
 
                                                     <!-- INDIKATOR SASARAN + (DEF OP dinonaktifkan) + SATUAN -->
-                                                    <td class="border p-2 align-top text-start"><?= esc($right['indikator']) ?></td>
+                                                    <td class="border p-2 align-top text-start">
+                                                        <?= esc($right['indikator']) ?>
+                                                        <?php if (! empty($right['dihentikan'])): ?>
+                                                            <span class="badge bg-secondary ms-1" title="Dihentikan pada <?= esc(date('d M Y', strtotime($right['dihentikan']))) ?>. Tidak lagi ikut ke versi RPJMD yang dibuat dari kondisi berjalan.">
+                                                                <i class="fa-solid fa-ban me-1"></i>Dihentikan<?= ! empty($right['berlaku_sampai']) ? ' s.d. ' . (int) $right['berlaku_sampai'] : '' ?>
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </td>
                                                     <td class="border p-2 align-top text-start"><?= esc($right['baseline'] ?? '-') ?></td>
                                                     <!-- DEFINISI OPERASIONAL dinonaktifkan sementara:
                                                          <td class="border p-2 align-top text-start"> $right['definisi'] </td> -->

@@ -181,8 +181,10 @@ trait DokumenVersiTrait
         }
 
         $resolver = new VersionResolver();
+        $approval = new VersionApprovalService();
         $periode  = $this->versiPeriodeTersedia();
         $blok     = [];
+        $bolehSuntingDraft = $this->versiBoleh('update_draft');
 
         foreach ($periode as $p) {
             $scope = $this->versiScope($p['periode']);
@@ -206,6 +208,11 @@ trait DokumenVersiTrait
             foreach ($daftar as &$d) {
                 $d['badge']  = $resolver->badge($d);
                 $d['rentang'] = $resolver->rentangTeks($d);
+                // Sunting & hapus langsung dari daftar — aturannya SAMA persis
+                // dengan yang dipakai halaman Lihat, supaya tombol di dua
+                // tempat tidak pernah berbeda pendapat.
+                $d['boleh_sunting'] = $approval->bolehSunting($d) && $bolehSuntingDraft;
+                $d['keadaan_hapus'] = $this->versiKeadaanHapus($d);
             }
             unset($d);
 
@@ -336,6 +343,9 @@ trait DokumenVersiTrait
             'rentang'       => $resolver->rentangTeks($baris),
             'isi'           => $arsip !== null && $arsip->siap() ? $arsip->isi((int) $id) : [],
             'ringkas'       => $arsip !== null && $arsip->siap() ? $arsip->ringkas((int) $id) : [],
+            // Baris berjalan yang tidak ikut ke versi ini, dengan alasannya —
+            // supaya "menu menampilkan 15, versi memuat 11" terjawab di layar.
+            'takTerbekukan' => $arsip !== null && $arsip->siap() ? $arsip->barisLiveTakTerbekukan((int) $id, $scope) : [],
             'riwayat'       => (new VersionAuditService())->riwayat((int) $id),
             'praTinjau'     => $baris['status'] === DokumenVersiModel::STATUS_DRAFT
                 ? $timeline->praTinjau($scope, (string) $baris['effective_from'], (int) $id)
@@ -1154,6 +1164,20 @@ trait DokumenVersiTrait
             return redirect()
                 ->to(base_url($this->versiBaseUrl() . '/versi/lihat/' . (int) $id))
                 ->with('error', pesanGalatBerawalan($e, 'Versi tidak bisa dihapus', 'umum.dokumenVersi'));
+        }
+
+        // Riwayat versinya ikut terhapus (FK RESTRICT), jadi jejaknya
+        // dipindahkan ke activity_logs: siapa menghapus versi apa, berstatus
+        // apa, berisi berapa baris, dan apa saja riwayat yang ikut hilang.
+        if (function_exists('log_activity')) {
+            log_activity(
+                'hapus_versi',
+                $this->versiModul(),
+                'Hapus versi ' . $this->versiNamaDokumen() . ' ' . $ringkas['periode']
+                . ' V' . $ringkas['version_no'] . ' "' . $ringkas['nama'] . '" (status ' . $ringkas['status']
+                . ', ' . (int) $ringkas['arsip'] . ' baris arsip; riwayat: '
+                . ($ringkas['riwayat'] !== [] ? implode('; ', $ringkas['riwayat']) : '-') . ')'
+            );
         }
 
         $jejak = (int) $ringkas['arsip'] > 0

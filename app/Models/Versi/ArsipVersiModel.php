@@ -107,6 +107,21 @@ abstract class ArsipVersiModel
     abstract public function hitungLiveAktif(VersionScope $scope): array;
 
     /**
+     * Baris LIVE pada periode ini yang TIDAK ada di arsip versi $versiId,
+     * beserta alasannya — bahan panel "kenapa versi ini lebih sedikit dari
+     * yang tampil di menu dokumennya".
+     *
+     * Bawaan kosong: modul yang belum menyediakannya tidak menampilkan panel.
+     *
+     * @return array<int,array{tingkat:string,id:int,teks:string,induk:string,misi:string,
+     *                         alasan:string,dihentikan_pada:?string,berlaku_sampai:?int}>
+     */
+    public function barisLiveTakTerbekukan(int $versiId, VersionScope $scope): array
+    {
+        return [];
+    }
+
+    /**
      * Peta tabel & kolom arsip per tingkat.
      *
      * Dipakai `simpanSuntingan()` supaya satu penyunting melayani RPJMD maupun

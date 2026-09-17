@@ -91,6 +91,52 @@ foreach ($isi as $akar) {
     </a>
 </div>
 
+<?php if (! empty($takTerbekukan)): ?>
+    <?php /* Menu dokumen menampilkan SEMUA baris, termasuk yang sudah dihentikan;
+             versi hanya memuat yang hidup pada periodenya. Selisihnya harus
+             tertulis di sini — pemakai yang menghitung 15 di menu dan 11 di
+             versi tidak punya cara lain untuk tahu ke mana 4 sisanya. */ ?>
+    <div class="kotak-jejak awas mb-3" id="baris-tak-terbekukan">
+        <div class="fw-semibold mb-1">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            <?= count($takTerbekukan) ?> indikator sasaran di menu <?= esc($namaDokumen) ?> tidak ada di versi ini
+        </div>
+        <div class="small text-secondary mb-2">
+            Menu <?= esc($namaDokumen) ?> menampilkan seluruh baris, termasuk yang sudah dihentikan atau
+            berperiode lain. Versi hanya memuat baris yang masih hidup pada periode
+            <?= (int) $versi['periode_mulai'] ?>&ndash;<?= (int) $versi['periode_akhir'] ?>. Inilah yang tidak ikut, dan mengapa:
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered small mb-0 bg-white" data-no-paginate>
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:36px">#</th>
+                        <th>Indikator Sasaran</th>
+                        <th>Sasaran</th>
+                        <th>Mengapa tidak ikut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($takTerbekukan as $k => $b): ?>
+                        <tr>
+                            <td class="text-center"><?= $k + 1 ?></td>
+                            <td><?= esc($b['teks']) ?></td>
+                            <td class="text-secondary"><?= esc($b['induk']) ?></td>
+                            <td><?= esc($b['alasan']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php if (! empty($bolehSunting)): ?>
+            <div class="small text-secondary mt-2">
+                Bila salah satunya memang masih harus berlaku, tambahkan kembali lewat
+                <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $versi['id']) ?>">Sunting Isi Draft</a>.
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
 <?php if (! empty($galatValidasi)): ?>
     <div class="kotak-jejak awas mb-3">
         <div class="fw-semibold text-danger mb-1">Versi ini belum bisa diajukan</div>
@@ -271,7 +317,7 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
               data-konfirmasi="Versi dokumen ini akan dihapus permanen beserta seluruh arsip isinya."
               data-konfirmasi-judul="Hapus Versi Dokumen"
               data-konfirmasi-nama="<?= esc(trim(($namaDokumen ?? 'Versi') . ' — ' . ($versi['label'] ?? ('#' . (int) $versi['id']))), 'attr') ?>"
-              data-konfirmasi-rincian="Seluruh tujuan, sasaran, indikator, dan target yang diarsipkan di versi ini|Jejak riwayat versi ini"
+              data-konfirmasi-rincian="Seluruh tujuan, sasaran, indikator, dan target yang diarsipkan di versi ini|Jejak riwayat versi ini (dipindahkan ke log aktivitas)"
               data-konfirmasi-ketik="HAPUS">
             <?= csrf_field() ?>
             <button class="btn btn-danger btn-sm"><i class="fa-solid fa-trash me-1"></i>Hapus Versi</button>

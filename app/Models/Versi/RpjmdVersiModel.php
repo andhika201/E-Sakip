@@ -505,6 +505,106 @@ class RpjmdVersiModel extends ArsipVersiModel
         return ['misi' => count($misi), 'sasaran' => count($sasaran), 'indikator' => $indikator];
     }
 
+    /**
+     * =====================================================================
+     * MENGAPA VERSI INI LEBIH SEDIKIT DARI MENU RPJMD?
+     *
+     * Menu RPJMD (RpjmdModel::getCompleteRpjmdStructure) menampilkan SELURUH
+     * baris — termasuk yang sudah dihentikan (`dihentikan_pada` terisi) —
+     * tanpa penanda apa pun. Pembekuan versi (bekukanDariLive) hanya
+     * mengambil baris yang masih hidup pada periode lingkupnya. Dua layar itu
+     * benar menurut aturannya masing-masing, tetapi pemakai melihat "15 di
+     * menu, 11 di versi" dan mengira pembekuannya gagal.
+     *
+     * Fungsi ini menyebut baris yang tidak ikut, satu per satu, dengan
+     * alasannya: dihentikan sendiri, ikut induknya yang dihentikan, misinya
+     * di luar periode versi, atau (untuk draft yang sudah disunting/disalin)
+     * memang tidak ada di versi ini. Yang dijawab adalah "kenapa", bukan
+     * sekadar "berapa".
+     * =====================================================================
+     */
+    public function barisLiveTakTerbekukan(int $versiId, VersionScope $scope): array
+    {
+        if (! $this->siap()) {
+            return [];
+        }
+
+        $adaDiArsip = array_map('intval', $this->kolomId(
+            $this->db->table('rpjmd_versi_indikator_sasaran')
+                ->select('source_indikator_id AS id')
+                ->where('version_id', $versiId)
+                ->where('source_indikator_id IS NOT NULL', null, false)
+                ->get()->getResultArray()
+        ));
+
+        $rows = $this->db->table('rpjmd_indikator_sasaran i')
+            ->select('i.id, i.indikator_sasaran, i.dihentikan_pada, i.berlaku_sampai, i.alasan_dihentikan, '
+                . 's.id AS sasaran_id, s.sasaran_rpjmd, s.dihentikan_pada AS s_stop, '
+                . 't.id AS tujuan_id, t.tujuan_rpjmd, t.dihentikan_pada AS t_stop, '
+                . 'm.id AS misi_id, m.misi, m.dihentikan_pada AS m_stop, m.tahun_mulai, m.tahun_akhir')
+            ->join('rpjmd_sasaran s', 's.id = i.sasaran_id', 'left')
+            ->join('rpjmd_tujuan t', 't.id = s.tujuan_id', 'left')
+            ->join('rpjmd_misi m', 'm.id = t.misi_id', 'left')
+            ->orderBy('m.id', 'ASC')->orderBy('t.id', 'ASC')->orderBy('s.id', 'ASC')->orderBy('i.id', 'ASC')
+            ->get()->getResultArray();
+
+        $mulai = $scope->periodeMulai();
+        $akhir = $scope->periodeAkhir();
+        $out   = [];
+
+        foreach ($rows as $r) {
+            if (in_array((int) $r['id'], $adaDiArsip, true)) {
+                continue;
+            }
+
+            $periodeMisi = (int) $r['tahun_mulai'] . '-' . (int) $r['tahun_akhir'];
+
+            if ($r['misi_id'] === null) {
+                $alasan = 'Indikator ini tidak tersambung ke misi mana pun (sasaran/tujuan/misinya sudah tidak ada).';
+            } elseif ((int) $r['tahun_mulai'] !== $mulai || (int) $r['tahun_akhir'] !== $akhir) {
+                $alasan = 'Misinya berperiode ' . $periodeMisi . ', bukan ' . $mulai . '-' . $akhir
+                    . ' — ia milik versi periode lain.';
+            } elseif ($r['dihentikan_pada'] !== null) {
+                $alasan = 'Indikator ini sudah DIHENTIKAN pada ' . $this->tanggalRingkas($r['dihentikan_pada'])
+                    . ($r['berlaku_sampai'] !== null ? ' (berlaku sampai ' . (int) $r['berlaku_sampai'] . ')' : '')
+                    . ($r['alasan_dihentikan'] ? ': ' . $r['alasan_dihentikan'] : '.');
+            } elseif ($r['s_stop'] !== null) {
+                $alasan = 'Sasarannya sudah dihentikan pada ' . $this->tanggalRingkas($r['s_stop']) . '.';
+            } elseif ($r['t_stop'] !== null) {
+                $alasan = 'Tujuannya sudah dihentikan pada ' . $this->tanggalRingkas($r['t_stop']) . '.';
+            } elseif ($r['m_stop'] !== null) {
+                $alasan = 'Misinya sudah dihentikan pada ' . $this->tanggalRingkas($r['m_stop']) . '.';
+            } else {
+                $alasan = 'Masih hidup di RPJMD berjalan, tetapi tidak ada di versi ini — '
+                    . 'dihapus saat draft disunting, atau versi ini disalin dari versi lain / dimulai dari kosong.';
+            }
+
+            $out[] = [
+                'tingkat'         => 'indikator_sasaran',
+                'id'              => (int) $r['id'],
+                'teks'            => (string) $r['indikator_sasaran'],
+                'induk'           => (string) ($r['sasaran_rpjmd'] ?? '-'),
+                'misi'            => (string) ($r['misi'] ?? '-'),
+                'alasan'          => $alasan,
+                'dihentikan_pada' => $r['dihentikan_pada'] ?? $r['s_stop'] ?? $r['t_stop'] ?? $r['m_stop'],
+                'berlaku_sampai'  => $r['berlaku_sampai'] !== null ? (int) $r['berlaku_sampai'] : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    private function tanggalRingkas(?string $tanggal): string
+    {
+        if ($tanggal === null || $tanggal === '') {
+            return '-';
+        }
+
+        $ts = strtotime($tanggal);
+
+        return $ts ? date('d M Y', $ts) : $tanggal;
+    }
+
     /* =========================================================
      * ARSIP -> LIVE (upsert + PENSIUN)
      * =======================================================*/

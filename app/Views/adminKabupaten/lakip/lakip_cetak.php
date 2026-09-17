@@ -1,5 +1,9 @@
 <?php
 helper(['number', 'lakip']);
+// pdf_td_gabung()/pdf_teks(): kolom induk (No/OPD/Sasaran) TANPA rowspan.
+// Rowspan setinggi satu OPD (mode OPD, seluruh OPD) membuat mPDF memindah
+// atau menyusutkan blok utuh begitu lebih tinggi dari sisa halaman.
+helper('pdf');
 
 $filters = $filters ?? [];
 $rows = $rows ?? [];
@@ -36,8 +40,8 @@ if ($mode === 'opd') {
         $sasCounts[$sasKey] = ($sasCounts[$sasKey] ?? 0) + 1;
     }
 }
-$opdSeen = [];
-$sasSeen = [];
+$opdKe = []; // posisi baris di dalam grup OPD / sasaran (mulai 0)
+$sasKe = [];
 
 // Lebar kolom (%) untuk kertas POTRAIT; total selalu 100% supaya mPDF tidak
 // perlu menormalkan ulang. Mode OPD punya satu kolom ekstra (OPD).
@@ -66,7 +70,8 @@ $w = ($mode === 'opd')
             line-height: 1.15;
         }
         table.lakip-print-table thead { display: table-header-group; }
-        table.lakip-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.lakip-print-table tbody tr:nth-child(even) td { background: #fff; }
         table.lakip-print-table th,
         table.lakip-print-table td {
             padding: 2px 3px;
@@ -185,37 +190,29 @@ $w = ($mode === 'opd')
                     } else {
                         $sasKey = (string) ($r['sasaran'] ?? '');
                     }
-                    $sasFirst = empty($sasSeen[$sasKey]);
+                    $sasKe[$sasKey] = isset($sasKe[$sasKey]) ? $sasKe[$sasKey] + 1 : 0;
+                    if ($sasKe[$sasKey] === 0) {
+                        $noSas[$sasKey] = $no++;
+                    }
                     ?>
                     <tr>
-                        <?php if ($sasFirst): ?>
-                            <td rowspan="<?= $sasCounts[$sasKey] ?? 1 ?>" class="text-center"><?= $no++ ?></td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($sasKe[$sasKey], $sasCounts[$sasKey] ?? 1, (string) $noSas[$sasKey], 'text-center', '', 0) ?>
 
                         <?php if ($mode === 'opd'): ?>
-                            <?php if (empty($opdSeen[$opdKey])):
-                                $opdSeen[$opdKey] = true; ?>
-                                <td rowspan="<?= $opdCounts[$opdKey] ?? 1 ?>" class="text-start">
-                                    <?= esc($r['nama_opd'] ?? '-') ?>
-                                </td>
-                            <?php endif; ?>
+                            <?php $opdKe[$opdKey] = isset($opdKe[$opdKey]) ? $opdKe[$opdKey] + 1 : 0; ?>
+                            <?= pdf_td_gabung($opdKe[$opdKey], $opdCounts[$opdKey] ?? 1, pdf_teks($r['nama_opd'] ?? ''), 'text-start') ?>
                         <?php endif; ?>
 
-                        <?php if ($sasFirst):
-                            $sasSeen[$sasKey] = true; ?>
-                            <td rowspan="<?= $sasCounts[$sasKey] ?? 1 ?>" class="text-start">
-                                <?= esc($r['sasaran'] ?? '-') ?>
-                            </td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($sasKe[$sasKey], $sasCounts[$sasKey] ?? 1, pdf_teks($r['sasaran'] ?? ''), 'text-start') ?>
 
-                        <td class="text-start"><?= esc($r['indikator_sasaran'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($r['satuan'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($r['tahun'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($targetNow ?? '-') ?></td>
-                        <td class="text-center"><?= esc($lakipItem['target_lalu'] ?? '-') ?></td>
-                        <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '-') ?></td>
-                        <td class="text-center"><?= formatAtauRaw($lakipItem['capaian_tahun_ini'] ?? null, 2) ?></td>
-                        <td class="text-center"><?= $capaianPersen === null ? '-' : formatAngkaID($capaianPersen, 2) . '%' ?></td>
+                        <td class="text-start"><?= pdf_teks($r['indikator_sasaran'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($r['satuan'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($r['tahun'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($targetNow ?? '') ?></td>
+                        <td class="text-center"><?= esc($lakipItem['target_lalu'] ?? '') ?></td>
+                        <td class="text-center"><?= esc($lakipItem['capaian_lalu'] ?? '') ?></td>
+                        <td class="text-center"><?= ($lakipItem['capaian_tahun_ini'] ?? '') !== '' ? formatAtauRaw($lakipItem['capaian_tahun_ini'], 2) : '' ?></td>
+                        <td class="text-center"><?= $capaianPersen === null ? '' : formatAngkaID($capaianPersen, 2) . '%' ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

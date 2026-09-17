@@ -530,7 +530,7 @@ class CascadingController extends BaseController
         // A4-L membuat tabel terpotong. shrink_tables_to_fit=false supaya mPDF
         // TIDAK menyusutkan font sampai tak terbaca — lebar kolom sudah diatur
         // persen lewat colgroup di view cetaknya.
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'                 => 'utf-8',
             'format'               => 'A3-L',
             'margin_left'          => 8,

@@ -1154,9 +1154,13 @@ class PkRenaksiController extends BaseController
             ...$this->unitHeaderVars($jenis, $eselon),
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        // A3-L: tabel MONEV punya 24-26 kolom (5 kolom nominal rupiah 15 digit).
+        // Di A4-L jumlah lebar MINIMUM kolomnya (~325 mm) melebihi lebar kertas,
+        // dan mPDF lalu menyusutkan seluruh tabel — makin banyak realisasi
+        // triwulan terisi, makin kecil hurufnya. Printer A4: cetak "fit to page".
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
-            'format'        => 'A4-L',
+            'format'        => 'A3-L',
             'margin_left'   => 10,
             'margin_right'  => 10,
             'margin_top'    => 12,
@@ -1280,7 +1284,7 @@ class PkRenaksiController extends BaseController
             ...$this->unitHeaderVars($jenis, $eselon),
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,

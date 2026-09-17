@@ -35,7 +35,8 @@ $subjudulParts[] = $showOpdCol ? 'Rekap Perangkat Daerah' : 'Pemerintah Kabupate
             line-height: 1.18;
         }
         table.iku-print-table thead { display: table-header-group; }
-        table.iku-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.iku-print-table tbody tr:nth-child(even) td { background: #fff; }
         table.iku-print-table th,
         table.iku-print-table td {
             padding: 2.8px 3px;

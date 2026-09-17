@@ -108,7 +108,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
         <div class="row g-3 align-items-end">
           <div class="col-6 col-md-3 col-lg-2">
             <label for="f-tahun" class="form-label mb-1">Tahun</label>
-            <select name="tahun" id="f-tahun" class="form-select">
+            <select name="tahun" id="f-tahun" class="form-select" onchange="this.form.submit()">
               <?php foreach ($tahunList as $t): ?>
                 <option value="<?= (int) $t ?>" <?= (int) $t === (int) $tahun ? 'selected' : '' ?>><?= (int) $t ?></option>
               <?php endforeach; ?>
@@ -117,7 +117,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
 
           <div class="col-6 col-md-3 col-lg-2">
             <label for="f-tw" class="form-label mb-1">Triwulan</label>
-            <select name="triwulan" id="f-tw" class="form-select">
+            <select name="triwulan" id="f-tw" class="form-select" onchange="this.form.submit()">
               <?php foreach ([1, 2, 3, 4] as $q): ?>
                 <option value="<?= $q ?>" <?= $q === (int) $triwulan ? 'selected' : '' ?>>s.d. Triwulan <?= $romawi[$q] ?></option>
               <?php endforeach; ?>
@@ -126,7 +126,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
 
           <div class="col-12 col-md-6 col-lg-2">
             <label for="f-misi" class="form-label mb-1">Misi Bupati</label>
-            <select name="misi_id" id="f-misi" class="form-select" <?= $fokusMode ? 'disabled' : '' ?>>
+            <select name="misi_id" id="f-misi" class="form-select" onchange="this.form.submit()" <?= $fokusMode ? 'disabled' : '' ?>>
               <option value="">Semua misi</option>
               <?php foreach ($misiList as $i => $m): ?>
                 <option value="<?= (int) $m['id'] ?>" <?= (int) $m['id'] === (int) $misiId ? 'selected' : '' ?>>
@@ -141,7 +141,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
 
           <div class="col-12 col-md-6 col-lg-4">
             <label for="f-opd" class="form-label mb-1">Perangkat Daerah</label>
-            <select name="opd_id" id="f-opd" class="form-select">
+            <select name="opd_id" id="f-opd" class="form-select" onchange="this.form.submit()">
               <option value="">Semua OPD — Mode Kabupaten</option>
               <?php foreach ($scope['opd_list'] as $o): ?>
                 <option value="<?= (int) $o['id'] ?>" <?= (int) $o['id'] === (int) ($scope['opd_id'] ?? 0) ? 'selected' : '' ?>>
@@ -149,10 +149,6 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
                 </option>
               <?php endforeach; ?>
             </select>
-          </div>
-
-          <div class="col-12 col-lg-2 d-grid">
-            <button type="submit" class="btn btn-success"><i class="fas fa-filter me-1"></i> Terapkan</button>
           </div>
         </div>
       </form>

@@ -172,7 +172,7 @@ class TargetController extends BaseController
             'opdFilter' => $opdFilter,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode' => 'utf-8',
             'format' => 'A4-L',
             'orientation' => 'L',

@@ -650,7 +650,7 @@ class IkuController extends BaseController
             'opd_name'    => $namaOpd,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,

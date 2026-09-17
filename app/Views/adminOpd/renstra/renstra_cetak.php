@@ -1,4 +1,8 @@
 <?php
+// pdf_td_gabung()/pdf_teks(): kolom induk (No/Tujuan/Sasaran) TANPA rowspan
+// supaya mPDF bebas memotong halaman di baris mana pun (lihat app/Helpers/pdf_helper.php).
+helper('pdf');
+
 $namaOpdTxt = trim((string) ($nama_opd ?? ''));
 $periodeTxt = trim((string) ($tahun_mulai ?? '-')) . ' - ' . trim((string) ($tahun_akhir ?? '-'));
 $subjudulParts = [];
@@ -65,9 +69,8 @@ $yearCount = ($start > 0 && $end >= $start) ? ($end - $start + 1) : 0;
         table.renstra-print-table thead {
             display: table-header-group;
         }
-        table.renstra-print-table tr {
-            page-break-inside: avoid;
-        }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.renstra-print-table tbody tr:nth-child(even) td { background: #fff; }
         table.renstra-print-table th,
         table.renstra-print-table td {
             padding: 2.8px 3px;
@@ -154,16 +157,16 @@ $yearCount = ($start > 0 && $end >= $start) ? ($end - $start + 1) : 0;
                         $rid = $fs['sasaran_id'];
                         $sasRowspan[$rid] = ($sasRowspan[$rid] ?? 0) + 1;
                     }
-                    $sasPrinted = [];
-                    $rowPrinted = false;
+                    // Posisi baris di dalam grup sasaran (mulai 0) — kolom induk
+                    // dicetak tiap baris lewat pdf_td_gabung(), tanpa rowspan.
+                    $sasKe = [];
+                    $noTujuan = $no++;
                     ?>
 
                     <?php for ($i = 0; $i < $totalRow; $i++): ?>
                         <tr>
-                            <?php if (!$rowPrinted): ?>
-                                <td rowspan="<?= $totalRow ?>" class="c"><?= $no++ ?></td>
-                                <td rowspan="<?= $totalRow ?>" class="text-start"><?= esc($tujuan['tujuan'] ?? '') ?></td>
-                            <?php endif; ?>
+                            <?= pdf_td_gabung($i, $totalRow, (string) $noTujuan, 'c', '', 0) ?>
+                            <?= pdf_td_gabung($i, $totalRow, pdf_teks($tujuan['tujuan'] ?? ''), 'text-start') ?>
 
                             <?php if ($i < $itCount): ?>
                                 <?php $it = $tujuan['indikator_tujuan'][$i]; ?>
@@ -182,18 +185,13 @@ $yearCount = ($start > 0 && $end >= $start) ? ($end - $start + 1) : 0;
                                 <?php
                                 $ss = $flatSas[$i];
                                 $sid = $ss['sasaran_id'];
-                                $isFirstOfSasaran = !isset($sasPrinted[$sid]);
-                                if ($isFirstOfSasaran) {
-                                    $sasPrinted[$sid] = true;
-                                }
+                                $sasKe[$sid] = isset($sasKe[$sid]) ? $sasKe[$sid] + 1 : 0;
                                 $kondisiAkhir = $ss['targets'][$end] ?? '';
                                 ?>
 
-                                <?php if ($isFirstOfSasaran): ?>
-                                    <td rowspan="<?= $sasRowspan[$sid] ?>" class="text-start"><?= esc($ss['sasaran']) ?></td>
-                                <?php endif; ?>
+                                <?= pdf_td_gabung($sasKe[$sid], $sasRowspan[$sid] ?? 1, pdf_teks($ss['sasaran']), 'text-start') ?>
 
-                                <td class="text-start"><?= esc($ss['indikator']) ?></td>
+                                <td class="text-start"><?= pdf_teks($ss['indikator']) ?></td>
                                 <td class="c"><?= esc($ss['satuan']) ?></td>
                                 <td class="c"><?= esc($ss['baseline']) ?></td>
                                 <?php for ($y = $start; $y <= $end; $y++): ?>
@@ -211,7 +209,6 @@ $yearCount = ($start > 0 && $end >= $start) ? ($end - $start + 1) : 0;
                                 <td></td>
                             <?php endif; ?>
                         </tr>
-                        <?php $rowPrinted = true; ?>
                     <?php endfor; ?>
                 <?php endforeach; ?>
             <?php endif; ?>

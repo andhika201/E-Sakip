@@ -213,19 +213,21 @@ text/x-generic cetak-L.php ( HTML document, ASCII text, with CRLF line terminato
             continue;
           }
 
-          $rowspan = count($sasaran['indikator']);
+          // No & Sasaran ditulis di baris indikator PERTAMA saja, tanpa rowspan:
+          // baris indikator memang tanpa garis mendatar (table-no-row-border),
+          // jadi tampilannya sama, tetapi mPDF bebas memotong halaman di antara
+          // indikator — rowspan setinggi semua indikator memaksa blok itu pindah
+          // halaman utuh atau disusutkan bila lebih tinggi dari halaman.
           ?>
 
-          <?php foreach ($sasaran['indikator'] as $i => $indikator): ?>
+          <?php foreach (array_values($sasaran['indikator']) as $i => $indikator): ?>
             <tr class="table-no-row-border">
-              <?php if ($i === 0): ?>
-                <td rowspan="<?= $rowspan ?>" style="text-align:center;">
-                  <?= $no++ ?>.
-                </td>
-                <td rowspan="<?= $rowspan ?>" style="text-align:left;">
-                  <?= esc(ucwords($sasaran['sasaran'])) ?>
-                </td>
-              <?php endif; ?>
+              <td style="text-align:center;">
+                <?= $i === 0 ? $no++ . '.' : '' ?>
+              </td>
+              <td style="text-align:left;">
+                <?= $i === 0 ? esc(ucwords($sasaran['sasaran'])) : '' ?>
+              </td>
 
               <td style="text-align:left;">
                 <?= esc($indikator['indikator']) ?>

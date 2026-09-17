@@ -780,7 +780,7 @@ class IkuController extends BaseController
             'lintas_opd'  => $opdId === null,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,

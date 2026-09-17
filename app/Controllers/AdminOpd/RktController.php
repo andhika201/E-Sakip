@@ -555,7 +555,7 @@ class RktController extends BaseController
             'currentOpd' => $currentOpd,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,

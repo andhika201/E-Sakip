@@ -165,7 +165,16 @@ class LakipSourceService
      */
     public function pilihanVersiIku(string $mode, ?int $opdId, int $tahun): array
     {
-        $mode   = $this->modeSah($mode);
+        $mode = $this->modeSah($mode);
+
+        // Lingkup OPD tanpa pemilik TIDAK boleh jatuh ke opd_key 0: nol adalah
+        // kunci IKU KABUPATEN, bukan "OPD mana saja". Sebelum penjaga ini,
+        // pemanggil yang lalai mengirim opdId null mendapat daftar versi IKU
+        // Kabupaten untuk sebuah OPD — dan menyimpulkan OPD itu punya IKU.
+        if ($mode !== self::MODE_KABUPATEN && (int) $opdId <= 0) {
+            return [];
+        }
+
         $opdKey = $mode === self::MODE_KABUPATEN ? 0 : (int) $opdId;
 
         if (! $this->db->tableExists('iku_revisi')) {

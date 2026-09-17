@@ -486,3 +486,46 @@ if (!function_exists('dash_tahun_lakip_jatuh_tempo')) {
         return min($tahun, (int) date('Y') - 1);
     }
 }
+
+if (!function_exists('dash_persen_teks')) {
+    /**
+     * Teks persentase sebuah indikator/baris untuk layar dashboard.
+     *
+     * =====================================================================
+     * "0%" UNTUK YANG BELUM DAPAT DINILAI — bukan "-"
+     *
+     * Keputusan pemilik sistem 16 Sep 2026: Capaian Total di MONEV ditulis
+     * "0%" untuk baris yang target kumulatifnya masih 0 (lihat $takTerukur
+     * pada capaianTotalPercentage()). Sejak 17 Sep 2026 dashboard menulis
+     * angka yang SAMA supaya kedua layar tidak saling bertentangan —
+     * operator melihat 0% di MONEV, pimpinan melihat "-" di dashboard, lalu
+     * bertanya mana yang benar.
+     *
+     * Yang TIDAK berubah: status `not_evaluable` tetap dibaca lebih dulu
+     * oleh agregat, jadi 0% ini tetap dikeluarkan dari rata-rata OPD dan
+     * tetap berlencana abu-abu "Belum Dapat Dinilai" dengan alasannya — ia
+     * tidak pernah menyeret OPD ke pita Kritis.
+     *
+     * Baris yang benar-benar belum bisa dihitung karena datanya kurang
+     * (target/capaian belum diisi, metode belum dipilih) tetap NULL: di sana
+     * "-" memang jujur, dan alasannya sudah tertulis di kartunya.
+     * =====================================================================
+     *
+     * @param array<string,mixed> $i baris berisi `percentage` dan `validity`
+     */
+    function dash_persen_teks(array $i): ?string
+    {
+        $persen = $i['percentage'] ?? null;
+
+        if ($persen !== null) {
+            return capaianFormatPersen($persen);
+        }
+
+        if (!empty($i['validity']['not_evaluable'])) {
+            return capaianFormatPersen(0);
+        }
+
+        return null;
+    }
+}
+

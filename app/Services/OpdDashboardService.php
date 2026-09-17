@@ -2304,7 +2304,7 @@ class OpdDashboardService
             'satuan'          => $i['satuan'],
             'target_tahunan'  => $i['target_tahunan'],
             'percentage'      => $i['percentage'],
-            'percentage_teks' => $i['percentage'] !== null ? capaianFormatPersen($i['percentage']) : null,
+            'percentage_teks' => dash_persen_teks($i),
             'status'          => $i['status'],
             'is_valid'        => $i['validity']['is_valid'],
             'reason_code'     => $i['validity']['reason_code'],

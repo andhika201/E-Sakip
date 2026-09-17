@@ -408,7 +408,7 @@ class UserController extends BaseController
 
         $html = view('adminKabupaten/cascading/cascading_cetak', compact('rows', 'rowspan', 'firstShow', 'years'));
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,
@@ -628,7 +628,7 @@ class UserController extends BaseController
             'nama_opd' => $namaOpd,
         ]);
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode'          => 'utf-8',
             'format'        => 'A4-L',
             'margin_left'   => 10,

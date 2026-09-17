@@ -1,5 +1,9 @@
 <?php
 helper('format_helper');
+// pdf_td_gabung()/pdf_teks(): kolom induk TANPA rowspan + pemenggalan token
+// panjang. Rowspan setinggi satu OPD (ratusan baris) membuat mPDF memindah
+// blok utuh ke halaman baru atau menyusutkan seluruh tabel sampai tak terbaca.
+helper('pdf');
 
 $allRows = $rows ?? [];
 $selectedOpd  = $filter_opd   ?? 'all';
@@ -106,7 +110,10 @@ foreach ($allRows as $r) {
             line-height: 1.16;
         }
         table.rkpd-print-table thead { display: table-header-group; }
-        table.rkpd-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.rkpd-print-table tbody tr:nth-child(even) td { background: #fff; }
+        /* Isi kolom gabungan ditulis di baris tengah grup -> rata tengah agar konsisten. */
+        table.rkpd-print-table td.vm { vertical-align: middle; }
         table.rkpd-print-table th,
         table.rkpd-print-table td {
             padding: 2.8px 3px;
@@ -139,17 +146,19 @@ foreach ($allRows as $r) {
     <table class="pdf-table rkpd-print-table">
         <thead>
             <tr>
-                <th style="width:11%;">Satuan Kerja</th>
+                <?php // Total lebar WAJIB tepat 100%: mPDF menjaga proporsi (keep_table_proportions),
+                      // jadi total 108% dulu = tabel 8% lebih lebar dari kertas -> seluruhnya disusutkan. ?>
+                <th style="width:10%;">Satuan Kerja</th>
                 <th style="width:3%;">No</th>
                 <th style="width:4%;">Tahun</th>
-                <th style="width:13%;">Sasaran</th>
-                <th style="width:13%;">Indikator Sasaran</th>
-                <th style="width:12%;">Program</th>
-                <th style="width:12%;">Kegiatan</th>
-                <th style="width:12%;">Sub Kegiatan</th>
-                <th style="width:13%;">Indikator Sasaran Sub Kegiatan</th>
+                <th style="width:12%;">Sasaran</th>
+                <th style="width:12%;">Indikator Sasaran</th>
+                <th style="width:11%;">Program</th>
+                <th style="width:11%;">Kegiatan</th>
+                <th style="width:11%;">Sub Kegiatan</th>
+                <th style="width:12%;">Indikator Sasaran Sub Kegiatan</th>
                 <th style="width:5%;">Target</th>
-                <th style="width:10%;">Target Anggaran</th>
+                <th style="width:9%;">Target Anggaran</th>
             </tr>
         </thead>
         <tbody>
@@ -160,33 +169,39 @@ foreach ($allRows as $r) {
                     </td>
                 </tr>
             <?php else: ?>
+                <?php
+                // Awal & tinggi grup yang sedang berjalan per jenjang; rs*[$i] > 0
+                // hanya di baris awal grup (pra-kalkulasi di atas).
+                $grup = ['opd' => [0, 1], 'ind' => [0, 1], 'prog' => [0, 1], 'keg' => [0, 1]];
+                ?>
                 <?php foreach ($allRows as $i => $row): ?>
                     <?php
                     $ik = ($row['opd_id'] ?? 0) . '_' . ($row['indikator_id'] ?? 0);
                     $anggar = $row['target_anggaran'] ?? 0;
+                    foreach (['opd' => $rsOpd, 'ind' => $rsInd, 'prog' => $rsProg, 'keg' => $rsKeg] as $jenjang => $rs) {
+                        if ($rs[$i] > 0) {
+                            $grup[$jenjang] = [$i, $rs[$i]];
+                        }
+                    }
+                    [$mulaiOpd, $tinggiOpd]   = $grup['opd'];
+                    [$mulaiInd, $tinggiInd]   = $grup['ind'];
+                    [$mulaiProg, $tinggiProg] = $grup['prog'];
+                    [$mulaiKeg, $tinggiKeg]   = $grup['keg'];
                     ?>
                     <tr>
-                        <?php if ($rsOpd[$i] > 0): ?>
-                            <td rowspan="<?= $rsOpd[$i] ?>" class="text-start"><?= esc($row['nama_opd'] ?? '-') ?></td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($i - $mulaiOpd, $tinggiOpd, pdf_teks($row['nama_opd'] ?? ''), 'text-start') ?>
 
-                        <?php if ($rsInd[$i] > 0): ?>
-                            <td rowspan="<?= $rsInd[$i] ?>" class="c"><?= $indNoMap[$ik] ?></td>
-                            <td rowspan="<?= $rsInd[$i] ?>" class="c"><?= esc($row['tahun'] ?? '-') ?></td>
-                            <td rowspan="<?= $rsInd[$i] ?>" class="text-start"><?= esc($row['sasaran'] ?? '-') ?></td>
-                            <td rowspan="<?= $rsInd[$i] ?>" class="text-start"><?= esc($row['indikator_sasaran'] ?? '-') ?></td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($i - $mulaiInd, $tinggiInd, (string) ($indNoMap[$ik] ?? ''), 'c', '', 0) ?>
+                        <?= pdf_td_gabung($i - $mulaiInd, $tinggiInd, esc($row['tahun'] ?? ''), 'c') ?>
+                        <?= pdf_td_gabung($i - $mulaiInd, $tinggiInd, pdf_teks($row['sasaran'] ?? ''), 'text-start') ?>
+                        <?= pdf_td_gabung($i - $mulaiInd, $tinggiInd, pdf_teks($row['indikator_sasaran'] ?? ''), 'text-start') ?>
 
-                        <?php if ($rsProg[$i] > 0): ?>
-                            <td rowspan="<?= $rsProg[$i] ?>" class="text-start"><?= esc($row['program_kegiatan'] ?? '-') ?></td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($i - $mulaiProg, $tinggiProg, pdf_teks($row['program_kegiatan'] ?? ''), 'text-start') ?>
 
-                        <?php if ($rsKeg[$i] > 0): ?>
-                            <td rowspan="<?= $rsKeg[$i] ?>" class="text-start"><?= esc($row['nama_kegiatan'] ?? '-') ?></td>
-                        <?php endif; ?>
+                        <?= pdf_td_gabung($i - $mulaiKeg, $tinggiKeg, pdf_teks($row['nama_kegiatan'] ?? ''), 'text-start') ?>
 
-                        <td class="text-start"><?= esc($row['nama_subkegiatan'] ?? '-') ?></td>
-                        <td class="text-start"><?= esc($row['indikator_sasaran_sub_kegiatan'] ?? '-') ?></td>
+                        <td class="text-start"><?= pdf_teks($row['nama_subkegiatan'] ?? '') ?></td>
+                        <td class="text-start"><?= pdf_teks($row['indikator_sasaran_sub_kegiatan'] ?? '') ?></td>
                         <td class="c"><?= esc($row['target'] ?? '-') ?></td>
                         <td class="r">
                             <?= function_exists('formatRupiah') ? formatRupiah($anggar) : 'Rp ' . number_format((float) $anggar, 0, ',', '.') ?>

@@ -1,4 +1,9 @@
 <?php
+// pdf_td_gabung()/pdf_teks(): kolom induk (Visi/Misi/Tujuan/Sasaran) TANPA
+// rowspan; rowspan Visi setinggi seluruh dokumen memaksa mPDF menyusutkan
+// tabel sampai tak terbaca begitu bloknya lebih tinggi dari satu halaman.
+helper('pdf');
+
 $years = $period_data['years'] ?? [];
 if (!is_array($years)) {
     $years = [];
@@ -58,7 +63,10 @@ $jenisLabelFn = static function ($v): string {
             line-height: 1.14;
         }
         table.rpjmd-print-table thead { display: table-header-group; }
-        table.rpjmd-print-table tr { page-break-inside: avoid; }
+        /* Tanpa zebra: kolom gabungan (tanpa garis dalam) akan tampak belang bila baris diwarnai selang-seling. */
+        table.rpjmd-print-table tbody tr:nth-child(even) td { background: #fff; }
+        /* Isi kolom gabungan ditulis di baris tengah grup -> rata tengah agar konsisten. */
+        table.rpjmd-print-table td.vm { vertical-align: middle; }
         table.rpjmd-print-table th,
         table.rpjmd-print-table td {
             padding: 2.4px 2.6px;
@@ -125,35 +133,19 @@ $jenisLabelFn = static function ($v): string {
                 </tr>
             <?php else: ?>
                 <?php
-                // Pra-hitung total rowspan per VISI (gabung sel VISI walau dipakai beberapa misi).
-                $visiTotals = [];
-                foreach ($misiList as $mPre) {
-                    $rs = 0;
-                    foreach ($mPre['tujuan'] ?? [] as $tPre) {
-                        $itc = !empty($tPre['indikator_tujuan']) ? count($tPre['indikator_tujuan']) : 1;
-                        $sasc = 0;
-                        if (!empty($tPre['sasaran'])) {
-                            foreach ($tPre['sasaran'] as $sPre) {
-                                $sasc += !empty($sPre['indikator_sasaran']) ? count($sPre['indikator_sasaran']) : 1;
-                            }
-                        } else {
-                            $sasc = 1;
-                        }
-                        $rs += max($itc, $sasc);
-                    }
-                    $vk = (string) ($mPre['rpjmd_visi_id'] ?? ('t:' . ($mPre['visi'] ?? '-')));
-                    $visiTotals[$vk] = ($visiTotals[$vk] ?? 0) + $rs;
-                }
-                $visiPrinted = [];
-                ?>
+                // ---------------------------------------------------------------
+                // Ratakan Visi → Misi → Tujuan → (indikator tujuan ∥ sasaran →
+                // indikator sasaran) menjadi daftar baris. Kolom induk lalu dicetak
+                // lewat pdf_td_gabung() tanpa rowspan: rowspan Visi/Misi setinggi
+                // seluruh dokumen memaksa mPDF menyusutkan tabel sampai tak terbaca
+                // begitu bloknya lebih tinggi dari satu halaman.
+                // ---------------------------------------------------------------
+                $baris = [];
+                foreach ($misiList as $mi => $misi) {
+                    $visiKey = (string) ($misi['rpjmd_visi_id'] ?? ('t:' . ($misi['visi'] ?? '-')));
+                    $adaBaris = false;
 
-                <?php foreach ($misiList as $misi): ?>
-                    <?php
-                    // Siapkan struktur tujuan: flatten indikator tujuan & indikator sasaran jadi baris sejajar.
-                    $preparedTujuan = [];
-                    $misiRowspan = 0;
-
-                    foreach ($misi['tujuan'] ?? [] as $tujuan) {
+                    foreach ($misi['tujuan'] ?? [] as $ti => $tujuan) {
                         $leftRows = [];
                         if (!empty($tujuan['indikator_tujuan'])) {
                             foreach ($tujuan['indikator_tujuan'] as $it) {
@@ -171,18 +163,19 @@ $jenisLabelFn = static function ($v): string {
                             $leftRows[] = ['indikator' => '-', 'baseline' => '-', 'targets' => []];
                         }
 
+                        // Tiap baris kanan membawa posisi & tinggi grup sasarannya.
                         $rightRows = [];
                         if (!empty($tujuan['sasaran'])) {
                             foreach ($tujuan['sasaran'] as $sas) {
                                 if (!empty($sas['indikator_sasaran'])) {
                                     $countIs = count($sas['indikator_sasaran']);
-                                    foreach ($sas['indikator_sasaran'] as $idx => $is) {
+                                    foreach (array_values($sas['indikator_sasaran']) as $idx => $is) {
                                         $targets2 = [];
                                         foreach ($is['target_tahunan'] ?? [] as $t2) {
                                             $targets2[(string) $t2['tahun']] = $t2['target_tahunan'] ?? '-';
                                         }
                                         $rightRows[] = [
-                                            'sasaran'         => ($idx === 0) ? ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => $countIs] : null,
+                                            'sasaran'         => ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'ke' => $idx, 'jumlah' => $countIs],
                                             'indikator'       => $is['indikator_sasaran'] ?? '-',
                                             'baseline'        => $is['baseline'] ?? '-',
                                             'satuan'          => $is['satuan'] ?? '-',
@@ -192,7 +185,7 @@ $jenisLabelFn = static function ($v): string {
                                     }
                                 } else {
                                     $rightRows[] = [
-                                        'sasaran'         => ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'rowspan' => 1],
+                                        'sasaran'         => ['text' => ($sas['sasaran_rpjmd'] ?? '-'), 'ke' => 0, 'jumlah' => 1],
                                         'indikator'       => '-',
                                         'baseline'        => '-',
                                         'satuan'          => '-',
@@ -203,7 +196,7 @@ $jenisLabelFn = static function ($v): string {
                             }
                         } else {
                             $rightRows[] = [
-                                'sasaran'         => ['text' => '-', 'rowspan' => 1],
+                                'sasaran'         => ['text' => '-', 'ke' => 0, 'jumlah' => 1],
                                 'indikator'       => '-',
                                 'baseline'        => '-',
                                 'satuan'          => '-',
@@ -213,83 +206,78 @@ $jenisLabelFn = static function ($v): string {
                         }
 
                         $rowCount = max(count($leftRows), count($rightRows));
-                        $preparedTujuan[] = [
-                            'tujuan'    => $tujuan,
-                            'leftRows'  => $leftRows,
-                            'rightRows' => $rightRows,
-                            'rowCount'  => $rowCount,
-                        ];
-                        $misiRowspan += $rowCount;
+                        for ($r = 0; $r < $rowCount; $r++) {
+                            $baris[] = [
+                                'visi'    => $visiKey,
+                                'misi'    => $mi,
+                                'tujuan'  => $mi . '/' . $ti,
+                                'misiRow' => $misi,
+                                'tujuanText' => $tujuan['tujuan_rpjmd'] ?? '-',
+                                'left'    => $leftRows[$r] ?? ['indikator' => '-', 'baseline' => '-', 'targets' => []],
+                                // Baris pengisi (indikator tujuan lebih banyak dari indikator sasaran):
+                                // sel sasaran tetap dicetak kosong supaya kolom tidak bergeser.
+                                'right'   => $rightRows[$r] ?? ['sasaran' => ['text' => '', 'ke' => 0, 'jumlah' => 1], 'indikator' => '-', 'baseline' => '-', 'satuan' => '-', 'jenis_indikator' => '-', 'targets' => []],
+                            ];
+                            $adaBaris = true;
+                        }
                     }
 
-                    if ($misiRowspan < 1) {
-                        $misiRowspan = 1;
-                        $preparedTujuan[] = [
-                            'tujuan'    => ['tujuan_rpjmd' => '-'],
-                            'leftRows'  => [['indikator' => '-', 'baseline' => '-', 'targets' => []]],
-                            'rightRows' => [['sasaran' => ['text' => '-', 'rowspan' => 1], 'indikator' => '-', 'baseline' => '-', 'satuan' => '-', 'jenis_indikator' => '-', 'targets' => []]],
-                            'rowCount'  => 1,
+                    if (!$adaBaris) {
+                        $baris[] = [
+                            'visi'    => $visiKey,
+                            'misi'    => $mi,
+                            'tujuan'  => $mi . '/-',
+                            'misiRow' => $misi,
+                            'tujuanText' => '-',
+                            'left'    => ['indikator' => '-', 'baseline' => '-', 'targets' => []],
+                            'right'   => ['sasaran' => ['text' => '-', 'ke' => 0, 'jumlah' => 1], 'indikator' => '-', 'baseline' => '-', 'satuan' => '-', 'jenis_indikator' => '-', 'targets' => []],
                         ];
                     }
+                }
 
-                    $visiKey = (string) ($misi['rpjmd_visi_id'] ?? ('t:' . ($misi['visi'] ?? '-')));
-                    $misiCellsPrinted = false;
+                // Tinggi grup per kunci & penghitung posisi.
+                $tinggi = ['visi' => [], 'misi' => [], 'tujuan' => []];
+                foreach ($baris as $b) {
+                    foreach ($tinggi as $kunci => $_) {
+                        $tinggi[$kunci][$b[$kunci]] = ($tinggi[$kunci][$b[$kunci]] ?? 0) + 1;
+                    }
+                }
+                $posisi   = ['visi' => [], 'misi' => [], 'tujuan' => []];
+                $lastYear = !empty($years) ? (string) $years[array_key_last($years)] : null;
+                ?>
+
+                <?php foreach ($baris as $b): ?>
+                    <?php
+                    $ke = [];
+                    foreach ($posisi as $kunci => $_) {
+                        $ke[$kunci] = $posisi[$kunci][$b[$kunci]] = ($posisi[$kunci][$b[$kunci]] ?? -1) + 1;
+                    }
+                    $left  = $b['left'];
+                    $right = $b['right'];
+                    $kondisiAkhir = ($lastYear !== null) ? ($right['targets'][$lastYear] ?? '-') : '-';
                     ?>
+                    <tr>
+                        <?= pdf_td_gabung($ke['visi'], $tinggi['visi'][$b['visi']], pdf_teks($b['misiRow']['visi'] ?? '-'), 'text-start') ?>
+                        <?= pdf_td_gabung($ke['misi'], $tinggi['misi'][$b['misi']], pdf_teks($b['misiRow']['misi'] ?? '-'), 'text-start') ?>
+                        <?= pdf_td_gabung($ke['tujuan'], $tinggi['tujuan'][$b['tujuan']], pdf_teks($b['tujuanText']), 'text-start') ?>
 
-                    <?php foreach ($preparedTujuan as $block): ?>
-                        <?php
-                        $tujuanText = $block['tujuan']['tujuan_rpjmd'] ?? '-';
-                        $rowCount   = $block['rowCount'];
-                        $leftRows   = $block['leftRows'];
-                        $rightRows  = $block['rightRows'];
-                        $tujuanCellsPrinted = false;
-                        ?>
-                        <?php for ($r = 0; $r < $rowCount; $r++): ?>
-                            <?php
-                            $left  = $leftRows[$r] ?? ['indikator' => '-', 'baseline' => '-', 'targets' => []];
-                            $right = $rightRows[$r] ?? ['sasaran' => null, 'indikator' => '-', 'baseline' => '-', 'satuan' => '-', 'jenis_indikator' => '-', 'targets' => []];
-                            ?>
-                            <tr>
-                                <?php if (!$misiCellsPrinted): ?>
-                                    <?php if (!isset($visiPrinted[$visiKey])): ?>
-                                        <td class="text-start" rowspan="<?= (int) ($visiTotals[$visiKey] ?? $misiRowspan) ?>"><?= esc($misi['visi'] ?? '-') ?></td>
-                                        <?php $visiPrinted[$visiKey] = true; ?>
-                                    <?php endif; ?>
-                                    <td class="text-start" rowspan="<?= $misiRowspan ?>"><?= esc($misi['misi'] ?? '-') ?></td>
-                                    <?php $misiCellsPrinted = true; ?>
-                                <?php endif; ?>
+                        <td class="text-start"><?= pdf_teks($left['indikator']) ?></td>
+                        <td class="c"><?= esc($left['baseline'] ?? '-') ?></td>
+                        <?php foreach ($years as $y): ?>
+                            <td class="year-cell"><?= esc($left['targets'][(string) $y] ?? '-') ?></td>
+                        <?php endforeach; ?>
 
-                                <?php if (!$tujuanCellsPrinted): ?>
-                                    <td class="text-start" rowspan="<?= $rowCount ?>"><?= esc($tujuanText) ?></td>
-                                    <?php $tujuanCellsPrinted = true; ?>
-                                <?php endif; ?>
+                        <?= pdf_td_gabung((int) $right['sasaran']['ke'], (int) $right['sasaran']['jumlah'], pdf_teks($right['sasaran']['text']), 'text-start') ?>
 
-                                <td class="text-start"><?= esc($left['indikator']) ?></td>
-                                <td class="c"><?= esc($left['baseline'] ?? '-') ?></td>
-                                <?php foreach ($years as $y): ?>
-                                    <td class="year-cell"><?= esc($left['targets'][(string) $y] ?? '-') ?></td>
-                                <?php endforeach; ?>
-
-                                <?php if (!empty($right['sasaran'])): ?>
-                                    <td class="text-start" rowspan="<?= (int) $right['sasaran']['rowspan'] ?>"><?= esc($right['sasaran']['text']) ?></td>
-                                <?php endif; ?>
-
-                                <td class="text-start"><?= esc($right['indikator']) ?></td>
-                                <td class="c"><?= esc($right['baseline'] ?? '-') ?></td>
-                                <td class="c"><?= esc($right['satuan']) ?></td>
-                                <td class="text-start"><?= esc($jenisLabelFn($right['jenis_indikator'] ?? '')) ?></td>
-                                <?php foreach ($years as $y): ?>
-                                    <td class="year-cell"><?= esc($right['targets'][(string) $y] ?? '-') ?></td>
-                                <?php endforeach; ?>
-
-                                <?php
-                                $lastYear = !empty($years) ? (string) $years[array_key_last($years)] : null;
-                                $kondisiAkhir = ($lastYear !== null) ? ($right['targets'][$lastYear] ?? '-') : '-';
-                                ?>
-                                <td class="c"><?= esc($kondisiAkhir) ?></td>
-                            </tr>
-                        <?php endfor; ?>
-                    <?php endforeach; ?>
+                        <td class="text-start"><?= pdf_teks($right['indikator']) ?></td>
+                        <td class="c"><?= esc($right['baseline'] ?? '-') ?></td>
+                        <td class="c"><?= esc($right['satuan']) ?></td>
+                        <td class="text-start"><?= esc($jenisLabelFn($right['jenis_indikator'] ?? '')) ?></td>
+                        <?php foreach ($years as $y): ?>
+                            <td class="year-cell"><?= esc($right['targets'][(string) $y] ?? '-') ?></td>
+                        <?php endforeach; ?>
+                        <td class="c"><?= esc($kondisiAkhir) ?></td>
+                    </tr>
                 <?php endforeach; ?>
             <?php endif; ?>
         </tbody>

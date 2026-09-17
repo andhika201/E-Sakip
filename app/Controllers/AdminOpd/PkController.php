@@ -201,7 +201,7 @@ class PkController extends BaseController
             'tampilkanProgram' => $tampilkanProgram,
         ]));
 
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \App\Libraries\PdfMpdf([
             'mode' => 'utf-8',
             'format' => 'FOLIO',
             'default_font_size' => 12,

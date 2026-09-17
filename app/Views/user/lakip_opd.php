@@ -42,7 +42,7 @@
                   </div>
                   
                   <div class="col-12 col-md-auto">
-                      <button type="submit" class="btn btn-success w-100"><i class="fas fa-filter me-1"></i> Filter</button>
+                      <noscript><button type="submit" class="btn btn-success w-100"><i class="fas fa-filter me-1"></i> Filter</button></noscript>
                   </div>
               </form>
           </div>

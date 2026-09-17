@@ -207,7 +207,7 @@ class DashboardController extends BaseController
         );
         $detail['anggaran_teks']   = formatRupiah($detail['anggaran'] ?? 0);
         $detail['realisasi_teks']  = ($detail['realisasi'] ?? null) !== null ? formatRupiah($detail['realisasi']) : null;
-        $detail['percentage_teks'] = ($detail['percentage'] ?? null) !== null ? capaianFormatPersen($detail['percentage']) : null;
+        $detail['percentage_teks'] = dash_persen_teks($detail);
         unset($detail['skala']);
 
         return $this->sukses($detail);

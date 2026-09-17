@@ -8,6 +8,8 @@
  * Variabelnya sama dengan addendum_layar.php, minus tombol aksi.
  */
 
+helper('pdf'); // pdf_td_gabung() & pdf_teks() — kedua view pemanggil sudah memuatnya; ini pengaman.
+
 $indikatorRows = $indikatorRows ?? [];
 $analisisMap   = $analisisMap ?? [];
 $efisiensiRows = $efisiensiRows ?? [];
@@ -64,21 +66,21 @@ $adaEfisiensi = !empty($efisiensiRows);
                 <?php if (empty($daftar)): ?>
                     <tr>
                         <td class="text-center"><?= $noA++ ?></td>
-                        <td class="text-start"><?= esc($namaIndikator) ?></td>
-                        <td class="text-center">-</td>
-                        <td class="text-center">-</td>
-                        <td class="text-center">-</td>
+                        <td class="text-start"><?= pdf_teks($namaIndikator) ?></td>
+                        <td class="text-center"></td>
+                        <td class="text-center"></td>
+                        <td class="text-center"></td>
                     </tr>
                 <?php else: ?>
-                    <?php foreach ($daftar as $i => $a): ?>
+                    <?php $noInd = $noA++; ?>
+                    <?php foreach (array_values($daftar) as $i => $a): ?>
                         <tr>
-                            <?php if ($i === 0): ?>
-                                <td class="text-center" rowspan="<?= $jumlah ?>"><?= $noA++ ?></td>
-                                <td class="text-start" rowspan="<?= $jumlah ?>"><?= esc($namaIndikator) ?></td>
-                            <?php endif; ?>
-                            <td class="text-start"><?= nl2br(esc($a['faktor_pendukung'] ?? '')) ?: '-' ?></td>
-                            <td class="text-start"><?= nl2br(esc($a['faktor_penghambat'] ?? '')) ?: '-' ?></td>
-                            <td class="text-start"><?= nl2br(esc($a['upaya_peningkatan'] ?? '')) ?: '-' ?></td>
+                            <?php // Kolom induk tanpa rowspan: baris analisis panjang, blok rowspan-nya bisa melebihi sisa halaman. ?>
+                            <?= pdf_td_gabung($i, $jumlah, (string) $noInd, 'text-center', '', 0) ?>
+                            <?= pdf_td_gabung($i, $jumlah, pdf_teks($namaIndikator), 'text-start') ?>
+                            <td class="text-start"><?= nl2br(pdf_teks($a['faktor_pendukung'] ?? '')) ?></td>
+                            <td class="text-start"><?= nl2br(pdf_teks($a['faktor_penghambat'] ?? '')) ?></td>
+                            <td class="text-start"><?= nl2br(pdf_teks($a['upaya_peningkatan'] ?? '')) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

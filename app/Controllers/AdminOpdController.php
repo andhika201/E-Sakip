@@ -270,7 +270,7 @@ class AdminOpdController extends BaseController
         );
         $detail['anggaran_teks']  = formatRupiah($detail['anggaran']);
         $detail['realisasi_teks'] = $detail['realisasi'] !== null ? formatRupiah($detail['realisasi']) : null;
-        $detail['percentage_teks'] = $detail['percentage'] !== null ? capaianFormatPersen($detail['percentage']) : null;
+        $detail['percentage_teks'] = dash_persen_teks($detail);
         unset($detail['skala']);
 
         return $detail;

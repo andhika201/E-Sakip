@@ -56,7 +56,7 @@
                             <label class="form-label fw-semibold text-muted">
                                 Pihak 1 ↔ Pihak 2
                             </label>
-                            <select name="pk_id" class="form-select" <?= empty($tahun) ? 'disabled' : '' ?>>
+                            <select name="pk_id" class="form-select" onchange="this.form.submit()" <?= empty($tahun) ? 'disabled' : '' ?>>
                                 <option value="">-- Pilih Relasi PK --</option>
                                 <?php foreach ($pkRelasiList as $pk): ?>
                                     <option value="<?= $pk['id'] ?>" <?= ($pk_id == $pk['id']) ? 'selected' : '' ?>>
@@ -66,16 +66,8 @@
                             </select>
                         </div>
 
-                        <!-- Tombol Tampilkan -->
-                        <div class="col-lg-2 col-md-6">
-                            <button class="btn btn-success w-100">
-                                <i class="fas fa-search me-1"></i>
-                                Tampilkan
-                            </button>
-                        </div>
-
-                        <!-- Tombol Tambah -->
-                        <div class="col-lg-2 col-md-6 text-lg-end">
+                        <!-- Tombol Tambah (filter diterapkan otomatis saat pilihan berubah) -->
+                        <div class="col-lg-4 col-md-12 text-lg-end">
                             <a href="<?= base_url(($areaBase ?? 'adminopd') . '/pk/' . ($seg ?? $jenis) . '/tambah') ?>"
                                 class="btn btn-outline-success w-100">
                                 <i class="fas fa-plus me-1"></i>

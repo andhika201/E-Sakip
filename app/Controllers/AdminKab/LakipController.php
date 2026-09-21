@@ -137,14 +137,25 @@ class LakipController extends BaseController
      */
     protected function sumberDokumenLakip(string $mode): ?string
     {
+        $tahun = (int) ($this->request->getGet('tahun') ?: $this->request->getPost('tahun') ?: $this->tahunLaporanBawaan());
+
         if ($mode !== 'kabupaten') {
-            return $this->sumberDokumenBawaan($mode);
+            $opdRaw = $this->request->getPost('opd_id') ?? $this->request->getGet('opd_id');
+            $opdId = ($opdRaw === null || $opdRaw === '') ? null : (int) $opdRaw;
+
+            // Mode OPD tanpa OPD terpilih = rekap SELURUH OPD dilayani Renstra
+            if (empty($opdId)) {
+                return null;
+            }
+
+            [$sumber] = $this->sumberDariPermintaan('opd', $opdId, $tahun);
+            return $sumber !== '' ? $sumber : null;
         }
 
         [$sumber] = $this->sumberDariPermintaan(
             'kabupaten',
             null,
-            (int) ($this->request->getGet('tahun') ?: $this->request->getPost('tahun') ?: $this->tahunLaporanBawaan())
+            $tahun
         );
 
         return $sumber !== '' ? $sumber : 'rpjmd';

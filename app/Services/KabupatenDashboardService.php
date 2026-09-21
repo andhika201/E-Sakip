@@ -330,11 +330,12 @@ class KabupatenDashboardService
      */
     public function getBupatiPkAchievement(array $indikator, int $tahun): array
     {
-        $wajib  = count($indikator);
-        $valid  = 0;
-        $jumlah = 0.0;
-        $kritis = 0;
-        $formulaGap = 0;
+        $wajib        = count($indikator);
+        $valid        = 0;
+        $notEvaluable = 0;
+        $jumlah       = 0.0;
+        $kritis       = 0;
+        $formulaGap   = 0;
 
         $pengampu = $this->opdPengampuSasaran(array_column($indikator, 'sasaran_id'));
 
@@ -346,6 +347,8 @@ class KabupatenDashboardService
                 if ($i['status']['code'] === 'critical') {
                     $kritis++;
                 }
+            } elseif (!empty($i['validity']['not_evaluable'])) {
+                $notEvaluable++;
             } elseif (in_array((string) $i['validity']['reason_code'], ['missing_method', 'missing_formula', 'missing_predicate_scale'], true)) {
                 $formulaGap++;
             }
@@ -371,8 +374,10 @@ class KabupatenDashboardService
             ];
         }
 
-        $bisa       = $wajib > 0 && $valid === $wajib;
-        $total      = $bisa ? round($jumlah / $wajib, 2) : null;
+        $wajibDiukur = $wajib - $notEvaluable;
+        $bisa       = ($wajibDiukur > 0 && $valid === $wajibDiukur)
+                       || ($wajibDiukur === 0 && $notEvaluable > 0);
+        $total      = ($wajibDiukur > 0 && $valid === $wajibDiukur) ? round($jumlah / $wajibDiukur, 2) : null;
         $verifikasi = $this->opd->verificationInfo();
         $belumVerif = $verifikasi['available'] ? 0 : $valid;
 
@@ -381,11 +386,13 @@ class KabupatenDashboardService
             'total'       => $total,
             'valid'       => $valid,
             'wajib'       => $wajib,
-            'belum_valid' => $wajib - $valid,
+            'belum_valid' => $wajibDiukur - $valid,
             'kritis'      => $kritis,
             'formula_gap' => $formulaGap,
             'can_compute' => $bisa,
-            'status'      => $bisa ? getAchievementStatus((float) $total) : dash_status_nonnumeric('belum_valid'),
+            'status'      => ($bisa && $total !== null)
+                                ? getAchievementStatus((float) $total)
+                                : dash_status_nonnumeric($bisa ? 'not_evaluable' : 'belum_valid'),
             'label'       => ($verifikasi['available'] && $belumVerif === 0) ? 'Terverifikasi' : 'Sementara',
             'verified_all' => $verifikasi['available'] && $belumVerif === 0,
             'belum_verifikasi' => $belumVerif,
@@ -530,6 +537,7 @@ class KabupatenDashboardService
     {
         $total = count($indikator);
         $valid = 0;
+        $notEvaluable = 0;
         $kritis = 0;
         $perhatian = 0;
         $jumlah = 0.0;
@@ -551,6 +559,8 @@ class KabupatenDashboardService
                 } elseif ($i['status']['code'] === 'attention') {
                     $perhatian++;
                 }
+            } elseif (!empty($i['validity']['not_evaluable'])) {
+                $notEvaluable++;
             }
             if ($i['renaksi_count'] === 0) {
                 $tanpaRenaksi++;
@@ -601,19 +611,21 @@ class KabupatenDashboardService
             dash_triwulan_selesai($tahun, $triwulan)
         );
 
+        $wajibDiukur = $total - $notEvaluable;
         $ringkas = [
             'opd_id'          => $opdId,
             'nama_opd'        => $nama,
             'tahun'           => $tahun,
             'indikator'       => $total,
             'valid'           => $valid,
-            'belum_valid'     => $total - $valid,
+            'belum_valid'     => $wajibDiukur - $valid,
             'kritis'          => $kritis,
             'perhatian'       => $perhatian,
             'tanpa_renaksi'   => $tanpaRenaksi,
             'indikator_belum_input' => $tanpaCapaianPeriode,
-            'percentage'      => ($total > 0 && $valid === $total) ? round($jumlah / $total, 2) : null,
-            'can_compute'     => $total > 0 && $valid === $total,
+            'percentage'      => ($wajibDiukur > 0 && $valid === $wajibDiukur) ? round($jumlah / $wajibDiukur, 2) : null,
+            'can_compute'     => ($wajibDiukur > 0 && $valid === $wajibDiukur)
+                                  || ($wajibDiukur === 0 && $notEvaluable > 0),
             'anggaran'        => $anggaran,
             'realisasi'       => $adaRealisasi ? $realisasi : null,
             'penyerapan'      => ($anggaran > 0 && $adaRealisasi) ? round($realisasi / $anggaran * 100, 2) : null,

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Sep 17, 2026 at 08:03 PM
+-- Generation Time: Sep 17, 2026 at 11:08 PM
 -- Server version: 8.0.46
 -- PHP Version: 8.4.25
 
@@ -30,17 +30,17 @@ SET time_zone = "+00:00";
 CREATE TABLE `activity_logs` (
   `id` int UNSIGNED NOT NULL,
   `user_id` int DEFAULT NULL,
-  `username` varchar(100) DEFAULT NULL,
-  `role` varchar(50) DEFAULT NULL,
-  `action` varchar(50) DEFAULT NULL,
-  `module` varchar(100) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `method` varchar(10) DEFAULT NULL,
-  `url` varchar(255) DEFAULT NULL,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` varchar(255) DEFAULT NULL,
+  `username` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `role` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `action` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `module` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `description` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `method` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `activity_logs`
@@ -17759,7 +17759,63 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `username`, `role`, `action`, `mod
 (17611, 19, 'admin_disdukcapil', 'admin_opd', 'logout', 'auth', 'Logout', 'GET', '/logout', '103.140.188.242', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 09:34:54'),
 (17612, 3, 'admin_diskominfo', 'admin_opd', 'simpan', 'monev', 'POST /adminopd/monev/save', 'POST', '/adminopd/monev/save', '103.140.188.242', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 09:35:47'),
 (17613, NULL, 'admin_dp3ap2kb', NULL, 'login_gagal', 'auth', 'Login gagal untuk username: admin_dp3ap2kb', 'POST', '/login/authenticate', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 11:46:36'),
-(17614, 18, 'admin_dp3ap2kb', 'admin_opd', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 11:46:47');
+(17614, 18, 'admin_dp3ap2kb', 'admin_opd', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 11:46:47'),
+(17615, 2, 'admin_kab', 'admin_kab', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:13:32'),
+(17616, 2, 'admin_kab', 'admin_kab', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:14:57'),
+(17617, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/simpan', 'POST', '/adminkab/rpjmd/versi/simpan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:34'),
+(17618, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/142', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:38'),
+(17619, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/142', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:42'),
+(17620, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/142', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:44'),
+(17621, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/142', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:48'),
+(17622, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/ajukan/142', 'POST', '/adminkab/rpjmd/versi/ajukan/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:15:55'),
+(17623, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/keterangan/142', 'POST', '/adminkab/rpjmd/versi/keterangan/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:16:08'),
+(17624, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/ajukan/142', 'POST', '/adminkab/rpjmd/versi/ajukan/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:16:10'),
+(17625, 2, 'admin_kab', 'admin_kab', 'aksi', 'verifikasi', 'POST /adminkab/verifikasi/setujui/142', 'POST', '/adminkab/verifikasi/setujui/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:16:21'),
+(17626, 2, 'admin_kab', 'admin_kab', 'hapus_versi', 'rpjmd', 'Hapus versi RPJMD 2025-2029 V4 \"V4 — RPJMD Kabupaten 2025-2029\" (status published, 20 baris arsip; riwayat: created (admin_kab, 2026-09-17 13:15:34); edited_draft (admin_kab, 2026-09-17 13:15:38); edited_draft (admin_kab, 2026-09-17 13:15:42); edited_draf', 'POST', '/adminkab/rpjmd/versi/hapus/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:16:44'),
+(17627, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/hapus/142', 'POST', '/adminkab/rpjmd/versi/hapus/142', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:16:44'),
+(17628, 18, 'admin_dp3ap2kb', 'admin_opd', 'aksi', 'renstra', 'POST /adminopd/renstra/versi/simpan', 'POST', '/adminopd/renstra/versi/simpan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 13:17:32'),
+(17629, 18, 'admin_dp3ap2kb', 'admin_opd', 'aksi', 'renstra', 'POST /adminopd/renstra/versi/keterangan/143', 'POST', '/adminopd/renstra/versi/keterangan/143', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 13:17:47'),
+(17630, 18, 'admin_dp3ap2kb', 'admin_opd', 'aksi', 'renstra', 'POST /adminopd/renstra/versi/batalkan/143', 'POST', '/adminopd/renstra/versi/batalkan/143', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 13:18:06'),
+(17631, 18, 'admin_dp3ap2kb', 'admin_opd', 'hapus_versi', 'renstra', 'Hapus versi Renstra 2025-2029 V2 \"V2 — RENSTRA OPD #211 2025-2029\" (status cancelled, 6 baris arsip; riwayat: created (admin_dp3ap2kb, 2026-09-17 13:17:32); edited_draft (admin_dp3ap2kb, 2026-09-17 13:17:47); cancelled (admin_dp3ap2kb, 2026-09-17 13:18:06', 'POST', '/adminopd/renstra/versi/hapus/143', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 13:18:13'),
+(17632, 18, 'admin_dp3ap2kb', 'admin_opd', 'aksi', 'renstra', 'POST /adminopd/renstra/versi/hapus/143', 'POST', '/adminopd/renstra/versi/hapus/143', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36', '2026-09-17 13:18:13'),
+(17633, 2, 'admin_kab', 'admin_kab', 'buka_kunci_rpjmd', 'rpjmd', 'Buka kunci RPJMD 2025-2029 (V3). Alasan: tea', 'POST', '/adminkab/rpjmd/izin-sunting/ajukan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:24'),
+(17634, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/izin-sunting/ajukan', 'POST', '/adminkab/rpjmd/izin-sunting/ajukan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:24'),
+(17635, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/terapkan-ulang/140', 'POST', '/adminkab/rpjmd/versi/terapkan-ulang/140', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:34'),
+(17636, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/simpan', 'POST', '/adminkab/rpjmd/versi/simpan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:51'),
+(17637, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/144', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:55'),
+(17638, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/144', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:18:58'),
+(17639, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/144', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:19:01');
+INSERT INTO `activity_logs` (`id`, `user_id`, `username`, `role`, `action`, `module`, `description`, `method`, `url`, `ip_address`, `user_agent`, `created_at`) VALUES
+(17640, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/aktifkan-indikator/144', 'POST', '/adminkab/rpjmd/versi/aktifkan-indikator/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:19:03'),
+(17641, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/keterangan/144', 'POST', '/adminkab/rpjmd/versi/keterangan/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:19:17'),
+(17642, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/tetapkan/144', 'POST', '/adminkab/rpjmd/versi/tetapkan/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:19:23'),
+(17643, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/terapkan-ulang/144', 'POST', '/adminkab/rpjmd/versi/terapkan-ulang/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:19:30'),
+(17644, 2, 'admin_kab', 'admin_kab', 'tutup_kunci_rpjmd', 'rpjmd', 'Tutup kunci RPJMD 2025-2029.', 'POST', '/adminkab/rpjmd/izin-sunting/selesai', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:26:07'),
+(17645, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/izin-sunting/selesai', 'POST', '/adminkab/rpjmd/izin-sunting/selesai', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:26:07'),
+(17646, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/simpan', 'POST', '/adminkab/rpjmd/versi/simpan', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:26:59'),
+(17647, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/sunting/145', 'POST', '/adminkab/rpjmd/versi/sunting/145', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:30:11'),
+(17648, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/tetapkan/145', 'POST', '/adminkab/rpjmd/versi/tetapkan/145', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:30:25'),
+(17649, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/keterangan/144', 'POST', '/adminkab/rpjmd/versi/keterangan/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:31:17'),
+(17650, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/keterangan/140', 'POST', '/adminkab/rpjmd/versi/keterangan/140', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:31:47'),
+(17651, 2, 'admin_kab', 'admin_kab', 'buka_kunci_rpjmd', 'rpjmd', 'Buka kunci RPJMD 2025-2029 (V5). Alasan: edit', 'POST', '/adminkab/rpjmd/izin-sunting/ajukan', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:33:22'),
+(17652, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/izin-sunting/ajukan', 'POST', '/adminkab/rpjmd/izin-sunting/ajukan', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:33:22'),
+(17653, 2, 'admin_kab', 'admin_kab', 'ubah', 'rpjmd', 'POST /adminkab/rpjmd/update', 'POST', '/adminkab/rpjmd/update', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:33:50'),
+(17654, 2, 'admin_kab', 'admin_kab', 'hapus_versi', 'rpjmd', 'Hapus versi RPJMD 2025-2029 V4 \"V4 — RPJMD Kabupaten 2025-2029\" (status published, 20 baris arsip; riwayat: created (admin_kab, 2026-09-17 13:18:51); edited_draft (admin_kab, 2026-09-17 13:18:55); edited_draft (admin_kab, 2026-09-17 13:18:58); edited_draf', 'POST', '/adminkab/rpjmd/versi/hapus/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:35:08'),
+(17655, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/hapus/144', 'POST', '/adminkab/rpjmd/versi/hapus/144', '103.169.238.113', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:35:08'),
+(17656, 2, 'admin_kab', 'admin_kab', 'tutup_kunci_rpjmd', 'rpjmd', 'Tutup kunci RPJMD 2025-2029.', 'POST', '/adminkab/rpjmd/izin-sunting/selesai', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:36:35'),
+(17657, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/izin-sunting/selesai', 'POST', '/adminkab/rpjmd/izin-sunting/selesai', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:36:35'),
+(17658, 2, 'admin_kab', 'admin_kab', 'aksi', 'iku', 'POST /adminkab/iku/revisi/simpan', 'POST', '/adminkab/iku/revisi/simpan', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:37:56'),
+(17659, 2, 'admin_kab', 'admin_kab', 'aksi', 'iku', 'POST /adminkab/iku/revisi/sunting/118', 'POST', '/adminkab/iku/revisi/sunting/118', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:40:12'),
+(17660, 2, 'admin_kab', 'admin_kab', 'aksi', 'iku', 'POST /adminkab/iku/revisi/berlaku/118', 'POST', '/adminkab/iku/revisi/berlaku/118', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:41:10'),
+(17661, 2, 'admin_kab', 'admin_kab', 'aksi', 'iku', 'POST /adminkab/iku/revisi/berlaku/118', 'POST', '/adminkab/iku/revisi/berlaku/118', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:41:34'),
+(17662, 2, 'admin_kab', 'admin_kab', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '182.3.100.242', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:42:46'),
+(17663, 2, 'admin_kab', 'admin_kab', 'aksi', 'iku', 'POST /adminkab/iku/revisi/sahkan/118', 'POST', '/adminkab/iku/revisi/sahkan/118', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:44:23'),
+(17664, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/jadikan-utama/140', 'POST', '/adminkab/rpjmd/versi/jadikan-utama/140', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:47:13'),
+(17665, 2, 'admin_kab', 'admin_kab', 'aksi', 'rpjmd', 'POST /adminkab/rpjmd/versi/jadikan-utama/1', 'POST', '/adminkab/rpjmd/versi/jadikan-utama/1', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 13:47:46'),
+(17666, 2, 'admin_kab', 'admin_kab', 'logout', 'auth', 'Logout', 'GET', '/logout', '103.59.45.37', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36', '2026-09-17 14:04:29'),
+(17667, 3, 'admin_diskominfo', 'admin_opd', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '36.50.143.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0', '2026-09-17 14:30:26'),
+(17668, 3, 'admin_diskominfo', 'admin_opd', 'logout', 'auth', 'Logout', 'GET', '/logout', '36.50.143.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0', '2026-09-17 14:31:24'),
+(17669, 2, 'admin_kab', 'admin_kab', 'login', 'auth', 'Login berhasil', 'POST', '/login/authenticate', '36.50.143.200', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0', '2026-09-17 14:31:47');
 
 -- --------------------------------------------------------
 
@@ -17768,10 +17824,10 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `username`, `role`, `action`, `mod
 --
 
 CREATE TABLE `app_settings` (
-  `skey` varchar(64) NOT NULL,
-  `svalue` text,
+  `skey` varchar(64) COLLATE utf8mb4_general_ci NOT NULL,
+  `svalue` text COLLATE utf8mb4_general_ci,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `app_settings`
@@ -20925,7 +20981,9 @@ INSERT INTO `dokumen_izin_sunting` (`id`, `modul`, `scope`, `opd_id`, `periode_m
 (35, 'renstra', 'opd', 2, 2025, 2029, 135, 'sunting', 'selesai', 'penyesuaian', NULL, 52, 'admin_sekda', '2026-09-09 04:16:21', 2, 'admin_kab', '2026-09-09 04:16:51', '2026-09-09 04:23:12', '2026-09-09 11:23:12'),
 (36, 'iku', 'opd', 2, 2025, 2029, 99, 'hapus', 'selesai', 'salah', 'Ditutup otomatis: revisi ini bukan lagi versi terkini.', 52, 'admin_sekda', '2026-09-09 04:20:51', NULL, NULL, NULL, '2026-09-09 04:21:05', '2026-09-09 04:21:05'),
 (37, 'iku', 'opd', 2, 2025, 2029, 101, 'hapus', 'selesai', 'salah', 'Ditutup otomatis: revisi ini bukan lagi versi terkini.', 52, 'admin_sekda', '2026-09-09 04:21:51', NULL, NULL, NULL, '2026-09-09 04:22:15', '2026-09-09 04:22:15'),
-(38, 'renstra', 'opd', 31, 2025, 2029, 34, 'sunting', 'selesai', 'salah', NULL, 43, 'admin_pringsewu', '2026-09-09 04:33:42', 2, 'admin_kab', '2026-09-09 04:33:49', '2026-09-09 04:42:46', '2026-09-09 11:42:46');
+(38, 'renstra', 'opd', 31, 2025, 2029, 34, 'sunting', 'selesai', 'salah', NULL, 43, 'admin_pringsewu', '2026-09-09 04:33:42', 2, 'admin_kab', '2026-09-09 04:33:49', '2026-09-09 04:42:46', '2026-09-09 11:42:46'),
+(39, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 140, 'sunting', 'selesai', 'tea', 'Dibuka sendiri oleh Admin Kabupaten (otoritas RPJMD).', 2, 'admin_kab', '2026-09-17 13:18:24', 2, 'admin_kab', '2026-09-17 13:18:24', '2026-09-17 13:26:07', '2026-09-17 20:26:07'),
+(40, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 145, 'sunting', 'selesai', 'edit', 'Dibuka sendiri oleh Admin Kabupaten (otoritas RPJMD).', 2, 'admin_kab', '2026-09-17 13:33:22', 2, 'admin_kab', '2026-09-17 13:33:22', '2026-09-17 13:36:35', '2026-09-17 20:36:35');
 
 -- --------------------------------------------------------
 
@@ -20983,7 +21041,7 @@ CREATE TABLE `dokumen_versi` (
 --
 
 INSERT INTO `dokumen_versi` (`id`, `modul`, `scope`, `opd_id`, `periode_mulai`, `periode_akhir`, `version_no`, `label`, `effective_from`, `effective_to`, `status`, `copied_from_version_id`, `mulai_dari_kosong`, `source_type`, `source_version_id`, `source_captured_at`, `source_override_reason`, `source_override_dasar`, `alasan_perubahan`, `dasar_perubahan`, `nomor_dasar`, `tanggal_dasar`, `catatan`, `ref_id`, `created_by`, `created_at`, `submitted_by`, `submitted_at`, `approved_by`, `approved_at`, `cancelled_by`, `cancelled_at`, `applied_at`, `updated_at`, `tampilan_utama`, `tampilan_oleh`, `tampilan_pada`) VALUES
-(1, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 1, 'V1 — Kondisi Awal RPJMD 2025-2029', '2025-01-01', '2026-07-01', 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Baseline otomatis saat pemasangan versioning (§43); isi arsip dibekukan terpisah.', NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-09-17 13:41:35', 0, NULL, NULL),
+(1, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 1, 'V1 — Kondisi Awal RPJMD 2025-2029', '2025-01-01', '2025-09-09', 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Baseline otomatis saat pemasangan versioning (§43); isi arsip dibekukan terpisah.', NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-09-17 20:47:46', 1, 2, '2026-09-17 13:47:46'),
 (2, 'renstra', 'opd', 7, 2025, 2029, 1, 'V1 — Kondisi Awal Renstra 2025-2029', '2025-01-01', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Baseline otomatis saat pemasangan versioning (§43); isi arsip dibekukan terpisah.', NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', 0, NULL, NULL),
 (3, 'renstra', 'opd', 5, 2025, 2029, 1, 'V1 — Kondisi Awal Renstra 2025-2029', '2025-01-01', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Baseline otomatis saat pemasangan versioning (§43); isi arsip dibekukan terpisah.', NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', 0, NULL, NULL),
 (4, 'renstra', 'opd', 23, 2025, 2029, 1, 'V1 — Kondisi Awal Renstra 2025-2029', '2025-01-01', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Baseline otomatis saat pemasangan versioning (§43); isi arsip dibekukan terpisah.', NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', NULL, NULL, NULL, '2026-08-26 08:55:24', 0, NULL, NULL),
@@ -21071,7 +21129,8 @@ INSERT INTO `dokumen_versi` (`id`, `modul`, `scope`, `opd_id`, `periode_mulai`, 
 (136, 'renstra', 'opd', 2, 2025, 2029, 4, 'V4 — Renstra 2025-2029 (hasil penyuntingan)', '2026-09-10', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, 'penyesuaian', NULL, NULL, NULL, NULL, NULL, 52, '2026-09-09 04:23:12', 52, '2026-09-09 04:23:12', 2, '2026-09-09 04:23:20', NULL, NULL, NULL, '2026-09-09 11:23:20', 0, NULL, NULL),
 (137, 'renstra', 'opd', 31, 2025, 2029, 2, 'V2 — Renstra 2025-2029 (hasil penyuntingan)', '2026-09-09', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, 'salah', NULL, NULL, NULL, NULL, NULL, 43, '2026-09-09 04:42:46', 43, '2026-09-09 04:42:46', 2, '2026-09-09 04:42:58', NULL, NULL, NULL, '2026-09-09 11:42:58', 0, NULL, NULL),
 (138, 'renstra', 'opd', 24, 2025, 2029, 2, 'V0', '2025-01-01', '2026-07-01', 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 28, '2026-09-16 02:00:34', 28, '2026-09-16 02:01:59', 2, '2026-09-16 02:03:41', NULL, NULL, NULL, '2026-09-16 09:04:15', 1, 28, '2026-09-16 02:04:15'),
-(140, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 3, 'V3 — RPJMD Kabupaten 2025-2029', '2026-07-01', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '2026-09-17 06:38:29', 2, '2026-09-17 06:41:27', 2, '2026-09-17 06:41:35', NULL, NULL, NULL, '2026-09-17 13:41:35', 0, NULL, NULL);
+(140, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 3, 'V3 — RPJMD Kabupaten 2025-2029', '2025-09-09', '2025-10-01', 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '2026-09-17 06:38:29', 2, '2026-09-17 06:41:27', 2, '2026-09-17 06:41:35', NULL, NULL, NULL, '2026-09-17 20:47:46', 0, NULL, NULL),
+(145, 'rpjmd', 'kabupaten', NULL, 2025, 2029, 5, 'V5 — RPJMD Kabupaten 2025-2029', '2025-10-01', NULL, 'published', NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, '2026-09-17 13:26:59', NULL, NULL, 2, '2026-09-17 13:30:25', NULL, NULL, NULL, '2026-09-17 20:31:47', 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -21570,17 +21629,33 @@ INSERT INTO `iku_indikator` (`id`, `iku_sasaran_id`, `indikator`, `definisi`, `r
 (186, 150, 'Persentase Penyelesaian gangguan Keamanan Tingkat Kecamatan', 'suatu kondisi dinamis di\r\nwilayah kecamatan yang\r\nmemungkinkan pemerintah,\r\naparatur desa/kelurahan, dan\r\nseluruh lapisan masyarakat\r\ndapat menjalankan aktivitasnya\r\nsecara tenang, tertib, teratur,\r\ndan aman tanpa adanya\r\ngangguan atau ancaman fisik\r\nmaupun psikologis', 'Persentase Gangguan\r\nkeamanan, ketentraman,\r\nketertiban masyarakat yang\r\ndapat diselesaikan', '13', 'Kantor Camat Pringsewu', 'Camat', 'positif', NULL, 0, 'draft', 102, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-09 04:44:32', '2026-09-10 01:23:29', 'renstra', 137, 546),
 (193, 154, 'Skor Pola Pangan Harapan (PPH) Konsumsi Pangan', 'Skor Pola Pangan Harapan (PPH) Konsumsi Pangan adalah Angka yang menunjukkan mutu atau kualitas komposisi konsumsi pangan penduduk', 'Angka Kecukupan Gizi(AKG) X Bobot Masing – masing Kelompok Pangan', '36', 'BPS', 'Bidang Ketersediaan dan Kerawanan Pangan, Bidang Distribusi dan cadangan Pangan, Bidang Konsumsi dan Keamanan Pangan', 'positif', '90,20', 0, 'draft', 115, NULL, 'dihentikan', 0, 2025, '2026-09-16 02:06:41', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 11).', '2026-09-16 02:06:41', '2026-09-16 02:06:41', 'renstra', 138, NULL),
 (194, 155, 'Persentase Daerah Rawan Pangan', 'Persentase Daerah Rentan Rawan Pangan adalah Ukuran kuantitatif yang menunjukkan tingkat keberhasilan program pemerintah dalam mengurangi jumlah wilayah yang terkategori rentan terhadap kerawanan pangan', '(Jumlah Daerah Rawan Pangan/Jumlah Seluruh Desa) x 100%', '13', 'BPS', 'Bidang Ketersediaan dan Kerawanan Pangan, Bidang Distribusi dan cadangan Pangan', 'negatif', '9', 0, 'draft', 115, NULL, 'dihentikan', 0, 2025, '2026-09-16 02:06:41', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 11).', '2026-09-16 02:06:41', '2026-09-16 02:06:41', 'renstra', 138, NULL),
-(195, 156, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks Pendidikan merupakan rata-rata dari Indeks Harapan Lama Sekolah (HLS) dan Indeks Rata-Rata Lama Sekolah (RLS).\r\nHarapan Lama Sekolah (HLS) : jumlah tahun sekolah yang diharapkan dapat ditempuh oleh anak usia sekolah pada masa mendatang.\r\nRata-rata Lama Sekolah (RLS) : jumlah tahun rata-rata yang sudah ditempuh oleh penduduk usia 25 tahun ke atas.', 'Indeks', 'BPS (Badan Pusat Statistik)', 'Dinas Pendidikan dan Kebudayaan Dinas Perpustakaan dan Kearsipan Dinas Kepemudaan, Olahraga dan Pariwisata Kesatuan Bangsa dan Politik Sekretariat Daerah', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 101),
-(196, 157, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Rumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau Berlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk. (PDRB ADHB / Jumlah Penduduk)\r\nTotal PDRB : nilai seluruh barang dan jasa yang dihasilkan di suatu daerah dalam periode tertentu (biasanya 1 tahun dan dinyatakan dalam juta rupia)h.\r\nJumlah Penduduk : total penduduk pada tahun yang sama.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Pemberdayaan Masyarakat Pekon Dinas Koperasi, Usaha Kecil dan Menengah, Perindustrian dan Perdagangan Dinas Kepemudaan, Olahraga dan Pariwisata', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 104),
-(197, 158, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Nilai Indeks RB General berdasarkan hasil evaluasi Kementerian PANRB', 'Indeks', 'Kementerian PAN RB', 'Inspektorat BAPPERIDA BAPENDA BPKAD Dinas Perpustakaan dan Kearsipan  Sekretariat Daerah Sekretariat DPRD Dinas Kominfo Satuan Polisi Pamong Praja Dinas Kependudukan dan Pencatatan Sipil Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 115),
-(198, 159, 'Persentase Ketersediaan Pangan terhadap kebutuhan pangan', NULL, NULL, '%', NULL, NULL, NULL, '114,49', 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 110),
-(199, 160, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Skor(i,d) = [ (N(i,d) − N_min(i)) / (N_max(i) − N_min(i)) ] × 5\r\n\r\nKeterangan:\r\n●Skor(i,d) = skor indikator ke-i untuk daerah ke-d\r\n●N(i,d) = nilai data mentah indikator ke-i untuk daerah ke-d\r\n●N_min(i) = nilai terendah (batas bawah) yang ditetapkan untuk indikator ke-i\r\n●N_max(i) = nilai tertinggi (batas atas) yang ditetapkan untuk indikator ke-i', 'Indeks', 'BRIN (Badan Riset dan Inovasi Nasional)\r\nBPS (Badan Pusat Statistik)\r\nKementerian PUPR\r\nKementerian Perhubungan\r\nKementerian Kominfo', 'Dinas Pekerjaan Umum dan Perumahan Rakyat Dinas Perhubungan', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 107),
-(200, 161, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks Kesehatan biasanya dihitung sebagai salah satu komponen dari Indeks Pembangunan Manusia (IPM).\r\n((UHH − 20) / (85 − 20)) × 100\r\nHarapan Hidup Saat Lahir (HLSL) : rata-rata umur yang diharapkan bayi yang lahir pada tahun tertentu.\r\n20 tahun : batas bawah (minimum).\r\n85 tahun : batas atas (maksimum).', 'Indeks', 'Badan Pusat Statistik (BPS)', 'Dinas Kesehatan Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Berencana', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 102),
-(201, 162, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', 'Persentase Pertumbuhan Investasi = Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​ dikali 100%', '%', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu (DPMPTSP) Kabupaten', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 105),
-(202, 163, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'IKLH = nilai komposit Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL), sesuai bobot/metodologi yang ditetapkan KLHK.', 'Indeks', 'KLHK (Kementerian Lingkungan Hidup dan Kehutanan). BPS, DLH Kabupaten Pringsewu', 'Dinas Lingkungan Hidup', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 108),
-(203, 163, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'IRB mencerminkan potensi kerugian yang mungkin timbul akibat bencana, baik terhadap penduduk, aset, ekonomi, maupun lingkungan. \r\nRumus Perhitungan : Bahaya dikali Kerentanan dibagi kapasitas.\r\nHazard (Bahaya) : potensi ancaman bencana alam (gempa, banjir, longsor, tsunami, dll).\r\nVulnerability (Kerentanan) : kondisi sosial, ekonomi, fisik, dan lingkungan yang membuat masyarakat rentan terhadap dampak bencana.\r\nCapacity (Kapasitas) : kemampuan daerah dalam mengurangi risiko, seperti kesiapsiagaan, infrastruktur mitigasi, dan sistem peringatan dini.', 'Indeks', 'Badan Nasional Penanggulangan Bencana (BNPB) , BPBD Kabupaten Pringsewu', 'Badan Penanggulangan Bencana Daerah', NULL, NULL, 1, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 109),
-(204, 164, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', 'Jumlah Penduduk Miskin / Jumlah Penduduk × 100%.\r\n\r\nJumlah Penduduk Miskin : penduduk dengan pengeluaran per kapita per bulan di bawah garis kemiskinan.\r\nJumlah Penduduk Total : seluruh penduduk di Kabupaten Pringsewu.\r\nGaris Kemiskinan : ditetapkan oleh BPS, mencakup kebutuhan minimum makanan (2.100 kkal per kapita per hari) dan kebutuhan non-makanan (perumahan, pendidikan, kesehatan, dll).', '%', 'BPS (Badan Pusat Statistik)', 'Dinas Sosial', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 103),
-(205, 165, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 106);
+(195, 156, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks Pendidikan merupakan rata-rata dari Indeks Harapan Lama Sekolah (HLS) dan Indeks Rata-Rata Lama Sekolah (RLS).\r\nHarapan Lama Sekolah (HLS) : jumlah tahun sekolah yang diharapkan dapat ditempuh oleh anak usia sekolah pada masa mendatang.\r\nRata-rata Lama Sekolah (RLS) : jumlah tahun rata-rata yang sudah ditempuh oleh penduduk usia 25 tahun ke atas.', 'Indeks', 'BPS (Badan Pusat Statistik)', 'Dinas Pendidikan dan Kebudayaan Dinas Perpustakaan dan Kearsipan Dinas Kepemudaan, Olahraga dan Pariwisata Kesatuan Bangsa dan Politik Sekretariat Daerah', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 101),
+(196, 157, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Rumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau Berlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk. (PDRB ADHB / Jumlah Penduduk)\r\nTotal PDRB : nilai seluruh barang dan jasa yang dihasilkan di suatu daerah dalam periode tertentu (biasanya 1 tahun dan dinyatakan dalam juta rupia)h.\r\nJumlah Penduduk : total penduduk pada tahun yang sama.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Pemberdayaan Masyarakat Pekon Dinas Koperasi, Usaha Kecil dan Menengah, Perindustrian dan Perdagangan Dinas Kepemudaan, Olahraga dan Pariwisata', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 104),
+(197, 158, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Nilai Indeks RB General berdasarkan hasil evaluasi Kementerian PANRB', 'Indeks', 'Kementerian PAN RB', 'Inspektorat BAPPERIDA BAPENDA BPKAD Dinas Perpustakaan dan Kearsipan  Sekretariat Daerah Sekretariat DPRD Dinas Kominfo Satuan Polisi Pamong Praja Dinas Kependudukan dan Pencatatan Sipil Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 115),
+(198, 159, 'Persentase Ketersediaan Pangan terhadap kebutuhan pangan', NULL, NULL, '%', NULL, NULL, NULL, '114,49', 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 110),
+(199, 160, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Skor(i,d) = [ (N(i,d) − N_min(i)) / (N_max(i) − N_min(i)) ] × 5\r\n\r\nKeterangan:\r\n●Skor(i,d) = skor indikator ke-i untuk daerah ke-d\r\n●N(i,d) = nilai data mentah indikator ke-i untuk daerah ke-d\r\n●N_min(i) = nilai terendah (batas bawah) yang ditetapkan untuk indikator ke-i\r\n●N_max(i) = nilai tertinggi (batas atas) yang ditetapkan untuk indikator ke-i', 'Indeks', 'BRIN (Badan Riset dan Inovasi Nasional)\r\nBPS (Badan Pusat Statistik)\r\nKementerian PUPR\r\nKementerian Perhubungan\r\nKementerian Kominfo', 'Dinas Pekerjaan Umum dan Perumahan Rakyat Dinas Perhubungan', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 107),
+(200, 161, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks Kesehatan biasanya dihitung sebagai salah satu komponen dari Indeks Pembangunan Manusia (IPM).\r\n((UHH − 20) / (85 − 20)) × 100\r\nHarapan Hidup Saat Lahir (HLSL) : rata-rata umur yang diharapkan bayi yang lahir pada tahun tertentu.\r\n20 tahun : batas bawah (minimum).\r\n85 tahun : batas atas (maksimum).', 'Indeks', 'Badan Pusat Statistik (BPS)', 'Dinas Kesehatan Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Berencana', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 102),
+(201, 162, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', 'Persentase Pertumbuhan Investasi = Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​ dikali 100%', '%', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu (DPMPTSP) Kabupaten', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 105),
+(202, 163, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'IKLH = nilai komposit Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL), sesuai bobot/metodologi yang ditetapkan KLHK.', 'Indeks', 'KLHK (Kementerian Lingkungan Hidup dan Kehutanan). BPS, DLH Kabupaten Pringsewu', 'Dinas Lingkungan Hidup', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 108),
+(203, 163, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'IRB mencerminkan potensi kerugian yang mungkin timbul akibat bencana, baik terhadap penduduk, aset, ekonomi, maupun lingkungan. \r\nRumus Perhitungan : Bahaya dikali Kerentanan dibagi kapasitas.\r\nHazard (Bahaya) : potensi ancaman bencana alam (gempa, banjir, longsor, tsunami, dll).\r\nVulnerability (Kerentanan) : kondisi sosial, ekonomi, fisik, dan lingkungan yang membuat masyarakat rentan terhadap dampak bencana.\r\nCapacity (Kapasitas) : kemampuan daerah dalam mengurangi risiko, seperti kesiapsiagaan, infrastruktur mitigasi, dan sistem peringatan dini.', 'Indeks', 'Badan Nasional Penanggulangan Bencana (BNPB) , BPBD Kabupaten Pringsewu', 'Badan Penanggulangan Bencana Daerah', NULL, NULL, 1, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 109),
+(204, 164, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', 'Jumlah Penduduk Miskin / Jumlah Penduduk × 100%.\r\n\r\nJumlah Penduduk Miskin : penduduk dengan pengeluaran per kapita per bulan di bawah garis kemiskinan.\r\nJumlah Penduduk Total : seluruh penduduk di Kabupaten Pringsewu.\r\nGaris Kemiskinan : ditetapkan oleh BPS, mencakup kebutuhan minimum makanan (2.100 kkal per kapita per hari) dan kebutuhan non-makanan (perumahan, pendidikan, kesehatan, dll).', '%', 'BPS (Badan Pusat Statistik)', 'Dinas Sosial', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 103),
+(205, 165, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 116, NULL, 'baru', 0, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 106);
+INSERT INTO `iku_indikator` (`id`, `iku_sasaran_id`, `indikator`, `definisi`, `rumusan_perhitungan`, `satuan`, `sumber_data`, `penanggung_jawab`, `jenis_indikator`, `baseline`, `urutan`, `status`, `revisi_id`, `indikator_sebelumnya_id`, `jenis_perubahan`, `perubahan_substansial`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`, `created_at`, `updated_at`, `source_type`, `source_version_id`, `source_indikator_id`) VALUES
+(206, 166, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks Pendidikan merupakan rata-rata dari Indeks Harapan Lama Sekolah (HLS) dan Indeks Rata-Rata Lama Sekolah (RLS).\r\nHarapan Lama Sekolah (HLS) : jumlah tahun sekolah yang diharapkan dapat ditempuh oleh anak usia sekolah pada masa mendatang.\r\nRata-rata Lama Sekolah (RLS) : jumlah tahun rata-rata yang sudah ditempuh oleh penduduk usia 25 tahun ke atas.', 'Indeks', 'BPS (Badan Pusat Statistik)', 'Dinas Pendidikan dan Kebudayaan Dinas Perpustakaan dan Kearsipan Dinas Kepemudaan, Olahraga dan Pariwisata Kesatuan Bangsa dan Politik Sekretariat Daerah', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 101),
+(207, 167, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks Kesehatan biasanya dihitung sebagai salah satu komponen dari Indeks Pembangunan Manusia (IPM).\r\n((UHH − 20) / (85 − 20)) × 100\r\nHarapan Hidup Saat Lahir (HLSL) : rata-rata umur yang diharapkan bayi yang lahir pada tahun tertentu.\r\n20 tahun : batas bawah (minimum).\r\n85 tahun : batas atas (maksimum).', 'Indeks', 'Badan Pusat Statistik (BPS)', 'Dinas Kesehatan Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Berencana', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 102),
+(208, 168, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', 'Jumlah Penduduk Miskin / Jumlah Penduduk × 100%.\r\n\r\nJumlah Penduduk Miskin : penduduk dengan pengeluaran per kapita per bulan di bawah garis kemiskinan.\r\nJumlah Penduduk Total : seluruh penduduk di Kabupaten Pringsewu.\r\nGaris Kemiskinan : ditetapkan oleh BPS, mencakup kebutuhan minimum makanan (2.100 kkal per kapita per hari) dan kebutuhan non-makanan (perumahan, pendidikan, kesehatan, dll).', '%', 'BPS (Badan Pusat Statistik)', 'Dinas Sosial', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 103),
+(209, 169, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Rumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau Berlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk. (PDRB ADHB / Jumlah Penduduk)\r\nTotal PDRB : nilai seluruh barang dan jasa yang dihasilkan di suatu daerah dalam periode tertentu (biasanya 1 tahun dan dinyatakan dalam juta rupia)h.\r\nJumlah Penduduk : total penduduk pada tahun yang sama.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Pemberdayaan Masyarakat Pekon Dinas Koperasi, Usaha Kecil dan Menengah, Perindustrian dan Perdagangan Dinas Kepemudaan, Olahraga dan Pariwisata', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 104),
+(210, 170, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', 'Persentase Pertumbuhan Investasi = Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​ dikali 100%', '%', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu (DPMPTSP) Kabupaten', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 105),
+(211, 171, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 106),
+(212, 172, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Nilai Indeks RB General berdasarkan hasil evaluasi Kementerian PANRB', 'Indeks', 'Kementerian PAN RB', 'Inspektorat BAPPERIDA BAPENDA BPKAD Dinas Perpustakaan dan Kearsipan  Sekretariat Daerah Sekretariat DPRD Dinas Kominfo Satuan Polisi Pamong Praja Dinas Kependudukan dan Pencatatan Sipil Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 115),
+(213, 173, 'Produksi Jagung', 'Produksi Jagung\r\nadalah jumlah hasil panen tanaman jagung yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat pipilan kering.\r\n\r\nProduksi jagung merupakan hasil perkalian antara luas panen jagung dan produktivitas jagung per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Jagung=Luas Panen Jagung dikali Produktivitas Jagung', NULL, 'Ton', NULL, NULL, NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 111),
+(214, 173, 'Produksi Daging', 'Produksi Daging adalah jumlah daging yang dihasilkan dari pemotongan ternak dan unggas dalam suatu wilayah dan periode tertentu, yang berasal dari sapi, kerbau, kambing, domba, babi, ayam, itik, dan ternak/unggas lainnya, yang dinyatakan dalam berat bersih (karkas atau setara karkas).\r\n\r\nProduksi daging dihitung berdasarkan jumlah ternak/unggas yang dipotong dan rata-rata bobot karkas per ekor.\r\n\r\nRumus Perhitungan : Produksi Daging = Jumlah Ternak/Unggas Dipotong dikali Rata-rata Bobot Karkas', NULL, 'Ton', NULL, NULL, NULL, NULL, 1, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 112),
+(215, 173, 'Produksi Telur', 'Produksi Telur\r\nadalah jumlah telur yang dihasilkan oleh ternak unggas petelur dalam suatu wilayah dan periode tertentu, baik dari ayam ras petelur, ayam buras, itik, maupun jenis unggas petelur lainnya, yang dinyatakan dalam berat atau jumlah satuan tertentu.\r\n\r\nProduksi telur dihitung berdasarkan jumlah ternak petelur produktif dan rata-rata produksi telur per ekor.\r\n\r\nRumus Perhitungan : Produksi Telur = Jumlah Ternak Petelur Produktif dikali Rata-rata Produksi Telur', NULL, 'Ton', NULL, NULL, NULL, NULL, 2, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 113),
+(216, 173, 'Produksi Perikanan', 'Produksi Perikanan adalah jumlah hasil perikanan yang dihasilkan dalam suatu wilayah dan periode tertentu, yang berasal dari kegiatan perikanan tangkap dan perikanan budidaya, dan dinyatakan dalam berat hasil (ton).\r\n\r\nRumus Perhitungan : Produksi Perikanan = Produksi Tangkap ditambah Produksi Budidaya', NULL, 'Ton', NULL, NULL, NULL, NULL, 3, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 114),
+(217, 173, 'Produksi Padi', NULL, NULL, 'Ton', NULL, NULL, NULL, NULL, 4, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 116),
+(218, 174, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Skor(i,d) = [ (N(i,d) − N_min(i)) / (N_max(i) − N_min(i)) ] × 5\r\n\r\nKeterangan:\r\n●Skor(i,d) = skor indikator ke-i untuk daerah ke-d\r\n●N(i,d) = nilai data mentah indikator ke-i untuk daerah ke-d\r\n●N_min(i) = nilai terendah (batas bawah) yang ditetapkan untuk indikator ke-i\r\n●N_max(i) = nilai tertinggi (batas atas) yang ditetapkan untuk indikator ke-i', 'Indeks', 'BRIN (Badan Riset dan Inovasi Nasional)\r\nBPS (Badan Pusat Statistik)\r\nKementerian PUPR\r\nKementerian Perhubungan\r\nKementerian Kominfo', 'Dinas Pekerjaan Umum dan Perumahan Rakyat Dinas Perhubungan', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 107),
+(219, 175, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'IKLH = nilai komposit Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL), sesuai bobot/metodologi yang ditetapkan KLHK.', 'Indeks', 'KLHK (Kementerian Lingkungan Hidup dan Kehutanan). BPS, DLH Kabupaten Pringsewu', 'Dinas Lingkungan Hidup', NULL, NULL, 0, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 108),
+(220, 175, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'IRB mencerminkan potensi kerugian yang mungkin timbul akibat bencana, baik terhadap penduduk, aset, ekonomi, maupun lingkungan. \r\nRumus Perhitungan : Bahaya dikali Kerentanan dibagi kapasitas.\r\nHazard (Bahaya) : potensi ancaman bencana alam (gempa, banjir, longsor, tsunami, dll).\r\nVulnerability (Kerentanan) : kondisi sosial, ekonomi, fisik, dan lingkungan yang membuat masyarakat rentan terhadap dampak bencana.\r\nCapacity (Kapasitas) : kemampuan daerah dalam mengurangi risiko, seperti kesiapsiagaan, infrastruktur mitigasi, dan sistem peringatan dini.', 'Indeks', 'Badan Nasional Penanggulangan Bencana (BNPB) , BPBD Kabupaten Pringsewu', 'Badan Penanggulangan Bencana Daerah', NULL, NULL, 1, 'draft', 118, NULL, 'dihentikan', 0, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 109);
 
 -- --------------------------------------------------------
 
@@ -22104,7 +22179,8 @@ INSERT INTO `iku_revisi` (`id`, `opd_id`, `tahun_mulai`, `tahun_akhir`, `nomor`,
 (100, 2, 2025, 2029, 0, 'Kondisi Awal IKU 2025-2029', NULL, NULL, NULL, 2025, NULL, 'berlaku', 'Dibekukan otomatis dari kondisi IKU yang berlaku saat revisi pertama dibuat.', 52, 52, '2026-09-09 04:21:26', '2026-09-09 04:21:26', '2026-09-09 04:21:26', '2026-09-09 04:21:26', NULL, NULL, NULL),
 (102, 31, 2025, 2029, 1, 'Revisi ke-1 IKU 2025-2029', NULL, NULL, NULL, 2026, NULL, 'berlaku', NULL, 43, 2, '2026-09-09 04:44:32', '2026-09-09 04:44:04', '2026-09-09 04:44:04', '2026-09-09 04:44:32', NULL, 43, '2026-09-09 04:44:25'),
 (115, 24, 2025, 2029, 1, 'V0', NULL, NULL, '2025-01-01', 2025, 2025, 'superseded', NULL, 28, 2, '2026-09-16 02:06:41', '2026-09-16 02:06:04', '2026-09-16 02:06:04', '2026-09-16 02:06:41', NULL, 28, '2026-09-16 02:06:32'),
-(116, NULL, 2025, 2029, 1, 'IKU baru', NULL, NULL, NULL, 2026, NULL, 'berlaku', NULL, 2, 2, '2026-09-17 07:33:42', '2026-09-17 07:31:09', '2026-09-17 07:31:09', '2026-09-17 07:36:29', NULL, NULL, NULL);
+(116, NULL, 2025, 2029, 1, 'IKU baru', NULL, NULL, NULL, 2026, NULL, 'berlaku', NULL, 2, 2, '2026-09-17 07:33:42', '2026-09-17 07:31:09', '2026-09-17 07:31:09', '2026-09-17 07:36:29', NULL, NULL, NULL),
+(118, NULL, 2025, 2029, 2, 'V0 versi lama', NULL, NULL, NULL, 2025, 2025, 'superseded', NULL, 2, 2, '2026-09-17 13:44:23', '2026-09-17 13:37:56', '2026-09-17 13:37:56', '2026-09-17 13:44:23', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -22292,7 +22368,22 @@ INSERT INTO `iku_revisi_indikator` (`id`, `revisi_id`, `revisi_sasaran_id`, `sum
 (398, 116, 352, 202, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'IKLH = nilai komposit Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL), sesuai bobot/metodologi yang ditetapkan KLHK.', 'Indeks', 'Indeks', 'KLHK (Kementerian Lingkungan Hidup dan Kehutanan). BPS, DLH Kabupaten Pringsewu', 'Dinas Lingkungan Hidup', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 108),
 (399, 116, 352, 203, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'IRB mencerminkan potensi kerugian yang mungkin timbul akibat bencana, baik terhadap penduduk, aset, ekonomi, maupun lingkungan. \r\nRumus Perhitungan : Bahaya dikali Kerentanan dibagi kapasitas.\r\nHazard (Bahaya) : potensi ancaman bencana alam (gempa, banjir, longsor, tsunami, dll).\r\nVulnerability (Kerentanan) : kondisi sosial, ekonomi, fisik, dan lingkungan yang membuat masyarakat rentan terhadap dampak bencana.\r\nCapacity (Kapasitas) : kemampuan daerah dalam mengurangi risiko, seperti kesiapsiagaan, infrastruktur mitigasi, dan sistem peringatan dini.', 'Indeks', 'Indeks', 'Badan Nasional Penanggulangan Bencana (BNPB) , BPBD Kabupaten Pringsewu', 'Badan Penanggulangan Bencana Daerah', NULL, NULL, 1, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 109),
 (400, 116, 353, 204, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', 'Jumlah Penduduk Miskin / Jumlah Penduduk × 100%.\r\n\r\nJumlah Penduduk Miskin : penduduk dengan pengeluaran per kapita per bulan di bawah garis kemiskinan.\r\nJumlah Penduduk Total : seluruh penduduk di Kabupaten Pringsewu.\r\nGaris Kemiskinan : ditetapkan oleh BPS, mencakup kebutuhan minimum makanan (2.100 kkal per kapita per hari) dan kebutuhan non-makanan (perumahan, pendidikan, kesehatan, dll).', '%', '%', 'BPS (Badan Pusat Statistik)', 'Dinas Sosial', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 103),
-(401, 116, 354, 205, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 106);
+(401, 116, 354, 205, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 106),
+(439, 118, 385, 206, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks Pendidikan merupakan rata-rata dari Indeks Harapan Lama Sekolah (HLS) dan Indeks Rata-Rata Lama Sekolah (RLS).\r\nHarapan Lama Sekolah (HLS) : jumlah tahun sekolah yang diharapkan dapat ditempuh oleh anak usia sekolah pada masa mendatang.\r\nRata-rata Lama Sekolah (RLS) : jumlah tahun rata-rata yang sudah ditempuh oleh penduduk usia 25 tahun ke atas.', 'Indeks', 'Indeks', 'BPS (Badan Pusat Statistik)', 'Dinas Pendidikan dan Kebudayaan Dinas Perpustakaan dan Kearsipan Dinas Kepemudaan, Olahraga dan Pariwisata Kesatuan Bangsa dan Politik Sekretariat Daerah', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 101),
+(440, 118, 386, 207, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks Kesehatan biasanya dihitung sebagai salah satu komponen dari Indeks Pembangunan Manusia (IPM).\r\n((UHH − 20) / (85 − 20)) × 100\r\nHarapan Hidup Saat Lahir (HLSL) : rata-rata umur yang diharapkan bayi yang lahir pada tahun tertentu.\r\n20 tahun : batas bawah (minimum).\r\n85 tahun : batas atas (maksimum).', 'Indeks', 'Indeks', 'Badan Pusat Statistik (BPS)', 'Dinas Kesehatan Dinas Pemberdayaan Perempuan, Perlindungan Anak, Pengendalian Penduduk dan Keluarga Berencana', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 102),
+(441, 118, 387, 208, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', 'Jumlah Penduduk Miskin / Jumlah Penduduk × 100%.\r\n\r\nJumlah Penduduk Miskin : penduduk dengan pengeluaran per kapita per bulan di bawah garis kemiskinan.\r\nJumlah Penduduk Total : seluruh penduduk di Kabupaten Pringsewu.\r\nGaris Kemiskinan : ditetapkan oleh BPS, mencakup kebutuhan minimum makanan (2.100 kkal per kapita per hari) dan kebutuhan non-makanan (perumahan, pendidikan, kesehatan, dll).', '%', '%', 'BPS (Badan Pusat Statistik)', 'Dinas Sosial', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 103),
+(442, 118, 388, 209, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Rumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau Berlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk. (PDRB ADHB / Jumlah Penduduk)\r\nTotal PDRB : nilai seluruh barang dan jasa yang dihasilkan di suatu daerah dalam periode tertentu (biasanya 1 tahun dan dinyatakan dalam juta rupia)h.\r\nJumlah Penduduk : total penduduk pada tahun yang sama.', 'Nilai', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Pemberdayaan Masyarakat Pekon Dinas Koperasi, Usaha Kecil dan Menengah, Perindustrian dan Perdagangan Dinas Kepemudaan, Olahraga dan Pariwisata', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 104),
+(443, 118, 389, 210, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', 'Persentase Pertumbuhan Investasi = Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​ dikali 100%', '%', '%', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu (DPMPTSP) Kabupaten', 'Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 105),
+(444, 118, 390, 211, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Rumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.\r\nPenganggur : penduduk usia kerja  (≥15 tahun) yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nJumlah Angkatan Kerja : penduduk usia kerja yang bekerja ditambah pengangguran.', 'Nilai', 'Nilai', 'BPS (Badan Pusat Statistik)', 'Dinas Tenaga Kerja dan Transmigrasi', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 106),
+(445, 118, 391, 212, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Nilai Indeks RB General berdasarkan hasil evaluasi Kementerian PANRB', 'Indeks', 'Indeks', 'Kementerian PAN RB', 'Inspektorat BAPPERIDA BAPENDA BPKAD Dinas Perpustakaan dan Kearsipan  Sekretariat Daerah Sekretariat DPRD Dinas Kominfo Satuan Polisi Pamong Praja Dinas Kependudukan dan Pencatatan Sipil Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 115),
+(446, 118, 392, 213, 'Produksi Jagung', 'Produksi Jagung\r\nadalah jumlah hasil panen tanaman jagung yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat pipilan kering.\r\n\r\nProduksi jagung merupakan hasil perkalian antara luas panen jagung dan produktivitas jagung per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Jagung=Luas Panen Jagung dikali Produktivitas Jagung', NULL, 'Ton', 'Ton', NULL, NULL, NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 111),
+(447, 118, 392, 214, 'Produksi Daging', 'Produksi Daging adalah jumlah daging yang dihasilkan dari pemotongan ternak dan unggas dalam suatu wilayah dan periode tertentu, yang berasal dari sapi, kerbau, kambing, domba, babi, ayam, itik, dan ternak/unggas lainnya, yang dinyatakan dalam berat bersih (karkas atau setara karkas).\r\n\r\nProduksi daging dihitung berdasarkan jumlah ternak/unggas yang dipotong dan rata-rata bobot karkas per ekor.\r\n\r\nRumus Perhitungan : Produksi Daging = Jumlah Ternak/Unggas Dipotong dikali Rata-rata Bobot Karkas', NULL, 'Ton', 'Ton', NULL, NULL, NULL, NULL, 1, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 112),
+(448, 118, 392, 215, 'Produksi Telur', 'Produksi Telur\r\nadalah jumlah telur yang dihasilkan oleh ternak unggas petelur dalam suatu wilayah dan periode tertentu, baik dari ayam ras petelur, ayam buras, itik, maupun jenis unggas petelur lainnya, yang dinyatakan dalam berat atau jumlah satuan tertentu.\r\n\r\nProduksi telur dihitung berdasarkan jumlah ternak petelur produktif dan rata-rata produksi telur per ekor.\r\n\r\nRumus Perhitungan : Produksi Telur = Jumlah Ternak Petelur Produktif dikali Rata-rata Produksi Telur', NULL, 'Ton', 'Ton', NULL, NULL, NULL, NULL, 2, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 113),
+(449, 118, 392, 216, 'Produksi Perikanan', 'Produksi Perikanan adalah jumlah hasil perikanan yang dihasilkan dalam suatu wilayah dan periode tertentu, yang berasal dari kegiatan perikanan tangkap dan perikanan budidaya, dan dinyatakan dalam berat hasil (ton).\r\n\r\nRumus Perhitungan : Produksi Perikanan = Produksi Tangkap ditambah Produksi Budidaya', NULL, 'Ton', 'Ton', NULL, NULL, NULL, NULL, 3, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 114),
+(450, 118, 392, 217, 'Produksi Padi', NULL, NULL, 'Ton', 'Ton', NULL, NULL, NULL, NULL, 4, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 116),
+(451, 118, 393, 218, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Skor(i,d) = [ (N(i,d) − N_min(i)) / (N_max(i) − N_min(i)) ] × 5\r\n\r\nKeterangan:\r\n●Skor(i,d) = skor indikator ke-i untuk daerah ke-d\r\n●N(i,d) = nilai data mentah indikator ke-i untuk daerah ke-d\r\n●N_min(i) = nilai terendah (batas bawah) yang ditetapkan untuk indikator ke-i\r\n●N_max(i) = nilai tertinggi (batas atas) yang ditetapkan untuk indikator ke-i', 'Indeks', 'Indeks', 'BRIN (Badan Riset dan Inovasi Nasional)\r\nBPS (Badan Pusat Statistik)\r\nKementerian PUPR\r\nKementerian Perhubungan\r\nKementerian Kominfo', 'Dinas Pekerjaan Umum dan Perumahan Rakyat Dinas Perhubungan', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 107),
+(452, 118, 394, 219, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'IKLH = nilai komposit Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL), sesuai bobot/metodologi yang ditetapkan KLHK.', 'Indeks', 'Indeks', 'KLHK (Kementerian Lingkungan Hidup dan Kehutanan). BPS, DLH Kabupaten Pringsewu', 'Dinas Lingkungan Hidup', NULL, NULL, 0, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 108),
+(453, 118, 394, 220, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'IRB mencerminkan potensi kerugian yang mungkin timbul akibat bencana, baik terhadap penduduk, aset, ekonomi, maupun lingkungan. \r\nRumus Perhitungan : Bahaya dikali Kerentanan dibagi kapasitas.\r\nHazard (Bahaya) : potensi ancaman bencana alam (gempa, banjir, longsor, tsunami, dll).\r\nVulnerability (Kerentanan) : kondisi sosial, ekonomi, fisik, dan lingkungan yang membuat masyarakat rentan terhadap dampak bencana.\r\nCapacity (Kapasitas) : kemampuan daerah dalam mengurangi risiko, seperti kesiapsiagaan, infrastruktur mitigasi, dan sistem peringatan dini.', 'Indeks', 'Indeks', 'Badan Nasional Penanggulangan Bencana (BNPB) , BPBD Kabupaten Pringsewu', 'Badan Penanggulangan Bencana Daerah', NULL, NULL, 1, 'draft', 'baru', NULL, 0, NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 109);
 
 -- --------------------------------------------------------
 
@@ -22453,7 +22544,17 @@ INSERT INTO `iku_revisi_sasaran` (`id`, `revisi_id`, `sumber_sasaran_id`, `sasar
 (351, 116, 162, 'Meningkatnya Investasi', 2025, 2029, 6, 'baru', NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 81, NULL, NULL),
 (352, 116, 163, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', 2025, 2029, 7, 'baru', NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 84, NULL, NULL),
 (353, 116, 164, 'Menurunnya Angka Kemiskinan', 2025, 2029, 8, 'baru', NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 79, NULL, NULL),
-(354, 116, 165, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 9, 'baru', NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 82, NULL, NULL);
+(354, 116, 165, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 9, 'baru', NULL, '2026-09-17 07:31:09', '2026-09-17 14:33:42', 'rpjmd', 140, 82, NULL, NULL),
+(385, 118, 166, 'Meningkatnya Kualitas Pendidikan', 2025, 2029, 0, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 77, NULL, NULL),
+(386, 118, 167, 'Meningkatnya Derajat Kesehatan', 2025, 2029, 1, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 78, NULL, NULL),
+(387, 118, 168, 'Menurunnya Angka Kemiskinan', 2025, 2029, 2, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 79, NULL, NULL),
+(388, 118, 169, 'Meningkatnya Produktivitas Lapangan Usaha', 2025, 2029, 3, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 80, NULL, NULL),
+(389, 118, 170, 'Meningkatnya Investasi', 2025, 2029, 4, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 81, NULL, NULL),
+(390, 118, 171, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 5, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 82, NULL, NULL),
+(391, 118, 172, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', 2025, 2029, 6, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 12, NULL, NULL),
+(392, 118, 173, 'Meningkatnya Ketersediaan Pangan Daerah', 2025, 2029, 7, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 9, NULL, NULL),
+(393, 118, 174, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', 2025, 2029, 8, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 83, NULL, NULL),
+(394, 118, 175, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', 2025, 2029, 9, 'baru', NULL, '2026-09-17 13:37:56', '2026-09-17 20:44:23', 'rpjmd', NULL, 84, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -23216,7 +23317,82 @@ INSERT INTO `iku_revisi_target` (`id`, `revisi_indikator_id`, `tahun`, `target`,
 (2356, 401, 2026, '4,32', NULL, '2026-09-17 07:31:09', '2026-09-17 07:32:16'),
 (2357, 401, 2027, '3,70', NULL, '2026-09-17 07:31:09', '2026-09-17 07:32:16'),
 (2358, 401, 2028, '3,60', NULL, '2026-09-17 07:31:09', '2026-09-17 07:32:16'),
-(2359, 401, 2029, '3,50', NULL, '2026-09-17 07:31:09', '2026-09-17 07:32:16');
+(2359, 401, 2029, '3,50', NULL, '2026-09-17 07:31:09', '2026-09-17 07:32:16'),
+(2545, 439, 2025, '0,648', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2546, 439, 2026, '0,654', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2547, 439, 2027, '0,659', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2548, 439, 2028, '0,664', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2549, 439, 2029, '0,668', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2550, 440, 2025, '0,842', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2551, 440, 2026, '0,844', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2552, 440, 2027, '0,846', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2553, 440, 2028, '0,848', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2554, 440, 2029, '0,85', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2555, 441, 2025, '7,78', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2556, 441, 2026, '7,50', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2557, 441, 2027, '7,30', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2558, 441, 2028, '7,00', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2559, 441, 2029, '6,50', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2560, 442, 2025, '37,89', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2561, 442, 2026, '42,20', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2562, 442, 2027, '46,80', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2563, 442, 2028, '51,80', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2564, 442, 2029, '57,40', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2565, 443, 2025, '5', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2566, 443, 2026, '5', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2567, 443, 2027, '5', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2568, 443, 2028, '5', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2569, 443, 2029, '5', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2570, 444, 2025, '4,20', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2571, 444, 2026, '4,32', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2572, 444, 2027, '3,70', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2573, 444, 2028, '3,60', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2574, 444, 2029, '3,50', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2575, 445, 2025, '67,01', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2576, 445, 2026, '67,30', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2577, 445, 2027, '67,50', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2578, 445, 2028, '68,01', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2579, 445, 2029, '68,30', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2580, 446, 2025, '42.500', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2581, 446, 2026, '43.000', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2582, 446, 2027, '43.500', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2583, 446, 2028, '44.000', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2584, 446, 2029, '44.500', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2585, 447, 2025, '5.066', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2586, 447, 2026, '5.319', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2587, 447, 2027, '5.585', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2588, 447, 2028, '5.864', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2589, 447, 2029, '6.158', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2590, 448, 2025, '9.469', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2591, 448, 2026, '9.659', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2592, 448, 2027, '9.852', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2593, 448, 2028, '10.049', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2594, 448, 2029, '10.250', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2595, 449, 2025, '14.286', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2596, 449, 2026, '14.715', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2597, 449, 2027, '15.156', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2598, 449, 2028, '15.233', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2599, 449, 2029, '15.690', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2600, 450, 2025, '144000', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2601, 450, 2026, '144500', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2602, 450, 2027, '145000', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2603, 450, 2028, '145500', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2604, 450, 2029, '146000', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2605, 451, 2025, '3,56', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2606, 451, 2026, '3,75', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2607, 451, 2027, '3,80', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2608, 451, 2028, '3,83', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2609, 451, 2029, '3,86', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2610, 452, 2025, '66,91', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2611, 452, 2026, '67,17', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2612, 452, 2027, '67,42', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2613, 452, 2028, '67,67', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2614, 452, 2029, '67,92', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2615, 453, 2025, '88,82', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2616, 453, 2026, '134,07', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2617, 453, 2027, '133', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2618, 453, 2028, '131,94', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11'),
+(2619, 453, 2029, '130,88', NULL, '2026-09-17 13:37:56', '2026-09-17 13:40:11');
 
 -- --------------------------------------------------------
 
@@ -23373,16 +23549,26 @@ INSERT INTO `iku_sasaran` (`id`, `opd_id`, `sasaran`, `tahun_mulai`, `tahun_akhi
 (150, 31, 'Meningkatnya Ketentraman dan Ketertiban Umum', 2025, 2029, 2, 102, NULL, NULL, NULL, '2026-09-09 04:44:32', '2026-09-09 04:44:32', 'renstra', 137, 230, NULL, NULL),
 (154, 24, 'Meningkatnya diversifikasi dan Ketahanan pangan masyarakat', 2025, 2029, 0, 115, 2025, '2026-09-16 02:06:41', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 11).', '2026-09-16 02:06:41', '2026-09-16 02:06:41', 'renstra', 138, NULL, NULL, NULL),
 (155, 24, 'Menurunnya Daerah Rawan Pangan', 2025, 2029, 1, 115, 2025, '2026-09-16 02:06:41', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 11).', '2026-09-16 02:06:41', '2026-09-16 02:06:41', 'renstra', 138, NULL, NULL, NULL),
-(156, NULL, 'Meningkatnya Kualitas Pendidikan', 2025, 2029, 0, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 77, NULL, NULL),
-(157, NULL, 'Meningkatnya Produktivitas Lapangan Usaha', 2025, 2029, 1, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 80, NULL, NULL),
-(158, NULL, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', 2025, 2029, 2, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 12, NULL, NULL),
-(159, NULL, 'Meningkatnya Ketersediaan Pangan Daerah', 2025, 2029, 3, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 9, NULL, NULL),
-(160, NULL, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', 2025, 2029, 4, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 83, NULL, NULL),
-(161, NULL, 'Meningkatnya Derajat Kesehatan', 2025, 2029, 5, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 78, NULL, NULL),
-(162, NULL, 'Meningkatnya Investasi', 2025, 2029, 6, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 81, NULL, NULL),
-(163, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', 2025, 2029, 7, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 84, NULL, NULL),
-(164, NULL, 'Menurunnya Angka Kemiskinan', 2025, 2029, 8, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 79, NULL, NULL),
-(165, NULL, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 9, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 07:36:29', 'rpjmd', 140, 82, NULL, NULL);
+(156, NULL, 'Meningkatnya Kualitas Pendidikan', 2025, 2029, 0, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 77, NULL, NULL),
+(157, NULL, 'Meningkatnya Produktivitas Lapangan Usaha', 2025, 2029, 1, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 80, NULL, NULL),
+(158, NULL, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', 2025, 2029, 2, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 12, NULL, NULL),
+(159, NULL, 'Meningkatnya Ketersediaan Pangan Daerah', 2025, 2029, 3, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 9, NULL, NULL),
+(160, NULL, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', 2025, 2029, 4, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 83, NULL, NULL),
+(161, NULL, 'Meningkatnya Derajat Kesehatan', 2025, 2029, 5, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 78, NULL, NULL),
+(162, NULL, 'Meningkatnya Investasi', 2025, 2029, 6, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 81, NULL, NULL),
+(163, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', 2025, 2029, 7, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 84, NULL, NULL),
+(164, NULL, 'Menurunnya Angka Kemiskinan', 2025, 2029, 8, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 79, NULL, NULL),
+(165, NULL, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 9, 116, NULL, NULL, NULL, '2026-09-17 07:33:42', '2026-09-17 13:44:23', 'rpjmd', 140, 82, NULL, NULL),
+(166, NULL, 'Meningkatnya Kualitas Pendidikan', 2025, 2029, 0, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 77, NULL, NULL),
+(167, NULL, 'Meningkatnya Derajat Kesehatan', 2025, 2029, 1, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 78, NULL, NULL),
+(168, NULL, 'Menurunnya Angka Kemiskinan', 2025, 2029, 2, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 79, NULL, NULL),
+(169, NULL, 'Meningkatnya Produktivitas Lapangan Usaha', 2025, 2029, 3, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 80, NULL, NULL),
+(170, NULL, 'Meningkatnya Investasi', 2025, 2029, 4, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 81, NULL, NULL),
+(171, NULL, 'Menurunnya Tingkat Pengangguran Terbuka', 2025, 2029, 5, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 82, NULL, NULL),
+(172, NULL, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', 2025, 2029, 6, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 12, NULL, NULL),
+(173, NULL, 'Meningkatnya Ketersediaan Pangan Daerah', 2025, 2029, 7, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 9, NULL, NULL),
+(174, NULL, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', 2025, 2029, 8, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 83, NULL, NULL),
+(175, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', 2025, 2029, 9, 118, 2025, '2026-09-17 13:44:23', 'Tidak lagi tercantum pada revisi yang disahkan (revisi id 116).', '2026-09-17 13:44:23', '2026-09-17 13:44:23', 'rpjmd', NULL, 84, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -24225,61 +24411,136 @@ INSERT INTO `iku_target` (`id`, `iku_indikator_id`, `tahun`, `target`, `created_
 (1979, 194, 2027, '7', '2026-09-16 02:06:41', '2026-09-16 02:06:41'),
 (1980, 194, 2028, '6', '2026-09-16 02:06:41', '2026-09-16 02:06:41'),
 (1981, 194, 2029, '5', '2026-09-16 02:06:41', '2026-09-16 02:06:41'),
-(1982, 195, 2025, '0,648', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1983, 195, 2026, '0,654', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1984, 195, 2027, '0,659', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1985, 195, 2028, '0,664', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1986, 195, 2029, '0,668', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1987, 196, 2025, '37,89', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1988, 196, 2026, '42,20', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1989, 196, 2027, '46,80', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1990, 196, 2028, '51,80', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1991, 196, 2029, '57,40', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1992, 197, 2025, '67,01', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1993, 197, 2026, '67,30', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1994, 197, 2027, '67,50', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1995, 197, 2028, '68,01', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1996, 197, 2029, '68,30', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1997, 198, 2025, '100', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1998, 198, 2026, '100', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(1999, 198, 2027, '100', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2000, 198, 2028, '100', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2001, 198, 2029, '100', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2002, 199, 2025, '3,56', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2003, 199, 2026, '3,75', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2004, 199, 2027, '3,80', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2005, 199, 2028, '3,83', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2006, 199, 2029, '3,86', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2007, 200, 2025, '0,842', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2008, 200, 2026, '0,844', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2009, 200, 2027, '0,846', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2010, 200, 2028, '0,848', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2011, 200, 2029, '0,85', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2012, 201, 2025, '5', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2013, 201, 2026, '5', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2014, 201, 2027, '5', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2015, 201, 2028, '5', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2016, 201, 2029, '5', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2017, 202, 2025, '66,91', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2018, 202, 2026, '67,17', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2019, 202, 2027, '67,42', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2020, 202, 2028, '67,67', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2021, 202, 2029, '67,92', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2022, 203, 2025, '88,82', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2023, 203, 2026, '134,07', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2024, 203, 2027, '133', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2025, 203, 2028, '131,94', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2026, 203, 2029, '130,88', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2027, 204, 2025, '7,78', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2028, 204, 2026, '7,50', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2029, 204, 2027, '7,30', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2030, 204, 2028, '7,00', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2031, 204, 2029, '6,50', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2032, 205, 2025, '4,20', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2033, 205, 2026, '4,32', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2034, 205, 2027, '3,70', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2035, 205, 2028, '3,60', '2026-09-17 07:33:42', '2026-09-17 07:36:29'),
-(2036, 205, 2029, '3,50', '2026-09-17 07:33:42', '2026-09-17 07:36:29');
+(1982, 195, 2025, '0,648', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1983, 195, 2026, '0,654', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1984, 195, 2027, '0,659', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1985, 195, 2028, '0,664', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1986, 195, 2029, '0,668', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1987, 196, 2025, '37,89', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1988, 196, 2026, '42,20', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1989, 196, 2027, '46,80', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1990, 196, 2028, '51,80', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1991, 196, 2029, '57,40', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1992, 197, 2025, '67,01', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1993, 197, 2026, '67,30', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1994, 197, 2027, '67,50', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1995, 197, 2028, '68,01', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1996, 197, 2029, '68,30', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1997, 198, 2025, '100', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1998, 198, 2026, '100', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(1999, 198, 2027, '100', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2000, 198, 2028, '100', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2001, 198, 2029, '100', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2002, 199, 2025, '3,56', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2003, 199, 2026, '3,75', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2004, 199, 2027, '3,80', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2005, 199, 2028, '3,83', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2006, 199, 2029, '3,86', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2007, 200, 2025, '0,842', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2008, 200, 2026, '0,844', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2009, 200, 2027, '0,846', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2010, 200, 2028, '0,848', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2011, 200, 2029, '0,85', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2012, 201, 2025, '5', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2013, 201, 2026, '5', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2014, 201, 2027, '5', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2015, 201, 2028, '5', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2016, 201, 2029, '5', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2017, 202, 2025, '66,91', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2018, 202, 2026, '67,17', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2019, 202, 2027, '67,42', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2020, 202, 2028, '67,67', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2021, 202, 2029, '67,92', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2022, 203, 2025, '88,82', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2023, 203, 2026, '134,07', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2024, 203, 2027, '133', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2025, 203, 2028, '131,94', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2026, 203, 2029, '130,88', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2027, 204, 2025, '7,78', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2028, 204, 2026, '7,50', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2029, 204, 2027, '7,30', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2030, 204, 2028, '7,00', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2031, 204, 2029, '6,50', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2032, 205, 2025, '4,20', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2033, 205, 2026, '4,32', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2034, 205, 2027, '3,70', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2035, 205, 2028, '3,60', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2036, 205, 2029, '3,50', '2026-09-17 07:33:42', '2026-09-17 13:44:23'),
+(2037, 206, 2025, '0,648', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2038, 206, 2026, '0,654', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2039, 206, 2027, '0,659', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2040, 206, 2028, '0,664', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2041, 206, 2029, '0,668', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2042, 207, 2025, '0,842', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2043, 207, 2026, '0,844', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2044, 207, 2027, '0,846', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2045, 207, 2028, '0,848', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2046, 207, 2029, '0,85', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2047, 208, 2025, '7,78', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2048, 208, 2026, '7,50', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2049, 208, 2027, '7,30', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2050, 208, 2028, '7,00', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2051, 208, 2029, '6,50', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2052, 209, 2025, '37,89', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2053, 209, 2026, '42,20', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2054, 209, 2027, '46,80', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2055, 209, 2028, '51,80', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2056, 209, 2029, '57,40', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2057, 210, 2025, '5', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2058, 210, 2026, '5', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2059, 210, 2027, '5', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2060, 210, 2028, '5', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2061, 210, 2029, '5', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2062, 211, 2025, '4,20', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2063, 211, 2026, '4,32', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2064, 211, 2027, '3,70', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2065, 211, 2028, '3,60', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2066, 211, 2029, '3,50', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2067, 212, 2025, '67,01', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2068, 212, 2026, '67,30', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2069, 212, 2027, '67,50', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2070, 212, 2028, '68,01', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2071, 212, 2029, '68,30', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2072, 213, 2025, '42.500', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2073, 213, 2026, '43.000', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2074, 213, 2027, '43.500', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2075, 213, 2028, '44.000', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2076, 213, 2029, '44.500', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2077, 214, 2025, '5.066', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2078, 214, 2026, '5.319', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2079, 214, 2027, '5.585', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2080, 214, 2028, '5.864', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2081, 214, 2029, '6.158', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2082, 215, 2025, '9.469', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2083, 215, 2026, '9.659', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2084, 215, 2027, '9.852', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2085, 215, 2028, '10.049', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2086, 215, 2029, '10.250', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2087, 216, 2025, '14.286', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2088, 216, 2026, '14.715', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2089, 216, 2027, '15.156', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2090, 216, 2028, '15.233', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2091, 216, 2029, '15.690', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2092, 217, 2025, '144000', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2093, 217, 2026, '144500', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2094, 217, 2027, '145000', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2095, 217, 2028, '145500', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2096, 217, 2029, '146000', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2097, 218, 2025, '3,56', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2098, 218, 2026, '3,75', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2099, 218, 2027, '3,80', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2100, 218, 2028, '3,83', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2101, 218, 2029, '3,86', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2102, 219, 2025, '66,91', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2103, 219, 2026, '67,17', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2104, 219, 2027, '67,42', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2105, 219, 2028, '67,67', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2106, 219, 2029, '67,92', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2107, 220, 2025, '88,82', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2108, 220, 2026, '134,07', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2109, 220, 2027, '133', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2110, 220, 2028, '131,94', '2026-09-17 13:44:23', '2026-09-17 13:44:23'),
+(2111, 220, 2029, '130,88', '2026-09-17 13:44:23', '2026-09-17 13:44:23');
 
 -- --------------------------------------------------------
 
@@ -29164,14 +29425,14 @@ INSERT INTO `jabatan` (`id`, `simpeg_id`, `opd_id`, `nama_jabatan`, `tupoksi`, `
 CREATE TABLE `kegiatan_pk` (
   `id` int UNSIGNED NOT NULL,
   `program_id` int UNSIGNED NOT NULL,
-  `kode_kegiatan` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `kegiatan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kode_kegiatan` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `kegiatan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `tahun_anggaran` year NOT NULL,
-  `jenis_anggaran` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'murni',
+  `jenis_anggaran` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'murni',
   `anggaran` decimal(15,0) DEFAULT '0',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `kegiatan_pk`
@@ -30293,7 +30554,7 @@ INSERT INTO `lakip` (`id`, `renstra_target_id`, `rpjmd_target_id`, `target_hitun
 (73, NULL, 519, NULL, 'n/a', 'n/a', '-38,67', NULL, 'selesai', '2026-06-01 21:48:46', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 519, NULL),
 (74, NULL, 524, '4.20', '4,58', '4,39', '4,65', '4.65', 'selesai', '2026-06-01 21:49:34', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 524, NULL),
 (75, NULL, 569, NULL, 'n/a', '64,37', '61,4', NULL, 'selesai', '2026-06-01 21:50:08', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 569, NULL),
-(76, NULL, 544, NULL, 'n/a', 'n/a', '154391', NULL, 'selesai', '2026-06-01 21:51:55', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 544, NULL),
+(76, NULL, NULL, NULL, 'n/a', 'n/a', '154391', NULL, 'selesai', '2026-06-01 21:51:55', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 544, NULL),
 (77, NULL, 549, NULL, 'n/a', 'n/a', '43516', NULL, 'selesai', '2026-06-01 21:52:33', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 549, NULL),
 (78, NULL, 554, NULL, 'n/a', 'n/a', '4925', NULL, 'selesai', '2026-06-01 21:53:07', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 554, NULL),
 (79, NULL, 559, NULL, 'n/a', 'n/a', '9473', NULL, 'selesai', '2026-06-01 21:53:33', '2026-08-26 01:55:24', '2025', 0, 'kabupaten', 'rpjmd', NULL, 559, NULL),
@@ -30371,7 +30632,7 @@ INSERT INTO `lakip` (`id`, `renstra_target_id`, `rpjmd_target_id`, `target_hitun
 (236, NULL, 520, NULL, '5', '-38,67', '0', NULL, 'proses', '2026-08-18 00:58:31', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 520, NULL),
 (237, NULL, 525, NULL, '4,20', '4,65', '0', NULL, 'proses', '2026-08-18 01:00:07', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 525, NULL),
 (238, NULL, 570, NULL, '67,01', '61,4', '0', NULL, 'proses', '2026-08-18 01:01:29', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 570, NULL),
-(239, NULL, 545, NULL, '144.000', '154.391', '0', NULL, 'proses', '2026-08-18 01:02:46', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 545, NULL),
+(239, NULL, NULL, NULL, '144.000', '154.391', '0', NULL, 'proses', '2026-08-18 01:02:46', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 545, NULL),
 (240, NULL, 550, NULL, '42.500', '43.516', '0', NULL, 'proses', '2026-08-18 01:04:31', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 550, NULL),
 (241, NULL, 555, NULL, '5.066', '4.925', '0', NULL, 'proses', '2026-08-18 01:07:14', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 555, NULL),
 (242, NULL, 560, NULL, '9.469', '9.473', '0', NULL, 'proses', '2026-08-18 01:09:12', '2026-08-26 01:55:24', '2026', 0, 'kabupaten', 'rpjmd', NULL, 560, NULL),
@@ -30516,7 +30777,6 @@ INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id
 (20, NULL, 529, NULL, 'rpjmd', 0, '2025', '1) Peningkatan pembangunan dan pemeliharaan infrastruktur dasar seperti jalan, jembatan, dan sarana transportasi, yang mendukung konektivitas antar wilayah \r\n2) Penguatan infrastruktur pelayanan publik, termasuk akses terhadap air bersih, sanitasi, dan transportasi, yang berkontribusi terhadap peningkatan kualitas hidup masyarakat\r\n3) Perencanaan pembangunan yang lebih terintegrasi, sehingga pembangunan infrastruktur lebih tepat sasaran dan sesuai kebutuhan daerah\r\n4) Dukungan anggaran dan prioritas pembangunan infrastruktur, yang memungkinkan percepatan pelaksanaan program dan kegiatan \r\n5) Koordinasi antar perangkat daerah yang semakin baik, khususnya antara sektor pekerjaan umum dan perhubungan', '1) Keterbatasan anggaran dalam memenuhi seluruh kebutuhan infrastruktur, terutama untuk peningkatan kualitas dan perluasan jaringan \r\n2) Ketimpangan kualitas infrastruktur antar wilayah, khususnya antara wilayah perkotaan dan perdesaan \r\n3) Tingkat kerusakan infrastruktur akibat faktor alam dan intensitas penggunaan, yang memerlukan biaya pemeliharaan yang cukup besar\r\n4) Belum optimalnya integrasi antar moda transportasi dan sistem logistik, yang mempengaruhi efisiensi mobilitas barang dan jasa\r\n5) Tantangan dalam pengelolaan infrastruktur berkelanjutan, termasuk aspek lingkungan dan ketahanan terhadap bencana', '1) Peningkatan kualitas dan pemerataan pembangunan infrastruktur, terutama pada wilayah yang masih tertinggal\r\n2) Penguatan pemeliharaan dan rehabilitasi infrastruktur, untuk menjaga kualitas dan umur layanan\r\n3) Pengembangan sistem transportasi yang terintegrasi, guna meningkatkan efisiensi mobilitas \r\n4) Optimalisasi perencanaan berbasis kebutuhan dan data, agar pembangunan lebih tepat sasaran dan berdampak langsung \r\n5) Peningkatan investasi di sektor infrastruktur, termasuk melalui skema kerja sama dengan pihak swasta \r\n6) Penguatan aspek ketahanan dan keberlanjutan infrastruktur, terutama dalam menghadapi risiko bencana dan perubahan iklim', 6, 6, '2026-08-20 03:29:02', '2026-08-26 09:03:38'),
 (21, NULL, 534, NULL, 'rpjmd', 0, '2025', '1) Pengendalian pencemaran air dan udara yang relatif efektif, melalui program monitoring dan pengawasan lingkungan \r\n2) Rendahnya tekanan industri besar, sehingga kualitas udara relatif terjaga \r\n3) Adanya kesadaran masyarakat dalam menjaga lingkungan, termasuk pengelolaan sampah dan sumber daya alam \r\n4) Program pemerintah daerah dalam pengelolaan lingkungan hidup, yang mulai terarah dan terintegrasi\r\n5) Ketersediaan ruang terbuka dan kawasan hijau, yang mendukung keseimbangan ekosistem', '1) Degradasi dan alih fungsi lahan, yang menyebabkan penurunan kualitas tanah dan daya dukung lingkungan \r\n2) Pengelolaan limbah domestik dan pertanian yang belum optimal, yang berpotensi mencemari tanah dan air \r\n3) Keterbatasan pengawasan terhadap pemanfaatan lahan, terutama di wilayah yang berkembang \r\n4) Kesadaran masyarakat yang belum merata, khususnya dalam pengelolaan sampah dan konservasi lingkungan \r\n5) Belum optimalnya rehabilitasi lahan kritis, yang berdampak pada rendahnya capaian IKL', '1) Penguatan pengelolaan dan rehabilitasi lahan, termasuk pengendalian alih fungsi lahan dan pemulihan lahan kritis\r\n2) Peningkatan pengawasan dan pengendalian pencemaran lingkungan, baik pada sektor domestik maupun kegiatan ekonomi \r\n3) Pengembangan program pengelolaan sampah berbasis masyarakat, guna meningkatkan partisipasi publik\r\n4) Peningkatan ruang terbuka hijau dan konservasi lingkungan, untuk menjaga keseimbangan ekosistem\r\n5) Penguatan edukasi dan kampanye lingkungan hidup, guna meningkatkan kesadaran masyarakat\r\n6) Integrasi kebijakan lingkungan dalam pembangunan daerah, agar pembangunan tetap memperhatikan daya dukung lingkungan', 6, 6, '2026-08-20 03:32:47', '2026-08-26 09:03:38'),
 (22, NULL, 539, NULL, 'rpjmd', 0, '2025', '1) Dukungan anggaran yang relatif memadai dalam pelaksanaan operasional tugas dan fungsi penanggulangan bencana, baik pada tahap pra-bencana, tanggap darurat, maupun pascabencana\r\n2) Inisiasi pemerintah pusat dalam penguatan kapasitas wilayah, khususnya melalui penyediaan gudang logistik pada wilayah tertentu, yang berfungsi mempercepat respons darurat serta menjamin ketersediaan bantuan saat terjadi bencana\r\n3) Ketersediaan dukungan pasca bencana yang cukup kuat, baik dalam bentuk logistik, relawan, maupun bantuan kemanusiaan lainnya, yang menunjukkan adanya solidaritas dan jejaring penanganan bencana yang cukup baik\r\n4)  Mulainya penguatan sistem koordinasi lintas sektor, yang memungkinkan penanganan bencana dilakukan secara lebih terpadu antara pemerintah daerah, instansi vertikal, dan pemangku kepentingan lainnya\r\n5) Faktor-faktor tersebut menunjukkan bahwa dari sisi kapasitas respons (response capacity), Kabupaten Pringsewu memiliki fondasi yang cukup baik, terutama dalam penanganan pasca bencana', '1) Rendahnya tingkat partisipasi dan kesadaran masyarakat dalam \r\nmitigasi bencana, yang menyebabkan upaya pencegahan dan kesiapsiagaan belum berjalan optimal, terutama di wilayah rawan bencana\r\n2) Keterbatasan sumber daya manusia yang kompeten di bidang kebencanaan, baik dari sisi jumlah maupun kualitas, yang berdampak pada belum optimalnya pelaksanaan fungsi mitigasi, kesiapsiagaan, dan respons bencana\r\n3) Rendahnya motivasi dan kapasitas aparatur, yang berimplikasi pada kurang optimalnya kinerja operasional di lapangan\r\n4) Terbatasnya jumlah personil pemadam kebakaran dan penanggulangan bencana, yang tidak sebanding dengan luas wilayah dan potensi risiko yang dihadapi\r\n5) Keterbatasan sarana dan prasarana pendukung, khususnya kendaraan operasional pemadam kebakaran yang saat ini hanya tersedia sebanyak 3 unit untuk melayani wilayah seluas ±625km², sehingga berdampak pada lambatnya jangkauan layanan darurat\r\n6) Dominasi pendekatan reaktif (tanggap darurat) dibandingkan pendekatan preventif (mitigasi), yang menyebabkan penurunan risiko belum terjadi secara signifikan', '1) Peningkatan edukasi dan sosialisasi mitigasi bencana kepada masyarakat, melalui pelatihan, simulasi, dan kampanye kesadaran kebencanaan, guna meningkatkan partisipasi dan kesiapsiagaan masyarakat\r\n2) Penguatan kapasitas sumber daya manusia kebencanaan, baik melalui pelatihan teknis, sertifikasi, maupun peningkatan motivasi aparatur, agar mampu menjalankan fungsi mitigasi dan respons secara optimal\r\n3) Penambahan sarana dan prasarana penanggulangan bencana, khususnya kendaraan pemadam kebakaran dan peralatan operasional lainnya, melalui koordinasi dengan BPKAD untuk dukungan penganggaran\r\n4) Penambahan dan penguatan jumlah personil pemadam kebakaran dan penanggulangan bencana, melalui koordinasi dengan BKPSDM, guna meningkatkan jangkauan dan kecepatan layanan \r\n5) Penguatan pendekatan mitigasi berbasis wilayah, dengan memprioritaskan daerah rawan bencana dalam perencanaan program dan kegiatan\r\n6) Peningkatan integrasi pengurangan risiko bencana dalam perencanaan pembangunan daerah, sehingga setiap pembangunan mempertimbangkan aspek risiko dan ketahanan bencana\r\n7) Penguatan sistem logistik dan respons darurat, agar lebih cepat, tepat, dan efisien dalam penanganan bencana', 6, 6, '2026-08-20 03:41:29', '2026-08-26 09:03:38'),
-(23, NULL, 544, NULL, 'rpjmd', 0, '2025', '1) Optimalisasi Infrastruktur dan Pompanisasi, Pemerintah berfokus pada perbaikan dan optimalisasi infrastruktur irigasi, serta pompanisasi untuk mengairi sawah, terutama untuk mengatasi kekurangan air pada musim tanam gadu. Selain itu, infrastruktur jalan strategis di Pringsewu juga ditingkatkan untuk memperlancar mobilitas pertanian\r\n2) Penggunaan Benih Unggul dan Pupuk Bersubsidi, Penggunaan benih unggul dan distribusi pupuk bersubsidi yang lebih terstruktur merupakan faktor penentu, sejalan dengan program swasembada pangan nasional\r\n3) Pelibatan Petani Muda (Milenial/Gen Z), Strategi percepatan tanam 2025 melibatkan petani milenial dan gen z untuk mendorong transformasi pertanian tradisional ke arah yang lebih efisien\r\n4) Pengalaman dan Manajemen Petani, Tingkat pengalaman petani di Pringsewu yang tinggi (rata-rata 22 tahun) dipadukan dengan manajemen usahatani yang lebih baik melalui penyuluhan, berdampak pada hasil yang lebih optimal\r\n5) Peningkatan mekanisasi pertanian, melalui pemanfaatan alat dan mesin pertanian (alsintan) yang mampu menekan biaya produksi, mempercepat proses tanam dan panen, serta mengurangi kehilangan hasil (losses)\r\n6) Dukungan kebijakan pemerintah dalam penguatan ketahanan pangan, yang memberikan arah dan prioritas yang jelas terhadap peningkatan produksi padi', '1) Dampak perubahan iklim dan cuaca ekstrem (El Nino dan La Nina), yang menyebabkan ketidakpastian pola tanam, kekeringan pada musim kemarau, serta potensi banjir pada musim hujan, yang secara langsung mempengaruhi produktivitas\r\n2) Alih fungsi lahan pertanian produktif, yang terus terjadi seiring dengan tekanan pembangunan, sehingga mengurangi luas baku sawah dan potensi produksi jangka panjang\r\n3) Serangan hama dan penyakit tanaman, seperti wereng coklat, tikus, dan gulma, yang masih menjadi ancaman serius terhadap stabilitas produksi\r\n4) Ketergantungan terhadap input produksi tertentu, khususnya pupuk bersubsidi dan ketersediaan air, yang apabila mengalami gangguan distribusi atau pasokan dapat berdampak signifikan terhadap hasil produksi\r\n5) Keterbatasan diversifikasi dan inovasi budidaya, yang menyebabkan sistem produksi masih rentan terhadap perubahan kondisi eksternal', '1) Perluasan areal tanam (PAT) dan optimalisasi indeks pertanaman, guna memaksimalkan pemanfaatan lahan yang tersedia\r\n2) Peningkatan penggunaan alat dan mesin pertanian (alsintan) seperti traktor roda 4 dan combine harvester untuk meningkatkan efisiensi dan mengurangi losses\r\n3) Pengembangan varietas benih unggul yang adaptif terhadap perubahan iklim dan tahan terhadap hama penyakit, guna meningkatkan stabilitas produksi\r\n4) Penguatan sistem irigasi terpadu dan manajemen air, untuk menjamin ketersediaan air sepanjang musim tanam \r\n5) Penerapan pemupukan berimbang dan pengelolaan kesuburan tanah, guna menjaga produktivitas lahan secara berkelanjutan\r\n6) Penguatan kelembagaan ekonomi desa melalui BUMDes, dalam mendukung distribusi sarana produksi, pembiayaan, serta pemasaran hasil pertanian\r\n7) Pengembangan pertanian berkelanjutan berbasis teknologi dan ramah lingkungan, untuk meningkatkan ketahanan sistem produksi terhadap perubahan iklim\r\n8) Peningkatan kapasitas petani melalui penyuluhan dan pendampingan berkelanjutan, guna memperkuat kemampuan adaptasi terhadap dinamika sektor pertanian', 6, 6, '2026-08-20 03:48:25', '2026-08-26 09:03:38'),
 (24, NULL, 549, NULL, 'rpjmd', 0, '2025', '1) Optimalisasi infrastruktur pertanian dan pompanisasi, yang mendukung ketersediaan air terutama pada musim kemarau serta memperlancar distribusi sarana produksi dan hasil panen melalui peningkatan akses jalan\r\n2) Penggunaan benih unggul dan distribusi pupuk bersubsidi yang lebih terarah, sehingga mampu meningkatkan produktivitas per hektar dan kualitas hasil panen\r\n3) Pelibatan petani milenial dan generasi muda, yang mendorong penerapan teknologi serta pola budidaya yang lebih modern dan efisien\r\n4) Pengalaman dan kemampuan manajemen petani yang relatif tinggi, yang diperkuat melalui kegiatan penyuluhan sehingga mampu meningkatkan efisiensi usaha tani\r\n5) Kolaborasi lintas sektor dan pemangku kepentingan, yang mendukung program intensifikasi dan perluasan tanam jagung secara lebih terkoordinasi', '1) Perubahan pola hujan yang tidak menentu, yang berdampak pada ketidaktepatan waktu tanam dan proses pengeringan hasil panen, sehingga menurunkan kualitas dan kuantitas produksi\r\n2) Serangan hama dan organisme pengganggu tanaman, seperti ulat grayak (Spodoptera sp.), belalang, dan penggerek batang, yang dapat menyebabkan kerusakan tanaman secara signifikan\r\n3) Keterbatasan sarana pascapanen, khususnya alat pengering (dryer), yang mengakibatkan tingginya kehilangan hasil (post-harvest loss) dan penurunan kualitas jagung\r\n4) Kondisi infrastruktur jalan produksi yang belum optimal di beberapa wilayah, sehingga menghambat distribusi hasil panen\r\n5) Ketergantungan terhadap faktor cuaca dan input produksi, yang menyebabkan fluktuasi hasil panen relatif tinggi', '1) Penguatan program intensifikasi melalui kolaborasi lintas sektor, melibatkan berbagai pemangku kepentingan untuk mengoptimalkan pemanfaatan lahan pertanian secara terkoordinasi\r\n2) Penerapan pola tanam serentak pada lahan potensial, guna meningkatkan efisiensi produksi dan mengendalikan serangan hama secara lebih efektif\r\n3) Peningkatan kualitas benih dan penerapan teknologi budidaya, untuk meningkatkan produktivitas per hektar \r\n4) Penguatan sarana dan prasarana pertanian, khususnya alat pengolah tanah, sistem irigasi, dan fasilitas pascapanen seperti dryer\r\n5) Peningkatan kapasitas petani melalui penyuluhan dan pendampingan teknis, guna memperkuat kemampuan adaptasi terhadap perubahan iklim dan dinamika produksi\r\n6) Perbaikan infrastruktur pendukung distribusi hasil panen, untuk meningkatkan efisiensi rantai pasok', 6, 6, '2026-08-20 03:55:06', '2026-08-26 09:03:38'),
 (25, NULL, 554, NULL, 'rpjmd', 0, '2025', '1) Ketersediaan bibit unggul dan manajemen pemeliharaan ternak, yang menjadi dasar dalam meningkatkan produktivitas dan kualitas hasil peternakan\r\n2) Penggunaan teknologi pakan, yang membantu mengatasi keterbatasan pakan hijauan terutama pada musim kemarau serta meningkatkan efisiensi pertumbuhan ternak\r\n3) Peningkatan kapasitas peternak melalui edukasi dan pelatihan teknis, yang mendorong penerapan praktik budidaya yang lebih baik dan berorientasi usaha\r\n4) Penguatan pengawasan dan pengendalian penyakit hewan menular strategis (PHMS), sebagai upaya menjaga kesehatan ternak dan mencegah penurunan populasi secara signifikan', '1) Wabah penyakit ternak, seperti kasus cacingan yang terjadi pada akhir tahun 2025, yang menyebabkan kematian ternak dan menurunkan produktivitas secara langsung\r\n2) Kondisi iklim dan kekeringan, yang berdampak pada ketersediaan pakan hijauan dan kualitas lingkungan pemeliharaan ternak \r\n3) Tingginya biaya input produksi, khususnya pakan, yang menjadi komponen biaya terbesar dalam usaha peternakan dan berpengaruh terhadap keberlanjutan usaha\r\n4) Kerentanan sektor peternakan terhadap faktor eksternal, termasuk fluktuasi harga dan risiko penyakit, yang menyebabkan ketidakstabilan produksi\r\n5) Masih terbatasnya penerapan teknologi secara merata di tingkat peternak, sehingga produktivitas belum optimal', '1) Peningkatan kapasitas peternak melalui bimbingan teknis (bimtek), guna meningkatkan pengetahuan dan keterampilan dalam pengelolaan usaha peternakan\r\n2) Penguatan layanan kesehatan hewan, melalui pemeriksaan kebuntingan, vaksinasi rutin, serta pengendalian penyakit seperti PMK dan penyakit lainnya\r\n3) Penerapan teknologi pakan dan manajemen nutrisi, untuk meningkatkan efisiensi pertumbuhan dan produktivitas ternak\r\n4) Pengembangan integrasi usaha pertanian dan peternakan, guna mendukung ketersediaan pakan dan efisiensi biaya produksi\r\n5) Fasilitasi legalitas dan standar usaha peternakan, seperti pendampingan Nomor Kontrol Veteriner (NKV), untuk meningkatkan kualitas dan daya saing produk\r\n6) Penguatan sistem mitigasi risiko usaha peternakan, terutama dalam menghadapi penyakit dan perubahan iklim', 6, 6, '2026-08-20 03:59:07', '2026-08-26 09:03:38'),
 (26, 4307, NULL, NULL, 'renstra', 34, '2025', 'Partisipasi aktif warga, dukungan pemerintah, sarana dan prasarana yang memadai, motivasi yang tinggi, serta komunikasi yang baik antar Pelaku dan sasaran. Yang terpenting adalah Ketersediaan dana atau anggaran yang jelas dan rutin.', 'Rendahnya tingkat pendidikan atau literasi, keterbatasan keterampilan, kurangnya kesadaran warga, serta minimnya sarana prasarana dan lemahnya koordinasi atau komunikasi antara pendamping dan warga.', 'Penguatan kapasitas sumber daya manusia, perbaikan tata kelola, peningkatan partisipasi warga, serta dukungan sarana dan anggaran yang memadai agar pelayanan serta pembangunan di tingkat lokal berjalan optimal.', 46, 46, '2026-08-20 04:05:24', '2026-08-26 09:03:38'),
@@ -30524,8 +30784,7 @@ INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id
 (28, 4312, NULL, NULL, 'renstra', 34, '2025', 'Faktor pendukung pembinaan aparatur pemerintahan kecamatan meliputi regulasi yang jelas, kepemimpinan camat yang komunikatif, ketersediaan anggaran, dukungan teknologi informasi, serta kerja sama yang baik dan kedisiplinan pegawai dan Dasar hukum dan pedoman kerja yang jelas dari pemerintah.', 'Keterbatasan sumber daya manusia (SDM) yang kurang kompeten, minimnya anggaran operasional, kurangnya sarana dan prasarana kerja, serta pemahaman regulasi yang masih rendah', 'Pelatihan kompetensi, pengawasan melekat, pemberian penghargaan, serta pemanfaatan teknologi digital. Pembinaan ini bertujuan agar aparatur mampu memberikan pelayanan publik yang cepat, transparan, dan tepat sasaran sesuai standar operasional prosedur (SOP).', 46, 46, '2026-08-20 04:09:44', '2026-08-26 09:03:38'),
 (29, 4297, NULL, NULL, 'renstra', 34, '2025', 'Koordinasi yang baik antar unsur Pimpinan dan Kepala seksi di Kecamatan , dukungan kerja sama lintas unit atau perangkat daerah, serta ketersediaan alokasi anggaran dan rencana aksi yang jelas.', 'Keterbatasan anggaran akibat efesiensi, kurangnya jumlah dan kompetensi sumber daya manusia (SDM) aparatur, serta sarana prasarana penunjang dan pemanfaatan sistem informasi yang belum optimal.', 'Penguatan koordinasi Forum Koordinasi Pimpinan Kecamatan, optimalisasi pembinaan wawasan kebangsaan, peningkatan ketenteraman dan ketertiban wilayah, serta penerapan Sistem Akuntabilitas Kinerja Instansi Pemerintah (SAKIP) secara berjenjang', 46, 46, '2026-08-20 04:14:24', '2026-08-26 09:03:38'),
 (30, NULL, 564, NULL, 'rpjmd', 0, '2025', '1) Ketersediaan lahan budidaya air tawar yang cukup luas, mencapai sekitar 1.070 hektar yang didukung oleh 45 embung dan 19 mata air, sehingga memberikan peluang besar untuk peningkatan produksi di masa mendatang\r\n2) Tingkat pemanfaatan lahan yang masih sekitar 50%, yang menunjukkan masih adanya ruang pengembangan dan ekspansi usaha budidaya perikanan\r\n3) Adanya program pendampingan dan pembinaan bagi pembudidaya ikan, yang bertujuan meningkatkan kapasitas teknis dan manajerial dalam pengelolaan usaha\r\n4) Komitmen pemerintah daerah dalam mendorong inovasi sektor perikanan, melalui penguatan tata kelola budidaya dan peningkatan kualitas produk agar lebih berdaya saing', '1) Dampak kondisi cuaca ekstrem, khususnya kemarau panjang, yang menyebabkan penurunan debit air pada embung dan sumber air lainnya, sehingga mengganggu proses budidaya dan menurunkan tingkat produksi\r\n2) Kualitas air yang fluktuatif serta ancaman penyakit ikan, yang berdampak pada tingkat kelangsungan hidup (survival rate) dan produktivitas budidaya\r\n3) Tingginya ketergantungan terhadap pakan pabrikan, yang harganya relatif mahal dan berpengaruh langsung terhadap biaya produksi serta margin keuntungan pembudidaya\r\n4) Belum optimalnya pemanfaatan lahan budidaya, yang menunjukkan adanya keterbatasan dalam pengembangan usaha aik dari sisi modal, teknologi, maupun manajemen\r\n5) Skala usaha yang masih relatif kecil dan tersebar, sehingga efisiensi produksi dan daya saing belum optimal', '1) Penguatan kawasan sentra perikanan budidaya, khususnya Kecamatan Pagelaran sebagai salah satu kawasan unggulan tingkat nasional\r\n2) Peningkatan kolaborasi antara pemerintah daerah dan pemangku kepentingan, untuk mendukung pengembangan sektor perikanan yang lebih tangguh, inovatif, dan berkelanjutan\r\n3) Optimalisasi pemanfaatan lahan budidaya yang masih belum tergarap, melalui fasilitasi akses permodalan, teknologi, dan pendampingan usaha\r\n4) Peningkatan efisiensi biaya produksi, khususnya melalui inovasi pakan alternatif untuk mengurangi ketergantungan terhadap pakan pabrikan\r\n5) Penguatan program bantuan dan pemberdayaan masyarakat, termasuk pemberian bantuan ikan konsumsi serta edukasi untuk meningkatkan konsumsi ikan dan kesejahteraan masyarakat\r\n6) Penguatan sistem pengelolaan kualitas air dan kesehatan ikan, guna meningkatkan produktivitas dan menekan risiko kegagalan usaha', 6, 6, '2026-08-20 04:19:30', '2026-08-26 09:03:38'),
-(31, 4167, NULL, NULL, 'renstra', 27, '2025', 'Faktor pendukung keberhasilan : \r\n Integrasi platform digital (SIAPkerja) Mempercepat job matching antara lowongan yang dibuka di suatu kabupaten/kota dengan pencari kerja di kabupaten/kota lain.\r\n\r\nFaktor Kegagalan :\r\nKeterbatasan Alokasi Anggaran APBD: Anggaran untuk penyelenggaraan Job Fair, penyuluhan, verifikasi dokumen, pemindaian tes seleksi, hingga proses fasilitasi pemberangkatan/penempatan AKD sangat minim di tingkat daerah.', 'Tingkat pendidikan atau skill pencari kerja sering kali tidak sesuai (gap) dengan kriteria spesifik yang disyaratkan oleh perusahaan atau Pemberi Kerja.', 'Mengoptimalkan integrasi platform SIAPkerja (Kemnaker) di tingkat kabupaten/kota agar data pencari kerja (AK/I) dan lowongan kerja (AK/II) terdata secara presisi.\r\n\r\nMengidentifikasi secara aktif potensi sektor industri di daerah penerima tenaga kerja (daerah tujuan) dan memetakan pasokan tenaga kerja dari daerah asal.', 31, 31, '2026-08-21 04:32:28', '2026-08-26 09:03:38');
-INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(31, 4167, NULL, NULL, 'renstra', 27, '2025', 'Faktor pendukung keberhasilan : \r\n Integrasi platform digital (SIAPkerja) Mempercepat job matching antara lowongan yang dibuka di suatu kabupaten/kota dengan pencari kerja di kabupaten/kota lain.\r\n\r\nFaktor Kegagalan :\r\nKeterbatasan Alokasi Anggaran APBD: Anggaran untuk penyelenggaraan Job Fair, penyuluhan, verifikasi dokumen, pemindaian tes seleksi, hingga proses fasilitasi pemberangkatan/penempatan AKD sangat minim di tingkat daerah.', 'Tingkat pendidikan atau skill pencari kerja sering kali tidak sesuai (gap) dengan kriteria spesifik yang disyaratkan oleh perusahaan atau Pemberi Kerja.', 'Mengoptimalkan integrasi platform SIAPkerja (Kemnaker) di tingkat kabupaten/kota agar data pencari kerja (AK/I) dan lowongan kerja (AK/II) terdata secara presisi.\r\n\r\nMengidentifikasi secara aktif potensi sektor industri di daerah penerima tenaga kerja (daerah tujuan) dan memetakan pasokan tenaga kerja dari daerah asal.', 31, 31, '2026-08-21 04:32:28', '2026-08-26 09:03:38'),
 (32, 3232, NULL, NULL, 'renstra', 8, '2025', 'Masih belum diterapkannya manajemen talenta dan belum adanya dokumen perencanaan pengembangan kompetensi ASN', 'Tahun 2024 dan 2025 tidak dilakukan penilaian indeks sistem merit karena pengalihan tugas dan fungsi Komisi Aparatur Sipil Negara (KASN) kepada Kementerian PANRB dan BKN berdasarkan Surat Edaran Menteri Pendayagunaan Aparatur Negara dan Reformasi Birokrasi Nomor 4 Tahun 2024, sehingga penilaian sistem merit diprioritaskan bagi Kabupaten yang memiliki nilai buruk dan baik', 'Penguatan Komitmen Pimpinan, Penerapan Manajemen Talenta, Penguatan Penilaian Kinerja, Penguatan Penilaian Kinerja, Digitalisasi Manajemen ASN, serta Penguatan Budaya Kerja ASN', 14, 14, '2026-08-21 05:26:24', '2026-08-26 09:03:38'),
 (41, NULL, NULL, 112, 'iku', 25, '2025', 'Pemahaman pelaku usaha terhadap regulasi penanaman modal (kewajiban pelaporan LKPM)', 'pelaku usaha belum memahami tata cara pelaporan LKPM', 'melakukan fasilitasi dan pendampingan pelaku usaha dalam pelaporan LKPM', 29, 29, '2026-08-31 06:36:59', '2026-08-31 06:36:59'),
 (42, NULL, NULL, 113, 'iku', 25, '2025', 'bergesernya investor ke daerah lain', 'Kurangnya Promosi potensi dan peluang usaha unggulan daerah serta  belum tersedianya regulasi yang mendukung iklim investasi daerah', 'melaksanakan promosi potensi dan peluang usaha unggulan daerah serta menyusun regulasi yang mendukung iklim penanaman modal', 29, 29, '2026-08-31 06:41:50', '2026-08-31 06:41:50'),
@@ -30533,7 +30792,8 @@ INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id
 (44, NULL, NULL, 112, 'iku', 25, '2025', 'pemahaman pelaku usaha terhadap regulasi penanaman modal', 'belum semua pelaku usaha memahami tata cara pelaporan LKPM', 'melakukan fasilitasi dan pendampingan pelaku usaha dalam pelaporan LKPM dan  membuat klinik konsultasi LKPM', 29, 29, '2026-08-31 08:21:31', '2026-08-31 08:21:31'),
 (45, NULL, NULL, 112, 'iku', 25, '2026', 'Pemahaman pelaku usaha terhadap regulasi penanaman modal (kewajiban pelaporan  LKPM)', 'pelaku usaha belum memahami tata cara pelaporan  LKPM', 'melakukan fasilitasi dan pendampingan pelaku usaha dalam pelaporan LKPM', 29, 29, '2026-09-01 01:48:54', '2026-09-01 01:48:54'),
 (46, NULL, NULL, 113, 'iku', 25, '2026', 'bergesernya investor ke daerah lain', 'Kurangnya Promosi potensi dan peluang usaha unggulan daerah serta belum tersedianya regulasi yang mendukung iklim  investasi daerah', 'melaksanakan promosi potensi dan peluang usaha unggulan daerah serta menyusun regulasi yang mendukung iklim  penanaman modal', 29, 29, '2026-09-01 01:49:46', '2026-09-01 01:49:46'),
-(47, NULL, NULL, 114, 'iku', 25, '2026', 'Meningkatnya ekspektasi masyarakat terhadap pelayanan perizinan dan non perizinan', 'Belum terpenuhinya kompetensi aparatur dan sarana serta prasarana pelayanan', 'peningkatan kompetensi aparatur peningkatan kualitas sarana dan prasarana serta inovasi pelayanan', 29, 29, '2026-09-01 01:50:41', '2026-09-01 01:50:41'),
+(47, NULL, NULL, 114, 'iku', 25, '2026', 'Meningkatnya ekspektasi masyarakat terhadap pelayanan perizinan dan non perizinan', 'Belum terpenuhinya kompetensi aparatur dan sarana serta prasarana pelayanan', 'peningkatan kompetensi aparatur peningkatan kualitas sarana dan prasarana serta inovasi pelayanan', 29, 29, '2026-09-01 01:50:41', '2026-09-01 01:50:41');
+INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
 (48, NULL, NULL, 131, 'iku', 37, '2025', '1. Komitmen pimpinan dan seluruh ASN dalam mengimplementasikan Sistem Akuntabilitas Kinerja Instansi Pemerintah (SAKIP) secara konsisten dan berkesinambungan.\r\n2. Penyusunan dokumen perencanaan kinerja (Renstra, Perjanjian Kinerja, dan IKU) yang makin terukur, relevan, serta selaras (cascading) hingga ke tingkat individu.\r\n3. Penguatan monitoring dan evaluasi internal secara berkala terhadap pencapaian target kinerja serta pemanfaatan anggaran.\r\n4. Pemanfaatan aplikasi e-SAKIP yang mempermudah proses pengukuran, pelaporan, dan pengawasan kinerja secara terintegrasi dan real-time.\r\n5. Peningkatan kapasitas SDM pengelola SAKIP melalui bimbingan teknis dan pendampingan berkelanjutan dari instansi pembina.', '1. Keterbatasan sumber daya manusia (SDM) yang memahami secara mendalam teknis penyusunan dan pengintegrasian SAKIP di unit kerja.\r\n\r\n2. Koordinasi dan pengumpulan data capaian kinerja dari setiap seksi/subbagian yang belum sepenuhnya tepat waktu.\r\n\r\n3. Belum optimalnya tindak lanjut hasil evaluasi internal SAKIP secara menyeluruh dan berkala.\r\n\r\n4. Integrasi pendokumentasian data dukung (evidence) kinerja yang masih belum sepenuhnya terdigitalisasi dengan rapi.', '1. Memperkuat sistem monitoring dan evaluasi berkala (triwulanan) untuk memantau ketercapaian Indikator Kinerja Utama (IKU) dan penyerapan anggaran.\r\n\r\n2. Meningkatkan koordinasi inter-seksi/subbagian agar pengumpulan data serta pelaporan kinerja dapat dilakukan secara tepat waktu dan akurat.\r\n\r\n3. Mengoptimalkan digitalisasi pendokumentasian bukti dukung (evidence) kinerja agar tersusun dengan rapi dan mudah diakses saat penilaian.\r\n\r\n4. Menindaklanjuti secara konsisten setiap rekomendasi hasil evaluasi SAKIP dari Inspektorat maupun Bagian Organisasi Kabupaten.', 49, 49, '2026-09-04 03:20:10', '2026-09-04 03:20:10'),
 (49, NULL, NULL, 132, 'iku', 37, '2025', '1. Komitmen pimpinan dan seluruh petugas pelayanan dalam memberikan pelayanan publik yang ramah, cepat, transparan, dan sesuai standar pelayanan (SOP).\r\n\r\n2. Peningkatan kualitas sarana dan prasarana publik serta pemanfaatan teknologi/sistem informasi pelayanan untuk mempermudah akses masyarakat.\r\n\r\n3. Pelaksanaan Survei Kepuasan Masyarakat (SKM) secara berkala sebagai bahan evaluasi dan perbaikan kualitas pelayanan secara berkelanjutan.\r\n\r\n4. Tingginya partisipasi dan kesadaran masyarakat dalam memberikan kritik, saran, serta masukan yang membangun terhadap pelayanan instansi.', '1. Keterbatasan fasilitas fisik dan ruang tunggu pelayanan yang kurang memadai untuk menampung jumlah pemohon pada jam-jam sibuk.\r\n\r\n2. Belum seluruhnya masyarakat memahami persyaratan dan alur pelayanan, sehingga masih sering terjadi kekurangan berkas saat pengajuan.\r\n\r\n3. Gangguan teknis pada jaringan internet atau sistem aplikasi pelayanan pusat/daerah yang sesekali menghambat kecepatan proses penyelesaian dokumen.\r\n\r\n4. Tingkat partisipasi masyarakat dalam pengisian Survei Kepuasan Masyarakat (SKM) digital yang masih perlu dioptimalkan.', '1. Mengoptimalkan penanganan aduan dan masukan masyarakat melalui penyediaan saluran aspirasi yang responsif serta tindak lanjut yang cepat.\r\n2. Melakukan digitalisasi dan penyederhanaan alur pelayanan untuk memangkas waktu proses serta mempermudah pengurusan berkas bagi warga.\r\n3. Melakukan publikasi informasi standar pelayanan (SOP), syarat, dan estimasi waktu secara luas melalui media sosial dan papan informasi fisik agar mudah dipahami masyarakat.\r\n4. Meningkatkan sosialisasi dan pendampingan pengisian Survei Kepuasan Masyarakat (SKM) agar partisipasi warga makin optimal dan data evaluasi lebih akurat.', 49, 49, '2026-09-04 03:22:57', '2026-09-04 03:26:36'),
 (50, NULL, NULL, 61, 'iku', 5, '2025', 'Faktor Pendukung Keberhasilan & Peningkatan Kinerja :\r\n1. Komitmen Kuat Pimpinan \r\n2. Kecepatan Tindak Lanjut Rekomendasi Hasil Pemeriksaan \r\n3. Sistem Pengendalian Intern (SPI) yang Tangguh\r\n4. Kompensasi Kompetensi SDM\r\n5. Digitalisasi Penatausahaan Aset\r\n\r\nFaktor Penyebab Kegagalan & Penurunan Kinerja :\r\n1. Pengabaian Temuan Audit Masa Lalu\r\n2. Kerancuan dan \"Gaibnya\" Dokumen Aset Tetap\r\n3. Pembatasan Ruang Lingkup Pemeriksaan \r\n4. Kelebihan Bayar dan Kekurangan Volume Proyek\r\n5. Ketidakpatuhan Material terhadap Aturan', 'Faktor penghambat:\r\n1. Kelemahan Sistem Pengendalian Intern \r\n2. Buruknya Penatausahaan dan Inventarisasi Aset Tetap \r\n3. Rendahnya Kualitas SDM Pengelola Keuangan\r\n4. Ketidakpatuhan terhadap Peraturan Perundang-undangan\r\n5. Rendahnya Tindak Lanjut Rekomendasi Hasil Pemeriksaan', 'Upaya yang telah dilakukan :\r\n1. Penguatan Komitmen dan Budaya Organisasi \r\n2. Akselerasi Tindak Lanjut Rekomendasi Hasil Pemeriksaan \r\n3. Peningkatan Peran dan Fungsi APIP \r\n4. Pembenahan dan Inventarisasi Aset Tetap secara Radikal\r\n5. Optimalisasi Sistem Informasi Pemerintahan yang Terintegrasi\r\n6. Peningkatan Kapasitas SDM Pengelola Keuangan', 12, 12, '2026-09-04 03:52:29', '2026-09-04 04:31:13'),
@@ -30566,11 +30826,11 @@ INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id
 (77, NULL, NULL, 91, 'iku', 23, '2026', NULL, '1. Tingginya Volume Emisi Sektor Transportasi: Laju pertumbuhan kendaraan bermotor yang pesat belum sebanding dengan kesadaran masyarakat dalam melakukan pemeliharaan rutin maupun tingkat kepatuhan uji emisi.\r\n\r\n2. Fenomena Cuaca dan Faktor Geografis: Kondisi iklim (seperti musim kemarau panjang) serta pola angin sering kali memperburuk pembentukan akumulasi polutan di atmosfer wilayah perkotaan.\r\n3. Tidak tersedianya  Stasiun Pemantau Kualitas Udara Ambien (SPKU) di Kabupaten Pringsewu yang beroperasi secara real-time', NULL, 27, 27, '2026-09-08 03:47:32', '2026-09-08 03:47:32'),
 (78, NULL, NULL, 14, 'iku', 9, '2025', '1. Pemberdayaan dan Kapasitas SDM yang Tinggi: Nilai IPKKU melonjak jika seluruh personel PPNS (Penyidik Pegawai Negeri Sipil) dan anggota operasional memiliki sertifikasi, kompetensi yang memadai, serta disiplin kerja yang optimal\r\n2. Dukungan Perencanaan dan Anggaran (Sistem): Alokasi anggaran belanja operasional yang mencukupi untuk sosialisasi produk hukum dan kegiatan penertiban lapangan\r\n3. Sarana dan Prasarana yang Memadai: Ketersediaan armada, alat pelindung diri (APD), pos pantau, dan fasilitas operasional penertiban yang representatif\r\n4. Sinergi Lintas Sektor: Koordinasi yang solid dan tanggap darurat bersama instansi samping seperti TNI, Polri, BPBD, dan dinas perizinan terkait', '1. Lemahnya Pengawasan Mutu (Eviden) Lapangan: Penurunan skor terjadi jika pengawasan penegakan peraturan daerah minim, misalnya maraknya penyalahgunaan trotoar/badan jalan oleh PKL secara terus-menerus tanpa penertiban yang konsisten\r\n2. Ketidaklengkapan Dokumen Bukti (Eviden): Pengukuran IPKKU dilakukan secara digital (misal via Google Form) dengan melampirkan berkas bukti (eviden). Jika administrasi pelaporan jelek atau dokumen pendukung hilang/tidak diunggah, nilai otomatis turun drastis\r\n3. Kurangnya Sosialisasi Hukum: Minimnya edukasi dan sosialisasi intensif mengenai Perda/Perkada kepada masyarakat, sehingga tingkat pelanggaran di komunitas tetap tinggi akibat ketidaktahuan warga\r\n4. Ketiadaan Solusi Terintegrasi: Melakukan penertiban non-yustisial tanpa berkoordinasi menyediakan solusi jangka panjang (seperti tidak adanya relokasi lapak tetap bagi pelanggar ketertiban umum) membuat pelanggaran berulang', '1. Digitalisasi Laporan Operasional: Mengubah sistem pelaporan manual di lapangan menjadi berbasis aplikasi atau digital. Hal ini mempermudah penyusunan dokumentasi (foto sebelum-sesudah penertiban, berita acara, dan jumlah pelanggar yang ditindak) secara real-time\r\n2. Akselerasi Diklat PPNS: Meningkatkan jumlah personel yang bersertifikasi PPNS (Penyidik Pegawai Negeri Sipil) melalui diklat khusus, agar penegakan Perda/Perkada dapat dilakukan secara yustisial dan berkekuatan hukum tetap\r\n3. Pelatihan Humanis dan SOP Penertiban: Menyelenggarakan pelatihan komunikasi persuasif dan resolusi konflik secara berkala bagi anggota operasional lapangan. Pendekatan yang humanis meminimalkan resistensi masyarakat dan menaikkan citra instansi\r\n4. Penerapan Patroli Berbasis Deteksi Dini: Menyusun pemetaan wilayah rawan gangguan trantibum (seperti titik kemacetan PKL atau lokasi balap liar) untuk menerapkan patroli terjadwal. Langkah antisipatif ini jauh lebih efektif daripada merespons setelah pelanggaran membesar\r\n5. Mengajukan penganggaran berkala untuk peremajaan armada operasional, alat perlindungan diri (APD) personel saat penertiban, serta teknologi pengawasan seperti CCTV pada titik-titik rawan gangguan trantibum', 15, 15, '2026-09-08 04:54:50', '2026-09-08 04:54:50'),
 (81, NULL, NULL, 171, 'iku', 15, '2025', 'FAKTOR PENDUKUNG KEBERHASILAN JUMLAH ATLET BERPRESTASI\r\n1. FAKTOR PEMBINAAN & SDM\r\nPelatih Kompeten & Bersertifikat\r\n2. FAKTOR SARANA PRASARANA & DANA\r\n Sarpras Berstandar Nasional', 'FAKTOR PENGHAMBAT JUMLAH ATLET BERPRESTASI\r\n1. FAKTOR PEMBINAAN & SDM\r\nPelatih Tidak Kompeten / Minim Lisensi\r\n2. FAKTOR SARANA PRASARANA & DANA\r\nSarpras Rusak / Tidak Standar', '1. UPAYA PEMBINAAN & SDM\r\nPenguatan Pelatih', 20, 20, '2026-09-09 06:43:11', '2026-09-10 04:37:31'),
-(82, NULL, NULL, 130, 'iku', 2, '2025', 'Faktor pendukung\r\n•  Komitmen pimpinan dalam mendorong pelaksanaan Reformasi Birokrasi secara berkelanjutan. \r\n•  Koordinasi dan kolaborasi yang baik antara Sekretariat Daerah dan perangkat daerah. \r\n\r\nFaktor Penurunan  Kinerja :\r\nBelum tercapainya target rencana aksi pada beberapa area perubahan. \r\n•  Pelaksanaan program/kegiatan reformasi birokrasi tidak konsisten. \r\n•  Kurangnya bukti dukung terhadap pelaksanaan dan hasil kegiatan. \r\n•  Tindak lanjut perbaikan berjalan lambat. \r\n•  Pergantian personel atau perubahan kebijakan yang memengaruhi kesinambungan   pelaksanaan. \r\n•  Koordinasi antarunit/perangkat daerah belum optimal. \r\n•  Hasil pelaksanaan belum memberikan dampak yang terukur terhadap kualitas tata kelola dan pelayanan\r\n\r\n\r\n•  Tersusunnya rencana aksi Reformasi Birokrasi General dan Tematik. \r\n•  Dukungan data dan dokumen pelaksanaan RB yang memadai. \r\n•  Pelaksanaan monitoring dan evaluasi secara berkala. \r\n•  Adanya tindak lanjut terhadap rekomendasi hasil evaluasi Reformasi Birokrasi. \r\n•  Integrasi RB dengan perencanaan kinerja, SAKIP, SPIP, pelayanan publik, dan pengawasan.\r\n\r\nFaktor penyebab Peningkatan Kinerja :\r\n•  Meningkatnya komitmen dan kepedulian perangkat daerah terhadap pelaksanaan RB. \r\n•  Perbaikan kualitas perencanaan, pengukuran, pelaporan, dan evaluasi kinerja. \r\n•  Meningkatnya pemenuhan dan kualitas data dukung evaluasi RB. \r\n•  Semakin baiknya koordinasi dalam pelaksanaan RB General dan Tematik. \r\n•  Meningkatnya tindak lanjut terhadap rekomendasi hasil evaluasi. \r\n•  Adanya inovasi dan penyederhanaan proses bisnis yang mendukung peningkatan kualitas tata kelola.', '1.Implementasi rencana aksi belum dilaksanakan secara optimal oleh seluruh perangkat daerah\r\n2.Koordinasi dan sinergi lintas perangkat daerah belum konsisten.\r\n3.Data dukung pelaksanaan Reformasi Birokrasi belum lengkap atau belum terdokumentasi dengan baik. \r\n4.Sebagian pelaksanaan masih berorientasi pada pemenuhan administrasi dan belum menunjukkan hasil/dampak yang kuat\r\n5.Tindak lanjut atas hasil evaluasi dan rekomendasi belum seluruhnya selesai. \r\n6.Monitoring terhadap pencapaian target belum dilakukan secara konsisten\r\n7.Keterbatasan sumber daya manusia, waktu, dan dukungan anggaran.', '1. Meningkatkan koordinasi dan sinergi pelaksanaan Reformasi Birokrasi antara Sekretariat Daerah dengan seluruh perangkat daerah. \r\n2. Memperkuat pelaksanaan rencana aksi Reformasi Birokrasi General dan Tematik sesuai target yang telah ditetapkan. \r\n3.  Meningkatkan kualitas perencanaan, pengukuran, pelaporan, dan evaluasi kinerja agar lebih berorientasi pada hasil dan dampak. \r\n4.  Melakukan monitoring dan evaluasi secara berkala terhadap capaian rencana aksi serta memastikan tindak lanjut atas hasil evaluasi\r\n1.	Meningkatkan kualitas dan kelengkapan data dukung Reformasi Birokrasi serta memastikan dokumentasi pelaksanaan tersedia secara tepat waktu. \r\n2.	Mendorong penyederhanaan proses bisnis dan peningkatan efektivitas tata kelola pemerintahan. \r\n3.	Meningkatkan kapasitas dan pemahaman SDM terkait pelaksanaan Reformasi Birokrasi. \r\n4.	Mengintegrasikan pelaksanaan RB dengan SAKIP, SPIP, pelayanan publik, pengawasan, pengadaan barang/jasa, dan pengelolaan kinerja. \r\n5. Meningkatkan kualitas dan kelengkapan data dukung Reformasi Birokrasi serta memastikan dokumentasi pelaksanaan tersedia secara tepat waktu\r\n6. Mendorong penyederhanaan proses bisnis dan peningkatan efektivitas tata kelola pemerintahan. \r\n7. Meningkatkan kapasitas dan pemahaman SDM terkait pelaksanaan Reformasi Birokrasi. \r\n8. Mengintegrasikan pelaksanaan RB dengan SAKIP, SPIP, pelayanan publik, pengawasan, pengadaan barang/jasa, dan pengelolaan kinerja. \r\n9. Mendorong setiap perangkat daerah untuk menyusun tindak lanjut perbaikan yang terukur berdasarkan hasil evaluasi. \r\n10. Memperkuat orientasi pelaksanaan RB pada hasil dan dampak nyata terhadap kualitas penyelenggaraan pemerintahan dan pelayanan publik', 52, 52, '2026-09-09 08:16:48', '2026-09-09 08:29:58');
-INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(82, NULL, NULL, 130, 'iku', 2, '2025', 'Faktor pendukung\r\n•  Komitmen pimpinan dalam mendorong pelaksanaan Reformasi Birokrasi secara berkelanjutan. \r\n•  Koordinasi dan kolaborasi yang baik antara Sekretariat Daerah dan perangkat daerah. \r\n\r\nFaktor Penurunan  Kinerja :\r\nBelum tercapainya target rencana aksi pada beberapa area perubahan. \r\n•  Pelaksanaan program/kegiatan reformasi birokrasi tidak konsisten. \r\n•  Kurangnya bukti dukung terhadap pelaksanaan dan hasil kegiatan. \r\n•  Tindak lanjut perbaikan berjalan lambat. \r\n•  Pergantian personel atau perubahan kebijakan yang memengaruhi kesinambungan   pelaksanaan. \r\n•  Koordinasi antarunit/perangkat daerah belum optimal. \r\n•  Hasil pelaksanaan belum memberikan dampak yang terukur terhadap kualitas tata kelola dan pelayanan\r\n\r\n\r\n•  Tersusunnya rencana aksi Reformasi Birokrasi General dan Tematik. \r\n•  Dukungan data dan dokumen pelaksanaan RB yang memadai. \r\n•  Pelaksanaan monitoring dan evaluasi secara berkala. \r\n•  Adanya tindak lanjut terhadap rekomendasi hasil evaluasi Reformasi Birokrasi. \r\n•  Integrasi RB dengan perencanaan kinerja, SAKIP, SPIP, pelayanan publik, dan pengawasan.\r\n\r\nFaktor penyebab Peningkatan Kinerja :\r\n•  Meningkatnya komitmen dan kepedulian perangkat daerah terhadap pelaksanaan RB. \r\n•  Perbaikan kualitas perencanaan, pengukuran, pelaporan, dan evaluasi kinerja. \r\n•  Meningkatnya pemenuhan dan kualitas data dukung evaluasi RB. \r\n•  Semakin baiknya koordinasi dalam pelaksanaan RB General dan Tematik. \r\n•  Meningkatnya tindak lanjut terhadap rekomendasi hasil evaluasi. \r\n•  Adanya inovasi dan penyederhanaan proses bisnis yang mendukung peningkatan kualitas tata kelola.', '1.Implementasi rencana aksi belum dilaksanakan secara optimal oleh seluruh perangkat daerah\r\n2.Koordinasi dan sinergi lintas perangkat daerah belum konsisten.\r\n3.Data dukung pelaksanaan Reformasi Birokrasi belum lengkap atau belum terdokumentasi dengan baik. \r\n4.Sebagian pelaksanaan masih berorientasi pada pemenuhan administrasi dan belum menunjukkan hasil/dampak yang kuat\r\n5.Tindak lanjut atas hasil evaluasi dan rekomendasi belum seluruhnya selesai. \r\n6.Monitoring terhadap pencapaian target belum dilakukan secara konsisten\r\n7.Keterbatasan sumber daya manusia, waktu, dan dukungan anggaran.', '1. Meningkatkan koordinasi dan sinergi pelaksanaan Reformasi Birokrasi antara Sekretariat Daerah dengan seluruh perangkat daerah. \r\n2. Memperkuat pelaksanaan rencana aksi Reformasi Birokrasi General dan Tematik sesuai target yang telah ditetapkan. \r\n3.  Meningkatkan kualitas perencanaan, pengukuran, pelaporan, dan evaluasi kinerja agar lebih berorientasi pada hasil dan dampak. \r\n4.  Melakukan monitoring dan evaluasi secara berkala terhadap capaian rencana aksi serta memastikan tindak lanjut atas hasil evaluasi\r\n1.	Meningkatkan kualitas dan kelengkapan data dukung Reformasi Birokrasi serta memastikan dokumentasi pelaksanaan tersedia secara tepat waktu. \r\n2.	Mendorong penyederhanaan proses bisnis dan peningkatan efektivitas tata kelola pemerintahan. \r\n3.	Meningkatkan kapasitas dan pemahaman SDM terkait pelaksanaan Reformasi Birokrasi. \r\n4.	Mengintegrasikan pelaksanaan RB dengan SAKIP, SPIP, pelayanan publik, pengawasan, pengadaan barang/jasa, dan pengelolaan kinerja. \r\n5. Meningkatkan kualitas dan kelengkapan data dukung Reformasi Birokrasi serta memastikan dokumentasi pelaksanaan tersedia secara tepat waktu\r\n6. Mendorong penyederhanaan proses bisnis dan peningkatan efektivitas tata kelola pemerintahan. \r\n7. Meningkatkan kapasitas dan pemahaman SDM terkait pelaksanaan Reformasi Birokrasi. \r\n8. Mengintegrasikan pelaksanaan RB dengan SAKIP, SPIP, pelayanan publik, pengawasan, pengadaan barang/jasa, dan pengelolaan kinerja. \r\n9. Mendorong setiap perangkat daerah untuk menyusun tindak lanjut perbaikan yang terukur berdasarkan hasil evaluasi. \r\n10. Memperkuat orientasi pelaksanaan RB pada hasil dan dampak nyata terhadap kualitas penyelenggaraan pemerintahan dan pelayanan publik', 52, 52, '2026-09-09 08:16:48', '2026-09-09 08:29:58'),
 (83, NULL, NULL, 28, 'iku', 27, '2025', 'Faktor Penyebab Kegagalan / Penurunan Kinerja\r\n\r\n1. Keterampilan dan kualifikasi yang dimiliki pencari kerja tidak memenuhi standar yang disyaratkan oleh pemberi kerja di daerah/luar negeri tujuan.\r\n\r\n2. Kurangnya sarana pelatihan berbasis kompetensi di daerah asal.\r\n\r\n3. Akses informasi lowongan kerja lintas daerah tidak sampai ke pencari kerja di pelosok atau wilayah terpencil.', 'Ketidaksesuaian Keterampilan (Mismatch): Kualifikasi atau keterampilan pencari kerja (supply) sering kali tidak sesuai dengan kriteria yang dibutuhkan oleh pengguna tenaga kerja/perusahaan (demand) di kabupaten/kota tujuan.\r\n\r\nRendahnya Partisipasi Perusahaan: Masih banyak perusahaan/pemberi kerja yang tidak melaporkan lowongan kerja (Wajib Lapor Lowongan) ke Disnaker dan memilih merekrut secara mandiri.\r\n\r\nKoordinasi Lintas Daerah Kurang Optimal: Kerjasama dan komunikasi antar-Disnaker kabupaten/kota dalam satu provinsi belum berjalan efektif atau rutin.', '1. Optimalisasi Platform SIAPkerja / Karirhub: Mengintegrasikan data pencari kerja (AK-1) dan lowongan pekerjaan dari seluruh kabupaten/kota dalam provinsi secara real-time.\r\n\r\n2. Bursa Kerja Khusus (BKK) & SMK Network: Mengoneksikan BKK di SMK/Perguruan Tinggi kabupaten A dengan industri pemohon tenaga kerja di kabupaten/kota B dalam satu provinsi.\r\n\r\n3.Pelatihan Berbasis Kompetensi (PBK) Sesuai Kebutuhan Pasar Lintas Daerah: Membuka akses pelatihan di BLK/UPTD provinsi bagi calon tenaga kerja asal kabupaten/kota yang memiliki angka pengangguran tinggi.', 31, 31, '2026-09-10 01:02:33', '2026-09-10 01:02:33'),
 (84, NULL, NULL, 170, 'iku', 15, '2025', 'FAKTOR PENDUKUNG KEBERHASILAN PENINGKATAN INDEKS PEMBANGUNAN PEMUDA\r\n1. DOMAIN PENDIDIKAN\r\nAkses Pendidikan Setara\r\n2. DOMAIN KESEHATAN & KESEJAHTERAAN\r\nLayanan Kesehatan Ramah Pemuda\r\n3. DOMAIN LAPANGAN KERJA & KEWIRAUSAHAAN\r\nAkses Modal & Pelatihan\r\n4. DOMAIN PARTISIPASI & KEPEMIMPINAN\r\nKelembagaan Pemuda Aktif\r\n5. DOMAIN GENDER & DISKRIMINASI\r\nKesetaraan Akses', 'FAKTOR PENGHAMBAT PENINGKATAN INDEKS PEMBANGUNAN PEMUDA / IPP\r\n1. DOMAIN PENDIDIKAN\r\nPutus Sekolah & Angka Drop Out Tinggi\r\n2. DOMAIN KESEHATAN & KESEJAHTERAAN\r\nMasalah Kesehatan Mental & NAPZA', 'UPAYA PENCAPAIAN KINERJA IPP\r\n1. DOMAIN PENDIDIKAN\r\nTingkatkan Akses Pendidikan\r\n2. DOMAIN KESEHATAN & KESEJAHTERAAN\r\n Layanan Kesehatan Ramah Pemuda', 20, 20, '2026-09-10 03:42:27', '2026-09-10 03:50:38'),
-(85, NULL, NULL, 54, 'iku', 6, '2025', 'Peningkatan persentase PAD terhadap\r\npendapatan daerah didukung oleh\r\noptimalisasi pemungutan pajak dan\r\nretribusi daerah, peningkatan\r\nkepatuhan wajib pajak, intensifikasi\r\ndan ekstensifikasi sumber PAD, serta\r\npenguatan digitalisasi pelayanan dan\r\npembayaran pajak. Adapun faktor yang\r\ndapat menyebabkan penurunan kinerja\r\nantara lain belum optimalnya\r\npendataan potensi pajak, masih\r\nrendahnya kepatuhan sebagian wajib\r\npajak, serta kondisi ekonomi\r\nmasyarakat dan dunia usaha yang\r\nmemengaruhi penerimaan PAD.', 'Belum optimalnya penggalian potensi\r\nPAD, kepatuhan wajib pajak, pendataan\r\ndan pengawasan pajak daerah, serta\r\nkondisi ekonomi masyarakat dan dunia\r\nusaha', 'Mengoptimalkan pendataan,\r\npemungutan, pengawasan, dan\r\npenagihan pajak daerah serta\r\nmeningkatkan digitalisasi pelayanan,\r\nkepatuhan wajib pajak, dan penggalian\r\npotensi PAD', 55, 55, '2026-09-10 04:00:56', '2026-09-10 04:00:56'),
+(85, NULL, NULL, 54, 'iku', 6, '2025', 'Peningkatan persentase PAD terhadap\r\npendapatan daerah didukung oleh\r\noptimalisasi pemungutan pajak dan\r\nretribusi daerah, peningkatan\r\nkepatuhan wajib pajak, intensifikasi\r\ndan ekstensifikasi sumber PAD, serta\r\npenguatan digitalisasi pelayanan dan\r\npembayaran pajak. Adapun faktor yang\r\ndapat menyebabkan penurunan kinerja\r\nantara lain belum optimalnya\r\npendataan potensi pajak, masih\r\nrendahnya kepatuhan sebagian wajib\r\npajak, serta kondisi ekonomi\r\nmasyarakat dan dunia usaha yang\r\nmemengaruhi penerimaan PAD.', 'Belum optimalnya penggalian potensi\r\nPAD, kepatuhan wajib pajak, pendataan\r\ndan pengawasan pajak daerah, serta\r\nkondisi ekonomi masyarakat dan dunia\r\nusaha', 'Mengoptimalkan pendataan,\r\npemungutan, pengawasan, dan\r\npenagihan pajak daerah serta\r\nmeningkatkan digitalisasi pelayanan,\r\nkepatuhan wajib pajak, dan penggalian\r\npotensi PAD', 55, 55, '2026-09-10 04:00:56', '2026-09-10 04:00:56');
+INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
 (86, NULL, NULL, 107, 'iku', 8, '2025', 'Faktor Pendukung Keberhasilan Peningkatan Kinerja:\r\n1. Penggunaan aplikasi (digitalisasi) dan sistem pendukung mempercepat penyelesaian layanan dan memudahkan evaluasi\r\n2. Sesuai Kerangka Acuan Kerja (KAK)\r\n3. Rutinitas Layanan, sebagian besar fungsi kepegawaian bersifat layanan dasar ASN (seperti kenaikan pangkat, mutasi, pensiun) yang memang menjadi tugas rutin tahunan dengan alur kerja yang sudah baku\r\n\r\nFaktor Penyebab Kegagalan Penurunan Kinerja:\r\n1. Keterbatasan dan efisiensi Anggaran\r\n2. Kendala Sistem Informasi, proses penyelesaian layanan kepegawaian terkendala jika sistem aplikasi manajemen kepegawaian (SIASN) mengalami pemeliharaan atau gangguan jaringan\r\n3. Perencanaan dan Regulasi, kesalahan dalam merumuskan ukuran kinerja (indikator tidak terukur), perubahan kebijakan pusat ke daerah, dan lemahnya koordinasi antar bidang', 'Faktor Penghambat:\r\n1. Kelemahan Sistem Pengendalian Intern\r\n2. Ketidakpatuhan terhadap Peraturan Perundang-undangan\r\n3. Rendahnya peningkatan kompetensi ASN', 'Upaya untuk Meningkatkan Pencapaian Kinerja:\r\n1. Kompetensi dan motivasi SDM yaitu tingkat penguasaan bidang kepegawaian, kedisiplinan, dan motivasi aparatur sangat menentukan kecepatan dan kualitas penyelesaian target\r\n2. Sistem informasi kepegawaian yang terintegrasi mempermudah dan mempercepat administrasi\r\n3. Komitmen pimpinan yaitu ketegasan dan arah kebijakan Kepala Daerah dan Kepala Perangkat Daerah dalam memantau capaian sangat krusial untuk menjaga kinerja instansi', 14, 14, '2026-09-10 04:56:42', '2026-09-10 04:56:42'),
 (87, NULL, NULL, 172, 'iku', 15, '2025', 'FAKTOR PENDUKUNG KEBERHASILAN TINGKAT PARTISIPASI MASYARAKAT DALAM KEPRAMUKAAN\r\n1. FAKTOR PEMBINA & SDM\r\nPembina Berkualitas & Kreatif', 'FAKTOR PENGHAMBAT PARTISIPASI MASYARAKAT DALAM KEPRAMUKAAN\r\n1. FAKTOR PEMBINA & SDM\r\nPembina Minim / Tidak Aktif', 'UPAYA PENCAPAIAN TARGET PARTISIPASI KEPRAMUKAAN\r\n1. UPAYA PENGUATAN PEMBINA & SDM\r\n Penuhi & Tingkatkan Kompetensi Pembina', 20, 20, '2026-09-10 05:22:36', '2026-09-10 05:22:36'),
 (88, NULL, NULL, 173, 'iku', 15, '2025', 'FAKTOR PENDUKUNG KEBERHASILAN JUMLAH KUNJUNGAN WISATAWAN\r\n1.  Adanya kolaborasi antara pemerintah, pelaku usaha, komunitas, masyarakat, dan pihak swasta dalam penyelenggaraan event \r\nFaktor Kegagalan dan Penurunan Kinerja\r\n1. Persaingan dengan destinasi wisata daerah lain yang memiliki daya tarik dan fasilitas lebih baik.', 'FAKTOR PENGHAMBAT JUMLAH KUNJUNGAN WISATAWAN\r\n1. Fasilitas penunjang pariwisata masih terbatas, seperti toilet, tempat parkir, pusat informasi, tempat istirahat, jaringan internet, dan fasilitas bagi kelompok rentan.', 'UPAYA PENCAPAIAN KINERJA: MENINGKATKAN JUMLAH KUNJUNGAN WISATAWAN\r\n1. Membangun jejaring kerja sama dengan hotel, restoran, komunitas, perguruan tinggi dan media', 20, 20, '2026-09-10 05:36:14', '2026-09-11 01:49:58'),
@@ -30613,10 +30873,10 @@ INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id
 (126, NULL, NULL, 85, 'iku', 26, '2025', '1. Komitmen kuat pimpinan dalam pengelolaan arsip\r\n2. Kompetensi SDM Arsiparis dan Pengelola Arsip\r\n3. Koordinasi yang baik antara Perangkat Daerah dengan LKD\r\n4. Digitalisasi arsip melalui Srikandi', '1. Belum semua perangkat daerah perduli dalam pengelolaan arsip\r\n2. Keterbatasan sarana penyimpanan arsip baik di perangkat daerah maupun di LKD\r\n3. Terbatasnya SDM yang fokus dalam pengelolaan arsip\r\n4. Belum optimalnya penggunaan Srikandi', '1. Melakukan pendampingan langsung melalui roadshow kearsipan\r\n2. Melakukan desk pengisian instrumen penilaian\r\n3. Memberikan bimbingan teknis kepada pengelola arsip\r\n4. Memberikan fasilitiasi sarana penyimpanan arsip.', 30, 30, '2026-09-14 07:52:16', '2026-09-14 07:52:16'),
 (127, NULL, NULL, 42, 'iku', 10, '2025', '1. Pemerataan sarana dan prasarana pendidikan di semua wilayah Kabupaten Pringsewu\r\n2. Program beasiswa dan bantuan biaya pendidikan bagi siswa kurang mampu\r\n3. Sinergi yang kuat antara Dinas Pendidikan, sekolah, dan masyarakat\r\n4. Optimalisasi program pendidikan nonformal (Kesetaraan Paket A, B, C)\r\n5. Peningkatan kesadaran masyarakat akan pentingnya pendidikan dasar dan menengah\r\n6. Cukup tingginya angka putus sekolah di jenjang sekolah dasar dan menengah\r\n7. Kurangnya pendampingan bagi peserta didik rentan putus sekolah', '1. Kondisi ekonomi keluarga peserta didik yang berada di bawah garis kemiskinan\r\n2. Persepsi sebagian masyarakat yang belum memprioritaskan pendidikan dasar dan menengah\r\n3. Mobilitas/migrasi penduduk usia sekolah yang berpindah ke luar daerah', '1. Perluasan jangkauan program bantuan biaya pendidikan\r\n2. Penguatan dan optimalisasi Pusat Kegiatan Belajar Masyarakat (PKBM) untuk program kesetaraan\r\n3. Peningkatan sarana, prasarana, dan daya tampung sekolah\r\n4. Sosialisasi dan edukasi masif kepada masyarakat mengenai wajib belajar 13 tahun\r\n5. Pemetaan serta pendampingan khusus berbasis by name by address bagi siswa berisiko putus sekolah\r\n6. Program pengentasan anak tidak sekolah (ATS) untuk dikembalikan ke pendidikan formal/nonformal', 10, 10, '2026-09-15 08:53:03', '2026-09-15 08:59:46'),
 (128, NULL, NULL, 43, 'iku', 10, '2025', '1. Pelaksanaan program wajib belajar 13 tahun yang berjalan konsisten\r\n2. Rehabilitasi ruang kelas dan sarana prasarana pendidikan\r\n3. Peningkatan kualitas dan distribusi tenaga pendidik/guru\r\n4. Ketersediaan layanan Pendidikan Anak Usia Dini (PAUD) berkualitas yang terus meningkat\r\n5. Penguatan kerja sama dengan lembaga pendidikan tinggi dan vokasi\r\n6. Biaya penunjang pendidikan yang masih dirasakan memberatkan oleh kelompok rentan', '1. Kondisi geografis wilayah yang menyulitkan jangkauan ke fasilitas sekolah tingkat menengah\r\n2. Masih maraknya fenomena pernikahan usia anak di beberapa wilayah\r\n3. Kurangnya kesadaran orang tua untuk mendorong anak melanjutkan ke jenjang perguruan tinggi', '1. Pembangunan dan rehabilitasi fasilitas sekolah dari jenjang dasar hingga menengah\r\n2. Pemberian insentif dan pelatihan peningkatan kompetensi pendidik secara berkelanjutan\r\n3. Optimalisasi program Bantuan Operasional Sekolah (BOS) dan penjaminan akses pendidikan inklusif', 10, 10, '2026-09-15 14:23:05', '2026-09-15 14:25:54'),
-(129, NULL, NULL, 44, 'iku', 10, '2025', '1. Tingginya partisipasi komunitas adat dan pegiat seni budaya lokal\r\n2. Penetapan Pokok Pikiran Kebudayaan Daerah (PPKD) yang terstruktur\r\n3. Rutinitas penyelenggaraan festival budaya dan pameran seni tingkat daerah\r\n4. Komitmen pemerintah dalam penetapan Warisan Budaya Takbenda (WBTb) dan cagar budaya\r\n5. Digitalisasi inventarisasi dan dokumentasi objek pemajuan kebudayaan\r\n\r\n1. Kurangnya generasi muda yang berminat meneruskan seni/tradisi lokal\r\n2. Minimnya anggaran khusus perawatan dan pemeliharaan situs cagar budaya\r\n3. Kurangnya promosi dan publikasi potensi budaya berbasis teknologi modern\r\n4. Lemahnya integrasi muatan lokal kebudayaan dalam kurikulum sekolah', '1. Pengaruh arus modernisasi dan budaya luar yang menggerus minat generasi muda\r\n2. Keterbatasan SDM ahli di bidang kebudayaan (kurator, pamong budaya, restorator)\r\n3. Sarana dan prasarana pusat kegiatan seni/kebudayaan yang belum memadai\r\n4. Ancaman kerusakan fisik pada situs/cagar budaya akibat faktor alam dan pembangunan', '1. Penyelenggaraan pembinaan dan workshop kebudayaan rutin bagi pelajar dan komunitas muda\r\n2. Alokasi dan peningkatan anggaran pemeliharaan situs serta cagar budaya daerah\r\n3. Digitalisasi arsip dan pembuatan katalog interaktif Objek Pemajuan Kebudayaan (OPK)\r\n4. Integrasi seni dan budaya daerah ke dalam kegiatan ekstrakurikuler serta muatan lokal sekolah\r\n5. Pemberian fasilitasi, apresiasi, dan ruang ekspresi bagi para maestro serta sanggar seni lokal', 10, 10, '2026-09-15 14:29:35', '2026-09-15 14:29:35');
-INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(129, NULL, NULL, 44, 'iku', 10, '2025', '1. Tingginya partisipasi komunitas adat dan pegiat seni budaya lokal\r\n2. Penetapan Pokok Pikiran Kebudayaan Daerah (PPKD) yang terstruktur\r\n3. Rutinitas penyelenggaraan festival budaya dan pameran seni tingkat daerah\r\n4. Komitmen pemerintah dalam penetapan Warisan Budaya Takbenda (WBTb) dan cagar budaya\r\n5. Digitalisasi inventarisasi dan dokumentasi objek pemajuan kebudayaan\r\n\r\n1. Kurangnya generasi muda yang berminat meneruskan seni/tradisi lokal\r\n2. Minimnya anggaran khusus perawatan dan pemeliharaan situs cagar budaya\r\n3. Kurangnya promosi dan publikasi potensi budaya berbasis teknologi modern\r\n4. Lemahnya integrasi muatan lokal kebudayaan dalam kurikulum sekolah', '1. Pengaruh arus modernisasi dan budaya luar yang menggerus minat generasi muda\r\n2. Keterbatasan SDM ahli di bidang kebudayaan (kurator, pamong budaya, restorator)\r\n3. Sarana dan prasarana pusat kegiatan seni/kebudayaan yang belum memadai\r\n4. Ancaman kerusakan fisik pada situs/cagar budaya akibat faktor alam dan pembangunan', '1. Penyelenggaraan pembinaan dan workshop kebudayaan rutin bagi pelajar dan komunitas muda\r\n2. Alokasi dan peningkatan anggaran pemeliharaan situs serta cagar budaya daerah\r\n3. Digitalisasi arsip dan pembuatan katalog interaktif Objek Pemajuan Kebudayaan (OPK)\r\n4. Integrasi seni dan budaya daerah ke dalam kegiatan ekstrakurikuler serta muatan lokal sekolah\r\n5. Pemberian fasilitasi, apresiasi, dan ruang ekspresi bagi para maestro serta sanggar seni lokal', 10, 10, '2026-09-15 14:29:35', '2026-09-15 14:29:35'),
 (130, NULL, NULL, 123, 'iku', 34, '2025', 'Faktor Pendependukung Keberhasilan / Peningkatan Kinerja\r\n•	Sinergi antar-instansi yang kuat\r\n•	Respon cepat (response time\r\n•	Penerapan Restorative Justice\r\n•	Kecukupan sarana dan prasarana\r\n•	Partisipasi aktif Masyarakat\r\n\r\nFaktor Penyebab Kegagalan / Penurunan Kinerja\r\n•	Keterbatasan personil dan anggaran\r\n•	Lambatnya penanganan aduan\r\n•	Sarana prasarana rusak atau minim\r\n•	Eskalasi konflik eksternal\r\n•	Rendahnya kesadaran hukum warga', 'Berikut adalah rincian faktor penghambat utama yang sering dihadapi dalam menangani dan menyelesaikan gangguan Trantibum:\r\n\r\n1. Faktor Sumber Daya Manusia (SDM)\r\n•	Rendahnya kesadaran masyarakat\r\n•	Keterbatasan jumlah dan kapasitas aparat\r\n•	Kurangnya keterampilan teknis\r\n\r\n2. Faktor Partisipasi dan Lingkungan\r\n•	Siskamling tidak aktif\r\n•	Kurangnya respons pelaku usaha\r\n•	Komunikasi yang belum optimal\r\n\r\n3. Faktor Sarana, Prasarana, dan Regulasi\r\n•	Keterbatasan fasilitas\r\n•	Konsistensi penegakan hukum.\r\n•	Kendala regulasi', 'Berikut adalah strategi komprehensif dan taktis yang dikelompokkan berdasarkan aspek operasional untuk mendongkrak capaian kinerja tersebut:\r\n\r\n1. Optimalisasi Sistem Respons dan Aduan  Masyarakat\r\n•	Digitalisasi Saluran Pengaduan\r\n•	Penyusunan dan Penerapan Response Time (Waktu Tanggap) yang Ketat\r\n2. Penguatan Operasional dan Pencegahan di Lapangan\r\n\r\n•	Patroli Rutin Berbasis Pemetaan Wilayah Rawan (Mapping Risk Zone\r\n•	Deteksi Dini dan Fungsi Intelijen\r\n\r\n3. Peningkatan Kualitas SDM dan Sarana Prasarana\r\n•	Peningkatan Kapasitas PPNS (Penyidik Pegawai Negeri Sipil)\r\n•	Modernisasi Sarana dan Prasarana\r\n\r\n4. Sinergi Lintas Sektor dan Pemberdayaan Masyarakat\r\n•	Penguatan Forum Koordinasi (Forkopimcam/Forkopimda\r\n•	Revitalisasi Siskamling dan Satlinmas\r\n\r\n5. Penguatan Manajemen Data dan Legalitas\r\n•	Sinkronisasi Data Pelanggaran\r\n•	Kepastian Hukum Regulasi', 46, 46, '2026-09-16 03:01:29', '2026-09-16 03:12:36'),
-(131, NULL, NULL, 124, 'iku', 34, '2025', 'Faktor Pendukung Keberhasilan & Peningkatan Kinerja\r\n•	Kompetensi dan Komitmen Pengurus\r\n•	Dukungan Anggaran yang Jelas\r\n•	Fasilitasi Pelatihan Berkelanjutan\r\n•	Regulasi dan Legalitas yang Kuat\r\n•	Partisipasi Aktif Masyarakat\r\n•	Sarana dan Prasarana Memadai\r\n\r\nFaktor Penyebab Kegagalan & Penurunan Kinerja\r\n•	Disfungsi Kepengurusan (Dua Jabatan/Pasif)\r\n•	Minimnya Anggaran Operasional\r\n•	Eksistensi Formalitas Belaka\r\n•	Kurangnya Monitoring dan Evaluasi\r\n•	Konflik Internal\r\n•	Sosialisasi Program yang Lemah', 'Berikut adalah pengelompokkan faktor penghambat tersebut:\r\n\r\n1. Sumber Daya Manusia (SDM) dan Kualitas Pengurus\r\n•	Kapasitas dan Kompetensi Rendah\r\n•	Rendahnya Partisipasi dan Motivasi\r\n•	Regenerasi yang Lambat\r\n\r\n2. Keterbatasan Anggaran dan Fasilitas\r\n•	Dana Operasional Minim\r\n•	Fasilitas Kerja Tidak Memadai\r\n\r\n3. Komunikasi dan Sinergi\r\n•	Koordinasi Lemah\r\n•	Tumpang Tindih Program\r\n\r\n4. Aspek Regulasi dan Birokrasi\r\n•	Sosialisasi Kebijakan Kurang Maksimal\r\n•	Prosedur Administrasi Rumit', 'Berikut adalah langkah-langkah strategis untuk meningkatkan kinerja LKD:\r\n\r\n1. Penguatan Regulasi dan Legalitas\r\n•	Penerbitan SK yang Jelas\r\n•	Penegasan Tugas Pokok dan Fungsi (Tupoksi\r\n\r\n2. Peningkatan Kapasitas SDM (Kapasitasi)\r\n•	Pelatihan Tata Kelola Administrasi\r\n•	Pelatihan Kepemimpinan dan Komunikasi\r\n\r\n3. Pemberian Fasilitas Pendanaan dan Sarana\r\n•	Alokasi Insentif Operasional\r\n•	Penyediaan Sarana Kerja\r\n\r\n4. Pemanfaatan Teknologi Informasi\r\n•	Digitalisasi Pelayanan\r\n•	Media Komunikasi Digital.\r\n\r\n5. Pendampingan, Monitoring, dan Evaluasi (Monev)\r\n•	Pendampingan Berkelanjutan\r\n•	Evaluasi Kinerja Berkala', 46, 46, '2026-09-16 03:16:11', '2026-09-16 05:02:55'),
+(131, NULL, NULL, 124, 'iku', 34, '2025', 'Faktor Pendukung Keberhasilan & Peningkatan Kinerja\r\n•	Kompetensi dan Komitmen Pengurus\r\n•	Dukungan Anggaran yang Jelas\r\n•	Fasilitasi Pelatihan Berkelanjutan\r\n•	Regulasi dan Legalitas yang Kuat\r\n•	Partisipasi Aktif Masyarakat\r\n•	Sarana dan Prasarana Memadai\r\n\r\nFaktor Penyebab Kegagalan & Penurunan Kinerja\r\n•	Disfungsi Kepengurusan (Dua Jabatan/Pasif)\r\n•	Minimnya Anggaran Operasional\r\n•	Eksistensi Formalitas Belaka\r\n•	Kurangnya Monitoring dan Evaluasi\r\n•	Konflik Internal\r\n•	Sosialisasi Program yang Lemah', 'Berikut adalah pengelompokkan faktor penghambat tersebut:\r\n\r\n1. Sumber Daya Manusia (SDM) dan Kualitas Pengurus\r\n•	Kapasitas dan Kompetensi Rendah\r\n•	Rendahnya Partisipasi dan Motivasi\r\n•	Regenerasi yang Lambat\r\n\r\n2. Keterbatasan Anggaran dan Fasilitas\r\n•	Dana Operasional Minim\r\n•	Fasilitas Kerja Tidak Memadai\r\n\r\n3. Komunikasi dan Sinergi\r\n•	Koordinasi Lemah\r\n•	Tumpang Tindih Program\r\n\r\n4. Aspek Regulasi dan Birokrasi\r\n•	Sosialisasi Kebijakan Kurang Maksimal\r\n•	Prosedur Administrasi Rumit', 'Berikut adalah langkah-langkah strategis untuk meningkatkan kinerja LKD:\r\n\r\n1. Penguatan Regulasi dan Legalitas\r\n•	Penerbitan SK yang Jelas\r\n•	Penegasan Tugas Pokok dan Fungsi (Tupoksi\r\n\r\n2. Peningkatan Kapasitas SDM (Kapasitasi)\r\n•	Pelatihan Tata Kelola Administrasi\r\n•	Pelatihan Kepemimpinan dan Komunikasi\r\n\r\n3. Pemberian Fasilitas Pendanaan dan Sarana\r\n•	Alokasi Insentif Operasional\r\n•	Penyediaan Sarana Kerja\r\n\r\n4. Pemanfaatan Teknologi Informasi\r\n•	Digitalisasi Pelayanan\r\n•	Media Komunikasi Digital.\r\n\r\n5. Pendampingan, Monitoring, dan Evaluasi (Monev)\r\n•	Pendampingan Berkelanjutan\r\n•	Evaluasi Kinerja Berkala', 46, 46, '2026-09-16 03:16:11', '2026-09-16 05:02:55');
+INSERT INTO `lakip_analisis_faktor` (`id`, `renstra_target_id`, `rpjmd_target_id`, `iku_indikator_id`, `source_type`, `opd_id`, `tahun`, `faktor_pendukung`, `faktor_penghambat`, `upaya_peningkatan`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
 (132, NULL, NULL, 125, 'iku', 34, '2025', 'Faktor Pendukung Keberhasilan & Peningkatan Kinerja\r\nKinerja aparatur kecamatan akan meningkat secara signifikan jika didukung oleh aspek-aspek berikut:\r\n•	Komitmen kepemimpinan\r\n•	Kurikulum berbasis kompetensi \r\n•	Fasilitas dan teknologi.\r\n•	Sistem reward dan punishment: \r\n•	Anggaran yang memadai\r\n\r\n2. Faktor Penyebab Kegagalan & Penurunan Kinerja\r\nSebaliknya, pembinaan akan gagal dan kinerja aparatur akan menurun apabila dihadapkan pada kendala berikut:\r\n•	Pembinaan bersifat formalitas\r\n•	Budaya kerja yang pasif\r\n•	Mutasi pegawai yang tidak tepat\r\n•	Lemahnya monitoring dan evaluasi\r\n•	Keterbatasan wewenang dan regulasi', 'Faktor Penghambat Pembinaan\r\n•	Sumber Daya Manusia (SDM)\r\n•	Sarana dan Prasarana\r\n•	Keterbatasan Anggaran\r\n•	Komunikasi dan Koordinasi\r\n•	Sistem Pengawasan', 'Langkah-Langkah Pembinaan dan Peningkatan Kinerja\r\n•	Peningkatan Kompetensi\r\n•	Penguatan Disiplin\r\n•	Penguatan Peran Camat\r\n•	Pemberian Motivasi\r\n•	Optimalisasi Pelayanan Publik', 46, 46, '2026-09-16 03:26:16', '2026-09-16 04:54:14'),
 (133, NULL, NULL, 91, 'iku', 23, '2025', 'Penerapan perizinan lingkungan yang ketat dan pengawasan AMDAL/UKL-UPL untuk mencegah alih fungsi lahan produktif', 'Keterbatasan Sumber Daya Manusia pengawas lingkungan', 'Memperketat pengawasan izin lingkungan dan pemanfaatan ruang serta penegakan hukum bagi pelanggar alih fungsi lahan', 27, 27, '2026-09-17 03:45:05', '2026-09-17 03:45:05'),
 (134, NULL, NULL, 133, 'iku', 37, '2025', '1. Sinergi dan Koordinasi Lintassektoral Terjalinnya kerja sama yang solid antara pihak Kecamatan, Satpol PP, Bhabinkamtibmas (Polri), Babinsa (TNI), dan tokoh masyarakat/agama dalam penanganan serta penyelesaian potensi gangguan ketertiban.\r\n2. Efektivitas Poskamling dan Sistem Keamanan Lingkungan Aktifnya peran serta masyarakat dalam kegiatan pos keamanan lingkungan (Poskamling) dan sistem deteksi dini di tingkat pekon/desa untuk mencegah dan meredam konflik\r\n3. Penyelesaian Sengketa Berbasis Musyawarah (Mediasi) Pengutamaan pendekatan persuasif dan penyelesaian secara kekeluargaan (restorative justice/musyawarah) melalui kelembagaan adat dan aparat pekon untuk aduan/gangguan tingkat lokal.\r\n4. Kecepatan Respon Operasional Respons cepat aparat kebersihan/ketertiban dan Satpol PP Kecamatan terhadap laporan atau aduan masyarakat terkait gangguan ketentraman publik', '1. Keterbatasan Personel Operasional Jumlah anggota Satpol PP dan petugas ketertiban di tingkat kecamatan yang terbatas dibandingkan dengan luas wilayah serta jumlah pekon/desa yang harus diawasi.\r\n2. Keterlambatan Pelaporan Masalah Masih adanya sebagian masyarakat atau aparatur pekon yang terlambat melaporkan potensi konflik atau gangguan trantibum, sehingga upaya pencegahan awal (early warning) kurang optimal\r\n3. Kompleksitas Sengketa/Konflik Adanya beberapa kasus sengketa lahan, perbatasan, atau perselisihan antarwarga yang melibatkan kepentingan hukum rumit sehingga membutuhkan waktu mediasi yang relatif panjang\r\n4. Keterbatasan Sarana dan Prasarana Pengawasan: Belum optimalnya ketersediaan sarana mobilitas penanganan cepat serta fasilitas pendukung keamanan lingkungan di seluruh wilayah pekon', '1. Meningkatkan Sinergi dan Patroli Terpadu Memperkuat koordinasi dan pemantauan wilayah secara berkala bersama Satpol PP, Bhabinkamtibmas, Babinsa, serta linmas/aparat pekon guna mengantisipasi dini gangguan ketertiban masyarakat\r\n2. Mengoptimalkan Mediasi dan Pendekatan Persuasif Mengembangkan sarana mediasi di tingkat kecamatan dan pekon dengan mengedepankan asas musyawarah/kekeluargaan (restorative justice) dalam penyelesaian konflik sosial/sengketa warga\r\n3. eningkatan Kapasitas dan Penguatan Poskamling Melakukan pembinaan rutin serta sosialisasi kepada pengurus RT/pekon untuk mengaktifkan kembali Poskamling dan sistem keamanan lingkungan (Siskamling) mandiri\r\n4. Sosialisasi Saluran Aduan Cepat Memperluas publikasi nomor kontak aduan atau saluran komunikasi cepat kecamatan agar laporan potensi gangguan dari masyarakat dapat segera direspons oleh petugas operasional.', 49, 49, '2026-09-17 03:59:14', '2026-09-17 04:12:15'),
@@ -31051,12 +31311,12 @@ CREATE TABLE `lakip_snapshot_program` (
 
 CREATE TABLE `lakip_yatim_arsip` (
   `arsip_id` int UNSIGNED NOT NULL,
-  `nasib` varchar(20) NOT NULL COMMENT 'dipulangkan | kembar | bentrok | kosong | tak-tercocokkan',
-  `catatan` varchar(255) DEFAULT NULL,
+  `nasib` varchar(20) COLLATE utf8mb4_general_ci NOT NULL COMMENT 'dipulangkan | kembar | bentrok | kosong | tak-tercocokkan',
+  `catatan` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `diarsipkan_pada` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lakip_id` int UNSIGNED NOT NULL,
   `isi` json NOT NULL COMMENT 'seluruh kolom baris lakip aslinya'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `lakip_yatim_arsip`
@@ -34481,30 +34741,30 @@ INSERT INTO `pangkat` (`id`, `simpeg_id`, `nama_pangkat`, `golongan`, `edited_by
 
 CREATE TABLE `pegawai` (
   `id` int NOT NULL,
-  `nama_pegawai` varchar(255) NOT NULL,
-  `nip_pegawai` varchar(20) NOT NULL,
+  `nama_pegawai` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+  `nip_pegawai` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
   `tanggal_lahir` date DEFAULT NULL,
   `opd_id` int NOT NULL,
   `jabatan_id` int NOT NULL,
   `pangkat_id` int NOT NULL,
   `atasan_id` int DEFAULT NULL,
-  `password` text NOT NULL,
-  `level` enum('ADMIN','PERMITOR','VERIFIKATOR','USER') NOT NULL DEFAULT 'USER',
+  `password` text COLLATE utf8mb4_general_ci NOT NULL,
+  `level` enum('ADMIN','PERMITOR','VERIFIKATOR','USER') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'USER',
   `is_plt` tinyint(1) NOT NULL DEFAULT '0',
-  `url_foto_pegawai` varchar(255) DEFAULT NULL,
+  `url_foto_pegawai` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `tukin` bigint NOT NULL,
   `edited_by` int DEFAULT NULL,
   `first_time` int NOT NULL DEFAULT '0',
-  `created_at` text,
-  `updated_at` text,
-  `no_whatsapp` varchar(50) DEFAULT NULL,
-  `device_id` varchar(255) DEFAULT NULL,
-  `device_type` enum('WEB','MOBILE') DEFAULT NULL,
-  `kategori` varchar(255) DEFAULT NULL,
-  `status` varchar(255) DEFAULT NULL,
+  `created_at` text COLLATE utf8mb4_general_ci,
+  `updated_at` text COLLATE utf8mb4_general_ci,
+  `no_whatsapp` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `device_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `device_type` enum('WEB','MOBILE') COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `kategori` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_banned` tinyint(1) NOT NULL DEFAULT '0',
   `pelanggaran_lokasi` int NOT NULL DEFAULT '0'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='SELECT *\r\nFROM pegawai\r\nWHERE nip_pegawai = ''1987654321'';\r\n';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='SELECT *\r\nFROM pegawai\r\nWHERE nip_pegawai = ''1987654321'';\r\n';
 
 --
 -- Dumping data for table `pegawai`
@@ -41652,12 +41912,12 @@ INSERT INTO `pegawai` (`id`, `nama_pegawai`, `nip_pegawai`, `tanggal_lahir`, `op
 
 CREATE TABLE `permissions` (
   `id` int UNSIGNED NOT NULL,
-  `name` varchar(100) NOT NULL,
-  `label` varchar(150) DEFAULT NULL,
-  `grup` varchar(50) DEFAULT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `label` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `grup` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `permissions`
@@ -50349,14 +50609,14 @@ INSERT INTO `renstra_indikator_sasaran` (`id`, `renstra_sasaran_id`, `indikator_
 CREATE TABLE `renstra_indikator_tujuan` (
   `id` int UNSIGNED NOT NULL,
   `tujuan_id` int UNSIGNED NOT NULL,
-  `indikator_tujuan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `indikator_tujuan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `version_id` int UNSIGNED DEFAULT NULL COMMENT 'dokumen_versi terakhir yang mengubah baris ini',
   `berlaku_sampai` int DEFAULT NULL COMMENT 'tahun terakhir dipakai; NULL = masih berlaku',
   `dihentikan_pada` datetime DEFAULT NULL COMMENT 'terisi = dipensiunkan, BUKAN dihapus',
-  `alasan_dihentikan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `alasan_dihentikan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `renstra_indikator_tujuan`
@@ -51341,10 +51601,10 @@ CREATE TABLE `renstra_target_tujuan` (
   `id` int UNSIGNED NOT NULL,
   `indikator_tujuan_id` int UNSIGNED NOT NULL,
   `tahun` year NOT NULL,
-  `target_tahunan` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `target_tahunan` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `renstra_target_tujuan`
@@ -52138,14 +52398,14 @@ INSERT INTO `renstra_target_tujuan` (`id`, `indikator_tujuan_id`, `tahun`, `targ
 CREATE TABLE `renstra_tujuan` (
   `id` int UNSIGNED NOT NULL,
   `rpjmd_sasaran_id` int UNSIGNED NOT NULL,
-  `tujuan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tujuan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `version_id` int UNSIGNED DEFAULT NULL COMMENT 'dokumen_versi terakhir yang mengubah baris ini',
   `berlaku_sampai` int DEFAULT NULL COMMENT 'tahun terakhir dipakai; NULL = masih berlaku',
   `dihentikan_pada` datetime DEFAULT NULL COMMENT 'terisi = dipensiunkan, BUKAN dihapus',
-  `alasan_dihentikan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `alasan_dihentikan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `renstra_tujuan`
@@ -55546,12 +55806,12 @@ INSERT INTO `rkt_subkegiatan` (`id`, `rkt_kegiatan_id`, `sub_kegiatan_id`, `indi
 
 CREATE TABLE `roles` (
   `id` int UNSIGNED NOT NULL,
-  `name` varchar(50) NOT NULL,
-  `label` varchar(100) DEFAULT NULL,
+  `name` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `label` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `is_system` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `roles`
@@ -55575,7 +55835,7 @@ CREATE TABLE `role_permissions` (
   `id` int UNSIGNED NOT NULL,
   `role_id` int UNSIGNED NOT NULL,
   `permission_id` int UNSIGNED NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `role_permissions`
@@ -55935,7 +56195,7 @@ CREATE TABLE `rpjmd_cascading` (
   `tahun` year NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -55967,21 +56227,21 @@ CREATE TABLE `rpjmd_indikator_sasaran` (
 --
 
 INSERT INTO `rpjmd_indikator_sasaran` (`id`, `sasaran_id`, `indikator_sasaran`, `definisi_op`, `satuan`, `jenis_indikator`, `created_at`, `updated_at`, `baseline`, `version_id`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`, `indikator_sebelumnya_id`, `jenis_perubahan`, `perubahan_substansial`) VALUES
-(101, 77, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks', 'indikator positif', '2026-04-09 15:19:48', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(102, 78, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks', 'indikator positif', '2026-04-09 15:19:48', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(103, 79, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', '%', 'indikator negatif', '2026-04-09 15:19:48', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(104, 80, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Nilai', 'indikator positif', '2026-04-09 15:23:52', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(105, 81, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', '%', 'indikator positif', '2026-04-09 15:23:52', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(106, 82, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Nilai', 'indikator negatif', '2026-04-09 15:23:52', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(107, 83, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Indeks', 'indikator positif', '2026-04-09 15:25:41', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(108, 84, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'Indeks', 'indikator positif', '2026-04-09 15:25:41', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(109, 84, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'Indeks', 'indikator negatif', '2026-04-09 15:25:41', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0),
-(110, 9, 'Produksi Padi', 'Produksi Padi adalah jumlah hasil panen tanaman padi yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat gabah kering giling (GKG).\r\n\r\nProduksi padi merupakan hasil perkalian antara luas panen padi dan produktivitas padi per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Padi = Luas Panen Padi dikali Produktivitas Padi', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'baru', 0),
-(111, 9, 'Produksi Jagung', 'Produksi Jagung\r\nadalah jumlah hasil panen tanaman jagung yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat pipilan kering.\r\n\r\nProduksi jagung merupakan hasil perkalian antara luas panen jagung dan produktivitas jagung per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Jagung=Luas Panen Jagung dikali Produktivitas Jagung', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 06:41:35', NULL, 1, 2025, '2026-09-17 06:41:35', 'Tidak lagi tercantum pada versi yang ditetapkan (dokumen_versi id 140).', NULL, 'dihentikan', 0),
-(112, 9, 'Produksi Daging', 'Produksi Daging adalah jumlah daging yang dihasilkan dari pemotongan ternak dan unggas dalam suatu wilayah dan periode tertentu, yang berasal dari sapi, kerbau, kambing, domba, babi, ayam, itik, dan ternak/unggas lainnya, yang dinyatakan dalam berat bersih (karkas atau setara karkas).\r\n\r\nProduksi daging dihitung berdasarkan jumlah ternak/unggas yang dipotong dan rata-rata bobot karkas per ekor.\r\n\r\nRumus Perhitungan : Produksi Daging = Jumlah Ternak/Unggas Dipotong dikali Rata-rata Bobot Karkas', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 06:41:35', NULL, 1, 2025, '2026-09-17 06:41:35', 'Tidak lagi tercantum pada versi yang ditetapkan (dokumen_versi id 140).', NULL, 'dihentikan', 0),
-(113, 9, 'Produksi Telur', 'Produksi Telur\r\nadalah jumlah telur yang dihasilkan oleh ternak unggas petelur dalam suatu wilayah dan periode tertentu, baik dari ayam ras petelur, ayam buras, itik, maupun jenis unggas petelur lainnya, yang dinyatakan dalam berat atau jumlah satuan tertentu.\r\n\r\nProduksi telur dihitung berdasarkan jumlah ternak petelur produktif dan rata-rata produksi telur per ekor.\r\n\r\nRumus Perhitungan : Produksi Telur = Jumlah Ternak Petelur Produktif dikali Rata-rata Produksi Telur', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 06:41:35', NULL, 1, 2025, '2026-09-17 06:41:35', 'Tidak lagi tercantum pada versi yang ditetapkan (dokumen_versi id 140).', NULL, 'dihentikan', 0),
-(114, 9, 'Produksi Perikanan', 'Produksi Perikanan adalah jumlah hasil perikanan yang dihasilkan dalam suatu wilayah dan periode tertentu, yang berasal dari kegiatan perikanan tangkap dan perikanan budidaya, dan dinyatakan dalam berat hasil (ton).\r\n\r\nRumus Perhitungan : Produksi Perikanan = Produksi Tangkap ditambah Produksi Budidaya', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 06:41:35', NULL, 1, 2025, '2026-09-17 06:41:35', 'Tidak lagi tercantum pada versi yang ditetapkan (dokumen_versi id 140).', NULL, 'dihentikan', 0),
-(115, 12, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Indeks', 'indikator positif', '2026-04-09 16:07:35', '2026-09-17 06:41:35', NULL, 140, NULL, NULL, NULL, NULL, 'tetap', 0);
+(101, 77, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks', 'indikator positif', '2026-04-09 15:19:48', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(102, 78, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks', 'indikator positif', '2026-04-09 15:19:48', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(103, 79, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', '%', 'indikator negatif', '2026-04-09 15:19:48', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(104, 80, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Nilai', 'indikator positif', '2026-04-09 15:23:52', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(105, 81, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', '%', 'indikator positif', '2026-04-09 15:23:52', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(106, 82, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Nilai', 'indikator negatif', '2026-04-09 15:23:52', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(107, 83, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Indeks', 'indikator positif', '2026-04-09 15:25:41', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(108, 84, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'Indeks', 'indikator positif', '2026-04-09 15:25:41', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(109, 84, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'Indeks', 'indikator negatif', '2026-04-09 15:25:41', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(111, 9, 'Produksi Jagung', 'Produksi Jagung\r\nadalah jumlah hasil panen tanaman jagung yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat pipilan kering.\r\n\r\nProduksi jagung merupakan hasil perkalian antara luas panen jagung dan produktivitas jagung per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Jagung=Luas Panen Jagung dikali Produktivitas Jagung', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(112, 9, 'Produksi Daging', 'Produksi Daging adalah jumlah daging yang dihasilkan dari pemotongan ternak dan unggas dalam suatu wilayah dan periode tertentu, yang berasal dari sapi, kerbau, kambing, domba, babi, ayam, itik, dan ternak/unggas lainnya, yang dinyatakan dalam berat bersih (karkas atau setara karkas).\r\n\r\nProduksi daging dihitung berdasarkan jumlah ternak/unggas yang dipotong dan rata-rata bobot karkas per ekor.\r\n\r\nRumus Perhitungan : Produksi Daging = Jumlah Ternak/Unggas Dipotong dikali Rata-rata Bobot Karkas', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(113, 9, 'Produksi Telur', 'Produksi Telur\r\nadalah jumlah telur yang dihasilkan oleh ternak unggas petelur dalam suatu wilayah dan periode tertentu, baik dari ayam ras petelur, ayam buras, itik, maupun jenis unggas petelur lainnya, yang dinyatakan dalam berat atau jumlah satuan tertentu.\r\n\r\nProduksi telur dihitung berdasarkan jumlah ternak petelur produktif dan rata-rata produksi telur per ekor.\r\n\r\nRumus Perhitungan : Produksi Telur = Jumlah Ternak Petelur Produktif dikali Rata-rata Produksi Telur', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(114, 9, 'Produksi Perikanan', 'Produksi Perikanan adalah jumlah hasil perikanan yang dihasilkan dalam suatu wilayah dan periode tertentu, yang berasal dari kegiatan perikanan tangkap dan perikanan budidaya, dan dinyatakan dalam berat hasil (ton).\r\n\r\nRumus Perhitungan : Produksi Perikanan = Produksi Tangkap ditambah Produksi Budidaya', 'Ton', 'indikator positif', '2026-04-09 15:26:46', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(115, 12, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Indeks', 'indikator positif', '2026-04-09 16:07:35', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'tetap', 0),
+(116, 9, 'Produksi Padi', NULL, 'Ton', 'indikator positif', '2026-09-17 13:31:47', '2026-09-17 13:31:47', NULL, 145, NULL, NULL, NULL, NULL, 'baru', 0);
 
 -- --------------------------------------------------------
 
@@ -56006,11 +56266,11 @@ CREATE TABLE `rpjmd_indikator_tujuan` (
 --
 
 INSERT INTO `rpjmd_indikator_tujuan` (`id`, `tujuan_id`, `indikator_tujuan`, `created_at`, `updated_at`, `version_id`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`) VALUES
-(37, 33, 'Indeks Pembangunan Manusia (IPM)', '2026-04-09 15:19:48', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(38, 34, 'Laju Pertumbuhan  Ekonomi', '2026-04-09 15:23:52', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(39, 35, 'Indeks Infrastruktur', '2026-04-09 15:25:41', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(40, 8, 'Indeks Ketahanan Pangan', '2026-04-09 15:26:46', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(41, 10, 'Indeks Reformasi Birokrasi', '2026-04-09 16:07:35', '2026-09-17 06:41:35', 140, NULL, NULL, NULL);
+(37, 33, 'Indeks Pembangunan Manusia (IPM)', '2026-04-09 15:19:48', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(38, 34, 'Laju Pertumbuhan  Ekonomi', '2026-04-09 15:23:52', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(39, 35, 'Indeks Infrastruktur', '2026-04-09 15:25:41', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(40, 8, 'Indeks Ketahanan Pangan', '2026-04-09 15:26:46', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(41, 10, 'Indeks Reformasi Birokrasi', '2026-04-09 16:07:35', '2026-09-17 13:31:47', 145, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -56038,11 +56298,11 @@ CREATE TABLE `rpjmd_misi` (
 --
 
 INSERT INTO `rpjmd_misi` (`id`, `rpjmd_visi_id`, `misi`, `status`, `tahun_mulai`, `tahun_akhir`, `created_at`, `updated_at`, `version_id`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`) VALUES
-(5, 1, 'Optimalisasi Kualitas dan Pemanfaatan Sumber Daya Manusia', 'selesai', '2025', '2029', '2025-12-24 15:33:32', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(6, 1, 'Meningkatkan Pertumbuhan Ekonomi Berbasis Keunggulan Daerah', 'selesai', '2025', '2029', '2025-12-24 16:29:04', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(7, 1, 'Penyelenggaraan Tata Kelola Yang Profesional, Modern dan Inovatif', 'selesai', '2025', '2029', '2025-12-24 16:33:18', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(8, 1, 'Mempertahankan Swasembada Pangan Yang Berwawasan Lingkungan', 'selesai', '2025', '2029', '2025-12-24 16:38:16', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(9, 1, 'Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan', 'selesai', '2025', '2029', '2025-12-24 16:44:14', '2026-09-17 06:41:35', 140, NULL, NULL, NULL);
+(5, 1, 'Optimalisasi Kualitas dan Pemanfaatan Sumber Daya Manusia', 'selesai', '2025', '2029', '2025-12-24 15:33:32', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(6, 1, 'Meningkatkan Pertumbuhan Ekonomi Berbasis Keunggulan Daerah', 'selesai', '2025', '2029', '2025-12-24 16:29:04', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(7, 1, 'Penyelenggaraan Tata Kelola Yang Profesional, Modern dan Inovatif', 'selesai', '2025', '2029', '2025-12-24 16:33:18', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(8, 1, 'Mempertahankan Swasembada Pangan Yang Berwawasan Lingkungan', 'selesai', '2025', '2029', '2025-12-24 16:38:16', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(9, 1, 'Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan', 'selesai', '2025', '2029', '2025-12-24 16:44:14', '2026-09-17 13:31:47', 145, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -56069,16 +56329,16 @@ CREATE TABLE `rpjmd_sasaran` (
 --
 
 INSERT INTO `rpjmd_sasaran` (`id`, `tujuan_id`, `status`, `sasaran_rpjmd`, `csf`, `created_at`, `updated_at`, `version_id`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`) VALUES
-(9, 8, 'draft', 'Meningkatnya produksi Pangan Daerah', NULL, '2026-04-09 15:26:46', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(12, 10, 'draft', 'Meningkatnya Kualitas Tata Kelola Pemerintahan', NULL, '2026-04-09 16:07:35', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(77, 33, 'draft', 'Meningkatnya Kualitas Pendidikan', NULL, '2026-04-09 15:19:48', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(78, 33, 'draft', 'Meningkatnya Derajat Kesehatan', NULL, '2026-04-09 15:19:48', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(79, 33, 'draft', 'Menurunnya Angka Kemiskinan', NULL, '2026-04-09 15:19:48', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(80, 34, 'draft', 'Meningkatnya Produktivitas Lapangan Usaha', NULL, '2026-04-09 15:23:52', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(81, 34, 'draft', 'Meningkatnya Investasi', NULL, '2026-04-09 15:23:52', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(82, 34, 'draft', 'Menurunnya Tingkat Pengangguran Terbuka', NULL, '2026-04-09 15:23:52', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(83, 35, 'draft', 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', NULL, '2026-04-09 15:25:41', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(84, 35, 'draft', 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', NULL, '2026-04-09 15:25:41', '2026-09-17 06:41:35', 140, NULL, NULL, NULL);
+(9, 8, 'draft', 'Meningkatnya Ketersediaan Pangan Daerah', NULL, '2026-04-09 15:26:46', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(12, 10, 'draft', 'Meningkatnya Kualitas Tata Kelola Pemerintahan', NULL, '2026-04-09 16:07:35', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(77, 33, 'draft', 'Meningkatnya Kualitas Pendidikan', NULL, '2026-04-09 15:19:48', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(78, 33, 'draft', 'Meningkatnya Derajat Kesehatan', NULL, '2026-04-09 15:19:48', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(79, 33, 'draft', 'Menurunnya Angka Kemiskinan', NULL, '2026-04-09 15:19:48', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(80, 34, 'draft', 'Meningkatnya Produktivitas Lapangan Usaha', NULL, '2026-04-09 15:23:52', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(81, 34, 'draft', 'Meningkatnya Investasi', NULL, '2026-04-09 15:23:52', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(82, 34, 'draft', 'Menurunnya Tingkat Pengangguran Terbuka', NULL, '2026-04-09 15:23:52', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(83, 35, 'draft', 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', NULL, '2026-04-09 15:25:41', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(84, 35, 'draft', 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', NULL, '2026-04-09 15:25:41', '2026-09-17 13:31:47', 145, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -56100,81 +56360,81 @@ CREATE TABLE `rpjmd_target` (
 --
 
 INSERT INTO `rpjmd_target` (`id`, `indikator_sasaran_id`, `tahun`, `target_tahunan`, `created_at`, `updated_at`) VALUES
-(499, 101, '2025', '0,648', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(500, 101, '2026', '0,654', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(501, 101, '2027', '0,659', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(502, 101, '2028', '0,664', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(503, 101, '2029', '0,668', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(504, 102, '2025', '0,842', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(505, 102, '2026', '0,844', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(506, 102, '2027', '0,846', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(507, 102, '2028', '0,848', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(508, 102, '2029', '0,85', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(509, 103, '2025', '7,78', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(510, 103, '2026', '7,50', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(511, 103, '2027', '7,30', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(512, 103, '2028', '7,00', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(513, 103, '2029', '6,50', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(514, 104, '2025', '37,89', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(515, 104, '2026', '42,20', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(516, 104, '2027', '46,80', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(517, 104, '2028', '51,80', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(518, 104, '2029', '57,40', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(519, 105, '2025', '5', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(520, 105, '2026', '5', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(521, 105, '2027', '5', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(522, 105, '2028', '5', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(523, 105, '2029', '5', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(524, 106, '2025', '4,20', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(525, 106, '2026', '4,32', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(526, 106, '2027', '3,70', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(527, 106, '2028', '3,60', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(528, 106, '2029', '3,50', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(529, 107, '2025', '3,56', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(530, 107, '2026', '3,75', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(531, 107, '2027', '3,80', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(532, 107, '2028', '3,83', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(533, 107, '2029', '3,86', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(534, 108, '2025', '66,91', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(535, 108, '2026', '67,17', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(536, 108, '2027', '67,42', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(537, 108, '2028', '67,67', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(538, 108, '2029', '67,92', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(539, 109, '2025', '88,82', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(540, 109, '2026', '134,07', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(541, 109, '2027', '133', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(542, 109, '2028', '131,94', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(543, 109, '2029', '130,88', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(544, 110, '2025', '144.000', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(545, 110, '2026', '144.500', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(546, 110, '2027', '145.000', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(547, 110, '2028', '145.500', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(548, 110, '2029', '146.000', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(549, 111, '2025', '42.500', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(550, 111, '2026', '43.000', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(551, 111, '2027', '43.500', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(552, 111, '2028', '44.000', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(553, 111, '2029', '44.500', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(554, 112, '2025', '5.066', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(555, 112, '2026', '5.319', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(556, 112, '2027', '5.585', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(557, 112, '2028', '5.864', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(558, 112, '2029', '6.158', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(559, 113, '2025', '9.469', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(560, 113, '2026', '9.659', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(561, 113, '2027', '9.852', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(562, 113, '2028', '10.049', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(563, 113, '2029', '10.250', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(564, 114, '2025', '14.286', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(565, 114, '2026', '14.715', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(566, 114, '2027', '15.156', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(567, 114, '2028', '15.233', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(568, 114, '2029', '15.690', '2026-04-09 15:26:46', '2026-04-09 15:26:46'),
-(569, 115, '2025', '67,01', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(570, 115, '2026', '67,30', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(571, 115, '2027', '67,50', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(572, 115, '2028', '68,01', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(573, 115, '2029', '68,30', '2026-04-09 16:07:35', '2026-09-17 06:41:35');
+(499, 101, '2025', '0,648', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(500, 101, '2026', '0,654', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(501, 101, '2027', '0,659', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(502, 101, '2028', '0,664', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(503, 101, '2029', '0,668', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(504, 102, '2025', '0,842', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(505, 102, '2026', '0,844', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(506, 102, '2027', '0,846', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(507, 102, '2028', '0,848', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(508, 102, '2029', '0,85', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(509, 103, '2025', '7,78', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(510, 103, '2026', '7,50', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(511, 103, '2027', '7,30', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(512, 103, '2028', '7,00', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(513, 103, '2029', '6,50', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(514, 104, '2025', '37,89', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(515, 104, '2026', '42,20', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(516, 104, '2027', '46,80', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(517, 104, '2028', '51,80', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(518, 104, '2029', '57,40', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(519, 105, '2025', '5', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(520, 105, '2026', '5', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(521, 105, '2027', '5', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(522, 105, '2028', '5', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(523, 105, '2029', '5', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(524, 106, '2025', '4,20', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(525, 106, '2026', '4,32', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(526, 106, '2027', '3,70', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(527, 106, '2028', '3,60', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(528, 106, '2029', '3,50', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(529, 107, '2025', '3,56', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(530, 107, '2026', '3,75', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(531, 107, '2027', '3,80', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(532, 107, '2028', '3,83', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(533, 107, '2029', '3,86', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(534, 108, '2025', '66,91', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(535, 108, '2026', '67,17', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(536, 108, '2027', '67,42', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(537, 108, '2028', '67,67', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(538, 108, '2029', '67,92', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(539, 109, '2025', '88,82', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(540, 109, '2026', '134,07', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(541, 109, '2027', '133', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(542, 109, '2028', '131,94', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(543, 109, '2029', '130,88', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(549, 111, '2025', '42.500', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(550, 111, '2026', '43.000', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(551, 111, '2027', '43.500', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(552, 111, '2028', '44.000', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(553, 111, '2029', '44.500', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(554, 112, '2025', '5.066', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(555, 112, '2026', '5.319', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(556, 112, '2027', '5.585', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(557, 112, '2028', '5.864', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(558, 112, '2029', '6.158', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(559, 113, '2025', '9.469', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(560, 113, '2026', '9.659', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(561, 113, '2027', '9.852', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(562, 113, '2028', '10.049', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(563, 113, '2029', '10.250', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(564, 114, '2025', '14.286', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(565, 114, '2026', '14.715', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(566, 114, '2027', '15.156', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(567, 114, '2028', '15.233', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(568, 114, '2029', '15.690', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(569, 115, '2025', '67,01', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(570, 115, '2026', '67,30', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(571, 115, '2027', '67,50', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(572, 115, '2028', '68,01', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(573, 115, '2029', '68,30', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(574, 116, '2025', '144000', '2026-09-17 13:31:47', '2026-09-17 13:31:47'),
+(575, 116, '2026', '144500', '2026-09-17 13:31:47', '2026-09-17 13:31:47'),
+(576, 116, '2027', '145000', '2026-09-17 13:31:47', '2026-09-17 13:31:47'),
+(577, 116, '2028', '145500', '2026-09-17 13:31:47', '2026-09-17 13:31:47'),
+(578, 116, '2029', '146000', '2026-09-17 13:31:47', '2026-09-17 13:31:47');
 
 -- --------------------------------------------------------
 
@@ -56196,31 +56456,31 @@ CREATE TABLE `rpjmd_target_tujuan` (
 --
 
 INSERT INTO `rpjmd_target_tujuan` (`id`, `indikator_tujuan_id`, `tahun`, `target_tahunan`, `created_at`, `updated_at`) VALUES
-(189, 37, '2025', '74,11', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(190, 37, '2026', '74,72', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(191, 37, '2027', '75,26', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(192, 37, '2028', '75,76', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(193, 37, '2029', '76,23', '2026-04-09 15:19:48', '2026-09-17 06:41:35'),
-(194, 38, '2025', '4,7', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(195, 38, '2026', '4,8', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(196, 38, '2027', '4,9', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(197, 38, '2028', '5,0', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(198, 38, '2029', '5,1', '2026-04-09 15:23:52', '2026-09-17 06:41:35'),
-(199, 39, '2025', '52,25', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(200, 39, '2026', '55,18', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(201, 39, '2027', '57,51', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(202, 39, '2028', '60,12', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(203, 39, '2029', '63,13', '2026-04-09 15:25:41', '2026-09-17 06:41:35'),
-(204, 40, '2025', '87,38', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(205, 40, '2026', '91,76', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(206, 40, '2027', '91,78', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(207, 40, '2028', '91,80', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(208, 40, '2029', '91,82', '2026-04-09 15:26:46', '2026-09-17 06:41:35'),
-(209, 41, '2025', '75,01', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(210, 41, '2026', '77,02', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(211, 41, '2027', '79,50', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(212, 41, '2028', '80,01', '2026-04-09 16:07:35', '2026-09-17 06:41:35'),
-(213, 41, '2029', '81,20', '2026-04-09 16:07:35', '2026-09-17 06:41:35');
+(189, 37, '2025', '74,11', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(190, 37, '2026', '74,72', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(191, 37, '2027', '75,26', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(192, 37, '2028', '75,76', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(193, 37, '2029', '76,23', '2026-04-09 15:19:48', '2026-09-17 13:31:47'),
+(194, 38, '2025', '4,7', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(195, 38, '2026', '4,8', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(196, 38, '2027', '4,9', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(197, 38, '2028', '5,0', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(198, 38, '2029', '5,1', '2026-04-09 15:23:52', '2026-09-17 13:31:47'),
+(199, 39, '2025', '52,25', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(200, 39, '2026', '55,18', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(201, 39, '2027', '57,51', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(202, 39, '2028', '60,12', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(203, 39, '2029', '63,13', '2026-04-09 15:25:41', '2026-09-17 13:31:47'),
+(204, 40, '2025', '87,38', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(205, 40, '2026', '91,76', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(206, 40, '2027', '91,78', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(207, 40, '2028', '91,80', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(208, 40, '2029', '91,82', '2026-04-09 15:26:46', '2026-09-17 13:31:47'),
+(209, 41, '2025', '75,01', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(210, 41, '2026', '77,02', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(211, 41, '2027', '79,50', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(212, 41, '2028', '80,01', '2026-04-09 16:07:35', '2026-09-17 13:31:47'),
+(213, 41, '2029', '81,20', '2026-04-09 16:07:35', '2026-09-17 13:31:47');
 
 -- --------------------------------------------------------
 
@@ -56245,11 +56505,11 @@ CREATE TABLE `rpjmd_tujuan` (
 --
 
 INSERT INTO `rpjmd_tujuan` (`id`, `misi_id`, `tujuan_rpjmd`, `created_at`, `updated_at`, `version_id`, `berlaku_sampai`, `dihentikan_pada`, `alasan_dihentikan`) VALUES
-(8, 8, 'Terjaganya Ketahanan dan Kemandirian Pangan', '2026-04-09 15:26:46', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(10, 7, 'Terwujudnya Tata Kelola Pemerintahan yang Profesional, Modern dan Inovatif', '2026-04-09 16:07:35', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(33, 5, 'Meningkatnya Kualitas Sumber Daya Manusia', '2026-04-09 15:19:48', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(34, 6, 'Mendorong Optimalnya Potensi Keunggulan Daerah Untuk Peningkatan Pertumbuhan Ekonomi', '2026-04-09 15:23:52', '2026-09-17 06:41:35', 140, NULL, NULL, NULL),
-(35, 9, 'Meningkatnya Kualitas Infrastruktur yang Berkelanjutan', '2026-04-09 15:25:41', '2026-09-17 06:41:35', 140, NULL, NULL, NULL);
+(8, 8, 'Terjaganya Ketahanan dan Kemandirian Pangan', '2026-04-09 15:26:46', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(10, 7, 'Terwujudnya Tata Kelola Pemerintahan yang Profesional, Modern dan Inovatif', '2026-04-09 16:07:35', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(33, 5, 'Meningkatnya Kualitas Sumber Daya Manusia', '2026-04-09 15:19:48', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(34, 6, 'Mendorong Optimalnya Potensi Keunggulan Daerah Untuk Peningkatan Pertumbuhan Ekonomi', '2026-04-09 15:23:52', '2026-09-17 13:31:47', 145, NULL, NULL, NULL),
+(35, 9, 'Meningkatnya Kualitas Infrastruktur yang Berkelanjutan', '2026-04-09 15:25:41', '2026-09-17 13:31:47', 145, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -56304,7 +56564,22 @@ INSERT INTO `rpjmd_versi_indikator_sasaran` (`id`, `version_id`, `versi_sasaran_
 (38, 1, 28, 110, NULL, 'Persentase Ketersediaan Pangan terhadap kebutuhan pangan', 'Produksi Padi adalah jumlah hasil panen tanaman padi yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat gabah kering giling (GKG).\r\n\r\nProduksi padi merupakan hasil perkalian antara luas panen padi dan produktivitas padi per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Padi = Luas Panen Padi dikali Produktivitas Padi', '%', '%', 'indikator positif', NULL, 0, 'baru', NULL, 0, NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (39, 1, 29, 107, NULL, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (40, 1, 30, 108, NULL, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
-(41, 1, 30, 109, NULL, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'Indeks', 'Indeks', 'indikator negatif', NULL, 1, 'tetap', NULL, 0, NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14');
+(41, 1, 30, 109, NULL, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'Indeks', 'Indeks', 'indikator negatif', NULL, 1, 'tetap', NULL, 0, NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
+(83, 145, 61, 101, NULL, 'Indeks Pendidikan', 'Indeks Pendidikan adalah indikator yang menggambarkan capaian pembangunan pada dimensi pendidikan, yang diukur berdasarkan rata-rata capaian indikator pendidikan penduduk, yaitu Rata-rata Lama Sekolah (RLS) dan Harapan Lama Sekolah (HLS).', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(84, 145, 62, 102, NULL, 'Indeks Kesehatan', 'Indeks Kesehatan adalah indikator yang menggambarkan capaian pembangunan pada dimensi kesehatan, yang diukur berdasarkan Umur Harapan Hidup saat lahir (UHH) sebagai proksi kondisi kesehatan penduduk.', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(85, 145, 63, 103, NULL, 'Angka Kemiskinan', 'Angka Kemiskinan adalah persentase penduduk yang berada di bawah Garis Kemiskinan pada suatu wilayah dan periode tertentu.\r\n\r\nPenduduk miskin adalah penduduk yang memiliki rata-rata pengeluaran per kapita per bulan di bawah Garis Kemiskinan, baik untuk memenuhi kebutuhan makanan maupun non makanan.', '%', '%', 'indikator negatif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(86, 145, 64, 104, NULL, 'PDRB Perkapita (juta)', 'PDRB per Kapita (juta) adalah rata-rata nilai tambah bruto yang dihasilkan per penduduk dalam suatu wilayah pada periode tertentu, yang diperoleh dari pembagian Produk Domestik Regional Bruto (PDRB) dengan jumlah penduduk, dan dinyatakan dalam juta rupiah.\r\nRumus Perhitungan : Nilai PDRB (Berlaku Atas Dasar Harga Berlaku (ADHB), untuk menggambarkan tingkat kemakmuran nominal, atau\r\nBerlaku Atas Dasar Harga Konstan (ADHK), untuk melihat daya beli riil dan pertumbuhan ekonomi per penduduk) dibagi Jumlah Penduduk', 'Nilai', 'Nilai', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(87, 145, 65, 105, NULL, 'Persentase Pertumbuhan Investasi', 'Persentase Pertumbuhan Investasi adalah besaran peningkatan nilai realisasi investasi pada suatu periode tertentu dibandingkan dengan periode sebelumnya, yang dinyatakan dalam satuan persentase.\r\nPersentase Pertumbuhan Investasi=Realisasi Investasi Tahun n dikurang Realisasi Investasi Tahun (n−1) dibagi Realisasi Investasi Tahun (n−1)​dikali 100%', '%', '%', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(88, 145, 66, 106, NULL, 'Tingkat Pengangguran Terbuka', 'Tingkat Pengangguran Terbuka (TPT) adalah persentase jumlah penganggur terhadap total angkatan kerja pada suatu wilayah dan periode tertentu.\r\nPenganggur adalah penduduk usia kerja yang tidak bekerja, sedang mencari pekerjaan, sedang mempersiapkan usaha, tidak mencari pekerjaan karena merasa tidak mungkin mendapat pekerjaan (putus asa) dan sudah memiliki pekerjaan tetapi belum mulai bekerja.\r\nRumus Perhitungan : Jumlah Penganggur dibagi Jumlah Angkatan Kerja dikali 100 persen.', 'Nilai', 'Nilai', 'indikator negatif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(89, 145, 67, 115, NULL, 'Indeks Reformasi Birokrasi General', 'Indeks Reformasi Birokrasi (RB) General adalah Pembobotan dari Indeks Sakip, Indeks SPBE, Indeks Kualitas Kebijakan, Indeks Pengelolaan Aset dan Indeks Tata Kelola Pengadaan', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(91, 145, 68, 111, NULL, 'Produksi Jagung', 'Produksi Jagung\r\nadalah jumlah hasil panen tanaman jagung yang dihasilkan dalam suatu wilayah dan periode tertentu, yang dinyatakan dalam berat pipilan kering.\r\n\r\nProduksi jagung merupakan hasil perkalian antara luas panen jagung dan produktivitas jagung per satuan luas.\r\n\r\nRumus Perhitungan : Produksi Jagung=Luas Panen Jagung dikali Produktivitas Jagung', 'Ton', 'Ton', 'indikator positif', NULL, 1, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(92, 145, 68, 112, NULL, 'Produksi Daging', 'Produksi Daging adalah jumlah daging yang dihasilkan dari pemotongan ternak dan unggas dalam suatu wilayah dan periode tertentu, yang berasal dari sapi, kerbau, kambing, domba, babi, ayam, itik, dan ternak/unggas lainnya, yang dinyatakan dalam berat bersih (karkas atau setara karkas).\r\n\r\nProduksi daging dihitung berdasarkan jumlah ternak/unggas yang dipotong dan rata-rata bobot karkas per ekor.\r\n\r\nRumus Perhitungan : Produksi Daging = Jumlah Ternak/Unggas Dipotong dikali Rata-rata Bobot Karkas', 'Ton', 'Ton', 'indikator positif', NULL, 2, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(93, 145, 68, 113, NULL, 'Produksi Telur', 'Produksi Telur\r\nadalah jumlah telur yang dihasilkan oleh ternak unggas petelur dalam suatu wilayah dan periode tertentu, baik dari ayam ras petelur, ayam buras, itik, maupun jenis unggas petelur lainnya, yang dinyatakan dalam berat atau jumlah satuan tertentu.\r\n\r\nProduksi telur dihitung berdasarkan jumlah ternak petelur produktif dan rata-rata produksi telur per ekor.\r\n\r\nRumus Perhitungan : Produksi Telur = Jumlah Ternak Petelur Produktif dikali Rata-rata Produksi Telur', 'Ton', 'Ton', 'indikator positif', NULL, 3, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(94, 145, 68, 114, NULL, 'Produksi Perikanan', 'Produksi Perikanan adalah jumlah hasil perikanan yang dihasilkan dalam suatu wilayah dan periode tertentu, yang berasal dari kegiatan perikanan tangkap dan perikanan budidaya, dan dinyatakan dalam berat hasil (ton).\r\n\r\nRumus Perhitungan : Produksi Perikanan = Produksi Tangkap ditambah Produksi Budidaya', 'Ton', 'Ton', 'indikator positif', NULL, 4, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(95, 145, 69, 107, NULL, 'Indeks Daya Saing Daerah Pilar Infrastruktur', 'Indeks Daya Saing Daerah (IDSD) – Pilar Infrastruktur adalah jumlah skor indikator Rasio Jalan Mantab, Akses Air minum Layak, Akses Sanitasi Layak, dan Rasio Jaringan Irigasi dibagi jumlah seluruh indikator', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(96, 145, 70, 108, NULL, 'Indeks Kualitas Lingkungan Hidup', 'IKLH terdiri dari:Komponen berupa Indeks Kualitas Air (IKA), Indeks Kualitas Udara (IKU), dan Indeks Kualitas Tutupan Lahan (IKTL). IKLH yang dihitung sebagai rata-rata tertimbang dari ketiga indeks tersebut sesuai bobot yang ditetapkan', 'Indeks', 'Indeks', 'indikator positif', NULL, 0, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(97, 145, 70, 109, NULL, 'Indeks Risiko Bencana', 'Indeks Risiko Bencana (IRB) adalah indikator yang dihitung berdasarkan interaksi antara Tingkat Bahaya (hazard) dikali dengan Kerentanan (vulnerability), dan dibagi Kapasitas (capacity) dalam Menghadapi Bencana', 'Indeks', 'Indeks', 'indikator negatif', NULL, 1, 'tetap', NULL, 0, NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(98, 145, 68, 116, NULL, 'Produksi Padi', NULL, '50', 'Ton', 'indikator positif', NULL, 5, 'baru', NULL, 0, NULL, '2026-09-17 13:30:11', '2026-09-17 20:31:47');
 
 -- --------------------------------------------------------
 
@@ -56338,7 +56613,12 @@ INSERT INTO `rpjmd_versi_indikator_tujuan` (`id`, `version_id`, `versi_tujuan_id
 (12, 1, 12, 38, NULL, 'Laju Pertumbuhan  Ekonomi', 0, 'tetap', '2026-09-17 07:40:14'),
 (13, 1, 13, 41, NULL, 'Indeks Reformasi Birokrasi', 0, 'tetap', '2026-09-17 07:40:14'),
 (14, 1, 14, 40, NULL, 'Indeks Ketahanan Pangan', 0, 'tetap', '2026-09-17 07:40:14'),
-(15, 1, 15, 39, NULL, 'Indeks Infrastruktur', 0, 'tetap', '2026-09-17 07:40:14');
+(15, 1, 15, 39, NULL, 'Indeks Infrastruktur', 0, 'tetap', '2026-09-17 07:40:14'),
+(31, 145, 31, 37, NULL, 'Indeks Pembangunan Manusia (IPM)', 0, 'tetap', '2026-09-17 13:26:59'),
+(32, 145, 32, 38, NULL, 'Laju Pertumbuhan  Ekonomi', 0, 'tetap', '2026-09-17 13:26:59'),
+(33, 145, 33, 41, NULL, 'Indeks Reformasi Birokrasi', 0, 'tetap', '2026-09-17 13:26:59'),
+(34, 145, 34, 40, NULL, 'Indeks Ketahanan Pangan', 0, 'tetap', '2026-09-17 13:26:59'),
+(35, 145, 35, 39, NULL, 'Indeks Infrastruktur', 0, 'tetap', '2026-09-17 13:26:59');
 
 -- --------------------------------------------------------
 
@@ -56377,7 +56657,12 @@ INSERT INTO `rpjmd_versi_misi` (`id`, `version_id`, `source_misi_id`, `copied_fr
 (12, 1, 6, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Meningkatkan Pertumbuhan Ekonomi Berbasis Keunggulan Daerah', 2025, 2029, 1, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (13, 1, 7, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Penyelenggaraan Tata Kelola Yang Profesional, Modern dan Inovatif', 2025, 2029, 2, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (14, 1, 8, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Mempertahankan Swasembada Pangan Yang Berwawasan Lingkungan', 2025, 2029, 3, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
-(15, 1, 9, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan', 2025, 2029, 4, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14');
+(15, 1, 9, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan', 2025, 2029, 4, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
+(31, 145, 5, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Optimalisasi Kualitas dan Pemanfaatan Sumber Daya Manusia', 2025, 2029, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(32, 145, 6, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Meningkatkan Pertumbuhan Ekonomi Berbasis Keunggulan Daerah', 2025, 2029, 1, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(33, 145, 7, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Penyelenggaraan Tata Kelola Yang Profesional, Modern dan Inovatif', 2025, 2029, 2, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(34, 145, 8, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Mempertahankan Swasembada Pangan Yang Berwawasan Lingkungan', 2025, 2029, 3, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(35, 145, 9, NULL, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', 1, 'Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan', 2025, 2029, 4, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59');
 
 -- --------------------------------------------------------
 
@@ -56424,7 +56709,17 @@ INSERT INTO `rpjmd_versi_sasaran` (`id`, `version_id`, `versi_tujuan_id`, `sourc
 (27, 1, 13, 12, NULL, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', NULL, 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (28, 1, 14, 9, NULL, 'Meningkatnya Ketersediaan Pangan Daerah', NULL, 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (29, 1, 15, 83, NULL, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', NULL, 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
-(30, 1, 15, 84, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', NULL, 1, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14');
+(30, 1, 15, 84, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', NULL, 1, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
+(61, 145, 31, 77, NULL, 'Meningkatnya Kualitas Pendidikan', NULL, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(62, 145, 31, 78, NULL, 'Meningkatnya Derajat Kesehatan', NULL, 1, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(63, 145, 31, 79, NULL, 'Menurunnya Angka Kemiskinan', NULL, 2, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(64, 145, 32, 80, NULL, 'Meningkatnya Produktivitas Lapangan Usaha', NULL, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(65, 145, 32, 81, NULL, 'Meningkatnya Investasi', NULL, 1, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(66, 145, 32, 82, NULL, 'Menurunnya Tingkat Pengangguran Terbuka', NULL, 2, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(67, 145, 33, 12, NULL, 'Meningkatnya Kualitas Tata Kelola Pemerintahan', NULL, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(68, 145, 34, 9, NULL, 'Meningkatnya Ketersediaan Pangan Daerah', NULL, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(69, 145, 35, 83, NULL, 'Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing', NULL, 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(70, 145, 35, 84, NULL, 'Meningkatnya Kualitas Lingkungan Hidup Dan Ketahanan Daerah Terhadap Risiko Bencana', NULL, 1, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59');
 
 -- --------------------------------------------------------
 
@@ -56555,7 +56850,82 @@ INSERT INTO `rpjmd_versi_target` (`id`, `versi_indikator_id`, `tahun`, `target_t
 (202, 41, 2026, '134,07', NULL, '2026-09-17 07:40:14'),
 (203, 41, 2027, '133', NULL, '2026-09-17 07:40:14'),
 (204, 41, 2028, '131,94', NULL, '2026-09-17 07:40:14'),
-(205, 41, 2029, '130,88', NULL, '2026-09-17 07:40:14');
+(205, 41, 2029, '130,88', NULL, '2026-09-17 07:40:14'),
+(411, 83, 2025, '0,648', NULL, '2026-09-17 13:26:59'),
+(412, 83, 2026, '0,654', NULL, '2026-09-17 13:26:59'),
+(413, 83, 2027, '0,659', NULL, '2026-09-17 13:26:59'),
+(414, 83, 2028, '0,664', NULL, '2026-09-17 13:26:59'),
+(415, 83, 2029, '0,668', NULL, '2026-09-17 13:26:59'),
+(416, 84, 2025, '0,842', NULL, '2026-09-17 13:26:59'),
+(417, 84, 2026, '0,844', NULL, '2026-09-17 13:26:59'),
+(418, 84, 2027, '0,846', NULL, '2026-09-17 13:26:59'),
+(419, 84, 2028, '0,848', NULL, '2026-09-17 13:26:59'),
+(420, 84, 2029, '0,85', NULL, '2026-09-17 13:26:59'),
+(421, 85, 2025, '7,78', NULL, '2026-09-17 13:26:59'),
+(422, 85, 2026, '7,50', NULL, '2026-09-17 13:26:59'),
+(423, 85, 2027, '7,30', NULL, '2026-09-17 13:26:59'),
+(424, 85, 2028, '7,00', NULL, '2026-09-17 13:26:59'),
+(425, 85, 2029, '6,50', NULL, '2026-09-17 13:26:59'),
+(426, 86, 2025, '37,89', NULL, '2026-09-17 13:26:59'),
+(427, 86, 2026, '42,20', NULL, '2026-09-17 13:26:59'),
+(428, 86, 2027, '46,80', NULL, '2026-09-17 13:26:59'),
+(429, 86, 2028, '51,80', NULL, '2026-09-17 13:26:59'),
+(430, 86, 2029, '57,40', NULL, '2026-09-17 13:26:59'),
+(431, 87, 2025, '5', NULL, '2026-09-17 13:26:59'),
+(432, 87, 2026, '5', NULL, '2026-09-17 13:26:59'),
+(433, 87, 2027, '5', NULL, '2026-09-17 13:26:59'),
+(434, 87, 2028, '5', NULL, '2026-09-17 13:26:59'),
+(435, 87, 2029, '5', NULL, '2026-09-17 13:26:59'),
+(436, 88, 2025, '4,20', NULL, '2026-09-17 13:26:59'),
+(437, 88, 2026, '4,32', NULL, '2026-09-17 13:26:59'),
+(438, 88, 2027, '3,70', NULL, '2026-09-17 13:26:59'),
+(439, 88, 2028, '3,60', NULL, '2026-09-17 13:26:59'),
+(440, 88, 2029, '3,50', NULL, '2026-09-17 13:26:59'),
+(441, 89, 2025, '67,01', NULL, '2026-09-17 13:26:59'),
+(442, 89, 2026, '67,30', NULL, '2026-09-17 13:26:59'),
+(443, 89, 2027, '67,50', NULL, '2026-09-17 13:26:59'),
+(444, 89, 2028, '68,01', NULL, '2026-09-17 13:26:59'),
+(445, 89, 2029, '68,30', NULL, '2026-09-17 13:26:59'),
+(451, 91, 2025, '42.500', NULL, '2026-09-17 13:26:59'),
+(452, 91, 2026, '43.000', NULL, '2026-09-17 13:26:59'),
+(453, 91, 2027, '43.500', NULL, '2026-09-17 13:26:59'),
+(454, 91, 2028, '44.000', NULL, '2026-09-17 13:26:59'),
+(455, 91, 2029, '44.500', NULL, '2026-09-17 13:26:59'),
+(456, 92, 2025, '5.066', NULL, '2026-09-17 13:26:59'),
+(457, 92, 2026, '5.319', NULL, '2026-09-17 13:26:59'),
+(458, 92, 2027, '5.585', NULL, '2026-09-17 13:26:59'),
+(459, 92, 2028, '5.864', NULL, '2026-09-17 13:26:59'),
+(460, 92, 2029, '6.158', NULL, '2026-09-17 13:26:59'),
+(461, 93, 2025, '9.469', NULL, '2026-09-17 13:26:59'),
+(462, 93, 2026, '9.659', NULL, '2026-09-17 13:26:59'),
+(463, 93, 2027, '9.852', NULL, '2026-09-17 13:26:59'),
+(464, 93, 2028, '10.049', NULL, '2026-09-17 13:26:59'),
+(465, 93, 2029, '10.250', NULL, '2026-09-17 13:26:59'),
+(466, 94, 2025, '14.286', NULL, '2026-09-17 13:26:59'),
+(467, 94, 2026, '14.715', NULL, '2026-09-17 13:26:59'),
+(468, 94, 2027, '15.156', NULL, '2026-09-17 13:26:59'),
+(469, 94, 2028, '15.233', NULL, '2026-09-17 13:26:59'),
+(470, 94, 2029, '15.690', NULL, '2026-09-17 13:26:59'),
+(471, 95, 2025, '3,56', NULL, '2026-09-17 13:26:59'),
+(472, 95, 2026, '3,75', NULL, '2026-09-17 13:26:59'),
+(473, 95, 2027, '3,80', NULL, '2026-09-17 13:26:59'),
+(474, 95, 2028, '3,83', NULL, '2026-09-17 13:26:59'),
+(475, 95, 2029, '3,86', NULL, '2026-09-17 13:26:59'),
+(476, 96, 2025, '66,91', NULL, '2026-09-17 13:26:59'),
+(477, 96, 2026, '67,17', NULL, '2026-09-17 13:26:59'),
+(478, 96, 2027, '67,42', NULL, '2026-09-17 13:26:59'),
+(479, 96, 2028, '67,67', NULL, '2026-09-17 13:26:59'),
+(480, 96, 2029, '67,92', NULL, '2026-09-17 13:26:59'),
+(481, 97, 2025, '88,82', NULL, '2026-09-17 13:26:59'),
+(482, 97, 2026, '134,07', NULL, '2026-09-17 13:26:59'),
+(483, 97, 2027, '133', NULL, '2026-09-17 13:26:59'),
+(484, 97, 2028, '131,94', NULL, '2026-09-17 13:26:59'),
+(485, 97, 2029, '130,88', NULL, '2026-09-17 13:26:59'),
+(486, 98, 2025, '144000', NULL, '2026-09-17 13:30:11'),
+(487, 98, 2026, '144500', NULL, '2026-09-17 13:30:11'),
+(488, 98, 2027, '145000', NULL, '2026-09-17 13:30:11'),
+(489, 98, 2028, '145500', NULL, '2026-09-17 13:30:11'),
+(490, 98, 2029, '146000', NULL, '2026-09-17 13:30:11');
 
 -- --------------------------------------------------------
 
@@ -56626,7 +56996,32 @@ INSERT INTO `rpjmd_versi_target_tujuan` (`id`, `versi_indikator_tujuan_id`, `tah
 (72, 15, 2026, '55,18', NULL, '2026-09-17 07:40:14'),
 (73, 15, 2027, '57,51', NULL, '2026-09-17 07:40:14'),
 (74, 15, 2028, '60,12', NULL, '2026-09-17 07:40:14'),
-(75, 15, 2029, '63,13', NULL, '2026-09-17 07:40:14');
+(75, 15, 2029, '63,13', NULL, '2026-09-17 07:40:14'),
+(151, 31, 2025, '74,11', NULL, '2026-09-17 13:26:59'),
+(152, 31, 2026, '74,72', NULL, '2026-09-17 13:26:59'),
+(153, 31, 2027, '75,26', NULL, '2026-09-17 13:26:59'),
+(154, 31, 2028, '75,76', NULL, '2026-09-17 13:26:59'),
+(155, 31, 2029, '76,23', NULL, '2026-09-17 13:26:59'),
+(156, 32, 2025, '4,7', NULL, '2026-09-17 13:26:59'),
+(157, 32, 2026, '4,8', NULL, '2026-09-17 13:26:59'),
+(158, 32, 2027, '4,9', NULL, '2026-09-17 13:26:59'),
+(159, 32, 2028, '5,0', NULL, '2026-09-17 13:26:59'),
+(160, 32, 2029, '5,1', NULL, '2026-09-17 13:26:59'),
+(161, 33, 2025, '75,01', NULL, '2026-09-17 13:26:59'),
+(162, 33, 2026, '77,02', NULL, '2026-09-17 13:26:59'),
+(163, 33, 2027, '79,50', NULL, '2026-09-17 13:26:59'),
+(164, 33, 2028, '80,01', NULL, '2026-09-17 13:26:59'),
+(165, 33, 2029, '81,20', NULL, '2026-09-17 13:26:59'),
+(166, 34, 2025, '87,38', NULL, '2026-09-17 13:26:59'),
+(167, 34, 2026, '91,76', NULL, '2026-09-17 13:26:59'),
+(168, 34, 2027, '91,78', NULL, '2026-09-17 13:26:59'),
+(169, 34, 2028, '91,80', NULL, '2026-09-17 13:26:59'),
+(170, 34, 2029, '91,82', NULL, '2026-09-17 13:26:59'),
+(171, 35, 2025, '52,25', NULL, '2026-09-17 13:26:59'),
+(172, 35, 2026, '55,18', NULL, '2026-09-17 13:26:59'),
+(173, 35, 2027, '57,51', NULL, '2026-09-17 13:26:59'),
+(174, 35, 2028, '60,12', NULL, '2026-09-17 13:26:59'),
+(175, 35, 2029, '63,13', NULL, '2026-09-17 13:26:59');
 
 -- --------------------------------------------------------
 
@@ -56662,7 +57057,12 @@ INSERT INTO `rpjmd_versi_tujuan` (`id`, `version_id`, `versi_misi_id`, `source_t
 (12, 1, 12, 34, NULL, 'Mendorong Optimalnya Potensi Keunggulan Daerah Untuk Peningkatan Pertumbuhan Ekonomi', 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (13, 1, 13, 10, NULL, 'Terwujudnya Tata Kelola Pemerintahan yang Profesional, Modern dan Inovatif', 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
 (14, 1, 14, 8, NULL, 'Terjaganya Ketahanan dan Kemandirian Pangan', 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
-(15, 1, 15, 35, NULL, 'Meningkatnya Kualitas Infrastruktur yang Berkelanjutan', 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14');
+(15, 1, 15, 35, NULL, 'Meningkatnya Kualitas Infrastruktur yang Berkelanjutan', 0, 'tetap', NULL, '2026-09-17 07:40:14', '2026-09-17 14:40:14'),
+(31, 145, 31, 33, NULL, 'Meningkatnya Kualitas Sumber Daya Manusia', 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(32, 145, 32, 34, NULL, 'Mendorong Optimalnya Potensi Keunggulan Daerah Untuk Peningkatan Pertumbuhan Ekonomi', 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(33, 145, 33, 10, NULL, 'Terwujudnya Tata Kelola Pemerintahan yang Profesional, Modern dan Inovatif', 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(34, 145, 34, 8, NULL, 'Terjaganya Ketahanan dan Kemandirian Pangan', 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59'),
+(35, 145, 35, 35, NULL, 'Meningkatnya Kualitas Infrastruktur yang Berkelanjutan', 0, 'tetap', NULL, '2026-09-17 13:26:59', '2026-09-17 20:26:59');
 
 -- --------------------------------------------------------
 
@@ -56672,17 +57072,17 @@ INSERT INTO `rpjmd_versi_tujuan` (`id`, `version_id`, `versi_misi_id`, `source_t
 
 CREATE TABLE `rpjmd_visi` (
   `id` int NOT NULL,
-  `visi` varchar(255) NOT NULL,
+  `visi` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `created_at` timestamp NOT NULL,
   `updated_at` timestamp NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `rpjmd_visi`
 --
 
 INSERT INTO `rpjmd_visi` (`id`, `visi`, `created_at`, `updated_at`) VALUES
-(1, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', '2026-04-13 07:22:59', '2026-09-17 00:45:51');
+(1, 'Pringsewu MAKMUR \r\n(Mandiri, Aman, Kondusif, Maju, Unggul, Religius)', '2026-04-13 07:22:59', '2026-09-17 06:33:50');
 
 -- --------------------------------------------------------
 
@@ -56802,14 +57202,14 @@ INSERT INTO `satuan_skala` (`id`, `satuan_id`, `kode`, `label`, `nilai`, `urutan
 CREATE TABLE `sub_kegiatan_pk` (
   `id` int UNSIGNED NOT NULL,
   `kegiatan_id` int UNSIGNED NOT NULL,
-  `kode_sub_kegiatan` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sub_kegiatan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `kode_sub_kegiatan` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `sub_kegiatan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `tahun_anggaran` year NOT NULL,
-  `jenis_anggaran` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'murni',
+  `jenis_anggaran` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'murni',
   `anggaran` decimal(15,0) DEFAULT '0',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sub_kegiatan_pk`
@@ -63072,7 +63472,16 @@ INSERT INTO `version_submission_history` (`id`, `version_id`, `aksi`, `dari_stat
 (186, 140, 'edited_draft', NULL, NULL, NULL, NULL, 'Tanggal mulai berlaku diubah dari 2025-01-01 menjadi 2026-07-01', '{\"effective_from\": \"2025-01-01\"}', '{\"effective_from\": \"2026-07-01\", \"perubahan_timeline\": []}', NULL, NULL, NULL, '2026-07-01', NULL, 2, 'admin_kab', 'admin_kab', '103.140.188.242', '2026-09-17 06:41:24'),
 (187, 140, 'submitted', 'draft', 'pending_approval', NULL, NULL, 'Diajukan untuk ditetapkan: V3 — RPJMD Kabupaten 2025-2029', NULL, NULL, NULL, NULL, NULL, '2026-07-01', NULL, 2, 'admin_kab', 'admin_kab', '103.140.188.242', '2026-09-17 06:41:27'),
 (188, 140, 'published', 'pending_approval', 'published', NULL, NULL, 'Ditetapkan berlaku mulai 2026-07-01', NULL, '{\"penerapan\": {\"dibuat\": 0, \"diperbarui\": 36, \"dipensiunkan\": 4, \"target_live_tak_tercantum\": 0}, \"perubahan_timeline\": []}', NULL, NULL, NULL, '2026-07-01', NULL, 2, 'admin_kab', 'admin_kab', '103.140.188.242', '2026-09-17 06:41:35'),
-(189, 1, 'applied', NULL, NULL, NULL, NULL, 'Baseline diisi dari kondisi berjalan: misi=5, tujuan=5, indikator_tujuan=5, target_tujuan=25, sasaran=10, indikator_sasaran=11, target=55', NULL, '{\"misi\": 5, \"target\": 55, \"tujuan\": 5, \"sasaran\": 10, \"target_tujuan\": 25, \"indikator_tujuan\": 5, \"indikator_sasaran\": 11}', NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.140.188.242', '2026-09-17 07:40:14');
+(189, 1, 'applied', NULL, NULL, NULL, NULL, 'Baseline diisi dari kondisi berjalan: misi=5, tujuan=5, indikator_tujuan=5, target_tujuan=25, sasaran=10, indikator_sasaran=11, target=55', NULL, '{\"misi\": 5, \"target\": 55, \"tujuan\": 5, \"sasaran\": 10, \"target_tujuan\": 25, \"indikator_tujuan\": 5, \"indikator_sasaran\": 11}', NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.140.188.242', '2026-09-17 07:40:14'),
+(202, 140, 'applied', NULL, NULL, NULL, NULL, 'Diterapkan ulang ke data berjalan atas permintaan.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:18:34'),
+(211, 145, 'created', NULL, 'draft', NULL, NULL, 'Versi dibuat (salinan kondisi berjalan): misi=5, tujuan=5, indikator_tujuan=5, target_tujuan=25, sasaran=10, indikator_sasaran=15, target=75', NULL, '{\"misi\": 5, \"target\": 75, \"tujuan\": 5, \"sasaran\": 10, \"target_tujuan\": 25, \"indikator_tujuan\": 5, \"indikator_sasaran\": 15}', NULL, NULL, NULL, '2025-10-01', NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:26:59'),
+(212, 145, 'edited_draft', NULL, NULL, NULL, NULL, 'Draft disunting: diubah=40, ditambah=1, dihapus=1, target=105', NULL, '{\"diubah\": 40, \"target\": 105, \"dihapus\": 1, \"ditambah\": 1}', NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:30:11'),
+(213, 145, 'published', 'draft', 'published', NULL, NULL, 'Ditetapkan berlaku mulai 2025-10-01', NULL, '{\"penerapan\": null, \"perubahan_timeline\": [{\"id\": 1, \"ke\": \"2025-10-01\", \"dari\": \"2026-07-01\", \"version_no\": 1}]}', NULL, NULL, NULL, '2025-10-01', NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:30:25'),
+(214, 140, 'applied', NULL, NULL, NULL, NULL, 'Diterapkan ke data berjalan karena menjadi versi terkini setelah tanggal berlaku digeser.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:31:17'),
+(216, 145, 'applied', NULL, NULL, NULL, NULL, 'Diterapkan ke data berjalan karena menjadi versi terkini setelah tanggal berlaku digeser.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:31:47'),
+(217, 140, 'edited_draft', NULL, NULL, NULL, NULL, 'Tanggal mulai berlaku diubah dari 2026-07-01 menjadi 2025-09-09', '{\"effective_from\": \"2026-07-01\"}', '{\"effective_from\": \"2025-09-09\", \"perubahan_timeline\": [{\"id\": 140, \"ke\": \"2025-10-01\", \"dari\": null, \"version_no\": 3}, {\"id\": 144, \"ke\": \"2025-09-09\", \"dari\": \"2025-10-01\", \"version_no\": 4}, {\"id\": 145, \"ke\": null, \"dari\": \"2026-07-01\", \"version_no\": 5}]}', NULL, 'tes', NULL, '2025-09-09', NULL, 2, 'admin_kab', 'admin_kab', '103.169.238.113', '2026-09-17 13:31:47'),
+(218, 140, 'tampilan_utama', NULL, NULL, NULL, NULL, 'Dijadikan tampilan utama RPJMD.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.59.45.37', '2026-09-17 13:47:13'),
+(219, 1, 'tampilan_utama', NULL, NULL, NULL, NULL, 'Dijadikan tampilan utama RPJMD.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 2, 'admin_kab', 'admin_kab', '103.59.45.37', '2026-09-17 13:47:46');
 
 -- --------------------------------------------------------
 
@@ -64896,6 +65305,7 @@ ALTER TABLE `sub_kegiatan_pk`
 --
 ALTER TABLE `target_rencana`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_target_rencana_pk_indikator` (`pk_indikator_id`,`opd_id`),
   ADD KEY `fk_target_rencana_opd` (`opd_id`),
   ADD KEY `fk_target_rencana_renstra_target` (`renstra_target_id`),
   ADD KEY `fk_target_rencana_rpjmd_target` (`rpjmd_target_id`),
@@ -64958,7 +65368,7 @@ ALTER TABLE `_bak_target_rencana_capaian_20260727`
 -- AUTO_INCREMENT for table `activity_logs`
 --
 ALTER TABLE `activity_logs`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17615;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17670;
 
 --
 -- AUTO_INCREMENT for table `cascading_indikator_opd`
@@ -64982,13 +65392,13 @@ ALTER TABLE `dashboard_status_thresholds`
 -- AUTO_INCREMENT for table `dokumen_izin_sunting`
 --
 ALTER TABLE `dokumen_izin_sunting`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `dokumen_versi`
 --
 ALTER TABLE `dokumen_versi`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=142;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
 
 --
 -- AUTO_INCREMENT for table `iku`
@@ -65000,7 +65410,7 @@ ALTER TABLE `iku`
 -- AUTO_INCREMENT for table `iku_indikator`
 --
 ALTER TABLE `iku_indikator`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=221;
 
 --
 -- AUTO_INCREMENT for table `iku_program`
@@ -65018,13 +65428,13 @@ ALTER TABLE `iku_program_pendukung`
 -- AUTO_INCREMENT for table `iku_revisi`
 --
 ALTER TABLE `iku_revisi`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
 
 --
 -- AUTO_INCREMENT for table `iku_revisi_indikator`
 --
 ALTER TABLE `iku_revisi_indikator`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=428;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=454;
 
 --
 -- AUTO_INCREMENT for table `iku_revisi_program`
@@ -65036,25 +65446,25 @@ ALTER TABLE `iku_revisi_program`
 -- AUTO_INCREMENT for table `iku_revisi_sasaran`
 --
 ALTER TABLE `iku_revisi_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=375;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=395;
 
 --
 -- AUTO_INCREMENT for table `iku_revisi_target`
 --
 ALTER TABLE `iku_revisi_target`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2490;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2620;
 
 --
 -- AUTO_INCREMENT for table `iku_sasaran`
 --
 ALTER TABLE `iku_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=176;
 
 --
 -- AUTO_INCREMENT for table `iku_target`
 --
 ALTER TABLE `iku_target`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2037;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2112;
 
 --
 -- AUTO_INCREMENT for table `import_batch`
@@ -65312,37 +65722,37 @@ ALTER TABLE `renstra_tujuan`
 -- AUTO_INCREMENT for table `renstra_versi_indikator_sasaran`
 --
 ALTER TABLE `renstra_versi_indikator_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `renstra_versi_indikator_tujuan`
 --
 ALTER TABLE `renstra_versi_indikator_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `renstra_versi_sasaran`
 --
 ALTER TABLE `renstra_versi_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- AUTO_INCREMENT for table `renstra_versi_target`
 --
 ALTER TABLE `renstra_versi_target`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=331;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=351;
 
 --
 -- AUTO_INCREMENT for table `renstra_versi_target_tujuan`
 --
 ALTER TABLE `renstra_versi_target_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=176;
 
 --
 -- AUTO_INCREMENT for table `renstra_versi_tujuan`
 --
 ALTER TABLE `renstra_versi_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `rkt`
@@ -65384,7 +65794,7 @@ ALTER TABLE `rpjmd_cascading`
 -- AUTO_INCREMENT for table `rpjmd_indikator_sasaran`
 --
 ALTER TABLE `rpjmd_indikator_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_indikator_tujuan`
@@ -65408,7 +65818,7 @@ ALTER TABLE `rpjmd_sasaran`
 -- AUTO_INCREMENT for table `rpjmd_target`
 --
 ALTER TABLE `rpjmd_target`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=574;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=579;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_target_tujuan`
@@ -65426,43 +65836,43 @@ ALTER TABLE `rpjmd_tujuan`
 -- AUTO_INCREMENT for table `rpjmd_versi_indikator_sasaran`
 --
 ALTER TABLE `rpjmd_versi_indikator_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_indikator_tujuan`
 --
 ALTER TABLE `rpjmd_versi_indikator_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_misi`
 --
 ALTER TABLE `rpjmd_versi_misi`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_sasaran`
 --
 ALTER TABLE `rpjmd_versi_sasaran`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_target`
 --
 ALTER TABLE `rpjmd_versi_target`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=261;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=491;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_target_tujuan`
 --
 ALTER TABLE `rpjmd_versi_target_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=176;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_versi_tujuan`
 --
 ALTER TABLE `rpjmd_versi_tujuan`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `rpjmd_visi`
@@ -65516,7 +65926,7 @@ ALTER TABLE `version_correction_requests`
 -- AUTO_INCREMENT for table `version_submission_history`
 --
 ALTER TABLE `version_submission_history`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=191;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
 
 --
 -- AUTO_INCREMENT for table `_arsip_monev_anggaran_20260830`

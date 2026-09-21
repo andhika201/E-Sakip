@@ -393,6 +393,9 @@ $js = static fn ($v) => json_encode(
                 <?php if (!$lkB['ada']): ?>
                   <div class="kpi-num sm text-muted">Belum ada LAKIP <?= (int) $lkB['tahun_lakip'] ?></div>
                   <div class="kpi-sub mt-2"><div>LAKIP Kabupaten tahun <?= (int) $lkB['tahun_lakip'] ?> belum memiliki indikator untuk dinilai.</div></div>
+                <?php elseif (!$lkB['disahkan']): ?>
+                  <div class="kpi-num sm text-warning-emphasis">Belum disahkan</div>
+                  <div class="kpi-sub mt-2"><div>LAKIP Kabupaten <?= (int) $lkB['tahun_lakip'] ?> tersedia, tetapi belum disahkan.</div></div>
                 <?php elseif ($lkB['can_compute']): ?>
                   <div class="kpi-num" style="color:<?= esc($lkB['status']['color_hex']) ?>"><?= esc(capaianFormatPersen($lkB['total'])) ?></div>
                   <div class="kpi-sub mt-2">
@@ -1202,6 +1205,9 @@ $js = static fn ($v) => json_encode(
           var b = D.kab.lakip_bupati;
           if (!b.ada) {
             return { t: 'Capaian PK Bupati', s: 'LAKIP ' + b.tahun_lakip, html: kosong('LAKIP Kabupaten tahun ' + b.tahun_lakip + ' belum memiliki indikator untuk dinilai.', 'fa-file-lines') };
+          }
+          if (!b.disahkan) {
+            return { t: 'Capaian PK Bupati', s: 'LAKIP ' + b.tahun_lakip + ' belum disahkan', html: '<div class="drawer-section"><p class="mb-2">LAKIP Kabupaten ' + b.tahun_lakip + ' tersedia, tetapi belum disahkan. Angka capaian belum ditampilkan sebagai hasil resmi.</p><a class="btn btn-sm btn-outline-success" href="' + esc(b.url) + '">Buka LAKIP ' + b.tahun_lakip + '</a></div>' };
           }
           var kepala = '<div class="drawer-section"><dl class="drawer-dl mb-0">' +
             '<dt>Capaian PK Bupati</dt><dd>' + (b.can_compute ? pct(b.total) : 'belum dapat dihitung') + '</dd>' +

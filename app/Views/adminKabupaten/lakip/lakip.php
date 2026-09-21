@@ -148,6 +148,13 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                 if ($mode === 'opd' && !empty($selectedOpdId)) {
                     $cetakParams['opd_id'] = $selectedOpdId;
                 }
+                $cetakSumber = $sumberLakip ?? null;
+                if ($mode === 'kabupaten' && is_array($cetakSumber)
+                    && ($cetakSumber['sumber'] ?? '') === 'iku'
+                    && ! empty($cetakSumber['versi']['id'])) {
+                    $cetakParams['sumber'] = 'iku';
+                    $cetakParams['sumber_versi'] = (int) $cetakSumber['versi']['id'];
+                }
                 ?>
                 <?php /* Pemilih dokumen sumber — kembaran layar LAKIP OPD.
                          LAKIP menilai capaian terhadap dokumen tertentu; selama
@@ -189,6 +196,60 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                             </select>
                         </div>
                     <?php endif; ?>
+
+                    <?php if (! empty($ikuPreview)): ?>
+                        <div class="col-12">
+                            <div class="card border-success-subtle bg-light">
+                                <div class="card-body py-2 small">
+                                    <div class="fw-semibold text-success mb-1"><i class="fas fa-eye me-1"></i>Preview IKU terpilih</div>
+                                    <div class="row g-1">
+                                        <div class="col-md-4">LAKIP: <strong><?= esc((string) ($filters['tahun'] ?? '')) ?></strong></div>
+                                        <div class="col-md-4">IKU Version ID: <strong><?= (int) $ikuPreview['version_id'] ?></strong></div>
+                                        <div class="col-md-4">Status: <strong><?= esc(ucfirst((string) $ikuPreview['status'])) ?></strong></div>
+                                        <div class="col-md-6">Label: <?= esc((string) $ikuPreview['label']) ?></div>
+                                        <div class="col-md-6">Periode: <?= esc((string) ($ikuPreview['effective_from'] ?? '-')) ?>–<?= esc((string) ($ikuPreview['effective_to'] ?? '…')) ?></div>
+                                        <div class="col-md-6">Jumlah sasaran: <strong><?= (int) $ikuPreview['sasaran_count'] ?></strong></div>
+                                        <div class="col-md-6">Jumlah indikator: <strong><?= (int) $ikuPreview['indikator_count'] ?></strong></div>
+                                    </div>
+                                    <div class="text-muted mt-1">Daftar indikator dan target pada tabel LAKIP di bawah ini berasal dari versi tersebut.</div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="col-12">
+                        <?php $dokumenKab = $dokumenLakipKab ?? null; ?>
+                        <?php if ($dokumenKab !== null && ($dokumenKab['source_type'] ?? '') === 'iku'): ?>
+                            <div class="alert alert-success py-2 mb-0 small">
+                                <i class="fas fa-link me-1"></i>
+                                IKU acuan sudah dikunci pada dokumen LAKIP ini: versi ID
+                                <strong><?= (int) ($dokumenKab['source_version_id'] ?? 0) ?></strong>.
+                            </div>
+                        <?php elseif (! empty($sl['versi']['id']) && $lakipCanWrite && ($sourceBindingSiap ?? false)): ?>
+                            <form method="post" action="<?= base_url($lakipBase . '/sumber/ikat') ?>" class="border rounded p-3 bg-light">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="tahun" value="<?= esc((string) ($filters['tahun'] ?? '')) ?>">
+                                <input type="hidden" name="source_version_id" value="<?= (int) $sl['versi']['id'] ?>">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-md-8">
+                                        <label class="form-label small mb-1">Alasan memilih versi ini <span class="text-muted">(opsional)</span></label>
+                                        <input class="form-control form-control-sm" type="text" name="source_override_reason" maxlength="2000">
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <button class="btn btn-success btn-sm" type="submit"
+                                            onclick="return confirm('Yakin menggunakan IKU ini sebagai acuan LAKIP Kabupaten?');">
+                                            <i class="fas fa-check me-1"></i>Yakin gunakan IKU ini
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        <?php elseif (! ($sourceBindingSiap ?? false)): ?>
+                            <div class="alert alert-secondary py-2 mb-0 small">
+                                <i class="fas fa-circle-info me-1"></i>
+                                Preview tersedia, tetapi binding dokumen belum diaktifkan karena migration LAKIP masih ditunda.
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
                     <?php if (! empty($sl['catatan'])): ?>
                         <div class="col-12">

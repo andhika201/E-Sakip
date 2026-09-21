@@ -44,6 +44,7 @@ class LakipModel extends Model
         'source_version_id',
         'source_entity_id',
         'lakip_version_id',
+        'lakip_dokumen_id',
         'created_at',
         'updated_at',
     ];
@@ -279,7 +280,12 @@ class LakipModel extends Model
      *
      * @return array<int,array<string,mixed>>
      */
-    public function getLakipMapIku(int $tahun, ?string $status = null, ?int $opdId = null): array
+    public function getLakipMapIku(
+        int $tahun,
+        ?string $status = null,
+        ?int $opdId = null,
+        ?int $sourceVersionId = null
+    ): array
     {
         if (! $this->db->fieldExists('source_entity_id', 'lakip')) {
             return [];
@@ -290,6 +296,12 @@ class LakipModel extends Model
             ->where('l.source_type', 'iku')
             ->where('l.tahun', $tahun)
             ->where('l.source_entity_id IS NOT NULL', null, false);
+
+        // One indicator can occur in multiple revisions. A version-specific
+        // screen must never silently read a realization from another revision.
+        if ($sourceVersionId !== null && $sourceVersionId > 0) {
+            $b->where('l.source_version_id', $sourceVersionId);
+        }
 
         if (! empty($status)) {
             $b->where('l.status', $status);
@@ -327,9 +339,13 @@ class LakipModel extends Model
         // bersumber IKU (bila ada) selalu MENANG — jembatan hanya mengisi
         // lubang, tidak menimpa.
         // =================================================================
-        foreach ($this->jembatanRealisasiLama($tahun, $status, $opdId) as $k => $r) {
-            if (! isset($map[$k])) {
-                $map[$k] = $r;
+        // Legacy rows cannot be assigned to an IKU revision deterministically.
+        // Keep their compatibility bridge only for an unversioned/legacy read.
+        if ($sourceVersionId === null || $sourceVersionId <= 0) {
+            foreach ($this->jembatanRealisasiLama($tahun, $status, $opdId) as $k => $r) {
+                if (! isset($map[$k])) {
+                    $map[$k] = $r;
+                }
             }
         }
 
@@ -438,7 +454,12 @@ class LakipModel extends Model
     }
 
     /** Baris LAKIP bersumber IKU untuk satu indikator & tahun. */
-    public function getLakipByIku(int $indikatorId, int $tahun, ?int $opdId = null): ?array
+    public function getLakipByIku(
+        int $indikatorId,
+        int $tahun,
+        ?int $opdId = null,
+        ?int $sourceVersionId = null
+    ): ?array
     {
         if (! $this->db->fieldExists('source_entity_id', 'lakip')) {
             return null;
@@ -448,6 +469,10 @@ class LakipModel extends Model
             ->where('source_type', 'iku')
             ->where('source_entity_id', $indikatorId)
             ->where('tahun', $tahun);
+
+        if ($sourceVersionId !== null && $sourceVersionId > 0) {
+            $b->where('source_version_id', $sourceVersionId);
+        }
 
         if (! empty($opdId)) {
             $b->where('opd_id', $opdId);

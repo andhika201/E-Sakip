@@ -223,7 +223,9 @@ protected function sumberDariQuery(string $mode, ?int $opdId, int $tahun): array
             'pilihan_sumber' => $pilihanSumber,
             // §27: memilih selain rekomendasi wajib beralasan. Ditegakkan saat
             // menyimpan, bukan hanya di form.
-            'alasan_wajib'   => $versi !== null && empty($versi['rekomendasi']),
+            // Rekomendasi membantu operator, tetapi versi IKU resmi lain
+            // tetap valid. Alasan override bersifat opsional.
+            'alasan_wajib'   => false,
             'catatan'        => $catatan,
         ];
     }
@@ -234,7 +236,12 @@ protected function baganLakip(array $pilihan, string $mode, ?int $opdId, int $ta
 
         if ($pilihan['sumber'] === $svc::SUMBER_IKU && ! empty($pilihan['versi'])) {
             $rows     = $this->lakipModel->getIndexIkuTargets((int) $pilihan['versi']['id'], $tahun, $opdId);
-            $lakipMap = $this->lakipModel->getLakipMapIku($tahun, $status ?: null, $opdId);
+            $lakipMap = $this->lakipModel->getLakipMapIku(
+                $tahun,
+                $status ?: null,
+                $opdId,
+                (int) $pilihan['versi']['id']
+            );
 
             return [$this->lakipModel->groupIndexRowsBySasaran($rows, $mode), $lakipMap, $rows];
         }

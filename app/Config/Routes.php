@@ -304,6 +304,7 @@ $routes->group(
         // Pengesahan LAKIP Kabupaten (kunci tahun) — kembaran sisi OPD.
         $routes->post('lakip/pengesahan/sahkan', 'AdminKab\LakipController::pengesahanSahkan');
         $routes->post('lakip/sumber/ikat', 'AdminKab\LakipController::ikatSumberIku');
+        $routes->post('lakip/sumber/ikat-rpjmd', 'AdminKab\LakipController::ikatSumberRpjmd');
         $routes->post('lakip/pengesahan/ajukan', 'AdminKab\LakipController::pengesahanAjukan');
         $routes->post('lakip/pengesahan/tarik/(:num)', 'AdminKab\LakipController::pengesahanTarik/$1');
         // Kotak masuk permintaan perbaikan LAKIP dari OPD.

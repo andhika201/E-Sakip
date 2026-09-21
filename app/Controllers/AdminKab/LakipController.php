@@ -238,13 +238,18 @@ class LakipController extends BaseController
         // berpindah ke versi rekomendasi atau versi yang diketik di URL.
         if ($mode === 'kabupaten') {
             $dokumen = (new \App\Models\LakipDokumenModel())->kabupaten($tahun);
-            if ($dokumen !== null && ($dokumen['source_type'] ?? '') === 'iku') {
-                foreach ($pilihan['daftar_versi'] as $versi) {
-                    if ((int) $versi['id'] === (int) ($dokumen['source_version_id'] ?? 0)) {
-                        $pilihan['sumber'] = 'iku';
-                        $pilihan['versi'] = $versi;
-                        break;
+            if ($dokumen !== null) {
+                if (($dokumen['source_type'] ?? '') === 'iku') {
+                    foreach ($pilihan['daftar_versi'] as $versi) {
+                        if ((int) $versi['id'] === (int) ($dokumen['source_version_id'] ?? 0)) {
+                            $pilihan['sumber'] = 'iku';
+                            $pilihan['versi'] = $versi;
+                            break;
+                        }
                     }
+                } elseif (($dokumen['source_type'] ?? '') === 'rpjmd') {
+                    $pilihan['sumber'] = 'rpjmd';
+                    $pilihan['versi'] = [];
                 }
             }
         }
@@ -323,13 +328,18 @@ class LakipController extends BaseController
             // of truth. Parameter URL tidak boleh membelokkan source yang
             // sudah terikat ke revisi lain.
             $dokumenKab = $sourceBindingModel->kabupaten((int) $tahun);
-            if ($dokumenKab !== null && ($dokumenKab['source_type'] ?? '') === 'iku') {
-                foreach ($pilihanSumberKab['daftar_versi'] as $versi) {
-                    if ((int) $versi['id'] === (int) ($dokumenKab['source_version_id'] ?? 0)) {
-                        $pilihanSumberKab['sumber'] = 'iku';
-                        $pilihanSumberKab['versi'] = $versi;
-                        break;
+            if ($dokumenKab !== null) {
+                if (($dokumenKab['source_type'] ?? '') === 'iku') {
+                    foreach ($pilihanSumberKab['daftar_versi'] as $versi) {
+                        if ((int) $versi['id'] === (int) ($dokumenKab['source_version_id'] ?? 0)) {
+                            $pilihanSumberKab['sumber'] = 'iku';
+                            $pilihanSumberKab['versi'] = $versi;
+                            break;
+                        }
                     }
+                } elseif (($dokumenKab['source_type'] ?? '') === 'rpjmd') {
+                    $pilihanSumberKab['sumber'] = 'rpjmd';
+                    $pilihanSumberKab['versi'] = [];
                 }
             }
 
@@ -432,6 +442,36 @@ class LakipController extends BaseController
 
         return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun . '&sumber=iku&sumber_versi=' . $revisiId))
             ->with('success', 'IKU acuan telah dikonfirmasi sebagai sumber LAKIP Kabupaten.');
+    }
+
+    /** Konfirmasi eksplisit tombol Yakin untuk source binding Kabupaten menggunakan RPJMD (fallback). */
+    public function ikatSumberRpjmd()
+    {
+        if (! in_array(session()->get('role'), self::ROLE_TULIS, true)) {
+            return redirect()->to('/login')->with('error', 'Akses ditolak');
+        }
+
+        $tahun = (int) $this->request->getPost('tahun');
+        $alasan = trim((string) $this->request->getPost('source_override_reason'));
+
+        try {
+            $cek = (new \App\Services\Version\LakipSourceService())->validasiPilihan(
+                'rpjmd', null, 'kabupaten', null, $tahun, $alasan !== '' ? $alasan : null
+            );
+            if ($cek['galat'] !== []) {
+                throw new \RuntimeException(implode(' ', $cek['galat']));
+            }
+
+            (new \App\Models\LakipDokumenModel())->ikatRpjmdKabupaten(
+                $tahun, session()->get('user_id'), $alasan !== '' ? $alasan : null
+            );
+        } catch (\Throwable $e) {
+            return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun . '&sumber=rpjmd'))
+                ->with('error', pesanGalat($e, 'kab.lakip'));
+        }
+
+        return redirect()->to(base_url('adminkab/lakip?mode=kabupaten&tahun=' . $tahun . '&sumber=rpjmd'))
+            ->with('success', 'RPJMD telah dikonfirmasi sebagai sumber acuan (fallback) LAKIP Kabupaten.');
     }
 
     /**
@@ -994,6 +1034,18 @@ class LakipController extends BaseController
                 ->select('tahun')->where('id', $rpjmdTargetId)
                 ->get()->getRowArray();
 
+            $dokumenId = null;
+            if ($this->db->tableExists('lakip_dokumen')) {
+                $dokumen = (new \App\Models\LakipDokumenModel())->kabupaten($tahun);
+                if ($dokumen === null || (string) ($dokumen['source_type'] ?? '') !== 'rpjmd') {
+                    return redirect()->back()->withInput()->with(
+                        'error',
+                        'Konfirmasikan dahulu sumber RPJMD melalui tombol Yakin sebelum mengisi LAKIP Kabupaten.'
+                    );
+                }
+                $dokumenId = (int) $dokumen['id'];
+            }
+
             $insert = array_merge($dataCommon, [
                 'renstra_target_id' => null,
                 'rpjmd_target_id' => $rpjmdTargetId,
@@ -1002,6 +1054,7 @@ class LakipController extends BaseController
                 'mode' => 'kabupaten',
                 'source_type' => 'rpjmd',
                 'source_entity_id' => $rpjmdTargetId,
+                'lakip_dokumen_id' => $dokumenId,
             ]);
         }
 
@@ -1269,6 +1322,13 @@ class LakipController extends BaseController
             return $tolak;
         }
 
+        if ($this->db->tableExists('lakip_dokumen') && $mode === 'kabupaten') {
+            $dokumen = (new \App\Models\LakipDokumenModel())->kabupaten((int) ($barisLakip['tahun'] ?? 0));
+            if ($dokumen !== null && (int) $barisLakip['lakip_dokumen_id'] !== (int) $dokumen['id']) {
+                return redirect()->back()->withInput()->with('error', 'Realisasi ini bukan bagian dari sumber acuan yang sedang aktif.');
+            }
+        }
+
         $updateData = [
             'target_lalu' => $this->request->getPost('target_lalu') ?? '',
             'capaian_lalu' => $this->request->getPost('capaian_lalu') ?? '',
@@ -1316,6 +1376,13 @@ class LakipController extends BaseController
             return $tolak;
         }
 
+        if ($this->db->tableExists('lakip_dokumen') && ($lakip['mode'] ?? 'kabupaten') === 'kabupaten') {
+            $dokumen = (new \App\Models\LakipDokumenModel())->kabupaten((int) ($lakip['tahun'] ?? 0));
+            if ($dokumen !== null && (int) $lakip['lakip_dokumen_id'] !== (int) $dokumen['id']) {
+                return redirect()->back()->with('error', 'Realisasi ini bukan bagian dari sumber acuan yang sedang aktif.');
+            }
+        }
+
         $this->lakipModel->updateLakip((int) $id, ['status' => $to]);
         return redirect()->back()->with('success', 'Status LAKIP diubah menjadi ' . ucfirst($to));
     }
@@ -1340,6 +1407,13 @@ class LakipController extends BaseController
             isset($lakip['opd_id']) ? (int) $lakip['opd_id'] : null
         )) {
             return $tolak;
+        }
+
+        if ($this->db->tableExists('lakip_dokumen') && ($lakip['mode'] ?? 'kabupaten') === 'kabupaten') {
+            $dokumen = (new \App\Models\LakipDokumenModel())->kabupaten((int) ($lakip['tahun'] ?? 0));
+            if ($dokumen !== null && (int) $lakip['lakip_dokumen_id'] !== (int) $dokumen['id']) {
+                return redirect()->back()->with('error', 'Realisasi ini bukan bagian dari sumber acuan yang sedang aktif.');
+            }
         }
 
         if ($this->lakipModel->deleteLakip((int) $id)) {

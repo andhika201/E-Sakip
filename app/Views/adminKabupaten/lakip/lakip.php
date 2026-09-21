@@ -219,30 +219,56 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
 
                     <div class="col-12">
                         <?php $dokumenKab = $dokumenLakipKab ?? null; ?>
-                        <?php if ($dokumenKab !== null && ($dokumenKab['source_type'] ?? '') === 'iku'): ?>
+                        <?php if ($dokumenKab !== null): ?>
                             <div class="alert alert-success py-2 mb-0 small">
                                 <i class="fas fa-link me-1"></i>
-                                IKU acuan sudah dikunci pada dokumen LAKIP ini: versi ID
-                                <strong><?= (int) ($dokumenKab['source_version_id'] ?? 0) ?></strong>.
+                                <?php if (($dokumenKab['source_type'] ?? '') === 'iku'): ?>
+                                    IKU acuan sudah dikunci pada dokumen LAKIP ini: versi ID <strong><?= (int) ($dokumenKab['source_version_id'] ?? 0) ?></strong>.
+                                <?php elseif (($dokumenKab['source_type'] ?? '') === 'rpjmd'): ?>
+                                    RPJMD sudah dikunci sebagai sumber acuan (fallback) pada dokumen LAKIP ini.
+                                <?php endif; ?>
                             </div>
-                        <?php elseif (! empty($sl['versi']['id']) && $lakipCanWrite && ($sourceBindingSiap ?? false)): ?>
-                            <form method="post" action="<?= base_url($lakipBase . '/sumber/ikat') ?>" class="border rounded p-3 bg-light">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="tahun" value="<?= esc((string) ($filters['tahun'] ?? '')) ?>">
-                                <input type="hidden" name="source_version_id" value="<?= (int) $sl['versi']['id'] ?>">
-                                <div class="row g-2 align-items-end">
-                                    <div class="col-md-8">
-                                        <label class="form-label small mb-1">Alasan memilih versi ini <span class="text-muted">(opsional)</span></label>
-                                        <input class="form-control form-control-sm" type="text" name="source_override_reason" maxlength="2000">
+                        <?php elseif ($lakipCanWrite && ($sourceBindingSiap ?? false)): ?>
+                            <div class="alert alert-warning mb-2 border-warning">
+                                <h6 class="alert-heading fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Sumber LAKIP Belum Diikat</h6>
+                                <p class="mb-0 small">Anda belum mengunci sumber acuan untuk LAKIP tahun <?= esc((string) ($filters['tahun'] ?? '')) ?>. Silakan pilih <strong>Dinilai terhadap</strong> di atas lalu klik tombol <strong>Yakin</strong> di bawah ini agar Anda dapat mulai mengisi realisasi.</p>
+                            </div>
+                            <?php if ($sl['sumber'] === 'iku' && !empty($sl['versi']['id'])): ?>
+                                <form method="post" action="<?= base_url($lakipBase . '/sumber/ikat') ?>" class="border rounded p-3 bg-light border-warning">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="tahun" value="<?= esc((string) ($filters['tahun'] ?? '')) ?>">
+                                    <input type="hidden" name="source_version_id" value="<?= (int) $sl['versi']['id'] ?>">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-8">
+                                            <label class="form-label small mb-1">Alasan memilih versi ini <span class="text-muted">(opsional)</span></label>
+                                            <input class="form-control form-control-sm" type="text" name="source_override_reason" maxlength="2000">
+                                        </div>
+                                        <div class="col-md-auto">
+                                            <button class="btn btn-warning btn-sm" type="submit"
+                                                onclick="return confirm('Yakin menggunakan IKU versi ini sebagai acuan LAKIP Kabupaten?');">
+                                                <i class="fas fa-check me-1"></i>Yakin gunakan IKU ini
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-auto">
-                                        <button class="btn btn-success btn-sm" type="submit"
-                                            onclick="return confirm('Yakin menggunakan IKU ini sebagai acuan LAKIP Kabupaten?');">
-                                            <i class="fas fa-check me-1"></i>Yakin gunakan IKU ini
-                                        </button>
+                                </form>
+                            <?php elseif ($sl['sumber'] === 'rpjmd'): ?>
+                                <form method="post" action="<?= base_url($lakipBase . '/sumber/ikat-rpjmd') ?>" class="border rounded p-3 bg-light border-warning">
+                                    <?= csrf_field() ?>
+                                    <input type="hidden" name="tahun" value="<?= esc((string) ($filters['tahun'] ?? '')) ?>">
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-8">
+                                            <label class="form-label small mb-1">Alasan menggunakan RPJMD sebagai fallback <span class="text-muted">(opsional)</span></label>
+                                            <input class="form-control form-control-sm" type="text" name="source_override_reason" maxlength="2000">
+                                        </div>
+                                        <div class="col-md-auto">
+                                            <button class="btn btn-warning btn-sm" type="submit"
+                                                onclick="return confirm('Yakin menggunakan RPJMD sebagai acuan (fallback) LAKIP Kabupaten?');">
+                                                <i class="fas fa-check me-1"></i>Yakin gunakan RPJMD
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            <?php endif; ?>
                         <?php elseif (! ($sourceBindingSiap ?? false)): ?>
                             <div class="alert alert-secondary py-2 mb-0 small">
                                 <i class="fas fa-circle-info me-1"></i>
@@ -349,7 +375,48 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
 
             $opdSeen = [];
             $sasSeen = [];
+
+            // --- Ringkasan kemajuan pengisian LAKIP Kabupaten ---
+            // Dihitung di sini agar tersedia sebelum tabel dan sebelum panel pengesahan.
+            if ($mode === 'kabupaten' && !empty($rows)) {
+                $totalRow = 0;
+                $selesaiRow = 0;
+                $belumCapaianRow = 0;
+                foreach ($rows as $_r) {
+                    $_lItem = $lakipMap[(int) ($_r['indikator_id'] ?? 0)] ?? null;
+                    $totalRow++;
+                    $_sLower = strtolower(trim((string) ($_lItem['status'] ?? '')));
+                    if ($_sLower === 'selesai') {
+                        $selesaiRow++;
+                    }
+                    if ($_lItem === null || trim((string) ($_lItem['capaian_tahun_ini'] ?? '')) === '') {
+                        $belumCapaianRow++;
+                    }
+                }
+                $pctSelesai = $totalRow > 0 ? round($selesaiRow / $totalRow * 100) : 0;
+            } else {
+                $totalRow = $selesaiRow = $belumCapaianRow = $pctSelesai = 0;
+            }
             ?>
+
+            <?php if ($mode === 'kabupaten' && $totalRow > 0): ?>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
+                    <span><i class="fas fa-tasks me-1"></i>Progres Pengisian</span>
+                    <span><strong><?= $selesaiRow ?></strong> dari <?= $totalRow ?> indikator selesai</span>
+                </div>
+                <div class="progress" style="height:10px">
+                    <div class="progress-bar <?= $pctSelesai >= 100 ? 'bg-success' : ($pctSelesai >= 50 ? 'bg-warning' : 'bg-danger') ?>"
+                         role="progressbar" style="width:<?= $pctSelesai ?>%"
+                         aria-valuenow="<?= $pctSelesai ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <?php if ($belumCapaianRow > 0): ?>
+                    <div class="small text-danger mt-1">
+                        <i class="fas fa-exclamation-circle me-1"></i><?= $belumCapaianRow ?> indikator belum diisi capaian tahun ini.
+                    </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped text-center small align-middle">
@@ -561,7 +628,23 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
 
         <?php // Snapshot tahunan + kunci tahun + penyesuaian kebijakan.
              // Partial ini menyembunyikan dirinya sendiri bila tabel snapshot belum ada. ?>
-        <?= $this->include('lakip/pengesahan_panel') ?>
+
+        <?php if ($mode === 'kabupaten' && ($dokumenLakipKab ?? null) === null && ($sourceBindingSiap ?? false)): ?>
+            <div class="card border-warning shadow-sm mt-4">
+                <div class="card-body">
+                    <h6 class="text-warning fw-bold mb-2">
+                        <i class="fas fa-triangle-exclamation me-2"></i>Pengesahan Belum Tersedia
+                    </h6>
+                    <p class="small mb-0">
+                        Sumber acuan LAKIP Kabupaten tahun <strong><?= esc((string) ($filters['tahun'] ?? '')) ?></strong>
+                        belum dikunci. Silakan ikat terlebih dahulu menggunakan IKU atau RPJMD di panel
+                        <strong>Dinilai terhadap</strong> di atas sebelum mengesahkan.
+                    </p>
+                </div>
+            </div>
+        <?php else: ?>
+            <?= $this->include('lakip/pengesahan_panel') ?>
+        <?php endif; ?>
 
         <?php /* Panel Snapshot & Penyesuaian Kebijakan DICABUT.
                  Penguncian tahun kini dilayani panel Pengesahan di atas.

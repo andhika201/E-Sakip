@@ -89,4 +89,56 @@ class LakipDokumenModel extends Model
 
         return $dokumen;
     }
+
+    /**
+     * Bind RPJMD secara eksplisit sebagai fallback untuk LAKIP Kabupaten.
+     */
+    public function ikatRpjmdKabupaten(int $tahun, ?int $userId, ?string $alasan = null): array
+    {
+        if (! $this->siap()) {
+            throw new RuntimeException('Struktur source binding LAKIP belum dipasang. Jalankan migration terlebih dahulu.');
+        }
+        if ($tahun < 1900) {
+            throw new RuntimeException('Tahun LAKIP tidak sah.');
+        }
+
+        $this->db->transStart();
+        $dokumen = $this->kabupaten($tahun);
+
+        if ($dokumen !== null && (string) $dokumen['source_type'] !== 'rpjmd') {
+            $jumlahBaris = $this->db->fieldExists('lakip_dokumen_id', 'lakip')
+                ? $this->db->table('lakip')->where('lakip_dokumen_id', (int) $dokumen['id'])->countAllResults()
+                : 0;
+
+            if ($jumlahBaris > 0) {
+                $this->db->transRollback();
+                throw new RuntimeException('Sumber acuan tidak dapat diganti karena dokumen sudah memiliki realisasi. Data lama tidak dihapus otomatis.');
+            }
+
+            $this->update((int) $dokumen['id'], [
+                'source_type' => 'rpjmd',
+                'source_version_id' => null,
+                'source_override_reason' => trim((string) $alasan) ?: null,
+            ]);
+            $dokumen = $this->find((int) $dokumen['id']);
+        } elseif ($dokumen === null) {
+            $this->insert([
+                'tahun' => $tahun,
+                'mode' => 'kabupaten',
+                'opd_id' => 0,
+                'source_type' => 'rpjmd',
+                'source_version_id' => null,
+                'source_override_reason' => trim((string) $alasan) ?: null,
+                'created_by' => $userId,
+            ]);
+            $dokumen = $this->find((int) $this->getInsertID());
+        }
+
+        $this->db->transComplete();
+        if (! $this->db->transStatus() || $dokumen === null) {
+            throw new RuntimeException('Source binding LAKIP gagal disimpan.');
+        }
+
+        return $dokumen;
+    }
 }

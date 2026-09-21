@@ -187,7 +187,7 @@ class LakipOpdController extends BaseController
 
         return [
             'rows'            => $this->lakipModel->getIndexIkuTargets($revisiId, (int) $tahun, $opdScope),
-            'lakipMap'        => $this->lakipModel->getLakipMapIku((int) $tahun, $status !== '' ? $status : null, $opdScope),
+            'lakipMap'        => $this->lakipModel->getLakipMapIku((int) $tahun, $status !== '' ? $status : null, $opdScope, $revisiId),
             'sumber_type'     => \App\Services\Version\LakipSourceService::SUMBER_IKU,
             'sumber_versi_id' => $revisiId,
         ];
@@ -546,7 +546,7 @@ class LakipOpdController extends BaseController
                 $rows     = $this->lakipModel->getIndexIkuTargets(
                     (int) $pilihanCetak['versi']['id'], (int) $tahun, $opdId
                 );
-                $lakipMap       = $this->lakipModel->getLakipMapIku((int) $tahun, $status ?: null, $opdId);
+                $lakipMap       = $this->lakipModel->getLakipMapIku((int) $tahun, $status ?: null, $opdId, (int) $pilihanCetak['versi']['id']);
                 $lakipMapTarget = $lakipMap;
                 $sumberCetak    = $pilihanCetak;
             } else {
@@ -698,7 +698,7 @@ class LakipOpdController extends BaseController
                 $rows = $this->lakipModel->getIndexIkuTargets(
                     (int) $pilihanCetak['versi']['id'], (int) $tahun, $opdId
                 );
-                $lakipMap       = $this->lakipModel->getLakipMapIku((int) $tahun, $status ?: null, $opdId);
+                $lakipMap       = $this->lakipModel->getLakipMapIku((int) $tahun, $status ?: null, $opdId, (int) $pilihanCetak['versi']['id']);
                 $lakipMapTarget = $lakipMap;
             } else {
                 $rows = $this->lakipModel->getIndexRenstraTargets((string) $tahun, $opdId);
@@ -783,7 +783,7 @@ class LakipOpdController extends BaseController
                 ->with('error', 'Akses ditolak: indikator bukan milik OPD Anda.');
         }
 
-        if ($this->lakipModel->getLakipByIku($indikatorId, $tahun, $opdId) !== null) {
+        if ($this->lakipModel->getLakipByIku($indikatorId, $tahun, $opdId, $revisiId) !== null) {
             return redirect()->to(base_url('adminopd/lakip/edit/' . $indikatorId) . $qsBack)
                 ->with('info', 'LAKIP sudah ada. Silakan edit.');
         }
@@ -1313,7 +1313,7 @@ class LakipOpdController extends BaseController
         $qsBack  = $this->buildQs((string) $tahun, $this->request->getGet('status'));
         $kembali = base_url('adminopd/lakip') . $qsBack;
 
-        $lakip = $this->lakipModel->getLakipByIku($indikatorId, $tahun, $opdId);
+        $lakip = $this->lakipModel->getLakipByIku($indikatorId, $tahun, $opdId, $revisiId);
 
         if ($lakip === null) {
             return redirect()->to(base_url('adminopd/lakip/tambah/' . $indikatorId) . $qsBack)

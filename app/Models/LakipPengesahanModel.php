@@ -113,19 +113,13 @@ class LakipPengesahanModel extends Model
 
         $k = $this->kunciLingkup($mode, $opdId);
 
-        $isi = $this->db->table('lakip')
-            ->where('tahun', $tahun)
-            ->where('mode', $k['mode'])
-            ->where('opd_id', $k['opd_id'])
-            ->where('capaian_tahun_ini IS NOT NULL', null, false)
-            ->where("capaian_tahun_ini <> ''", null, false)
-            ->countAllResults();
+        $verifikasi = $k['mode'] === 'kabupaten'
+            ? $this->validasiKabupaten($tahun)
+            : ['jumlah_realisasi' => $this->jumlahRealisasi($tahun, $k)];
+        $isi = (int) $verifikasi['jumlah_realisasi'];
 
         if ($isi < 1) {
-            throw new RuntimeException(
-                'Belum ada satu pun realisasi yang terisi untuk tahun ' . $tahun
-                . ', jadi belum ada yang perlu disahkan.'
-            );
+            throw new RuntimeException('Belum ada satu pun realisasi yang terisi untuk tahun ' . $tahun . '.');
         }
 
         $sekarang = date('Y-m-d H:i:s');
@@ -142,6 +136,15 @@ class LakipPengesahanModel extends Model
             'dibuka_pada'   => null,
         ];
 
+        // Kolom ini hadir bersama document-level binding. Guard menjaga
+        // instalasi legacy yang migration-nya belum dijalankan.
+        foreach (['source_type', 'source_version_id', 'lakip_dokumen_id'] as $kolom) {
+            if ($this->db->fieldExists($kolom, 'lakip_pengesahan')) {
+                $data[$kolom] = $verifikasi[$kolom] ?? null;
+            }
+        }
+
+        $this->db->transStart();
         if ($ada) {
             $this->db->table('lakip_pengesahan')->where('id', $ada['id'])->update($data);
             $id = (int) $ada['id'];
@@ -154,7 +157,89 @@ class LakipPengesahanModel extends Model
             $id = (int) $this->db->insertID();
         }
 
+        $this->db->transComplete();
+        if (! $this->db->transStatus()) {
+            throw new RuntimeException('Pengesahan gagal disimpan; perubahan dibatalkan.');
+        }
+
         return ['id' => $id, 'jumlah_realisasi' => $isi, 'sahkan_ulang' => $ada !== null];
+    }
+
+    private function jumlahRealisasi(int $tahun, array $k): int
+    {
+        return $this->db->table('lakip')
+            ->where('tahun', $tahun)->where('mode', $k['mode'])->where('opd_id', $k['opd_id'])
+            ->where('capaian_tahun_ini IS NOT NULL', null, false)
+            ->where("capaian_tahun_ini <> ''", null, false)->countAllResults();
+    }
+
+    /** Validasi formal untuk LAKIP Kabupaten; legacy RPJMD tetap didukung. */
+    private function validasiKabupaten(int $tahun): array
+    {
+        $kolom = 'id, source_type, source_version_id, source_entity_id, status, capaian_tahun_ini';
+        if ($this->db->fieldExists('lakip_dokumen_id', 'lakip')) {
+            $kolom .= ', lakip_dokumen_id';
+        }
+
+        $rows = $this->db->table('lakip')
+            ->select($kolom)
+            ->where('tahun', $tahun)->where('mode', 'kabupaten')->where('opd_id', 0)
+            ->get()->getResultArray();
+
+        if ($rows === []) {
+            throw new RuntimeException('LAKIP Kabupaten belum memiliki baris untuk disahkan.');
+        }
+
+        $sumber = [];
+        $entitas = [];
+        $dokumenId = null;
+        $isi = 0;
+        foreach ($rows as $row) {
+            $tipe = strtolower(trim((string) ($row['source_type'] ?? '')));
+            if (! in_array($tipe, ['iku', 'rpjmd'], true)) {
+                throw new RuntimeException('Setiap baris LAKIP Kabupaten harus memiliki sumber yang sah sebelum pengesahan.');
+            }
+            if (! in_array(strtolower(trim((string) ($row['status'] ?? ''))), ['selesai', 'siap'], true)) {
+                throw new RuntimeException('Seluruh indikator LAKIP Kabupaten harus berstatus selesai sebelum pengesahan.');
+            }
+            if (($row['capaian_tahun_ini'] ?? '') === null || trim((string) $row['capaian_tahun_ini']) === '') {
+                throw new RuntimeException('Seluruh indikator wajib memiliki capaian tahun ini sebelum pengesahan.');
+            }
+            $kunci = $tipe . ':' . (int) ($row['source_version_id'] ?? 0);
+            $sumber[$kunci] = ['source_type' => $tipe, 'source_version_id' => (int) ($row['source_version_id'] ?? 0)];
+            $entitas[(int) ($row['source_entity_id'] ?? 0)] = true;
+            if (! empty($row['lakip_dokumen_id'])) {
+                $dokumenId ??= (int) $row['lakip_dokumen_id'];
+                if ($dokumenId !== (int) $row['lakip_dokumen_id']) {
+                    throw new RuntimeException('LAKIP Kabupaten memiliki document binding campuran.');
+                }
+            }
+            $isi++;
+        }
+
+        if (count($sumber) !== 1) {
+            throw new RuntimeException('LAKIP Kabupaten memiliki source type atau source version campuran.');
+        }
+        $source = reset($sumber);
+
+        if ($source['source_type'] === 'iku') {
+            if ($source['source_version_id'] <= 0) {
+                throw new RuntimeException('LAKIP bersumber IKU wajib memiliki source version sebelum pengesahan.');
+            }
+            $wajib = $this->db->table('iku_revisi_indikator')
+                ->where('revisi_id', $source['source_version_id'])
+                ->where('jenis_perubahan !=', 'dihentikan')->countAllResults();
+            if ($wajib !== count($entitas)) {
+                throw new RuntimeException('Jumlah indikator IKU yang lengkap belum sama dengan sumber acuan.');
+            }
+        } else {
+            $wajib = $this->db->table('rpjmd_target')->where('tahun', $tahun)->countAllResults();
+            if ($wajib !== count($entitas)) {
+                throw new RuntimeException('Jumlah indikator RPJMD yang lengkap belum sama dengan sumber acuan.');
+            }
+        }
+
+        return $source + ['lakip_dokumen_id' => $dokumenId, 'jumlah_realisasi' => $isi];
     }
 
     /** Permintaan pembukaan oleh OPD. Alasan WAJIB — itu inti pertanggungjawabannya. */

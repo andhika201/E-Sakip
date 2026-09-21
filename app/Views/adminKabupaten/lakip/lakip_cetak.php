@@ -142,6 +142,9 @@ $w = ($mode === 'opd')
     <?php endif; ?>
     <div class="lakip-doc-sub">
         Tahun <?= esc($tahun !== '' ? $tahun : '-') ?> &middot; Lingkup <?= esc($modeLabel) ?>
+        <?php if (! empty($sumberLakip) && ($sumberLakip['sumber'] ?? '') === 'iku'): ?>
+            &middot; IKU Version ID <?= (int) ($sumberLakip['versi']['id'] ?? 0) ?>
+        <?php endif; ?>
     </div>
 
     <div class="filter-note">Status: <?= esc($statusFilter !== '' ? $statusLabel($statusFilter) : 'Semua Status') ?></div>

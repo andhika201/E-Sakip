@@ -137,6 +137,7 @@ class LakipKabupatenCapaianService
         // Sama dengan kartu PK: rata-rata hanya ditampilkan bila SELURUH
         // indikator terhitung — tidak pernah rata-rata parsial.
         $bisa  = $wajib > 0 && $valid === $wajib;
+        $official = $bisa && $bahan['disahkan'];
 
         return [
             'tahun'         => $tahun,
@@ -147,15 +148,18 @@ class LakipKabupatenCapaianService
             'dari_snapshot' => $bahan['dari_snapshot'],
             'terkunci'      => $bahan['terkunci'],
             'disahkan'      => $bahan['disahkan'],
-            // "Final" = tahunnya dikunci snapshot ATAU disahkan ATAU seluruh
-            // barisnya berstatus selesai/siap. Selain itu Sementara.
-            'final'         => $wajib > 0 && ($bahan['terkunci'] || $bahan['disahkan'] || $semuaFinal),
+            // Hanya pengesahan formal yang menjadikan hasil tahunan resmi.
+            // Kelengkapan input dan snapshot dapat membantu pembacaan, tetapi
+            // tidak boleh diberi label final/official.
+            'final'         => $wajib > 0 && $bahan['disahkan'],
             'wajib'         => $wajib,
             'valid'         => $valid,
             'belum_valid'   => $wajib - $valid,
             'belum_input'   => $belumInput,
-            'total'         => $bisa ? round($jumlah / $wajib, 2) : null,
-            'can_compute'   => $bisa,
+            // Perhitungan internal boleh lengkap, tetapi dashboard tidak
+            // memublikasikan angka itu sebagai hasil tahunan sebelum sah.
+            'total'         => $official ? round($jumlah / $wajib, 2) : null,
+            'can_compute'   => $official,
             'indikator'     => $daftar,
         ];
     }
@@ -235,6 +239,30 @@ class LakipKabupatenCapaianService
             }
         }
 
+        // 1.5. Cek binding dokumen yang sedang aktif (single source of truth).
+        $dokumenKab = (new \App\Models\LakipDokumenModel())->kabupaten($tahun);
+        if ($dokumenKab !== null) {
+            if (($dokumenKab['source_type'] ?? '') === 'iku') {
+                $versiId = (int) ($dokumenKab['source_version_id'] ?? 0);
+                $out['rows']         = $this->lakip->getIndexIkuTargets($versiId, $tahun, null);
+                $out['lakipMap']     = $this->lakip->getLakipMapIku($tahun, null, null, $versiId);
+                $out['sumber']       = LakipSourceService::SUMBER_IKU;
+                $out['sumber_label'] = $this->labelSumber(LakipSourceService::SUMBER_IKU);
+                // Kita tidak tahu nama versi pastinya dari tabel dokumen, jadi kita sebut saja Terikat v[id]
+                $out['versi_label']  = 'Terikat v' . $versiId;
+
+                return $out;
+            } elseif (($dokumenKab['source_type'] ?? '') === 'rpjmd') {
+                $out['rows']         = $this->lakip->getIndexRpjmdTargets((string) $tahun);
+                $out['lakipMap']     = $this->lakip->getLakipMapRpjmd((string) $tahun, null);
+                $out['sumber']       = LakipSourceService::SUMBER_RPJMD;
+                $out['sumber_label'] = $this->labelSumber(LakipSourceService::SUMBER_RPJMD);
+                $out['versi_label']  = 'Terikat (Fallback)';
+
+                return $out;
+            }
+        }
+
         // 1. Sumber: IKU Kabupaten bila ada revisi resmi, cadangan RPJMD.
         $svc    = new LakipSourceService();
         $daftar = $svc->pilihanVersi(LakipSourceService::SUMBER_IKU, 'kabupaten', null, $tahun);
@@ -250,7 +278,12 @@ class LakipKabupatenCapaianService
             $versi ??= $daftar[0];
 
             $out['rows']         = $this->lakip->getIndexIkuTargets((int) $versi['id'], $tahun, null);
-            $out['lakipMap']     = $this->lakip->getLakipMapIku($tahun, null, null);
+            $out['lakipMap']     = $this->lakip->getLakipMapIku(
+                $tahun,
+                null,
+                null,
+                (int) $versi['id']
+            );
             $out['sumber']       = LakipSourceService::SUMBER_IKU;
             $out['sumber_label'] = $this->labelSumber(LakipSourceService::SUMBER_IKU);
             $out['versi_label']  = (string) ($versi['label'] ?? '');

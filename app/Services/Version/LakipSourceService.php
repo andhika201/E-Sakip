@@ -184,8 +184,6 @@ class LakipSourceService
         $rows = $this->db->table('iku_revisi')
             ->where('opd_key', $opdKey)
             ->whereIn('status', ['berlaku', 'superseded'])
-            ->where('tahun_mulai <=', $tahun)
-            ->where('tahun_akhir >=', $tahun)
             ->orderBy('berlaku_mulai_tahun', 'DESC')
             ->orderBy('nomor', 'DESC')
             ->get()->getResultArray();
@@ -348,12 +346,6 @@ class LakipSourceService
 
         $adalahRekomendasi = $rekom !== null && (int) $rekom['id'] === (int) $versi['id'];
 
-        // §27 — bukan rekomendasi berarti wajib beralasan.
-        if (! $adalahRekomendasi && trim((string) $alasanOverride) === '') {
-            $galat[] = 'Versi yang dipilih bukan rekomendasi sistem untuk tahun ' . $tahun
-                . '. Alasan penggunaan versi wajib diisi.';
-        }
-
         return [
             'sumber_type'        => $sumberType,
             'sumber_versi'       => $versi,
@@ -422,12 +414,6 @@ class LakipSourceService
         }
 
         $adalahRekomendasi = $rekom !== null && (int) $rekom['id'] === (int) $versi['id'];
-
-        // §27 — bukan rekomendasi berarti wajib beralasan.
-        if (! $adalahRekomendasi && trim((string) $alasanOverride) === '') {
-            $galat[] = 'Versi yang dipilih bukan rekomendasi sistem untuk tahun ' . $tahun
-                . '. Alasan penggunaan versi wajib diisi.';
-        }
 
         return [
             'sumber_type'        => self::SUMBER_IKU,

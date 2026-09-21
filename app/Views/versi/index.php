@@ -185,11 +185,17 @@ $kelasBadge = static function (string $badge): string {
                                                         <i class="fa-solid fa-trash me-1"></i>Hapus
                                                     </button>
                                                 </form>
-                                            <?php elseif (! empty($v['keadaan_hapus']['alasan']) && $v['badge'] !== 'CURRENT' && $v['badge'] !== 'HISTORICAL' && $v['badge'] !== 'UPCOMING'): ?>
+                                            <?php elseif (! empty($v['keadaan_hapus']['alasan'])): ?>
+                                                <?php /* Versi apa pun yang belum bisa dihapus menampilkan ALASANNYA,
+                                                         termasuk yang HISTORICAL tetapi masih dirujuk data lain —
+                                                         supaya tidak terkesan tombolnya sekadar hilang. */ ?>
                                                 <span class="badge bg-light text-secondary border" role="note"
                                                       title="<?= esc($v['keadaan_hapus']['alasan'], 'attr') ?>">
                                                     <i class="fa-solid fa-lock me-1"></i>Tidak bisa dihapus
                                                 </span>
+                                                <div class="text-secondary sel-kecil mt-1" style="max-width:230px">
+                                                    <?= esc($v['keadaan_hapus']['alasan']) ?>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
                                     </td>

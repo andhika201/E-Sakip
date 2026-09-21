@@ -362,6 +362,10 @@ if (!function_exists('lakip_kab_excel')) {
             'Tahun'  => $tahun !== '' ? $tahun : '-',
             'Status' => $statusF !== '' ? _lakip_status_label($statusF) : 'Semua Status',
         ];
+        if (($meta['source_type'] ?? '') === 'iku' && ! empty($meta['source_version_id'])) {
+            $metaRows['Sumber'] = 'IKU Version ID ' . (int) $meta['source_version_id']
+                . (! empty($meta['source_label']) ? ' — ' . _lakip_txt($meta['source_label']) : '');
+        }
 
         $safeUnit = preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($metaRows['Unit']));
         $filename = 'LAKIP-' . trim($safeUnit, '-') . '-' . ($tahun !== '' ? $tahun : 'semua') . '.xlsx';

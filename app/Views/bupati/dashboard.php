@@ -850,7 +850,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
         var kritisIcon = o.kritis > 0 ? '<i class="fas fa-exclamation-triangle me-1"></i>' : '';
         
         var updBg = '#f1f3f2', updColor = '#6b7a70';
-        if (o.update.code === 'lengkap') {
+        if (o.update.code === 'terkini') {
           updBg = '#e8f5e9'; updColor = '#2e7d32'; // Hijau soft
         } else if (o.update.code === 'belum_lengkap' || o.update.code === 'belum_periode' || o.update.code === 'belum_pernah') {
           updBg = '#fdf0e6'; updColor = '#e07b39'; // Oranye soft

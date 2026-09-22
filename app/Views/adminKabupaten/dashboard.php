@@ -426,7 +426,7 @@ $js = static fn ($v) => json_encode(
               <div>
                 <div class="kpi-num"><?= (int) $opdR['total'] ?> <span style="font-size:.9rem;font-weight:700;color:#6b7a70;">Perangkat Daerah</span></div>
                 <div class="kpi-sub mt-2">
-                  <div><?= (int) $opdR['dapat_dinilai'] ?> dapat dinilai &middot; <?= (int) $opdR['belum_lengkap'] ?> belum lengkap</div>
+                  <div><?= (int) $opdR['dapat_dinilai'] ?> dapat dinilai &middot; <span class="<?= (int) $opdR['belum_lengkap'] > 0 ? 'text-warning-emphasis fw-bold' : '' ?>"><?= (int) $opdR['belum_lengkap'] ?> belum lengkap</span></div>
                   <div>
                     <span class="dot" style="background:#d64545"></span><?= (int) $opdR['kritis'] ?> kritis<?php
                       if ((int) ($opdR['kritis_data'] ?? 0) > 0): ?> <span class="text-muted">(<?= (int) $opdR['kritis_data'] ?> karena data belum diperbarui)</span><?php endif; ?>
@@ -729,7 +729,7 @@ $js = static fn ($v) => json_encode(
         var kritisIcon = o.kritis > 0 ? '<i class="fas fa-exclamation-triangle me-1"></i>' : '';
         
         var updBg = '#f1f3f2', updColor = '#6b7a70';
-        if (o.update.code === 'lengkap') {
+        if (o.update.code === 'terkini') {
           updBg = '#e8f5e9'; updColor = '#2e7d32'; // Hijau soft
         } else if (o.update.code === 'belum_lengkap' || o.update.code === 'belum_periode' || o.update.code === 'belum_pernah') {
           updBg = '#fdf0e6'; updColor = '#e07b39'; // Oranye soft

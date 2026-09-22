@@ -426,7 +426,7 @@ $js = static fn ($v) => json_encode(
               <div>
                 <div class="kpi-num"><?= (int) $opdR['total'] ?> <span style="font-size:.9rem;font-weight:700;color:#6b7a70;">Perangkat Daerah</span></div>
                 <div class="kpi-sub mt-2">
-                  <div><?= (int) $opdR['dapat_dinilai'] ?> dapat dinilai &middot; <?= (int) $opdR['belum_lengkap'] ?> belum lengkap</div>
+                  <div><?= (int) $opdR['dapat_dinilai'] ?> dapat dinilai &middot; <span class="<?= (int) $opdR['belum_lengkap'] > 0 ? 'text-warning-emphasis fw-bold' : '' ?>"><?= (int) $opdR['belum_lengkap'] ?> belum lengkap</span></div>
                   <div>
                     <span class="dot" style="background:#d64545"></span><?= (int) $opdR['kritis'] ?> kritis<?php
                       if ((int) ($opdR['kritis_data'] ?? 0) > 0): ?> <span class="text-muted">(<?= (int) $opdR['kritis_data'] ?> karena data belum diperbarui)</span><?php endif; ?>
@@ -724,6 +724,19 @@ $js = static fn ($v) => json_encode(
       /* ---------------- Kartu ---------------- */
       function kartuOpd(o) {
         var url = o.url_fokus || (D.urls.dashboard + '?opd_id=' + o.opd_id + '&tahun=' + D.tahun + '&triwulan=' + D.triwulan);
+        
+        var kritisStyle = o.kritis > 0 ? 'color:#d9534f;font-weight:600;' : '';
+        var kritisIcon = o.kritis > 0 ? '<i class="fas fa-exclamation-triangle me-1"></i>' : '';
+        
+        var updBg = '#f1f3f2', updColor = '#6b7a70';
+        if (o.update.code === 'terkini') {
+          updBg = '#e8f5e9'; updColor = '#2e7d32'; // Hijau soft
+        } else if (o.update.code === 'belum_lengkap' || o.update.code === 'belum_periode' || o.update.code === 'belum_pernah') {
+          updBg = '#fdf0e6'; updColor = '#e07b39'; // Oranye soft
+        } else if (o.update.code === 'belum_ada_pk') {
+          updBg = '#fbe9e7'; updColor = '#d84315'; // Merah bata soft
+        }
+
         return '<div class="ind-card">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;">' + esc(o.nama_opd) + '</div>' +
@@ -731,11 +744,11 @@ $js = static fn ($v) => json_encode(
           '</div>' +
           '<div class="ind-meta">' +
             '<span>' + o.valid + '/' + o.indikator + ' indikator valid</span>' +
-            '<span>' + o.kritis + ' kritis</span>' +
+            '<span style="' + kritisStyle + '">' + kritisIcon + o.kritis + ' kritis</span>' +
             '<span>Update: ' + esc(o.last_update || 'belum ada') + '</span>' +
           '</div>' +
           '<div class="d-flex flex-wrap gap-2 mt-2 align-items-center">' + badge(o.status) +
-            '<span class="badge-soft" style="background:#f1f3f2;color:#6b7a70;">' + esc(o.update.label) + '</span>' +
+            '<span class="badge-soft" style="background:' + updBg + ';color:' + updColor + ';">' + esc(o.update.label) + '</span>' +
             '<a class="btn btn-sm btn-outline-success ms-auto" href="' + esc(url) + '">Fokus OPD</a>' +
           '</div>' +
           (o.status.reason ? '<div class="ins-why mt-2"><i class="fas fa-circle-info me-1"></i>' + esc(o.status.reason) + '</div>' : '') +
@@ -743,6 +756,9 @@ $js = static fn ($v) => json_encode(
       }
 
       function kartuIndikatorBupati(i) {
+        var validBg = i.is_valid ? '#e8f5e9' : '#fbe9e7';
+        var validColor = i.is_valid ? '#2e7d32' : '#d84315';
+        
         return '<div class="ind-card" data-pkbupati="' + i.indikator_id + '" role="button">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;line-height:1.35;">' + esc(i.indikator) + '</div>' +
@@ -754,7 +770,7 @@ $js = static fn ($v) => json_encode(
             '<span>' + (i.pengampu && i.pengampu.length ? i.pengampu.length + ' OPD pengampu' : 'OPD pengampu belum ditetapkan') + '</span>' +
           '</div>' +
           '<div class="d-flex flex-wrap gap-2 mt-2">' + badge(i.status) +
-            '<span class="badge-soft" style="background:#f1f3f2;color:#6b7a70;">' + (i.is_valid ? 'Valid' : 'Belum valid') + '</span>' +
+            '<span class="badge-soft" style="background:' + validBg + ';color:' + validColor + ';">' + (i.is_valid ? 'Valid' : 'Belum valid') + '</span>' +
             // Lencana status verifikasi hanya bila mekanismenya ada (lihat verificationInfo()).
             (i.verification.available ? '<span class="badge-soft" style="background:#fdf0e6;color:#e07b39;">' + esc(i.verification.label) + '</span>' : '') +
           '</div>' +

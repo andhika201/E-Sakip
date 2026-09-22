@@ -283,10 +283,7 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
                 };
 
                 if (chart) {
-                    chart.data = cfgData;
-                    chart.options.plugins.title.text = d.nama;
-                    chart.update();
-                    return;
+                    chart.destroy();
                 }
 
                 chart = new Chart(canvas.getContext('2d'), {
@@ -311,13 +308,15 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
                 });
             }
 
-            sel.addEventListener('change', () => render(Number(sel.value)));
+            sel.addEventListener('change', function() { render(Number(this.value)); });
             render(Number(sel.value));
 
             // Dropdown searchable bila select2 tersedia (pola project existing).
-            if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
-                jQuery(sel).select2({ width: '100%', placeholder: 'Cari indikator...' });
-                jQuery(sel).on('change', () => render(Number(sel.value)));
+            if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
+                window.jQuery(sel).select2({ width: '100%', placeholder: 'Cari indikator...' });
+                window.jQuery(sel).off('change').on('change', function() { 
+                    render(Number(window.jQuery(this).val())); 
+                });
             }
 
             const btnIsi = document.getElementById('bm-btn-isi');

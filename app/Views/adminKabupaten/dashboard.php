@@ -191,8 +191,15 @@ $js = static fn ($v) => json_encode(
                       <?php endif; ?>
                     </div>
                   <?php else: ?>
-                    <div class="kpi-num sm text-muted">Belum dapat dihitung</div>
+                    <?php if ($fCapaian['has_monev_average'] ?? false): ?>
+                      <div class="kpi-num" style="color:<?= esc($fCapaian['status']['color_hex']) ?>"><?= esc(capaianFormatPersen($fCapaian['monev_average'])) ?></div>
+                    <?php else: ?>
+                      <div class="kpi-num sm text-muted">Belum dapat dihitung</div>
+                    <?php endif; ?>
                     <div class="kpi-sub mt-2">
+                      <?php if ($fCapaian['has_monev_average'] ?? false): ?>
+                        <div>Rata-rata Realisasi KMonev</div>
+                      <?php endif; ?>
                       <div><?= (int) $fCapaian['valid'] ?> dari <?= (int) $fCapaian['wajib'] ?> indikator valid</div>
                       <div class="fw-semibold text-warning-emphasis"><?= (int) $fCapaian['belum_valid'] ?> indikator perlu dilengkapi</div>
                     </div>
@@ -746,7 +753,7 @@ $js = static fn ($v) => json_encode(
           '</div>' +
           '<div class="ind-meta">' +
             '<span>' + o.valid + '/' + o.indikator + ' indikator valid</span>' +
-            (o.has_monev_average ? '<span class="text-muted">Rata-rata MONEV; target periode 0</span>' : '') +
+            (o.has_monev_average ? '<span class="text-muted">Rata-rata Realisasi KMonev</span>' : '') +
             '<span style="' + kritisStyle + '">' + kritisIcon + o.kritis + ' kritis</span>' +
             '<span>Update: ' + esc(o.last_update || 'belum ada') + '</span>' +
           '</div>' +
@@ -1279,8 +1286,9 @@ $js = static fn ($v) => json_encode(
         },
         f_capaian: function () {
           var c = D.fokus.capaian;
+          var capaianOpd = c.can_compute ? pct(c.total) : (c.has_monev_average ? pct(c.monev_average) + ' <span class="text-muted">(Rata-rata Realisasi KMonev)</span>' : 'belum dapat dihitung');
           var kepala = '<div class="drawer-section"><dl class="drawer-dl mb-0">' +
-            '<dt>Capaian OPD</dt><dd>' + (c.can_compute ? pct(c.total) : 'belum dapat dihitung') + '</dd>' +
+            '<dt>Capaian OPD</dt><dd>' + capaianOpd + '</dd>' +
             '<dt>Indikator valid</dt><dd>' + c.valid + ' dari ' + c.wajib + '</dd>' +
             (c.verifikasi && c.verifikasi.available ? '<dt>Status nilai</dt><dd>' + esc(c.label) + '</dd>' : '') +
             '</dl>' + (c.verifikasi && c.verifikasi.available ? '<p class="text-muted mt-3 mb-0" style="font-size:.75rem;">' + esc(c.verifikasi.note) + '</p>' : '') + '</div>';

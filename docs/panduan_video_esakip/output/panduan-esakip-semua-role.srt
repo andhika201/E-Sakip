@@ -1,0 +1,60 @@
+﻿1
+00:00:00,000 --> 00:00:07,000
+Selamat datang di panduan penggunaan web e-SAKIP AKSARA Kabupaten Pringsewu. Video ini menjelaskan alur penggunaan untuk semua role.
+
+2
+00:00:07,000 --> 00:00:15,000
+Buka halaman login, isi username dan password sesuai akun yang diberikan. Setelah berhasil masuk, sistem mengarahkan pengguna ke dashboard sesuai role.
+
+3
+00:00:15,000 --> 00:00:24,000
+Setiap role melihat menu yang berbeda. Publik membaca informasi, role admin mengelola data, sedangkan Inspektorat dan Bupati berfokus pada pemantauan.
+
+4
+00:00:24,000 --> 00:00:32,000
+Pengunjung publik dapat melihat dashboard, RPJMD, RKPD, Renstra, RKT, IKU, Perjanjian Kinerja, Cascading, Pohon Kinerja, dan LAKIP.
+
+5
+00:00:32,000 --> 00:00:41,000
+Super Admin menyiapkan master data, user, role, permission, program kegiatan PK, log aktivitas, pengaturan aplikasi, dan ambang dashboard.
+
+6
+00:00:41,000 --> 00:00:50,000
+Admin Kabupaten mengelola dashboard kabupaten, RPJMD, versi RPJMD, RKPD, IKU Kabupaten, Pohon Kinerja, Cascading, dan PK Bupati.
+
+7
+00:00:50,000 --> 00:00:59,000
+Admin Kabupaten juga mengelola Target Rencana Aksi, MONEV, LAKIP Kabupaten, verifikasi dokumen, dan permintaan perbaikan LAKIP OPD.
+
+8
+00:00:59,000 --> 00:01:08,000
+Admin OPD mengelola Renstra, RKT atau Renja, IKU, Cascading, PK, Target Rencana Aksi, MONEV, dan LAKIP untuk perangkat daerahnya.
+
+9
+00:01:08,000 --> 00:01:16,000
+Admin Kecamatan memakai area OPD dengan penyesuaian struktur kecamatan. Fokusnya PK Kecamatan, Administrator, Pengawas, target, monitoring, dan laporan.
+
+10
+00:01:16,000 --> 00:01:24,000
+Admin Inspektorat adalah evaluator read-only lintas OPD. Role ini dipakai untuk membaca, mengecek, dan mengevaluasi data kinerja.
+
+11
+00:01:24,000 --> 00:01:32,000
+Role Bupati memakai dashboard eksekutif dan halaman monitoring read-only untuk PK, Target Rencana Aksi, MONEV, LAKIP, status OPD, dan misi.
+
+12
+00:01:32,000 --> 00:01:42,000
+Satu siklus SAKIP berjalan dari master data, perencanaan kabupaten, penurunan ke OPD dan kecamatan, verifikasi, evaluasi, lalu monitoring eksekutif.
+
+13
+00:01:42,000 --> 00:01:50,000
+Sebelum input, cek tahun, periode, OPD, dan status dokumen. Gunakan tombol resmi, cetak arsip, ganti password awal, dan aktifkan 2FA bila perlu.
+
+14
+00:01:50,000 --> 00:02:01,000
+Proses input data dimulai dari pilih modul, klik tambah, isi form, simpan draft, ajukan validasi, lakukan perbaikan bila dikembalikan, lalu cetak arsip.
+
+15
+00:02:01,000 --> 00:02:07,000
+Panduan ini siap dipakai untuk pelatihan. Kunci penggunaan: ikuti menu yang tampil sesuai role karena aplikasi sudah memfilter hak akses.
+

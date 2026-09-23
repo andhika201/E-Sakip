@@ -335,16 +335,23 @@ if (!function_exists('dash_row_validity')) {
             return $gagal('invalid_number', 'Perhitungan menghasilkan nilai yang tidak sah.');
         }
 
-        // Periode sebelum triwulan terpilih yang bolong: nilainya tetap terhitung,
-        // tapi kelengkapannya dilaporkan supaya tidak terkesan sudah paripurna.
+        // Periode sebelum triwulan terpilih yang bolong: nilainya TETAP dihitung
+        // dan dimasukkan ke rata-rata (is_valid = true), namun reason_code &
+        // reason dibawa sebagai peringatan supaya operator tahu triwulan mana
+        // yang belum diisi — tanpa memblokir tampilan persentase capaian.
+        //
+        // Sebelumnya is_valid = false, yang menyebabkan persentase yang sudah
+        // dihitung dengan benar dibuang seluruhnya dari agregat OPD. Akibatnya
+        // banyak indikator dan OPD tampil "Belum Valid" meski datanya ada, dan
+        // rata-rata OPD menjadi tidak akurat karena baris-baris itu dikecualikan.
         for ($q = 1; $q < $triwulan; $q++) {
             if (!capaianTerisi($capaian[$q] ?? null) && capaianTerisi($targets[$q] ?? null)) {
                 return [
-                    'is_valid'        => false,
+                    'is_valid'        => true,
                     'not_evaluable'   => false,
                     'reason_code'     => 'incomplete_period',
                     'reason'          => 'Capaian Triwulan ' . capaianRomawi($q) . ' belum diinput.',
-                    'percentage'      => (float) $hasil['percentage'],
+                    'percentage'      => round((float) $hasil['percentage'], 2),
                     'filled_quarters' => (int) $hasil['filled_quarters_count'],
                     'last_quarter'    => $hasil['last_quarter'],
                 ];

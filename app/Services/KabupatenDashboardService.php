@@ -507,6 +507,9 @@ class KabupatenDashboardService
         $opdList = $this->opdOptions();
         $opdIds  = array_map('intval', array_column($opdList, 'id'));
         $perOpd  = $this->indikatorSeluruhOpd($opdIds, $tahun, $triwulan);
+        $rataKmonev = $misiId === null
+            ? $this->opd->rataRataRealisasiKmonevPerOpd($opdIds, $tahun)
+            : [];
 
         $hasil = [];
         foreach ($opdList as $o) {
@@ -529,7 +532,14 @@ class KabupatenDashboardService
                 }
             }
 
-            $hasil[$opdId] = $this->ringkasOpd($opdId, (string) $o['nama_opd'], $indikator, $triwulan, $tahun);
+            $hasil[$opdId] = $this->ringkasOpd(
+                $opdId,
+                (string) $o['nama_opd'],
+                $indikator,
+                $triwulan,
+                $tahun,
+                $rataKmonev[$opdId] ?? null
+            );
         }
 
         return $hasil;
@@ -542,7 +552,14 @@ class KabupatenDashboardService
      *
      * @return array<string, mixed>
      */
-    private function ringkasOpd(int $opdId, string $nama, array $indikator, int $triwulan, int $tahun): array
+    private function ringkasOpd(
+        int $opdId,
+        string $nama,
+        array $indikator,
+        int $triwulan,
+        int $tahun,
+        ?float $rataMonevOverride = null
+    ): array
     {
         $total = count($indikator);
         $valid = 0;
@@ -621,6 +638,17 @@ class KabupatenDashboardService
         );
 
         $wajibDiukur = $total - $notEvaluable;
+        $rataMonev   = $rataMonevOverride ?? $this->opd->rataRataRealisasiMonev($indikator);
+        $tampilMonev = $rataMonev ?? ($total > 0 ? 0.0 : null);
+        // Bila seluruh indikator sudah mempunyai MONEV tetapi target periode
+        // masih 0, halaman MONEV menampilkan capaian 0%. Itu berguna sebagai
+        // informasi progres, walau bukan nilai kinerja yang sah (tidak ada
+        // pembagi). Sediakan terpisah dari `percentage` agar status kendali
+        // dan prioritas tidak keliru menganggapnya capaian kinerja 0%.
+        $adaRataMonev = $total > 0
+            && $wajibDiukur === 0
+            && $notEvaluable === $total
+            && $monevAda === $total;
         $ringkas = [
             'opd_id'          => $opdId,
             'nama_opd'        => $nama,
@@ -632,7 +660,9 @@ class KabupatenDashboardService
             'perhatian'       => $perhatian,
             'tanpa_renaksi'   => $tanpaRenaksi,
             'indikator_belum_input' => $tanpaCapaianPeriode,
-            'percentage'      => ($wajibDiukur > 0 && $valid === $wajibDiukur) ? round($jumlah / $wajibDiukur, 2) : null,
+            'percentage'      => $rataMonev ?? (($wajibDiukur > 0 && $valid === $wajibDiukur) ? round($jumlah / $wajibDiukur, 2) : null),
+            'monev_average'   => $tampilMonev ?? ($adaRataMonev ? 0.0 : null),
+            'has_monev_average' => $tampilMonev !== null || $adaRataMonev,
             'can_compute'     => ($wajibDiukur > 0 && $valid === $wajibDiukur)
                                   || ($wajibDiukur === 0 && $notEvaluable > 0),
             'anggaran'        => $anggaran,

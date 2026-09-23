@@ -91,7 +91,8 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
         <div class="row g-3 align-items-end mb-3">
             <div class="col-lg-8">
                 <label class="form-label small fw-semibold mb-1" for="bm-indikator">Indikator</label>
-                <select class="form-select" id="bm-indikator">
+                <select class="form-select" id="bm-indikator"
+                        onchange="window.lakipBenchmarkRender && window.lakipBenchmarkRender(this.value)">
                     <?php foreach ($benchmarkList as $i => $b): ?>
                         <option value="<?= (int) $b['indikator_id'] ?>" <?= $i === 0 ? 'selected' : '' ?>>
                             <?= esc($b['nama']) ?><?= $b['satuan'] !== '' ? ' (' . esc($b['satuan']) . ')' : '' ?>
@@ -225,7 +226,9 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
         (function () {
-            const DATA = <?= json_encode($benchmarkList, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            // JSON_INVALID_UTF8_SUBSTITUTE memastikan satu catatan benchmark
+            // lama dengan encoding rusak tidak membatalkan SELURUH script.
+            const DATA = <?= json_encode($benchmarkList, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?: '[]' ?>;
             const LABEL_DAERAH = <?= json_encode($bmLabelDaerah, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
             const byId = {};
             DATA.forEach(d => { byId[d.indikator_id] = d; });
@@ -308,15 +311,32 @@ $bmLabelDaerah = $bmMode === 'kabupaten' ? 'Kabupaten Pringsewu' : 'OPD Terpilih
                 });
             }
 
-            sel.addEventListener('change', function() { render(Number(this.value)); });
+            // Jalur eksplisit untuk atribut onchange di elemen <select>.
+            // Ini tetap bekerja jika plugin Select2 di halaman lain mengelola
+            // ulang handler jQuery pada elemen yang sama.
+            window.lakipBenchmarkRender = function (id) {
+                render(Number(id));
+            };
+
+            // Tetap dengarkan event native: halaman bisa dipakai tanpa Select2.
+            // Handler dinamai agar tidak pernah menghapus event internal Select2.
+            const indikatorBerubah = function () {
+                window.lakipBenchmarkRender(sel.value);
+            };
+            sel.addEventListener('change', indikatorBerubah);
             render(Number(sel.value));
 
             // Dropdown searchable bila select2 tersedia (pola project existing).
             if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
-                window.jQuery(sel).select2({ width: '100%', placeholder: 'Cari indikator...' });
-                window.jQuery(sel).off('change').on('change', function() { 
-                    render(Number(window.jQuery(this).val())); 
-                });
+                const $sel = window.jQuery(sel);
+                $sel.select2({ width: '100%', placeholder: 'Cari indikator...' });
+
+                // JANGAN gunakan `.off('change')`: itu ikut membuang handler
+                // internal `change.select2`, akibatnya teks pilihan berubah
+                // tetapi data/chart pembanding dapat tetap pada indikator lama.
+                // Namespace ini hanya milik panel benchmark sendiri.
+                $sel.off('change.lakipBenchmark select2:select.lakipBenchmark')
+                    .on('change.lakipBenchmark select2:select.lakipBenchmark', indikatorBerubah);
             }
 
             const btnIsi = document.getElementById('bm-btn-isi');

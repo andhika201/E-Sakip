@@ -312,7 +312,8 @@ class OpdDashboardService
         $indikator = $this->kecualikanPkStafAhliDariDashboard($indikator);
 
         $pk        = $this->getPkSummary($indikator, $opdId, $tahun, $jenis);
-        $capaian   = $this->getOpdAchievement($indikator);
+        $rataKmonev = $opdId ? ($this->rataRataRealisasiKmonevPerOpd([$opdId], $tahun)[$opdId] ?? null) : null;
+        $capaian   = $this->getOpdAchievement($indikator, $rataKmonev);
         $anggaran  = $this->getBudgetAbsorption($indikator, $triwulan);
         $distribusi = $this->getStatusDistribution($indikator);
         $misi      = $this->getMissionContributions($indikator, $opdId, $tahun);
@@ -1129,10 +1130,139 @@ class OpdDashboardService
                 : $this->barisPertama((string) ($tr['rencana_aksi'] ?? '')),
             'monev_id'  => $monev !== null ? (int) $monev['id'] : null,
             'metode'    => $monev['metode_perhitungan'] ?? null,
+            // Persentase yang tersimpan di halaman KMonev (monev.total).
+            // Dipakai ringkasan dashboard supaya angka OPD sama dengan
+            // "Rata-rata Realisasi" pada KMonev.
+            'monev_total' => $monev['total'] ?? null,
             'targets'   => $targets,
             'capaian'   => $capaian,
             'validity'  => $validity,
         ];
+    }
+
+    /**
+     * Rata-rata persentase realisasi dari KMonev (`monev.total`).
+     *
+     * `rows` di indikator sudah hanya berisi baris ukur current: sub rencana
+     * aksi bila ada, atau baris rencana aksi bila belum dipecah. Karena itu
+     * perhitungan ini mengikuti penyaring yang sama dengan kartu KMonev dan
+     * tidak mencampur baris warisan sub_id 0.
+     *
+     * @param array<int, array<string, mixed>> $indikator
+     */
+    public function rataRataRealisasiMonev(array $indikator): ?float
+    {
+        $jumlah = 0.0;
+        $n      = 0;
+
+        foreach ($indikator as $i) {
+            foreach ($i['rows'] ?? [] as $baris) {
+                $pct = capaianToFloat($baris['monev_total'] ?? null);
+                if ($pct === null) {
+                    continue;
+                }
+
+                $jumlah += $pct;
+                $n++;
+            }
+        }
+
+        return $n > 0 ? round($jumlah / $n, 2) : null;
+    }
+
+    /**
+     * Rata-rata realisasi KMonev OPD/Kecamatan lintas eselon.
+     *
+     * Ini mengikuti ringkasan halaman KMonev `monev_pk/es3` saat filter eselon
+     * = semua: jenis PK JPT, Camat, Administrator, dan Pengawas ikut dihitung;
+     * bila target sudah punya sub, baris MONEV tingkat rencana aksi (sub_id 0)
+     * dilewati sebagai warisan.
+     *
+     * @param int[] $opdIds
+     *
+     * @return array<int, float> [opd_id => rata-rata persentase]
+     */
+    public function rataRataRealisasiKmonevPerOpd(array $opdIds, int $tahun): array
+    {
+        $opdIds = $this->bersihkanIds($opdIds);
+        if ($opdIds === []) {
+            return [];
+        }
+
+        $targets = $this->db->table('target_rencana tr')
+            ->select('tr.id, tr.opd_id')
+            ->join('pk_indikator pi', 'pi.id = tr.pk_indikator_id', 'inner')
+            ->join('pk_sasaran ps', 'ps.id = pi.pk_sasaran_id', 'inner')
+            ->join('pk', 'pk.id = ps.pk_id', 'inner')
+            ->whereIn('tr.opd_id', $opdIds)
+            ->where('pk.opd_id = tr.opd_id', null, false)
+            ->where('pk.tahun', $tahun)
+            ->whereIn('pk.jenis', ['jpt', 'camat', 'administrator', 'pengawas'])
+            ->get()->getResultArray();
+
+        if ($targets === []) {
+            return [];
+        }
+
+        $targetOpd = [];
+        foreach ($targets as $t) {
+            $targetOpd[(int) $t['id']] = (int) $t['opd_id'];
+        }
+
+        $targetIds = array_keys($targetOpd);
+        $subRows = $this->db->table('target_sub_rencana')
+            ->select('target_rencana_id')
+            ->whereIn('target_rencana_id', $targetIds)
+            ->groupBy('target_rencana_id')
+            ->get()->getResultArray();
+
+        $punyaSub = [];
+        foreach ($subRows as $s) {
+            $punyaSub[(int) $s['target_rencana_id']] = true;
+        }
+
+        $monevRows = $this->db->table('monev')
+            ->select('id, target_rencana_id, target_sub_rencana_id, total')
+            ->whereIn('target_rencana_id', $targetIds)
+            ->orderBy('id', 'ASC')
+            ->get()->getResultArray();
+
+        $monev = [];
+        foreach ($monevRows as $m) {
+            $monev[(int) $m['target_rencana_id']][(int) $m['target_sub_rencana_id']] = $m;
+        }
+
+        $jumlah = [];
+        $n      = [];
+        foreach ($monev as $targetId => $perSub) {
+            $opdId = $targetOpd[$targetId] ?? null;
+            if ($opdId === null) {
+                continue;
+            }
+
+            foreach ($perSub as $subId => $m) {
+                if (!empty($punyaSub[$targetId]) && (int) $subId === 0) {
+                    continue;
+                }
+
+                $pct = capaianToFloat($m['total'] ?? null);
+                if ($pct === null) {
+                    continue;
+                }
+
+                $jumlah[$opdId] = ($jumlah[$opdId] ?? 0.0) + $pct;
+                $n[$opdId]      = ($n[$opdId] ?? 0) + 1;
+            }
+        }
+
+        $hasil = [];
+        foreach ($n as $opdId => $count) {
+            if ($count > 0) {
+                $hasil[(int) $opdId] = round($jumlah[$opdId] / $count, 2);
+            }
+        }
+
+        return $hasil;
     }
 
     /**
@@ -1506,7 +1636,7 @@ class OpdDashboardService
      *
      * @return array<string, mixed>
      */
-    public function getOpdAchievement(array $indikator): array
+    public function getOpdAchievement(array $indikator, ?float $rataMonevOverride = null): array
     {
         // =============================================================
         // KELENGKAPAN DATA vs KEMAMPUAN DINILAI
@@ -1541,12 +1671,16 @@ class OpdDashboardService
 
         $wajib        = $total_ - $takTerukur;
         $bisaDihitung = $wajib > 0 && $valid === $wajib;
-        $total        = $bisaDihitung ? round($jumlah / $wajib, 2) : null;
+        $rataMonev    = $rataMonevOverride ?? $this->rataRataRealisasiMonev($indikator);
+        $tampilMonev  = $rataMonev ?? ($total_ > 0 ? 0.0 : null);
+        $total        = $bisaDihitung ? ($rataMonev ?? round($jumlah / $wajib, 2)) : null;
         $verifikasi   = $this->verificationInfo();
         $belumVerif   = $verifikasi['available'] ? 0 : $valid;
 
         return [
             'total'          => $total,
+            'monev_average'  => $tampilMonev,
+            'has_monev_average' => $tampilMonev !== null,
             'valid'          => $valid,
             'wajib'          => $wajib,
             'indikator'      => $total_,

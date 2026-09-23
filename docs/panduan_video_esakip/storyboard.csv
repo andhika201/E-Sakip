@@ -1,0 +1,16 @@
+slide,duration_seconds,title,focus
+1,7,Panduan e-SAKIP AKSARA,Cover dan cakupan semua role
+2,8,Masuk dan Keamanan,Login, dashboard role, profil, ganti password, 2FA, logout
+3,9,Peta Role,Akses utama setiap role dalam sistem
+4,8,Publik,Tampilan informasi tanpa login dan ekspor dokumen
+5,9,Super Admin,Master data, user, role, program PK, pengaturan, log
+6,9,Admin Kabupaten: Perencanaan,RPJMD, RKPD, IKU, cascading, PK Bupati
+7,9,Admin Kabupaten: Pengukuran,Target renaksi, MONEV, LAKIP, verifikasi
+8,9,Admin OPD,Renstra, RKT/Renja, IKU, cascading, PK, MONEV, LAKIP
+9,8,Admin Kecamatan,Alur OPD versi kecamatan dan PK Kecamatan
+10,8,Admin Inspektorat,Read-only evaluasi lintas OPD
+11,8,Bupati,Dashboard eksekutif dan monitoring read-only
+12,10,Siklus Tahunan,Urutan kerja lintas role dalam satu tahun anggaran
+13,8,Praktik Baik,Filter periode, status dokumen, cetak, keamanan
+14,11,Proses Input Data,Alur tambah data, simpan draft, validasi, finalisasi, dan cetak
+15,6,Penutup,Ringkasan penggunaan dan siap pelatihan

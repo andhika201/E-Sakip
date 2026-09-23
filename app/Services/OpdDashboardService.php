@@ -428,8 +428,16 @@ class OpdDashboardService
             return isset($punyaJpt[$opd]) ? $r['pk_jenis'] === 'jpt' : true;
         }));
 
+        // PK Staf Ahli Bupati hanya berhenti pada dokumen PK dan memang tidak
+        // diturunkan ke Rencana Aksi maupun MONEV. Kecualikan dari agregat
+        // lintas OPD agar Sekretariat Daerah tidak menerima warning yang tidak
+        // dapat ditindaklanjuti. PK tetap utuh pada modul PK.
+        $indikator = $this->kecualikanPkStafAhliDariDashboard(
+            $this->assembleIndicators($rows, $triwulan)
+        );
+
         $hasil = [];
-        foreach ($this->assembleIndicators($rows, $triwulan) as $ind) {
+        foreach ($indikator as $ind) {
             $hasil[(int) $ind['opd_id']][] = $ind;
         }
 

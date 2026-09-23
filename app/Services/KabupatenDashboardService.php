@@ -61,6 +61,12 @@ class KabupatenDashboardService
     /** Role yang hanya boleh membaca (tanpa tombol ubah). */
     private const ROLE_READONLY = ['admin_inspektorat', 'bupati'];
 
+    /**
+     * Entitas tingkat kabupaten dan RSUD sementara tidak menjadi bahan
+     * pengendalian eksekutif perangkat daerah. Data sumbernya tidak diubah.
+     */
+    private const OPD_DASHBOARD_DIKECUALIKAN = [30, 212];
+
     private $db;
     private OpdDashboardService $opd;
 
@@ -146,7 +152,10 @@ class KabupatenDashboardService
     {
         $b = $this->db->table('opd')
             ->select('id, nama_opd')
-            ->whereNotIn('id', OpdModel::EXCLUDED_OPD_IDS);
+            ->whereNotIn('id', array_merge(
+                OpdModel::EXCLUDED_OPD_IDS,
+                self::OPD_DASHBOARD_DIKECUALIKAN
+            ));
 
         if ($this->db->fieldExists('jenis', 'opd')) {
             $b->whereNotIn('jenis', OpdModel::EXCLUDED_EXECUTIVE_JENIS);
@@ -843,10 +852,14 @@ class KabupatenDashboardService
     public function getOpdStatusSummary(array $statuses): array
     {
         $out = [
-            'total'        => count($statuses),
-            'dapat_dinilai' => 0,
-            'belum_lengkap' => 0,
-            'per_status'   => [],
+            'total'                 => count($statuses),
+            'dapat_dinilai'         => 0,
+            // Nama lama dipertahankan agar payload lama tetap kompatibel.
+            // Nilainya bukan kelengkapan input MONEV, melainkan jumlah OPD
+            // yang capaiannya belum dapat dihitung.
+            'belum_lengkap'         => 0,
+            'belum_dapat_dinilai'   => 0,
+            'per_status'            => [],
         ];
 
         $out['kritis_data'] = 0;
@@ -856,6 +869,7 @@ class KabupatenDashboardService
                 $out['dapat_dinilai']++;
             } else {
                 $out['belum_lengkap']++;
+                $out['belum_dapat_dinilai']++;
             }
             $code = $s['status']['code'];
             $out['per_status'][$code] = ($out['per_status'][$code] ?? 0) + 1;

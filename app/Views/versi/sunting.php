@@ -16,7 +16,7 @@
  * @var string $modul     rpjmd | renstra
  */
 $title        = $title ?? ('Sunting ' . $versi['label']);
-$judulHalaman = $judulHalaman ?? ('Sunting Draft: ' . $versi['label']);
+$judulHalaman = $judulHalaman ?? ((empty($sudahTerbit) ? 'Sunting Draft: ' : 'Sunting Versi: ') . $versi['label']);
 
 $jenisOpsi = [
     'tetap'      => 'Tetap (tidak berubah)',
@@ -50,15 +50,38 @@ $nilaiSatuan = static function ($ind) {
     .tabel-sunting td { vertical-align: top; }
 ']) ?>
 
-<div class="kotak-jejak beku mb-3">
-    <div class="fw-semibold mb-1">Anda sedang menyunting DRAFT</div>
-    <div class="small text-secondary">
-        Semua perubahan di halaman ini tersimpan di dalam draft saja.
-        <?= esc($namaDokumen) ?> berjalan, Cascading, RKT, Renaksi, MONEV, LAKIP, dashboard,
-        dan API publik <strong>belum berubah</strong> sampai versi ini ditetapkan berlaku
-        (rencananya mulai <strong><?= esc($versi['effective_from']) ?></strong>).
+<?php if (! empty($sedangBerlaku)): ?>
+    <div class="alert alert-warning border mb-3">
+        <div class="fw-semibold mb-1">
+            <i class="fa-solid fa-triangle-exclamation me-1"></i>Versi ini SEDANG BERLAKU
+        </div>
+        <div class="small">
+            Yang Anda sunting bukan draft, melainkan dokumen <?= esc($namaDokumen) ?> yang dipakai
+            hari ini. Begitu disimpan, perubahannya <strong>langsung diterapkan</strong> ke
+            <?= esc($namaDokumen) ?> berjalan, dan ikut terbaca oleh Cascading, RKT, Renaksi,
+            MONEV, LAKIP, dashboard, serta API publik. Seluruh suntingan tercatat di Jejak Audit.
+        </div>
     </div>
-</div>
+<?php elseif (! empty($sudahTerbit)): ?>
+    <div class="kotak-jejak beku mb-3">
+        <div class="fw-semibold mb-1">Versi sudah ditetapkan, masa berlakunya sudah lewat</div>
+        <div class="small text-secondary">
+            Suntingan di sini memperbaiki <strong>arsipnya saja</strong>.
+            <?= esc($namaDokumen) ?> berjalan sengaja tidak disentuh, karena yang berlaku
+            hari ini adalah versi lain.
+        </div>
+    </div>
+<?php else: ?>
+    <div class="kotak-jejak beku mb-3">
+        <div class="fw-semibold mb-1">Anda sedang menyunting DRAFT</div>
+        <div class="small text-secondary">
+            Semua perubahan di halaman ini tersimpan di dalam draft saja.
+            <?= esc($namaDokumen) ?> berjalan, Cascading, RKT, Renaksi, MONEV, LAKIP, dashboard,
+            dan API publik <strong>belum berubah</strong> sampai versi ini ditetapkan berlaku
+            (rencananya mulai <strong><?= esc($versi['effective_from']) ?></strong>).
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="alert alert-light border small">
     <strong>Membedakan jenis perubahan itu penting.</strong>
@@ -238,10 +261,17 @@ $nilaiSatuan = static function ($ind) {
                                     <table class="table table-sm table-bordered align-middle small tabel-sunting mb-2">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width:26%">Indikator</th>
-                                                <th style="width:14%">Satuan</th>
+                                                <th style="width:24%">Indikator</th>
+                                                <th style="width:12%">Satuan</th>
                                                 <th style="width:9%">Baseline</th>
-                                                <th style="width:22%">Jenis Perubahan</th>
+                                                <?php /* Jenis indikator menentukan ARAH penilaian (naik = baik, atau
+                                                         turun = baik). Kolom ini dulu tidak ada di sini — satu-satunya
+                                                         halaman sunting versi yang tidak punya, padahal RPJMD dan IKU
+                                                         punya. Akibatnya indikator Renstra yang jenisnya salah atau
+                                                         kosong tidak bisa dibetulkan dari layar mana pun, dan
+                                                         capaian LAKIP-nya ikut terbalik atau tidak terhitung. */ ?>
+                                                <th style="width:12%">Jenis Indikator</th>
+                                                <th style="width:20%">Jenis Perubahan</th>
                                                 <th>Target per Tahun</th>
                                                 <th style="width:76px">Keluarkan</th>
                                             </tr>
@@ -273,6 +303,25 @@ $nilaiSatuan = static function ($ind) {
                                                         <input type="text" name="indikator[<?= $indId ?>][baseline]"
                                                                class="form-control form-control-sm"
                                                                value="<?= esc($ind['baseline'] ?? '') ?>">
+                                                    </td>
+                                                    <td>
+                                                        <?php $jenisIndNilai = strtolower(trim((string) ($ind['jenis_indikator'] ?? ''))); ?>
+                                                        <select name="indikator[<?= $indId ?>][jenis_indikator]"
+                                                                class="form-select form-select-sm">
+                                                            <option value="">— pilih —</option>
+                                                            <option value="positif" <?= in_array($jenisIndNilai, ['positif', 'indikator positif'], true) ? 'selected' : '' ?>>
+                                                                Positif (naik = baik)
+                                                            </option>
+                                                            <option value="negatif" <?= in_array($jenisIndNilai, ['negatif', 'indikator negatif'], true) ? 'selected' : '' ?>>
+                                                                Negatif (turun = baik)
+                                                            </option>
+                                                        </select>
+                                                        <?php if ($jenisIndNilai === ''): ?>
+                                                            <div class="text-warning sel-kecil mt-1"
+                                                                 title="Capaian LAKIP indikator ini tidak dapat dihitung selama jenisnya kosong">
+                                                                <i class="fa-solid fa-triangle-exclamation me-1"></i>belum ditentukan
+                                                            </div>
+                                                        <?php endif; ?>
                                                     </td>
                                                     <td>
                                                         <select name="indikator[<?= $indId ?>][jenis_perubahan]"
@@ -392,7 +441,7 @@ $nilaiSatuan = static function ($ind) {
             Pada data berjalan, baris itu nanti <strong>dipensiunkan</strong> — bukan dihapus.
         </div>
         <button type="submit" class="btn btn-success">
-            <i class="fa-solid fa-floppy-disk me-1"></i>Simpan Draft
+            <i class="fa-solid fa-floppy-disk me-1"></i><?= empty($sudahTerbit) ? 'Simpan Draft' : 'Simpan Versi' ?>
         </button>
     </div>
 </form>
@@ -426,7 +475,16 @@ $nilaiSatuan = static function ($ind) {
                + '<input list="' + opsiSatuan + '" name="' + prefix + '[satuan]" class="form-control form-control-sm"></div>'
                + '<div class="col-md-2"><label class="sel-kecil text-secondary">Baseline</label>'
                + '<input type="text" name="' + prefix + '[baseline]" class="form-control form-control-sm"></div>'
-               + '<div class="col-md-4"><label class="sel-kecil text-secondary">Jenis perubahan</label>'
+               // Indikator BARU pun wajib punya arah penilaian. Tanpa baris ini
+               // penjaganya bocor lewat jalur "tambah indikator": barisnya lahir
+               // tanpa jenis, dan capaian LAKIP-nya tidak terhitung.
+               + '<div class="col-md-2"><label class="sel-kecil text-secondary">Jenis indikator</label>'
+               + '<select name="' + prefix + '[jenis_indikator]" class="form-select form-select-sm" required>'
+               + '<option value="">— pilih —</option>'
+               + '<option value="positif">Positif (naik = baik)</option>'
+               + '<option value="negatif">Negatif (turun = baik)</option>'
+               + '</select></div>'
+               + '<div class="col-md-2"><label class="sel-kecil text-secondary">Jenis perubahan</label>'
                + '<select name="' + prefix + '[jenis_perubahan]" class="form-select form-select-sm">'
                + '<option value="baru">Baru (tambahan)</option>'
                + '<option value="pengganti">Pengganti</option>'

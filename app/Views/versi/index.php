@@ -78,6 +78,49 @@ $kelasBadge = static function (string $badge): string {
             <?php endif; ?>
         </div>
 
+        <?php /* =====================================================
+                 JALAN KELUAR BAGI YANG BELUM BERWENANG MENYUNTING
+
+                 Versi yang sudah ditetapkan hanya terbuka bagi pemilik
+                 garis waktu atau pemegang Izin Sunting. Tanpa keterangan
+                 ini, operator OPD melihat daftar berisi tombol "Lihat"
+                 saja dan mengira menu ini memang tidak menyediakan
+                 penyuntingan. Permohonannya diajukan dari MENU dokumen
+                 (per periode), jadi di sini disebut keadaannya berikut
+                 penunjuk ke tempat formnya.
+                 ===================================================== */ ?>
+        <?php if (! empty($b['izin_perlu'])): ?>
+            <?php $izinKini = $b['izin'] ?? null; ?>
+            <div class="px-3 pt-3">
+                <?php if ($izinKini !== null && ($izinKini['status'] ?? '') === 'disetujui'): ?>
+                    <div class="alert alert-success py-2 px-3 mb-0 small">
+                        <i class="fa-solid fa-unlock me-1"></i>
+                        <strong>Izin Sunting periode ini sudah disetujui.</strong>
+                        Versi yang sudah ditetapkan kini bisa Anda sunting lewat tombol
+                        <em>Sunting</em> di bawah.
+                    </div>
+                <?php elseif ($izinKini !== null && ($izinKini['status'] ?? '') === 'pending'): ?>
+                    <div class="alert alert-warning py-2 px-3 mb-0 small">
+                        <i class="fa-solid fa-hourglass-half me-1"></i>
+                        <strong>Permohonan Izin Sunting sedang menunggu keputusan</strong>
+                        Admin Kabupaten. Selama itu versi yang sudah ditetapkan tetap terkunci.
+                        <?php if (! empty($izinKini['alasan'])): ?>
+                            <div class="text-secondary mt-1">Alasan diajukan: <?= esc($izinKini['alasan']) ?></div>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-light border py-2 px-3 mb-0 small">
+                        <i class="fa-solid fa-lock me-1"></i>
+                        Versi yang <strong>sudah ditetapkan</strong> terkunci bagi Anda &mdash;
+                        membukanya perlu <strong>Izin Sunting</strong> yang disetujui Admin Kabupaten.
+                        <a href="<?= esc($b['izin_url'] ?? base_url($baseUrl)) ?>" class="ms-1">
+                            Ajukan dari menu <?= esc($namaDokumen) ?>
+                        </a>.
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <div class="card-body">
             <?php if ($b['konflik'] !== null): ?>
                 <div class="kotak-jejak awas mb-3">
@@ -107,7 +150,7 @@ $kelasBadge = static function (string $badge): string {
                                 <th style="width:150px">Status</th>
                                 <th style="width:140px">Dibuat</th>
                                 <th style="width:130px">Sumber</th>
-                                <th style="width:250px">Aksi</th>
+                                <th style="width:320px">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -167,11 +210,33 @@ $kelasBadge = static function (string $badge): string {
                                                 <i class="fa-solid fa-eye me-1"></i>Lihat
                                             </a>
                                             <?php if (! empty($v['boleh_sunting'])): ?>
+                                                <?php /* Versi yang sudah ditetapkan kini ikut bisa disunting.
+                                                         Judulnya dibedakan supaya operator sadar yang dibuka
+                                                         adalah dokumen BERLAKU, bukan draft. */ ?>
                                                 <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $v['id']) ?>"
-                                                   class="btn btn-warning btn-sm" title="Sunting isi draft">
+                                                   class="btn btn-warning btn-sm"
+                                                   title="<?= empty($v['sudah_terbit'])
+                                                        ? 'Sunting isi draft'
+                                                        : 'Sunting isi versi yang sudah ditetapkan — perubahan langsung diterapkan ke data berjalan bila versi ini yang sedang berlaku' ?>">
                                                     <i class="fa-solid fa-pen me-1"></i>Sunting
                                                 </a>
                                             <?php endif; ?>
+
+                                            <?php if (! empty($v['boleh_keterangan'])): ?>
+                                                <a href="<?= base_url($baseUrl . '/versi/keterangan/' . (int) $v['id']) ?>"
+                                                   class="btn btn-outline-warning btn-sm"
+                                                   title="Ubah label, tanggal berlaku, dasar &amp; alasan perubahan">
+                                                    <i class="fa-solid fa-calendar-day me-1"></i>Keterangan
+                                                </a>
+                                            <?php elseif (! empty($v['boleh_tanggal_baseline'])): ?>
+                                                <a href="<?= base_url($baseUrl . '/versi/keterangan/' . (int) $v['id']) ?>"
+                                                   class="btn btn-outline-danger btn-sm"
+                                                   title="Perbaiki tanggal berlaku versi ini">
+                                                    <i class="fa-solid fa-calendar-day me-1"></i>Perbaiki Tanggal
+                                                </a>
+                                            <?php endif; ?>
+
+
                                             <?php if (! empty($v['keadaan_hapus']['boleh'])): ?>
                                                 <form method="post" action="<?= base_url($baseUrl . '/versi/hapus/' . (int) $v['id']) ?>"
                                                       class="d-inline"

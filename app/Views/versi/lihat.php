@@ -3,8 +3,10 @@
 /**
  * Lihat isi satu versi + aksi lifecycle-nya.
  *
- * §16: versi published hanya boleh dilihat, dibandingkan, dijadikan dasar versi
- * baru, atau diajukan koreksi — TIDAK ada tombol edit.
+ * §16 dilonggarkan (23 Sep 2026): versi published kini BOLEH disunting isinya
+ * oleh pemilik garis waktu atau pemegang izin sunting yang berlaku — lihat
+ * DokumenVersiTrait::versiBolehSuntingIsi(). Bila versi itu yang sedang
+ * berlaku, suntingannya langsung diterapkan ke data berjalan.
  *
  * @var array $versi
  * @var array $isi        pohon arsip (RPJMD: misi>tujuan>...; Renstra: tujuan>...)
@@ -271,8 +273,12 @@ $selisihTunjuk = ! empty($sudahDitunjuk)
     <?php endif; ?>
 
     <?php if ($bolehSunting): ?>
-        <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $versi['id']) ?>" class="btn btn-warning btn-sm">
-            <i class="fa-solid fa-pen me-1"></i>Sunting Isi Draft
+        <a href="<?= base_url($baseUrl . '/versi/sunting/' . (int) $versi['id']) ?>" class="btn btn-warning btn-sm"
+           title="<?= empty($sudahTerbit)
+                ? 'Sunting isi draft'
+                : 'Sunting isi versi yang sudah ditetapkan' ?>">
+            <i class="fa-solid fa-pen me-1"></i>
+            <?= empty($sudahTerbit) ? 'Sunting Isi Draft' : 'Sunting Isi Versi' ?>
         </a>
     <?php endif; ?>
 
@@ -424,8 +430,13 @@ $adaIndTujuan = ($versi['modul'] ?? '') === 'rpjmd' && array_filter(
     $tujuanSemua,
     static fn ($t) => ! empty($t['indikator_tujuan'])
 );
+
+/* Isi versi dibaca lewat versi/_tabel_isi (kolomnya sama dengan menu
+   dokumennya), jadi tabel "Indikator Tujuan" terpisah ini tidak ikut
+   ditampilkan — isinya sudah termuat di sana. */
+$tabelGabung = in_array($versi['modul'] ?? '', ['rpjmd', 'renstra'], true) && ! empty($isi);
 ?>
-<?php if (! empty($adaIndTujuan)): ?>
+<?php if (! $tabelGabung && ! empty($adaIndTujuan)): ?>
     <div class="fw-semibold mb-2"><i class="fa-solid fa-bullseye me-1 text-primary"></i>Indikator Tujuan</div>
     <div class="table-responsive mb-4">
         <table class="table table-bordered align-middle small revisi-tabel" data-no-paginate>
@@ -465,7 +476,9 @@ $adaIndTujuan = ($versi['modul'] ?? '') === 'rpjmd' && array_filter(
     </div>
 <?php endif; ?>
 
-<?php if (empty($tujuanSemua)): ?>
+<?php if ($tabelGabung): ?>
+    <?= $this->include('versi/_tabel_isi') ?>
+<?php elseif (empty($tujuanSemua)): ?>
     <div class="alert alert-light border text-center">
         Versi ini belum berisi apa pun.
         <?php if ($bolehIsiTujuan): ?>

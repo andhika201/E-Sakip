@@ -795,7 +795,9 @@ class LakipOpdController extends BaseController
                 'id'                => $indikatorId,
                 'indikator_sasaran' => $target['indikator_sasaran'] ?? '',
                 'satuan'            => $target['satuan'] ?? '',
-                'jenis_indikator'   => $target['jenis_indikator'] ?? 'positif',
+                // Jangan mengaku 'positif' saat jenisnya memang belum ditentukan;
+                // view menampilkan '-' supaya operator tahu ada yang kurang.
+                'jenis_indikator'   => $target['jenis_indikator'] ?? null,
                 'sasaran'           => $target['sasaran'] ?? '',
             ],
             'target'     => $target,
@@ -881,7 +883,9 @@ class LakipOpdController extends BaseController
                 'id' => $indikatorId,
                 'indikator_sasaran' => $target['indikator_sasaran'] ?? '',
                 'satuan' => $target['satuan'] ?? '',
-                'jenis_indikator' => $target['jenis_indikator'] ?? 'indikator positif',
+                // Jangan mengaku 'positif' saat jenisnya memang belum ditentukan;
+                // view menampilkan '-' supaya operator tahu ada yang kurang.
+                'jenis_indikator' => $target['jenis_indikator'] ?? null,
                 'sasaran' => $target['sasaran'] ?? '',
             ],
             'target' => $target, // rt.*
@@ -1339,7 +1343,9 @@ class LakipOpdController extends BaseController
                 'id'                => $indikatorId,
                 'indikator_sasaran' => $target['indikator_sasaran'] ?? '',
                 'satuan'            => $target['satuan'] ?? '',
-                'jenis_indikator'   => $target['jenis_indikator'] ?? 'positif',
+                // Jangan mengaku 'positif' saat jenisnya memang belum ditentukan;
+                // view menampilkan '-' supaya operator tahu ada yang kurang.
+                'jenis_indikator'   => $target['jenis_indikator'] ?? null,
                 'sasaran'           => $target['sasaran'] ?? '',
             ],
             'lakip'      => $lakip,

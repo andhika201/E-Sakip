@@ -16,6 +16,45 @@ use App\Services\Version\VersionScope;
 
 class RenstraController extends BaseController
 {
+
+    /**
+     * Periksa jenis indikator pada seluruh indikator sasaran yang dikirim.
+     *
+     * Dipanggil save() MAUPUN update(): dua jalur yang menulis kolom yang
+     * sama tidak boleh punya dua standar.
+     *
+     * Atribut `required` di formulir tidak cukup — ia bisa dilewati dengan
+     * JavaScript dimatikan atau POST langsung. Indikator tanpa arah penilaian
+     * membuat capaian LAKIP-nya tidak dapat dihitung.
+     *
+     * @return string|null pesan galat pertama, atau null bila lolos
+     */
+    private function renstraGalatJenisIndikator(array $sasaranList): ?string
+    {
+        $sah = ['positif', 'indikator positif', 'negatif', 'indikator negatif'];
+
+        foreach ($sasaranList as $sr) {
+            foreach ((array) ($sr['indikator_sasaran'] ?? []) as $is) {
+                $teks = trim((string) ($is['indikator_sasaran'] ?? ($is['indikator'] ?? '')));
+
+                // Baris kosong dari formulir dinamis bukan galat.
+                if ($teks === '') {
+                    continue;
+                }
+
+                $jenis = strtolower(trim((string) ($is['jenis_indikator'] ?? ($is['jenis'] ?? ''))));
+
+                if (! in_array($jenis, $sah, true)) {
+                    return 'Jenis Indikator pada "' . mb_strimwidth($teks, 0, 60, '...')
+                        . '" wajib dipilih (Positif = naik semakin baik, Negatif = turun '
+                        . 'semakin baik). Tanpa itu capaian LAKIP indikator ini tidak '
+                        . 'dapat dihitung.';
+                }
+            }
+        }
+
+        return null;
+    }
     // Aksi versi dokumen. Seluruh method lama di bawah TIDAK tersentuh:
     // trait hanya menambah method baru berawalan `versi*`.
     use DokumenVersiTrait;
@@ -414,6 +453,14 @@ class RenstraController extends BaseController
 
     public function save()
     {
+        // Jenis indikator diperiksa SEBELUM transaksi dibuka — menolak lebih
+        // awal lebih murah daripada membuka transaksi lalu menggulungnya.
+        if ($galatJenis = $this->renstraGalatJenisIndikator(
+            (array) ($this->request->getPost('sasaran_renstra') ?? [])
+        )) {
+            return redirect()->back()->withInput()->with('error', $galatJenis);
+        }
+
         // Terkunci bila periode ini sedang menunggu verifikasi atau sudah
         // ditetapkan. Diperiksa di server, bukan sekadar tombolnya disembunyikan.
         if ($tolak = $this->renstraPastikanBoleh($this->renstraKeadaan(
@@ -642,6 +689,13 @@ class RenstraController extends BaseController
     }
     public function update($id = null)
     {
+        // Aturan yang SAMA dengan save() — lihat renstraGalatJenisIndikator().
+        if ($galatJenis = $this->renstraGalatJenisIndikator(
+            (array) ($this->request->getPost('sasaran_renstra') ?? [])
+        )) {
+            return redirect()->back()->withInput()->with('error', $galatJenis);
+        }
+
         if ($tolak = $this->renstraPastikanBoleh($this->renstraKeadaanDariSasaran((int) $id))) {
             return $tolak;
         }

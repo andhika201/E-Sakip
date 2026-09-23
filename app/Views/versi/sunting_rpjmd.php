@@ -96,14 +96,31 @@ $satuanSelect = static function (string $name, string $nilai) use ($opsiSatuanHt
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             <?php endif; ?>
 
-            <div class="alert alert-light border small mb-3">
-                <strong>Anda sedang menyunting DRAFT.</strong>
-                Semua perubahan tersimpan di draft saja — RPJMD berjalan, Cascading, LAKIP, dan dashboard
-                <strong>belum berubah</strong> sampai versi ini ditetapkan berlaku
-                (rencana mulai <strong><?= esc($versi['effective_from'] ?? '-') ?></strong>).
-                Baris lama yang dicentang <span class="text-danger">Keluarkan</span> akan dipensiunkan (bukan dihapus)
-                saat versi ditetapkan.
-            </div>
+            <?php if (! empty($sedangBerlaku)): ?>
+                <div class="alert alert-warning border small mb-3">
+                    <strong><i class="fas fa-triangle-exclamation me-1"></i>Versi ini SEDANG BERLAKU.</strong>
+                    Yang Anda sunting bukan draft, melainkan dokumen RPJMD yang dipakai hari ini.
+                    Begitu disimpan, perubahannya <strong>langsung diterapkan</strong> ke RPJMD berjalan,
+                    dan ikut terbaca oleh Cascading, LAKIP, serta dashboard.
+                    Baris lama yang dicentang <span class="text-danger">Keluarkan</span> akan dipensiunkan
+                    (bukan dihapus). Seluruh suntingan tercatat di Jejak Audit versi ini.
+                </div>
+            <?php elseif (! empty($sudahTerbit)): ?>
+                <div class="alert alert-secondary border small mb-3">
+                    <strong>Versi ini sudah ditetapkan, tetapi masa berlakunya sudah lewat.</strong>
+                    Suntingan di sini memperbaiki <strong>arsipnya saja</strong> — RPJMD berjalan
+                    sengaja tidak disentuh, karena yang berlaku hari ini adalah versi lain.
+                </div>
+            <?php else: ?>
+                <div class="alert alert-light border small mb-3">
+                    <strong>Anda sedang menyunting DRAFT.</strong>
+                    Semua perubahan tersimpan di draft saja — RPJMD berjalan, Cascading, LAKIP, dan dashboard
+                    <strong>belum berubah</strong> sampai versi ini ditetapkan berlaku
+                    (rencana mulai <strong><?= esc($versi['effective_from'] ?? '-') ?></strong>).
+                    Baris lama yang dicentang <span class="text-danger">Keluarkan</span> akan dipensiunkan (bukan dihapus)
+                    saat versi ditetapkan.
+                </div>
+            <?php endif; ?>
 
             <div class="d-flex gap-2 mb-4">
                 <a href="<?= base_url($baseUrl . '/versi') ?>" class="btn btn-outline-secondary btn-sm">
@@ -365,7 +382,7 @@ $satuanSelect = static function (string $name, string $nilai) use ($opsiSatuanHt
                         <i class="fas fa-arrow-left me-1"></i>Kembali
                     </a>
                     <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save me-1"></i>Simpan Draft
+                        <i class="fas fa-save me-1"></i><?= empty($sudahTerbit) ? 'Simpan Draft' : 'Simpan Versi' ?>
                     </button>
                 </div>
             </form>

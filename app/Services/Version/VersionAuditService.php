@@ -24,6 +24,11 @@ class VersionAuditService
 {
     public const AKSI_CREATED              = 'created';
     public const AKSI_EDITED_DRAFT         = 'edited_draft';
+    // Suntingan pada versi yang SUDAH DITETAPKAN. Sengaja dibedakan dari
+    // edited_draft: menyunting draft itu pekerjaan biasa, menyunting versi
+    // resmi mengubah dokumen yang sudah berlaku dan harus bisa ditelusuri
+    // tersendiri di jejak audit.
+    public const AKSI_EDITED_PUBLISHED     = 'edited_published';
     public const AKSI_SUBMITTED            = 'submitted';
     public const AKSI_RETURNED             = 'returned';
     public const AKSI_RESUBMITTED          = 'resubmitted';

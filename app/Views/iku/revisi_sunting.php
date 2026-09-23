@@ -153,8 +153,8 @@ $medanIndikator = static function (
             </select>
         </div>
         <div class="col-md-4">
-            <label class="form-label">Jenis Indikator</label>
-            <select name="<?= $awalan ?>[jenis_indikator]" class="form-select">
+            <label class="form-label">Jenis Indikator <span class="text-danger">*</span></label>
+            <select name="<?= $awalan ?>[jenis_indikator]" class="form-select" required>
                 <option value="">Pilih Jenis Indikator</option>
                 <option value="positif" <?= ($ind['jenis_indikator'] ?? '') === 'positif' ? 'selected' : '' ?>>
                     Indikator Positif (naik = baik)

@@ -338,7 +338,18 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                         return null;
                     }
 
-                    return min($hasil, 200); // batas atas 200%; negatif dibiarkan (sama dengan cetak/Excel & dashboard)
+                    // TANPA batas atas. Dulu baris ini memotong ke 200%, sehingga
+                    // satu indikator bisa punya DUA angka: Persentase Daerah Rawan
+                    // Pangan (target 9, realisasi 0,8) tampil 200% di layar tetapi
+                    // 1.125% di PDF — dan prestasi sesungguhnya tersembunyi justru
+                    // di layar yang paling sering dibuka. Kini layar, cetak, Excel,
+                    // dan dashboard menampilkan angka yang sama apa adanya.
+                    //
+                    // Yang TETAP dibatasi 0-200% hanyalah kontribusi per indikator
+                    // ke RATA-RATA tahunan (LakipKabupatenCapaianService::ringkasan),
+                    // supaya satu lonjakan tidak menyeret rata-rata belasan
+                    // indikator lain.
+                    return $hasil;
                 }
 
             }
@@ -461,7 +472,20 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                                     ? ($lakipMap[(int) ($r['indikator_id'] ?? 0)] ?? null)
                                     : ($lakipMap[$targetId] ?? null);
 
-                                $jenis = $r['jenis_indikator'] ?? 'indikator positif';
+                                // Indikator TANPA jenis TIDAK dianggap positif. Dulu baris ini
+                                // memakai fallback 'indikator positif', sehingga indikator yang
+                                // jenisnya belum ditentukan diam-diam dihitung realisasi/target —
+                                // untuk indikator "semakin rendah semakin baik" hasilnya terbalik
+                                // (Tingkat Pengangguran Terbuka target 4,20 realisasi 4,65 tampil
+                                // 110,71% padahal capaiannya 90,32%). Jenis kosong sekarang
+                                // mengalir ke hitungCapaianLakip() sebagai null: capaian ditandai
+                                // belum dapat dihitung, bukan ditebak.
+                                $jenis = trim((string) ($r['jenis_indikator'] ?? ''));
+                                $jenisTakTentu = ! in_array(
+                                    strtolower($jenis),
+                                    ['positif', 'indikator positif', 'negatif', 'indikator negatif'],
+                                    true
+                                );
                                 $targetNow = $r['target_tahun_ini'] ?? null;
 
                                 $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
@@ -555,9 +579,16 @@ $lakipBase     = $lakipBase ?? 'adminkab/lakip';
                                     <td><?= formatAtauRaw($lakipItem['capaian_tahun_ini'] ?? null, 2) ?></td>
 
                                     <td>
-                                        <?= ($capaianPersen === null)
-                                            ? '-'
-                                            : formatAngkaID($capaianPersen, 2) . '%' ?>
+                                        <?php if ($capaianPersen !== null): ?>
+                                            <?= formatAngkaID($capaianPersen, 2) ?>%
+                                        <?php elseif ($jenisTakTentu): ?>
+                                            <span class="text-warning"
+                                                title="Jenis indikator (positif/negatif) belum ditentukan, sehingga capaian belum dapat dihitung. Lengkapi lewat revisi IKU.">
+                                                <i class="fas fa-triangle-exclamation me-1"></i>-
+                                            </span>
+                                        <?php else: ?>
+                                            -
+                                        <?php endif; ?>
                                     </td>
 
                                     <td>

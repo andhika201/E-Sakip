@@ -21,6 +21,25 @@ class RpjmdModel extends Model
      * - 'indikator negatif' atau 'negatif' => 'indikator negatif'
      * - selain itu => 'indikator positif'
      */
+    /**
+     * Samakan penulisan jenis indikator; kosong tetap kosong.
+     *
+     * =====================================================================
+     * TIDAK LAGI MENEBAK 'POSITIF'
+     *
+     * Semula fungsi ini memulangkan 'indikator positif' untuk nilai apa pun
+     * yang tidak dikenalinya, termasuk string kosong. Itu menebak ARAH
+     * penilaian: indikator "semakin rendah semakin baik" yang jenisnya lupa
+     * diisi tersimpan sebagai positif, lalu capaiannya terbaca terbalik —
+     * persis penyakit yang menimpa Tingkat Pengangguran Terbuka 2025
+     * (tampil 110,71% padahal capaiannya 90,32%).
+     *
+     * Atribut `required` di formulir tidak cukup: ia bisa dilewati dengan
+     * JavaScript dimatikan atau POST langsung. Karena itu kosong kini
+     * dipulangkan apa adanya, dan pemanggilnya yang menolak — lihat
+     * insertIndikatorSasaran() serta RpjmdController::rpjmdGalatJenisIndikator().
+     * =====================================================================
+     */
     private function normalizeJenisIndikator(?string $raw): string
     {
         $raw = strtolower(trim($raw ?? ''));
@@ -29,8 +48,11 @@ class RpjmdModel extends Model
             return 'indikator negatif';
         }
 
-        // default ke positif
-        return 'indikator positif';
+        if ($raw === 'indikator positif' || $raw === 'positif') {
+            return 'indikator positif';
+        }
+
+        return '';
     }
 
     // ==================== RPJMD MISI ====================
@@ -1016,8 +1038,16 @@ class RpjmdModel extends Model
             }
         }
 
-        // normalisasi jenis_indikator
+        // normalisasi jenis_indikator; kosong DITOLAK, bukan ditebak positif.
         $jenis = $this->normalizeJenisIndikator($data['jenis_indikator'] ?? '');
+
+        if ($jenis === '') {
+            throw new \InvalidArgumentException(
+                'Jenis indikator wajib dipilih (Positif = naik semakin baik, '
+                . 'Negatif = turun semakin baik). Tanpa itu arah penilaiannya '
+                . 'tidak diketahui dan capaian LAKIP-nya tidak dapat dihitung.'
+            );
+        }
 
         $insert = [
             'sasaran_id' => (int) $data['sasaran_id'],
@@ -1041,9 +1071,18 @@ class RpjmdModel extends Model
     public function updateIndikatorSasaran($id, $data)
     {
 
-        // normalisasi jenis_indikator jika ada di data
+        // normalisasi jenis_indikator jika ada di data. Bila dikirim tetapi
+        // tidak dikenali, suntingan DITOLAK — mengosongkannya diam-diam sama
+        // buruknya dengan menebaknya: capaian LAKIP indikator itu berhenti
+        // terhitung tanpa ada yang tahu sebabnya.
         if (array_key_exists('jenis_indikator', $data)) {
             $data['jenis_indikator'] = $this->normalizeJenisIndikator($data['jenis_indikator']);
+
+            if ($data['jenis_indikator'] === '') {
+                throw new \InvalidArgumentException(
+                    'Jenis indikator wajib dipilih (Positif / Negatif).'
+                );
+            }
         }
 
         $ok = $this->db->table('rpjmd_indikator_sasaran')
@@ -1198,11 +1237,23 @@ class RpjmdModel extends Model
                 // ---------- INDIKATOR SASARAN ----------
                 foreach ($sasaran['indikator_sasaran'] ?? [] as $indikatorSasaran) {
 
-                    // normalisasi jenis indikator (opsional)
-                    $jenisRaw = strtolower(trim($indikatorSasaran['jenis_indikator'] ?? ''));
-                    $jenis = ($jenisRaw === 'indikator negatif' || $jenisRaw === 'negatif')
-                        ? 'indikator negatif'
-                        : 'indikator positif';
+                    // Jenis indikator TIDAK opsional dan TIDAK ditebak.
+                    //
+                    // Baris ini dulu menyalin logika normalisasi sendiri dengan
+                    // 'indikator positif' sebagai jatuhan terakhir — salinan
+                    // kedua dari penyakit yang sama seperti di
+                    // normalizeJenisIndikator(). Karena jalur ini menulis kolom
+                    // yang sama, standarnya pun harus sama: dipakai fungsi yang
+                    // satu itu, dan kosong ditolak.
+                    $jenis = $this->normalizeJenisIndikator($indikatorSasaran['jenis_indikator'] ?? '');
+
+                    if ($jenis === '') {
+                        throw new \InvalidArgumentException(
+                            'Jenis indikator wajib dipilih pada indikator "'
+                            . mb_strimwidth((string) ($indikatorSasaran['indikator_sasaran'] ?? '-'), 0, 60, '...')
+                            . '" (Positif = naik semakin baik, Negatif = turun semakin baik).'
+                        );
+                    }
 
                     $builderIndSasaran->insert([
                         // ✅ PAKAI $sasaranId, BUKAN dari POST

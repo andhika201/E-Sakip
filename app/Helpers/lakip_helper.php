@@ -9,7 +9,13 @@ if (!function_exists('hitungCapaianLakip')) {
         $target = toFloatComma($target);
         $realisasi = toFloatComma($realisasi);
 
-        if ($target === null || $target == 0 || $realisasi === null) {
+        // Target <= 0, bukan == 0. Target NEGATIF membuat persentasenya
+        // terbalik tandanya dan tidak bermakna (target -5 realisasi 10 ->
+        // -200%), jadi ia diperlakukan sama dengan target 0: tidak terhitung.
+        // Layar Kabupaten dan LakipKabupatenCapaianService sudah memakai <= 0;
+        // baris ini dulu memakai == 0 sehingga cetak/Excel dan layar OPD bisa
+        // memunculkan angka untuk baris yang di layar Kabupaten tampil '-'.
+        if ($target === null || $target <= 0 || $realisasi === null) {
             return null;
         }
 

@@ -305,6 +305,12 @@ class OpdDashboardService
 
         $indikator = $opdId ? $this->loadIndicators($opdId, $tahun, $jenis, $triwulan, $pejabatId) : [];
 
+        // PK Staf Ahli Bupati tetap sah sebagai dokumen PK, tetapi kebijakan
+        // operasionalnya berhenti di PK dan tidak diturunkan ke Rencana Aksi
+        // maupun MONEV OPD. Jangan jadikan itu warning yang tidak bisa
+        // ditindaklanjuti pada Dashboard Pengendalian.
+        $indikator = $this->kecualikanPkStafAhliDariDashboard($indikator);
+
         $pk        = $this->getPkSummary($indikator, $opdId, $tahun, $jenis);
         $capaian   = $this->getOpdAchievement($indikator);
         $anggaran  = $this->getBudgetAbsorption($indikator, $triwulan);
@@ -337,6 +343,19 @@ class OpdDashboardService
             'indicators'          => array_map([$this, 'ringkasIndikator'], $indikator),
             'chart_series'        => $this->getQuarterlyOptions($indikator),
         ];
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $indikator
+     * @return array<int,array<string,mixed>>
+     */
+    private function kecualikanPkStafAhliDariDashboard(array $indikator): array
+    {
+        return array_values(array_filter($indikator, static function (array $baris): bool {
+            $jabatan = strtolower(trim((string) ($baris['pejabat_jabatan'] ?? '')));
+
+            return ! str_contains($jabatan, 'staf ahli bupati');
+        }));
     }
 
     private function normalisasiTriwulan(?int $triwulan, int $tahun): int

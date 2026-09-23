@@ -305,6 +305,12 @@ class OpdDashboardService
 
         $indikator = $opdId ? $this->loadIndicators($opdId, $tahun, $jenis, $triwulan, $pejabatId) : [];
 
+        // PK Staf Ahli Bupati tetap sah sebagai dokumen PK, tetapi kebijakan
+        // operasionalnya berhenti di PK dan tidak diturunkan ke Rencana Aksi
+        // maupun MONEV OPD. Jangan jadikan itu warning yang tidak bisa
+        // ditindaklanjuti pada Dashboard Pengendalian.
+        $indikator = $this->kecualikanPkStafAhliDariDashboard($indikator);
+
         $pk        = $this->getPkSummary($indikator, $opdId, $tahun, $jenis);
         $capaian   = $this->getOpdAchievement($indikator);
         $anggaran  = $this->getBudgetAbsorption($indikator, $triwulan);
@@ -337,6 +343,19 @@ class OpdDashboardService
             'indicators'          => array_map([$this, 'ringkasIndikator'], $indikator),
             'chart_series'        => $this->getQuarterlyOptions($indikator),
         ];
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $indikator
+     * @return array<int,array<string,mixed>>
+     */
+    private function kecualikanPkStafAhliDariDashboard(array $indikator): array
+    {
+        return array_values(array_filter($indikator, static function (array $baris): bool {
+            $jabatan = strtolower(trim((string) ($baris['pejabat_jabatan'] ?? '')));
+
+            return ! str_contains($jabatan, 'staf ahli bupati');
+        }));
     }
 
     private function normalisasiTriwulan(?int $triwulan, int $tahun): int
@@ -409,8 +428,16 @@ class OpdDashboardService
             return isset($punyaJpt[$opd]) ? $r['pk_jenis'] === 'jpt' : true;
         }));
 
+        // PK Staf Ahli Bupati hanya berhenti pada dokumen PK dan memang tidak
+        // diturunkan ke Rencana Aksi maupun MONEV. Kecualikan dari agregat
+        // lintas OPD agar Sekretariat Daerah tidak menerima warning yang tidak
+        // dapat ditindaklanjuti. PK tetap utuh pada modul PK.
+        $indikator = $this->kecualikanPkStafAhliDariDashboard(
+            $this->assembleIndicators($rows, $triwulan)
+        );
+
         $hasil = [];
-        foreach ($this->assembleIndicators($rows, $triwulan) as $ind) {
+        foreach ($indikator as $ind) {
             $hasil[(int) $ind['opd_id']][] = $ind;
         }
 
@@ -2485,15 +2512,41 @@ class OpdDashboardService
             return ['status' => null, 'pesan' => '', 'perlu_tindak_lanjut' => false];
         }
 
+        // Pengesahan formal adalah sumber kebenaran. Sebelumnya dashboard
+        // hanya membaca status baris LAKIP dan join Renstra, sehingga LAKIP
+        // sumber IKU (renstra_target_id = NULL) tampak tidak ada walaupun
+        // sudah sah. Hal itu menghasilkan catatan palsu "belum final".
+        $pengesahan = new \App\Models\LakipPengesahanModel();
+        if ($pengesahan->siap() && $pengesahan->terkunci($tahun, 'opd', $opdId)) {
+            return [
+                'status'              => 'disahkan',
+                'pesan'               => 'LAKIP ' . $tahun . ' sudah disahkan.',
+                'perlu_tindak_lanjut' => false,
+            ];
+        }
+
+        // Jalur utama membaca lingkup yang dibekukan ketika baris LAKIP
+        // dibuat. Ia berlaku untuk sumber IKU maupun Renstra.
         $rows = $this->db->table('lakip l')
             ->select('l.status, COUNT(*) AS jumlah')
-            ->join('renstra_target rt', 'rt.id = l.renstra_target_id', 'inner')
-            ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'inner')
-            ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'inner')
-            ->where('rs.opd_id', $opdId)
-            ->where('rt.tahun', $tahun)
+            ->where('l.tahun', $tahun)
+            ->where('l.mode', 'opd')
+            ->where('l.opd_id', $opdId)
             ->groupBy('l.status')
             ->get()->getResultArray();
+
+        // Kompatibilitas data lama yang belum menyimpan scope denormalisasi.
+        if ($rows === []) {
+            $rows = $this->db->table('lakip l')
+                ->select('l.status, COUNT(*) AS jumlah')
+                ->join('renstra_target rt', 'rt.id = l.renstra_target_id', 'inner')
+                ->join('renstra_indikator_sasaran ris', 'ris.id = rt.renstra_indikator_id', 'inner')
+                ->join('renstra_sasaran rs', 'rs.id = ris.renstra_sasaran_id', 'inner')
+                ->where('rs.opd_id', $opdId)
+                ->where('rt.tahun', $tahun)
+                ->groupBy('l.status')
+                ->get()->getResultArray();
+        }
 
         if ($rows === []) {
             return [
@@ -2518,7 +2571,11 @@ class OpdDashboardService
             ];
         }
 
-        return ['status' => 'siap', 'pesan' => 'LAKIP ' . $tahun . ' sudah final.', 'perlu_tindak_lanjut' => false];
+        return [
+            'status'              => 'selesai',
+            'pesan'               => 'LAKIP ' . $tahun . ' selesai diisi, tetapi belum disahkan.',
+            'perlu_tindak_lanjut' => true,
+        ];
     }
 
     /* =====================================================================

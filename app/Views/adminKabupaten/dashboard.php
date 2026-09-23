@@ -740,10 +740,13 @@ $js = static fn ($v) => json_encode(
         return '<div class="ind-card">' +
           '<div class="d-flex justify-content-between gap-2 align-items-start">' +
             '<div class="fw-bold" style="font-size:.87rem;">' + esc(o.nama_opd) + '</div>' +
-            '<div class="ind-pct">' + (o.can_compute ? pct(o.percentage) : '<span class="text-muted" style="font-size:.7rem;">Belum dapat dinilai</span>') + '</div>' +
+            '<div class="ind-pct">' + (o.can_compute
+              ? pct(o.percentage)
+              : (o.has_monev_average ? pct(o.monev_average) : '<span class="text-muted" style="font-size:.7rem;">Belum dapat dinilai</span>')) + '</div>' +
           '</div>' +
           '<div class="ind-meta">' +
             '<span>' + o.valid + '/' + o.indikator + ' indikator valid</span>' +
+            (o.has_monev_average ? '<span class="text-muted">Rata-rata MONEV; target periode 0</span>' : '') +
             '<span style="' + kritisStyle + '">' + kritisIcon + o.kritis + ' kritis</span>' +
             '<span>Update: ' + esc(o.last_update || 'belum ada') + '</span>' +
           '</div>' +

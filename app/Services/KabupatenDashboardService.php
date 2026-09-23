@@ -621,6 +621,15 @@ class KabupatenDashboardService
         );
 
         $wajibDiukur = $total - $notEvaluable;
+        // Bila seluruh indikator sudah mempunyai MONEV tetapi target periode
+        // masih 0, halaman MONEV menampilkan capaian 0%. Itu berguna sebagai
+        // informasi progres, walau bukan nilai kinerja yang sah (tidak ada
+        // pembagi). Sediakan terpisah dari `percentage` agar status kendali
+        // dan prioritas tidak keliru menganggapnya capaian kinerja 0%.
+        $adaRataMonev = $total > 0
+            && $wajibDiukur === 0
+            && $notEvaluable === $total
+            && $monevAda === $total;
         $ringkas = [
             'opd_id'          => $opdId,
             'nama_opd'        => $nama,
@@ -633,6 +642,8 @@ class KabupatenDashboardService
             'tanpa_renaksi'   => $tanpaRenaksi,
             'indikator_belum_input' => $tanpaCapaianPeriode,
             'percentage'      => ($wajibDiukur > 0 && $valid === $wajibDiukur) ? round($jumlah / $wajibDiukur, 2) : null,
+            'monev_average'   => $adaRataMonev ? 0.0 : null,
+            'has_monev_average' => $adaRataMonev,
             'can_compute'     => ($wajibDiukur > 0 && $valid === $wajibDiukur)
                                   || ($wajibDiukur === 0 && $notEvaluable > 0),
             'anggaran'        => $anggaran,

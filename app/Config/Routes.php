@@ -786,3 +786,73 @@ $routes->group('bupati', ['filter' => 'auth:bupati,admin'], function ($routes) {
 $routes->get('/login', 'LoginController::index');
 $routes->post('/login/authenticate', 'LoginController::authenticate');
 $routes->get('/logout', 'LoginController::logout');
+
+// =====================================================================
+// AKSARA+ — KINERJA PRIORITAS (IKP) & SAKIP SAMPAI PELAKSANA
+// Rancangan: db/update_2026-09-26_ikp_kinerja.sql & docs di cabang
+// fitur/ikp-kinerja-pelaksana.
+//
+// MENGAPA blok ini berdiri sendiri di ujung berkas (grup ber-prefix sama
+// didaftarkan ulang), bukan disisipkan ke grup lama: tim upstream aktif
+// menyunting Routes.php, dan blok tambahan di ujung paling kecil peluang
+// bentroknya saat penggabungan. Filter auth-nya identik dengan grup lama.
+//
+// Aturan slug: kata tambah|save|update|edit|status|delete|import di PATH
+// dibaca ModulePermissionFilter sebagai aksi tulis. Kategori IKP (mis.
+// penugasan_tambahan) karenanya SELALU lewat query string ?kategori=.
+// =====================================================================
+$routes->group('adminopd', ['filter' => 'auth:admin_opd,admin,admin_kecamatan'], static function ($routes) {
+    // ---------- IKP (OPD) ----------
+    $routes->get('ikp', 'AdminOpd\IkpController::index');
+    $routes->get('ikp/tambah', 'AdminOpd\IkpController::tambah');
+    $routes->post('ikp/save', 'AdminOpd\IkpController::save');
+    $routes->get('ikp/edit/(:num)', 'AdminOpd\IkpController::edit/$1');
+    $routes->post('ikp/update/(:num)', 'AdminOpd\IkpController::update/$1');
+    $routes->post('ikp/delete/(:num)', 'AdminOpd\IkpController::delete/$1');
+    $routes->get('ikp/buku-saku', 'AdminOpd\IkpController::bukuSaku');
+    $routes->get('ikp/pegawai', 'AdminOpd\IkpController::pegawai');
+    $routes->get('ikp/node', 'AdminOpd\IkpController::node');
+    $routes->get('ikp/target/(:num)', 'AdminOpd\IkpController::target/$1');
+    $routes->post('ikp/target/(:num)/save', 'AdminOpd\IkpController::targetSave/$1');
+    $routes->get('ikp/breakdown', 'AdminOpd\IkpController::breakdown');
+    $routes->post('ikp/breakdown/save', 'AdminOpd\IkpController::breakdownSave');
+    $routes->get('ikp/realisasi', 'AdminOpd\IkpController::realisasi');
+    $routes->post('ikp/realisasi/save', 'AdminOpd\IkpController::realisasiSave');
+    $routes->get('ikp/rekap', 'AdminOpd\IkpController::rekap');
+    $routes->get('ikp/cetak', 'AdminOpd\IkpController::cetak');
+    $routes->get('ikp/lampiran-pk', 'AdminOpd\IkpInovasiController::lampiranPk');
+    // ---------- Rencana Inovasi (Lampiran III PK) ----------
+    $routes->get('ikp/inovasi', 'AdminOpd\IkpInovasiController::index');
+    $routes->post('ikp/inovasi/save', 'AdminOpd\IkpInovasiController::save');
+    $routes->post('ikp/inovasi/update/(:num)', 'AdminOpd\IkpInovasiController::update/$1');
+    $routes->post('ikp/inovasi/delete/(:num)', 'AdminOpd\IkpInovasiController::delete/$1');
+    // ---------- Pemilik Kinerja: pohon kinerja sampai pelaksana + pemilik + target tahunan ----------
+    $routes->get('pemilik-kinerja', 'AdminOpd\PemilikKinerjaController::index');
+    $routes->get('pemilik-kinerja/pegawai', 'AdminOpd\PemilikKinerjaController::pegawai');
+    $routes->post('pemilik-kinerja/save', 'AdminOpd\PemilikKinerjaController::save');
+    $routes->post('pemilik-kinerja/delete/(:num)', 'AdminOpd\PemilikKinerjaController::delete/$1');
+    $routes->post('pemilik-kinerja/indikator', 'AdminOpd\PemilikKinerjaController::indikator');
+});
+
+$routes->group('adminkab', ['filter' => 'auth:admin_kab,admin,admin_inspektorat'], static function ($routes) {
+    // ---------- IKP (Kabupaten, lintas OPD, baca) ----------
+    $routes->get('ikp', 'AdminKab\IkpController::index');
+    $routes->get('ikp/opd/(:num)', 'AdminKab\IkpController::opd/$1');
+    $routes->get('ikp/program-unggulan', 'AdminKab\IkpController::programUnggulan');
+    $routes->get('ikp/cetak', 'AdminKab\IkpController::cetak');
+});
+
+$routes->group('bupati', ['filter' => 'auth:bupati,admin'], static function ($routes) {
+    // ---------- IKP (Bupati, read-only, bulanan) ----------
+    $routes->get('ikp', 'Bupati\IkpMonitoringController::index');
+    $routes->get('ikp/opd/(:num)', 'Bupati\IkpMonitoringController::opd/$1');
+});
+
+// API untuk eKin Internal Pringsewu — token TERPISAH (env EKIN_API_TOKEN),
+// hanya GET, tanpa kata sandi pegawai. Lihat API_DOCUMENTATION.md § eKin.
+$routes->group('api/ekin', ['filter' => 'api-token:ekin'], static function ($routes) {
+    $routes->get('opd', 'Api\EkinController::opd');
+    $routes->get('opd/(:num)/ikp', 'Api\EkinController::ikpOpd/$1');
+    $routes->get('pegawai', 'Api\EkinController::pegawai');
+    $routes->get('pegawai/(:num)/kinerja', 'Api\EkinController::kinerja/$1');
+});

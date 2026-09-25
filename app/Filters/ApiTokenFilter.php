@@ -10,7 +10,17 @@ class ApiTokenFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        $configuredToken = trim((string) (env('API_TOKEN') ?: env('api.token')));
+        // Argumen filter memilih token TERPISAH per konsumen, mis. 'api-token:ekin'
+        // → env('EKIN_API_TOKEN'). Tanpa argumen perilakunya persis seperti dulu
+        // (API_TOKEN bersama), jadi konsumen lama (Prioritas, korpus) tidak terdampak.
+        // MENGAPA terpisah: endpoint eKin memuat nama & NIP pegawai; tokennya harus
+        // bisa dicabut tanpa memutus konsumen lain.
+        $konsumen = is_array($arguments) && $arguments !== [] ? strtolower((string) $arguments[0]) : '';
+        if ($konsumen === 'ekin') {
+            $configuredToken = trim((string) (env('EKIN_API_TOKEN') ?: env('api.ekinToken')));
+        } else {
+            $configuredToken = trim((string) (env('API_TOKEN') ?: env('api.token')));
+        }
 
         if ($configuredToken === '') {
             return service('response')

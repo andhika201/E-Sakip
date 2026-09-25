@@ -16,10 +16,12 @@ $ddBtn   = 'btn btn-outline-secondary text-start px-3 py-2 text-dark border-0 ro
 $canKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('iku_kab.view')
     || user_can('pk_bupati.view') || user_can('program_pk.view')
     || user_can('target_kab.view') || user_can('monev_kab.view') || user_can('lakip_kab.view')
-    || user_can('cascading_kab.view');
+    || user_can('cascading_kab.view')
+    || user_can('ikp_kab.view'); // AKSARA+ IKP
 $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_opd.view')
     || user_can('pk_opd.view') || user_can('target_opd.view') || user_can('monev_opd.view')
-    || user_can('lakip_opd.view') || user_can('cascading_opd.view');
+    || user_can('lakip_opd.view') || user_can('cascading_opd.view')
+    || user_can('ikp_opd.view') || user_can('pemilik_kinerja.view'); // AKSARA+ IKP & Pemilik Kinerja
 
 // Jumlah permintaan perbaikan LAKIP yang menunggu keputusan admin kabupaten.
 // Dihitung di sini supaya lencananya terlihat tanpa perlu membuka halamannya —
@@ -101,6 +103,7 @@ if (user_can('lakip_opd.buka_kunci')) {
      TIDAK ADA: Master Data, Program PK, Pegawai, Pengaturan, Log Aktivitas,
      pengelolaan Cascading, maupun menu administratif lainnya. */
   $bupatiMenu = [
+      ['bupati/ikp',            'fa-bullseye',       'Kinerja Prioritas (IKP)'], // AKSARA+
       ['bupati/pk/bupati',     'fa-file-signature', 'Perjanjian Kinerja'],
       ['bupati/target_renaksi', 'fa-list-check',     'Target &amp; Rencana Aksi'],
       ['bupati/monev',          'fa-chart-line',     'MONEV'],
@@ -146,6 +149,16 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
         <li><a class="dropdown-item" href="<?= base_url('adminkab/cascading?view=tabel') ?>">Cascading</a></li>
       <?php endif; ?>
       <?php if (user_can('pk_bupati.view')): ?><li><a class="dropdown-item" href="<?= base_url('adminkab/pk/bupati') ?>">Perjanjian Kinerja Bupati</a></li><?php endif; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+<?php /* ===== AKSARA+ — Kinerja Prioritas (IKP) lintas OPD ===== */ ?>
+<?php if (user_can('ikp_kab.view')): ?>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddIkpKab" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-bullseye"></i> Kinerja Prioritas (IKP)</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddIkpKab">
+      <li><a class="dropdown-item" href="<?= base_url('adminkab/ikp') ?>">Rekap Bulanan per OPD</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminkab/ikp/program-unggulan') ?>">Per Program Unggulan</a></li>
     </ul>
   </div>
 <?php endif; ?>
@@ -265,6 +278,24 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
         <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/administrator') ?>">PK Administrator (Eselon III)</a></li>
         <li><a class="dropdown-item" href="<?= base_url('adminopd/pk/pengawas') ?>">PK Pengawas (Eselon IV)</a></li>
       <?php endif; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+<?php /* ===== AKSARA+ — Kinerja Prioritas (IKP) & Pemilik Kinerja sampai pelaksana ===== */ ?>
+<?php if (user_can('pemilik_kinerja.view')): ?>
+  <a href="<?= base_url('adminopd/pemilik-kinerja') ?>" class="<?= $linkCls ?>"><i class="fas fa-sitemap"></i><span>Pemilik Kinerja (s.d. Pelaksana)</span></a>
+<?php endif; ?>
+<?php if (user_can('ikp_opd.view')): ?>
+  <div class="dropdown">
+    <button class="<?= $ddBtn ?>" type="button" id="ddIkpOpd" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-bullseye"></i> Kinerja Prioritas (IKP)</span></button>
+    <ul class="dropdown-menu w-100" aria-labelledby="ddIkpOpd">
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp') ?>">Indikator &amp; Target</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp/breakdown') ?>">Breakdown Target (Tahun &amp; Bulan)</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp/realisasi') ?>">Realisasi Bulanan</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp/rekap') ?>">Rekap Triwulan</a></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp/inovasi') ?>">Rencana Inovasi</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="<?= base_url('adminopd/ikp/lampiran-pk') ?>" target="_blank">Cetak Lampiran PK Eselon II</a></li>
     </ul>
   </div>
 <?php endif; ?>

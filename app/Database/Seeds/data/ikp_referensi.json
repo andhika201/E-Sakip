@@ -1,0 +1,131 @@
+{
+ "program_unggulan": [
+  {
+   "nama": "Pringsewu Produktif",
+   "slug": "produktif",
+   "warna": "#f59f00",
+   "ikon": "fa-industry",
+   "urutan": 1
+  },
+  {
+   "nama": "Pringsewu Sehat",
+   "slug": "sehat",
+   "warna": "#e03131",
+   "ikon": "fa-heart-pulse",
+   "urutan": 2
+  },
+  {
+   "nama": "Pringsewu Cerdas",
+   "slug": "cerdas",
+   "warna": "#1971c2",
+   "ikon": "fa-graduation-cap",
+   "urutan": 3
+  },
+  {
+   "nama": "Pringsewu Lancar",
+   "slug": "lancar",
+   "warna": "#0c8599",
+   "ikon": "fa-road",
+   "urutan": 4
+  },
+  {
+   "nama": "Pringsewu Tahan Pangan",
+   "slug": "tahan-pangan",
+   "warna": "#2f9e44",
+   "ikon": "fa-wheat-awn",
+   "urutan": 5
+  },
+  {
+   "nama": "Pringsewu Bersih",
+   "slug": "bersih",
+   "warna": "#37b24d",
+   "ikon": "fa-recycle",
+   "urutan": 6
+  },
+  {
+   "nama": "Pringsewu Melayani",
+   "slug": "melayani",
+   "warna": "#00743e",
+   "ikon": "fa-hands-holding-circle",
+   "urutan": 7
+  },
+  {
+   "nama": "Pringsewu Nyaman",
+   "slug": "nyaman",
+   "warna": "#6eab11",
+   "ikon": "fa-shield-halved",
+   "urutan": 8
+  },
+  {
+   "nama": "Pringsewu Religius",
+   "slug": "religius",
+   "warna": "#7048e8",
+   "ikon": "fa-mosque",
+   "urutan": 9
+  }
+ ],
+ "misi": [
+  {
+   "nomor": 1,
+   "nama": "Optimalisasi Kualitas dan Pemanfaatan Sumber Daya Manusia"
+  },
+  {
+   "nomor": 2,
+   "nama": "Meningkatkan Pertumbuhan Ekonomi Berbasis Keunggulan Daereh"
+  },
+  {
+   "nomor": 3,
+   "nama": "Penyelenggaraan Tata Kelola yang Profesional, Modern dan Inovatif"
+  },
+  {
+   "nomor": 4,
+   "nama": "Mempertahankan Swasembada Pangan yang Berwawasan Lingkungan"
+  },
+  {
+   "nomor": 5,
+   "nama": "Peningkatan Prasarana dan Sarana Pelayanan Dasar yang Berkelanjutan"
+  }
+ ],
+ "sasaran_pembangunan": [
+  {
+   "nama": "Meningkatnya kualitas Pendidikan",
+   "urutan": 1
+  },
+  {
+   "nama": "Meningkatnya Kualitas Tata Kelola Pemerintah",
+   "urutan": 2
+  },
+  {
+   "nama": "Meningkatnya derajat Kesehatan",
+   "urutan": 3
+  },
+  {
+   "nama": "Menurunnya angka kemiskinan",
+   "urutan": 4
+  },
+  {
+   "nama": "Meningkatnya Produktivitas Unggulan",
+   "urutan": 5
+  },
+  {
+   "nama": "Menurunnya Tingkat Pengangguran Terbuka",
+   "urutan": 6
+  },
+  {
+   "nama": "Terpeliharanya stabilitas dan kondisi sosial masyarakat yang kondusif bagi pembangunan",
+   "urutan": 7
+  },
+  {
+   "nama": "Meningkatnya Produksi Pangan Daerah",
+   "urutan": 8
+  },
+  {
+   "nama": "Meningkatnya Kualitas Infrastruktur Daerah yang Berdaya Saing",
+   "urutan": 9
+  },
+  {
+   "nama": "Meningkatnya Kualitas Lingkungan Hidup dan Ketangguhan Bencana",
+   "urutan": 10
+  }
+ ]
+}

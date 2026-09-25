@@ -205,9 +205,12 @@ class LakipKabupatenCapaianService
         if ($jenis === 'indikator positif' || $jenis === 'positif') {
             $hasil = ($realisasi / $target) * 100;
         } elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-            // Semakin rendah semakin baik: target / realisasi — rumus yang
-            // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
-            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
+// Indikator negatif: (1 - (realisasi - target) / target) x 100%
+// Setara (2 x target - realisasi) / target x 100% — rumus baku SAKIP,
+// ditetapkan 24 Sep 2026. Boleh minus bila realisasi > 2x target, dan
+// realisasi 0 memberi 200%. Penjelasan lengkap ada di
+// app/Helpers/lakip_helper.php.
+            $hasil = (1 - ($realisasi - $target) / $target) * 100;
         } else {
             return null;
         }

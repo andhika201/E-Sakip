@@ -196,10 +196,13 @@
                             $hasil = ($realisasi / $target) * 100;
                         }
 
-                        // indikator negatif (turun = baik): target / realisasi, rumus yang
-                        // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
+// Indikator negatif: (1 - (realisasi - target) / target) x 100%
+// Setara (2 x target - realisasi) / target x 100% — rumus baku SAKIP,
+// ditetapkan 24 Sep 2026. Boleh minus bila realisasi > 2x target, dan
+// realisasi 0 memberi 200%. Penjelasan lengkap ada di
+// app/Helpers/lakip_helper.php.
                         elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
+                            $hasil = (1 - ($realisasi - $target) / $target) * 100;
                         } else {
                             return null;
                         }

@@ -32,6 +32,7 @@ class IkpPermissionSeeder extends Seeder
             [
                 ['OPD', 'pemilik_kinerja.view',   'Pemilik Kinerja (sampai Pelaksana) - Lihat'],
                 ['OPD', 'pemilik_kinerja.update', 'Pemilik Kinerja (sampai Pelaksana) - Ubah'],
+                ['OPD', 'pemilik_kinerja.delete', 'Pemilik Kinerja (sampai Pelaksana) - Hapus'],
             ],
             $crud('ikp_kab', 'Kinerja Prioritas (IKP) Kabupaten', 'Kabupaten'),
             [['Bupati', 'ikp_bupati_monitoring.view', 'Monitoring Kinerja Prioritas (IKP) - Lihat']]
@@ -42,7 +43,7 @@ class IkpPermissionSeeder extends Seeder
     public static function roleDefaults(): array
     {
         $opd = ['ikp_opd.view', 'ikp_opd.create', 'ikp_opd.update', 'ikp_opd.delete',
-                'pemilik_kinerja.view', 'pemilik_kinerja.update'];
+                'pemilik_kinerja.view', 'pemilik_kinerja.update', 'pemilik_kinerja.delete'];
 
         return [
             'admin_opd'         => $opd,

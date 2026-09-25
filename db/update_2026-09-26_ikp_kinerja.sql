@@ -212,6 +212,7 @@ SELECT x.name, x.label, x.grup, NOW(), NOW() FROM (
   SELECT 'ikp_opd.delete', 'Kinerja Prioritas (IKP) OPD - Hapus', 'OPD' UNION ALL
   SELECT 'pemilik_kinerja.view', 'Pemilik Kinerja (sampai Pelaksana) - Lihat', 'OPD' UNION ALL
   SELECT 'pemilik_kinerja.update', 'Pemilik Kinerja (sampai Pelaksana) - Ubah', 'OPD' UNION ALL
+  SELECT 'pemilik_kinerja.delete', 'Pemilik Kinerja (sampai Pelaksana) - Hapus', 'OPD' UNION ALL
   SELECT 'ikp_kab.view', 'Kinerja Prioritas (IKP) Kabupaten - Lihat', 'Kabupaten' UNION ALL
   SELECT 'ikp_kab.create', 'Kinerja Prioritas (IKP) Kabupaten - Tambah', 'Kabupaten' UNION ALL
   SELECT 'ikp_kab.update', 'Kinerja Prioritas (IKP) Kabupaten - Ubah', 'Kabupaten' UNION ALL
@@ -221,7 +222,7 @@ SELECT x.name, x.label, x.grup, NOW(), NOW() FROM (
 
 INSERT INTO `role_permissions` (`role_id`,`permission_id`)
 SELECT r.id, p.id FROM `roles` r JOIN `permissions` p
-  ON p.name IN ('ikp_opd.view','ikp_opd.create','ikp_opd.update','ikp_opd.delete','pemilik_kinerja.view','pemilik_kinerja.update')
+  ON p.name IN ('ikp_opd.view','ikp_opd.create','ikp_opd.update','ikp_opd.delete','pemilik_kinerja.view','pemilik_kinerja.update','pemilik_kinerja.delete')
 WHERE r.name IN ('admin_opd','admin_kecamatan')
   AND NOT EXISTS (SELECT 1 FROM `role_permissions` x WHERE x.role_id = r.id AND x.permission_id = p.id);
 

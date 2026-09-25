@@ -21,7 +21,8 @@ $canKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('iku_kab.v
 $canOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_can('iku_opd.view')
     || user_can('pk_opd.view') || user_can('target_opd.view') || user_can('monev_opd.view')
     || user_can('lakip_opd.view') || user_can('cascading_opd.view')
-    || user_can('ikp_opd.view') || user_can('pemilik_kinerja.view'); // AKSARA+ IKP & Pemilik Kinerja
+    || (in_array($role, ['admin_opd', 'admin_kecamatan', 'admin'], true)
+        && (user_can('ikp_opd.view') || user_can('pemilik_kinerja.view'))); // AKSARA+ — hanya peran yang bisa membuka /adminopd
 
 // Jumlah permintaan perbaikan LAKIP yang menunggu keputusan admin kabupaten.
 // Dihitung di sini supaya lencananya terlihat tanpa perlu membuka halamannya —
@@ -159,6 +160,10 @@ $canRencanaKab = user_can('rpjmd.view') || user_can('rkpd.view') || user_can('ik
     <ul class="dropdown-menu w-100" aria-labelledby="ddIkpKab">
       <li><a class="dropdown-item" href="<?= base_url('adminkab/ikp') ?>">Rekap Bulanan per OPD</a></li>
       <li><a class="dropdown-item" href="<?= base_url('adminkab/ikp/program-unggulan') ?>">Per Program Unggulan</a></li>
+      <?php if (user_can('pemilik_kinerja.view')): ?>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="<?= base_url('adminkab/pemilik-kinerja') ?>">Pemilik Kinerja per OPD (s.d. Pelaksana)</a></li>
+      <?php endif; ?>
     </ul>
   </div>
 <?php endif; ?>
@@ -282,10 +287,11 @@ $canRencanaOpd = user_can('renstra.view') || user_can('rkt_opd.view') || user_ca
   </div>
 <?php endif; ?>
 <?php /* ===== AKSARA+ — Kinerja Prioritas (IKP) & Pemilik Kinerja sampai pelaksana ===== */ ?>
-<?php if (user_can('pemilik_kinerja.view')): ?>
+<?php $bukaOpdPlus = in_array($role, ['admin_opd', 'admin_kecamatan', 'admin'], true); /* grup /adminopd menolak peran kabupaten */ ?>
+<?php if ($bukaOpdPlus && user_can('pemilik_kinerja.view')): ?>
   <a href="<?= base_url('adminopd/pemilik-kinerja') ?>" class="<?= $linkCls ?>"><i class="fas fa-sitemap"></i><span>Pemilik Kinerja (s.d. Pelaksana)</span></a>
 <?php endif; ?>
-<?php if (user_can('ikp_opd.view')): ?>
+<?php if ($bukaOpdPlus && user_can('ikp_opd.view')): ?>
   <div class="dropdown">
     <button class="<?= $ddBtn ?>" type="button" id="ddIkpOpd" data-bs-toggle="dropdown" aria-expanded="false"><span><i class="fas fa-bullseye"></i> Kinerja Prioritas (IKP)</span></button>
     <ul class="dropdown-menu w-100" aria-labelledby="ddIkpOpd">

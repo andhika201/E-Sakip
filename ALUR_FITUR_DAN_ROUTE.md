@@ -424,6 +424,20 @@ oleh `LakipAddendumTrait`.
 | GET | `adminkab/lakip/cetak` | `AdminKab\LakipController::cetak` *(PDF)* |
 | GET | `adminkab/lakip/cetak-excel` | `AdminKab\LakipController::cetakExcel` |
 
+### 8.10 Kinerja Prioritas (IKP) lintas OPD — AKSARA+
+
+IKP = ukuran kinerja **bulanan** dari Program Unggulan Bupati, program prioritas, penugasan khusus
+dan penugasan tambahan (skema `db/update_2026-09-26_ikp_kinerja.sql`). Halaman kabupaten hanya
+membaca; `opd_id` divalidasi terhadap daftar OPD sah (bukan `canAccessOpd`).
+
+| Method | Route | Handler |
+|---|---|---|
+| GET | `adminkab/ikp` | `AdminKab\IkpController::index` *(rekap per OPD, `?tahun&bulan`)* |
+| GET | `adminkab/ikp/opd/(:num)` | `AdminKab\IkpController::opd` |
+| GET | `adminkab/ikp/program-unggulan` | `AdminKab\IkpController::programUnggulan` *(`?pu=slug`)* |
+| GET | `adminkab/ikp/cetak` | `AdminKab\IkpController::cetak` *(PDF)* |
+| GET | `bupati/ikp` · `bupati/ikp/opd/(:num)` | `Bupati\IkpMonitoringController::index` / `opd` *(read-only)* |
+
 ---
 
 ## 9. Area Perangkat Daerah — `/adminopd`
@@ -609,6 +623,41 @@ Struktur identik LAKIP kabupaten (capaian + analisis faktor + efisiensi program)
 | POST | `adminopd/lakip/analisis/save` · `analisis/delete/(:num)` | `analisisSave` / `analisisDelete` |
 | POST | `adminopd/lakip/efisiensi/save` · `efisiensi/delete/(:num)` | `efisiensiSave` / `efisiensiDelete` |
 | GET | `adminopd/lakip/cetak` · `lakip/cetak-excel` | `cetak` / `cetakExcel` |
+
+### 9.10 Kinerja Prioritas (IKP) OPD — AKSARA+
+
+Target 5 tahun → tahunan → **bulanan**, rekap triwulan dihitung (tidak diisi), realisasi bulanan.
+Metode perhitungan memakai kosakata monev (`sum|trend_naik|trend_turun|trend_flat`). Hapus IKP =
+*soft delete* (`dihapus_pada`) karena eKin merujuk `ikp.id`. Kategori selalu lewat `?kategori=`
+(kata `tambah` di path dibaca modperm sebagai aksi tulis).
+
+| Method | Route | Handler |
+|---|---|---|
+| GET | `adminopd/ikp` | `AdminOpd\IkpController::index` |
+| GET · POST | `adminopd/ikp/tambah` · `ikp/save` | `tambah` / `save` |
+| GET · POST | `adminopd/ikp/edit/(:num)` · `ikp/update/(:num)` | `edit` / `update` |
+| POST | `adminopd/ikp/delete/(:num)` | `delete` *(soft delete)* |
+| GET | `adminopd/ikp/buku-saku` · `ikp/pegawai` · `ikp/node` | JSON autolengkap / Select2 / simpul pohon |
+| GET · POST | `adminopd/ikp/target/(:num)` · `ikp/target/(:num)/save` | `target` / `targetSave` *(JSON)* |
+| GET · POST | `adminopd/ikp/breakdown` · `ikp/breakdown/save` | `breakdown` / `breakdownSave` *(JSON)* |
+| GET · POST | `adminopd/ikp/realisasi` · `ikp/realisasi/save` | `realisasi` / `realisasiSave` *(JSON)* |
+| GET | `adminopd/ikp/rekap` · `ikp/cetak` | `rekap` / `cetak` *(PDF)* |
+| GET | `adminopd/ikp/inovasi` | `AdminOpd\IkpInovasiController::index` |
+| POST | `adminopd/ikp/inovasi/save` · `update/(:num)` · `delete/(:num)` | `save` / `update` / `delete` |
+| GET | `adminopd/ikp/lampiran-pk` | `AdminOpd\IkpInovasiController::lampiranPk` *(PDF Folio: PK + Lamp. I–V)* |
+
+### 9.11 Pemilik Kinerja (pohon kinerja sampai pelaksana) — AKSARA+
+
+Setiap simpul Es III/Es IV/pelaksana diberi **pemilik** (pegawai, per tahun, `cascading_pemilik`) dan
+setiap indikatornya satuan + target tahunan (`cascading_indikator_target`). Pemilik Es II mengikuti
+PK JPT/Camat. Dasar SKP eKin (RHK diturunkan dari simpul yang dimiliki).
+
+| Method | Route | Handler |
+|---|---|---|
+| GET | `adminopd/pemilik-kinerja` | `AdminOpd\PemilikKinerjaController::index` *(`?tahun`)* |
+| GET | `adminopd/pemilik-kinerja/pegawai` | `pegawai` *(JSON Select2)* |
+| POST | `adminopd/pemilik-kinerja/save` · `delete/(:num)` | `save` / `delete` |
+| POST | `adminopd/pemilik-kinerja/indikator` | `indikator` *(satuan, target tahunan, metode, tautan IKP)* |
 
 ---
 

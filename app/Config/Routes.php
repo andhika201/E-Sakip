@@ -840,6 +840,10 @@ $routes->group('adminkab', ['filter' => 'auth:admin_kab,admin,admin_inspektorat'
     $routes->get('ikp/opd/(:num)', 'AdminKab\IkpController::opd/$1');
     $routes->get('ikp/program-unggulan', 'AdminKab\IkpController::programUnggulan');
     $routes->get('ikp/cetak', 'AdminKab\IkpController::cetak');
+    // Pemilik Kinerja lintas OPD (baca; pilih OPD). Controller yang sama dengan
+    // area OPD — tanpa izin .update halamannya otomatis baca-saja.
+    $routes->get('pemilik-kinerja', 'AdminOpd\PemilikKinerjaController::index');
+    $routes->get('pemilik-kinerja/pegawai', 'AdminOpd\PemilikKinerjaController::pegawai');
 });
 
 $routes->group('bupati', ['filter' => 'auth:bupati,admin'], static function ($routes) {

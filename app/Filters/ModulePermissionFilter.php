@@ -41,6 +41,7 @@ class ModulePermissionFilter implements FilterInterface
         'tentang_kami'    => 'tentang_kami',
         // AKSARA+ — Kinerja Prioritas (IKP) lintas OPD
         'ikp'             => 'ikp_kab',
+        'pemilik-kinerja' => 'pemilik_kinerja',
     ];
 
     /** segmen pertama setelah 'adminopd' => modul permission (konteks OPD) */

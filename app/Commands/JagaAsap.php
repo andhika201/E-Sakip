@@ -209,6 +209,9 @@ class JagaAsap extends BaseCommand
                 '/adminopd/pk/jpt', '/adminopd/pk/administrator',
                 '/adminopd/target_renaksi', '/adminopd/monev',
                 '/adminopd/lakip',
+                // AKSARA+ — Kinerja Prioritas (IKP) & Pemilik Kinerja
+                '/adminopd/ikp', '/adminopd/ikp/breakdown', '/adminopd/ikp/realisasi',
+                '/adminopd/ikp/rekap', '/adminopd/ikp/inovasi', '/adminopd/pemilik-kinerja',
             ];
         }
 
@@ -216,6 +219,8 @@ class JagaAsap extends BaseCommand
             '/adminkab/dashboard', '/adminkab/rpjmd', '/adminkab/rpjmd/versi',
             '/adminkab/iku', '/adminkab/iku/revisi', '/adminkab/cascading',
             '/adminkab/lakip', '/adminkab/verifikasi',
+            // AKSARA+ — Kinerja Prioritas (IKP) lintas OPD
+            '/adminkab/ikp', '/adminkab/ikp/program-unggulan',
         ];
     }
 

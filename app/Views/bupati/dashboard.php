@@ -103,6 +103,20 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
         <?php endif; ?>
       </div>
 
+      <?php /* AKSARA+ — pintasan pemantauan BULANAN Kinerja Prioritas (IKP).
+               MENGAPA di sini: dasbor ini triwulanan (mengikuti MONEV PK), padahal
+               Bupati menilai OPD tiap bulan; IKP adalah ukuran bulanannya. */ ?>
+      <?php if (user_can('ikp_bupati_monitoring.view') || session('role') === 'admin'): ?>
+        <a href="<?= base_url('bupati/ikp') ?>" class="d-flex align-items-center gap-3 p-3 mb-3 rounded-3 text-decoration-none border border-success-subtle bg-success-subtle">
+          <span class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px"><i class="fas fa-bullseye"></i></span>
+          <span class="flex-fill">
+            <span class="d-block fw-bold text-success">Kinerja Prioritas (IKP) — pemantauan bulanan</span>
+            <span class="d-block small text-body-secondary">Capaian bulanan program unggulan, program prioritas, dan penugasan khusus tiap perangkat daerah.</span>
+          </span>
+          <i class="fas fa-arrow-right text-success"></i>
+        </a>
+      <?php endif; ?>
+
       <!-- ======================= FILTER ======================= -->
       <form method="get" class="dash-filter mb-4">
         <div class="row g-3 align-items-end">

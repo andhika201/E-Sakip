@@ -31,6 +31,10 @@
     },
     {
       "name": "Target & Rencana Aksi"
+    },
+    {
+      "name": "eKin (token terpisah)",
+      "description": "Endpoint khusus eKin Internal Pringsewu. Token TERPISAH (EKIN_API_TOKEN), hanya GET."
     }
   ],
   "paths": {
@@ -440,6 +444,192 @@
           }
         }
       }
+    },
+    "/api/ekin/opd": {
+      "get": {
+        "tags": ["eKin (token terpisah)"],
+        "summary": "eKin: daftar OPD aktif + kepala",
+        "description": "OPD aktif (tanpa OPD yang dikecualikan dan tanpa id alias 13/210/213). `kepala` = pihak_1 PK jpt/camat tahun itu (PK terbaru).",
+        "security": [
+          {
+            "EkinApiToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/TahunEkin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EkinOpdListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/ekin/pegawai": {
+      "get": {
+        "tags": ["eKin (token terpisah)"],
+        "summary": "eKin: roster pegawai",
+        "description": "Wajib salah satu dari opd_id, q, ids (boleh digabung = AND). Maks 500 baris. opd_id memakai peta alias (8→[8,210], 32→[32,213], 211→[211,13]). Tidak pernah mengirim password, tanggal lahir, tukin, perangkat, atau nomor WA.",
+        "security": [
+          {
+            "EkinApiToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "opd_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "example": 23
+            },
+            "description": "ID OPD (id alias ikut dipetakan)."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "example": "Nurlela"
+            },
+            "description": "Cari nama/NIP, minimal 3 karakter (huruf, angka, spasi, . , ' -)."
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "44,57,253"
+            },
+            "description": "Daftar id dipisah koma (maks 500)."
+          },
+          {
+            "$ref": "#/components/parameters/TahunEkin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EkinPegawaiListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/ekin/pegawai/{pegawai_id}/kinerja": {
+      "get": {
+        "tags": ["eKin (token terpisah)"],
+        "summary": "eKin: sumber RHK seorang pegawai",
+        "description": "PK yang ia tanda tangani (peran_pk), simpul pohon kinerja miliknya + indikator/target/induk (cascading), IKP relevan dengan alasan pj|simpul|kepala_opd (ikp), dan indikator PK-nya dengan target triwulan (pk_indikator).",
+        "security": [
+          {
+            "EkinApiToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PegawaiIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/TahunEkin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EkinKinerjaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/ekin/opd/{opd_id}/ikp": {
+      "get": {
+        "tags": ["eKin (token terpisah)"],
+        "summary": "eKin: IKP OPD (bulanan, triwulan, capaian)",
+        "description": "Rekap IKP aktif OPD untuk satu tahun — angka yang sama dengan layar IKP AKSARA (IkpRekapService::rekapOpd).",
+        "security": [
+          {
+            "EkinApiToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OpdIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/TahunEkin"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EkinIkpOpdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -449,6 +639,12 @@
         "in": "header",
         "name": "api-token",
         "description": "Masukkan token API dari file .env."
+      },
+      "EkinApiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "api-token",
+        "description": "Token KHUSUS eKin (EKIN_API_TOKEN di .env) — berbeda dari token API umum; token umum ditolak di /api/ekin/*."
       }
     },
     "parameters": {
@@ -555,6 +751,28 @@
           "example": 151
         },
         "description": "Filter pejabat penandatangan PK (`pk.pihak_1`)."
+      },
+      "TahunEkin": {
+        "name": "tahun",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100,
+          "example": 2026
+        },
+        "description": "Tahun kinerja (4 digit). Kosong = tahun berjalan."
+      },
+      "PegawaiIdPath": {
+        "name": "pegawai_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "example": 44
+        },
+        "description": "ID pegawai AKSARA (pegawai.id)."
       }
     },
     "responses": {
@@ -1519,6 +1737,612 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SasaranRenaksiBupati"
+            }
+          }
+        }
+      },
+      "EkinKepala": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "pegawai_id": {
+            "type": "integer"
+          },
+          "nama": {
+            "type": "string"
+          },
+          "nip": {
+            "type": "string"
+          },
+          "jabatan": {
+            "type": "string"
+          },
+          "plt": {
+            "type": "boolean"
+          },
+          "plh": {
+            "type": "boolean"
+          },
+          "pk_id": {
+            "type": "integer"
+          },
+          "jenis_pk": {
+            "type": "string",
+            "enum": ["jpt", "camat"]
+          }
+        }
+      },
+      "EkinOpd": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nama_opd": {
+            "type": "string"
+          },
+          "singkatan": {
+            "type": "string",
+            "nullable": true
+          },
+          "jenis": {
+            "type": "string",
+            "nullable": true
+          },
+          "pegawai_opd_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "kepala": {
+            "$ref": "#/components/schemas/EkinKepala"
+          }
+        }
+      },
+      "EkinPegawai": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nip": {
+            "type": "string",
+            "nullable": true
+          },
+          "nama": {
+            "type": "string"
+          },
+          "opd_id": {
+            "type": "integer"
+          },
+          "opd_id_efektif": {
+            "type": "integer",
+            "nullable": true
+          },
+          "opd": {
+            "type": "string",
+            "nullable": true
+          },
+          "jabatan_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "jabatan": {
+            "type": "string",
+            "nullable": true
+          },
+          "jabatan_kategori": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["struktural", "fungsional", "pelaksana", null]
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "pangkat": {
+            "type": "string",
+            "nullable": true
+          },
+          "plt": {
+            "type": "boolean"
+          },
+          "pk_jenis": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Jenis PK tahun itu yang ia tanda tangani sebagai pihak_1 (hanya di GET /api/ekin/pegawai)."
+          }
+        }
+      },
+      "EkinIndikatorSimpul": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nama": {
+            "type": "string"
+          },
+          "satuan": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_tahunan": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_teks": {
+            "type": "string",
+            "nullable": true
+          },
+          "metode": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["sum", "trend_naik", "trend_turun", "trend_flat", null]
+          },
+          "ikp_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "target_bulanan": {
+            "type": "object",
+            "description": "Kunci \"1\"..\"12\"; null = belum diisi.",
+            "additionalProperties": {
+              "type": "number",
+              "nullable": true
+            },
+            "nullable": true
+          }
+        }
+      },
+      "EkinSimpul": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "integer"
+          },
+          "opd_id": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "string",
+            "enum": ["es3", "es4", "pelaksana"]
+          },
+          "level_label": {
+            "type": "string"
+          },
+          "sasaran": {
+            "type": "string"
+          },
+          "peran": {
+            "type": "string",
+            "enum": ["penanggung_jawab", "anggota"]
+          },
+          "jabatan_teks": {
+            "type": "string",
+            "nullable": true
+          },
+          "plt": {
+            "type": "boolean"
+          },
+          "induk": {
+            "type": "object",
+            "properties": {
+              "jenis": {
+                "type": "string",
+                "enum": ["iku", "cascading"]
+              },
+              "level": {
+                "type": "string"
+              },
+              "level_label": {
+                "type": "string"
+              },
+              "node_id": {
+                "type": "integer",
+                "nullable": true
+              },
+              "sasaran_id": {
+                "type": "integer"
+              },
+              "sasaran": {
+                "type": "string"
+              },
+              "indikator_id": {
+                "type": "integer"
+              },
+              "indikator": {
+                "type": "string"
+              },
+              "pemilik_pegawai_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "indikator": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EkinIndikatorSimpul"
+            }
+          }
+        }
+      },
+      "EkinIkpPegawai": {
+        "type": "object",
+        "properties": {
+          "ikp_id": {
+            "type": "integer"
+          },
+          "opd_id": {
+            "type": "integer"
+          },
+          "kategori": {
+            "type": "string"
+          },
+          "program_unggulan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikator": {
+            "type": "string"
+          },
+          "satuan": {
+            "type": "string"
+          },
+          "metode": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_5_tahun": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_tahunan": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_tahunan_teks": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_bulanan": {
+            "type": "object",
+            "description": "Kunci \"1\"..\"12\"; null = belum diisi.",
+            "additionalProperties": {
+              "type": "number",
+              "nullable": true
+            }
+          },
+          "realisasi_bulanan": {
+            "type": "object",
+            "description": "Kunci \"1\"..\"12\"; null = belum diisi.",
+            "additionalProperties": {
+              "type": "number",
+              "nullable": true
+            }
+          },
+          "pj_pegawai_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cascading_sasaran_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cascading_indikator_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "alasan": {
+            "type": "string",
+            "enum": ["pj", "simpul", "kepala_opd"]
+          },
+          "node_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "EkinPkIndikator": {
+        "type": "object",
+        "properties": {
+          "pk_id": {
+            "type": "integer"
+          },
+          "jenis_pk": {
+            "type": "string"
+          },
+          "opd_id": {
+            "type": "integer"
+          },
+          "pk_indikator_id": {
+            "type": "integer"
+          },
+          "sasaran": {
+            "type": "string"
+          },
+          "indikator": {
+            "type": "string"
+          },
+          "jenis_indikator": {
+            "type": "string",
+            "nullable": true
+          },
+          "satuan": {
+            "type": "string",
+            "nullable": true
+          },
+          "target": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_triwulan": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "rencana_aksi": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EkinIkpOpd": {
+        "type": "object",
+        "properties": {
+          "ikp_id": {
+            "type": "integer"
+          },
+          "kategori": {
+            "type": "string"
+          },
+          "program_unggulan": {
+            "type": "string",
+            "nullable": true
+          },
+          "indikator": {
+            "type": "string"
+          },
+          "satuan": {
+            "type": "string"
+          },
+          "metode": {
+            "type": "string",
+            "nullable": true
+          },
+          "target_5_tahun": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_tahunan": {
+            "type": "number",
+            "nullable": true
+          },
+          "target_tahunan_teks": {
+            "type": "string",
+            "nullable": true
+          },
+          "bulan": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "realisasi": {
+                  "type": "number",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "triwulan": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "realisasi": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "capaian": {
+                  "type": "number",
+                  "nullable": true
+                },
+                "status": {
+                  "type": "string"
+                },
+                "status_label": {
+                  "type": "string"
+                },
+                "warna": {
+                  "type": "string"
+                },
+                "berjalan": {
+                  "type": "boolean",
+                  "description": "true = triwulan belum lengkap; capaian dari bulan yang sudah terisi"
+                }
+              }
+            }
+          },
+          "capaian_tahun_berjalan": {
+            "type": "object",
+            "properties": {
+              "persen": {
+                "type": "number",
+                "nullable": true
+              },
+              "status": {
+                "type": "string"
+              },
+              "status_label": {
+                "type": "string"
+              },
+              "warna": {
+                "type": "string"
+              },
+              "sampai_bulan": {
+                "type": "integer",
+                "nullable": true
+              }
+            }
+          },
+          "pj_pegawai_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cascading_sasaran_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cascading_indikator_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "EkinOpdListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "description": "tahun, count"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EkinOpd"
+            }
+          }
+        }
+      },
+      "EkinPegawaiListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "description": "tahun, count, maks (500), terpotong (bool), filter"
+          },
+          "data": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/EkinPegawai"
+            }
+          }
+        }
+      },
+      "EkinKinerjaResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "description": "tahun, pegawai_id, simpul_tersembunyi (simpul milik yang tidak tampil di pohon karena IKU induknya dihentikan/di luar periode)"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "pegawai": {
+                "$ref": "#/components/schemas/EkinPegawai"
+              },
+              "peran_pk": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "pk_id": {
+                      "type": "integer"
+                    },
+                    "jenis": {
+                      "type": "string"
+                    },
+                    "tahun": {
+                      "type": "integer"
+                    },
+                    "opd_id": {
+                      "type": "integer"
+                    },
+                    "pihak_2_pegawai_id": {
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "plt": {
+                      "type": "boolean"
+                    },
+                    "plh": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "cascading": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EkinSimpul"
+                }
+              },
+              "ikp": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EkinIkpPegawai"
+                }
+              },
+              "pk_indikator": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EkinPkIndikator"
+                }
+              }
+            }
+          }
+        }
+      },
+      "EkinIkpOpdResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "meta": {
+            "type": "object",
+            "description": "opd {id,nama_opd,singkatan,jenis}, tahun, kepala_pegawai_id, count"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EkinIkpOpd"
             }
           }
         }

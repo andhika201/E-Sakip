@@ -39,6 +39,9 @@ class ModulePermissionFilter implements FilterInterface
         'renaksi_pk'      => 'pk_bupati',
         'monev_pk'        => 'pk_bupati',
         'tentang_kami'    => 'tentang_kami',
+        // AKSARA+ — Kinerja Prioritas (IKP) lintas OPD
+        'ikp'             => 'ikp_kab',
+        'pemilik-kinerja' => 'pemilik_kinerja',
     ];
 
     /** segmen pertama setelah 'adminopd' => modul permission (konteks OPD) */
@@ -57,6 +60,9 @@ class ModulePermissionFilter implements FilterInterface
         'renaksi_pk'   => 'pk_opd',
         'monev_pk'     => 'pk_opd',
         'tentang_kami' => 'tentang_kami',
+        // AKSARA+ — Kinerja Prioritas (IKP) & Pemilik Kinerja sampai pelaksana
+        'ikp'             => 'ikp_opd',
+        'pemilik-kinerja' => 'pemilik_kinerja',
     ];
 
     public function before(RequestInterface $request, $arguments = null)

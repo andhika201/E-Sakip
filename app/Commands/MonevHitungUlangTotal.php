@@ -43,10 +43,11 @@ class MonevHitungUlangTotal extends BaseCommand
     protected $group       = 'SAKIP';
     protected $name        = 'monev:hitung-ulang';
     protected $description = 'Hitung ulang monev.total dengan aturan Capaian Total yang berlaku.';
-    protected $usage       = 'monev:hitung-ulang [--fix] [--db <nama>]';
+    protected $usage       = 'monev:hitung-ulang [--fix] [--db <nama>] [--metode <kode>]';
     protected $options     = [
         '--fix' => 'benar-benar menulis; tanpa ini hanya laporan',
         '--db'  => 'kerjakan pada basis data lain (mis. salinan uji)',
+        '--metode' => 'hanya baris dengan metode ini (mis. trend_turun setelah rumusnya berubah)',
     ];
 
     public function run(array $params)
@@ -55,6 +56,7 @@ class MonevHitungUlangTotal extends BaseCommand
 
         $kerjakan = array_key_exists('fix', $params) || CLI::getOption('fix');
         $namaDb   = trim((string) (CLI::getOption('db') ?: ''));
+        $metode   = trim((string) (CLI::getOption('metode') ?: ''));
 
         if ($namaDb !== '' && $namaDb !== '1') {
             $cfg             = config('Database')->default;
@@ -91,6 +93,14 @@ class MonevHitungUlangTotal extends BaseCommand
                      AND NOT EXISTS (SELECT 1 FROM target_sub_rencana x
                                       WHERE x.target_rencana_id = m.target_rencana_id))'
         )->getResultArray();
+
+        if ($metode !== '' && $metode !== '1') {
+            CLI::write('Metode     : ' . $metode);
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $r): bool => (string) $r['metode_perhitungan'] === $metode
+            ));
+        }
 
         $ubah = 0;
         $sama = 0;

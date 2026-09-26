@@ -643,10 +643,7 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
           <div class="col-12 col-lg-7">
             <div class="panel">
               <div class="panel-head">
-                <div><h3>Tren Indikator PK Bupati</h3><p>Target &amp; realisasi per triwulan, satu indikator pada satu waktu.</p></div>
-                <div style="min-width: 240px; flex: 1 1 240px;">
-                  <select id="trenPicker" class="form-select form-select-sm" data-no-select2 aria-label="Pilih indikator PK Bupati"></select>
-                </div>
+                <div><h3>Tren Capaian PK Bupati</h3><p>Persentase capaian PK Bupati per tahun, 5 tahun terakhir.</p></div>
               </div>
               <div class="chart-box"><canvas id="chartTren"></canvas></div>
               <p id="trenInfo" class="text-muted mt-3 mb-0" style="font-size:.76rem;"></p>
@@ -1187,71 +1184,72 @@ $sorot = static function (string $ikon, string $warna, string $teks): string {
           }
         }
 
-        var tren = D.kab.tren || [];
-        var picker = document.getElementById('trenPicker');
+        // Tren capaian PK Bupati per TAHUN (5 tahun terakhir). Tahun sebelum
+        // tren.tahun_mulai_engine = input manual admin kabupaten; sesudahnya =
+        // total LAKIP Kabupaten (angka yang sama dengan kartu Capaian PK Bupati).
+        // Lihat KabupatenDashboardService::getBupatiAnnualTrend().
+        var tren = D.kab.tren || {};
+        var titik = tren.titik || [];
         var elTren = document.getElementById('chartTren');
-        var chartTren = null;
+        var trenInfo = document.getElementById('trenInfo');
 
-        var gambarTren = function (idx) {
-          var s = tren[idx];
-          if (!s) return;
-          var d = s.series;
-          var info = document.getElementById('trenInfo');
-          if (chartTren) chartTren.destroy();
-          chartTren = new Chart(elTren, {
-            type: 'bar',
-            data: {
-              labels: ['Triwulan I', 'Triwulan II', 'Triwulan III', 'Triwulan IV'],
-              datasets: [
-                { label: 'Target PK', data: d.target, backgroundColor: 'rgba(63,98,150,.75)', borderRadius: 6, maxBarThickness: 34 },
-                { label: 'Realisasi PK', data: d.capaian, backgroundColor: 'rgba(10,143,80,.85)', borderRadius: 6, maxBarThickness: 34 }
-              ]
-            },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              scales: { y: { beginAtZero: true, grid: { color: '#eef2ef' } }, x: { grid: { display: false } } },
-              plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
-                tooltip: { backgroundColor: '#15311f', padding: 10, cornerRadius: 8,
-                  callbacks: { label: function (c) {
-                    var arr = c.datasetIndex === 0 ? d.label_target : d.label_capaian;
-                    var teks = arr[c.dataIndex];
-                    if (teks === null || teks === undefined) return c.dataset.label + ': belum tersedia';
-                    return c.dataset.label + ': ' + teks + (s.satuan ? ' ' + s.satuan : '');
-                  } } }
-              }
-            }
-          });
-          if (info) {
-            info.innerHTML = s.tersedia
-              ? 'Metode: <strong>' + esc(d.metode_nama) + '</strong>' + (s.satuan ? ' &middot; Satuan: <strong>' + esc(s.satuan) + '</strong>' : '') +
-                (d.predikat ? ' &middot; nilai predikat dipetakan ke skala satuan untuk posisi grafik' : '')
-              : '<span class="text-warning-emphasis"><i class="fas fa-circle-info me-1"></i>Realisasi PK belum tersedia untuk indikator ini' +
-                (s.alasan ? ' — ' + esc(s.alasan) : '') + '.</span>';
-          }
-        };
-
-        if (picker && elTren) {
-          if (!tren.length) {
+        if (elTren) {
+          if (!titik.length) {
             elTren.parentNode.innerHTML = '<div class="empty"><div class="ic"><i class="fas fa-chart-column"></i></div>' +
-              '<p class="mb-0 small">Belum ada indikator PK Bupati untuk tahun ' + D.tahun + '.</p></div>';
-            picker.style.display = 'none';
+              '<p class="mb-0 small">Belum ada data capaian PK Bupati.</p></div>';
           } else {
-            var grup = {};
-            tren.forEach(function (s, i) { (grup[s.indikator] = grup[s.indikator] || []).push(i); });
-            picker.innerHTML = Object.keys(grup).map(function (nama) {
-              return '<optgroup label="' + esc(nama) + '">' + grup[nama].map(function (i) {
-                return '<option value="' + i + '">' + esc(tren[i].label || nama) + (tren[i].tersedia ? '' : ' — belum tersedia') + '</option>';
-              }).join('') + '</optgroup>';
-            }).join('');
-            // Indikator paling berisiko ditampilkan lebih dulu.
-            var awal = tren.findIndex(function (s) { return s.status === 'critical'; });
-            if (awal < 0) awal = tren.findIndex(function (s) { return s.misi; });
-            if (awal < 0) awal = tren.findIndex(function (s) { return s.is_valid; });
-            if (awal < 0) awal = 0;
-            picker.value = String(awal);
-            gambarTren(awal);
-            picker.addEventListener('change', function () { gambarTren(parseInt(picker.value, 10)); });
+            new Chart(elTren, {
+              type: 'bar',
+              data: {
+                labels: titik.map(function (t) { return String(t.tahun); }),
+                datasets: [{
+                  label: 'Capaian PK Bupati',
+                  data: titik.map(function (t) { return t.nilai; }),
+                  backgroundColor: titik.map(function (t) { return t.status ? t.status.color_hex : '#c9d3cd'; }),
+                  borderRadius: 6, maxBarThickness: 48
+                }]
+              },
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                  y: { beginAtZero: true, grid: { color: '#eef2ef' }, ticks: { callback: function (v) { return v + '%'; } } },
+                  x: { grid: { display: false } }
+                },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: { backgroundColor: '#15311f', padding: 10, cornerRadius: 8,
+                    callbacks: {
+                      title: function (c) { return 'Tahun ' + titik[c[0].dataIndex].tahun; },
+                      label: function (c) {
+                        var t = titik[c.dataIndex];
+                        if (t.nilai === null) return 'Belum tersedia';
+                        return 'Capaian: ' + pct(t.nilai) + (t.status ? ' · ' + t.status.name : '');
+                      },
+                      afterLabel: function (c) {
+                        var t = titik[c.dataIndex];
+                        var baris = [t.sumber === 'manual' ? 'Sumber: input manual' : 'Sumber: LAKIP Kabupaten'];
+                        if (t.keterangan) baris.push(t.keterangan);
+                        return baris;
+                      }
+                    } }
+                }
+              }
+            });
+          }
+
+          if (trenInfo && titik.length) {
+            var mulai = tren.tahun_mulai_engine;
+            var manual = titik.filter(function (t) { return t.sumber === 'manual'; });
+            var teks = manual.length
+              ? 'Tahun ' + manual[0].tahun + (manual.length > 1 ? '–' + manual[manual.length - 1].tahun : '') +
+                ' diinput manual; mulai ' + mulai + ' dihitung dari LAKIP Kabupaten.'
+              : 'Dihitung dari LAKIP Kabupaten.';
+            var kosong = titik.filter(function (t) { return t.nilai === null; });
+            if (kosong.length) {
+              teks += ' <span class="text-warning-emphasis"><i class="fas fa-circle-info ms-1 me-1"></i>Belum tersedia: ' +
+                kosong.map(function (t) { return esc(t.tahun) + (t.keterangan ? ' (' + esc(t.keterangan) + ')' : ''); }).join('; ') + '.</span>';
+            }
+            trenInfo.innerHTML = teks;
           }
         }
       }

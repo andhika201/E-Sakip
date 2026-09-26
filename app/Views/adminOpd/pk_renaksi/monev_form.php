@@ -346,11 +346,15 @@ $labelSkala = static function ($nilai) use ($skala) {
                     ' menggunakan metode ' + NAMA_METODE[metode] + '.';
 
                 if (metode === 'trend_turun') {
-                    // Capaian 0 pada indikator "semakin rendah semakin baik" =
-                    // tercapai sempurna. Dipatok 100% agar bukan Infinity.
-                    // Samakan dengan capaian_helper.php bila kebijakannya berubah.
-                    if (Math.abs(capaian) < 1e-9) return tampilkan(100, pesan, false);
-                    return tampilkan(target / capaian * 100, pesan, false);
+                    // (target - (capaian - target)) / target x 100% — sama dengan
+                    // capaian_helper.php & hitungCapaianLakip().
+                    if (Math.abs(target) < 1e-9) {
+                        if (Math.abs(capaian) < 1e-9) return tampilkan(100, pesan, false);
+                        return tampilkan(0, 'Realisasi ' + angkaRingkas(capaian) +
+                            ' sudah tercatat, namun target Triwulan ' + ROMAWI[akhir.quarter] +
+                            ' masih 0; Capaian Total ditulis 0%.', false);
+                    }
+                    return tampilkan((target - (capaian - target)) / target * 100, pesan, false);
                 }
 
                 // trend_naik & trend_flat

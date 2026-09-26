@@ -52,12 +52,9 @@ if (!function_exists('hitungCapaianLakip')) {
         //      dihindari, dan 200% adalah hasil yang konsisten dengan
         //      rumusnya sendiri.
         //
-        // BERBEDA DARI MONEV. Metode "Trend Turun" pada
-        // calculateCapaianTotalPercentage masih memakai target / realisasi,
-        // sehingga satu indikator negatif dapat menampilkan dua angka:
-        // Indeks Risiko Bencana (target 88,82 realisasi 135,15) tampil
-        // 47,84% di LAKIP tetapi 65,72% di MONEV. Perbedaan ini DISADARI
-        // dan ditunda pembahasannya, bukan terlewat.
+        // SAMA DENGAN MONEV. Sejak 26 Sep 2026 metode "Trend Turun" pada
+        // calculateCapaianTotalPercentage memakai rumus yang sama, sehingga
+        // indikator negatif tidak lagi tampil dengan dua angka berbeda.
         // ---------------------------------------------------------------
         if ($jenis === 'indikator negatif' || $jenis === 'negatif') {
             return (1 - ($realisasi - $target) / $target) * 100;

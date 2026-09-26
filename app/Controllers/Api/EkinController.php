@@ -10,7 +10,7 @@ use Throwable;
 /**
  * =====================================================================
  * API untuk eKin Internal Pringsewu (token TERPISAH: filter api-token:ekin,
- * env EKIN_API_TOKEN). Hanya GET. Kontrak: RANCANGAN §2.4 dan
+ * env EKIN_API_TOKEN). Hanya GET. Kontrak: lihat
  * API_DOCUMENTATION.md bagian "API eKin (token terpisah)".
  *
  *   GET api/ekin/opd?tahun=                         OPD aktif + kepala (PK jpt|camat pihak_1)

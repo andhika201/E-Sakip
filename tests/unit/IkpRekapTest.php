@@ -6,9 +6,9 @@ use CodeIgniter\Test\CIUnitTestCase;
  * Rumus IKP (Indikator Kinerja Prioritas): parser angka, rekap triwulan,
  * capaian bulanan, Bagi Rata, dan pemeriksa konsistensi.
  *
- * Angka harapan DLH diambil dari seed demo (ikp_bulanan_2026.csv) dengan
- * aturan AKSARA: hanya bulan yang realisasinya terisi yang ikut dihitung
- * (lihat riset kritik.md §2 A3 / C16).
+ * Angka harapan DLH berasal dari data contoh bank sampah (target dan realisasi
+ * Januari–Agustus 2026) dengan aturan AKSARA: hanya bulan yang realisasinya
+ * terisi yang ikut dihitung (sama dengan calculateCapaianTotalPercentage).
  *
  * @see app/Helpers/ikp_helper.php
  *

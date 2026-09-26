@@ -185,7 +185,11 @@ $statusLabel = static function ($status) {
                             ?? null;
                     }
 
-                    $jenisIndikator = $indikator['jenis_indikator'] ?? ($row['jenis_indikator'] ?? 'indikator positif');
+                    // Jenis kosong TIDAK lagi dianggap positif — lihat catatan di
+                    // app/Views/adminKabupaten/lakip/lakip.php. Capaian dibiarkan
+                    // tak terhitung agar indikator "semakin rendah semakin baik"
+                    // tidak tampil terbalik.
+                    $jenisIndikator = trim((string) ($indikator['jenis_indikator'] ?? ($row['jenis_indikator'] ?? '')));
                     $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
                     $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetTahun;
                     $realisasiCalc = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realisasiNow;

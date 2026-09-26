@@ -182,8 +182,10 @@
                         $target = toFloatComma($target);
                         $realisasi = toFloatComma($realisasi);
 
-                        // validasi dasar
-                        if ($target === null || $target == 0 || $realisasi === null) {
+                        // validasi dasar. Target <= 0 (bukan == 0): target negatif
+                        // membalik tanda persentase dan tidak bermakna — disamakan
+                        // dengan layar Kabupaten, cetak/Excel, dan dashboard.
+                        if ($target === null || $target <= 0 || $realisasi === null) {
                             return null;
                         }
 
@@ -194,10 +196,13 @@
                             $hasil = ($realisasi / $target) * 100;
                         }
 
-                        // indikator negatif (turun = baik): target / realisasi, rumus yang
-                        // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
+// Indikator negatif: (1 - (realisasi - target) / target) x 100%
+// Setara (2 x target - realisasi) / target x 100% — rumus baku SAKIP,
+// ditetapkan 24 Sep 2026. Boleh minus bila realisasi > 2x target, dan
+// realisasi 0 memberi 200%. Penjelasan lengkap ada di
+// app/Helpers/lakip_helper.php.
                         elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-                            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
+                            $hasil = (1 - ($realisasi - $target) / $target) * 100;
                         } else {
                             return null;
                         }
@@ -207,13 +212,13 @@
                             return null;
                         }
 
-                        // batasi nilai ekstrem ke ATAS saja. Negatif dibiarkan:
-                        // realisasi minus terhadap target plus memang capaian
-                        // minus — dipotong ke 0% menyembunyikan melesetnya,
-                        // dan cetak/Excel serta dashboard menampilkannya apa adanya.
-                        if ($hasil > 200)
-                            $hasil = 200;
-
+                        // TANPA batas atas maupun bawah — apa adanya, sama dengan
+                        // cetak/Excel, layar Kabupaten, dan dashboard. Pemotongan
+                        // ke 200% dicabut karena membuat satu indikator punya dua
+                        // angka berbeda tergantung dilihat di layar atau di PDF.
+                        // Nilai minus juga dibiarkan: realisasi minus terhadap
+                        // target plus memang capaian minus, dan memotongnya ke 0%
+                        // menyembunyikan seberapa jauh melesetnya.
                         return $hasil;
                     }
                 }
@@ -431,7 +436,14 @@
                                             ?? null;
                                     }
 
-                                    $jenisIndikator = $indikator['jenis_indikator'] ?? ($row['jenis_indikator'] ?? 'indikator positif');
+                                    // Jenis kosong TIDAK lagi dianggap positif — lihat catatan di
+                                    // app/Views/adminKabupaten/lakip/lakip.php.
+                                    $jenisIndikator = trim((string) ($indikator['jenis_indikator'] ?? ($row['jenis_indikator'] ?? '')));
+                                    $jenisTakTentu = ! in_array(
+                                        strtolower($jenisIndikator),
+                                        ['positif', 'indikator positif', 'negatif', 'indikator negatif'],
+                                        true
+                                    );
 
                                     $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
 
@@ -501,10 +513,15 @@
                                         </td>
 
                                         <td class="text-center">
-                                            <?php if ($capaianPersen === null): ?>
-                                                -
-                                            <?php else: ?>
+                                            <?php if ($capaianPersen !== null): ?>
                                                 <?= formatAngkaID($capaianPersen, 2) ?>%
+                                            <?php elseif ($jenisTakTentu): ?>
+                                                <span class="text-warning"
+                                                    title="Jenis indikator (positif/negatif) belum ditentukan, sehingga capaian belum dapat dihitung. Lengkapi lewat revisi IKU.">
+                                                    <i class="fas fa-triangle-exclamation me-1"></i>-
+                                                </span>
+                                            <?php else: ?>
+                                                -
                                             <?php endif; ?>
                                         </td>
 

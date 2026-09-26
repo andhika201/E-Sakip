@@ -32,20 +32,23 @@ use Throwable;
  * YANG DIBEKUKAN: MASUKAN, BUKAN HASIL HITUNG
  *
  * Ini keputusan penting dan tidak kentara. `hitungCapaianLakip()` ada TIGA
- * definisi berbeda di proyek ini, semuanya dijaga `function_exists()`:
+ * definisi di proyek ini, semuanya dijaga `function_exists()`:
  *
- *   app/Helpers/lakip_helper.php          -> TANPA clamp   (dipakai cetak & Excel)
- *   views/adminOpd/lakip/lakip.php        -> clamp 0..200% (dipakai layar OPD)
- *   views/adminKabupaten/lakip/lakip.php  -> clamp 0..200% (dipakai layar Kab)
+ *   app/Helpers/lakip_helper.php          -> dipakai cetak & Excel
+ *   views/adminOpd/lakip/lakip.php        -> dipakai layar OPD
+ *   views/adminKabupaten/lakip/lakip.php  -> dipakai layar Kab
  *
- * Jadi layar dan PDF memang SUDAH menampilkan persentase berbeda untuk capaian
- * ekstrem. Kalau snapshot menyimpan satu angka persen jadi, salah satu dari
- * keduanya pasti berubah — pelanggaran backward-compatibility yang nyaris
- * mustahil disadari.
+ * Dulu ketiganya BERBEDA: helper tanpa batas, kedua view memotong ke 200%,
+ * sehingga layar dan PDF menampilkan angka berbeda untuk capaian ekstrem
+ * (Persentase Daerah Rawan Pangan: 200% di layar, 1.125% di PDF). Sejak
+ * 23 Sep 2026 pemotongan itu dicabut dan ketiganya memberi hasil yang SAMA;
+ * batas 0-200% kini hanya dipasang pada perhitungan RATA-RATA di
+ * LakipKabupatenCapaianService::ringkasan().
  *
- * Maka yang dibekukan adalah BAHAN MENTAHNYA (target, realisasi, satuan, jenis
- * indikator, nilai *_hitung), dan setiap view tetap menghitung persentasenya
- * sendiri seperti sekarang. Tidak ada satu angka pun yang berubah.
+ * Yang dibekukan tetap BAHAN MENTAHNYA (target, realisasi, satuan, jenis
+ * indikator, nilai *_hitung), bukan angka persen jadi — supaya perubahan
+ * rumus di kemudian hari tidak membuat arsip lama ikut bergeser, dan supaya
+ * ketiga definisi di atas boleh disatukan tanpa menyentuh isi snapshot.
  *
  * Konsekuensi lain dari prinsip yang sama: rehidrasi() mengembalikan
  * ['rows', 'lakipMap'] dengan bentuk PERSIS seperti LakipModel::getLakipByMode(),

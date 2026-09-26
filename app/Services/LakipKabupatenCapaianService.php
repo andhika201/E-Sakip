@@ -28,13 +28,14 @@ use App\Services\Version\LakipSourceService;
  *   2. Tahun yang sudah DIFINALKAN dibaca dari arsip beku (lakip_snapshot),
  *      bukan tabel hidup — snapshot draft SENGAJA tidak dipakai, sama seperti
  *      layar.
- *   3. Capaian % per indikator = rumus layar (positif/negatif, batas atas 200%,
- *      negatif dibiarkan), kolom perhitungan (target_hitung/capaian_hitung)
+ *   3. Capaian % per indikator = rumus layar (positif/negatif, apa adanya
+ *      tanpa batas), kolom perhitungan (target_hitung/capaian_hitung)
  *      didahulukan bila diisi.
  *
- * Rumusnya DITULIS ULANG di sini, bukan memuat helper('lakip'): helper itu
- * versi TANPA batas atas (untuk cetak/Excel), sedangkan yang dilihat pemakai di
- * layar dibatasi 200%. Dashboard harus cocok dengan layar.
+ * Rumusnya DITULIS ULANG di sini, bukan memuat helper('lakip'), semata supaya
+ * service ini tidak bergantung pada helper yang dimuat per-request. Sejak
+ * 23 Sep 2026 keduanya memberi hasil yang SAMA PERSIS: batas 200% yang dulu
+ * membedakan layar dari cetak sudah dicabut dari semua tampilan.
  * =====================================================================
  */
 class LakipKabupatenCapaianService
@@ -84,7 +85,11 @@ class LakipKabupatenCapaianService
                 $realisasi = $item['capaian_hitung'];
             }
 
-            $jenis  = (string) ($r['jenis_indikator'] ?? 'indikator positif');
+            // Jenis kosong TIDAK dianggap positif. capaianPersen() memulangkan
+            // null dan alasan() menandainya 'missing_method' — indikator itu
+            // masuk hitungan belum_valid sehingga rata-rata tahunan tidak
+            // dipublikasikan di atas angka yang arahnya ditebak.
+            $jenis  = trim((string) ($r['jenis_indikator'] ?? ''));
             $persen = $item === null ? null : self::capaianPersen($target, $realisasi, $jenis);
 
             [$reasonCode, $reason] = $this->alasan($item, $target, $realisasi, $jenis, $persen);
@@ -100,12 +105,18 @@ class LakipKabupatenCapaianService
 
             if ($persen !== null) {
                 $valid++;
-                // Per indikator ditampilkan apa adanya (boleh minus), tetapi
-                // ke RATA-RATA kontribusinya dibatasi 0–200%: satu indikator
-                // -773% akan menyeret total 11 indikator dari 84% ke 14% dan
-                // menutupi sepuluh lainnya. Batas atas 200% sudah dipasang
-                // capaianPersen(); batas bawah 0% adalah pasangannya.
-                $jumlah += max(0.0, $persen);
+                // Per indikator ditampilkan apa adanya (boleh minus, boleh di
+                // atas 200%), tetapi ke RATA-RATA kontribusinya dibatasi
+                // 0–200%. Tanpa batas bawah, satu indikator -773% menyeret
+                // total 11 indikator dari 84% ke 14% dan menutupi sepuluh
+                // lainnya; tanpa batas atas, satu indikator 183.907% membuat
+                // rata-ratanya 16.700% — dua-duanya angka yang tidak berarti
+                // apa-apa.
+                //
+                // KEDUA batas dipasang DI SINI. Sebelumnya batas atas menumpang
+                // pada capaianPersen(), sehingga mencabut batas di tampilan
+                // ikut menjebol rata-rata tanpa ada yang menyadarinya.
+                $jumlah += min(200.0, max(0.0, $persen));
             }
 
             $daftar[] = [
@@ -167,10 +178,18 @@ class LakipKabupatenCapaianService
     /**
      * Rumus layar LAKIP. Lihat catatan kelas.
      *
-     * Hanya batas ATAS (200%) yang dipasang. Nilai negatif dibiarkan apa
-     * adanya: realisasi -38,67 terhadap target 5 memang berarti -773% —
-     * memotongnya ke 0% menyembunyikan seberapa jauh melesetnya, dan cetak/
-     * Excel (helper lakip) sejak awal tidak pernah memotongnya.
+     * TANPA batas atas maupun bawah — persentasenya apa adanya, persis sama
+     * dengan layar Kabupaten, layar OPD, cetak, dan Excel.
+     *
+     * Batas 200% dulu dipasang di sini. Akibatnya satu indikator punya DUA
+     * angka: Persentase Daerah Rawan Pangan (target 9, realisasi 0,8) tampil
+     * 200% di layar tetapi 1.125% di PDF — prestasi sesungguhnya tersembunyi
+     * justru di layar yang paling sering dibuka. Nilai negatif juga dibiarkan:
+     * realisasi -38,67 terhadap target 5 memang berarti -773%, dan memotongnya
+     * ke 0% menyembunyikan seberapa jauh melesetnya.
+     *
+     * Pembatasan 0-200% TIDAK hilang, hanya pindah ke tempat yang memang
+     * membutuhkannya: kontribusi per indikator ke RATA-RATA di ringkasan().
      */
     public static function capaianPersen($target, $realisasi, string $jenisIndikator): ?float
     {
@@ -186,14 +205,17 @@ class LakipKabupatenCapaianService
         if ($jenis === 'indikator positif' || $jenis === 'positif') {
             $hasil = ($realisasi / $target) * 100;
         } elseif ($jenis === 'indikator negatif' || $jenis === 'negatif') {
-            // Semakin rendah semakin baik: target / realisasi — rumus yang
-            // sama dengan metode "Trend Turun" MONEV. Realisasi 0 = 100%.
-            $hasil = $realisasi <= 0 ? 100.0 : ($target / $realisasi) * 100;
+// Indikator negatif: (1 - (realisasi - target) / target) x 100%
+// Setara (2 x target - realisasi) / target x 100% — rumus baku SAKIP,
+// ditetapkan 24 Sep 2026. Boleh minus bila realisasi > 2x target, dan
+// realisasi 0 memberi 200%. Penjelasan lengkap ada di
+// app/Helpers/lakip_helper.php.
+            $hasil = (1 - ($realisasi - $target) / $target) * 100;
         } else {
             return null;
         }
 
-        return min($hasil, 200);
+        return $hasil;
     }
 
     /**

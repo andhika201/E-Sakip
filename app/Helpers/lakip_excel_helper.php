@@ -328,7 +328,10 @@ if (!function_exists('lakip_kab_excel')) {
         foreach ($rows as $r) {
             $targetId  = (int) ($r['target_id'] ?? 0);
             $lakipItem = $lakipMap[$targetId] ?? null;
-            $jenis     = $r['jenis_indikator'] ?? 'indikator positif';
+            // Jenis kosong TIDAK dianggap positif; hitungCapaianLakip()
+            // mengembalikan null dan selnya ditulis '-'. Menebak positif
+            // membalik arah indikator "semakin rendah semakin baik".
+            $jenis     = trim((string) ($r['jenis_indikator'] ?? ''));
             $targetNow = $r['target_tahun_ini'] ?? null;
             $realNow   = $lakipItem['capaian_tahun_ini'] ?? null;
             $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetNow;
@@ -439,7 +442,8 @@ if (!function_exists('lakip_opd_excel')) {
                     $targetTahun = $indikator['target_tahun_ini'] ?? $indikator['target'] ?? $group['target_tahun_ini'] ?? $group['target'] ?? null;
                 }
 
-                $jenis   = $indikator['jenis_indikator'] ?? ($group['jenis_indikator'] ?? 'indikator positif');
+                // Jenis kosong TIDAK dianggap positif (lihat catatan di atas).
+                $jenis   = trim((string) ($indikator['jenis_indikator'] ?? ($group['jenis_indikator'] ?? '')));
                 $realNow = $lakipItem['capaian_tahun_ini'] ?? null;
                 $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetTahun;
                 $realCalc   = (isset($lakipItem['capaian_hitung']) && $lakipItem['capaian_hitung'] !== '') ? $lakipItem['capaian_hitung'] : $realNow;

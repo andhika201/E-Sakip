@@ -593,6 +593,19 @@ trait IkuFormTrait
                 return 'Satuan pada ' . $label . ' terlalu panjang (maksimal 50 karakter).';
             }
 
+            // Jenis indikator WAJIB. Tanpa ini arah penilaiannya tidak diketahui,
+            // dan LAKIP tidak bisa menghitung capaiannya sama sekali — indikator
+            // "semakin rendah semakin baik" yang jenisnya kosong pernah tampil
+            // 110,71% padahal capaiannya 90,32% (Tingkat Pengangguran Terbuka
+            // 2025). Sejak fallback "anggap positif" dicabut, jenis kosong
+            // membuat kolom Capaian jadi '-', jadi lebih baik ditolak di sini
+            // daripada baru ketahuan setahun kemudian saat LAKIP disusun.
+            if (! in_array($ind['jenis_indikator'], ['positif', 'negatif'], true)) {
+                return 'Jenis Indikator pada ' . $label . ' wajib dipilih '
+                    . '(Positif = naik semakin baik, Negatif = turun semakin baik). '
+                    . 'Tanpa itu capaian LAKIP indikator ini tidak dapat dihitung.';
+            }
+
             $error = $this->safeTextError([
                 $label                              => $ind['indikator'],
                 'Definisi Operasional pada ' . $label => $ind['definisi'],

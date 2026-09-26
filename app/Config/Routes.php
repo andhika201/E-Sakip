@@ -131,6 +131,9 @@ $routes->group(
         $routes->get('dashboard/status-opd/(:segment)', 'AdminKabupatenController::statusOpd/$1');
         $routes->get('dashboard/misi/(:num)', 'AdminKabupatenController::misiDetail/$1');
         $routes->get('dashboard/anggaran-kinerja', 'AdminKabupatenController::anggaranKinerja');
+        // Capaian PK Bupati tahun sebelum 2025 (input manual) untuk grafik tren tahunan.
+        $routes->get('dashboard/capaian-historis', 'AdminKab\CapaianHistorisController::index');
+        $routes->post('dashboard/capaian-historis/save', 'AdminKab\CapaianHistorisController::save');
 
         // VERIFIKASI pengajuan versi dokumen (§17, §47).
         // Segmen 'verifikasi' sengaja TIDAK dipetakan di ModulePermissionFilter:

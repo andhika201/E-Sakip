@@ -127,9 +127,18 @@ $badge = static function (string $status): array {
                                 <i class="fa-solid fa-eye"></i> Lihat
                             </a>
 
-                            <?php if ($r['status'] === 'draft' && $bolehRevisi): ?>
+                            <?php /* Sunting kini tidak lagi khusus draft: pemegang wewenang
+                                     pengesahan boleh menyunting revisi yang sudah berlaku
+                                     secara langsung, sejalan dengan RPJMD & Renstra.
+                                     Aturannya dihitung controller (boleh_sunting) supaya
+                                     tombol di sini tidak pernah berbeda dari penjaga di
+                                     revisiSunting(). */ ?>
+                            <?php if (! empty($r['boleh_sunting'])): ?>
                                 <a href="<?= base_url($baseUrl . '/revisi/sunting/' . (int) $r['id']) ?>"
-                                   class="btn btn-sm btn-warning mb-1">
+                                   class="btn btn-sm btn-warning mb-1"
+                                   title="<?= $r['status'] === 'draft'
+                                        ? 'Sunting isi draft'
+                                        : 'Sunting isi revisi yang sudah berlaku' ?>">
                                     <i class="fa-solid fa-pen"></i> Sunting
                                 </a>
 
@@ -216,10 +225,9 @@ $badge = static function (string $status): array {
                             <?php $izin = $r['izin_keadaan'] ?? []; ?>
 
                             <?php if (! empty($izin['sedang_disunting'])): ?>
-                                <a href="<?= base_url($baseUrl . '/revisi/sunting/' . (int) $r['id']) ?>"
-                                   class="btn btn-sm btn-warning mb-1">
-                                    <i class="fa-solid fa-pen"></i> Perbaiki
-                                </a>
+                                <?php /* Tombol suntingnya sudah tercetak di atas lewat
+                                         boleh_sunting; di sini cukup penanda bahwa yang
+                                         membukanya adalah izin, bukan wewenang sendiri. */ ?>
                                 <span class="badge bg-success-subtle text-success-emphasis border mb-1">
                                     izin terbuka
                                 </span>

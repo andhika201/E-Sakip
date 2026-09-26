@@ -177,6 +177,37 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
         </div>
     </div>
 
+<?php elseif (! empty($bolehSunting) && ($revisi['status'] ?? '') !== 'draft'): ?>
+    <?php /* Pemegang wewenang pengesahan boleh menyunting revisi berlaku/arsip
+             secara LANGSUNG, tanpa mengajukan izin — sejalan dengan RPJMD &
+             Renstra. Kotak ini menggantikan "Arsip beku" bagi mereka, tetapi
+             tetap menyebut akibatnya, yang berbeda antara revisi berlaku dan
+             arsip yang sudah digantikan. */ ?>
+    <?php $sudahDigantikan = ($revisi['status'] ?? '') === 'superseded'; ?>
+    <div class="alert alert-warning">
+        <div class="fw-semibold mb-1">
+            <i class="fa-solid fa-unlock me-1"></i>
+            <?= $sudahDigantikan
+                ? 'Anda berwenang membetulkan arsip versi ini'
+                : 'Anda berwenang menyunting revisi yang sedang berlaku ini' ?>
+        </div>
+        <div class="small mb-2">
+            <?php if ($sudahDigantikan): ?>
+                Versi ini sudah digantikan versi yang lebih baru. Perbaikannya berhenti
+                di arsip dan <strong>mengubah bacaan LAKIP</strong> tahun-tahun yang
+                dipayunginya; IKU berjalan tidak ikut berubah.
+            <?php else: ?>
+                Perbaikan tersimpan pada arsip revisi ini. Agar <strong>IKU berjalan</strong>
+                ikut mengikuti, sahkan ulang revisi ini sesudah menyunting.
+            <?php endif; ?>
+            Seluruh suntingan tercatat di jejak audit revisi.
+        </div>
+        <a class="btn btn-primary btn-sm"
+           href="<?= base_url($baseUrl . '/revisi/sunting/' . (int) $revisi['id']) ?>">
+            <i class="fa-solid fa-pen me-1"></i>Sunting Isi Revisi
+        </a>
+    </div>
+
 <?php elseif (! empty($keadaanIzin['terkunci'])): ?>
     <div class="alert alert-light border">
         <div class="fw-semibold mb-1">
@@ -334,11 +365,24 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
         <table class="table table-bordered table-striped align-middle small revisi-tabel" data-no-paginate>
             <thead class="table-success">
                 <tr>
+                    <?php /* Kolomnya disamakan dengan menu IKU (templates/iku/_tabel.php)
+                             supaya isi sebuah revisi bisa disandingkan langsung dengan
+                             dokumen berjalan. Definisi Operasional, Formula, Sumber Data,
+                             dan Penanggung Jawab SUDAH dibekukan ke arsip sejak awal —
+                             hanya saja dahulu tidak pernah ditampilkan di sini.
+                             Kolom OPD tidak ditiru: satu revisi selalu satu lingkup.
+                             Kolom Aksi juga tidak: id di sini milik arsip, jadi tombolnya
+                             akan menunjuk baris yang salah. Kolom "Perubahan" DIPERTAHANKAN
+                             walau menu tidak punya — justru itu isi khas sebuah revisi. */ ?>
                     <th rowspan="2" style="width:40px">No</th>
                     <th rowspan="2">Sasaran</th>
                     <th rowspan="2">Indikator Kinerja Utama</th>
+                    <th rowspan="2">Definisi Operasional</th>
+                    <th rowspan="2">Formula / Rumusan Perhitungan</th>
                     <th rowspan="2" style="width:90px">Satuan</th>
-                    <th colspan="<?= max(1, count($years)) ?>">Target per Tahun</th>
+                    <th colspan="<?= max(1, count($years)) ?>">Target Capaian per Tahun</th>
+                    <th rowspan="2">Sumber Data</th>
+                    <th rowspan="2">Penanggung Jawab</th>
                     <th rowspan="2" style="width:120px">Perubahan</th>
                 </tr>
                 <tr>
@@ -360,7 +404,7 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
                             <?php endif; ?>
 
                             <?php if (! $ind): ?>
-                                <td colspan="<?= 3 + max(1, count($years)) ?>" class="text-center text-secondary">
+                                <td colspan="<?= 7 + max(1, count($years)) ?>" class="text-center text-secondary">
                                     Belum ada indikator pada sasaran ini.
                                 </td>
                             <?php else: ?>
@@ -375,11 +419,15 @@ $aksiIzin    = base_url($baseUrl . '/revisi/izin');
                                         <div class="sel-kecil text-secondary"><?= esc($ind['catatan_perubahan']) ?></div>
                                     <?php endif; ?>
                                 </td>
+                                <td class="text-start"><?= esc($ind['definisi'] ?? '') ?: '-' ?></td>
+                                <td class="text-start"><?= esc($ind['rumusan_perhitungan'] ?? '') ?: '-' ?></td>
                                 <td class="text-center"><?= esc($ind['satuan_nama'] ?: ($ind['satuan'] ?: '-')) ?></td>
                                 <?php foreach ($years as $th): ?>
                                     <td class="text-center"><?= esc($ind['target'][$th]['target'] ?? '-') ?></td>
                                 <?php endforeach; ?>
                                 <?php if (empty($years)): ?><td class="text-center">-</td><?php endif; ?>
+                                <td class="text-start"><?= esc($ind['sumber_data'] ?? '') ?: '-' ?></td>
+                                <td class="text-start"><?= esc($ind['penanggung_jawab'] ?? '') ?: '-' ?></td>
                                 <td class="text-center">
                                     <?php [$kelas, $label] = $tanda((string) $ind['jenis_perubahan']); ?>
                                     <span class="badge <?= $kelas ?>"><?= $label ?></span>

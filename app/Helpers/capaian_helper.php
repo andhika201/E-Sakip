@@ -214,7 +214,7 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
      *   sum         -> SUM(capaian terisi) / SUM(target pada triwulan yang sama) x 100
      *   trend_naik  -> capaian triwulan terakhir / target triwulan itu x 100
      *   trend_flat  -> sama dengan trend_naik (target antar triwulan biasanya tetap)
-     *   trend_turun -> target triwulan terakhir / capaian triwulan itu x 100
+     *   trend_turun -> (target - (capaian - target)) / target x 100, triwulan terakhir
      *
      * "Triwulan terakhir" = triwulan terisi dengan nomor terbesar (Q4 > Q3 > Q2 > Q1),
      * jadi Q1 & Q3 terisi sementara Q2 kosong tetap memakai Q3.
@@ -424,20 +424,36 @@ if (!function_exists('calculateCapaianTotalPercentage')) {
             . ' menggunakan metode ' . capaianMetodeNama($method) . '.';
 
         if ($method === 'trend_turun') {
-            // Capaian 0 pada indikator "semakin rendah semakin baik" = target
-            // tercapai sempurna. Dipatok 100% supaya tidak jadi Infinity.
-            // KEBIJAKAN: ubah angka 100 di bawah bila nanti ada batas maksimal
-            // persentase yang disepakati (mis. dibatasi 100% atau 200%).
-            if (abs($capaian) < 1e-9) {
-                $hasil['percentage']   = 100.0;
-                $hasil['status']       = 'calculated';
-                $hasil['target_total'] = $target;
-                $hasil['actual_total'] = $capaian;
+            // Rumus baku SAKIP indikator negatif, SAMA dengan hitungCapaianLakip():
+            //
+            //     (target - (capaian - target)) / target x 100%
+            //
+            // Ditetapkan pemilik dokumen 26 Sep 2026, menggantikan target / capaian
+            // (dulu Indeks Risiko Bencana target 88,82 realisasi 135,15 tampil
+            // 65,72% di MONEV tetapi 47,84% di LAKIP). Boleh minus bila capaian
+            // lebih dari 2x target; capaian 0 memberi 200%.
+            if (abs($target) < 1e-9) {
+                // Target 0 pada "semakin rendah semakin baik": capaian 0 = tercapai
+                // sempurna (100%); capaian > 0 tidak bisa dipersenkan (pembagi 0).
+                if (abs($capaian) < 1e-9) {
+                    $hasil['percentage']   = 100.0;
+                    $hasil['status']       = 'calculated';
+                    $hasil['target_total'] = $target;
+                    $hasil['actual_total'] = $capaian;
 
-                return $hasil;
+                    return $hasil;
+                }
+
+                return $takTerukur(
+                    $hasil,
+                    'actual_without_target',
+                    'Realisasi ' . capaianAngkaRingkas($capaian)
+                        . ' sudah tercatat, namun target Triwulan '
+                        . capaianRomawi($akhir['quarter']) . ' masih 0; Capaian Total ditulis 0%.'
+                );
             }
 
-            $hasil['percentage']   = round($target / $capaian * 100, 2);
+            $hasil['percentage']   = round(($target - ($capaian - $target)) / $target * 100, 2);
             $hasil['status']       = 'calculated';
             $hasil['target_total'] = $target;
             $hasil['actual_total'] = $capaian;

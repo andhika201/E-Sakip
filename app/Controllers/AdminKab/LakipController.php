@@ -839,7 +839,9 @@ class LakipController extends BaseController
             'indikator'     => [
                 'indikator_sasaran' => $target['indikator_sasaran'] ?? '',
                 'satuan'            => $target['satuan'] ?? '',
-                'jenis_indikator'   => $target['jenis_indikator'] ?? 'positif',
+                // Jangan mengaku 'positif' saat jenisnya memang belum ditentukan;
+                // view menampilkan '-' supaya operator tahu ada yang kurang.
+                'jenis_indikator'   => $target['jenis_indikator'] ?? null,
             ],
             'target'        => $target,
             'opdInfo'       => $opdId !== null ? $this->opdModel->find($opdId) : null,

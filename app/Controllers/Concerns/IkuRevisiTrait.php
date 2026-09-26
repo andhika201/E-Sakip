@@ -335,10 +335,44 @@ trait IkuRevisiTrait
         ]);
     }
 
-    /** Bolehkah isi revisi ini diubah sekarang. */
+    /**
+     * Bolehkah isi revisi ini diubah sekarang.
+     *
+     * =====================================================================
+     * PEMILIK GARIS WAKTU BOLEH MENYUNTING LANGSUNG
+     *
+     * Semula revisi yang sudah BERLAKU/SUPERSEDED hanya terbuka lewat Izin
+     * Sunting. Atas permintaan pemilik dokumen (23 Sep 2026) pemegang
+     * wewenang pengesahan (`*.revisi_sahkan`) kini boleh menyuntingnya
+     * langsung — sejalan dengan RPJMD & Renstra, yang memberi hak sama
+     * kepada pemegang `.version.publish`
+     * (DokumenVersiTrait::versiBolehSuntingIsi).
+     *
+     * Jalur Izin Sunting TIDAK dihapus: ia tetap satu-satunya cara bagi OPD
+     * yang tidak memegang wewenang pengesahan, dan seluruh jejaknya tetap
+     * tercatat seperti sebelumnya.
+     *
+     * Status MENUNGGU tetap tertutup bagi siapa pun: isinya sedang dibaca
+     * verifikator, dan mengubahnya di tengah jalan membuat mereka memutuskan
+     * sesuatu yang sudah berbeda. revisiKeadaanIzin() memulangkan keadaan
+     * kosong untuk status itu, jadi penjaganya sudah ada — pemeriksaan
+     * status di bawah membuatnya kentara, bukan tersirat.
+     * =====================================================================
+     */
     private function revisiBolehDisunting(array $revisi): bool
     {
-        if ($revisi['status'] === IkuRevisiModel::STATUS_DRAFT) {
+        $status = (string) ($revisi['status'] ?? '');
+
+        if ($status === IkuRevisiModel::STATUS_DRAFT) {
+            return true;
+        }
+
+        if ($status !== IkuRevisiModel::STATUS_BERLAKU
+            && $status !== IkuRevisiModel::STATUS_SUPERSEDED) {
+            return false;
+        }
+
+        if ($this->bolehSahkanRevisi()) {
             return true;
         }
 
@@ -724,6 +758,11 @@ trait IkuRevisiTrait
         // =============================================================
         foreach ($daftar as &$baris) {
             $baris['izin_keadaan']  = $this->revisiKeadaanIzin($baris);
+            // Aturan yang SAMA dengan revisiSunting() — lihat
+            // revisiBolehDisunting(). Dihitung di sini supaya tombol pada
+            // daftar dan pada halaman detail tidak pernah berbeda pendapat.
+            $baris['boleh_sunting'] = $this->bolehRevisi()
+                && $this->revisiBolehDisunting($baris);
             $baris['hapus_keadaan'] = $this->revisiKeadaanHapus($baris);
         }
         unset($baris);
@@ -1125,6 +1164,10 @@ trait IkuRevisiTrait
             'years'   => range((int) $revisi['tahun_mulai'], (int) $revisi['tahun_akhir']),
             'baseUrl' => $this->revisiBaseUrl(),
             'keadaanIzin'    => $this->revisiKeadaanIzin($revisi),
+            // Aturan yang SAMA dengan penjaga di revisiSunting(), supaya tombol
+            // pada daftar, pada halaman ini, dan penjaganya tidak pernah
+            // berbeda pendapat.
+            'bolehSunting'   => $this->bolehRevisi() && $this->revisiBolehDisunting($revisi),
             'keadaanHapus'   => $this->revisiKeadaanHapus($revisi),
             // Tahun berlaku bisa diubah pada revisi mana pun yang masih hidup
             // — draft maupun yang sedang berlaku, Kondisi Awal termasuk.

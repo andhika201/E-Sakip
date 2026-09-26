@@ -208,17 +208,47 @@ trait DokumenVersiTrait
             foreach ($daftar as &$d) {
                 $d['badge']  = $resolver->badge($d);
                 $d['rentang'] = $resolver->rentangTeks($d);
-                // Sunting & hapus langsung dari daftar — aturannya SAMA persis
-                // dengan yang dipakai halaman Lihat, supaya tombol di dua
-                // tempat tidak pernah berbeda pendapat.
-                $d['boleh_sunting'] = $approval->bolehSunting($d) && $bolehSuntingDraft;
+                // Sunting & hapus langsung dari daftar. Sunting kini berlaku
+                // untuk draft MAUPUN versi yang sudah ditetapkan — aturan
+                // lengkapnya di versiBolehSuntingIsi(). Aturannya disalin apa
+                // adanya dari halaman Lihat supaya tombol di dua tempat tidak
+                // pernah berbeda pendapat.
+                $d['boleh_sunting'] = $this->versiBolehSuntingIsi($d, $scope);
+                $d['sudah_terbit']  = $d['status'] === DokumenVersiModel::STATUS_PUBLISHED;
                 $d['keadaan_hapus'] = $this->versiKeadaanHapus($d);
+
+                $d['boleh_keterangan'] = $approval->bolehUbahKeterangan($d) && $bolehSuntingDraft;
+                $d['boleh_tanggal_baseline'] = ($this->versiBoleh('create')
+                        && $approval->bolehPerbaikiTanggalBaseline($d))
+                    || $this->versiBolehGeserTanggal($d, $scope);
             }
             unset($d);
+
+            // =============================================================
+            // KEADAAN IZIN SUNTING IKUT KE DAFTAR VERSI
+            //
+            // Versi yang sudah ditetapkan hanya terbuka bagi pemilik garis
+            // waktu (*.version.publish) atau pemegang izin sunting yang
+            // berlaku. Bagi operator OPD — yang hanya punya update_draft —
+            // daftar ini sebelumnya tidak menawarkan apa pun selain "Lihat",
+            // tanpa menyebut SEBABNYA maupun jalan keluarnya, sehingga tampak
+            // seolah menu ini memang tidak menyediakan penyuntingan.
+            //
+            // Permohonannya sendiri diajukan dari MENU dokumen (per periode,
+            // lewat modal di sana), bukan per versi — jadi yang ditaruh di
+            // sini adalah keadaan permohonan + penunjuk ke tempat formnya.
+            // =============================================================
+            $izinSvc = new IzinSuntingService();
+            $izin     = $izinSvc->siap() ? $izinSvc->berjalan($scope) : null;
 
             $blok[] = [
                 'periode'  => $p['periode'],
                 'scope'    => $scope,
+                'izin'     => $izin,
+                // Benar hanya bila pemakai memang TIDAK bisa menyunting versi
+                // terbit karena wewenang — bukan karena tidak punya izin baca.
+                'izin_perlu' => ! $this->versiBoleh('publish') && $this->versiBoleh('update_draft'),
+                'izin_url'   => base_url($this->versiBaseUrl()),
                 'daftar'   => $daftar,
                 'sekarang' => $sekarang,
                 'konflik'  => $konflik,
@@ -353,7 +383,13 @@ trait DokumenVersiTrait
             'galatValidasi' => $baris['status'] === DokumenVersiModel::STATUS_DRAFT
                 ? $timeline->validasi((int) $id)
                 : [],
-            'bolehSunting'  => $approval->bolehSunting($baris) && $this->versiBoleh('update_draft'),
+            // Aturan yang SAMA dengan daftar versi (versiIndex) — lihat
+            // versiBolehSuntingIsi(): draft, atau versi terbit bagi pemilik
+            // garis waktu / pemegang izin sunting yang sedang berlaku.
+            'bolehSunting'  => $this->versiBolehSuntingIsi($baris, $scope),
+            'sudahTerbit'   => $baris['status'] === DokumenVersiModel::STATUS_PUBLISHED,
+            'sedangBerlaku' => $baris['status'] === DokumenVersiModel::STATUS_PUBLISHED
+                && ($baris['effective_to'] ?? null) === null,
             'bolehKeterangan' => $approval->bolehUbahKeterangan($baris) && $this->versiBoleh('update_draft'),
             'bolehTanggalBaseline' => ($this->versiBoleh('create')
                     && $approval->bolehPerbaikiTanggalBaseline($baris))
@@ -765,11 +801,11 @@ trait DokumenVersiTrait
 
     public function versiSunting($id = null)
     {
-        if (! $this->versiBoleh('update_draft')) {
+        if (! $this->versiBoleh('update_draft') && ! $this->versiBoleh('publish')) {
             return $this->versiTolakIzin();
         }
 
-        $baris = $this->versiDraftMilikSaya((int) $id);
+        $baris = $this->versiSuntingMilikSaya((int) $id);
 
         if (! is_array($baris)) {
             return $baris;
@@ -777,10 +813,16 @@ trait DokumenVersiTrait
 
         $scope = VersionScope::dariBaris($baris);
         $arsip = (new ArsipRegistry())->untuk($scope->modul());
+        $sudahTerbit = ($baris['status'] ?? '') === DokumenVersiModel::STATUS_PUBLISHED;
 
         return view($this->versiSuntingView(), [
             'title'        => 'Sunting ' . $baris['label'],
-            'judulHalaman' => 'Sunting Draft: ' . $baris['label'],
+            'judulHalaman' => ($sudahTerbit ? 'Sunting Versi Berlaku: ' : 'Sunting Draft: ')
+                . $baris['label'],
+            // Tampilan memakai ini untuk memperingatkan bahwa yang disunting
+            // adalah dokumen yang SUDAH BERLAKU, bukan draft.
+            'sudahTerbit'  => $sudahTerbit,
+            'sedangBerlaku' => $sudahTerbit && ($baris['effective_to'] ?? null) === null,
             'namaDokumen'  => $this->versiNamaDokumen(),
             'baseUrl'      => $this->versiBaseUrl(),
             'versi'        => $baris,
@@ -930,11 +972,11 @@ trait DokumenVersiTrait
 
     public function versiSuntingSimpan($id = null)
     {
-        if (! $this->versiBoleh('update_draft')) {
+        if (! $this->versiBoleh('update_draft') && ! $this->versiBoleh('publish')) {
             return $this->versiTolakIzin();
         }
 
-        $baris = $this->versiDraftMilikSaya((int) $id);
+        $baris = $this->versiSuntingMilikSaya((int) $id);
 
         if (! is_array($baris)) {
             return $baris;
@@ -977,17 +1019,64 @@ trait DokumenVersiTrait
                 return redirect()->back()->with('error', 'Penyimpanan gagal pada salah satu query.');
             }
 
+            $sudahTerbit   = ($baris['status'] ?? '') === DokumenVersiModel::STATUS_PUBLISHED;
+            $sedangBerlaku = $sudahTerbit && ($baris['effective_to'] ?? null) === null;
+
+            // ARSIP DAN DATA BERJALAN TIDAK BOLEH BERPISAH DIAM-DIAM.
+            //
+            // Isi versi diterapkan ke tabel berjalan saat DITETAPKAN. Kalau
+            // versi yang sudah terbit kemudian disunting, arsipnya berubah
+            // tetapi menu dokumennya tidak — operator menyunting, membuka menu
+            // RPJMD/Renstra, dan melihat isi lama tanpa tahu sebabnya.
+            //
+            // Karena itu versi yang SEDANG BERLAKU diterapkan ulang di sini,
+            // di dalam transaksi yang sama dengan penyimpanannya: kalau
+            // penerapannya gagal, suntingannya ikut dibatalkan daripada
+            // meninggalkan keduanya berbeda.
+            //
+            // Versi HISTORIS (effective_to terisi) sengaja TIDAK diterapkan.
+            // Ia bukan dokumen yang berlaku hari ini; menuliskannya ke tabel
+            // berjalan justru akan menimpa versi yang sedang berlaku.
+            if ($sedangBerlaku) {
+                $mulai = (string) ($baris['effective_from'] ?? '');
+                $tahun = $mulai !== '' && strtotime($mulai) !== false
+                    ? (int) date('Y', strtotime($mulai))
+                    : $scope->periodeMulai();
+
+                $arsip->terapkanKeLive((int) $id, $scope, $tahun);
+
+                if ($db->transStatus() === false) {
+                    $db->transRollback();
+
+                    return redirect()->back()->with('error',
+                        'Suntingan tersimpan tetapi penerapannya ke data berjalan gagal, '
+                        . 'jadi seluruhnya dibatalkan agar arsip dan menu dokumen tidak berbeda.');
+                }
+            }
+
             $db->transCommit();
 
-            (new VersionAuditService())->catat((int) $id, VersionAuditService::AKSI_EDITED_DRAFT, [
-                'ringkasan' => 'Draft disunting: ' . implode(', ', array_map(
-                    static fn ($k, $v) => $k . '=' . $v,
-                    array_keys($n),
-                    $n
-                )),
-                'sesudah'   => $n,
-                'oleh'      => session()->get('user_id') ?? session()->get('id'),
-            ]);
+            $ringkasN = implode(', ', array_map(
+                static fn ($k, $v) => $k . '=' . $v,
+                array_keys($n),
+                $n
+            ));
+
+            (new VersionAuditService())->catat(
+                (int) $id,
+                $sudahTerbit
+                    ? VersionAuditService::AKSI_EDITED_PUBLISHED
+                    : VersionAuditService::AKSI_EDITED_DRAFT,
+                [
+                    'ringkasan' => ($sudahTerbit
+                        ? 'Versi berlaku disunting'
+                            . ($sedangBerlaku ? ' dan diterapkan ke data berjalan' : ' (versi historis, data berjalan tidak disentuh)')
+                            . ': '
+                        : 'Draft disunting: ') . $ringkasN,
+                    'sesudah'   => $n,
+                    'oleh'      => session()->get('user_id') ?? session()->get('id'),
+                ]
+            );
         } catch (Throwable $e) {
             if (isset($db) && $db->transDepth > 0) {
                 $db->transRollback();
@@ -996,10 +1085,20 @@ trait DokumenVersiTrait
             return redirect()->back()->withInput()->with('error', pesanGalat($e, 'umum.dokumenVersi'));
         }
 
+        if (! empty($sedangBerlaku)) {
+            $pesan = 'Versi disimpan dan langsung diterapkan ke data berjalan — '
+                . 'menu ' . $this->versiNamaDokumen() . ' sudah mengikuti perubahan ini.';
+        } elseif (! empty($sudahTerbit)) {
+            $pesan = 'Versi disimpan. Karena versi ini sudah tidak berlaku (historis), '
+                . 'data berjalan sengaja tidak diubah.';
+        } else {
+            $pesan = 'Draft disimpan. Data berjalan belum berubah — perubahan baru '
+                . 'diterapkan setelah versi ini ditetapkan berlaku.';
+        }
+
         return redirect()
             ->to(base_url($this->versiBaseUrl() . '/versi/sunting/' . (int) $id))
-            ->with('success', 'Draft disimpan. Data berjalan belum berubah — perubahan baru '
-                . 'diterapkan setelah versi ini ditetapkan berlaku.');
+            ->with('success', $pesan);
     }
 
     /**
@@ -1011,6 +1110,93 @@ trait DokumenVersiTrait
      *
      * @return array|\CodeIgniter\HTTP\RedirectResponse
      */
+    /**
+     * Boleh menyunting ISI versi ini?
+     *
+     * =====================================================================
+     * VERSI YANG SUDAH DITETAPKAN KINI BOLEH DISUNTING
+     *
+     * Semula hanya draft yang boleh (§16): versi resmi bersifat tetap, dan
+     * perubahannya ditempuh dengan membuat versi baru. Atas permintaan
+     * pemilik dokumen (23 Sep 2026) aturan itu dilonggarkan — membuat versi
+     * baru untuk setiap koreksi dinilai melahirkan "versi di dalam versi"
+     * yang menyulitkan, sementara yang dibutuhkan hanyalah membetulkan isi
+     * versi yang ada.
+     *
+     * Kelonggaran ini TIDAK diberikan kepada semua orang:
+     *
+     *   draft     -> pemegang `.version.update_draft`, seperti sebelumnya.
+     *   pending   -> TIDAK ADA. Isinya sedang dibaca verifikator; mengubahnya
+     *                di tengah jalan membuat mereka memutuskan sesuatu yang
+     *                sudah berbeda.
+     *   published -> pemilik garis waktu (`.version.publish`), atau pemegang
+     *                `.version.update_draft` yang izin suntingnya sedang
+     *                berlaku pada periode itu. Aturan yang sama persis dipakai
+     *                versiBolehGeserTanggal() untuk menggeser tanggal versi
+     *                resmi, jadi tidak ada wewenang baru yang diciptakan.
+     *
+     * Akibat yang ditangani di versiSuntingSimpan(): bila versi yang disunting
+     * adalah versi yang SEDANG BERLAKU, isinya diterapkan ulang ke tabel
+     * berjalan begitu tersimpan. Tanpa itu arsip dan menu dokumen berpisah
+     * diam-diam — operator menyunting, lalu membuka menu RPJMD dan melihat
+     * isi lama, tanpa tahu sebabnya.
+     * =====================================================================
+     */
+    protected function versiBolehSuntingIsi(array $baris, VersionScope $scope): bool
+    {
+        $status = $baris['status'] ?? '';
+
+        if ($status === DokumenVersiModel::STATUS_DRAFT) {
+            return $this->versiBoleh('update_draft');
+        }
+
+        if ($status !== DokumenVersiModel::STATUS_PUBLISHED) {
+            return false;
+        }
+
+        if ($this->versiBoleh('publish')) {
+            return true;
+        }
+
+        return $this->versiBoleh('update_draft')
+            && (new IzinSuntingService())->bolehSunting($scope);
+    }
+
+    /**
+     * Versi yang boleh disunting isinya, atau redirect berisi alasannya.
+     *
+     * Pasangan versiDraftMilikSaya() yang memakai versiBolehSuntingIsi().
+     * versiDraftMilikSaya() DIPERTAHANKAN apa adanya untuk aksi yang memang
+     * hanya masuk akal pada draft (mis. mengaktifkan kembali indikator yang
+     * dihentikan, dan penyusunan tujuan Renstra).
+     *
+     * @return array<string,mixed>|RedirectResponse
+     */
+    protected function versiSuntingMilikSaya(int $id)
+    {
+        $baris = $this->versiMilikSaya($id);
+
+        if ($baris === null) {
+            return $this->versiTolak('Versi tidak ditemukan pada lingkup Anda.');
+        }
+
+        $kembali = base_url($this->versiBaseUrl() . '/versi/lihat/' . $id);
+
+        if (($baris['status'] ?? '') === DokumenVersiModel::STATUS_PENDING) {
+            return redirect()->to($kembali)
+                ->with('error', 'Versi sedang menunggu verifikasi, jadi tidak bisa disunting. '
+                    . 'Batalkan pengajuannya dulu bila memang perlu diubah.');
+        }
+
+        if (! $this->versiBolehSuntingIsi($baris, VersionScope::dariBaris($baris))) {
+            return redirect()->to($kembali)
+                ->with('error', 'Versi ini sudah ditetapkan, dan Anda belum berwenang '
+                    . 'menyuntingnya. Mintalah Izin Sunting untuk periode ini lebih dulu.');
+        }
+
+        return $baris;
+    }
+
     protected function versiDraftMilikSaya(int $id)
     {
         $baris = $this->versiMilikSaya($id);

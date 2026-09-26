@@ -371,8 +371,9 @@ class DashVerify extends BaseCommand
         $this->cek('total tetap tidak tampil', $d3['pk_bupati']['can_compute'] === false);
         $adaInsightFormula = in_array('pk_bupati_formula', array_column($d3['prioritas'], 'code'), true);
         $this->cek('muncul di prioritas sebagai pk_bupati_formula', $adaInsightFormula);
-        $seri = array_values(array_filter($d3['tren'], static fn ($s) => $s['indikator_id'] === $indFormula));
-        $this->cek('seri tren indikator itu ditandai tersedia/tidak', $seri !== []);
+        // Grafik tren kini tahunan (26 Sep 2026) — seri per indikator tidak lagi dikirim.
+        $this->cek('tren tahunan PK Bupati berisi ' . \App\Services\KabupatenDashboardService::TREN_JUMLAH_TAHUN . ' tahun',
+            count($d3['tren']['titik'] ?? []) === \App\Services\KabupatenDashboardService::TREN_JUMLAH_TAHUN);
 
         CLI::write('== Kabupaten: status & distribusi OPD (uji 3, 4, 11, 14) ==', 'yellow');
         $statuses = $svc->getOpdStatuses($tahun, 4, null);

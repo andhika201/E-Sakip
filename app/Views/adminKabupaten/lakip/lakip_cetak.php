@@ -180,7 +180,11 @@ $w = ($mode === 'opd')
                     <?php
                     $targetId = (int) ($r['target_id'] ?? 0);
                     $lakipItem = $lakipMap[$targetId] ?? null;
-                    $jenisIndikator = $r['jenis_indikator'] ?? 'indikator positif';
+                    // Jenis kosong TIDAK lagi dianggap positif — lihat catatan di
+                    // app/Views/adminKabupaten/lakip/lakip.php. Capaian dibiarkan
+                    // tak terhitung agar indikator "semakin rendah semakin baik"
+                    // tidak tampil terbalik.
+                    $jenisIndikator = trim((string) ($r['jenis_indikator'] ?? ''));
                     $targetNow = $r['target_tahun_ini'] ?? null;
                     $realisasiNow = $lakipItem['capaian_tahun_ini'] ?? null;
                     $targetCalc = (isset($lakipItem['target_hitung']) && $lakipItem['target_hitung'] !== '') ? $lakipItem['target_hitung'] : $targetNow;

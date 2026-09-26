@@ -212,8 +212,8 @@ if ($tahunMulai !== '' && $tahunAkhir !== '' && (int) $tahunAkhir >= (int) $tahu
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Jenis Indikator</label>
-                            <select name="indikator[<?= $i ?>][jenis_indikator]" class="form-select select2">
+                            <label class="form-label">Jenis Indikator <span class="text-danger">*</span></label>
+                            <select name="indikator[<?= $i ?>][jenis_indikator]" class="form-select select2" required>
                                 <option value="">Pilih Jenis Indikator</option>
                                 <option value="positif" <?= ($ind['jenis_indikator'] ?? '') === 'positif' ? 'selected' : '' ?>>
                                     Indikator Positif (naik = baik)
@@ -387,8 +387,8 @@ if ($tahunMulai !== '' && $tahunAkhir !== '' && (int) $tahunAkhir >= (int) $tahu
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Jenis Indikator</label>
-                        <select name="indikator[${indeks}][jenis_indikator]" class="form-select select2">
+                        <label class="form-label">Jenis Indikator <span class="text-danger">*</span></label>
+                        <select name="indikator[${indeks}][jenis_indikator]" class="form-select select2" required>
                             <option value="">Pilih Jenis Indikator</option>
                             <option value="positif">Indikator Positif (naik = baik)</option>
                             <option value="negatif">Indikator Negatif (turun = baik)</option>

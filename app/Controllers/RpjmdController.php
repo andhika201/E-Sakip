@@ -10,6 +10,48 @@ use App\Services\Version\VersionScope;
 
 class RpjmdController extends BaseController
 {
+
+    /**
+     * Periksa jenis indikator pada seluruh indikator sasaran yang dikirim.
+     *
+     * Dipanggil save() MAUPUN update(): dua jalur yang menulis kolom yang
+     * sama tidak boleh punya dua standar.
+     *
+     * Atribut `required` di formulir tidak cukup — ia bisa dilewati dengan
+     * JavaScript dimatikan atau POST langsung. Tanpa penjaga ini, indikator
+     * "semakin rendah semakin baik" bisa tersimpan tanpa arah lalu terbaca
+     * terbalik di LAKIP.
+     *
+     * @return string|null pesan galat pertama, atau null bila lolos
+     */
+    private function rpjmdGalatJenisIndikator(array $tujuan): ?string
+    {
+        $sah = ['positif', 'indikator positif', 'negatif', 'indikator negatif'];
+
+        foreach ($tujuan as $t) {
+            foreach ((array) ($t['sasaran'] ?? []) as $sas) {
+                foreach ((array) ($sas['indikator_sasaran'] ?? []) as $is) {
+                    $teks = trim((string) ($is['indikator_sasaran'] ?? ''));
+
+                    // Baris kosong dari formulir dinamis bukan galat.
+                    if ($teks === '') {
+                        continue;
+                    }
+
+                    $jenis = strtolower(trim((string) ($is['jenis_indikator'] ?? '')));
+
+                    if (! in_array($jenis, $sah, true)) {
+                        return 'Jenis Indikator pada "' . mb_strimwidth($teks, 0, 60, '...')
+                            . '" wajib dipilih (Positif = naik semakin baik, Negatif = turun '
+                            . 'semakin baik). Tanpa itu capaian LAKIP indikator ini tidak '
+                            . 'dapat dihitung.';
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
     // Aksi versi dokumen (daftar, buat, ajukan, tetapkan, bandingkan).
     // Seluruh method lama di bawah TIDAK tersentuh: trait hanya menambah
     // method baru berawalan `versi*`.
@@ -299,6 +341,12 @@ class RpjmdController extends BaseController
                 ->with('error', implode(' | ', $this->validator->getErrors()));
         }
 
+        if ($galatJenis = $this->rpjmdGalatJenisIndikator(
+            (array) ($this->request->getPost('tujuan') ?? [])
+        )) {
+            return redirect()->back()->withInput()->with('error', $galatJenis);
+        }
+
         // KUNCI: periode yang sudah punya versi resmi tidak boleh ditulisi
         // langsung. Diperiksa dari periode POST (lihat RpjmdSiklusTrait).
         if ($tolak = $this->rpjmdPastikanBoleh($this->rpjmdKeadaan(
@@ -508,6 +556,12 @@ class RpjmdController extends BaseController
         ])) {
             return redirect()->back()->withInput()
                 ->with('error', implode(' | ', $this->validator->getErrors()));
+        }
+
+        if ($galatJenis = $this->rpjmdGalatJenisIndikator(
+            (array) ($this->request->getPost('tujuan') ?? [])
+        )) {
+            return redirect()->back()->withInput()->with('error', $galatJenis);
         }
 
         // KUNCI: sama seperti save(). Diperiksa dari periode POST.

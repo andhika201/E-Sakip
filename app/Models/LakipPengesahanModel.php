@@ -113,9 +113,12 @@ class LakipPengesahanModel extends Model
 
         $k = $this->kunciLingkup($mode, $opdId);
 
+        // Kedua lingkup kini divalidasi setara. Dahulu OPD hanya dihitung
+        // jumlah baris yang realisasinya terisi, sehingga laporan yang belum
+        // lengkap pun bisa dikunci — lihat catatan panjang di validasiOpd().
         $verifikasi = $k['mode'] === 'kabupaten'
             ? $this->validasiKabupaten($tahun)
-            : ['jumlah_realisasi' => $this->jumlahRealisasi($tahun, $k)];
+            : $this->validasiOpd($tahun, (int) $k['opd_id']);
         $isi = (int) $verifikasi['jumlah_realisasi'];
 
         if ($isi < 1) {
@@ -165,15 +168,240 @@ class LakipPengesahanModel extends Model
         return ['id' => $id, 'jumlah_realisasi' => $isi, 'sahkan_ulang' => $ada !== null];
     }
 
-    private function jumlahRealisasi(int $tahun, array $k): int
+    /**
+     * Validasi formal untuk LAKIP OPD.
+     *
+     * =====================================================================
+     * MENGAPA ADA
+     *
+     * Sebelum ini jalur OPD hanya menuntut SATU hal: minimal satu realisasi
+     * terisi. Jalur Kabupaten menuntut lima. Akibat ketimpangan itu, LAKIP
+     * OPD bisa — dan nyatanya sudah — disahkan dalam keadaan:
+     *
+     *   * tidak satu pun indikatornya berstatus selesai
+     *     (Dinas Koperasi 2025: 4 baris, semuanya masih draft);
+     *   * hanya sebagian indikator yang dilaporkan
+     *     (Kecamatan Adiluwih 2025: 1 baris dari 5 indikator);
+     *   * bersumber CAMPURAN dari dua revisi IKU sekaligus
+     *     (Dinas Ketahanan Pangan & Dinas Perhubungan 2025 — keduanya sudah
+     *     terkunci dalam keadaan itu).
+     *
+     * Pengesahan adalah penguncian: sesudahnya perbaikan hanya lewat
+     * Permintaan Perbaikan. Mengunci laporan yang belum lengkap justru
+     * mempersulit yang seharusnya dilindungi.
+     *
+     * Pemeriksaannya disamakan dengan validasiKabupaten(), dengan satu
+     * perbedaan yang perlu: OPD TIDAK punya ikatan `lakip_dokumen` (tabel itu
+     * hanya diisi untuk mode kabupaten), jadi sumber acuannya tidak bisa
+     * ditanyakan ke ikatan. Yang dipakai adalah sumber yang tercatat pada
+     * barisnya sendiri, dan ketunggalannya-lah yang dijaga.
+     * =====================================================================
+     *
+     * @return array{jumlah_realisasi: int, source_type: ?string,
+     *               source_version_id: ?int, lakip_dokumen_id: ?int}
+     */
+    private function validasiOpd(int $tahun, int $opdId): array
     {
-        return $this->db->table('lakip')
-            ->where('tahun', $tahun)->where('mode', $k['mode'])->where('opd_id', $k['opd_id'])
-            ->where('capaian_tahun_ini IS NOT NULL', null, false)
-            ->where("capaian_tahun_ini <> ''", null, false)->countAllResults();
+        $kolom = 'id, source_type, source_version_id, source_entity_id, renstra_target_id, '
+               . 'status, capaian_tahun_ini';
+        if ($this->db->fieldExists('lakip_dokumen_id', 'lakip')) {
+            $kolom .= ', lakip_dokumen_id';
+        }
+
+        $rows = $this->db->table('lakip')
+            ->select($kolom)
+            ->where('tahun', $tahun)->where('mode', 'opd')->where('opd_id', $opdId)
+            ->get()->getResultArray();
+
+        if ($rows === []) {
+            throw new RuntimeException(
+                'LAKIP tahun ' . $tahun . ' belum memiliki baris untuk disahkan. '
+                . 'Isi dulu capaian indikatornya.'
+            );
+        }
+
+        $sumber    = [];
+        $entitas   = [];
+        $dokumenId = null;
+        $belumSiap = 0;
+        $tanpaIsi  = 0;
+
+        foreach ($rows as $row) {
+            $tipe = strtolower(trim((string) ($row['source_type'] ?? '')));
+
+            if (! in_array($tipe, ['iku', 'renstra', 'rpjmd'], true)) {
+                throw new RuntimeException(
+                    'Setiap baris LAKIP harus memiliki sumber yang sah sebelum pengesahan. '
+                    . 'Ada baris tanpa sumber — hubungi admin kabupaten untuk memulangkan lingkupnya.'
+                );
+            }
+
+            if (! in_array(strtolower(trim((string) ($row['status'] ?? ''))), ['selesai', 'siap'], true)) {
+                $belumSiap++;
+            }
+
+            if (($row['capaian_tahun_ini'] ?? null) === null
+                || trim((string) $row['capaian_tahun_ini']) === '') {
+                $tanpaIsi++;
+            }
+
+            $kunci = $tipe . ':' . (int) ($row['source_version_id'] ?? 0);
+            $sumber[$kunci] = [
+                'source_type'       => $tipe,
+                'source_version_id' => (int) ($row['source_version_id'] ?? 0),
+            ];
+
+            // Jangkar entitas berbeda per sumber: IKU memakai source_entity_id
+            // (id indikator IKU berjalan), Renstra memakai renstra_target_id.
+            $jangkar = $tipe === 'iku'
+                ? (int) ($row['source_entity_id'] ?? 0)
+                : (int) ($row['renstra_target_id'] ?? 0);
+
+            if ($jangkar > 0) {
+                $entitas[$jangkar] = true;
+            }
+
+            if (! empty($row['lakip_dokumen_id'])) {
+                $dokumenId ??= (int) $row['lakip_dokumen_id'];
+            }
+        }
+
+        // URUTANNYA DISENGAJA: sumber campuran dilaporkan LEBIH DULU.
+        //
+        // Baris sisa dari dokumen lama biasanya juga berstatus draft. Kalau
+        // "belum berstatus Selesai" muncul lebih dulu, operator akan menandai
+        // selesai baris yang justru seharusnya DIBUANG — lalu baru menabrak
+        // pesan sumber campuran. Menyebut masalah strukturalnya lebih dulu
+        // menghindarkan satu putaran kerja yang salah arah. Pada Dinas
+        // Perhubungan 2025, membuang baris nyasarnya sekaligus menuntaskan
+        // hitungan status dan jumlah indikatornya.
+        if (count($sumber) !== 1) {
+            $daftar = implode(', ', array_map(
+                static fn ($v) => strtoupper($v['source_type'])
+                    . ($v['source_version_id'] ? ' v' . $v['source_version_id'] : ''),
+                $sumber
+            ));
+
+            throw new RuntimeException(
+                'LAKIP ini bersumber dari lebih dari satu dokumen sekaligus (' . $daftar . '). '
+                . 'Satu LAKIP hanya boleh dinilai terhadap SATU dokumen — minta admin kabupaten '
+                . 'membersihkan baris sisa dari dokumen lama lebih dulu.'
+            );
+        }
+
+        if ($tanpaIsi > 0) {
+            throw new RuntimeException(
+                $tanpaIsi . ' dari ' . count($rows) . ' indikator belum memiliki capaian tahun ini. '
+                . 'Seluruhnya wajib terisi sebelum pengesahan.'
+            );
+        }
+
+        if ($belumSiap > 0) {
+            throw new RuntimeException(
+                $belumSiap . ' dari ' . count($rows) . ' indikator belum berstatus Selesai. '
+                . 'Tandai selesai lebih dulu, lalu sahkan.'
+            );
+        }
+
+        $source = reset($sumber);
+
+        // Jumlah indikator yang dilaporkan harus sama dengan dokumen acuannya;
+        // laporan separuh jalan tidak boleh dikunci.
+        if ($source['source_type'] === 'iku' && $source['source_version_id'] > 0) {
+            $wajib = $this->db->table('iku_revisi_indikator')
+                ->where('revisi_id', $source['source_version_id'])
+                ->where('jenis_perubahan !=', 'dihentikan')->countAllResults();
+
+            if ($wajib !== count($entitas)) {
+                throw new RuntimeException(
+                    'Baru ' . count($entitas) . ' dari ' . $wajib . ' indikator IKU yang dilaporkan. '
+                    . 'Lengkapi seluruhnya sebelum pengesahan.'
+                );
+            }
+        } elseif ($source['source_type'] === 'renstra') {
+            $wajib = $this->db->table('renstra_target t')
+                ->join('renstra_indikator_sasaran i', 'i.id = t.renstra_indikator_id', 'inner')
+                ->join('renstra_sasaran s', 's.id = i.renstra_sasaran_id', 'inner')
+                ->where('s.opd_id', $opdId)->where('t.tahun', $tahun)
+                ->countAllResults();
+
+            if ($wajib > 0 && $wajib !== count($entitas)) {
+                throw new RuntimeException(
+                    'Baru ' . count($entitas) . ' dari ' . $wajib . ' indikator Renstra yang dilaporkan. '
+                    . 'Lengkapi seluruhnya sebelum pengesahan.'
+                );
+            }
+        }
+
+        return $source + [
+            'lakip_dokumen_id' => $dokumenId,
+            'jumlah_realisasi' => count($rows),
+        ];
     }
 
-    /** Validasi formal untuk LAKIP Kabupaten; legacy RPJMD tetap didukung. */
+    /**
+     * Ikatan dokumen LAKIP Kabupaten tahun ini, atau null bila belum diikat.
+     *
+     * Dibaca langsung dari tabel, bukan lewat LakipDokumenModel, supaya model
+     * pengesahan tidak menyeret model lain hanya untuk satu baris — dan tetap
+     * bekerja pada basis data lama yang belum punya tabelnya.
+     *
+     * @return array{source_type: string, source_version_id: int}|null
+     */
+    private function ikatanKabupaten(int $tahun): ?array
+    {
+        if (! $this->db->tableExists('lakip_dokumen')) {
+            return null;
+        }
+
+        $row = $this->db->table('lakip_dokumen')
+            ->select('source_type, source_version_id')
+            ->where('tahun', $tahun)
+            ->where('mode', 'kabupaten')
+            ->get()->getRowArray();
+
+        if ($row === null) {
+            return null;
+        }
+
+        $tipe = strtolower(trim((string) ($row['source_type'] ?? '')));
+
+        if (! in_array($tipe, ['iku', 'rpjmd'], true)) {
+            return null;
+        }
+
+        return [
+            'source_type'       => $tipe,
+            'source_version_id' => (int) ($row['source_version_id'] ?? 0),
+        ];
+    }
+
+    /**
+     * Validasi formal untuk LAKIP Kabupaten; legacy RPJMD tetap didukung.
+     *
+     * =====================================================================
+     * MENYARING SESUAI IKATAN DOKUMEN, SAMA SEPERTI LAYAR
+     *
+     * Dahulu baris diambil hanya dengan saringan tahun + mode + opd_id, lalu
+     * dituntut seluruhnya berasal dari SATU (source_type, source_version_id).
+     * Itu keliru sejak `lakip_dokumen` ada: tabel `lakip` MEMANG menyimpan
+     * sisa dari sumber-sumber lama, karena berpindah sumber tidak menghapus
+     * baris yang sudah terisi realisasinya.
+     *
+     * Akibatnya layar dan pengesahan berbeda pendapat. Layar membaca lewat
+     * ikatan dokumen (LakipModel::getLakipMapIku menyaring source_version_id),
+     * sehingga operator melihat 11 indikator lengkap dan merasa siap; penjaga
+     * ini membaca 26 baris dari dua sumber lalu menolak dengan pesan
+     * "source type atau source version campuran" — galat yang benar menurut
+     * kodenya sendiri, tetapi tidak bisa diperbaiki operator dari layar mana
+     * pun, sebab baris sisanya tidak ditampilkan di sana.
+     *
+     * Kini penyaringnya mengikuti ikatan yang aktif. Bila belum ada ikatan,
+     * perilaku lama dipertahankan apa adanya: seluruh baris diperiksa dan
+     * sumber campuran tetap ditolak — itu satu-satunya penjaga yang tersisa
+     * ketika tidak ada yang menyatakan sumber mana yang sah.
+     * =====================================================================
+     */
     private function validasiKabupaten(int $tahun): array
     {
         $kolom = 'id, source_type, source_version_id, source_entity_id, status, capaian_tahun_ini';
@@ -181,13 +409,30 @@ class LakipPengesahanModel extends Model
             $kolom .= ', lakip_dokumen_id';
         }
 
-        $rows = $this->db->table('lakip')
+        $b = $this->db->table('lakip')
             ->select($kolom)
-            ->where('tahun', $tahun)->where('mode', 'kabupaten')->where('opd_id', 0)
-            ->get()->getResultArray();
+            ->where('tahun', $tahun)->where('mode', 'kabupaten')->where('opd_id', 0);
+
+        $ikatan = $this->ikatanKabupaten($tahun);
+
+        if ($ikatan !== null) {
+            $b->where('source_type', $ikatan['source_type']);
+
+            // RPJMD lama tidak menyimpan nomor versi; jangan menuntutnya ada.
+            if ((int) $ikatan['source_version_id'] > 0) {
+                $b->where('source_version_id', (int) $ikatan['source_version_id']);
+            }
+        }
+
+        $rows = $b->get()->getResultArray();
 
         if ($rows === []) {
-            throw new RuntimeException('LAKIP Kabupaten belum memiliki baris untuk disahkan.');
+            throw new RuntimeException($ikatan === null
+                ? 'LAKIP Kabupaten belum memiliki baris untuk disahkan.'
+                : 'LAKIP Kabupaten belum memiliki baris yang bersumber dari dokumen yang '
+                  . 'sedang diikat (' . strtoupper((string) $ikatan['source_type'])
+                  . ($ikatan['source_version_id'] ? ' v' . (int) $ikatan['source_version_id'] : '')
+                  . '). Periksa ikatan sumber LAKIP tahun ' . $tahun . '.');
         }
 
         $sumber = [];

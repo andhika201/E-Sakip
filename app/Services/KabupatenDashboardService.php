@@ -29,6 +29,17 @@ class KabupatenDashboardService
     /** Batas hari sejak pembaruan terakhir sebelum sebuah OPD disebut terlambat. */
     public const HARI_TERLAMBAT = 14;
 
+    /**
+     * Tahun pertama capaian PK Bupati dihitung MESIN (LAKIP Kabupaten).
+     * Tahun sebelumnya memakai indikator RPJMD/RPD lama yang tidak tersambung
+     * ke data sekarang, sehingga angkanya diinput manual
+     * (capaian_pk_bupati_historis) — lihat getBupatiAnnualTrend().
+     */
+    public const TAHUN_MULAI_ENGINE = 2025;
+
+    /** Banyaknya tahun pada grafik tren capaian PK Bupati. */
+    public const TREN_JUMLAH_TAHUN = 5;
+
     /** Porsi indikator belum valid yang membuat status OPD dinyatakan Belum Valid. */
     private const AMBANG_BELUM_VALID = 0.5;
 
@@ -226,6 +237,7 @@ class KabupatenDashboardService
         $telat    = $this->getUnupdatedOpds($statuses);
         $misi     = $this->getMissionContributions($tahun, $triwulan, $statuses, $bupati);
         $prioritas = $this->getLeadershipPriorities($pkBupati, $statuses, $tahun, $triwulan);
+        $lakipBupati = $this->getBupatiLakipAchievement($tahun);
 
         return [
             'mode'    => 'kabupaten',
@@ -240,13 +252,13 @@ class KabupatenDashboardService
             'pk_bupati'  => $pkBupati,
             // Kartu 1 "Capaian PK Bupati" membaca LAKIP tahun yang sudah
             // jatuh tempo, bukan MONEV PK Bupati — lihat getBupatiLakipAchievement().
-            'lakip_bupati' => $this->getBupatiLakipAchievement($tahun),
+            'lakip_bupati' => $lakipBupati,
             'opd'        => $ringkas,
             'opd_list'   => array_values($statuses),
             'belum_update' => $telat,
             'prioritas'  => $prioritas,
             'distribusi' => $this->getOpdStatusDistribution($statuses),
-            'tren'       => $this->getBupatiIndicatorTrend($bupati),
+            'tren'       => $this->getBupatiAnnualTrend($tahun, $lakipBupati),
             'misi'       => $misi,
             // Ringkasan mutu data anggaran lintas OPD (§41, §42).
             'anggaran_lebih_pagu' => $this->anggaranLebihPagu($tahun),
@@ -1033,7 +1045,98 @@ class KabupatenDashboardService
     }
 
     /**
-     * Grafik 2 — tren indikator PK Bupati (target vs realisasi triwulanan).
+     * Grafik 2 — tren CAPAIAN PK BUPATI per TAHUN (5 tahun terakhir).
+     *
+     * =====================================================================
+     * MENGAPA TAHUNAN, BUKAN PER INDIKATOR PER TRIWULAN
+     *
+     * Grafik lama (target vs realisasi triwulanan per indikator, dari MONEV
+     * PK Bupati) praktis tidak pernah terisi: PK Eselon II dan PK Bupati
+     * belum tersambung, jadi MONEV PK Bupati kosong. Permintaan 26 Sep 2026:
+     * tampilkan persentase capaian PK Bupati per tahun saja.
+     *
+     *   tahun <  TAHUN_MULAI_ENGINE -> angka yang DIINPUT MANUAL admin
+     *                                  kabupaten (indikator RPJMD/RPD lama
+     *                                  berbeda; mesin tidak dipaksa).
+     *   tahun >= TAHUN_MULAI_ENGINE -> mesin: total LAKIP Kabupaten tahun itu,
+     *                                  angka yang sama dengan kartu
+     *                                  "Capaian PK Bupati".
+     *
+     * Tahun terakhir = tahun LAKIP yang sudah jatuh tempo
+     * (dash_tahun_lakip_jatuh_tempo), sama dengan kartu — dashboard 2026
+     * menampilkan 2021–2025. Tahun berjalan belum punya LAKIP, jadi tidak
+     * digambar.
+     *
+     * Tidak ada angka karangan: tahun tanpa data dikirim null beserta
+     * alasannya, dan grafiknya menampilkan celah.
+     * =====================================================================
+     *
+     * @param array<string, mixed> $lakipTerakhir hasil getBupatiLakipAchievement($tahun)
+     *
+     * @return array<string, mixed>
+     */
+    public function getBupatiAnnualTrend(int $tahun, array $lakipTerakhir): array
+    {
+        $akhir = (int) ($lakipTerakhir['tahun_lakip'] ?? dash_tahun_lakip_jatuh_tempo($tahun));
+        $awal  = $akhir - self::TREN_JUMLAH_TAHUN + 1;
+
+        $manual = (new \App\Models\CapaianPkBupatiHistorisModel())->petaTahun($awal, $akhir);
+
+        $titik = [];
+        for ($th = $awal; $th <= $akhir; $th++) {
+            if ($th < self::TAHUN_MULAI_ENGINE) {
+                $m = $manual[$th] ?? null;
+                $nilai = $m !== null ? (float) $m['capaian'] : null;
+                $titik[] = [
+                    'tahun'      => $th,
+                    'nilai'      => $nilai,
+                    'sumber'     => 'manual',
+                    'final'      => $nilai !== null,
+                    'keterangan' => $m !== null
+                        ? trim((string) ($m['keterangan'] ?? ''))
+                        : 'Belum diinput (data manual tahun sebelum ' . self::TAHUN_MULAI_ENGINE . ').',
+                    'status'     => $nilai !== null ? getAchievementStatus($nilai) : null,
+                ];
+                continue;
+            }
+
+            $r = $th === $akhir && isset($lakipTerakhir['total'])
+                ? $lakipTerakhir
+                : (new LakipKabupatenCapaianService())->ringkasan($th);
+
+            $nilai = !empty($r['can_compute']) && $r['total'] !== null ? (float) $r['total'] : null;
+            if ($nilai !== null) {
+                $ket = 'LAKIP Kabupaten ' . $th . ' — ' . (int) $r['valid'] . ' dari ' . (int) $r['wajib']
+                    . ' indikator terhitung' . (!empty($r['final']) ? ' (Final)' : ' (Sementara)');
+            } elseif (empty($r['ada'])) {
+                $ket = 'LAKIP Kabupaten ' . $th . ' belum ada datanya.';
+            } else {
+                $ket = 'LAKIP Kabupaten ' . $th . ' belum lengkap — ' . (int) ($r['valid'] ?? 0)
+                    . ' dari ' . (int) ($r['wajib'] ?? 0) . ' indikator terhitung.';
+            }
+
+            $titik[] = [
+                'tahun'      => $th,
+                'nilai'      => $nilai !== null ? round($nilai, 2) : null,
+                'sumber'     => 'lakip',
+                'final'      => !empty($r['final']),
+                'keterangan' => $ket,
+                'status'     => $nilai !== null ? getAchievementStatus($nilai) : null,
+            ];
+        }
+
+        return [
+            'tahun_awal'         => $awal,
+            'tahun_akhir'        => $akhir,
+            'tahun_mulai_engine' => self::TAHUN_MULAI_ENGINE,
+            'titik'              => $titik,
+        ];
+    }
+
+    /**
+     * (TIDAK LAGI DIPAKAI dashboard sejak 26 Sep 2026 — digantikan
+     * getBupatiAnnualTrend(); dipertahankan untuk DashVerify.)
+     * Tren indikator PK Bupati (target vs realisasi triwulanan).
      *
      * Realisasi PK diambil dari MONEV rencana aksi PK Bupati. Bila indikator
      * belum punya rencana aksi/MONEV, serinya tetap dikirim dengan penanda

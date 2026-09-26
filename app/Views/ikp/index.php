@@ -22,7 +22,8 @@ $metodeSingkat = ['sum' => 'Akumulasi', 'trend_naik' => 'Posisi ↑', 'trend_tur
     <i class="fas fa-circle-info"></i>
     <div>
         <p><strong>IKP</strong> adalah ukuran kinerja yang terukur setiap bulan dari Program Unggulan Bupati,
-            program prioritas, penugasan khusus, dan penugasan tambahan.</p>
+            program prioritas, penugasan khusus, dan penugasan tambahan. Di dokumen Perjanjian Kinerja (PK), IKP disebut
+            <em>Indikator Kinerja Kunci (IKK) Pendukung Program Prioritas</em>.</p>
         <p class="small text-secondary">Alur kerja: <strong>1.</strong> daftarkan indikator
             → <strong>2.</strong> pecah target 5 tahun menjadi tahunan dan bulanan
             → <strong>3.</strong> isi realisasi setiap bulan → <strong>4.</strong> rekap triwulan dihitung otomatis.</p>

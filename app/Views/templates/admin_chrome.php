@@ -91,6 +91,9 @@ $rName = session('username') ?: 'Pengguna';
   }
 </style>
 
+<?php /* ===== AKSARA+ — pita "DATA SIMULASI" (hanya bila .env demo.simulasi = true) ===== */ ?>
+<?= $this->include('templates/pita_simulasi') ?>
+
 <!-- ===== HEADER ===== -->
 <header id="main-header" class="bg-success px-3 px-md-4 shadow-sm" style="position: sticky; top: 0; z-index: 1030;">
   <meta name="csrf-token" content="<?= csrf_hash(); ?>">

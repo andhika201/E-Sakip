@@ -33,7 +33,7 @@ class LoginController extends BaseController
 
         if (!$this->validate($rules)) {
             return redirect()->back()
-                ->withInput()
+                ->with('_ci_old_input', $this->isianLamaTanpaPassword())
                 ->with('error', 'Username minimal 4 karakter dan password minimal 6 karakter.');
         }
 
@@ -58,7 +58,7 @@ class LoginController extends BaseController
             ]);
 
             return redirect()->back()
-                ->withInput()
+                ->with('_ci_old_input', $this->isianLamaTanpaPassword())
                 ->with('error', 'Terlalu banyak percobaan login. Coba lagi dalam satu menit.');
         }
 
@@ -76,7 +76,7 @@ class LoginController extends BaseController
                     'role'     => $user['role'] ?? null,
                 ]);
                 return redirect()->back()
-                    ->withInput()
+                    ->with('_ci_old_input', $this->isianLamaTanpaPassword())
                     ->with('error', 'Akun Anda dinonaktifkan. Hubungi administrator.');
             }
 
@@ -103,7 +103,7 @@ class LoginController extends BaseController
         ]);
 
         return redirect()->back()
-            ->withInput()
+            ->with('_ci_old_input', $this->isianLamaTanpaPassword())
             ->with('error', 'Username atau password salah.');
     }
 
@@ -131,5 +131,15 @@ class LoginController extends BaseController
         }
 
         return redirect()->to($tujuan);
+    }
+
+    /**
+     * Isian lama untuk form login: HANYA username.
+     * MENGAPA bukan withInput(): withInput() menyimpan seluruh POST — termasuk
+     * password dalam teks biasa — ke berkas sesi di server (writable/session).
+     */
+    private function isianLamaTanpaPassword(): array
+    {
+        return ['get' => [], 'post' => ['username' => (string) $this->request->getPost('username')]];
     }
 }

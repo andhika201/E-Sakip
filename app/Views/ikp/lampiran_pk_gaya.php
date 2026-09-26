@@ -18,6 +18,7 @@
   .lp-wrap { font-family: "Times New Roman", Times, serif; color: #000; }
   .lp-label { font-family: "Times New Roman", Times, serif; font-size: 11pt; font-weight: bold; margin: 0; }
   .lp-sub   { font-family: "Times New Roman", Times, serif; font-size: 11pt; font-weight: bold; margin: 0; }
+  .lp-alias { font-family: "Times New Roman", Times, serif; font-size: 10pt; font-style: italic; margin: 1px 0 0 0; }
   .lp-meta  { font-family: "Times New Roman", Times, serif; font-size: 10pt; margin: 2px 0 10px 0; }
   .lp-catatan { font-family: "Times New Roman", Times, serif; font-size: 9.5pt; border: 0.6px solid #b58900; background-color: #fff8e1;
                 padding: 6px 8px; margin: 0 0 10px 0; }

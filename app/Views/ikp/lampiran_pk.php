@@ -82,6 +82,7 @@ $kolomGrup = [
   <p class="lp-label">Lampiran II :</p>
   <p class="lp-sub">Indikator Kinerja Prioritas (IKP)</p>
   <p class="lp-sub">Pendukung Program Prioritas Kabupaten Pringsewu</p>
+  <p class="lp-alias">(di dokumen PK disebut Indikator Kinerja Kunci (IKK) Pendukung Program Prioritas Kabupaten Pringsewu)</p>
   <p class="lp-meta"><?= esc($lampNamaDok) ?> &middot; <?= esc($lampOpd['nama_opd']) ?></p>
 
   <?php if (empty($lampPk)): ?>

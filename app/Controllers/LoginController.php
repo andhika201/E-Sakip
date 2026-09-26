@@ -112,6 +112,11 @@ class LoginController extends BaseController
      */
     public function logout()
     {
+        // AKSARA+ — saat "Masuk sebagai", Logout milik akun tiruan; yang diharapkan admin adalah kembali ke akunnya.
+        if ((new \App\Services\MasukSebagaiService())->kembali()) {
+            return redirect()->to('/masuk-sebagai')->with('success', 'Anda kembali sebagai ' . session()->get('username') . '.');
+        }
+
         log_activity('logout', 'auth', 'Logout');
         session()->destroy();
         return redirect()->to('/login')->with('message', 'Anda telah berhasil logout.');

@@ -47,6 +47,22 @@ Impor data prototipe Prioritas (opsional): `php spark ikp:impor-prioritas --db=/
 `app/Views/templates/admin_menu.php` (blok menu bertanda AKSARA+), `app/Views/bupati/dashboard.php` (kartu pintasan),
 `app/Commands/JagaAsap.php` (halaman IKP), `ALUR_FITUR_DAN_ROUTE.md` (§8.10, §9.10, §9.11), `API_DOCUMENTATION.md`, `public/openapi.json`.
 
+## Masuk sebagai (prototipe; bawaan mati)
+
+Admin Kabupaten dan Super Admin bisa memakai akun Admin OPD, Admin Kecamatan, Bupati, atau Inspektorat untuk menelusuri
+AKSARA persis seperti pemiliknya, lalu kembali. Hanya aktif bila `.env` berisi `demo.masukSebagai = true`.
+
+- **Berkas baru**: `app/Services/MasukSebagaiService.php`, `app/Controllers/MasukSebagaiController.php`,
+  `app/Views/masuk_sebagai/index.php`, `app/Views/templates/pita_masuk_sebagai.php`, `tests/unit/MasukSebagaiTest.php`.
+- **Berkas lama yang disentuh (penambahan)**: `Routes.php` (3 rute di ujung), `AuthFilter` (akun asli diperiksa ulang; ganti
+  sandi/2FA akun tiruan ditolak), `ReadOnlyRoleFilter` (jalur `masuk-sebagai/` agar akun Bupati tiruan bisa kembali),
+  `LoginController::logout` (saat meniru = kembali), `activity_helper` (catatan pelaku asli), `admin_chrome` (pita),
+  `admin_menu` (menu).
+- **Aturan**: hak dinilai dari akun ASLI; akun `admin` & `admin_kab` tidak bisa ditiru; sesi diregenerasi setiap berganti
+  akun; mulai/ganti/kembali tercatat di `activity_logs` (modul `masuk_sebagai`) atas nama akun asli.
+- Kolom "Kepala perangkat daerah" di halaman ini diambil dari PK jpt/camat terbaru tahun berjalan, bukan `opd.id_kepala_opd`
+  (banyak yang basi).
+
 ## Keputusan desain penting
 
 - IKP melekat ke **OPD × periode RPJMD** (bukan per dokumen PK). Hapus IKP = *soft delete* (`dihapus_pada`) karena aplikasi

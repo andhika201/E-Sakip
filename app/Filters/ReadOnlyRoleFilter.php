@@ -40,6 +40,7 @@ class ReadOnlyRoleFilter implements FilterInterface
         'login',
         'change-password',
         '2fa/',
+        'masuk-sebagai/', // AKSARA+ — ganti akun / kembali saat admin sedang memakai akun Bupati
     ];
 
     public function before(RequestInterface $request, $arguments = null)

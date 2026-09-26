@@ -93,6 +93,7 @@ $rName = session('username') ?: 'Pengguna';
 
 <?php /* ===== AKSARA+ — pita "DATA SIMULASI" (hanya bila .env demo.simulasi = true) ===== */ ?>
 <?= $this->include('templates/pita_simulasi') ?>
+<?= $this->include('templates/pita_masuk_sebagai') ?>
 
 <!-- ===== HEADER ===== -->
 <header id="main-header" class="bg-success px-3 px-md-4 shadow-sm" style="position: sticky; top: 0; z-index: 1030;">

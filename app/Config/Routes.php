@@ -860,3 +860,9 @@ $routes->group('api/ekin', ['filter' => 'api-token:ekin'], static function ($rou
     $routes->get('pegawai', 'Api\EkinController::pegawai');
     $routes->get('pegawai/(:num)/kinerja', 'Api\EkinController::kinerja/$1');
 });
+
+// AKSARA+ — "Masuk sebagai" (.env demo.masukSebagai): Admin Kabupaten / Super Admin memakai akun lain lalu kembali.
+// Hak dinilai dari akun ASLI di controller (App\Services\MasukSebagaiService), bukan dari peran sesi yang sedang ditiru.
+$routes->get('masuk-sebagai', 'MasukSebagaiController::index', ['filter' => 'auth']);
+$routes->post('masuk-sebagai/kembali', 'MasukSebagaiController::kembali', ['filter' => 'auth']);
+$routes->post('masuk-sebagai/(:num)', 'MasukSebagaiController::mulai/$1', ['filter' => 'auth']);

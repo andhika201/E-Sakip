@@ -30,6 +30,12 @@ if (!function_exists('log_activity')) {
                 'created_at'  => date('Y-m-d H:i:s'),
             ];
 
+            // AKSARA+ — "Masuk sebagai": pelaku tetap akun yang ditiru, admin yang sebenarnya ikut tercatat.
+            if ($ses->get('masuk_sebagai_asli_id') && ! array_key_exists('user_id', $overrides)) {
+                $data['description'] = mb_substr(trim(($data['description'] ?? '') . ' [lewat Masuk sebagai oleh '
+                    . $ses->get('masuk_sebagai_asli_username') . ']'), 0, 255);
+            }
+
             foreach ($overrides as $k => $v) {
                 $data[$k] = $v;
             }

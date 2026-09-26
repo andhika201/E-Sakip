@@ -81,6 +81,27 @@ class AuthFilter implements FilterInterface
         }
         
 
+        // =============================================================
+        // AKSARA+ — "MASUK SEBAGAI"
+        //
+        // Selama meniru, akun ASLI (admin) diperiksa ulang: dinonaktifkan,
+        // diturunkan perannya, atau saklar .env dimatikan → sesi berhenti.
+        // Kata sandi & 2FA akun yang ditiru tidak boleh diubah lewat jalan ini.
+        // =============================================================
+        if (\App\Services\MasukSebagaiService::sedangMeniru()) {
+            if (! \App\Services\MasukSebagaiService::bolehDipakai()) {
+                $session->destroy();
+
+                return redirect()->to('/login')->with('error', 'Sesi "Masuk sebagai" dihentikan. Silakan login kembali.');
+            }
+
+            $jalur = ltrim((string) $request->getUri()->getPath(), '/');
+
+            if (strtolower($request->getMethod()) === 'post' && preg_match('#^(change-password/|2fa/(enable|disable))#', $jalur)) {
+                return redirect()->back()->with('error', 'Kata sandi dan 2FA akun yang sedang Anda masuki tidak dapat diubah lewat "Masuk sebagai".');
+            }
+        }
+
         if($arguments !== null && is_array($arguments)) {
             // Check if user has the required role
             $userRole = $session->get('role');

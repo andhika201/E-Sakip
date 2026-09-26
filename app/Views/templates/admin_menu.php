@@ -128,6 +128,11 @@ if (user_can('lakip_opd.buka_kunci')) {
   <a href="<?= $dashUrl ?>" class="<?= $linkCls ?>"><i class="fas fa-gauge-high"></i><span>Dashboard</span></a>
 <?php endif; ?>
 
+<?php /* AKSARA+ — "Masuk sebagai" (.env demo.masukSebagai; Admin Kabupaten & Super Admin, tidak tampil saat meniru) */ ?>
+<?php if (! \App\Services\MasukSebagaiService::sedangMeniru() && \App\Services\MasukSebagaiService::bolehDipakai()): ?>
+  <a href="<?= base_url('masuk-sebagai') ?>" class="<?= $linkCls ?>"><i class="fas fa-user-secret"></i><span>Masuk sebagai</span></a>
+<?php endif; ?>
+
 <?php /* ===================== KABUPATEN ===================== */ ?>
 <?php if ($canKab): ?>
   <div class="sidebar-section">Kabupaten</div>
